@@ -1,0 +1,16 @@
+{
+  "events": [
+    {
+      "number": 1,
+      "name": "EVENT-NAGOYA-2026"
+    },
+    {
+      "number": 2,
+      "name": "EVENT-TOKYO-2026"
+    },
+    {
+      "number": 3,
+      "name": "EVENT-OSAKA-2026"
+    }
+  ]
+}
