@@ -1,6 +1,10 @@
 import type { RefObject } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
+const SEARCH_RESULT_KEY_DOWN = "ArrowDown";
+const SEARCH_RESULT_KEY_UP = "ArrowUp";
+const SEARCH_RESULT_KEY_CONFIRM = "Enter";
+
 type UseSearchResultNavigationParams = {
   isOpen: boolean;
   resultCount: number;
@@ -31,13 +35,14 @@ export function useSearchResultNavigation({
     }
 
     function handleKeyDown(event: KeyboardEvent) {
-      if (
+      const shouldIgnoreKeyboardEvent =
         event.isComposing ||
         event.defaultPrevented ||
         event.altKey ||
         event.ctrlKey ||
-        event.metaKey
-      ) {
+        event.metaKey;
+
+      if (shouldIgnoreKeyboardEvent) {
         return;
       }
 
@@ -48,19 +53,19 @@ export function useSearchResultNavigation({
         return;
       }
 
-      if (event.key === "ArrowDown") {
+      if (event.key === SEARCH_RESULT_KEY_DOWN) {
         event.preventDefault();
         setSelectedIndex((current) => (current + 1) % resultCount);
       }
 
-      if (event.key === "ArrowUp") {
+      if (event.key === SEARCH_RESULT_KEY_UP) {
         event.preventDefault();
         setSelectedIndex(
           (current) => (current - 1 + resultCount) % resultCount
         );
       }
 
-      if (event.key === "Enter") {
+      if (event.key === SEARCH_RESULT_KEY_CONFIRM) {
         event.preventDefault();
         onConfirmIndex(selectedIndexRef.current);
       }
