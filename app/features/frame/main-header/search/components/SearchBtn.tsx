@@ -1,5 +1,5 @@
 import { createPortal } from "react-dom";
-import { useCallback, useRef } from "react";
+import { useCallback, useRef, useSyncExternalStore } from "react";
 
 import { SearchAnchor } from "~/features/frame/main-header/search/components/SearchAnchor";
 import { SearchBackdrop } from "~/features/frame/main-header/search/components/SearchBackdrop";
@@ -50,12 +50,18 @@ export function SearchBtn() {
     close();
   }, [close, resetSelection]);
 
+  const isMounted = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false
+  );
+
   return (
     <>
       {/* domの場所確保用 */}
       <SearchAnchor anchorRef={anchorRef} />
 
-      {typeof document !== "undefined"
+      {isMounted
         ? createPortal(
             <>
               {/* 黒背景 */}

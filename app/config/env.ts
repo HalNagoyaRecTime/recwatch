@@ -1,9 +1,5 @@
 function readStringEnv(value: string | undefined, fallback = "") {
-  if (value === undefined) {
-    return fallback;
-  }
-
-  return value.trim();
+  return value?.trim() ?? fallback;
 }
 
 export const env = {
