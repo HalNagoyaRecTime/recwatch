@@ -5,10 +5,18 @@ import { AuthErrorMessage } from "~/features/auth/components/AuthErrorMessage";
 import { AuthLayout } from "~/features/auth/components/AuthLayout";
 import { AuthPrimaryButton } from "~/features/auth/components/AuthPrimaryButton";
 
-export function AuthLoginPage() {
+export function AuthLoginPage({
+  initialError,
+}: {
+  initialError?: string | null;
+}) {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
-  const [errorMessage, setErrorMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState(
+    initialError === "auth_failed"
+      ? "ログインに失敗しました。もう一度お試しください。"
+      : ""
+  );
   const [isEmailInputOpen, setIsEmailInputOpen] = useState(false);
   const [isOAuthSubmitting, setIsOAuthSubmitting] = useState(false);
   const [isEmailSubmitting, setIsEmailSubmitting] = useState(false);
@@ -30,17 +38,13 @@ export function AuthLoginPage() {
     try {
       setErrorMessage("");
       setIsOAuthSubmitting(true);
-
-      startTransition(() => {
-        navigate("/dashboard");
-      });
+      window.location.href = `${import.meta.env.VITE_BACKEND_BASE_URL}/api/v1/auth/microsoft/login`;
     } catch (error) {
       setErrorMessage(
         error instanceof Error
           ? error.message
           : "ログインの開始に失敗しました。"
       );
-    } finally {
       setIsOAuthSubmitting(false);
     }
   }
