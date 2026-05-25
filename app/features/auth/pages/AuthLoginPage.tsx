@@ -6,6 +6,7 @@ import { AuthLayout } from "~/features/auth/components/AuthLayout";
 import { AuthPrimaryButton } from "~/features/auth/components/AuthPrimaryButton";
 
 const initialErrorMessages: Record<string, string> = {
+  auth_failed: "ログインに失敗しました。もう一度お試しください。",
   logout_failed:
     "ログアウトに失敗しました。お手数ですが、もう一度ログアウトをお試しください。",
 };
@@ -41,17 +42,13 @@ export function AuthLoginPage({
     try {
       setErrorMessage("");
       setIsOAuthSubmitting(true);
-
-      startTransition(() => {
-        navigate("/dashboard");
-      });
+      window.location.href = `${import.meta.env.VITE_BACKEND_BASE_URL}/api/v1/auth/microsoft/login`;
     } catch (error) {
       setErrorMessage(
         error instanceof Error
           ? error.message
           : "ログインの開始に失敗しました。"
       );
-    } finally {
       setIsOAuthSubmitting(false);
     }
   }
