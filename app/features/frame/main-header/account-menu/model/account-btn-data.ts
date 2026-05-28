@@ -4,7 +4,6 @@ export type AccountUser = {
   id: string;
   email: string;
   display_name: string;
-  is_internal: boolean;
   avatar_url?: string | null;
   avatar_updated_at?: string | null;
 };
