@@ -65,7 +65,7 @@ export function AccountMenuPanel({
               {account.name}
             </span>
             <span
-              className="flex items-center justify-center rounded-full border px-0.5 py-px text-[10px] font-bold tracking-[0.04em]"
+              className="flex w-fit items-center justify-center rounded-full border px-2 py-px text-[10px] font-bold tracking-[0.04em]"
               style={{
                 color: account.textColor,
                 background: account.bgColor,

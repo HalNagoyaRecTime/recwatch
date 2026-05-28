@@ -1,9 +1,13 @@
 import { useState } from "react";
 
+// import { AuthAlternativeLoginSection } from "~/features/auth/components/AuthAlternativeLoginSection";
 import { AuthErrorMessage } from "~/features/auth/components/AuthErrorMessage";
 import { AuthLayout } from "~/features/auth/components/AuthLayout";
 import { AuthPrimaryButton } from "~/features/auth/components/AuthPrimaryButton";
 import { MicrosoftLogo } from "~/features/auth/components/MicrosoftLogo";
+
+const backendUnavailableMessage =
+  "ログインサービスに接続できませんでした。時間をおいてもう一度お試しください。";
 
 export function AuthLoginPage({
   initialError,
@@ -21,7 +25,18 @@ export function AuthLoginPage({
     try {
       setErrorMessage("");
       setIsOAuthSubmitting(true);
-      window.location.href = `${import.meta.env.VITE_BACKEND_BASE_URL}/api/v1/auth/microsoft/login`;
+      const backendBaseUrl = import.meta.env.VITE_BACKEND_BASE_URL;
+      const healthRes = await fetch(backendBaseUrl, {
+        cache: "no-store",
+      }).catch(() => null);
+
+      if (!healthRes?.ok) {
+        setErrorMessage(backendUnavailableMessage);
+        setIsOAuthSubmitting(false);
+        return;
+      }
+
+      window.location.href = `${backendBaseUrl}/api/v1/auth/microsoft/login`;
     } catch (error) {
       setErrorMessage(
         error instanceof Error
@@ -49,6 +64,11 @@ export function AuthLoginPage({
             ? "ログイン中..."
             : "Microsoft アカウントでログイン"}
         </AuthPrimaryButton>
+        {/* 未実装機能・メールアドレスログイン */}
+        {/*<AuthAlternativeLoginSection*/}
+        {/*  isOAuthSubmitting={isOAuthSubmitting}*/}
+        {/*  onError={setErrorMessage}*/}
+        {/*/>*/}
       </div>
     </AuthLayout>
   );
