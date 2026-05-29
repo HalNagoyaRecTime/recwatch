@@ -1,6 +1,6 @@
 import { useLoaderData } from "react-router";
 
-import { env } from "~/config/env";
+import { buildBackendUrl } from "~/config/env";
 import { AdminScreenPage } from "~/features/admin-pages/components/AdminScreenPage";
 import { dashboardContent } from "~/features/admin-pages/model/dashboard-content";
 
@@ -9,7 +9,15 @@ export function meta() {
 }
 
 export async function loader() {
-  const res = await fetch(`${env.backendBaseUrl}/`);
+  const dashboardUrl = buildBackendUrl("/");
+  if (!dashboardUrl) {
+    return {
+      error:
+        "バックエンド URL が未設定のため、ダッシュボードの接続確認をスキップしました。",
+    };
+  }
+
+  const res = await fetch(dashboardUrl);
   return res.json();
 }
 

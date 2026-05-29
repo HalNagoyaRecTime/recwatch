@@ -12,6 +12,7 @@ import type { AccountBtnData } from "~/features/frame/main-header/account-menu/m
 
 type AccountMenuPanelProps = {
   account: AccountBtnData;
+  photoUrl?: string | null;
   onClose: () => void;
   onLogout?: () => void;
 };
@@ -23,6 +24,7 @@ const accountMenuItems = [
 
 export function AccountMenuPanel({
   account,
+  photoUrl,
   onClose,
   onLogout,
 }: AccountMenuPanelProps) {
@@ -38,13 +40,24 @@ export function AccountMenuPanel({
             className="flex aspect-square h-full shrink-0 items-center justify-center rounded-full border-2 p-0.5"
             style={{ borderColor: account.borderColor }}
           >
-            <div className="h-full w-full overflow-hidden rounded-full bg-amber-200">
+            {photoUrl ? (
               <img
-                className="aspect-square h-full object-cover"
-                src={account.imageUrl}
-                alt={account.name}
+                className="h-full w-full rounded-full object-cover"
+                src={photoUrl}
+                alt=""
               />
-            </div>
+            ) : (
+              <div
+                className="flex h-full w-full items-center justify-center rounded-full text-xs font-bold"
+                style={{
+                  color: account.textColor,
+                  background: account.bgColor,
+                }}
+                aria-hidden="true"
+              >
+                {account.abbr_label}
+              </div>
+            )}
           </div>
           {/* 右側名前とロール */}
           <div className="flex h-full flex-col justify-between pr-4">
@@ -52,7 +65,7 @@ export function AccountMenuPanel({
               {account.name}
             </span>
             <span
-              className="flex items-center justify-center rounded-full border px-0.5 py-px text-[10px] font-bold tracking-[0.04em]"
+              className="flex w-fit items-center justify-center rounded-full border px-2 py-px text-[10px] font-bold tracking-[0.04em]"
               style={{
                 color: account.textColor,
                 background: account.bgColor,
