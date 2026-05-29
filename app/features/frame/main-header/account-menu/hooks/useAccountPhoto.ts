@@ -1,72 +1,15 @@
 import { useEffect, useState } from "react";
 
 import type { AccountUser } from "~/features/frame/main-header/account-menu/model/account-btn-data";
-
-type CachedAccountPhoto = {
-  userId: string;
-  avatarUrl: string;
-  avatarUpdatedAt: string | null;
-  blob: Blob;
-  contentType: string;
-  updatedAt: number;
-};
-
-const DB_NAME = "recwatch-account-cache";
-const DB_VERSION = 1;
-const PHOTO_STORE = "accountPhotos";
-const PHOTO_CACHE_MS = 24 * 60 * 60 * 1000;
-
-function buildApiUrl(pathOrUrl: string) {
-  if (/^https?:\/\//i.test(pathOrUrl)) {
-    return pathOrUrl;
-  }
-
-  return new URL(pathOrUrl, import.meta.env.VITE_BACKEND_BASE_URL).toString();
-}
-
-function openPhotoDb(): Promise<IDBDatabase> {
-  return new Promise((resolve, reject) => {
-    const request = indexedDB.open(DB_NAME, DB_VERSION);
-
-    request.onupgradeneeded = () => {
-      const db = request.result;
-      if (!db.objectStoreNames.contains(PHOTO_STORE)) {
-        db.createObjectStore(PHOTO_STORE, { keyPath: "userId" });
-      }
-    };
-
-    request.onsuccess = () => resolve(request.result);
-    request.onerror = () => reject(request.error);
-  });
-}
-
-async function readCachedPhoto(
-  userId: string
-): Promise<CachedAccountPhoto | null> {
-  const db = await openPhotoDb();
-
-  return new Promise<CachedAccountPhoto | null>((resolve, reject) => {
-    const request = db
-      .transaction(PHOTO_STORE, "readonly")
-      .objectStore(PHOTO_STORE)
-      .get(userId);
-
-    request.onsuccess = () =>
-      resolve((request.result as CachedAccountPhoto | undefined) ?? null);
-    request.onerror = () => reject(request.error);
-  }).finally(() => db.close());
-}
-
-async function writeCachedPhoto(photo: CachedAccountPhoto): Promise<void> {
-  const db = await openPhotoDb();
-
-  return new Promise<void>((resolve, reject) => {
-    const transaction = db.transaction(PHOTO_STORE, "readwrite");
-    transaction.objectStore(PHOTO_STORE).put(photo);
-    transaction.oncomplete = () => resolve(undefined);
-    transaction.onerror = () => reject(transaction.error);
-  }).finally(() => db.close());
-}
+import {
+  buildAccountPhotoApiUrl,
+  hasAccountPhotoBeenRefreshedThisSession,
+  markAccountPhotoRefreshedThisSession,
+  PHOTO_CACHE_MS,
+  readCachedAccountPhoto,
+  writeCachedAccountPhoto,
+} from "~/features/frame/main-header/account-menu/lib/accountPhotoCache";
+import { WEB_CLIENT_HEADERS } from "~/features/auth/lib/logout";
 
 export function useAccountPhoto(user?: AccountUser | null) {
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
@@ -82,6 +25,11 @@ export function useAccountPhoto(user?: AccountUser | null) {
     const avatarUpdatedAt = user.avatar_updated_at ?? null;
     let cancelled = false;
     let activeObjectUrl: string | null = null;
+    void Promise.resolve().then(() => {
+      if (!cancelled) {
+        setPhotoUrl(null);
+      }
+    });
 
     function showBlob(blob: Blob) {
       const objectUrl = URL.createObjectURL(blob);
@@ -93,11 +41,14 @@ export function useAccountPhoto(user?: AccountUser | null) {
     }
 
     async function loadPhoto() {
-      const cached = await readCachedPhoto(userId).catch(() => null);
+      const cached = await readCachedAccountPhoto(userId).catch(() => null);
       const cacheMatches =
         cached?.avatarUrl === avatarUrl &&
         cached.avatarUpdatedAt === avatarUpdatedAt;
+      const refreshedThisSession =
+        hasAccountPhotoBeenRefreshedThisSession(userId);
       const shouldRefresh =
+        !refreshedThisSession ||
         !cacheMatches ||
         !cached ||
         Date.now() - cached.updatedAt > PHOTO_CACHE_MS;
@@ -112,9 +63,14 @@ export function useAccountPhoto(user?: AccountUser | null) {
         return;
       }
 
-      const res = await fetch(buildApiUrl(avatarUrl), {
+      const photoUrl = buildAccountPhotoApiUrl(avatarUrl);
+      if (!photoUrl) {
+        return;
+      }
+
+      const res = await fetch(photoUrl, {
         credentials: "include",
-        headers: { "X-Client-Type": "web" },
+        headers: WEB_CLIENT_HEADERS,
       }).catch(() => null);
 
       if (!res?.ok) {
@@ -134,9 +90,10 @@ export function useAccountPhoto(user?: AccountUser | null) {
         contentType:
           blob.type || res.headers.get("Content-Type") || "image/jpeg",
         updatedAt: Date.now(),
-      } satisfies CachedAccountPhoto;
+      };
 
-      await writeCachedPhoto(photo).catch(() => undefined);
+      await writeCachedAccountPhoto(photo).catch(() => undefined);
+      markAccountPhotoRefreshedThisSession(userId);
       if (!cancelled) {
         showBlob(blob);
       }
