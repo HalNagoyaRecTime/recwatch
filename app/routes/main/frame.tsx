@@ -1,5 +1,5 @@
 import { redirect, useLoaderData } from "react-router";
-import { env } from "~/config/env";
+import { buildBackendUrl } from "~/config/env";
 import { AppShell } from "~/features/frame/AppShell";
 import type { AccountUser } from "~/features/frame/main-header/account-menu/model/account-btn-data";
 
@@ -17,12 +17,34 @@ type FrameLoaderData =
       message: string;
     };
 
-function isAuthMeResponse(value: unknown): value is AuthMeResponse {
-  if (typeof value !== "object" || value === null) {
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
+}
+
+function isAccountUser(value: unknown): value is AccountUser {
+  if (!isRecord(value)) {
     return false;
   }
 
-  return "user" in value;
+  return (
+    typeof value.id === "string" &&
+    typeof value.email === "string" &&
+    typeof value.display_name === "string" &&
+    (value.avatar_url === undefined ||
+      value.avatar_url === null ||
+      typeof value.avatar_url === "string") &&
+    (value.avatar_updated_at === undefined ||
+      value.avatar_updated_at === null ||
+      typeof value.avatar_updated_at === "string")
+  );
+}
+
+function isAuthMeResponse(value: unknown): value is AuthMeResponse {
+  if (!isRecord(value)) {
+    return false;
+  }
+
+  return isAccountUser(value.user);
 }
 
 function getAuthErrorMessage(status: number) {
@@ -34,7 +56,16 @@ function getAuthErrorMessage(status: number) {
 }
 
 export async function clientLoader(): Promise<FrameLoaderData> {
-  const res = await fetch(`${env.backendBaseUrl}/api/v1/auth/me`, {
+  const authMeUrl = buildBackendUrl("/api/v1/auth/me");
+  if (!authMeUrl) {
+    return {
+      status: "backend_error",
+      message:
+        "バックエンド URL が未設定です。環境変数を確認してから、もう一度お試しください。",
+    };
+  }
+
+  const res = await fetch(authMeUrl, {
     credentials: "include",
     headers: { "X-Client-Type": "web" },
   }).catch(() => null);

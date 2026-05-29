@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { buildBackendUrl, hasBackendBaseUrl } from "~/config/env";
 
 // import { AuthAlternativeLoginSection } from "~/features/auth/components/AuthAlternativeLoginSection";
 import { AuthErrorMessage } from "~/features/auth/components/AuthErrorMessage";
@@ -25,8 +26,21 @@ export function AuthLoginPage({
     try {
       setErrorMessage("");
       setIsOAuthSubmitting(true);
-      const backendBaseUrl = import.meta.env.VITE_BACKEND_BASE_URL;
-      const healthRes = await fetch(backendBaseUrl, {
+      if (!hasBackendBaseUrl()) {
+        setErrorMessage(backendUnavailableMessage);
+        setIsOAuthSubmitting(false);
+        return;
+      }
+
+      const healthUrl = buildBackendUrl("/");
+      const loginUrl = buildBackendUrl("/api/v1/auth/microsoft/login");
+      if (!healthUrl || !loginUrl) {
+        setErrorMessage(backendUnavailableMessage);
+        setIsOAuthSubmitting(false);
+        return;
+      }
+
+      const healthRes = await fetch(healthUrl, {
         cache: "no-store",
       }).catch(() => null);
 
@@ -36,7 +50,7 @@ export function AuthLoginPage({
         return;
       }
 
-      window.location.href = `${backendBaseUrl}/api/v1/auth/microsoft/login`;
+      window.location.href = loginUrl;
     } catch (error) {
       setErrorMessage(
         error instanceof Error

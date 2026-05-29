@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router";
 
+import { logout } from "~/features/auth/lib/logout";
 import { SearchBtn } from "~/features/frame/main-header/search/components/SearchBtn";
 import { NoticeBtn } from "~/features/frame/main-header/components/NoticeBtn";
 import { AccountBtn } from "~/features/frame/main-header/account-menu/components/AccountBtn";
@@ -16,14 +17,7 @@ export function MainHeader({ user }: MainHeaderProps) {
 
   async function handleLogout() {
     try {
-      await fetch(
-        `${import.meta.env.VITE_BACKEND_BASE_URL}/api/v1/auth/logout`,
-        {
-          method: "POST",
-          credentials: "include",
-          headers: { "X-Client-Type": "web" },
-        }
-      );
+      await logout();
     } finally {
       navigate("/login", { replace: true });
     }
