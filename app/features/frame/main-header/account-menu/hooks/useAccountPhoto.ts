@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 
+import { buildBackendUrl } from "~/config/env";
+import { WEB_CLIENT_HEADERS } from "~/features/auth/lib/logout";
 import type { AccountUser } from "~/features/frame/main-header/account-menu/model/account-btn-data";
 import {
   buildAccountPhotoApiUrl,
@@ -9,7 +11,18 @@ import {
   readCachedAccountPhoto,
   writeCachedAccountPhoto,
 } from "~/features/frame/main-header/account-menu/lib/accountPhotoCache";
-import { WEB_CLIENT_HEADERS } from "~/features/auth/lib/logout";
+
+function isBackendOrigin(url: string) {
+  const backendUrl = buildBackendUrl("/");
+  if (!backendUrl || typeof window === "undefined") {
+    return false;
+  }
+
+  return (
+    new URL(url, window.location.href).origin ===
+    new URL(backendUrl, window.location.href).origin
+  );
+}
 
 export function useAccountPhoto(user?: AccountUser | null) {
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
@@ -68,10 +81,14 @@ export function useAccountPhoto(user?: AccountUser | null) {
         return;
       }
 
-      const res = await fetch(photoUrl, {
-        credentials: "include",
-        headers: WEB_CLIENT_HEADERS,
-      }).catch(() => null);
+      const init: RequestInit = isBackendOrigin(photoUrl)
+        ? {
+            credentials: "include",
+            headers: WEB_CLIENT_HEADERS,
+          }
+        : {};
+
+      const res = await fetch(photoUrl, init).catch(() => null);
 
       if (!res?.ok) {
         return;
