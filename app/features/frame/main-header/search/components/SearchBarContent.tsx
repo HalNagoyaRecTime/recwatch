@@ -28,7 +28,7 @@ export function SearchBarContent({
   const { handleActivate } = useSearchBarActivation({ inputRef, onOpen });
 
   return (
-    <button
+    <div
       onClick={handleActivate}
       className={cn(
         "flex h-full max-h-12 w-full min-w-0 shrink-0",
@@ -91,6 +91,6 @@ export function SearchBarContent({
           </span>
         </div>
       </div>
-    </button>
+    </div>
   );
 }
