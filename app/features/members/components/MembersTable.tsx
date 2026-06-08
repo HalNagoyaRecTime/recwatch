@@ -17,7 +17,10 @@ export function MembersTable({ students }: { students: Student[] }) {
         >
           <tr>
             <th className="px-4 py-3">ID</th>
-            <th className="px-4 py-3">DISPLAY_NAME</th>
+            <th className="px-4 py-3">表示名</th>
+            <th className="px-4 py-3">学籍番号</th>
+            <th className="px-4 py-3">出席番号</th>
+            <th className="px-4 py-3">学籍番号（数字）</th>
             <th className="px-4 py-3">UID</th>
           </tr>
         </thead>
@@ -34,8 +37,11 @@ export function MembersTable({ students }: { students: Student[] }) {
                 ((e.currentTarget as HTMLElement).style.background = "")
               }
             >
-              <td className="px-4 py-3">{s.display_name}</td>
               <td className="px-4 py-3">{s.id}</td>
+              <td className="px-4 py-3">{s.display_name}</td>
+              <td className="px-4 py-3">{s.student_id}</td>
+              <td className="px-4 py-3">{s.attendance_number}</td>
+              <td className="px-4 py-3">{s.student_id_number}</td>
               <td className="px-4 py-3">{s.uid}</td>
             </tr>
           ))}
