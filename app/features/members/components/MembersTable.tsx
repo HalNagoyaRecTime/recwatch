@@ -29,13 +29,7 @@ export function MembersTable({ students }: { students: Student[] }) {
             <tr
               key={s.id}
               style={{ borderTop: "1px solid var(--border-1)" }}
-              onMouseEnter={(e) =>
-                ((e.currentTarget as HTMLElement).style.background =
-                  "var(--surface-2)")
-              }
-              onMouseLeave={(e) =>
-                ((e.currentTarget as HTMLElement).style.background = "")
-              }
+              className="hover:bg-[var(--surface-2)]"
             >
               <td className="px-4 py-3">{s.id}</td>
               <td className="px-4 py-3">{s.display_name}</td>
