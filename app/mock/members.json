@@ -1,0 +1,30 @@
+[
+  {
+    "id": "1",
+    "displayName": "Taro Yamada",
+    "attendanceNumber": "01",
+    "studentIdNumber": "24001",
+    "uid": "0000-0000-0000"
+  },
+  {
+    "id": "2",
+    "displayName": "Jiro Yamada",
+    "attendanceNumber": "02",
+    "studentIdNumber": "24002",
+    "uid": "0000-0000-0001"
+  },
+  {
+    "id": "3",
+    "displayName": "Saburo Yamada",
+    "attendanceNumber": "03",
+    "studentIdNumber": "24003",
+    "uid": "0000-0000-0002"
+  },
+  {
+    "id": "4",
+    "displayName": "Shiro Yamada",
+    "attendanceNumber": "04",
+    "studentIdNumber": "24004",
+    "uid": "0000-0000-0003"
+  }
+]
