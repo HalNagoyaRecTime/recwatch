@@ -21,10 +21,10 @@ export function MembersTable({ students }: { students: Student[] }) {
               className="border-t border-t-[var(--border-1)] hover:bg-[var(--surface-2)]"
             >
               <td className="px-4 py-3">{s.id}</td>
-              <td className="px-4 py-3">{s.display_name}</td>
-              <td className="px-4 py-3">{s.student_id}</td>
-              <td className="px-4 py-3">{s.attendance_number}</td>
-              <td className="px-4 py-3">{s.student_id_number}</td>
+              <td className="px-4 py-3">{s.displayName}</td>
+              <td className="px-4 py-3">{s.studentId}</td>
+              <td className="px-4 py-3">{s.attendanceNumber}</td>
+              <td className="px-4 py-3">{s.studentIdNumber}</td>
               <td className="px-4 py-3">{s.uid}</td>
             </tr>
           ))}

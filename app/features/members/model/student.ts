@@ -1,8 +1,8 @@
 export type Student = {
   id: string;
-  display_name: string;
-  student_id: string;
-  attendance_number: string;
-  student_id_number: string;
+  displayName: string;
+  studentId: string;
+  attendanceNumber: string;
+  studentIdNumber: string;
   uid: string;
 };
