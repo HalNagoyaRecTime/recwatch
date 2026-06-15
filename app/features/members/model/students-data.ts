@@ -8,7 +8,7 @@ const USE_MOCK = false;
 type StudentMock = {
   id: string;
   displayName: string;
-  attendanceNumber: string;
+  attendanceNumber: number;
   studentIdNumber: string;
   uid: string;
 };
