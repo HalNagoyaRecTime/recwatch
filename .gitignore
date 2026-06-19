@@ -8,3 +8,5 @@
 /.react-router/
 /build/
 
+# IDE
+.idea/
