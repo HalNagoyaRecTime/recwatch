@@ -7,6 +7,3 @@
 # React Router
 /.react-router/
 /build/
-
-# IDE
-.idea/

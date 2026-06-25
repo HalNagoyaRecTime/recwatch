@@ -6,7 +6,7 @@ export function NoticeBtn() {
     <button
       type="button"
       className={cn(
-        "app-rounded relative inline-flex aspect-square h-full cursor-pointer items-center justify-center border shadow-(--shadow-soft) transition",
+        "app-rounded transition　shadow-(--shadow-soft) relative inline-flex aspect-square h-full cursor-pointer items-center justify-center border",
         "border-(--border-2) bg-transparent text-(--text-2)",
         "hover:border-(--border-strong) hover:bg-(--surface-2) hover:text-(--text-1)"
       )}

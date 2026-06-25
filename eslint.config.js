@@ -5,23 +5,6 @@ import reactRefresh from "eslint-plugin-react-refresh";
 import globals from "globals";
 import tseslint from "typescript-eslint";
 
-const routeModuleExportNames = [
-  "action",
-  "clientAction",
-  "clientLoader",
-  "clientMiddleware",
-  "ErrorBoundary",
-  "handle",
-  "headers",
-  "HydrateFallback",
-  "Layout",
-  "links",
-  "loader",
-  "meta",
-  "middleware",
-  "shouldRevalidate",
-];
-
 export default tseslint.config(
   {
     ignores: [
@@ -50,22 +33,18 @@ export default tseslint.config(
     rules: {
       ...reactHooks.configs.recommended.rules,
       "react-refresh/only-export-components": [
-        "error",
+        "warn",
         {
           allowConstantExport: true,
-        },
-      ],
-    },
-  },
-  {
-    files: ["app/root.tsx", "app/routes/**/*.{ts,tsx}"],
-    rules: {
-      // Route Modules intentionally export framework APIs alongside components.
-      "react-refresh/only-export-components": [
-        "error",
-        {
-          allowConstantExport: true,
-          allowExportNames: routeModuleExportNames,
+          allowExportNames: [
+            "meta",
+            "links",
+            "headers",
+            "loader",
+            "action",
+            "ErrorBoundary",
+            "Layout",
+          ],
         },
       ],
     },
