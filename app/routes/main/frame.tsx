@@ -1,5 +1,7 @@
 import { redirect, useLoaderData } from "react-router";
+import { Link } from "react-router";
 import { buildBackendUrl } from "~/config/env";
+import { WEB_CLIENT_HEADERS } from "~/features/auth/lib/logout";
 import { AppShell } from "~/features/frame/AppShell";
 import type { AccountUser } from "~/features/frame/main-header/account-menu/model/account-btn-data";
 
@@ -67,7 +69,7 @@ export async function clientLoader(): Promise<FrameLoaderData> {
 
   const res = await fetch(authMeUrl, {
     credentials: "include",
-    headers: { "X-Client-Type": "web" },
+    headers: WEB_CLIENT_HEADERS,
   }).catch(() => null);
 
   if (!res) {
@@ -78,8 +80,8 @@ export async function clientLoader(): Promise<FrameLoaderData> {
     };
   }
 
-  if (res.status === 401) {
-    throw redirect("/login");
+  if (res.status === 401 || res.status === 403) {
+    throw redirect("/login?error=auth_failed");
   }
 
   if (!res.ok) {
@@ -128,6 +130,12 @@ function BackendErrorScreen({ message }: { message: string }) {
           バックエンドに接続できません
         </h1>
         <p className="mt-3 text-sm leading-7 text-(--text-2)">{message}</p>
+        <Link
+          to="/login"
+          className="mt-5 inline-block text-sm font-medium text-(--brand-1) hover:underline"
+        >
+          ログインページへ戻る
+        </Link>
       </section>
     </main>
   );
