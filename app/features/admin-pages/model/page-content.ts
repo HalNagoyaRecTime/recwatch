@@ -110,6 +110,21 @@ export const pageContent = {
       },
     ],
   },
+  homeroom: {
+    eyebrow: "Homeroom",
+    title: "Homeroom Management",
+    description: "Management page for homerooms.",
+    sections: [
+      {
+        title: "homeroom table",
+        description: "This area will hold the table, search, and filters.",
+      },
+      {
+        title: "homeroom Detail",
+        description: "This area will show details for the selected homeroom.",
+      },
+    ],
+  },
   timing: {
     eyebrow: "Timing",
     title: "Timing Control",
