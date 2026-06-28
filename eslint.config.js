@@ -39,9 +39,8 @@ export default tseslint.config(
           allowExportNames: [
             "meta",
             "links",
-            "headers",
-            "loader",
-            "action",
+            "clientLoader",
+            "clientAction",
             "ErrorBoundary",
             "Layout",
           ],
