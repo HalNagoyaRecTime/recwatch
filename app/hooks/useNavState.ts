@@ -32,7 +32,7 @@ export const useNavState = create<NavState>()(
         })),
     }),
     {
-      name: "rectime-nav-state",
+      name: "recwatch-nav-state",
       storage: createJSONStorage(() => localStorage),
     }
   )
