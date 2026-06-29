@@ -12,6 +12,8 @@ export default function HomeroomRoute() {
   return <HomeRoomPage homerooms={Homeroom} />;
 }
 
+// ダミーデータ
+
 const Homeroom: Homeroom[] = [
   {
     HomeRoomId: 1,
