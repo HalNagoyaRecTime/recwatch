@@ -104,7 +104,7 @@ export const navSections = [
       },
       {
         id: "homeroom",
-        label: "クラス",
+        label: "Homerooms",
         icon: "homeroom",
         to: "/homeroom",
         roles: ["admin", "manager"],
