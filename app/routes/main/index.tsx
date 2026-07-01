@@ -1,6 +1,6 @@
 import { redirect } from "react-router";
 
-export function clientLoader() {
+export function loader() {
   return redirect("/dashboard");
 }
 

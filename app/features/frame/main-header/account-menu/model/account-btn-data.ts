@@ -21,6 +21,10 @@ function isProbablyMojibake(value: string) {
   return /[\u0080-\u009f\u00c0-\u00ff]|縺|繧|螟|驛|�/.test(value);
 }
 
+function isDefinitelyMojibake(value: string) {
+  return /縺|繧|螟|驛|�/.test(value);
+}
+
 function repairMojibake(value: string) {
   if (!isProbablyMojibake(value)) {
     return value;
@@ -43,7 +47,7 @@ function getDisplayName(user?: AccountUser | null) {
   const rawName = user?.display_name?.trim();
   const repairedName = rawName ? repairMojibake(rawName).trim() : "";
 
-  if (repairedName && !isProbablyMojibake(repairedName)) {
+  if (repairedName && !isDefinitelyMojibake(repairedName)) {
     return repairedName;
   }
 
