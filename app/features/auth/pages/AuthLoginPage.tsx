@@ -5,10 +5,21 @@ import { AuthErrorMessage } from "~/features/auth/components/AuthErrorMessage";
 import { AuthLayout } from "~/features/auth/components/AuthLayout";
 import { AuthPrimaryButton } from "~/features/auth/components/AuthPrimaryButton";
 
-export function AuthLoginPage() {
+const initialErrorMessages: Record<string, string> = {
+  logout_failed:
+    "ログアウトに失敗しました。お手数ですが、もう一度ログアウトをお試しください。",
+};
+
+export function AuthLoginPage({
+  initialError,
+}: {
+  initialError?: string | null;
+} = {}) {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
-  const [errorMessage, setErrorMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState(
+    initialError ? (initialErrorMessages[initialError] ?? "") : ""
+  );
   const [isEmailInputOpen, setIsEmailInputOpen] = useState(false);
   const [isOAuthSubmitting, setIsOAuthSubmitting] = useState(false);
   const [isEmailSubmitting, setIsEmailSubmitting] = useState(false);

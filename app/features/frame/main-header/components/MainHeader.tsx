@@ -16,12 +16,19 @@ export function MainHeader({ user }: MainHeaderProps) {
   const navigate = useNavigate();
 
   async function handleLogout() {
-    const msLogoutUrl = await logout().catch(() => null);
-    if (msLogoutUrl) {
-      window.location.href = msLogoutUrl;
-    } else {
-      navigate("/login", { replace: true });
+    const result = await logout().catch(() => ({ status: "error" }) as const);
+
+    if (result.status === "error") {
+      navigate("/login?error=logout_failed", { replace: true });
+      return;
     }
+
+    if (result.msLogoutUrl) {
+      window.location.href = result.msLogoutUrl;
+      return;
+    }
+
+    navigate("/login", { replace: true });
   }
 
   return (
