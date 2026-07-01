@@ -6,13 +6,17 @@ import {
 
 const WEB_CLIENT_HEADERS = { "X-Client-Type": "web" };
 
-export async function logout(): Promise<string | null> {
+export type LogoutResult =
+  | { status: "ok"; msLogoutUrl: string | null }
+  | { status: "error" };
+
+export async function logout(): Promise<LogoutResult> {
   clearAccountPhotoRefreshMarkers();
   await clearCachedAccountPhotos().catch(() => undefined);
 
   const logoutUrl = buildBackendUrl("/api/v1/auth/logout");
   if (!logoutUrl) {
-    return null;
+    return { status: "error" };
   }
 
   const res = await fetch(logoutUrl, {
@@ -22,13 +26,13 @@ export async function logout(): Promise<string | null> {
   }).catch(() => null);
 
   if (!res?.ok) {
-    return null;
+    return { status: "error" };
   }
 
   const body = (await res.json().catch(() => null)) as {
     ms_logout_url?: string;
   } | null;
-  return body?.ms_logout_url ?? null;
+  return { status: "ok", msLogoutUrl: body?.ms_logout_url ?? null };
 }
 
 export { WEB_CLIENT_HEADERS };
