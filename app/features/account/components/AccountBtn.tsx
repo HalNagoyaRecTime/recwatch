@@ -1,6 +1,6 @@
-import { AccountMenuBtn } from "~/features/frame/main-header/account-menu/components/AccountMenuBtn";
-import { AccountMenuPanel } from "~/features/frame/main-header/account-menu/components/AccountMenuPanel";
-import { getAccountBtnData } from "~/features/frame/main-header/account-menu/model/account-btn-data";
+import { AccountMenuBtn } from "~/features/account/components/AccountMenuBtn";
+import { AccountMenuPanel } from "~/features/account/components/AccountMenuPanel";
+import { getAccountBtnData } from "~/features/account/model/account-btn-data";
 import { useState } from "react";
 import { Popover } from "~/components/shared/Popover";
 

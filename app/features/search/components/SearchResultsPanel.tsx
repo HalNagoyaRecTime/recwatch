@@ -1,5 +1,5 @@
-import type { SearchResultItem } from "~/features/frame/main-header/search/constants/mockSearchResults";
-import { useSearchResultScroll } from "~/features/frame/main-header/search/hooks/useSearchResultScroll";
+import type { SearchResultItem } from "~/features/search/constants/mockSearchResults";
+import { useSearchResultScroll } from "~/features/search/hooks/useSearchResultScroll";
 import { cn } from "~/lib/cn";
 
 type SearchResultsPanelProps = {

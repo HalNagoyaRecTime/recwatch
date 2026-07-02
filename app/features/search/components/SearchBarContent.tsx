@@ -1,7 +1,7 @@
 import { SearchIcon } from "lucide-react";
 
-import { useSearchBarActivation } from "~/features/frame/main-header/search/hooks/useSearchBarActivation";
-import { useSearchShortcutWidths } from "~/features/frame/main-header/search/hooks/useSearchShortcutWidths";
+import { useSearchBarActivation } from "~/features/search/hooks/useSearchBarActivation";
+import { useSearchShortcutWidths } from "~/features/search/hooks/useSearchShortcutWidths";
 import { cn } from "~/lib/cn";
 
 type SearchBarContentProps = {

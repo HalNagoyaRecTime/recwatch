@@ -2,7 +2,7 @@ import { ChevronDownIcon } from "lucide-react";
 
 import { cn } from "~/lib/cn";
 
-import type { AccountBtnData } from "~/features/frame/main-header/account-menu/model/account-btn-data";
+import type { AccountBtnData } from "~/features/account/model/account-btn-data";
 
 type AccountMenuBtnProps = {
   account: AccountBtnData;

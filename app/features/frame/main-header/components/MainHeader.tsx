@@ -1,8 +1,8 @@
 import { useNavigate } from "react-router";
 
-import { SearchBtn } from "~/features/frame/main-header/search/components/SearchBtn";
+import { SearchBtn } from "~/features/search/components/SearchBtn";
 import { NoticeBtn } from "~/features/frame/main-header/components/NoticeBtn";
-import { AccountBtn } from "~/features/frame/main-header/account-menu/components/AccountBtn";
+import { AccountBtn } from "~/features/account/components/AccountBtn";
 import { EventSwitcherBtn } from "~/features/frame/main-header/event-switcher/components/EventSwitcherBtn";
 import { MobileHamburgerMenuBtn } from "~/features/frame/main-header/components/MobileHamburgerMenuBtn";
 

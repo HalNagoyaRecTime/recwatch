@@ -7,9 +7,9 @@ import {
 } from "lucide-react";
 
 import { useThemeMode } from "~/hooks/useThemeMode";
-import type { AccountBtnData } from "~/features/frame/main-header/account-menu/model/account-btn-data";
+import type { AccountBtnData } from "~/features/account/model/account-btn-data";
 import { Menu, type MenuItemType } from "~/components/ui/Menu";
-import { AccountProfileHeader } from "~/features/frame/main-header/account-menu/components/AccountProfileHeader";
+import { AccountProfileHeader } from "~/features/account/components/AccountProfileHeader";
 
 type AccountMenuPanelProps = {
   account: AccountBtnData;

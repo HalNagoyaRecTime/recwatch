@@ -1,4 +1,4 @@
-import type { AccountBtnData } from "~/features/frame/main-header/account-menu/model/account-btn-data";
+import type { AccountBtnData } from "~/features/account/model/account-btn-data";
 
 type AccountProfileHeaderProps = {
   account: AccountBtnData;

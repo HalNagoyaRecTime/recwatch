@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { useSearchBodyScrollLock } from "~/features/frame/main-header/search/hooks/useSearchBodyScrollLock";
-import { useSearchFrame } from "~/features/frame/main-header/search/hooks/useSearchFrame";
-import { useSearchGlobalShortcut } from "~/features/frame/main-header/search/hooks/useSearchGlobalShortcut";
+import { useSearchBodyScrollLock } from "~/features/search/hooks/useSearchBodyScrollLock";
+import { useSearchFrame } from "~/features/search/hooks/useSearchFrame";
+import { useSearchGlobalShortcut } from "~/features/search/hooks/useSearchGlobalShortcut";
 
 const SEARCH_OPEN_FOCUS_DELAY_MS = 220;
 

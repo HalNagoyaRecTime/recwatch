@@ -1,17 +1,17 @@
 import { createPortal } from "react-dom";
 import { useCallback, useRef, useSyncExternalStore } from "react";
 
-import { SearchAnchor } from "~/features/frame/main-header/search/components/SearchAnchor";
-import { SearchBackdrop } from "~/features/frame/main-header/search/components/SearchBackdrop";
-import { SearchBarContent } from "~/features/frame/main-header/search/components/SearchBarContent";
-import { SearchExpandedBody } from "~/features/frame/main-header/search/components/SearchExpandedBody";
-import { SearchPositionContainer } from "~/features/frame/main-header/search/components/SearchPositionContainer";
-import { SearchResultsPanel } from "~/features/frame/main-header/search/components/SearchResultsPanel";
-import { SearchShell } from "~/features/frame/main-header/search/components/SearchShell";
-import { useSearchTransition } from "~/features/frame/main-header/search/hooks/useSearchTransition";
-import { SearchFooter } from "~/features/frame/main-header/search/components/SearchFooter";
-import { MOCK_SEARCH_RESULTS } from "~/features/frame/main-header/search/constants/mockSearchResults";
-import { useSearchResultNavigation } from "~/features/frame/main-header/search/hooks/useSearchResultNavigation";
+import { SearchAnchor } from "~/features/search/components/SearchAnchor";
+import { SearchBackdrop } from "~/features/search/components/SearchBackdrop";
+import { SearchBarContent } from "~/features/search/components/SearchBarContent";
+import { SearchExpandedBody } from "~/features/search/components/SearchExpandedBody";
+import { SearchPositionContainer } from "~/features/search/components/SearchPositionContainer";
+import { SearchResultsPanel } from "~/features/search/components/SearchResultsPanel";
+import { SearchShell } from "~/features/search/components/SearchShell";
+import { useSearchTransition } from "~/features/search/hooks/useSearchTransition";
+import { SearchFooter } from "~/features/search/components/SearchFooter";
+import { MOCK_SEARCH_RESULTS } from "~/features/search/constants/mockSearchResults";
+import { useSearchResultNavigation } from "~/features/search/hooks/useSearchResultNavigation";
 
 export function SearchBtn() {
   const { anchorRef, close, frame, inputRef, isOpen, open, query, setQuery } =
