@@ -1,4 +1,4 @@
-# React Router v7 Policy (Full Stack)
+# Framework Policy (React Router v7)
 
 ## 1. Scope
 
