@@ -1,310 +1,310 @@
 # Framework Policy (React Router v7)
 
-## 1. Scope
+## 1. 適用範囲 (Scope)
 
-- This document defines implementation rules for React Router v7 (Full Stack) projects.
-- Full Stack configuration means loader and action functions run on the server.
-- It derives from the architectural principles defined in AGENTS.md.
-- It does not redefine abstract architectural theory.
-- Client-only (SPA) configuration is out of scope.
+- 本ドキュメントは、React Router v7（フルスタック）プロジェクトの実装ルールを定義する。
+- フルスタック構成とは、`loader` および `action` 関数がサーバー上で実行される構成を指す。
+- 本ルールは `AGENTS.md` で定義されたアーキテクチャの原則から派生したものである。
+- 抽象的なアーキテクチャ理論を再定義するものではない。
+- クライアントオンリー（SPA）構成は適用範囲外とする。
 
 ---
 
-## 2. Architectural Layer Mapping
+## 2. アーキテクチャのレイヤーマッピング
 
-The application is organized into logical layers:
+アプリケーションは以下の論理レイヤーに編成される：
 
-- Presentation: React components and route UI
-- Application: hooks and use cases (state orchestration and procedural flow)
-- Domain: normalized types and pure business logic
-- Infrastructure: external I/O (API, DB, storage, providers)
+- Presentation（プレゼンテーション）: ReactコンポーネントおよびルートのUI
+- Application（アプリケーション）: フックおよびユースケース（状態の調整や手続き的なフロー）
+- Domain（ドメイン）: 正規化された型と純粋なビジネスロジック
+- Infrastructure（インフラストラクチャ）: 外部I/O（API、DB、ストレージ、プロバイダー）
 
-Dependency direction must always move inward.
+依存関係の方向は、常に「外側から内側」に向かわなければならない。
 
 - Presentation → Application / Domain
 - Application → Domain / Infrastructure
 - Infrastructure → Domain
-- Domain → must not depend on outer layers
+- Domain → 外側のレイヤーに依存してはならない
 
-Route modules act as HTTP boundary adapters and must not contain business logic.
+Route（ルート）モジュールはHTTP境界のアダプターとして機能し、ビジネスロジックを含んではならない。
 
-Domain defines business invariants and pure rules.
-Use cases orchestrate domain rules and infrastructure interactions.
+Domain はビジネスの不変条件（ビジネスルール）や純粋なルールを定義する。
+Use cases（ユースケース）は、ドメインルールとインフラストラクチャとのやり取りを調整（オーケストレーション）する。
 
 ---
 
-## 3. Directory Structure & File Layout
+## 3. ディレクトリ構造とファイルの配置
 
-### Suggested Directory Layout
+### 推奨されるディレクトリ構造
 
-This is a suggestion, not a hard requirement. The rules matter more than names.
+これはあくまで提案であり、絶対的な要件ではない。ディレクトリ名よりもルール自体が重要である。
 
 ```
 app/
-  routes/           # route modules (HTTP boundary)
-  components/       # shared presentational components
-    shared/         # cross-feature reusable UI
-    <area>/         # feature-scoped reusable UI
-      pages/        # route-level page components (composed by route, not reused)
-      parts/        # page-local presentational components
-  hooks/            # client-side application logic
-  usecases/         # server-side application logic (optional, promoted when needed)
-  domain/           # domain types and pure business logic
-  service/          # external I/O abstraction and normalization
-  lib/              # technical utilities only (no business logic)
-  context/          # cross-cutting UI/session state
+  routes/           # ルートモジュール（HTTP境界）
+  components/       # 共有のプレゼンテーションコンポーネント
+    shared/         # 機能をまたいで再利用可能なUI
+    <area>/         # 機能単位でスコープされた再利用可能なUI
+      pages/        # ルートレベルのページコンポーネント（ルートで構成され、再利用はしない）
+      parts/        # ページに特化したプレゼンテーションコンポーネント
+  hooks/            # クライアント側のアプリケーションロジック
+  usecases/         # サーバー側のアプリケーションロジック（オプション。必要に応じて作成）
+  domain/           # ドメイン型と純粋なビジネスロジック
+  service/          # 外部I/Oの抽象化と正規化
+  lib/              # 技術的なユーティリティのみ（ビジネスロジックは不可）
+  context/          # 横断的なUI/セッション状態
 server/
-  db/               # server-only DB clients
-  repositories/     # server-only persistence logic
+  db/               # サーバー専用のDBクライアント
+  repositories/     # サーバー専用の永続化ロジック
 ```
 
-### File Responsibility Principle
+### File Responsibility Principle（ファイルの単一責任原則）
 
-Each file must represent a single cohesive responsibility.
+各ファイルは単一の凝集した責任を持たなければならない。
 
-- One route file must correspond to one route responsibility.
-- One hook file must correspond to one use case or state concern.
-- One service file must correspond to one external resource or action.
-- Helper functions are allowed if they support the same responsibility.
-- Avoid grouping multiple unrelated actions into a single file.
-- Increasing file count is acceptable if it preserves structural clarity.
-- If a file name requires "and" to describe its purpose, split it.
+- 1つのルートファイルは、1つのルート責任に対応しなければならない。
+- 1つのフックファイルは、1つのユースケースまたは状態の関心事に対応しなければならない。
+- 1つのサービスファイルは、1つの外部リソースまたはアクションに対応しなければならない。
+- ヘルパー関数は、同じ責任をサポートする場合にのみ許可される。
+- 複数の無関係なアクションを1つのファイルにグループ化することは避ける。
+- 構造的な明確さが保たれるのであれば、ファイル数が増えることは許容される。
+- ファイルの目的を説明するのに「〜と（and）」が必要な場合は、そのファイルを分割すること。
 
-### Server-Only Rule
+### サーバー専用ルール (Server-Only Rule)
 
-Code under `server/` must never be imported into client-side code.
+`server/` 配下のコードは、絶対にクライアント側のコードにインポートしてはならない。
 
-Secrets, environment variables, DB clients, and Node-only APIs must exist under `server/`.
+シークレット、環境変数、DBクライアント、およびNode専用のAPIは `server/` 配下に配置しなければならない。
 
-Route modules and services may import from `server/`.
+ルートモジュールおよびサービスは `server/` からインポートすることができる。
 
-Components and hooks must not import from `server/`.
+コンポーネントおよびフックは `server/` からインポートしてはならない。
 
 ---
 
-## 4. Route Responsibilities (loader / action)
+## 4. ルートの責任 (loader / action)
 
-Routes are HTTP boundary adapters.
+ルートはHTTP境界のアダプターである。
 
-Each route file corresponds to one route responsibility.
+各ルートファイルは、1つのルート責任に対応する。
 
-### Route File Structure
+### ルートファイルの構造
 
-Route files may export:
+ルートファイルは以下をエクスポートすることができる：
 
 - `loader`
 - `action`
 - `ErrorBoundary`
-- default component
+- デフォルトコンポーネント（default export）
 
-Route files must:
+ルートファイルが「しなければならない」こと：
 
-- Parse and validate route params and form data
-- Perform authentication and authorization checks
-- Call service or use case functions
-- Return normalized Domain types
-- Redirect when necessary
+- ルートパラメータおよびフォームデータのパースとバリデーション
+- 認証および認可のチェック
+- サービスまたはユースケース関数の呼び出し
+- 正規化されたドメイン型の返却
+- 必要な場合のリダイレクト処理
 
-Route files must not:
+ルートファイルが「してはならない」こと：
 
-- Contain business logic
-- Access DB directly
-- Return raw infrastructure types
-- Contain UI implementation details beyond simple composition
+- ビジネスロジックを含めること
+- DBに直接アクセスすること
+- 生のインフラストラクチャ型をそのまま返すこと
+- 単純な構成（コンポジション）を超えるUIの実装詳細を含めること
 
-Data normalization and parameter validation are allowed in route files.
-Domain rule evaluation is not allowed.
+データの正規化およびパラメータのバリデーションはルートファイル内で許可される。
+ドメインルールの評価（判定）は許可されない。
 
-Routes must remain thin.
+ルートは常に薄く（thin）保たなければならない。
 
 ---
 
-## 5. UI Placement Rules
+## 5. UIの配置ルール
 
-UI components must be placed according to reuse scope.
+UIコンポーネントは、再利用のスコープに応じて配置しなければならない。
 
-### Placement Rules
+### 配置ルール
 
-Page-specific UI components
+ページ固有のUIコンポーネント
 → `components/<area>/parts/`
 
-Route-level page components (composed by route, returned as default export)
+ルートレベルのページコンポーネント（ルートで組み立てられ、デフォルトエクスポートとして返されるもの）
 → `components/<area>/pages/`
 
-Feature-scoped reusable components
+機能単位でスコープされた再利用可能なコンポーネント
 → `components/<area>/`
 
-Cross-feature reusable components
+機能をまたいで再利用可能なコンポーネント
 → `components/shared/`
 
-UI configuration data (e.g., navigation structures, UI-only constants) must be placed near the route or feature that owns them.
+UI設定データ（例：ナビゲーション構造、UI専用の定数）は、それを所有するルートまたは機能の近くに配置しなければならない。
 
-Global dumping of UI constants is prohibited.
-
----
-
-## 6. Application Logic Placement Rules
-
-Application logic is divided into client-side and server-side.
-
-### Client-Side Logic
-
-Placed under `hooks/`.
-
-Hooks may:
-
-- Manage UI state
-- Orchestrate user interaction
-- Call service functions
-- Consume loader data
-
-Hooks must not:
-
-- Import raw DTO or infrastructure types
-- Access DB or server-only modules
-- Contain domain rules
-
-### Server-Side Logic (Use Cases)
-
-Placed under `usecases/` when procedural complexity exists.
-
-Use cases may:
-
-- Coordinate multiple service calls
-- Enforce authorization
-- Apply domain rules
-- Convert infrastructure errors into AppError
-
-Use cases must not:
-
-- Access UI concerns
-- Return raw infrastructure types
-
-Creation of a use case is required when any of the following applies:
-
-- More than one service call is involved
-- Authorization logic exists
-- Domain rule evaluation is required
+UI定数を無差別にグローバルな場所に放り込むことは禁止される。
 
 ---
 
-## 7. Service Layer Rules
+## 6. アプリケーションロジックの配置ルール
 
-The `service/` directory represents infrastructure abstraction.
+アプリケーションロジックは、クライアント側とサーバー側に分けられる。
 
-Services are responsible for:
+### クライアント側のロジック
 
-- Communicating with external systems
-- Fetching or mutating data
-- Normalizing Raw/DTO into Domain types
-- Handling retry or rate limiting
-- Throwing AppError on failure
+`hooks/` 配下に配置する。
 
-Services must not:
+フックが「できる」こと：
 
-- Contain UI logic
-- Contain domain rule definitions
-- Expose raw external response shapes
-- Coordinate multiple domain concepts
+- UI状態の管理
+- ユーザーインタラクションの調整（オーケストレーション）
+- サービス関数の呼び出し
+- `loader` データの消費（利用）
 
-Raw types must not escape the service boundary.
+フックが「してはならない」こと：
 
----
+- 生のDTOやインフラストラクチャ型をインポートすること
+- DBやサーバー専用のモジュールにアクセスすること
+- ドメインルールを含めること
 
-## 8. Domain Rules
+### サーバー側のロジック（ユースケース）
 
-The `domain/` directory contains:
+手続き的な複雑さが存在する場合に `usecases/` 配下に配置する。
 
-- Entities
-- Value Objects
-- Domain types
-- Pure validation rules
-- Business invariants
-- Domain-level error definitions
+ユースケースが「できる」こと：
 
-Domain must:
+- 複数のサービス呼び出しの調整
+- 認可の適用
+- ドメインルールの適用
+- インフラストラクチャのエラーを `AppError` に変換すること
 
-- Remain framework-independent
-- Avoid infrastructure dependencies
-- Avoid UI dependencies
+ユースケースが「してはならない」こと：
 
-`snake_case` is forbidden inside Domain types.
+- UIの関心事にアクセスすること
+- 生のインフラストラクチャ型を返すこと
 
----
+以下のいずれかに該当する場合、ユースケースの作成が必須となる：
 
-## 9. lib Directory Rules
-
-`lib/` is reserved for technical utilities only.
-
-Allowed:
-
-- Assertion helpers
-- Class name utilities
-- Generic formatting helpers
-- Generic functional utilities
-- Environment access helpers (client-safe env only; server-only env must live under `server/`)
-
-Forbidden:
-
-- Business logic
-- Domain rules
-- External I/O
-- UI configuration
-- Feature-specific logic
-
-`lib/` must not become a miscellaneous dumping directory.
+- 複数のサービス呼び出しが絡む場合
+- 認可ロジックが存在する場合
+- ドメインルールの評価が必要な場合
 
 ---
 
-## 10. State Ownership
+## 7. サービス層 (Service Layer) のルール
 
-State must have a clear owner.
+`service/` ディレクトリは、インフラストラクチャの抽象化を表す。
 
-- URL state: owned by route (search params, path params)
-- UI state: owned by component or hook
-- Server state: loaded in loader and consumed via `useLoaderData`
-- Application flow state: managed in hooks
+サービスが「責任を持つ」こと：
 
-Global state must not be used for unrelated concerns.
+- 外部システムとの通信
+- データの取得またはミューテーション（更新）
+- 生データ/DTOからドメイン型への正規化
+- リトライ処理またはレート制限の処理
+- 失敗時に `AppError` をスローすること
 
----
+サービスが「してはならない」こと：
 
-## 11. Error Handling Policy
+- UIロジックを含めること
+- ドメインルールの定義を含めること
+- 生の外部レスポンスの形状をそのまま外部に露出すること
+- 複数のドメイン概念を調整すること
 
-All infrastructure errors must be converted into `AppError`.
-
-`AppError` must:
-
-- Represent application-level meaning
-- Include a machine-readable `code` field
-- Not expose transport or provider details
-- Not expose stack traces or raw infrastructure error messages
-
-UI must derive user-facing messages through a single transformation layer.
-
-Route-level `ErrorBoundary` handles route-scoped failures.
-Root-level `ErrorBoundary` handles global failures.
+生の型（Raw types）が境界を越えてサービスの外に漏れ出てはならない。
 
 ---
 
-## 12. Route Granularity Rules
+## 8. ドメイン (Domain) ルール
 
-Routes represent screens.
+`domain/` ディレクトリには以下を含める：
 
-Mutation operations must default to using `action` within the same route.
+- エンティティ (Entities)
+- 値オブジェクト (Value Objects)
+- ドメイン型
+- 純粋なバリデーションルール
+- ビジネスの不変条件
+- ドメインレベルのエラー定義
 
-Separate routes for mutation are allowed only when a distinct screen exists.
+ドメインが「守るべき」こと：
 
-CRUD endpoints must not be mechanically mapped to separate routes.
+- フレームワークに依存しない状態を保つこと
+- インフラストラクチャへの依存を避けること
+- UIへの依存を避けること
+
+ドメイン型の中での `snake_case` の使用は禁止される。
 
 ---
 
-## 13. Testing Policy
+## 9. lib ディレクトリのルール
 
-- Domain: pure unit tests (no network, no browser)
-- Service: tests with external system mocks/fakes
-- Use cases: tests with service mocks
-- Hooks: tests with service mocks (no render)
-- Routes: verify loader/action return shape and redirect behavior
-- Components: interaction-based tests (render + user event)
-- Implementation details must not be tested
+`lib/` は、技術的なユーティリティ専用に予約されている。
+
+許可されるもの：
+
+- アサーションヘルパー
+- クラス名ユーティリティ
+- 汎用的なフォーマットヘルパー
+- 汎用的な関数型ユーティリティ
+- 環境変数アクセスヘルパー（クライアントで安全な環境変数のみ。サーバー専用の環境変数は `server/` 配下に置くこと）
+
+禁止されるもの：
+
+- ビジネスロジック
+- ドメインルール
+- 外部I/O
+- UIの設定データ
+- 特定の機能に依存するロジック
+
+`lib/` を「何でも置き場（雑多なゴミ捨て場）」にしてはならない。
+
+---
+
+## 10. 状態の所有権 (State Ownership)
+
+状態は明確な所有者を持たなければならない。
+
+- URL状態: ルートが所有する（クエリパラメータ、パスパラメータ）
+- UI状態: コンポーネントまたはフックが所有する
+- サーバー状態: `loader` で読み込まれ、`useLoaderData` 経由で消費される
+- アプリケーションフロー状態: フックで管理される
+
+無関係な関心事のためにグローバル状態を使用してはならない。
+
+---
+
+## 11. エラーハンドリングポリシー
+
+すべてのインフラストラクチャエラーは `AppError` に変換されなければならない。
+
+`AppError` が「満たすべき」こと：
+
+- アプリケーションレベルの意味を表すこと
+- 機械が読み取れる `code` フィールドを含めること
+- 通信経路（トランスポート）やプロバイダーの詳細を露出しないこと
+- スタックトレースや、生のインフラストラクチャのエラーメッセージを露出しないこと
+
+UIは、単一の変換層を通じてユーザー向けのエラーメッセージを生成しなければならない。
+
+ルートレベルの `ErrorBoundary` は、ルート単位の障害を処理する。
+ルート（Root）レベルの `ErrorBoundary` は、グローバルな障害を処理する。
+
+---
+
+## 12. ルートの粒度ルール
+
+ルートは画面（スクリーン）を表す。
+
+ミューテーション（更新・作成・削除など）操作は、同じルート内の `action` を使用することをデフォルトとしなければならない。
+
+ミューテーションのために別のルートを分けることは、別の画面が存在する場合にのみ許可される。
+
+CRUDのエンドポイントを、機械的に別々のルートにマッピングしてはならない。
+
+---
+
+## 13. テストポリシー
+
+- Domain（ドメイン）: 純粋な単体テスト（ネットワークなし、ブラウザなし）
+- Service（サービス）: 外部システムのモック/フェイクを用いたテスト
+- Use cases（ユースケース）: サービスのモックを用いたテスト
+- Hooks（フック）: サービスのモックを用いたテスト（レンダリングなし）
+- Routes（ルート）: `loader` / `action` の戻り値の形状と、リダイレクトの振る舞いを検証する
+- Components（コンポーネント）: インタラクションベースのテスト（レンダリング + ユーザーイベント）
+- 実装の詳細をテストしてはならない
