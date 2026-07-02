@@ -83,7 +83,7 @@ export function Menu({ items, className }: MenuProps) {
             className={cn(
               "flex h-8.5 w-full cursor-pointer items-center gap-2.5 rounded-md bg-transparent px-2.5 text-left text-sm transition",
               item.danger
-                ? "text-red-400 hover:bg-red-500/5"
+                ? "text-tone-danger-text hover:bg-tone-danger-bg-hover"
                 : "text-text-1 hover:bg-surface-2"
             )}
           >

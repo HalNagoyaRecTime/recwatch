@@ -41,9 +41,10 @@
   --color-tone-cyan-bg: var(--tone-cyan-bg);
   --color-tone-cyan-text: var(--tone-cyan-text);
 
-  --color-tone-red-border: var(--tone-red-border);
-  --color-tone-red-bg: var(--tone-red-bg);
-  --color-tone-red-text: var(--tone-red-text);
+  --color-tone-danger-bg: var(--tone-danger-bg);
+  --color-tone-danger-bg-hover: var(--tone-danger-bg-hover);
+  --color-tone-danger-border: var(--tone-danger-border);
+  --color-tone-danger-text: var(--tone-danger-text);
 
   --shadow-soft: var(--shadow-soft);
 }
@@ -87,9 +88,10 @@
   --tone-cyan-bg: rgba(56, 189, 248, 0.12);
   --tone-cyan-text: #0369a1;
 
-  --tone-red-border: rgba(239, 68, 68, 0.28);
-  --tone-red-bg: rgba(239, 68, 68, 0.12);
-  --tone-red-text: #dc2626;
+  --tone-danger-bg: rgba(239, 68, 68, 0.12);
+  --tone-danger-bg-hover: rgba(239, 68, 68, 0.2);
+  --tone-danger-border: rgba(239, 68, 68, 0.28);
+  --tone-danger-text: #dc2626;
 
   --shadow-soft: 0 20px 45px rgba(15, 23, 42, 0.12);
 }
@@ -130,9 +132,10 @@
   --tone-cyan-bg: rgba(56, 189, 248, 0.12);
   --tone-cyan-text: #7dd3fc;
 
-  --tone-red-border: rgba(239, 68, 68, 0.36);
-  --tone-red-bg: rgba(239, 68, 68, 0.12);
-  --tone-red-text: #ff8d8d;
+  --tone-danger-bg: rgba(239, 68, 68, 0.12);
+  --tone-danger-bg-hover: rgba(239, 68, 68, 0.2);
+  --tone-danger-border: rgba(239, 68, 68, 0.36);
+  --tone-danger-text: #ff8d8d;
 
   --shadow-soft: 0 20px 45px rgba(0, 0, 0, 0.28);
 }
