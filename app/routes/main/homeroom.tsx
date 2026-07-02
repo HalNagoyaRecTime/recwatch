@@ -1,8 +1,5 @@
-// import { AdminPlaceholderPage } from "~/features/admin-pages/components/AdminPlaceholderPage";
-// import { pageContent } from "~/features/admin-pages/model/page-content";
-
 import { HomeRoomPage } from "~/features/homeroom/pages/HomeRoomPage";
-import type { Homeroom } from "~/features/homeroom/model/homeroom";
+import type { HomeRoomData } from "~/features/homeroom/model/homeroom";
 
 export function meta() {
   return [{ title: "Homeroom | recwatch" }];
@@ -14,7 +11,7 @@ export default function HomeroomRoute() {
 
 // ダミーデータ
 
-const Homeroom: Homeroom[] = [
+const Homeroom: HomeRoomData[] = [
   {
     HomeRoomId: 1,
     HomeRoomCode: "11A",
