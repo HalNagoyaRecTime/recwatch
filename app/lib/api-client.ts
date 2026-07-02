@@ -6,7 +6,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     throw new Response(res.statusText, { status: res.status });
   }
 
-  return res.json() as Promise<T>;
+  return (await res.json()) as T;
 }
 
 export const apiClient = {
