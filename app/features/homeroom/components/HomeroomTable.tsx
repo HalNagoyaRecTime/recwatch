@@ -1,6 +1,6 @@
-import type { Homeroom } from "~/features/homeroom/model/homeroom";
+import type { HomeRoomData } from "~/features/homeroom/model/homeroom";
 
-export function HomeRoomTable({ homerooms }: { homerooms: Homeroom[] }) {
+export function HomeRoomTable({ homerooms }: { homerooms: HomeRoomData[] }) {
   return (
     <div
       className="overflow-x-auto rounded-lg"
@@ -26,13 +26,7 @@ export function HomeRoomTable({ homerooms }: { homerooms: Homeroom[] }) {
             <tr
               key={homeroom.HomeRoomId}
               style={{ borderTop: "1px solid var(--surface-1)" }}
-              onMouseEnter={(e) => {
-                (e.currentTarget as HTMLElement).style.backgroundColor =
-                  "var(--surface-2)";
-              }}
-              onMouseLeave={(e) => {
-                (e.currentTarget as HTMLElement).style.backgroundColor = "";
-              }}
+              className="border-t border-t-[var(--border-1)] hover:bg-[var(--surface-2)]"
             >
               <td className="p-3">{homeroom.HomeRoomId}</td>
               <td className="p-3">{homeroom.HomeRoomCode}</td>
