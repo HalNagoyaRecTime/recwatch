@@ -38,7 +38,7 @@ export function Menu({ items, className }: MenuProps) {
   return (
     <div
       className={cn(
-        "border-border-2 bg-surface-overlay-strong shadow-soft min-w-50 rounded-xl border p-2 backdrop-blur-xl",
+        "border-border-2 bg-surface-overlay-strong shadow-soft min-w-max rounded-xl border p-2 backdrop-blur-xl",
         className
       )}
     >
@@ -65,13 +65,21 @@ export function Menu({ items, className }: MenuProps) {
                   className="text-text-1 hover:bg-surface-2 flex h-8.5 w-full cursor-pointer items-center justify-between gap-2.5 rounded-md bg-transparent px-2.5 text-left text-sm transition"
                 >
                   <div className="flex items-center gap-2.5">
-                    {item.icon && <item.icon size={14} strokeWidth={1.8} />}
-                    <span className="app-text-small">{item.label}</span>
+                    {item.icon && (
+                      <item.icon
+                        size={14}
+                        strokeWidth={1.8}
+                        className="shrink-0"
+                      />
+                    )}
+                    <span className="app-text-small whitespace-nowrap">
+                      {item.label}
+                    </span>
                   </div>
                   <ChevronRightIcon
                     size={14}
                     strokeWidth={1.8}
-                    className="text-text-3"
+                    className="text-text-3 ml-4 shrink-0"
                   />
                 </button>
               }
@@ -92,8 +100,12 @@ export function Menu({ items, className }: MenuProps) {
                 : "text-text-1 hover:bg-surface-2"
             )}
           >
-            {item.icon && <item.icon size={14} strokeWidth={1.8} />}
-            <span className="app-text-small">{item.label}</span>
+            {item.icon && (
+              <item.icon size={14} strokeWidth={1.8} className="shrink-0" />
+            )}
+            <span className="app-text-small whitespace-nowrap">
+              {item.label}
+            </span>
           </button>
         );
       })}
