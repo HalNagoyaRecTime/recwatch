@@ -1,7 +1,7 @@
-import { EventSwitcherPanel } from "~/features/frame/main-header/event-switcher/components/EventSwitcherPanel";
-import { EventSwitcherTrigger } from "~/features/frame/main-header/event-switcher/components/EventSwitcherTrigger";
-import { useEventSwitcher } from "~/features/frame/main-header/event-switcher/hooks/useEventSwitcher";
-import { getEventSwitcherData } from "~/features/frame/main-header/event-switcher/model/event-switcher-data";
+import { EventSwitcherPanel } from "~/features/event-switcher/components/EventSwitcherPanel";
+import { EventSwitcherTrigger } from "~/features/event-switcher/components/EventSwitcherTrigger";
+import { useEventSwitcher } from "~/features/event-switcher/hooks/useEventSwitcher";
+import { getEventSwitcherData } from "~/features/event-switcher/model/event-switcher-data";
 
 export function EventSwitcherBtn() {
   const events = getEventSwitcherData();

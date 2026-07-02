@@ -1,6 +1,6 @@
 import { cn } from "~/lib/cn";
 
-import { useLeftNavigationExpanded } from "~/features/frame/left-navigation/hooks/useLeftNavigationExpanded";
+import { useLeftNavigationExpanded } from "~/features/layout/left-navigation/hooks/useLeftNavigationExpanded";
 
 export function SidebarBrand() {
   const isExpanded = useLeftNavigationExpanded();

@@ -1,7 +1,7 @@
 import { currentUser } from "~/config/permissions";
 
-import { getVisibleNavSections } from "~/features/frame/left-navigation/model/nav-config";
-import { NavSection } from "~/features/frame/left-navigation/components/NavSection";
+import { getVisibleNavSections } from "~/features/layout/left-navigation/model/nav-config";
+import { NavSection } from "~/features/layout/left-navigation/components/NavSection";
 
 export function AppSidebar() {
   const sections = getVisibleNavSections(currentUser.role);

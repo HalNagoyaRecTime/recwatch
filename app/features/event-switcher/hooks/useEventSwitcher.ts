@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 
-import type { EventSwitcherItem } from "~/features/frame/main-header/event-switcher/model/event-switcher-data";
+import type { EventSwitcherItem } from "~/features/event-switcher/model/event-switcher-data";
 
 export function useEventSwitcher(events: EventSwitcherItem[]) {
   const [isOpen, setIsOpen] = useState(false);

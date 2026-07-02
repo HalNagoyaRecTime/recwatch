@@ -1,4 +1,4 @@
-import { AppShell } from "~/features/frame/AppShell";
+import { AppShell } from "~/features/layout/AppShell";
 
 export default function FrameRoute() {
   return <AppShell />;

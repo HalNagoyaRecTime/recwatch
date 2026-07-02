@@ -1,5 +1,5 @@
 import { useContext } from "react";
-import { LeftNavigationHoverContext } from "~/features/frame/left-navigation/components/LeftNavigationHoverProvider";
+import { LeftNavigationHoverContext } from "~/features/layout/left-navigation/components/LeftNavigationHoverProvider";
 
 export function useLeftNavigationHoverState() {
   const context = useContext(LeftNavigationHoverContext);

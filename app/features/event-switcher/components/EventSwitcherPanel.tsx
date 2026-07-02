@@ -1,5 +1,5 @@
 import { MenuActionButton } from "~/components/ui/MenuActionButton";
-import type { EventSwitcherItem } from "~/features/frame/main-header/event-switcher/model/event-switcher-data";
+import type { EventSwitcherItem } from "~/features/event-switcher/model/event-switcher-data";
 
 type EventSwitcherPanelProps = {
   events: EventSwitcherItem[];

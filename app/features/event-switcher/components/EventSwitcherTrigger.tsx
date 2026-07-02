@@ -1,7 +1,7 @@
 import { CalendarClockIcon, ChevronDownIcon } from "lucide-react";
 
 import { cn } from "~/lib/cn";
-import type { EventSwitcherItem } from "~/features/frame/main-header/event-switcher/model/event-switcher-data";
+import type { EventSwitcherItem } from "~/features/event-switcher/model/event-switcher-data";
 
 type EventSwitcherTriggerProps = {
   isOpen: boolean;

@@ -3,12 +3,12 @@ import { useEffect } from "react";
 import { useNavState } from "~/hooks/useNavState";
 import { cn } from "~/lib/cn";
 
-import { BottomBtn } from "~/features/frame/left-navigation/bottom-area/BottomBtn";
-import { AppSidebar } from "~/features/frame/left-navigation/components/AppSidebar";
-import { useLeftNavigationExpanded } from "~/features/frame/left-navigation/hooks/useLeftNavigationExpanded";
-import { useLeftNavigationHoverState } from "~/features/frame/left-navigation/hooks/useLeftNavigationHoverState";
-import { LeftNavigationHoverProvider } from "~/features/frame/left-navigation/components/LeftNavigationHoverProvider";
-import { SidebarBrand } from "~/features/frame/left-navigation/header-logo/SidebarBrand";
+import { BottomBtn } from "~/features/layout/left-navigation/bottom-area/BottomBtn";
+import { AppSidebar } from "~/features/layout/left-navigation/components/AppSidebar";
+import { useLeftNavigationExpanded } from "~/features/layout/left-navigation/hooks/useLeftNavigationExpanded";
+import { useLeftNavigationHoverState } from "~/features/layout/left-navigation/hooks/useLeftNavigationHoverState";
+import { LeftNavigationHoverProvider } from "~/features/layout/left-navigation/components/LeftNavigationHoverProvider";
+import { SidebarBrand } from "~/features/layout/left-navigation/header-logo/SidebarBrand";
 
 function LeftNavigationContent() {
   const { isOpen } = useNavState();

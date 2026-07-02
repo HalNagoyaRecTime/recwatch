@@ -5,8 +5,8 @@ import { useNavState } from "~/hooks/useNavState";
 import { cn } from "~/lib/cn";
 import type { NavChildDef, NavItemDef } from "~/types/nav";
 
-import { NavAccordion } from "~/features/frame/left-navigation/components/NavAccordion";
-import { useLeftNavigationExpanded } from "~/features/frame/left-navigation/hooks/useLeftNavigationExpanded";
+import { NavAccordion } from "~/features/layout/left-navigation/components/NavAccordion";
+import { useLeftNavigationExpanded } from "~/features/layout/left-navigation/hooks/useLeftNavigationExpanded";
 
 type NavItemProps = {
   def: NavItemDef;

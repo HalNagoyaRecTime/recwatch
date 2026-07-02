@@ -1,5 +1,5 @@
-import { LeftNavigationShell } from "~/features/frame/left-navigation/LeftNavigationShell";
-import { MainShell } from "~/features/frame/main-header/MainShell";
+import { LeftNavigationShell } from "~/features/layout/left-navigation/LeftNavigationShell";
+import { MainShell } from "~/features/layout/main-header/MainShell";
 
 export function AppShell() {
   return (

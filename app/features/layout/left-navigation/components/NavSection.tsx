@@ -1,8 +1,8 @@
 import type { NavSectionDef } from "~/types/nav";
 import { cn } from "~/lib/cn";
 
-import { useLeftNavigationExpanded } from "~/features/frame/left-navigation/hooks/useLeftNavigationExpanded";
-import { NavItem } from "~/features/frame/left-navigation/components/NavItem";
+import { useLeftNavigationExpanded } from "~/features/layout/left-navigation/hooks/useLeftNavigationExpanded";
+import { NavItem } from "~/features/layout/left-navigation/components/NavItem";
 
 type NavSectionProps = {
   def: NavSectionDef;

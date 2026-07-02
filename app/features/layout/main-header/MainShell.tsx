@@ -1,7 +1,7 @@
 import { Outlet } from "react-router";
 
-import { MainHeader } from "~/features/frame/main-header/components/MainHeader";
-import MainFooter from "~/features/frame/main-header/components/MainFooter";
+import { MainHeader } from "~/features/layout/main-header/components/MainHeader";
+import MainFooter from "~/features/layout/main-header/components/MainFooter";
 
 export function MainShell() {
   return (
