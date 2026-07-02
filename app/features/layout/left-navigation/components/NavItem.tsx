@@ -36,10 +36,6 @@ function itemBaseClass(isActive: boolean) {
   );
 }
 
-function badgeClass() {
-  return "ml-auto rounded-full border border-[color:var(--border-1)] px-[7px] py-[2px] font-['DM_Mono'] text-[10px] text-[color:var(--text-2)]";
-}
-
 function ChildLink({
   child,
   closeForMobile,
@@ -62,9 +58,6 @@ function ChildLink({
           <span className="overflow-hidden text-[13px] font-medium whitespace-nowrap opacity-100">
             {child.label}
           </span>
-          {child.badge ? (
-            <span className={badgeClass()}>{child.badge}</span>
-          ) : null}
         </>
       )}
     </NavLink>
@@ -115,16 +108,6 @@ export function NavItem({ def }: NavItemProps) {
           >
             {def.label}
           </span>
-          {def.badge ? (
-            <span
-              className={cn(
-                badgeClass(),
-                isExpanded ? "opacity-100" : "hidden"
-              )}
-            >
-              {def.badge}
-            </span>
-          ) : null}
           <ChevronRightIcon
             size={14}
             strokeWidth={1.8}
@@ -151,9 +134,6 @@ export function NavItem({ def }: NavItemProps) {
                 {def.icon}
               </span>
               <span>{def.label}</span>
-              {def.badge ? (
-                <span className={badgeClass()}>{def.badge}</span>
-              ) : null}
             </div>
             <div className="pt-1">
               {def.children.map((child) => {
@@ -172,9 +152,6 @@ export function NavItem({ def }: NavItemProps) {
                     onClick={() => closeOnSmallScreen(closeForMobile)}
                   >
                     <span>{child.label}</span>
-                    {child.badge ? (
-                      <span className={badgeClass()}>{child.badge}</span>
-                    ) : null}
                   </NavLink>
                 );
               })}
@@ -212,16 +189,6 @@ export function NavItem({ def }: NavItemProps) {
             >
               {def.label}
             </span>
-            {def.badge ? (
-              <span
-                className={cn(
-                  badgeClass(),
-                  isExpanded ? "opacity-100" : "hidden"
-                )}
-              >
-                {def.badge}
-              </span>
-            ) : null}
           </>
         )}
       </NavLink>
