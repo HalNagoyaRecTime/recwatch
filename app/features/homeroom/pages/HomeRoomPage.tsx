@@ -1,7 +1,7 @@
-import type { Homeroom } from "~/features/homeroom/model/homeroom";
+import type { HomeRoomData } from "~/features/homeroom/model/homeroom";
 import { HomeRoomTable } from "~/features/homeroom/components/HomeroomTable";
 
-export function HomeRoomPage({ homerooms }: { homerooms: Homeroom[] }) {
+export function HomeRoomPage({ homerooms }: { homerooms: HomeRoomData[] }) {
   return (
     <div className="flex flex-col gap-4">
       <h1 className="text-2xl font-bold">Homerooms</h1>
