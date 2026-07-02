@@ -9,6 +9,8 @@ import {
 
 import type { Route } from "./+types/root";
 import { THEME_STORAGE_KEY } from "./lib/theme";
+import { ThemeProvider } from "./components/providers/ThemeProvider";
+import { NavProvider } from "./components/providers/NavProvider";
 import "./app.css";
 
 export const links: Route.LinksFunction = () => [];
@@ -37,9 +39,13 @@ export function Layout({ children }: { children: React.ReactNode }) {
         />
       </head>
       <body className="text-text-1 antialiased transition-colors duration-200">
-        {children}
-        <ScrollRestoration />
-        <Scripts />
+        <NavProvider>
+          <ThemeProvider>
+            {children}
+            <ScrollRestoration />
+            <Scripts />
+          </ThemeProvider>
+        </NavProvider>
       </body>
     </html>
   );

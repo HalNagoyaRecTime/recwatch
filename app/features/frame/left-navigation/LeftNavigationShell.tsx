@@ -7,12 +7,13 @@ import { BottomBtn } from "~/features/frame/left-navigation/bottom-area/BottomBt
 import { AppSidebar } from "~/features/frame/left-navigation/components/AppSidebar";
 import { useLeftNavigationExpanded } from "~/features/frame/left-navigation/hooks/useLeftNavigationExpanded";
 import { useLeftNavigationHoverState } from "~/features/frame/left-navigation/hooks/useLeftNavigationHoverState";
+import { LeftNavigationHoverProvider } from "~/features/frame/left-navigation/components/LeftNavigationHoverProvider";
 import { SidebarBrand } from "~/features/frame/left-navigation/header-logo/SidebarBrand";
 
-export function LeftNavigationShell() {
-  const isOpen = useNavState((state) => state.isOpen);
+function LeftNavigationContent() {
+  const { isOpen } = useNavState();
   const isExpanded = useLeftNavigationExpanded();
-  const setHovering = useLeftNavigationHoverState((state) => state.setHovering);
+  const { setHovering } = useLeftNavigationHoverState();
 
   useEffect(() => {
     return () => {
@@ -47,5 +48,13 @@ export function LeftNavigationShell() {
         <BottomBtn />
       </div>
     </div>
+  );
+}
+
+export function LeftNavigationShell() {
+  return (
+    <LeftNavigationHoverProvider>
+      <LeftNavigationContent />
+    </LeftNavigationHoverProvider>
   );
 }

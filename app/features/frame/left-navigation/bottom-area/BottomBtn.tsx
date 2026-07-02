@@ -3,8 +3,8 @@ import { PanelLeftCloseIcon } from "lucide-react";
 import { useNavState } from "~/hooks/useNavState";
 
 export function BottomBtn() {
-  const isOpen = useNavState((state) => state.isOpen);
-  const toggle = useNavState((state) => state.toggle);
+  const { isOpen, toggle } = useNavState();
+
   return (
     <div className="main-footer-height flex border-t border-(--border-1) p-1 pl-3">
       <button

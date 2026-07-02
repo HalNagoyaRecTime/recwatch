@@ -3,7 +3,7 @@ import { Menu } from "lucide-react";
 import { useNavState } from "~/hooks/useNavState";
 
 export function MobileHamburgerMenuBtn() {
-  const toggle = useNavState((state) => state.toggle);
+  const { toggle } = useNavState();
 
   return (
     <button

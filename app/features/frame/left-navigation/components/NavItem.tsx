@@ -72,12 +72,15 @@ function ChildLink({
 }
 
 export function NavItem({ def }: NavItemProps) {
-  const pathname = useLocation().pathname;
-  const isSidebarOpen = useNavState((state) => state.isOpen);
+  const {
+    isOpen: isSidebarOpen,
+    openAccordions,
+    toggleAccordion,
+    closeForMobile,
+  } = useNavState();
+  const location = useLocation();
+  const pathname = location.pathname;
   const isExpanded = useLeftNavigationExpanded();
-  const openAccordions = useNavState((state) => state.openAccordions);
-  const toggleAccordion = useNavState((state) => state.toggleAccordion);
-  const closeForMobile = useNavState((state) => state.closeForMobile);
   const hasChildren = Boolean(def.children?.length);
   const isAccordionOpen = openAccordions.includes(def.id);
   const isActive = hasChildren
