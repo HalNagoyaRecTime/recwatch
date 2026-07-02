@@ -2,6 +2,52 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+@theme {
+  --color-bg-top: var(--bg-top);
+  --color-bg-bottom: var(--bg-bottom);
+  --color-bg-glow: var(--bg-glow);
+
+  --color-surface-1: var(--surface-1);
+  --color-surface-2: var(--surface-2);
+  --color-surface-overlay: var(--surface-overlay);
+  --color-surface-overlay-strong: var(--surface-overlay-strong);
+  --color-surface-card-gloss: var(--surface-card-gloss);
+  --color-surface-row: var(--surface-row);
+  --color-surface-brand-soft: var(--surface-brand-soft);
+
+  --color-border-1: var(--border-1);
+  --color-border-2: var(--border-2);
+  --color-border-strong: var(--border-strong);
+
+  --color-text-1: var(--text-1);
+  --color-text-2: var(--text-2);
+  --color-text-3: var(--text-3);
+
+  --color-brand-1: var(--brand-1);
+  --color-brand-2: var(--brand-2);
+  --color-brand-button-1: var(--brand-button-1);
+  --color-brand-button-2: var(--brand-button-2);
+  --color-brand-button-text: var(--brand-button-text);
+
+  --color-tone-green-border: var(--tone-green-border);
+  --color-tone-green-bg: var(--tone-green-bg);
+  --color-tone-green-text: var(--tone-green-text);
+
+  --color-tone-blue-border: var(--tone-blue-border);
+  --color-tone-blue-bg: var(--tone-blue-bg);
+  --color-tone-blue-text: var(--tone-blue-text);
+
+  --color-tone-cyan-border: var(--tone-cyan-border);
+  --color-tone-cyan-bg: var(--tone-cyan-bg);
+  --color-tone-cyan-text: var(--tone-cyan-text);
+
+  --color-tone-red-border: var(--tone-red-border);
+  --color-tone-red-bg: var(--tone-red-bg);
+  --color-tone-red-text: var(--tone-red-text);
+
+  --shadow-soft: var(--shadow-soft);
+}
+
 :root {
   --bg-top: #eef8ff;
   --bg-bottom: #f8fcff;
@@ -101,8 +147,12 @@ body {
 
 body {
   height: 100dvh;
+  min-height: 100dvh;
   overscroll-behavior-y: none;
   overflow: hidden;
+  background:
+    radial-gradient(circle at top right, var(--bg-glow), transparent 32%),
+    linear-gradient(180deg, var(--bg-top), var(--bg-bottom));
 }
 
 a {
