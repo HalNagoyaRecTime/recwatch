@@ -1,8 +1,8 @@
 import { useLoaderData } from "react-router";
 
 import { env } from "~/config/env";
-import { AdminScreenPage } from "~/features/admin-pages/components/AdminScreenPage";
-import { dashboardContent } from "~/features/admin-pages/model/dashboard-content";
+import { AdminScreenPage } from "~/features/dashboard/components/AdminScreenPage";
+import { dashboardContent } from "~/features/dashboard/model/dashboard-content";
 
 export function meta() {
   return [{ title: "Dashboard | recwatch" }];

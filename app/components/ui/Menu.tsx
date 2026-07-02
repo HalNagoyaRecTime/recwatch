@@ -1,6 +1,7 @@
 import { ChevronRightIcon } from "lucide-react";
 import type { ReactNode, ElementType } from "react";
 import { cn } from "~/lib/cn";
+import { Popover } from "~/components/shared/Popover";
 
 export type MenuItemType =
   | {
@@ -52,26 +53,30 @@ export function Menu({ items, className }: MenuProps) {
 
         if (item.type === "submenu") {
           return (
-            <div key={item.id} className="group relative">
-              <button
-                type="button"
-                className="text-text-1 hover:bg-surface-2 flex h-8.5 w-full cursor-pointer items-center justify-between gap-2.5 rounded-md bg-transparent px-2.5 text-left text-sm transition"
-              >
-                <div className="flex items-center gap-2.5">
-                  {item.icon && <item.icon size={14} strokeWidth={1.8} />}
-                  <span className="app-text-small">{item.label}</span>
-                </div>
-                <ChevronRightIcon
-                  size={14}
-                  strokeWidth={1.8}
-                  className="text-text-3"
-                />
-              </button>
-
-              <div className="absolute top-0 right-0 z-10 hidden translate-x-full pl-1 group-hover:block">
-                <Menu items={item.children} />
-              </div>
-            </div>
+            <Popover
+              key={item.id}
+              placement="right-start"
+              interaction="hover"
+              offsetValue={6}
+              triggerClassName="w-full block"
+              trigger={
+                <button
+                  type="button"
+                  className="text-text-1 hover:bg-surface-2 flex h-8.5 w-full cursor-pointer items-center justify-between gap-2.5 rounded-md bg-transparent px-2.5 text-left text-sm transition"
+                >
+                  <div className="flex items-center gap-2.5">
+                    {item.icon && <item.icon size={14} strokeWidth={1.8} />}
+                    <span className="app-text-small">{item.label}</span>
+                  </div>
+                  <ChevronRightIcon
+                    size={14}
+                    strokeWidth={1.8}
+                    className="text-text-3"
+                  />
+                </button>
+              }
+              content={<Menu items={item.children} />}
+            />
           );
         }
 

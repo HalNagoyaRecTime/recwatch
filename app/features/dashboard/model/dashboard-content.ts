@@ -2,7 +2,7 @@ import type { ComponentProps } from "react";
 
 import dashboardMock from "~/mock/dashboard.json";
 
-import type { AdminScreenPage } from "~/features/admin-pages/components/AdminScreenPage";
+import type { AdminScreenPage } from "~/features/dashboard/components/AdminScreenPage";
 
 export type DashboardContent = ComponentProps<typeof AdminScreenPage>;
 
