@@ -6,6 +6,10 @@ import {
   CopyIcon,
   XIcon,
 } from "lucide-react";
+import {
+  actionListContainerStyle,
+  actionListItemStyle,
+} from "~/components/ui/styles/action-list-styles";
 
 // --- ダミーデータ（テスト用） ---
 type Notice = {
@@ -52,46 +56,50 @@ export function NoticeMenuPanel({ onClose }: NoticeMenuPanelProps) {
   };
 
   return (
-    <div className="w-80 overflow-hidden rounded-xl border border-(--border-2) bg-(--surface-1) shadow-xl">
-      <div className="flex items-center justify-between border-b border-(--border-2) bg-(--surface-2) px-4 py-3">
-        <h3 className="text-sm font-semibold text-(--text-1)">
+    <div className={cn(actionListContainerStyle, "flex w-80 flex-col p-1.5")}>
+      {/* Header */}
+      <div className="flex items-center justify-between px-2.5 py-2">
+        <h3 className="text-text-1 text-sm font-semibold">
           通知・システムログ
         </h3>
         <button
           onClick={onClose}
-          className="cursor-pointer rounded text-(--text-2) transition-colors hover:text-(--text-1)"
+          className="text-text-2 hover:text-text-1 cursor-pointer rounded transition-colors"
         >
           <XIcon size={16} />
         </button>
       </div>
 
-      <div className="max-h-96 overflow-y-auto p-2">
+      <div className="bg-border-1 mx-1 mb-1.5 h-px shrink-0" />
+
+      {/* Body */}
+      <div className="max-h-96 overflow-y-auto px-1">
         {notices.length === 0 ? (
-          <p className="p-4 text-center text-sm text-(--text-3)">
+          <p className="text-text-3 p-4 text-center text-sm">
             通知はありません
           </p>
         ) : (
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-1">
             {notices.map((notice) => (
               <div
                 key={notice.id}
                 className={cn(
-                  "flex flex-col gap-1 rounded-lg border p-3",
+                  "flex flex-col gap-1.5 rounded-lg border p-2.5 transition-colors",
                   notice.type === "error"
-                    ? "border-red-200 bg-red-50"
-                    : "border-(--border-2) bg-(--surface-1)"
+                    ? "border-tone-danger-border bg-tone-danger-bg hover:bg-tone-danger-bg-hover"
+                    : "border-border-2 bg-surface-1 hover:bg-surface-2"
                 )}
               >
                 <div className="flex items-start justify-between gap-2">
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-start gap-2">
                     {notice.type === "error" ? (
                       <AlertCircleIcon
-                        className="mt-0.5 text-red-500"
+                        className="text-tone-danger-text mt-0.5 shrink-0"
                         size={16}
                       />
                     ) : (
                       <CheckCircle2Icon
-                        className="mt-0.5 text-green-500"
+                        className="text-tone-green-text mt-0.5 shrink-0"
                         size={16}
                       />
                     )}
@@ -99,26 +107,26 @@ export function NoticeMenuPanel({ onClose }: NoticeMenuPanelProps) {
                       className={cn(
                         "text-sm font-medium",
                         notice.type === "error"
-                          ? "text-red-900"
-                          : "text-(--text-1)"
+                          ? "text-tone-danger-text"
+                          : "text-text-1"
                       )}
                     >
                       {notice.message}
                     </span>
                   </div>
-                  <span className="shrink-0 text-xs text-(--text-3)">
+                  <span className="text-text-3 shrink-0 text-xs">
                     {notice.time}
                   </span>
                 </div>
 
                 {notice.detail && (
-                  <div className="group relative mt-1 rounded border border-red-100 bg-white p-2 text-xs text-red-800 shadow-sm">
+                  <div className="group border-tone-danger-border bg-surface-overlay text-tone-danger-text relative mt-1 overflow-hidden rounded border p-2 text-xs shadow-sm">
                     <pre className="font-mono leading-relaxed whitespace-pre-wrap">
                       {notice.detail}
                     </pre>
                     <button
                       onClick={() => handleCopy(notice.detail!)}
-                      className="absolute top-1 right-1 hidden cursor-pointer items-center gap-1 rounded border border-red-200 bg-white px-2 py-1 text-xs shadow-sm transition-colors group-hover:flex hover:bg-red-50"
+                      className="border-tone-danger-border bg-surface-1 hover:bg-tone-danger-bg-hover absolute top-1 right-1 hidden cursor-pointer items-center gap-1 rounded border px-2 py-1 text-xs shadow-sm transition-colors group-hover:flex"
                       title="エラー詳細をコピー"
                     >
                       <CopyIcon size={12} />
@@ -131,10 +139,16 @@ export function NoticeMenuPanel({ onClose }: NoticeMenuPanelProps) {
           </div>
         )}
       </div>
-      <div className="border-t border-(--border-2) bg-(--surface-2) p-2">
+
+      {/* Footer */}
+      <div className="bg-border-1 mx-1 mt-1.5 h-px shrink-0" />
+      <div className="px-1 pt-1.5">
         <button
           onClick={() => setNotices([])}
-          className="w-full cursor-pointer rounded py-1.5 text-xs font-medium text-(--text-2) transition-colors hover:bg-(--surface-3)"
+          className={cn(
+            actionListItemStyle({ intent: "primary" }),
+            "text-text-2 hover:text-text-1 justify-center font-medium"
+          )}
         >
           すべてクリア
         </button>

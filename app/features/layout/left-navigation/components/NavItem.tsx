@@ -74,6 +74,8 @@ export function NavItem({ def }: NavItemProps) {
           type="button"
           className={cn(
             actionListItemStyle({ intent: "nav", active: false }),
+            "transition-all duration-200",
+            !isExpanded && "gap-0 pr-0 pl-3",
             isActive && "hover:bg-transparent"
           )}
           onClick={() => {
@@ -154,7 +156,11 @@ export function NavItem({ def }: NavItemProps) {
       <NavLink
         to={def.to}
         className={({ isActive: linkActive }) =>
-          actionListItemStyle({ intent: "nav", active: linkActive })
+          cn(
+            actionListItemStyle({ intent: "nav", active: linkActive }),
+            "transition-all duration-200",
+            !isExpanded && "gap-0 pr-0 pl-3"
+          )
         }
         onClick={() => closeOnSmallScreen(closeForMobile)}
       >
