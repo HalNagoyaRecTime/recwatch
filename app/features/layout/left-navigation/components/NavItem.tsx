@@ -42,17 +42,10 @@ function ChildLink({
       }
       onClick={() => closeOnSmallScreen(closeForMobile)}
     >
-      {({ isActive }) => (
-        <>
-          {isActive ? (
-            <span className="absolute inset-y-[5px] left-0 w-[2.5px] rounded-r-sm bg-[color:var(--brand-1)]" />
-          ) : null}
-          <span className="inline-flex w-4 min-w-4 items-center justify-center" />
-          <span className="overflow-hidden text-[13px] font-medium whitespace-nowrap opacity-100">
-            {child.label}
-          </span>
-        </>
-      )}
+      <span className="inline-flex w-4 min-w-4 items-center justify-center" />
+      <span className="overflow-hidden text-[13px] font-medium whitespace-nowrap opacity-100">
+        {child.label}
+      </span>
     </NavLink>
   );
 }
@@ -87,9 +80,6 @@ export function NavItem({ def }: NavItemProps) {
             }
           }}
         >
-          {isActive ? (
-            <span className="absolute inset-y-[5px] left-0 w-[2.5px] rounded-r-sm bg-[color:var(--brand-1)]" />
-          ) : null}
           <span className="inline-flex w-4 min-w-4 items-center justify-center">
             {def.icon}
           </span>
@@ -166,24 +156,17 @@ export function NavItem({ def }: NavItemProps) {
         }
         onClick={() => closeOnSmallScreen(closeForMobile)}
       >
-        {({ isActive: linkActive }) => (
-          <>
-            {linkActive ? (
-              <span className="absolute inset-y-[5px] left-0 w-[2.5px] rounded-r-sm bg-[color:var(--brand-1)]" />
-            ) : null}
-            <span className="inline-flex w-4 min-w-4 items-center justify-center">
-              {def.icon}
-            </span>
-            <span
-              className={cn(
-                "overflow-hidden text-[13px] font-medium whitespace-nowrap transition-[max-width,opacity] duration-200",
-                isExpanded ? "max-w-40 opacity-100" : "max-w-0 opacity-0"
-              )}
-            >
-              {def.label}
-            </span>
-          </>
-        )}
+        <span className="inline-flex w-4 min-w-4 items-center justify-center">
+          {def.icon}
+        </span>
+        <span
+          className={cn(
+            "overflow-hidden text-[13px] font-medium whitespace-nowrap transition-[max-width,opacity] duration-200",
+            isExpanded ? "max-w-40 opacity-100" : "max-w-0 opacity-0"
+          )}
+        >
+          {def.label}
+        </span>
       </NavLink>
       {!isExpanded ? (
         <div className="pointer-events-none absolute top-1/2 left-[66px] z-[200] translate-x-[-4px] -translate-y-1/2 rounded-lg border border-[color:var(--border-2)] bg-[color:var(--surface-overlay-strong)] px-[11px] py-[5px] text-[12.5px] font-medium text-[color:var(--text-1)] opacity-0 shadow-[var(--shadow-soft)] transition duration-150 group-hover/nav:pointer-events-auto group-hover/nav:translate-x-0 group-hover/nav:opacity-100">
