@@ -43,6 +43,7 @@ export default tseslint.config(
             "clientAction",
             "ErrorBoundary",
             "Layout",
+            "HydrateFallback",
           ],
         },
       ],
