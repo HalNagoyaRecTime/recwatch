@@ -42,7 +42,6 @@ function ChildLink({
       }
       onClick={() => closeOnSmallScreen(closeForMobile)}
     >
-      <span className="inline-flex w-4 min-w-4 items-center justify-center" />
       <span className="overflow-hidden text-[13px] font-medium whitespace-nowrap opacity-100">
         {child.label}
       </span>
