@@ -37,7 +37,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
           }}
         />
       </head>
-      <body className="min-h-dvh bg-[radial-gradient(circle_at_top_right,var(--bg-glow),transparent_32%),linear-gradient(180deg,var(--bg-top)_0%,var(--bg-bottom)_100%)] text-[color:var(--text-1)] antialiased transition-colors duration-200">
+      <body className="min-h-dvh text-[color:var(--text-1)] antialiased transition-colors duration-200">
         {children}
         <ScrollRestoration />
         <Scripts />
