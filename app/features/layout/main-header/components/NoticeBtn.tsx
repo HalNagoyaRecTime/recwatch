@@ -1,20 +1,26 @@
-import { cn } from "~/lib/cn";
-import { BellIcon } from "lucide-react";
+import { useState } from "react";
+import { Popover } from "~/components/shared/Popover";
+import { NoticeMenuBtn } from "~/features/layout/main-header/components/NoticeMenuBtn";
+import { NoticeMenuPanel } from "~/features/layout/main-header/components/NoticeMenuPanel";
 
 export function NoticeBtn() {
+  const [isOpen, setIsOpen] = useState(false);
+  const unreadCount = 3; // テスト用
+
   return (
-    <button
-      type="button"
-      className={cn(
-        "app-rounded transition　shadow-(--shadow-soft) relative inline-flex aspect-square h-full cursor-pointer items-center justify-center border",
-        "border-(--border-2) bg-transparent text-(--text-2)",
-        "hover:border-(--border-strong) hover:bg-(--surface-2) hover:text-(--text-1)"
-      )}
-      aria-label="Notifications"
-    >
-      <BellIcon size={15} strokeWidth={1.8} />
-      {/* 通知が来ていることを示すランプ要素 */}
-      <span className="absolute top-1.5 right-1.75 h-1.75 w-1.75 rounded-full border-[1.5px] border-(--surface-1) bg-(--brand-1)" />
-    </button>
+    <Popover
+      isOpen={isOpen}
+      onOpenChange={setIsOpen}
+      placement="bottom-end"
+      interaction="click"
+      trigger={
+        <NoticeMenuBtn
+          isOpen={isOpen}
+          onToggle={() => setIsOpen(!isOpen)}
+          unreadCount={unreadCount}
+        />
+      }
+      content={<NoticeMenuPanel onClose={() => setIsOpen(false)} />}
+    />
   );
 }
