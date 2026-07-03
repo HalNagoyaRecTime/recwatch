@@ -46,7 +46,6 @@ export function NavProvider({ children }: { children: ReactNode }) {
     setState((prev) => ({
       ...prev,
       isOpen: !prev.isOpen,
-      openAccordions: prev.isOpen ? [] : prev.openAccordions,
     }));
   };
 
