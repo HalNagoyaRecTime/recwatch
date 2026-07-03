@@ -3,9 +3,9 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
-  --color-bg-top: var(--bg-top);
-  --color-bg-bottom: var(--bg-bottom);
-  --color-bg-glow: var(--bg-glow);
+  --color-gradient-start: var(--bg-gradient-start);
+  --color-gradient-end: var(--bg-gradient-end);
+  --color-gradient-glow: var(--bg-gradient-glow);
 
   --color-surface-1: var(--surface-1);
   --color-surface-2: var(--surface-2);
@@ -50,9 +50,9 @@
 }
 
 :root {
-  --bg-top: #eef8ff;
-  --bg-bottom: #f8fcff;
-  --bg-glow: rgba(56, 189, 248, 0.16);
+  --bg-gradient-start: #eef8ff;
+  --bg-gradient-end: #f8fcff;
+  --bg-gradient-glow: rgba(56, 189, 248, 0.16);
 
   --surface-1: rgba(255, 255, 255, 0.84);
   --surface-2: rgba(226, 242, 252, 0.82);
@@ -97,9 +97,9 @@
 }
 
 .dark {
-  --bg-top: #03131d;
-  --bg-bottom: #07131b;
-  --bg-glow: rgba(56, 189, 248, 0.12);
+  --bg-gradient-start: #03131d;
+  --bg-gradient-end: #07131b;
+  --bg-gradient-glow: rgba(56, 189, 248, 0.12);
 
   --surface-1: #0b1720;
   --surface-2: #10212d;
@@ -154,8 +154,12 @@ body {
   overscroll-behavior-y: none;
   overflow: hidden;
   background:
-    radial-gradient(circle at top right, var(--bg-glow), transparent 32%),
-    linear-gradient(180deg, var(--bg-top), var(--bg-bottom));
+    radial-gradient(
+      circle at top right,
+      var(--bg-gradient-glow),
+      transparent 32%
+    ),
+    linear-gradient(180deg, var(--bg-gradient-start), var(--bg-gradient-end));
 }
 
 a {

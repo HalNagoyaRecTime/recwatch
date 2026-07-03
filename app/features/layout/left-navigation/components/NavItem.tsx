@@ -50,12 +50,7 @@ function ChildLink({
 }
 
 export function NavItem({ def }: NavItemProps) {
-  const {
-    isOpen: isSidebarOpen,
-    openAccordions,
-    toggleAccordion,
-    closeForMobile,
-  } = useNavState();
+  const { openAccordions, toggleAccordion, closeForMobile } = useNavState();
   const location = useLocation();
   const pathname = location.pathname;
   const isExpanded = useLeftNavigationExpanded();
@@ -79,7 +74,7 @@ export function NavItem({ def }: NavItemProps) {
             isActive && "hover:bg-transparent"
           )}
           onClick={() => {
-            if (isSidebarOpen) {
+            if (isExpanded) {
               toggleAccordion(def.id);
             }
           }}
