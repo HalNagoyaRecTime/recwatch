@@ -13,6 +13,7 @@ export type MenuItemType =
       id: string;
       label: string;
       icon?: ElementType;
+      endIcon?: ElementType;
       danger?: boolean;
       onClick?: () => void;
     }
@@ -95,15 +96,25 @@ export function Menu({ items, className }: MenuProps) {
             className={cn(
               actionListItemStyle({
                 intent: item.danger ? "danger" : "primary",
-              })
+              }),
+              item.endIcon && "justify-between"
             )}
           >
-            {item.icon && (
-              <item.icon size={14} strokeWidth={1.8} className="shrink-0" />
+            <div className="flex items-center gap-2.5">
+              {item.icon && (
+                <item.icon size={14} strokeWidth={1.8} className="shrink-0" />
+              )}
+              <span className="app-text-small whitespace-nowrap">
+                {item.label}
+              </span>
+            </div>
+            {item.endIcon && (
+              <item.endIcon
+                size={14}
+                strokeWidth={1.8}
+                className="text-text-3 ml-4 shrink-0"
+              />
             )}
-            <span className="app-text-small whitespace-nowrap">
-              {item.label}
-            </span>
           </button>
         );
       })}

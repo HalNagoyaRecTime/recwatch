@@ -1,5 +1,7 @@
 import {
+  CheckIcon,
   LogOutIcon,
+  MonitorIcon,
   MoonStarIcon,
   SettingsIcon,
   SunMediumIcon,
@@ -22,9 +24,8 @@ export function AccountMenuPanel({
   onClose,
   onLogout,
 }: AccountMenuPanelProps) {
-  const { theme, toggleTheme } = useThemeMode();
+  const { theme, setTheme } = useThemeMode();
   const navigate = useNavigate();
-  const isDark = theme === "dark";
 
   const menuItems: MenuItemType[] = [
     {
@@ -37,25 +38,36 @@ export function AccountMenuPanel({
       type: "submenu",
       id: "theme",
       label: "テーマ設定",
-      icon: isDark ? MoonStarIcon : SunMediumIcon,
+      icon:
+        theme === "dark"
+          ? MoonStarIcon
+          : theme === "light"
+            ? SunMediumIcon
+            : MonitorIcon,
       children: [
+        {
+          type: "action",
+          id: "theme-system",
+          label: "システム",
+          icon: MonitorIcon,
+          endIcon: theme === "system" ? CheckIcon : undefined,
+          onClick: () => setTheme("system"),
+        },
         {
           type: "action",
           id: "theme-dark",
           label: "Dark mode",
           icon: MoonStarIcon,
-          onClick: () => {
-            if (!isDark) toggleTheme();
-          },
+          endIcon: theme === "dark" ? CheckIcon : undefined,
+          onClick: () => setTheme("dark"),
         },
         {
           type: "action",
           id: "theme-light",
           label: "Light mode",
           icon: SunMediumIcon,
-          onClick: () => {
-            if (isDark) toggleTheme();
-          },
+          endIcon: theme === "light" ? CheckIcon : undefined,
+          onClick: () => setTheme("light"),
         },
       ],
     },
