@@ -12,6 +12,7 @@ export default [
     route("members", "routes/main/members.tsx"),
     route("members/teams", "routes/main/members.teams.tsx"),
     route("members/import", "routes/main/members.import.tsx"),
+    route("homeroom", "routes/main/homeroom.tsx"),
     route("timing", "routes/main/timing.tsx"),
     route("sports", "routes/main/sports.tsx"),
     route("sports/tournament", "routes/main/sports.tournament.tsx"),
