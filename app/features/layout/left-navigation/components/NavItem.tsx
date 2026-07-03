@@ -72,7 +72,10 @@ export function NavItem({ def }: NavItemProps) {
       <div className="group/nav relative">
         <button
           type="button"
-          className={actionListItemStyle({ intent: "nav", active: isActive })}
+          className={cn(
+            actionListItemStyle({ intent: "nav", active: false }),
+            isActive && "hover:bg-transparent"
+          )}
           onClick={() => {
             if (isSidebarOpen) {
               toggleAccordion(def.id);

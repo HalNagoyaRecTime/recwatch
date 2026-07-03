@@ -3,8 +3,8 @@ import {
   MoonStarIcon,
   SettingsIcon,
   SunMediumIcon,
-  User2Icon,
 } from "lucide-react";
+import { useNavigate } from "react-router";
 
 import { useThemeMode } from "~/hooks/useThemeMode";
 import type { AccountBtnData } from "~/features/account/model/account-btn-data";
@@ -23,6 +23,7 @@ export function AccountMenuPanel({
   onLogout,
 }: AccountMenuPanelProps) {
   const { theme, toggleTheme } = useThemeMode();
+  const navigate = useNavigate();
   const isDark = theme === "dark";
 
   const menuItems: MenuItemType[] = [
@@ -60,17 +61,13 @@ export function AccountMenuPanel({
     },
     {
       type: "action",
-      id: "profile",
-      label: "プロフィール",
-      icon: User2Icon,
-      onClick: onClose,
-    },
-    {
-      type: "action",
       id: "settings",
       label: "設定",
       icon: SettingsIcon,
-      onClick: onClose,
+      onClick: () => {
+        onClose();
+        navigate("/user/settings");
+      },
     },
     { type: "divider", id: "div-2" },
     {

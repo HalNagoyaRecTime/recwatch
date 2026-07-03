@@ -185,7 +185,7 @@ export const navSections = [
     items: [
       {
         id: "settings",
-        label: "イベント設定",
+        label: "イベント管理",
         icon: "settings",
         to: "/settings",
         roles: ["admin", "manager"],

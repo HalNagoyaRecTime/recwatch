@@ -21,5 +21,6 @@ export default [
     route("reports/export", "routes/app/reports.export.tsx"),
     route("schedule", "routes/app/schedule.tsx"),
     route("settings", "routes/app/settings.tsx"),
+    route("user/settings", "routes/app/user.settings.tsx"),
   ]),
 ] satisfies RouteConfig;

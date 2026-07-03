@@ -4,7 +4,7 @@ export const actionListContainerStyle =
   "border-border-2 bg-surface-overlay-strong shadow-soft min-w-max rounded-xl border p-2 backdrop-blur-xl";
 
 export const actionListItemStyle = cva(
-  "relative flex h-8.5 w-full cursor-pointer items-center gap-2.5 rounded-md bg-transparent px-2.5 text-left text-sm transition",
+  "relative flex h-8.5 w-full cursor-pointer items-center gap-2.5 rounded-md px-2.5 text-left text-sm transition",
   {
     variants: {
       intent: {

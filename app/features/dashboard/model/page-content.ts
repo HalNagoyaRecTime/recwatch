@@ -245,4 +245,20 @@ export const pageContent = {
       },
     ],
   },
+  userSettings: {
+    eyebrow: "User",
+    title: "User Settings",
+    description: "Management page for user personal settings.",
+    sections: [
+      {
+        title: "Profile",
+        description: "This area will hold personal profile information.",
+      },
+      {
+        title: "Preferences",
+        description:
+          "This area will show display and notification preferences.",
+      },
+    ],
+  },
 } satisfies Record<string, AdminPageContent>;
