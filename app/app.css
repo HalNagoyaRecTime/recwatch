@@ -2,10 +2,57 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+@theme {
+  --color-gradient-start: var(--bg-gradient-start);
+  --color-gradient-end: var(--bg-gradient-end);
+  --color-gradient-glow: var(--bg-gradient-glow);
+
+  --color-surface-1: var(--surface-1);
+  --color-surface-2: var(--surface-2);
+  --color-surface-overlay: var(--surface-overlay);
+  --color-surface-overlay-strong: var(--surface-overlay-strong);
+  --color-surface-card-gloss: var(--surface-card-gloss);
+  --color-surface-row: var(--surface-row);
+  --color-surface-brand-soft: var(--surface-brand-soft);
+
+  --color-border-1: var(--border-1);
+  --color-border-2: var(--border-2);
+  --color-border-strong: var(--border-strong);
+
+  --color-text-1: var(--text-1);
+  --color-text-2: var(--text-2);
+  --color-text-3: var(--text-3);
+
+  --color-brand-1: var(--brand-1);
+  --color-brand-2: var(--brand-2);
+  --color-brand-button-1: var(--brand-button-1);
+  --color-brand-button-2: var(--brand-button-2);
+  --color-brand-button-text: var(--brand-button-text);
+
+  --color-tone-green-border: var(--tone-green-border);
+  --color-tone-green-bg: var(--tone-green-bg);
+  --color-tone-green-text: var(--tone-green-text);
+
+  --color-tone-blue-border: var(--tone-blue-border);
+  --color-tone-blue-bg: var(--tone-blue-bg);
+  --color-tone-blue-text: var(--tone-blue-text);
+
+  --color-tone-cyan-border: var(--tone-cyan-border);
+  --color-tone-cyan-bg: var(--tone-cyan-bg);
+  --color-tone-cyan-text: var(--tone-cyan-text);
+
+  --color-tone-danger-bg: var(--tone-danger-bg);
+  --color-tone-danger-bg-hover: var(--tone-danger-bg-hover);
+  --color-tone-danger-border: var(--tone-danger-border);
+  --color-tone-danger-text: var(--tone-danger-text);
+
+  --shadow-soft: var(--shadow-soft);
+}
+
 :root {
-  --bg-top: #eef8ff;
-  --bg-bottom: #f8fcff;
-  --bg-glow: rgba(56, 189, 248, 0.16);
+  --bg-gradient-start: #eef8ff;
+  --bg-gradient-end: #f8fcff;
+  --bg-gradient-glow: rgba(56, 189, 248, 0.16);
 
   --surface-1: rgba(255, 255, 255, 0.84);
   --surface-2: rgba(226, 242, 252, 0.82);
@@ -41,17 +88,18 @@
   --tone-cyan-bg: rgba(56, 189, 248, 0.12);
   --tone-cyan-text: #0369a1;
 
-  --tone-red-border: rgba(239, 68, 68, 0.28);
-  --tone-red-bg: rgba(239, 68, 68, 0.12);
-  --tone-red-text: #dc2626;
+  --tone-danger-bg: rgba(239, 68, 68, 0.12);
+  --tone-danger-bg-hover: rgba(239, 68, 68, 0.2);
+  --tone-danger-border: rgba(239, 68, 68, 0.28);
+  --tone-danger-text: #dc2626;
 
   --shadow-soft: 0 20px 45px rgba(15, 23, 42, 0.12);
 }
 
 .dark {
-  --bg-top: #03131d;
-  --bg-bottom: #07131b;
-  --bg-glow: rgba(56, 189, 248, 0.12);
+  --bg-gradient-start: #03131d;
+  --bg-gradient-end: #07131b;
+  --bg-gradient-glow: rgba(56, 189, 248, 0.12);
 
   --surface-1: #0b1720;
   --surface-2: #10212d;
@@ -84,9 +132,10 @@
   --tone-cyan-bg: rgba(56, 189, 248, 0.12);
   --tone-cyan-text: #7dd3fc;
 
-  --tone-red-border: rgba(239, 68, 68, 0.36);
-  --tone-red-bg: rgba(239, 68, 68, 0.12);
-  --tone-red-text: #ff8d8d;
+  --tone-danger-bg: rgba(239, 68, 68, 0.12);
+  --tone-danger-bg-hover: rgba(239, 68, 68, 0.2);
+  --tone-danger-border: rgba(239, 68, 68, 0.36);
+  --tone-danger-text: #ff8d8d;
 
   --shadow-soft: 0 20px 45px rgba(0, 0, 0, 0.28);
 }
@@ -101,8 +150,16 @@ body {
 
 body {
   height: 100dvh;
+  min-height: 100dvh;
   overscroll-behavior-y: none;
   overflow: hidden;
+  background:
+    radial-gradient(
+      circle at top right,
+      var(--bg-gradient-glow),
+      transparent 32%
+    ),
+    linear-gradient(180deg, var(--bg-gradient-start), var(--bg-gradient-end));
 }
 
 a {
@@ -144,7 +201,7 @@ input {
 }
 
 .left-navigation-open-width {
-  width: 224px;
+  width: 230px;
 }
 
 @media (prefers-reduced-motion: reduce) {
