@@ -7,6 +7,7 @@ import type { NavChildDef, NavItemDef } from "~/types/nav";
 
 import { NavAccordion } from "~/features/layout/left-navigation/components/NavAccordion";
 import { useLeftNavigationExpanded } from "~/features/layout/left-navigation/hooks/useLeftNavigationExpanded";
+import { actionListItemStyle } from "~/components/ui/styles/action-list-styles";
 
 type NavItemProps = {
   def: NavItemDef;
@@ -26,16 +27,6 @@ function closeOnSmallScreen(closeForMobile: () => void) {
   }
 }
 
-function itemBaseClass(isActive: boolean) {
-  return cn(
-    "relative flex min-h-[42px] w-full items-center gap-3 rounded-xl bg-transparent px-3 text-[color:var(--text-2)] transition",
-    "hover:bg-[color:var(--surface-2)] hover:text-[color:var(--text-1)]",
-    isActive
-      ? "bg-[color:var(--surface-brand-soft)] text-[color:var(--text-1)]"
-      : ""
-  );
-}
-
 function ChildLink({
   child,
   closeForMobile,
@@ -46,7 +37,9 @@ function ChildLink({
   return (
     <NavLink
       to={child.to}
-      className={({ isActive }) => itemBaseClass(isActive)}
+      className={({ isActive }) =>
+        actionListItemStyle({ intent: "nav", active: isActive })
+      }
       onClick={() => closeOnSmallScreen(closeForMobile)}
     >
       {({ isActive }) => (
@@ -87,7 +80,7 @@ export function NavItem({ def }: NavItemProps) {
       <div className="group/nav relative">
         <button
           type="button"
-          className={itemBaseClass(isActive)}
+          className={actionListItemStyle({ intent: "nav", active: isActive })}
           onClick={() => {
             if (isSidebarOpen) {
               toggleAccordion(def.id);
@@ -143,12 +136,10 @@ export function NavItem({ def }: NavItemProps) {
                   <NavLink
                     key={child.id}
                     to={child.to}
-                    className={cn(
-                      "flex min-h-[35px] items-center gap-2 rounded-lg px-2.5 text-[12.5px] transition",
-                      childActive
-                        ? "bg-[color:var(--surface-2)] text-[color:var(--text-1)]"
-                        : "text-[color:var(--text-2)] hover:bg-[color:var(--surface-2)] hover:text-[color:var(--text-1)]"
-                    )}
+                    className={actionListItemStyle({
+                      intent: "nav",
+                      active: childActive,
+                    })}
                     onClick={() => closeOnSmallScreen(closeForMobile)}
                   >
                     <span>{child.label}</span>
@@ -170,7 +161,9 @@ export function NavItem({ def }: NavItemProps) {
     <div className="group/nav relative">
       <NavLink
         to={def.to}
-        className={({ isActive: linkActive }) => itemBaseClass(linkActive)}
+        className={({ isActive: linkActive }) =>
+          actionListItemStyle({ intent: "nav", active: linkActive })
+        }
         onClick={() => closeOnSmallScreen(closeForMobile)}
       >
         {({ isActive: linkActive }) => (

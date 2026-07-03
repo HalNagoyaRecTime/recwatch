@@ -2,6 +2,10 @@ import { ChevronRightIcon } from "lucide-react";
 import type { ReactNode, ElementType } from "react";
 import { cn } from "~/lib/cn";
 import { Popover } from "~/components/shared/Popover";
+import {
+  actionListContainerStyle,
+  actionListItemStyle,
+} from "./styles/action-list-styles";
 
 export type MenuItemType =
   | {
@@ -36,12 +40,7 @@ type MenuProps = {
 
 export function Menu({ items, className }: MenuProps) {
   return (
-    <div
-      className={cn(
-        "border-border-2 bg-surface-overlay-strong shadow-soft min-w-max rounded-xl border p-2 backdrop-blur-xl",
-        className
-      )}
-    >
+    <div className={cn(actionListContainerStyle, className)}>
       {items.map((item) => {
         if (item.type === "custom") {
           return <div key={item.id}>{item.content}</div>;
@@ -62,7 +61,7 @@ export function Menu({ items, className }: MenuProps) {
               trigger={
                 <button
                   type="button"
-                  className="text-text-1 hover:bg-surface-2 flex h-8.5 w-full cursor-pointer items-center justify-between gap-2.5 rounded-md bg-transparent px-2.5 text-left text-sm transition"
+                  className={cn(actionListItemStyle(), "justify-between")}
                 >
                   <div className="flex items-center gap-2.5">
                     {item.icon && (
@@ -94,10 +93,9 @@ export function Menu({ items, className }: MenuProps) {
             key={item.id}
             onClick={item.onClick}
             className={cn(
-              "flex h-8.5 w-full cursor-pointer items-center gap-2.5 rounded-md bg-transparent px-2.5 text-left text-sm transition",
-              item.danger
-                ? "text-tone-danger-text hover:bg-tone-danger-bg-hover"
-                : "text-text-1 hover:bg-surface-2"
+              actionListItemStyle({
+                intent: item.danger ? "danger" : "primary",
+              })
             )}
           >
             {item.icon && (

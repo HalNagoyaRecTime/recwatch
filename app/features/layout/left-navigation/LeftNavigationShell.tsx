@@ -1,7 +1,6 @@
 import { useEffect } from "react";
 
 import { useNavState } from "~/hooks/useNavState";
-import { cn } from "~/lib/cn";
 
 import { BottomBtn } from "~/features/layout/left-navigation/bottom-area/BottomBtn";
 import { AppSidebar } from "~/features/layout/left-navigation/components/AppSidebar";
@@ -9,6 +8,10 @@ import { useLeftNavigationExpanded } from "~/features/layout/left-navigation/hoo
 import { useLeftNavigationHoverState } from "~/features/layout/left-navigation/hooks/useLeftNavigationHoverState";
 import { LeftNavigationHoverProvider } from "~/features/layout/left-navigation/components/LeftNavigationHoverProvider";
 import { SidebarBrand } from "~/features/layout/left-navigation/header-logo/SidebarBrand";
+import {
+  sidebarContainerStyle,
+  sidebarPlaceholderStyle,
+} from "~/features/layout/left-navigation/styles/sidebar-styles";
 
 function LeftNavigationContent() {
   const { isOpen } = useNavState();
@@ -22,21 +25,8 @@ function LeftNavigationContent() {
   }, [setHovering]);
 
   return (
-    <div
-      className={cn(
-        "relative z-99 overflow-visible transition-[width] duration-200 ease-in-out",
-        isOpen ? "left-navigation-open-width" : "left-navigation-close-width"
-      )}
-    >
-      <div
-        className={cn(
-          "left-navigation-expandable absolute z-99 flex h-full flex-col border-r bg-(--surface-overlay) backdrop-blur-xl transition-[width] duration-200 ease-in-out",
-          "border-(--border-1)",
-          isExpanded
-            ? "left-navigation-open-width"
-            : "left-navigation-close-width"
-        )}
-      >
+    <div className={sidebarPlaceholderStyle({ isOpen })}>
+      <div className={sidebarContainerStyle({ isExpanded })}>
         <div
           className="sidebar-hover-area contents"
           onMouseEnter={() => setHovering(true)}
