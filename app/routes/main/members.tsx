@@ -2,7 +2,7 @@ import { useLoaderData } from "react-router";
 import { MembersPage } from "~/features/members/pages/MembersPage";
 import { getStudentsData } from "~/features/members/model/students-data";
 
-export async function loader() {
+export async function clientLoader() {
   return getStudentsData();
 }
 export function meta() {

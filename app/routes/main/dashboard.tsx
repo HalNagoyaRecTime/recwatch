@@ -8,7 +8,7 @@ export function meta() {
   return [{ title: "Dashboard | recwatch" }];
 }
 
-export async function loader() {
+export async function clientLoader() {
   const res = await fetch(`${env.backendBaseUrl}/`);
   return res.json();
 }
