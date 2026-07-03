@@ -7,7 +7,7 @@ import {
   SunMediumIcon,
 } from "lucide-react";
 import { useNavigate } from "react-router";
-
+import { cn } from "~/lib/cn";
 import { useThemeMode } from "~/hooks/useThemeMode";
 import type { AccountBtnData } from "~/features/frame/main-header/account-menu/model/account-btn-data";
 import { Menu, type MenuItemType } from "~/components/ui/Menu";
@@ -50,7 +50,13 @@ export function AccountMenuPanel({
           id: "theme-light",
           label: "ライト",
           icon: SunMediumIcon,
-          endIcon: theme === "light" ? CheckIcon : undefined,
+          endIcon: (
+            <CheckIcon
+              size={14}
+              strokeWidth={1.8}
+              className={cn(theme !== "light" && "opacity-0")}
+            />
+          ),
           onClick: () => setTheme("light"),
         },
         {
@@ -58,7 +64,13 @@ export function AccountMenuPanel({
           id: "theme-dark",
           label: "ダーク",
           icon: MoonStarIcon,
-          endIcon: theme === "dark" ? CheckIcon : undefined,
+          endIcon: (
+            <CheckIcon
+              size={14}
+              strokeWidth={1.8}
+              className={cn(theme !== "dark" && "opacity-0")}
+            />
+          ),
           onClick: () => setTheme("dark"),
         },
         {
@@ -66,7 +78,13 @@ export function AccountMenuPanel({
           id: "theme-system",
           label: "システム",
           icon: MonitorIcon,
-          endIcon: theme === "system" ? CheckIcon : undefined,
+          endIcon: (
+            <CheckIcon
+              size={14}
+              strokeWidth={1.8}
+              className={cn(theme !== "system" && "opacity-0")}
+            />
+          ),
           onClick: () => setTheme("system"),
         },
       ],

@@ -13,7 +13,7 @@ export type MenuItemType =
       id: string;
       label: string;
       icon?: ElementType;
-      endIcon?: ElementType;
+      endIcon?: ElementType | ReactNode;
       danger?: boolean;
       onClick?: () => void;
     }
@@ -79,7 +79,7 @@ export function Menu({ items, className }: MenuProps) {
                   <ChevronRightIcon
                     size={14}
                     strokeWidth={1.8}
-                    className="text-text-3 ml-4 shrink-0"
+                    className="text-text-3 shrink-0"
                   />
                 </button>
               }
@@ -109,11 +109,13 @@ export function Menu({ items, className }: MenuProps) {
               </span>
             </div>
             {item.endIcon && (
-              <item.endIcon
-                size={14}
-                strokeWidth={1.8}
-                className="text-text-3 ml-4 shrink-0"
-              />
+              <div className="text-text-3 flex shrink-0 items-center justify-center">
+                {typeof item.endIcon === "function" ? (
+                  <item.endIcon size={14} strokeWidth={1.8} />
+                ) : (
+                  item.endIcon
+                )}
+              </div>
             )}
           </button>
         );
