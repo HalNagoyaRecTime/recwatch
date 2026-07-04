@@ -7,4 +7,5 @@
 # React Router
 /.react-router/
 /build/
+/app-old
 
