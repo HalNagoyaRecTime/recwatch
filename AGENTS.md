@@ -1,125 +1,131 @@
 # AGENTS
 
-## 1. Purpose
+## 1. 目的 (Purpose)
 
-This repository defines architectural principles.
+このリポジトリはアーキテクチャの原則を定義するものです。
 
-It does not define framework rules, language rules, or directory structures.  
-It defines how systems should be designed to remain evolvable, clear, and replaceable.
-
----
-
-## 2. Core Principles
-
-### 2.1 Separation of Responsibilities
-
-Each layer has a single purpose.
-Mixing concerns increases long-term cost.
+フレームワーク固有のルール、言語固有のルール、あるいはディレクトリ構造を定義するものではありません。
+システムが進化可能（evolvable）で、明確かつ、交換可能な状態を保つためにどのように設計されるべきかを定義します。
 
 ---
 
-### 2.2 File Responsibility Principle
+## 2. コア原則 (Core Principles)
 
-Each file must represent a single cohesive responsibility.
+### 2.1 責任の分離 (Separation of Responsibilities)
 
-- A file must express one clear purpose.
-- If a file requires “and” to describe its role, it likely violates this rule.
-- Multiple helper functions are allowed if they support the same responsibility.
-- A file must not contain multiple unrelated use cases.
-- Increasing file count is acceptable if it preserves structural clarity.
-
-This rule enforces responsibility separation at a physical (file) level.
-It does not define directory structure or naming conventions.
+各レイヤーは単一の目的を持ちます。
+関心事（concerns）を混在させることは、長期的なコストを増加させます。
 
 ---
 
-### 2.3 Layered Architecture
+### 2.2 ファイルの責任原則 (File Responsibility Principle)
 
-Systems are organized into logical layers:
+各ファイルは単一で凝集度の高い責任を表現しなければなりません。
 
-- Presentation
-- Application
-- Domain
-- Infrastructure
+- ファイルは1つの明確な目的を表現しなければならない。
+- ファイルの役割を説明するのに「〜と（and）」が必要な場合、このルールに違反している可能性が高い。
+- 同じ責任をサポートするものであれば、複数のヘルパー関数を含めることは許容される。
+- 1つのファイルに複数の無関係なユースケースを含めてはならない。
+- 構造の明確さを保つのであれば、ファイル数が増加することは許容される。
 
-Dependencies must move inward.
-Inner layers must not depend on outer layers.
-
----
-
-### 2.4 Boundary Normalization
-
-All external data must be normalized at system boundaries.
-Internal domain models must not depend on external data shapes.
+このルールは物理的（ファイル）レベルでの責任分離を強制するものです。
+ディレクトリ構造や命名規則を定義するものではありません。
 
 ---
 
-### 2.5 Domain Isolation
+### 2.3 レイヤードアーキテクチャ (Layered Architecture)
 
-The domain model is the source of truth.
-It must not depend on frameworks, transport formats, or infrastructure details.
+システムは論理的なレイヤーに構成されます：
 
----
+- プレゼンテーション (Presentation)
+- アプリケーション (Application)
+- ドメイン (Domain)
+- インフラストラクチャ (Infrastructure)
 
-### 2.6 Explicit Mapping
-
-All transformations between layers must be explicit.
-Structural similarity is not a reason to bypass mapping.
-
----
-
-### 2.7 Replaceable Contracts
-
-External systems must be accessed through explicit contracts.
-Implementations must be replaceable without affecting the domain.
+依存関係は内側に向かって進まなければなりません。
+内側のレイヤーが外側のレイヤーに依存してはなりません。
 
 ---
 
-### 2.8 No Leakage
+### 2.4 境界での正規化 (Boundary Normalization)
 
-External conventions must not leak into internal models.
-Transport formats must not define domain logic.
-
----
-
-### 2.9 Evolvability First
-
-Prefer structures that tolerate change.  
-Short-term convenience must not compromise long-term flexibility.
+すべての外部データは、システムの境界において正規化されなければなりません。
+内部のドメインモデルが、外部データの形状に依存してはなりません。
 
 ---
 
-## 3. Design Philosophy
+### 2.5 ドメインの隔離 (Domain Isolation)
 
-Constraints are intentional.  
-Constraints reduce ambiguity.  
-Simplicity is preferred over cleverness.  
-Clarity is preferred over compactness.
+ドメインモデルは信頼できる唯一の情報源（source of truth）です。
+フレームワーク、通信フォーマット、インフラストラクチャの詳細に依存してはなりません。
 
 ---
 
-## 4. Trade-offs
+### 2.6 明示的なマッピング (Explicit Mapping)
 
-This architecture increases:
-
-- File count
-- Explicit transformations
-- Initial implementation cost
-
-It reduces:
-
-- Long-term coupling
-- Hidden dependencies
-- Refactoring risk
+レイヤー間のすべての変換（データマッピング）は明示的でなければなりません。
+構造が似ているからといって、マッピングを省略する理由にはなりません。
 
 ---
 
-## 5. Non-Goals
+### 2.7 交換可能な契約 (Replaceable Contracts)
 
-This repository does not define:
+外部システムへのアクセスは、明示的な契約（インターフェース）を通じて行われなければなりません。
+実装は、ドメインに影響を与えることなく交換可能でなければなりません。
 
-- Framework-specific rules
-- Language-specific rules
-- Naming conventions
-- Directory structures
-- Formatting rules
+---
+
+### 2.8 漏洩の禁止 (No Leakage)
+
+外部の規約や概念が内部モデルに漏れ出してはなりません。
+通信フォーマットがドメインロジックを定義してはなりません。
+
+---
+
+### 2.9 進化性を最優先 (Evolvability First)
+
+変化に耐えうる構造を優先してください。
+短期的な利便性のために、長期的な柔軟性を犠牲にしてはなりません。
+
+---
+
+## 3. 設計哲学 (Design Philosophy)
+
+制約は意図的なものです。
+制約が曖昧さを減らします。
+賢さ（cleverness）よりもシンプルさ（simplicity）を優先します。
+コンパクトさ（compactness）よりも明確さ（clarity）を優先します。
+
+---
+
+## 4. トレードオフ (Trade-offs)
+
+このアーキテクチャは以下を増加させます：
+
+- ファイル数
+- 明示的な変換処理の記述
+- 初期の実装コスト
+
+このアーキテクチャは以下を減少させます：
+
+- 長期的な結合度
+- 隠れた依存関係
+- リファクタリングのリスク
+
+---
+
+## 5. 対象外とするもの (Non-Goals)
+
+このリポジトリでは以下を定義しません：
+
+- フレームワーク固有のルール
+- 言語固有のルール
+- 命名規則
+- ディレクトリ構造
+- フォーマットルール
+
+---
+
+## 6. AIエージェントのワークフロールール (AI Agent Workflow Rules)
+
+- **コード変更後の検証 (Post-Modification Validation)**: AIエージェントはコードを変更した後、ユーザーに作業完了を報告する前に、必ず自身の環境で Linter や Formatter（例: `npm run lint` や `eslint` 等の同等のコマンド）を実行し、Lintエラーや警告が残っていないことを自身で確認・修正しなければならない。
