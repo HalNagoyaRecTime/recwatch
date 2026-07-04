@@ -1,8 +1,7 @@
 import { AccountMenuBtn } from "~/features/frame/main-header/account-menu/components/AccountMenuBtn";
 import { AccountMenuPanel } from "~/features/frame/main-header/account-menu/components/AccountMenuPanel";
 import { getAccountBtnData } from "~/features/frame/main-header/account-menu/model/account-btn-data";
-import { useState } from "react";
-import { FloatingPanel } from "~/components/shared/FloatingPanel";
+import { useAccountBtn } from "~/features/frame/main-header/account-menu/hooks/useAccountBtn";
 
 type AccountBtnProps = {
   onLogout?: () => void;
@@ -10,28 +9,18 @@ type AccountBtnProps = {
 
 export function AccountBtn({ onLogout }: AccountBtnProps) {
   const account = getAccountBtnData();
-  const [isOpen, setIsOpen] = useState(false);
+  const { close, isOpen, rootRef, toggle } = useAccountBtn();
 
   return (
-    <FloatingPanel
-      isOpen={isOpen}
-      onOpenChange={setIsOpen}
-      placement="bottom-end"
-      interaction="click"
-      trigger={
-        <AccountMenuBtn
-          account={account}
-          isOpen={isOpen}
-          onToggle={() => setIsOpen(!isOpen)}
-        />
-      }
-      content={
+    <div className="relative" ref={rootRef}>
+      <AccountMenuBtn account={account} isOpen={isOpen} onToggle={toggle} />
+      {isOpen ? (
         <AccountMenuPanel
           account={account}
-          onClose={() => setIsOpen(false)}
+          onClose={close}
           onLogout={onLogout}
         />
-      }
-    />
+      ) : null}
+    </div>
   );
 }

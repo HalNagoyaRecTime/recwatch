@@ -5,8 +5,8 @@ export type NavIconKey =
   | "clock"
   | "dashboard"
   | "file"
+  | "home"
   | "settings"
-  | "homeroom"
   | "timing"
   | "trophy"
   | "users";
@@ -32,153 +32,153 @@ export type NavItemConfig = NavRoleConfig & {
 };
 
 export type NavSectionConfig = {
-  label: string;
+  label?: string;
+  hasDivider?: boolean;
   items: NavItemConfig[];
 };
 
 export const navSections = [
   {
-    label: "Main",
     items: [
       {
         id: "dashboard",
-        label: "Dashboard",
-        icon: "dashboard",
+        label: "ダッシュボード",
+        icon: "home",
         to: "/dashboard",
         roles: ["admin", "manager", "member"],
       },
+    ],
+  },
+  {
+    label: "分析",
+    items: [
+      {
+        id: "reports",
+        label: "レポート",
+        icon: "file",
+        roles: ["admin", "manager"],
+        children: [
+          {
+            id: "reports-summary",
+            label: "サマリー",
+            to: "/reports/summary",
+            roles: ["admin", "manager"],
+          },
+          {
+            id: "reports-detail",
+            label: "詳細",
+            to: "/reports/detail",
+            roles: ["admin"],
+          },
+          {
+            id: "reports-export",
+            label: "エクスポート",
+            to: "/reports/export",
+            roles: ["admin"],
+          },
+        ],
+      },
+    ],
+  },
+  {
+    label: "管理",
+    items: [
       {
         id: "events",
-        label: "Events",
+        label: "イベント",
         icon: "calendar",
-        badge: 3,
         roles: ["admin", "manager", "member"],
         children: [
           {
             id: "events-active",
-            label: "Active Events",
+            label: "開催中",
             to: "/events/active",
             roles: ["admin", "manager", "member"],
           },
           {
             id: "events-past",
-            label: "Past Events",
+            label: "過去のイベント",
             to: "/events/past",
             roles: ["admin", "manager"],
           },
           {
             id: "events-new",
-            label: "Create Event",
+            label: "新規作成",
             to: "/events/new",
-            badge: "Beta",
             roles: ["admin", "manager"],
           },
         ],
       },
       {
         id: "members",
-        label: "Members",
+        label: "メンバー",
         icon: "users",
-        badge: 128,
         roles: ["admin", "manager"],
         children: [
           {
             id: "members-list",
-            label: "Member List",
+            label: "メンバー一覧",
             to: "/members",
             roles: ["admin", "manager"],
           },
           {
             id: "members-teams",
-            label: "Teams",
+            label: "チーム",
             to: "/members/teams",
             roles: ["admin", "manager"],
           },
           {
             id: "members-import",
-            label: "Import",
+            label: "インポート",
             to: "/members/import",
             roles: ["admin"],
           },
         ],
       },
       {
-        id: "homeroom",
-        label: "Homerooms",
-        icon: "homeroom",
-        to: "/homeroom",
-        roles: ["admin", "manager"],
-      },
-      {
-        id: "timing",
-        label: "Timing Control",
-        icon: "timing",
-        to: "/timing",
-        roles: ["admin", "manager"],
-      },
-    ],
-  },
-  {
-    label: "Operations",
-    items: [
-      {
         id: "sports",
-        label: "Sports Setup",
+        label: "競技マスター",
         icon: "trophy",
         roles: ["admin", "manager"],
         children: [
           {
             id: "sports-list",
-            label: "Sports List",
+            label: "競技一覧",
             to: "/sports",
             roles: ["admin", "manager"],
           },
           {
             id: "sports-tournament",
-            label: "Tournament",
+            label: "トーナメント",
             to: "/sports/tournament",
             roles: ["admin"],
           },
           {
             id: "sports-scoring",
-            label: "Scoring Rules",
+            label: "採点ルール",
             to: "/sports/scoring",
             roles: ["admin", "manager"],
           },
         ],
       },
-      {
-        id: "reports",
-        label: "Reports",
-        icon: "file",
-        roles: ["admin", "manager"],
-        children: [
-          {
-            id: "reports-summary",
-            label: "Summary",
-            to: "/reports/summary",
-            roles: ["admin", "manager"],
-          },
-          {
-            id: "reports-detail",
-            label: "Detail",
-            to: "/reports/detail",
-            roles: ["admin"],
-          },
-          {
-            id: "reports-export",
-            label: "Export",
-            to: "/reports/export",
-            roles: ["admin"],
-          },
-        ],
-      },
+    ],
+  },
+  {
+    label: "運用",
+    items: [
       {
         id: "schedule",
-        label: "Schedule",
-        icon: "clock",
+        label: "スケジュール",
+        icon: "calendar",
         to: "/schedule",
         roles: ["admin", "manager", "member"],
+      },
+      {
+        id: "timing",
+        label: "計測コントロール",
+        icon: "timing",
+        to: "/timing",
+        roles: ["admin", "manager"],
       },
     ],
   },
@@ -186,7 +186,7 @@ export const navSections = [
 
 export const settingsItem = {
   id: "settings",
-  label: "Settings",
+  label: "イベント管理",
   icon: "settings",
   to: "/settings",
   roles: ["admin", "manager"],

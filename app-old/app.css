@@ -1,0 +1,216 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --color-gradient-start: var(--bg-gradient-start);
+  --color-gradient-end: var(--bg-gradient-end);
+  --color-gradient-glow: var(--bg-gradient-glow);
+
+  --color-surface-1: var(--surface-1);
+  --color-surface-2: var(--surface-2);
+  --color-surface-overlay: var(--surface-overlay);
+  --color-surface-overlay-strong: var(--surface-overlay-strong);
+  --color-surface-card-gloss: var(--surface-card-gloss);
+  --color-surface-row: var(--surface-row);
+  --color-surface-brand-soft: var(--surface-brand-soft);
+
+  --color-border-1: var(--border-1);
+  --color-border-2: var(--border-2);
+  --color-border-strong: var(--border-strong);
+
+  --color-text-1: var(--text-1);
+  --color-text-2: var(--text-2);
+  --color-text-3: var(--text-3);
+
+  --color-brand-1: var(--brand-1);
+  --color-brand-2: var(--brand-2);
+  --color-brand-button-1: var(--brand-button-1);
+  --color-brand-button-2: var(--brand-button-2);
+  --color-brand-button-text: var(--brand-button-text);
+
+  --color-tone-green-border: var(--tone-green-border);
+  --color-tone-green-bg: var(--tone-green-bg);
+  --color-tone-green-text: var(--tone-green-text);
+
+  --color-tone-blue-border: var(--tone-blue-border);
+  --color-tone-blue-bg: var(--tone-blue-bg);
+  --color-tone-blue-text: var(--tone-blue-text);
+
+  --color-tone-cyan-border: var(--tone-cyan-border);
+  --color-tone-cyan-bg: var(--tone-cyan-bg);
+  --color-tone-cyan-text: var(--tone-cyan-text);
+
+  --color-tone-danger-bg: var(--tone-danger-bg);
+  --color-tone-danger-bg-hover: var(--tone-danger-bg-hover);
+  --color-tone-danger-border: var(--tone-danger-border);
+  --color-tone-danger-text: var(--tone-danger-text);
+
+  --shadow-soft: var(--shadow-soft);
+}
+
+:root {
+  --bg-gradient-start: #eef8ff;
+  --bg-gradient-end: #f8fcff;
+  --bg-gradient-glow: rgba(56, 189, 248, 0.16);
+
+  --surface-1: rgba(255, 255, 255, 0.84);
+  --surface-2: rgba(226, 242, 252, 0.82);
+  --surface-overlay: rgba(255, 255, 255, 0.78);
+  --surface-overlay-strong: rgba(255, 255, 255, 0.94);
+  --surface-card-gloss: rgba(255, 255, 255, 0.34);
+  --surface-row: rgba(255, 255, 255, 0.62);
+  --surface-brand-soft: rgba(56, 189, 248, 0.14);
+
+  --border-1: rgba(15, 23, 42, 0.08);
+  --border-2: rgba(15, 23, 42, 0.14);
+  --border-strong: rgba(15, 23, 42, 0.24);
+
+  --text-1: #05233a;
+  --text-2: #45657d;
+  --text-3: #7b95ab;
+
+  --brand-1: #38bdf8;
+  --brand-2: #7dd3fc;
+  --brand-button-1: #2397d6;
+  --brand-button-2: #63c2f0;
+  --brand-button-text: #05233a;
+
+  --tone-green-border: rgba(34, 197, 94, 0.28);
+  --tone-green-bg: rgba(34, 197, 94, 0.12);
+  --tone-green-text: #15803d;
+
+  --tone-blue-border: rgba(59, 130, 246, 0.28);
+  --tone-blue-bg: rgba(59, 130, 246, 0.12);
+  --tone-blue-text: #1d4ed8;
+
+  --tone-cyan-border: rgba(56, 189, 248, 0.3);
+  --tone-cyan-bg: rgba(56, 189, 248, 0.12);
+  --tone-cyan-text: #0369a1;
+
+  --tone-danger-bg: rgba(239, 68, 68, 0.12);
+  --tone-danger-bg-hover: rgba(239, 68, 68, 0.2);
+  --tone-danger-border: rgba(239, 68, 68, 0.28);
+  --tone-danger-text: #dc2626;
+
+  --shadow-soft: 0 20px 45px rgba(15, 23, 42, 0.12);
+}
+
+.dark {
+  --bg-gradient-start: #03131d;
+  --bg-gradient-end: #07131b;
+  --bg-gradient-glow: rgba(56, 189, 248, 0.12);
+
+  --surface-1: #0b1720;
+  --surface-2: #10212d;
+  --surface-overlay: rgba(8, 20, 28, 0.86);
+  --surface-overlay-strong: rgba(12, 25, 35, 0.96);
+  --surface-card-gloss: rgba(255, 255, 255, 0.02);
+  --surface-row: rgba(255, 255, 255, 0.02);
+  --surface-brand-soft: rgba(56, 189, 248, 0.12);
+
+  --border-1: rgba(255, 255, 255, 0.07);
+  --border-2: rgba(255, 255, 255, 0.12);
+  --border-strong: rgba(255, 255, 255, 0.2);
+
+  --text-1: #eff9ff;
+  --text-2: #8fb0c4;
+  --text-3: #557187;
+  --brand-button-1: #1b6ea8;
+  --brand-button-2: #3a9cda;
+  --brand-button-text: #eff9ff;
+
+  --tone-green-border: rgba(34, 197, 94, 0.36);
+  --tone-green-bg: rgba(34, 197, 94, 0.12);
+  --tone-green-text: #74e0a0;
+
+  --tone-blue-border: rgba(59, 130, 246, 0.36);
+  --tone-blue-bg: rgba(59, 130, 246, 0.12);
+  --tone-blue-text: #8bc2ff;
+
+  --tone-cyan-border: rgba(56, 189, 248, 0.36);
+  --tone-cyan-bg: rgba(56, 189, 248, 0.12);
+  --tone-cyan-text: #7dd3fc;
+
+  --tone-danger-bg: rgba(239, 68, 68, 0.12);
+  --tone-danger-bg-hover: rgba(239, 68, 68, 0.2);
+  --tone-danger-border: rgba(239, 68, 68, 0.36);
+  --tone-danger-text: #ff8d8d;
+
+  --shadow-soft: 0 20px 45px rgba(0, 0, 0, 0.28);
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  color: var(--text-1);
+  font-family: Meiryo, system-ui, sans-serif;
+}
+
+body {
+  height: 100dvh;
+  min-height: 100dvh;
+  overscroll-behavior-y: none;
+  overflow: hidden;
+  background:
+    radial-gradient(
+      circle at top right,
+      var(--bg-gradient-glow),
+      transparent 32%
+    ),
+    linear-gradient(180deg, var(--bg-gradient-start), var(--bg-gradient-end));
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+#app {
+  height: 100dvh;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--brand-1) 28%, transparent);
+}
+
+.main-header-height {
+  height: 52px;
+}
+
+.main-footer-height {
+  height: 42px;
+}
+
+.app-rounded {
+  border-radius: 8px;
+}
+
+.app-text-small {
+  font-size: 14px;
+}
+
+.left-navigation-close-width {
+  width: 56px;
+}
+
+.left-navigation-open-width {
+  width: 230px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}

@@ -21,6 +21,7 @@ export type NavItemDef = {
 };
 
 export type NavSectionDef = {
-  label: string;
+  label?: string;
+  hasDivider?: boolean;
   items: NavItemDef[];
 };

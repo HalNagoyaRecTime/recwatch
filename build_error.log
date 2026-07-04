@@ -1,0 +1,126 @@
+
+> build
+> react-router build
+
+[36mvite v7.3.1 [32mbuilding client environment for production...[36m[39m
+transforming...
+[32m笨・[39m 1876 modules transformed.
+笨・[39m Build failed in 2.13s
+[vite]: Rollup failed to resolve import "~/lib/cva" from "C:/Users/yukid/GitHub-Project/rectime-2026/recwatch/app/features/frame/left-navigation/styles/sidebar-styles.ts".
+This is most likely unintended because it can break your application at runtime.
+If you do want to externalize this module explicitly add it to
+`build.rollupOptions.external`
+    at viteLog (file:///C:/Users/yukid/GitHub-Project/rectime-2026/recwatch/node_modules/vite/dist/node/chunks/config.js:33635:57)
+    at file:///C:/Users/yukid/GitHub-Project/rectime-2026/recwatch/node_modules/vite/dist/node/chunks/config.js:33669:73
+    at onwarn (C:\Users\yukid\GitHub-Project\rectime-2026\recwatch\node_modules\@react-router\dev\dist\cli\index.js:1670:11)
+    at file:///C:/Users/yukid/GitHub-Project/rectime-2026/recwatch/node_modules/vite/dist/node/chunks/config.js:33669:28
+    at onRollupLog (file:///C:/Users/yukid/GitHub-Project/rectime-2026/recwatch/node_modules/vite/dist/node/chunks/config.js:33664:63)
+    at onLog (file:///C:/Users/yukid/GitHub-Project/rectime-2026/recwatch/node_modules/vite/dist/node/chunks/config.js:33467:4)
+    at file:///C:/Users/yukid/GitHub-Project/rectime-2026/recwatch/node_modules/rollup/dist/es/shared/node-entry.js:20981:32
+    at Object.logger [as onLog] (file:///C:/Users/yukid/GitHub-Project/rectime-2026/recwatch/node_modules/rollup/dist/es/shared/node-entry.js:22968:9)
+    at ModuleLoader.handleInvalidResolvedId (file:///C:/Users/yukid/GitHub-Project/rectime-2026/recwatch/node_modules/rollup/dist/es/shared/node-entry.js:21712:26)
+    at file:///C:/Users/yukid/GitHub-Project/rectime-2026/recwatch/node_modules/rollup/dist/es/shared/node-entry.js:21670:26 {
+  watchFiles: [
+    'C:\\Users\\yukid\\GitHub-Project\\rectime-2026\\recwatch\\package.json',
+    'C:/Users/yukid/GitHub-Project/rectime-2026/recwatch/node_modules/@react-router/dev/dist/config/defaults/entry.client.tsx',
+    'C:/Users/yukid/GitHub-Project/rectime-2026/recwatch/app/root.tsx',
+    'C:/Users/yukid/GitHub-Project/rectime-2026/recwatch/app/routes/auth/auth.email.tsx',
+    'C:/Users/yukid/GitHub-Project/rectime-2026/recwatch/app/routes/main/events.past.tsx',
+    'C:/Users/yukid/GitHub-Project/rectime-2026/recwatch/app/routes/main/events.active.tsx',
+    'C:/Users/yukid/GitHub-Project/rectime-2026/recwatch/app/routes/main/index.tsx',
+    'C:/Users/yukid/GitHub-Project/rectime-2026/recwatch/app/routes/main/frame.tsx',
+    'C:/Users/yukid/GitHub-Project/rectime-2026/recwatch/app/routes/main/events.new.tsx',
+    'C:/Users/yukid/GitHub-Project/rectime-2026/recwatch/app/routes/main/members.teams.tsx',
+    'C:/Users/yukid/GitHub-Project/rectime-2026/recwatch/app/routes/main/members.import.tsx',
+    'C:/Users/yukid/GitHub-Project/rectime-2026/recwatch/app/routes/main/sports.tsx',
+    'C:/Users/yukid/GitHub-Project/rectime-2026/recwatch/app/routes/main/timing.tsx',
+    'C:/Users/yukid/GitHub-Project/rectime-2026/recwatch/app/routes/main/sports.tournament.tsx',
+    'C:/Users/yukid/GitHub-Project/rectime-2026/recwatch/app/routes/main/sports.scoring.tsx',
+    'C:/Users/yukid/GitHub-Project/rectime-2026/recwatch/app/routes/main/homeroom.tsx',
+    'C:/Users/yukid/GitHub-Project/rectime-2026/recwatch/app/routes/main/reports.detail.tsx',
+    'C:/Users/yukid/GitHub-Project/rectime-2026/recwatch/app/routes/main/reports.export.tsx',
+    'C:/Users/yukid/GitHub-Project/rectime-2026/recwatch/app/routes/main/dashboard.tsx',
+    'C:/Users/yukid/GitHub-Project/rectime-2026/recwatch/app/routes/main/schedule.tsx',
+    'C:/Users/yukid/GitHub-Project/rectime-2026/recwatch/app/routes/auth/auth.login.tsx',
+    'C:/Users/yukid/GitHub-Project/rectime-2026/recwatch/app/routes/main/members.tsx',
+    'C:/Users/yukid/GitHub-Project/rectime-2026/recwatch/app/routes/main/reports.summary.tsx',
+    'C:/Users/yukid/GitHub-Project/rectime-2026/recwatch/app/routes/main/settings.tsx',
+    'C:/Users/yukid/GitHub-Project/rectime-2026/recwatch/node_modules/react/index.js',
+    'C:/Users/yukid/GitHub-Project/rectime-2026/recwatch/node_modules/react/jsx-runtime.js',
+    'C:/Users/yukid/GitHub-Project/rectime-2026/recwatch/node_modules/react-dom/client.js',
+    'C:/Users/yukid/GitHub-Project/rectime-2026/recwatch/node_modules/react-router/dist/development/dom-export.mjs',
+    'C:/Users/yukid/GitHub-Project/rectime-2026/recwatch/node_modules/react/cjs/react-jsx-runtime.production.js',
+    'C:/Users/yukid/GitHub-Project/rectime-2026/recwatch/node_modules/react/cjs/react.production.js',
+    'C:/Users/yukid/GitHub-Project/rectime-2026/recwatch/node_modules/react-dom/cjs/react-dom-client.production.js',
+    'C:/Users/yukid/GitHub-Project/rectime-2026/recwatch/node_modules/react-dom/index.js',
+    'C:/Users/yukid/GitHub-Project/rectime-2026/recwatch/node_modules/react-router/dist/development/chunk-JPUPSTYD.mjs',
+    'C:/Users/yukid/GitHub-Project/rectime-2026/recwatch/node_modules/react-router/dist/development/chunk-LFPYN7LY.mjs',
+    'C:/Users/yukid/GitHub-Project/rectime-2026/recwatch/node_modules/scheduler/index.js',
+    'C:/Users/yukid/GitHub-Project/rectime-2026/recwatch/node_modules/react-dom/cjs/react-dom.production.js',
+    'C:/Users/yukid/GitHub-Project/rectime-2026/recwatch/app/features/admin-pages/components/AdminPlaceholderPage.tsx',
+    'C:/Users/yukid/GitHub-Project/rectime-2026/recwatch/app/features/admin-pages/model/page-content.ts',
+    'C:/Users/yukid/GitHub-Project/rectime-2026/recwatch/node_modules/scheduler/cjs/scheduler.production.js',
+    'C:/Users/yukid/GitHub-Project/rectime-2026/recwatch/app/features/homeroom/pages/HomeRoomPage.tsx',
+    'C:/Users/yukid/GitHub-Project/rectime-2026/recwatch/app/features/auth/pages/AuthEmailVerificationPage.tsx',
+    'C:/Users/yukid/GitHub-Project/rectime-2026/recwatch/app/config/env.ts',
+    'C:/Users/yukid/GitHub-Project/rectime-2026/recwatch/app/features/admin-pages/components/AdminScreenPage.tsx',
+    'C:/Users/yukid/GitHub-Project/rectime-2026/recwatch/app/features/admin-pages/model/dashboard-content.ts',
+    'C:/Users/yukid/GitHub-Project/rectime-2026/recwatch/app/features/auth/pages/AuthLoginPage.tsx',
+    'C:/Users/yukid/GitHub-Project/rectime-2026/recwatch/app/features/frame/AppShell.tsx',
+    'C:/Users/yukid/GitHub-Project/rectime-2026/recwatch/app/features/members/model/students-data.ts',
+    'C:/Users/yukid/GitHub-Project/rectime-2026/recwatch/app/features/members/pages/MembersPage.tsx',
+    'C:/Users/yukid/GitHub-Project/rectime-2026/recwatch/node_modules/set-cookie-parser/lib/set-cookie.js',
+    'C:/Users/yukid/GitHub-Project/rectime-2026/recwatch/node_modules/react-router/node_modules/cookie/dist/index.js',
+    'C:/Users/yukid/GitHub-Project/rectime-2026/recwatch/app/lib/theme.ts',
+    'C:/Users/yukid/GitHub-Project/rectime-2026/recwatch/app/app.css',
+    'C:\\Users\\yukid\\GitHub-Project\\rectime-2026\\recwatch\\node_modules\\tailwindcss\\index.css',
+    'C:\\Users\\yukid\\GitHub-Project\\rectime-2026\\recwatch\\app\\config\\routes.ts',
+    'C:\\Users\\yukid\\GitHub-Project\\rectime-2026\\recwatch\\app\\features\\admin-pages\\model\\page-content.ts',
+    'C:\\Users\\yukid\\GitHub-Project\\rectime-2026\\recwatch\\app\\features\\frame\\left-navigation\\components\\NavAccordion.tsx',
+    'C:\\Users\\yukid\\GitHub-Project\\rectime-2026\\recwatch\\app\\features\\frame\\main-header\\search\\components\\SearchShell.tsx',
+    'C:\\Users\\yukid\\GitHub-Project\\rectime-2026\\recwatch\\.prettierignore',
+    'C:\\Users\\yukid\\GitHub-Project\\rectime-2026\\recwatch\\app\\features\\frame\\main-header\\components\\MobileHamburgerMenuBtn.tsx',
+    'C:\\Users\\yukid\\GitHub-Project\\rectime-2026\\recwatch\\app\\features\\homeroom\\components\\HomeroomTable.tsx',
+    'C:\\Users\\yukid\\GitHub-Project\\rectime-2026\\recwatch\\app\\features\\frame\\left-navigation\\components\\LeftNavigationHeader.tsx',
+    'C:\\Users\\yukid\\GitHub-Project\\rectime-2026\\recwatch\\app\\routes\\auth\\auth.email.tsx',
+    'C:\\Users\\yukid\\GitHub-Project\\rectime-2026\\recwatch\\app\\routes\\main\\dashboard.tsx',
+    'C:\\Users\\yukid\\GitHub-Project\\rectime-2026\\recwatch\\app\\mock\\dashboard.json',
+    'C:\\Users\\yukid\\GitHub-Project\\rectime-2026\\recwatch\\app\\config\\permissions.ts',
+    'C:\\Users\\yukid\\GitHub-Project\\rectime-2026\\recwatch\\app\\features\\frame\\left-navigation\\components\\NavigationContent.tsx',
+    'C:\\Users\\yukid\\GitHub-Project\\rectime-2026\\recwatch\\app\\features\\frame\\left-navigation\\components\\NavItem.tsx',
+    'C:\\Users\\yukid\\GitHub-Project\\rectime-2026\\recwatch\\AGENTS.md',
+    'C:\\Users\\yukid\\GitHub-Project\\rectime-2026\\recwatch\\app\\features\\frame\\main-header\\event-switcher\\components\\EventSwitcherPanel.tsx',
+    'C:\\Users\\yukid\\GitHub-Project\\rectime-2026\\recwatch\\.github\\ISSUE_TEMPLATE\\chore.yml',
+    'C:\\Users\\yukid\\GitHub-Project\\rectime-2026\\recwatch\\.github\\ISSUE_TEMPLATE\\refactor.yml',
+    'C:\\Users\\yukid\\GitHub-Project\\rectime-2026\\recwatch\\app\\routes\\main\\members.import.tsx',
+    'C:\\Users\\yukid\\GitHub-Project\\rectime-2026\\recwatch\\app\\features\\frame\\main-header\\account-menu\\components\\AccountBtn.tsx',
+    'C:\\Users\\yukid\\GitHub-Project\\rectime-2026\\recwatch\\app\\features\\frame\\main-header\\account-menu\\components\\AccountMenuBtn.tsx',
+    'C:\\Users\\yukid\\GitHub-Project\\rectime-2026\\recwatch\\README.md',
+    'C:\\Users\\yukid\\GitHub-Project\\rectime-2026\\recwatch\\app\\features\\frame\\left-navigation\\header-logo\\SidebarBrand.tsx',
+    'C:\\Users\\yukid\\GitHub-Project\\rectime-2026\\recwatch\\.prettierrc.json',
+    'C:\\Users\\yukid\\GitHub-Project\\rectime-2026\\recwatch\\.idea\\modules.xml',
+    'C:\\Users\\yukid\\GitHub-Project\\rectime-2026\\recwatch\\app\\features\\frame\\AppShell.tsx',
+    'C:\\Users\\yukid\\GitHub-Project\\rectime-2026\\recwatch\\app\\features\\frame\\main-header\\search\\components\\SearchBarContent.tsx',
+    'C:\\Users\\yukid\\GitHub-Project\\rectime-2026\\recwatch\\.env.example',
+    'C:\\Users\\yukid\\GitHub-Project\\rectime-2026\\recwatch\\.github\\ISSUE_TEMPLATE\\config.yml',
+    'C:\\Users\\yukid\\GitHub-Project\\rectime-2026\\recwatch\\app\\hooks\\useNavState.ts',
+    'C:\\Users\\yukid\\GitHub-Project\\rectime-2026\\recwatch\\react-router-v7-policy.md',
+    'C:\\Users\\yukid\\GitHub-Project\\rectime-2026\\recwatch\\app\\features\\frame\\left-navigation\\components\\LeftNavigation.tsx',
+    'C:\\Users\\yukid\\GitHub-Project\\rectime-2026\\recwatch\\app\\features\\frame\\left-navigation\\styles\\sidebar-styles.ts',
+    'C:\\Users\\yukid\\GitHub-Project\\rectime-2026\\recwatch\\app\\features\\admin-pages\\components\\AdminPageTitle.tsx',
+    'C:\\Users\\yukid\\GitHub-Project\\rectime-2026\\recwatch\\app\\features\\members\\pages\\MembersPage.tsx',
+    'C:\\Users\\yukid\\GitHub-Project\\rectime-2026\\recwatch\\app\\routes\\main\\events.past.tsx',
+    'C:\\Users\\yukid\\GitHub-Project\\rectime-2026\\recwatch\\app\\config\\env.ts',
+    'C:\\Users\\yukid\\GitHub-Project\\rectime-2026\\recwatch\\app\\types\\nav.ts',
+    'C:\\Users\\yukid\\GitHub-Project\\rectime-2026\\recwatch\\app\\routes\\main\\sports.tsx',
+    'C:\\Users\\yukid\\GitHub-Project\\rectime-2026\\recwatch\\app\\features\\members\\components\\MembersTable.tsx',
+    'C:\\Users\\yukid\\GitHub-Project\\rectime-2026\\recwatch\\app\\features\\frame\\main-header\\event-switcher\\hooks\\useEventSwitcher.ts',
+    'C:\\Users\\yukid\\GitHub-Project\\rectime-2026\\recwatch\\app\\features\\frame\\main-header\\MainShell.tsx',
+    'C:\\Users\\yukid\\GitHub-Project\\rectime-2026\\recwatch\\app\\lib\\cn.ts',
+    'C:\\Users\\yukid\\GitHub-Project\\rectime-2026\\recwatch\\app\\features\\frame\\main-header\\components\\MainHeader.tsx',
+    'C:\\Users\\yukid\\GitHub-Project\\rectime-2026\\recwatch\\.idea\\recwatch.iml',
+    'C:\\Users\\yukid\\GitHub-Project\\rectime-2026\\recwatch\\app\\features\\frame\\main-header\\search\\components\\SearchFooter.tsx',
+    'C:\\Users\\yukid\\GitHub-Project\\rectime-2026\\recwatch\\app\\features\\members\\model\\students-data.ts',
+    ... 1881 more items
+  ]
+}
