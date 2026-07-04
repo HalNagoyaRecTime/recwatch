@@ -6,7 +6,6 @@ export type NavChildDef = {
   id: string;
   label: string;
   to: string;
-  badge?: string;
   roles: AppRole[];
 };
 
@@ -15,12 +14,12 @@ export type NavItemDef = {
   label: string;
   icon: ReactNode;
   to?: string;
-  badge?: number | string;
   children?: NavChildDef[];
   roles: AppRole[];
 };
 
 export type NavSectionDef = {
-  label: string;
+  label?: string;
+  hasDivider?: boolean;
   items: NavItemDef[];
 };

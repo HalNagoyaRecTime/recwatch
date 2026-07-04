@@ -17,6 +17,6 @@ export function ErrorBoundary() {
   );
 }
 export default function MembersRoute() {
-  const students = useLoaderData<typeof loader>();
+  const students = useLoaderData<typeof clientLoader>();
   return <MembersPage students={students} />;
 }

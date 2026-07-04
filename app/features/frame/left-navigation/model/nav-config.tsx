@@ -2,9 +2,9 @@ import {
   CalendarIcon,
   Clock3Icon,
   FileTextIcon,
-  GraduationCap,
+  HomeIcon,
   LayoutDashboardIcon,
-  Settings2Icon,
+  SettingsIcon,
   TimerResetIcon,
   TrophyIcon,
   UsersIcon,
@@ -14,7 +14,6 @@ import type { ReactNode } from "react";
 import { currentUser, type AppRole } from "~/config/permissions";
 import {
   navSections,
-  settingsItem as settingsItemConfig,
   type NavIconKey,
   type NavItemConfig,
   type NavSectionConfig,
@@ -23,14 +22,13 @@ import type { NavChildDef, NavItemDef, NavSectionDef } from "~/types/nav";
 
 const iconSize = 15;
 
-// https://lucide.dev/icons/
 const iconMap: Record<NavIconKey, ReactNode> = {
   calendar: <CalendarIcon size={iconSize} strokeWidth={1.8} />,
   clock: <Clock3Icon size={iconSize} strokeWidth={1.8} />,
   dashboard: <LayoutDashboardIcon size={iconSize} strokeWidth={1.8} />,
   file: <FileTextIcon size={iconSize} strokeWidth={1.8} />,
-  settings: <Settings2Icon size={iconSize} strokeWidth={1.8} />,
-  homeroom: <GraduationCap size={iconSize} strokeWidth={1.8} />,
+  home: <HomeIcon size={iconSize} strokeWidth={1.8} />,
+  settings: <SettingsIcon size={iconSize} strokeWidth={1.8} />,
   timing: <TimerResetIcon size={iconSize} strokeWidth={1.8} />,
   trophy: <TrophyIcon size={iconSize} strokeWidth={1.8} />,
   users: <UsersIcon size={iconSize} strokeWidth={1.8} />,
@@ -43,11 +41,10 @@ function canAccess(role: AppRole, roles: AppRole[]) {
 function mapChildren(role: AppRole, children: NavItemConfig["children"] = []) {
   return children
     .filter((child) => canAccess(role, child.roles))
-    .map<NavChildDef>(({ id, label, to, badge, roles }) => ({
+    .map<NavChildDef>(({ id, label, to, roles }) => ({
       id,
       label,
       to,
-      badge: typeof badge === "number" ? String(badge) : badge,
       roles,
     }));
 }
@@ -66,7 +63,6 @@ function mapItem(role: AppRole, item: NavItemConfig): NavItemDef | null {
     label: item.label,
     icon: iconMap[item.icon],
     to: isDirectlyVisible ? item.to : undefined,
-    badge: item.badge,
     children,
     roles: item.roles,
   };
@@ -86,6 +82,7 @@ function mapSection(
 
   return {
     label: section.label,
+    hasDivider: section.hasDivider,
     items,
   };
 }
@@ -94,8 +91,4 @@ export function getVisibleNavSections(role: AppRole = currentUser.role) {
   return navSections
     .map((section) => mapSection(role, section))
     .filter((section): section is NavSectionDef => section !== null);
-}
-
-export function getVisibleSettingsItem(role: AppRole = currentUser.role) {
-  return mapItem(role, settingsItemConfig);
 }

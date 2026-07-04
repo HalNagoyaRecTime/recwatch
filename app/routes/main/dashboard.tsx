@@ -14,7 +14,7 @@ export async function clientLoader() {
 }
 
 export default function DashboardRoute() {
-  const data = useLoaderData<typeof loader>();
+  const data = useLoaderData<typeof clientLoader>();
 
   return (
     <div className="flex flex-col gap-[18px]">

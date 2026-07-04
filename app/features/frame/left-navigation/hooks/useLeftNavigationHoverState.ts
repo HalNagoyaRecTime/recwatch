@@ -1,13 +1,12 @@
-import { create } from "zustand";
+import { useContext } from "react";
+import { LeftNavigationHoverContext } from "~/features/frame/left-navigation/components/LeftNavigationHoverProvider";
 
-type LeftNavigationHoverState = {
-  isHovering: boolean;
-  setHovering: (value: boolean) => void;
-};
-
-export const useLeftNavigationHoverState = create<LeftNavigationHoverState>()(
-  (set) => ({
-    isHovering: false,
-    setHovering: (value) => set({ isHovering: value }),
-  })
-);
+export function useLeftNavigationHoverState() {
+  const context = useContext(LeftNavigationHoverContext);
+  if (!context) {
+    throw new Error(
+      "useLeftNavigationHoverState must be used within a LeftNavigationHoverProvider"
+    );
+  }
+  return context;
+}
