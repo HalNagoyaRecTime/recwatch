@@ -4,8 +4,8 @@ import { ChevronRightIcon } from "lucide-react";
 import { currentUser } from "~/config/permissions";
 import { cn } from "~/lib/cn";
 import { useNavState } from "~/hooks/useNavState";
-import { useLeftNavigationExpanded } from "~/features/frame/left-navigation/hooks/useLeftNavigationExpanded";
-import { getVisibleNavSections } from "~/features/frame/left-navigation/model/nav-config";
+import { useNavigationExpanded } from "~/features/frame/navigation/hooks/useNavigationExpanded";
+import { getVisibleNavSections } from "~/features/frame/navigation/model/nav-config";
 import { actionListItemStyle } from "~/components/ui/styles/action-list-styles";
 import type { NavItemDef } from "~/types/nav";
 
@@ -29,7 +29,7 @@ function SidebarNavItem({
   item: NavItemDef;
   pathname: string;
 }) {
-  const isExpanded = useLeftNavigationExpanded();
+  const isExpanded = useNavigationExpanded();
   const { openAccordions, toggleAccordion, closeForMobile } = useNavState();
 
   const hasChildren = Boolean(item.children?.length);
@@ -176,7 +176,7 @@ function SidebarNavItem({
 
 export function AppSidebar() {
   const sections = getVisibleNavSections(currentUser.role);
-  const isExpanded = useLeftNavigationExpanded();
+  const isExpanded = useNavigationExpanded();
   const location = useLocation();
   const pathname = location.pathname;
 
