@@ -21,11 +21,16 @@ export function NavSection({ def }: NavSectionProps) {
       {def.label && (
         <div
           className={cn(
-            "overflow-hidden px-2.5 pb-2 text-[10px] font-bold tracking-[0.12em] whitespace-nowrap text-[color:var(--text-3)] uppercase transition-all duration-200",
-            !isExpanded && "text-center tracking-normal"
+            "overflow-hidden px-2.5 pb-2 text-[10px] font-bold tracking-[0.12em] whitespace-nowrap text-[color:var(--text-3)] uppercase transition-all duration-200"
           )}
         >
-          {isExpanded ? def.label : "-"}
+          {isExpanded ? (
+            def.label
+          ) : (
+            <div className="flex h-3.5 w-full items-center justify-center">
+              <div className="h-[1px] w-6 bg-[color:var(--border-strong)]" />
+            </div>
+          )}
         </div>
       )}
       <div>
