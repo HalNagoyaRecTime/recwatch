@@ -1,9 +1,9 @@
 import { cn } from "~/lib/cn";
 
-import { useNavigationExpanded } from "~/features/frame/navigation/hooks/useNavigationExpanded";
+import { useNavigationUI } from "~/features/frame/navigation/hooks/useNavigationUI";
 
 export function SidebarBrand() {
-  const isExpanded = useNavigationExpanded();
+  const { isExpanded } = useNavigationUI();
 
   return (
     <div className="main-header-height hidden items-center gap-3 border-b border-(--border-1) pl-4 md:flex">

@@ -4,9 +4,10 @@ import { useNavState } from "~/hooks/useNavState";
 
 import { BottomBtn } from "~/features/frame/navigation/bottom-area/BottomBtn";
 import { AppSidebar } from "~/features/frame/navigation/components/AppSidebar";
-import { useNavigationExpanded } from "~/features/frame/navigation/hooks/useNavigationExpanded";
-import { useNavigationHoverState } from "~/features/frame/navigation/hooks/useNavigationHoverState";
-import { NavigationHoverProvider } from "~/features/frame/navigation/components/NavigationHoverProvider";
+import {
+  NavigationUIProvider,
+  useNavigationUI,
+} from "~/features/frame/navigation/hooks/useNavigationUI";
 import { SidebarBrand } from "~/features/frame/navigation/header-logo/SidebarBrand";
 import {
   sidebarContainerStyle,
@@ -15,8 +16,7 @@ import {
 
 function NavigationContent() {
   const { isOpen } = useNavState();
-  const isExpanded = useNavigationExpanded();
-  const { setHovering } = useNavigationHoverState();
+  const { isExpanded, setHovering } = useNavigationUI();
 
   useEffect(() => {
     return () => {
@@ -43,8 +43,8 @@ function NavigationContent() {
 
 export function NavigationShell() {
   return (
-    <NavigationHoverProvider>
+    <NavigationUIProvider>
       <NavigationContent />
-    </NavigationHoverProvider>
+    </NavigationUIProvider>
   );
 }
