@@ -254,15 +254,17 @@ function NavAccordion({ item, isOpen, closeMenu }: NavAccordionProps) {
   return (
     <div
       className={cn(
-        "border-border-1 ml-[17.5px] overflow-hidden border-l pl-[7.5px]",
+        "grid",
         "transition-all",
         SIDEBAR_DURATION,
-        active ? "visible max-h-[400px]" : "invisible max-h-0"
+        active ? "visible grid-rows-[1fr]" : "invisible grid-rows-[0fr]"
       )}
     >
-      {item.children.map((child) => (
-        <NavSubItem key={child.id} item={child} onClick={closeMenu} />
-      ))}
+      <div className="border-border-1 ml-[17.5px] min-h-0 overflow-hidden border-l pl-[7.5px]">
+        {item.children.map((child) => (
+          <NavSubItem key={child.id} item={child} onClick={closeMenu} />
+        ))}
+      </div>
     </div>
   );
 }
