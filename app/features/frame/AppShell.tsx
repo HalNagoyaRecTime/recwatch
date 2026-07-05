@@ -1,6 +1,6 @@
 import { SidebarShell } from "~/features/frame/sidebar/SidebarShell";
 import { MainShell } from "~/features/frame/main-header/MainShell";
-import { SidebarStateProvider } from "~/hooks/useSidebarState";
+import { SidebarStateProvider } from "~/components/providers/SidebarStateProvider";
 
 export function AppShell() {
   return (

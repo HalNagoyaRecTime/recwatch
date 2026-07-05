@@ -4,10 +4,8 @@ import { useSidebarState } from "~/hooks/useSidebarState";
 
 import { SidebarFooter } from "~/features/frame/sidebar/components/SidebarFooter";
 import { AppSidebar } from "~/features/frame/sidebar/components/AppSidebar";
-import {
-  SidebarUIProvider,
-  useSidebarUI,
-} from "~/features/frame/sidebar/hooks/useSidebarUI";
+import { SidebarUIProvider } from "~/features/frame/sidebar/components/SidebarUIProvider";
+import { useSidebarUI } from "~/features/frame/sidebar/hooks/useSidebarUI";
 import { SidebarHeader } from "~/features/frame/sidebar/components/SidebarHeader";
 import {
   sidebarContainerStyle,
