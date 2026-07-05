@@ -2,6 +2,7 @@ import {
   CalendarIcon,
   Clock3Icon,
   FileTextIcon,
+  GraduationCap,
   LayoutDashboardIcon,
   Settings2Icon,
   TimerResetIcon,
@@ -22,12 +23,14 @@ import type { NavChildDef, NavItemDef, NavSectionDef } from "~/types/nav";
 
 const iconSize = 15;
 
+// https://lucide.dev/icons/
 const iconMap: Record<NavIconKey, ReactNode> = {
   calendar: <CalendarIcon size={iconSize} strokeWidth={1.8} />,
   clock: <Clock3Icon size={iconSize} strokeWidth={1.8} />,
   dashboard: <LayoutDashboardIcon size={iconSize} strokeWidth={1.8} />,
   file: <FileTextIcon size={iconSize} strokeWidth={1.8} />,
   settings: <Settings2Icon size={iconSize} strokeWidth={1.8} />,
+  homeroom: <GraduationCap size={iconSize} strokeWidth={1.8} />,
   timing: <TimerResetIcon size={iconSize} strokeWidth={1.8} />,
   trophy: <TrophyIcon size={iconSize} strokeWidth={1.8} />,
   users: <UsersIcon size={iconSize} strokeWidth={1.8} />,
