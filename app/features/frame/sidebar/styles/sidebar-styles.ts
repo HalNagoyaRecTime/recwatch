@@ -1,7 +1,7 @@
 import { cva } from "~/lib/cva";
 
-export const SIDEBAR_DURATION_MS = 200;
-export const SIDEBAR_DURATION = "duration-200 ease-[cubic-bezier(0.4,0,0.2,1)]";
+export const SIDEBAR_DURATION_MS = 400;
+export const SIDEBAR_DURATION = "duration-400 ease-[cubic-bezier(0.4,0,0.2,1)]";
 
 export const sidebarPlaceholderStyle = cva(
   "relative z-99 overflow-visible transition-[width] " + SIDEBAR_DURATION,
