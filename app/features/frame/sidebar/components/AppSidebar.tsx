@@ -2,13 +2,13 @@ import { useLocation } from "react-router";
 import { currentUser } from "~/config/permissions";
 import { cn } from "~/lib/cn";
 import { useSidebarUI } from "~/features/frame/sidebar/hooks/useSidebarUI";
-import { getVisibleSidebarSections } from "~/features/frame/sidebar/model/sidebar-config";
+import { buildSidebarMenu } from "~/features/frame/sidebar/utils/build-sidebar-menu";
 import type { SidebarSectionDef } from "~/types/sidebar";
 import { SidebarNavItem } from "~/features/frame/sidebar/components/SidebarNavItem";
 import { SIDEBAR_DURATION } from "~/features/frame/sidebar/styles/sidebar-styles";
 
 export function AppSidebar() {
-  const sections = getVisibleSidebarSections(currentUser.role);
+  const sections = buildSidebarMenu(currentUser.role);
   const { isExpanded } = useSidebarUI();
   const location = useLocation();
   const pathname = location.pathname;

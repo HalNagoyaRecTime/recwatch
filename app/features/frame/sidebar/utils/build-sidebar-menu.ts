@@ -1,46 +1,16 @@
-import {
-  CalendarIcon,
-  Clock3Icon,
-  FileTextIcon,
-  HomeIcon,
-  LayoutDashboardIcon,
-  SettingsIcon,
-  TimerResetIcon,
-  TrophyIcon,
-  UsersIcon,
-} from "lucide-react";
-import type { ReactNode } from "react";
-
 import { currentUser, type AppRole } from "~/config/permissions";
 import {
   sidebarSections,
-  type SidebarIconKey,
   type SidebarItemConfig,
   type SidebarSectionConfig,
 } from "~/config/routes";
+import { canAccess } from "~/utils/permissions";
+import { sidebarIconMap } from "~/features/frame/sidebar/utils/sidebar-icon-mapper";
 import type {
   SidebarChildDef,
   SidebarItemDef,
   SidebarSectionDef,
 } from "~/types/sidebar";
-
-const iconSize = 15;
-
-const iconMap: Record<SidebarIconKey, ReactNode> = {
-  calendar: <CalendarIcon size={iconSize} strokeWidth={1.8} />,
-  clock: <Clock3Icon size={iconSize} strokeWidth={1.8} />,
-  dashboard: <LayoutDashboardIcon size={iconSize} strokeWidth={1.8} />,
-  file: <FileTextIcon size={iconSize} strokeWidth={1.8} />,
-  home: <HomeIcon size={iconSize} strokeWidth={1.8} />,
-  settings: <SettingsIcon size={iconSize} strokeWidth={1.8} />,
-  timing: <TimerResetIcon size={iconSize} strokeWidth={1.8} />,
-  trophy: <TrophyIcon size={iconSize} strokeWidth={1.8} />,
-  users: <UsersIcon size={iconSize} strokeWidth={1.8} />,
-};
-
-function canAccess(role: AppRole, roles: AppRole[]) {
-  return roles.includes(role);
-}
 
 function mapChildren(
   role: AppRole,
@@ -71,7 +41,7 @@ function mapItem(
   return {
     id: item.id,
     label: item.label,
-    icon: iconMap[item.icon],
+    icon: sidebarIconMap[item.icon],
     to: isDirectlyVisible ? item.to : undefined,
     children,
     roles: item.roles,
@@ -97,7 +67,7 @@ function mapSection(
   };
 }
 
-export function getVisibleSidebarSections(role: AppRole = currentUser.role) {
+export function buildSidebarMenu(role: AppRole = currentUser.role) {
   return sidebarSections
     .map((section) => mapSection(role, section))
     .filter((section): section is SidebarSectionDef => section !== null);
