@@ -61,7 +61,7 @@ function NavFolder({ item, pathname }: NavFolderProps) {
       <button
         type="button"
         className={cn(
-          actionListItemStyle({ intent: "nav", active: false }),
+          actionListItemStyle({ active: false }),
           "w-full",
           "transition-all",
           SIDEBAR_DURATION,
@@ -105,7 +105,7 @@ function NavLinkItem({ item }: NavLinkItemProps) {
         to={item.to}
         className={({ isActive }) =>
           cn(
-            actionListItemStyle({ intent: "nav", active: isActive }),
+            actionListItemStyle({ active: isActive }),
             "w-full",
             "transition-all",
             SIDEBAR_DURATION,
@@ -278,9 +278,7 @@ function NavSubItem({ item, onClick }: NavSubItemProps) {
   return (
     <NavLink
       to={item.to}
-      className={({ isActive }) =>
-        actionListItemStyle({ intent: "nav", active: isActive })
-      }
+      className={({ isActive }) => actionListItemStyle({ active: isActive })}
       onClick={onClick}
     >
       <span className="overflow-hidden text-[13px] font-medium whitespace-nowrap opacity-100">
