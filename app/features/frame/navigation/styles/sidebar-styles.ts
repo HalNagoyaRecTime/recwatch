@@ -1,7 +1,9 @@
 import { cva } from "~/lib/cva";
 
+export const NAV_DURATION = "duration-2000 ease-[cubic-bezier(0.4,0,0.2,1)]";
+
 export const sidebarPlaceholderStyle = cva(
-  "relative z-99 overflow-visible transition-[width] duration-200 ease-in-out",
+  "relative z-99 overflow-visible transition-[width] " + NAV_DURATION,
   {
     variants: {
       isOpen: {
@@ -13,7 +15,8 @@ export const sidebarPlaceholderStyle = cva(
 );
 
 export const sidebarContainerStyle = cva(
-  "navigation-expandable absolute z-99 flex h-full flex-col border-r bg-(--surface-overlay) backdrop-blur-xl transition-[width] duration-200 ease-in-out border-(--border-1)",
+  "navigation-expandable absolute z-99 flex h-full flex-col border-r bg-(--surface-overlay) backdrop-blur-xl border-(--border-1) transition-[width] " +
+    NAV_DURATION,
   {
     variants: {
       isExpanded: {

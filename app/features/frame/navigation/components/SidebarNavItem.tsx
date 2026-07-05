@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { NavLink } from "react-router";
 import { ChevronRightIcon } from "lucide-react";
 import { useNavigationUI } from "~/features/frame/navigation/hooks/useNavigationUI";
@@ -5,7 +6,7 @@ import { useNavState } from "~/hooks/useNavState";
 import { cn } from "~/lib/cn";
 import { actionListItemStyle } from "~/components/ui/styles/action-list-styles";
 import type { NavItemDef, NavChildDef } from "~/types/nav";
-import { NAV_TRANSITION } from "./nav-animations";
+import { NAV_DURATION } from "../styles/sidebar-styles";
 
 // パスの一致判定ユーティリティ
 function pathMatches(pathname: string, to: string) {
@@ -59,7 +60,8 @@ function NavFolder({ item, pathname }: NavFolderProps) {
         className={cn(
           actionListItemStyle({ intent: "nav", active: false }),
           "w-full",
-          NAV_TRANSITION,
+          "transition-all",
+          NAV_DURATION,
           !isExpanded && "gap-0 pr-0 pl-3",
           hasActiveChild && "hover:bg-transparent"
         )}
@@ -75,13 +77,11 @@ function NavFolder({ item, pathname }: NavFolderProps) {
 
       {!isExpanded && <NavPopup item={item} closeMenu={closeForMobile} />}
 
-      {isExpanded && (
-        <NavAccordion
-          item={item}
-          isOpen={isAccordionOpen}
-          closeMenu={closeForMobile}
-        />
-      )}
+      <NavAccordion
+        item={item}
+        isOpen={isExpanded && isAccordionOpen}
+        closeMenu={closeForMobile}
+      />
     </div>
   );
 }
@@ -104,7 +104,8 @@ function NavLinkItem({ item }: NavLinkItemProps) {
           cn(
             actionListItemStyle({ intent: "nav", active: isActive }),
             "w-full",
-            NAV_TRANSITION,
+            "transition-all",
+            NAV_DURATION,
             !isExpanded && "gap-0 pr-0 pl-3"
           )
         }
@@ -139,7 +140,8 @@ function NavTriggerContent({
       <span
         className={cn(
           "overflow-hidden text-[13px] font-medium whitespace-nowrap",
-          NAV_TRANSITION,
+          "transition-all",
+          NAV_DURATION,
           isExpanded ? "max-w-40 opacity-100" : "max-w-0 opacity-0"
         )}
       >
@@ -151,7 +153,8 @@ function NavTriggerContent({
           strokeWidth={1.8}
           className={cn(
             "ml-auto text-(--text-3)",
-            NAV_TRANSITION,
+            "transition-all",
+            NAV_DURATION,
             isExpanded ? "opacity-100" : "hidden",
             isAccordionOpen ? "rotate-90" : ""
           )}
@@ -173,7 +176,8 @@ function NavPopup({ item, closeMenu }: NavPopupProps) {
     <div
       className={cn(
         "pointer-events-none absolute top-0 left-[66px] z-100 min-w-[180px] translate-x-[-4px] opacity-0 shadow-(--shadow-soft)",
-        NAV_TRANSITION,
+        "transition-all",
+        NAV_DURATION,
         "group-hover/nav:pointer-events-auto group-hover/nav:translate-x-0 group-hover/nav:opacity-100"
       )}
     >
@@ -210,14 +214,47 @@ type NavAccordionProps = {
 };
 
 function NavAccordion({ item, isOpen, closeMenu }: NavAccordionProps) {
-  if (!item.children) return null;
+  // DOMをマウントするかどうか
+  const [mounted, setMounted] = useState(isOpen);
+  // CSSの「開いた状態」を適用するかどうか。初期値は絶対にfalse（閉じた状態でDOMを作るため）
+  const [active, setActive] = useState(false);
+
+  useEffect(() => {
+    let timer1: NodeJS.Timeout;
+    let timer2: NodeJS.Timeout;
+
+    if (isOpen) {
+      // 1. DOMを生成する
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setMounted(true);
+      // 2. DOM生成（ブラウザの描画）を少し待ってから、CSSで「開く」
+      timer1 = setTimeout(() => {
+        setActive(true);
+      }, 10);
+    } else {
+      // 1. CSSで「閉じる」
+      setActive(false);
+      // 2. アニメーション終了(200ms)を待ってから、DOMを破棄する
+      timer2 = setTimeout(() => {
+        setMounted(false);
+      }, 200);
+    }
+
+    return () => {
+      clearTimeout(timer1);
+      clearTimeout(timer2);
+    };
+  }, [isOpen]);
+
+  if (!item.children || !mounted) return null;
 
   return (
     <div
       className={cn(
         "ml-[17.5px] overflow-hidden border-l border-(--border-1) pl-[7.5px]",
-        NAV_TRANSITION,
-        isOpen ? "visible max-h-[400px]" : "invisible max-h-0"
+        "transition-all",
+        NAV_DURATION,
+        active ? "visible max-h-[400px]" : "invisible max-h-0"
       )}
     >
       {item.children.map((child) => (
