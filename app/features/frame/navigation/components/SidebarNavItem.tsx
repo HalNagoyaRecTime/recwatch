@@ -217,9 +217,7 @@ function NavAccordion({ item, isOpen, closeMenu }: NavAccordionProps) {
       className={cn(
         "ml-[17.5px] overflow-hidden border-l border-(--border-1) pl-[7.5px]",
         NAV_TRANSITION,
-        isOpen
-          ? "visible max-h-[400px] opacity-100"
-          : "invisible max-h-0 opacity-0"
+        isOpen ? "visible max-h-[400px]" : "invisible max-h-0"
       )}
     >
       {item.children.map((child) => (
