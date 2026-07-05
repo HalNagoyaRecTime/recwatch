@@ -59,7 +59,7 @@ function SidebarSection({
         "first:mt-0",
         "transition-all",
         SIDEBAR_DURATION,
-        shouldShowLine ? "mt-3" : "mt-[18px]"
+        shouldShowLine ? "mt-3" : "mt-4.5"
       )}
     >
       {/* 線とラベルの表示を「セクションの導入部」として丸投げ */}
@@ -118,8 +118,8 @@ function SidebarSectionSeparator({
             "transition-all",
             SIDEBAR_DURATION,
             isExpanded
-              ? "max-h-10 pb-2 text-[10px] opacity-100"
-              : "max-h-0 pb-0 text-[10px] opacity-0"
+              ? "text-2.5 max-h-10 pb-2 opacity-100"
+              : "text-2.5 max-h-0 pb-0 opacity-0"
           )}
         >
           {section.label}
