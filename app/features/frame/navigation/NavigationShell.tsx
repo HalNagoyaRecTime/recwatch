@@ -28,7 +28,7 @@ function NavigationContent() {
     <div className={sidebarPlaceholderStyle({ isOpen })}>
       <div className={sidebarContainerStyle({ isExpanded })}>
         <div
-          className="sidebar-hover-area contents"
+          className="sidebar-hover-area flex flex-1 flex-col overflow-hidden"
           onMouseEnter={() => setHovering(true)}
           onMouseLeave={() => setHovering(false)}
         >
