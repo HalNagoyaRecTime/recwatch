@@ -1,6 +1,8 @@
+import mockUser from "~/mock/frame/account-button.json";
+
 export type AppRole = "admin" | "manager" | "member";
 
 export const currentUser = {
-  name: "Yuki Sato",
-  role: "manager" as AppRole,
+  name: mockUser.name,
+  role: mockUser.role.toLowerCase() as AppRole,
 };
