@@ -157,6 +157,12 @@ export const navSections = [
             to: "/sports/scoring",
             roles: ["admin", "manager"],
           },
+          {
+            id: "homeroom",
+            label: "ホームルーム",
+            to: "/homeroom",
+            roles: ["admin", "manager"],
+          },
         ],
       },
     ],
