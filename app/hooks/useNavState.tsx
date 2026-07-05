@@ -83,8 +83,10 @@ export function NavigationStateProvider({ children }: { children: ReactNode }) {
   };
 
   const closeForMobile = () => {
-    setIsOpen(false);
-    setOpenAccordions([]);
+    if (typeof window !== "undefined" && window.innerWidth <= 720) {
+      setIsOpen(false);
+      setOpenAccordions([]);
+    }
   };
 
   return (
