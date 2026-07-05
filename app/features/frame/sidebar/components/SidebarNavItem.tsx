@@ -9,7 +9,7 @@ import type { SidebarItemDef, SidebarChildDef } from "~/types/sidebar";
 import {
   SIDEBAR_DURATION,
   SIDEBAR_DURATION_MS,
-} from "../styles/sidebar-styles";
+} from "~/features/frame/sidebar/styles/sidebar-styles";
 
 // パスの一致判定ユーティリティ
 function pathMatches(pathname: string, to: string) {
