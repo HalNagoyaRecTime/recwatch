@@ -1,4 +1,3 @@
-import { useEffect, useState } from "react";
 import { NavLink } from "react-router";
 import { ChevronRightIcon } from "lucide-react";
 import { useNavigationUI } from "~/features/frame/navigation/hooks/useNavigationUI";
@@ -6,6 +5,7 @@ import { useNavState } from "~/hooks/useNavState";
 import { cn } from "~/lib/cn";
 import { actionListItemStyle } from "~/components/ui/styles/action-list-styles";
 import type { NavItemDef, NavChildDef } from "~/types/nav";
+import { NAV_TRANSITION } from "./nav-animations";
 
 // パスの一致判定ユーティリティ
 function pathMatches(pathname: string, to: string) {
@@ -58,7 +58,8 @@ function NavFolder({ item, pathname }: NavFolderProps) {
         type="button"
         className={cn(
           actionListItemStyle({ intent: "nav", active: false }),
-          "w-full transition-all duration-200",
+          "w-full",
+          NAV_TRANSITION,
           !isExpanded && "gap-0 pr-0 pl-3",
           hasActiveChild && "hover:bg-transparent"
         )}
@@ -102,7 +103,8 @@ function NavLinkItem({ item }: NavLinkItemProps) {
         className={({ isActive }) =>
           cn(
             actionListItemStyle({ intent: "nav", active: isActive }),
-            "w-full transition-all duration-200",
+            "w-full",
+            NAV_TRANSITION,
             !isExpanded && "gap-0 pr-0 pl-3"
           )
         }
@@ -136,7 +138,8 @@ function NavTriggerContent({
       </span>
       <span
         className={cn(
-          "overflow-hidden text-[13px] font-medium whitespace-nowrap transition-[max-width,opacity] duration-200",
+          "overflow-hidden text-[13px] font-medium whitespace-nowrap",
+          NAV_TRANSITION,
           isExpanded ? "max-w-40 opacity-100" : "max-w-0 opacity-0"
         )}
       >
@@ -147,7 +150,8 @@ function NavTriggerContent({
           size={14}
           strokeWidth={1.8}
           className={cn(
-            "ml-auto text-(--text-3) transition duration-200",
+            "ml-auto text-(--text-3)",
+            NAV_TRANSITION,
             isExpanded ? "opacity-100" : "hidden",
             isAccordionOpen ? "rotate-90" : ""
           )}
@@ -168,7 +172,8 @@ function NavPopup({ item, closeMenu }: NavPopupProps) {
   return (
     <div
       className={cn(
-        "pointer-events-none absolute top-0 left-[66px] z-100 min-w-[180px] translate-x-[-4px] opacity-0 shadow-(--shadow-soft) transition duration-150",
+        "pointer-events-none absolute top-0 left-[66px] z-100 min-w-[180px] translate-x-[-4px] opacity-0 shadow-(--shadow-soft)",
+        NAV_TRANSITION,
         "group-hover/nav:pointer-events-auto group-hover/nav:translate-x-0 group-hover/nav:opacity-100"
       )}
     >
@@ -205,24 +210,17 @@ type NavAccordionProps = {
 };
 
 function NavAccordion({ item, isOpen, closeMenu }: NavAccordionProps) {
-  const [mounted, setMounted] = useState(isOpen);
-
-  useEffect(() => {
-    if (isOpen) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setMounted(true);
-    } else {
-      const timer = setTimeout(() => setMounted(false), 200); // CSSのアニメーション時間(200ms)に合わせる
-      return () => clearTimeout(timer);
-    }
-  }, [isOpen]);
-
-  if (!item.children || !mounted) return null;
+  if (!item.children) return null;
 
   return (
     <div
-      className="ml-[17.5px] overflow-hidden border-l border-(--border-1) pl-[7.5px] transition-[max-height] duration-200 ease-[cubic-bezier(0.4,0,0.2,1)]"
-      style={{ maxHeight: isOpen ? 400 : 0 }}
+      className={cn(
+        "ml-[17.5px] overflow-hidden border-l border-(--border-1) pl-[7.5px]",
+        NAV_TRANSITION,
+        isOpen
+          ? "visible max-h-[400px] opacity-100"
+          : "invisible max-h-0 opacity-0"
+      )}
     >
       {item.children.map((child) => (
         <NavSubItem key={child.id} item={child} onClick={closeMenu} />

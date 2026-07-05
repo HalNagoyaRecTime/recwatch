@@ -5,6 +5,7 @@ import { useNavigationUI } from "~/features/frame/navigation/hooks/useNavigation
 import { getVisibleNavSections } from "~/features/frame/navigation/model/nav-config";
 import type { NavSectionDef } from "~/types/nav";
 import { SidebarNavItem } from "./SidebarNavItem";
+import { NAV_TRANSITION } from "./nav-animations";
 
 export function AppSidebar() {
   const sections = getVisibleNavSections(currentUser.role);
@@ -16,7 +17,8 @@ export function AppSidebar() {
     <aside className="flex min-h-0 flex-1 flex-col overflow-visible">
       <div
         className={cn(
-          "flex-1 overflow-x-hidden overflow-y-auto overscroll-y-contain py-3 transition-[padding] duration-200",
+          "flex-1 overflow-x-hidden overflow-y-auto overscroll-y-contain py-3",
+          NAV_TRANSITION,
           isExpanded ? "px-3.5" : "px-2"
         )}
       >
@@ -48,7 +50,8 @@ function NavSection({ section, pathname, isExpanded }: NavSectionProps) {
   return (
     <section
       className={cn(
-        "transition-[margin] duration-200 first:mt-0",
+        "first:mt-0",
+        NAV_TRANSITION,
         shouldShowLine ? "mt-3" : "mt-[18px]"
       )}
     >
@@ -92,7 +95,8 @@ function NavSectionSeparator({
       */}
       <div
         className={cn(
-          "mx-2 bg-(--border-1) transition-all duration-200",
+          "mx-2 bg-(--border-1)",
+          NAV_TRANSITION,
           shouldShowLine ? "mb-3 h-px opacity-100" : "mb-0 h-0 opacity-0"
         )}
       />
@@ -104,7 +108,8 @@ function NavSectionSeparator({
       {hasLabel && (
         <div
           className={cn(
-            "overflow-hidden px-2.5 font-bold tracking-[0.12em] whitespace-nowrap text-(--text-3) uppercase transition-all duration-200",
+            "overflow-hidden px-2.5 font-bold tracking-[0.12em] whitespace-nowrap text-(--text-3) uppercase",
+            NAV_TRANSITION,
             isExpanded
               ? "max-h-10 pb-2 text-[10px] opacity-100"
               : "max-h-0 pb-0 text-[10px] opacity-0"
