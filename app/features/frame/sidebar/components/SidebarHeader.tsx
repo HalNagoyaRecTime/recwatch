@@ -7,7 +7,7 @@ export function SidebarHeader() {
   const { isExpanded } = useSidebarUI();
 
   return (
-    <div className="main-header-height hidden items-center gap-3 border-b border-(--border-1) pl-4 md:flex">
+    <div className="main-header-height border-border-1 hidden items-center gap-3 border-b pl-4 md:flex">
       <a href="/" className="flex cursor-pointer items-center gap-2">
         <img
           src="/recwatch-logo.svg"
@@ -21,7 +21,7 @@ export function SidebarHeader() {
             isExpanded ? "max-w-32 opacity-100" : "max-w-0 opacity-0"
           )}
         >
-          rec<em className="text-(--brand-1) not-italic">watch</em>
+          rec<em className="text-brand-1 not-italic">watch</em>
         </span>
       </a>
     </div>

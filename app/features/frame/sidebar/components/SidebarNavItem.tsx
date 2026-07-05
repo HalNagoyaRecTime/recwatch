@@ -155,7 +155,7 @@ function NavTriggerContent({
           size={14}
           strokeWidth={1.8}
           className={cn(
-            "ml-auto text-(--text-3)",
+            "text-text-3 ml-auto",
             "transition-all",
             SIDEBAR_DURATION,
             isExpanded ? "opacity-100" : "hidden",
@@ -178,22 +178,22 @@ function NavPopup({ item, closeMenu }: NavPopupProps) {
   return (
     <div
       className={cn(
-        "pointer-events-none absolute top-0 left-[66px] z-100 min-w-[180px] translate-x-[-4px] opacity-0 shadow-(--shadow-soft)",
+        "shadow-shadow-soft pointer-events-none absolute top-0 left-[66px] z-100 min-w-[180px] translate-x-[-4px] opacity-0",
         "transition-all",
         SIDEBAR_DURATION,
         "group-hover/nav:pointer-events-auto group-hover/nav:translate-x-0 group-hover/nav:opacity-100"
       )}
     >
-      <div className="rounded-lg border border-(--border-2) bg-(--surface-overlay-strong) p-1">
+      <div className="border-border-2 bg-surface-overlay-strong rounded-lg border p-1">
         {hasChildren && item.children ? (
           <>
-            <div className="flex items-center gap-2.5 px-2.5 pt-1 pb-2 text-[12.5px] font-semibold text-(--text-1)">
+            <div className="text-text-1 flex items-center gap-2.5 px-2.5 pt-1 pb-2 text-[12.5px] font-semibold">
               <span className="inline-flex w-4 min-w-4 items-center justify-center">
                 {item.icon}
               </span>
               <span>{item.label}</span>
             </div>
-            <div className="mx-1 my-1 h-px bg-(--border-1)" />
+            <div className="bg-border-1 mx-1 my-1 h-px" />
             <div className="flex flex-col">
               {item.children.map((child) => (
                 <NavSubItem key={child.id} item={child} onClick={closeMenu} />
@@ -201,7 +201,7 @@ function NavPopup({ item, closeMenu }: NavPopupProps) {
             </div>
           </>
         ) : (
-          <div className="px-[11px] py-[5px] text-[12.5px] font-medium text-(--text-1)">
+          <div className="text-text-1 px-[11px] py-[5px] text-[12.5px] font-medium">
             {item.label}
           </div>
         )}
@@ -254,7 +254,7 @@ function NavAccordion({ item, isOpen, closeMenu }: NavAccordionProps) {
   return (
     <div
       className={cn(
-        "ml-[17.5px] overflow-hidden border-l border-(--border-1) pl-[7.5px]",
+        "border-border-1 ml-[17.5px] overflow-hidden border-l pl-[7.5px]",
         "transition-all",
         SIDEBAR_DURATION,
         active ? "visible max-h-[400px]" : "invisible max-h-0"

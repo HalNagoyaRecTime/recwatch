@@ -44,6 +44,7 @@ type SidebarSectionProps = {
   isExpanded: boolean;
 };
 
+// セクション
 function SidebarSection({
   section,
   pathname,
@@ -70,11 +71,9 @@ function SidebarSection({
       />
 
       {/* 中身のアイテムたちの描画 */}
-      <div>
-        {section.items.map((item) => (
-          <SidebarNavItem key={item.id} item={item} pathname={pathname} />
-        ))}
-      </div>
+      {section.items.map((item) => (
+        <SidebarNavItem key={item.id} item={item} pathname={pathname} />
+      ))}
     </section>
   );
 }
@@ -101,7 +100,7 @@ function SidebarSectionSeparator({
       */}
       <div
         className={cn(
-          "mx-2 bg-(--border-1)",
+          "bg-border-1 mx-2",
           "transition-all",
           SIDEBAR_DURATION,
           shouldShowLine ? "mb-3 h-px opacity-100" : "mb-0 h-0 opacity-0"
@@ -115,7 +114,7 @@ function SidebarSectionSeparator({
       {hasLabel && (
         <div
           className={cn(
-            "overflow-hidden px-2.5 font-bold tracking-[0.12em] whitespace-nowrap text-(--text-3) uppercase",
+            "text-text-3 overflow-hidden px-2.5 font-bold tracking-[0.12em] whitespace-nowrap uppercase",
             "transition-all",
             SIDEBAR_DURATION,
             isExpanded
