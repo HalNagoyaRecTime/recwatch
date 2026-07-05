@@ -13,16 +13,20 @@ import type { ReactNode } from "react";
 
 import { currentUser, type AppRole } from "~/config/permissions";
 import {
-  navSections,
-  type NavIconKey,
-  type NavItemConfig,
-  type NavSectionConfig,
+  sidebarSections,
+  type SidebarIconKey,
+  type SidebarItemConfig,
+  type SidebarSectionConfig,
 } from "~/config/routes";
-import type { NavChildDef, NavItemDef, NavSectionDef } from "~/types/nav";
+import type {
+  SidebarChildDef,
+  SidebarItemDef,
+  SidebarSectionDef,
+} from "~/types/sidebar";
 
 const iconSize = 15;
 
-const iconMap: Record<NavIconKey, ReactNode> = {
+const iconMap: Record<SidebarIconKey, ReactNode> = {
   calendar: <CalendarIcon size={iconSize} strokeWidth={1.8} />,
   clock: <Clock3Icon size={iconSize} strokeWidth={1.8} />,
   dashboard: <LayoutDashboardIcon size={iconSize} strokeWidth={1.8} />,
@@ -38,10 +42,13 @@ function canAccess(role: AppRole, roles: AppRole[]) {
   return roles.includes(role);
 }
 
-function mapChildren(role: AppRole, children: NavItemConfig["children"] = []) {
+function mapChildren(
+  role: AppRole,
+  children: SidebarItemConfig["children"] = []
+) {
   return children
     .filter((child) => canAccess(role, child.roles))
-    .map<NavChildDef>(({ id, label, to, roles }) => ({
+    .map<SidebarChildDef>(({ id, label, to, roles }) => ({
       id,
       label,
       to,
@@ -49,7 +56,10 @@ function mapChildren(role: AppRole, children: NavItemConfig["children"] = []) {
     }));
 }
 
-function mapItem(role: AppRole, item: NavItemConfig): NavItemDef | null {
+function mapItem(
+  role: AppRole,
+  item: SidebarItemConfig
+): SidebarItemDef | null {
   const children = mapChildren(role, item.children);
   const isDirectlyVisible = canAccess(role, item.roles);
   const hasVisibleChildren = children.length > 0;
@@ -70,11 +80,11 @@ function mapItem(role: AppRole, item: NavItemConfig): NavItemDef | null {
 
 function mapSection(
   role: AppRole,
-  section: NavSectionConfig
-): NavSectionDef | null {
+  section: SidebarSectionConfig
+): SidebarSectionDef | null {
   const items = section.items
     .map((item) => mapItem(role, item))
-    .filter((item): item is NavItemDef => item !== null);
+    .filter((item): item is SidebarItemDef => item !== null);
 
   if (items.length === 0) {
     return null;
@@ -88,7 +98,7 @@ function mapSection(
 }
 
 export function getVisibleSidebarSections(role: AppRole = currentUser.role) {
-  return navSections
+  return sidebarSections
     .map((section) => mapSection(role, section))
-    .filter((section): section is NavSectionDef => section !== null);
+    .filter((section): section is SidebarSectionDef => section !== null);
 }

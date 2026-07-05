@@ -2,7 +2,7 @@ import { cn } from "~/lib/cn";
 import { PanelLeftCloseIcon } from "lucide-react";
 import { useSidebarState } from "~/hooks/useSidebarState";
 
-import { NAV_DURATION } from "~/features/frame/sidebar/styles/sidebar-styles";
+import { SIDEBAR_DURATION } from "~/features/frame/sidebar/styles/sidebar-styles";
 
 export function SidebarFooter() {
   const { isOpen, toggle } = useSidebarState();
@@ -20,7 +20,7 @@ export function SidebarFooter() {
         <PanelLeftCloseIcon
           className={cn(
             "transition-transform",
-            NAV_DURATION,
+            SIDEBAR_DURATION,
             !isOpen ? "scale-x-[-1]" : ""
           )}
         />

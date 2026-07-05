@@ -2,24 +2,24 @@ import type { ReactNode } from "react";
 
 import type { AppRole } from "~/config/permissions";
 
-export type NavChildDef = {
+export type SidebarChildDef = {
   id: string;
   label: string;
   to: string;
   roles: AppRole[];
 };
 
-export type NavItemDef = {
+export type SidebarItemDef = {
   id: string;
   label: string;
   icon: ReactNode;
   to?: string;
-  children?: NavChildDef[];
+  children?: SidebarChildDef[];
   roles: AppRole[];
 };
 
-export type NavSectionDef = {
+export type SidebarSectionDef = {
   label?: string;
   hasDivider?: boolean;
-  items: NavItemDef[];
+  items: SidebarItemDef[];
 };

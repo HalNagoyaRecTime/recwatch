@@ -1,6 +1,6 @@
 import type { AppRole } from "./permissions";
 
-export type NavIconKey =
+export type SidebarIconKey =
   | "calendar"
   | "clock"
   | "dashboard"
@@ -11,31 +11,31 @@ export type NavIconKey =
   | "trophy"
   | "users";
 
-type NavRoleConfig = {
+type SidebarRoleConfig = {
   roles: AppRole[];
 };
 
-export type NavChildConfig = NavRoleConfig & {
+export type SidebarChildConfig = SidebarRoleConfig & {
   id: string;
   label: string;
   to: string;
 };
 
-export type NavItemConfig = NavRoleConfig & {
+export type SidebarItemConfig = SidebarRoleConfig & {
   id: string;
   label: string;
-  icon: NavIconKey;
+  icon: SidebarIconKey;
   to?: string;
-  children?: NavChildConfig[];
+  children?: SidebarChildConfig[];
 };
 
-export type NavSectionConfig = {
+export type SidebarSectionConfig = {
   label?: string;
   hasDivider?: boolean;
-  items: NavItemConfig[];
+  items: SidebarItemConfig[];
 };
 
-export const navSections = [
+export const sidebarSections = [
   {
     items: [
       {
@@ -198,4 +198,4 @@ export const navSections = [
       },
     ],
   },
-] satisfies NavSectionConfig[];
+] satisfies SidebarSectionConfig[];

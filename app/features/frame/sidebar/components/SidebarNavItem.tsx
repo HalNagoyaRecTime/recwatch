@@ -5,8 +5,11 @@ import { useSidebarUI } from "~/features/frame/sidebar/hooks/useSidebarUI";
 import { useSidebarState } from "~/hooks/useSidebarState";
 import { cn } from "~/lib/cn";
 import { actionListItemStyle } from "~/components/ui/styles/action-list-styles";
-import type { NavItemDef, NavChildDef } from "~/types/nav";
-import { NAV_DURATION, NAV_DURATION_MS } from "../styles/sidebar-styles";
+import type { SidebarItemDef, SidebarChildDef } from "~/types/sidebar";
+import {
+  SIDEBAR_DURATION,
+  SIDEBAR_DURATION_MS,
+} from "../styles/sidebar-styles";
 
 // パスの一致判定ユーティリティ
 function pathMatches(pathname: string, to: string) {
@@ -22,7 +25,7 @@ export function SidebarNavItem({
   item,
   pathname,
 }: {
-  item: NavItemDef;
+  item: SidebarItemDef;
   pathname: string;
 }) {
   const hasChildren = Boolean(item.children?.length);
@@ -37,7 +40,7 @@ export function SidebarNavItem({
 // --- ファイル内専用の部品コンポーネント ---
 
 type NavFolderProps = {
-  item: NavItemDef;
+  item: SidebarItemDef;
   pathname: string;
 };
 
@@ -61,7 +64,7 @@ function NavFolder({ item, pathname }: NavFolderProps) {
           actionListItemStyle({ intent: "nav", active: false }),
           "w-full",
           "transition-all",
-          NAV_DURATION,
+          SIDEBAR_DURATION,
           !isExpanded && "gap-0 pr-0 pl-3",
           hasActiveChild && "hover:bg-transparent"
         )}
@@ -87,7 +90,7 @@ function NavFolder({ item, pathname }: NavFolderProps) {
 }
 
 type NavLinkItemProps = {
-  item: NavItemDef;
+  item: SidebarItemDef;
 };
 
 function NavLinkItem({ item }: NavLinkItemProps) {
@@ -105,7 +108,7 @@ function NavLinkItem({ item }: NavLinkItemProps) {
             actionListItemStyle({ intent: "nav", active: isActive }),
             "w-full",
             "transition-all",
-            NAV_DURATION,
+            SIDEBAR_DURATION,
             !isExpanded && "gap-0 pr-0 pl-3"
           )
         }
@@ -120,7 +123,7 @@ function NavLinkItem({ item }: NavLinkItemProps) {
 }
 
 type NavTriggerContentProps = {
-  item: NavItemDef;
+  item: SidebarItemDef;
   isExpanded: boolean;
   isAccordionOpen?: boolean;
   hasChildren?: boolean;
@@ -141,7 +144,7 @@ function NavTriggerContent({
         className={cn(
           "overflow-hidden text-[13px] font-medium whitespace-nowrap",
           "transition-all",
-          NAV_DURATION,
+          SIDEBAR_DURATION,
           isExpanded ? "max-w-40 opacity-100" : "max-w-0 opacity-0"
         )}
       >
@@ -154,7 +157,7 @@ function NavTriggerContent({
           className={cn(
             "ml-auto text-(--text-3)",
             "transition-all",
-            NAV_DURATION,
+            SIDEBAR_DURATION,
             isExpanded ? "opacity-100" : "hidden",
             isAccordionOpen ? "rotate-90" : ""
           )}
@@ -165,7 +168,7 @@ function NavTriggerContent({
 }
 
 type NavPopupProps = {
-  item: NavItemDef;
+  item: SidebarItemDef;
   closeMenu: () => void;
 };
 
@@ -177,7 +180,7 @@ function NavPopup({ item, closeMenu }: NavPopupProps) {
       className={cn(
         "pointer-events-none absolute top-0 left-[66px] z-100 min-w-[180px] translate-x-[-4px] opacity-0 shadow-(--shadow-soft)",
         "transition-all",
-        NAV_DURATION,
+        SIDEBAR_DURATION,
         "group-hover/nav:pointer-events-auto group-hover/nav:translate-x-0 group-hover/nav:opacity-100"
       )}
     >
@@ -208,7 +211,7 @@ function NavPopup({ item, closeMenu }: NavPopupProps) {
 }
 
 type NavAccordionProps = {
-  item: NavItemDef;
+  item: SidebarItemDef;
   isOpen: boolean;
   closeMenu: () => void;
 };
@@ -234,10 +237,10 @@ function NavAccordion({ item, isOpen, closeMenu }: NavAccordionProps) {
     } else {
       // 1. CSSで「閉じる」
       setActive(false);
-      // 2. アニメーション終了(NAV_DURATION_MS)を待ってから、DOMを破棄する
+      // 2. アニメーション終了(SIDEBAR_DURATION_MS)を待ってから、DOMを破棄する
       timer2 = setTimeout(() => {
         setMounted(false);
-      }, NAV_DURATION_MS);
+      }, SIDEBAR_DURATION_MS);
     }
 
     return () => {
@@ -253,7 +256,7 @@ function NavAccordion({ item, isOpen, closeMenu }: NavAccordionProps) {
       className={cn(
         "ml-[17.5px] overflow-hidden border-l border-(--border-1) pl-[7.5px]",
         "transition-all",
-        NAV_DURATION,
+        SIDEBAR_DURATION,
         active ? "visible max-h-[400px]" : "invisible max-h-0"
       )}
     >
@@ -265,7 +268,7 @@ function NavAccordion({ item, isOpen, closeMenu }: NavAccordionProps) {
 }
 
 type NavSubItemProps = {
-  item: NavChildDef;
+  item: SidebarChildDef;
   onClick?: () => void;
 };
 

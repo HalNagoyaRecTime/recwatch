@@ -1,7 +1,7 @@
 import { cn } from "~/lib/cn";
 
 import { useSidebarUI } from "~/features/frame/sidebar/hooks/useSidebarUI";
-import { NAV_DURATION } from "~/features/frame/sidebar/styles/sidebar-styles";
+import { SIDEBAR_DURATION } from "~/features/frame/sidebar/styles/sidebar-styles";
 
 export function SidebarHeader() {
   const { isExpanded } = useSidebarUI();
@@ -17,7 +17,7 @@ export function SidebarHeader() {
         <span
           className={cn(
             "overflow-hidden text-base font-semibold tracking-[0.02em] whitespace-nowrap transition-[max-width,opacity]",
-            NAV_DURATION,
+            SIDEBAR_DURATION,
             isExpanded ? "max-w-32 opacity-100" : "max-w-0 opacity-0"
           )}
         >

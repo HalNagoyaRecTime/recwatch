@@ -3,9 +3,9 @@ import { currentUser } from "~/config/permissions";
 import { cn } from "~/lib/cn";
 import { useSidebarUI } from "~/features/frame/sidebar/hooks/useSidebarUI";
 import { getVisibleSidebarSections } from "~/features/frame/sidebar/model/sidebar-config";
-import type { NavSectionDef } from "~/types/nav";
+import type { SidebarSectionDef } from "~/types/sidebar";
 import { SidebarNavItem } from "./SidebarNavItem";
-import { NAV_DURATION } from "../styles/sidebar-styles";
+import { SIDEBAR_DURATION } from "../styles/sidebar-styles";
 
 export function AppSidebar() {
   const sections = getVisibleSidebarSections(currentUser.role);
@@ -19,12 +19,12 @@ export function AppSidebar() {
         className={cn(
           "flex-1 overflow-x-hidden overflow-y-auto overscroll-y-contain py-3",
           "transition-all",
-          NAV_DURATION,
+          SIDEBAR_DURATION,
           isExpanded ? "px-3.5" : "px-2"
         )}
       >
         {sections.map((section, sIdx) => (
-          <NavSection
+          <SidebarSection
             key={section.label ?? `section-${sIdx}`}
             section={section}
             pathname={pathname}
@@ -38,13 +38,17 @@ export function AppSidebar() {
 
 // --- Local Components ---
 
-type NavSectionProps = {
-  section: NavSectionDef;
+type SidebarSectionProps = {
+  section: SidebarSectionDef;
   pathname: string;
   isExpanded: boolean;
 };
 
-function NavSection({ section, pathname, isExpanded }: NavSectionProps) {
+function SidebarSection({
+  section,
+  pathname,
+  isExpanded,
+}: SidebarSectionProps) {
   const hasLabel = Boolean(section.label);
   const shouldShowLine = section.hasDivider || (!isExpanded && hasLabel);
 
@@ -53,12 +57,12 @@ function NavSection({ section, pathname, isExpanded }: NavSectionProps) {
       className={cn(
         "first:mt-0",
         "transition-all",
-        NAV_DURATION,
+        SIDEBAR_DURATION,
         shouldShowLine ? "mt-3" : "mt-[18px]"
       )}
     >
       {/* 線とラベルの表示を「セクションの導入部」として丸投げ */}
-      <NavSectionSeparator
+      <SidebarSectionSeparator
         section={section}
         isExpanded={isExpanded}
         shouldShowLine={shouldShowLine}
@@ -75,13 +79,13 @@ function NavSection({ section, pathname, isExpanded }: NavSectionProps) {
   );
 }
 
-function NavSectionSeparator({
+function SidebarSectionSeparator({
   section,
   isExpanded,
   shouldShowLine,
   hasLabel,
 }: {
-  section: NavSectionDef;
+  section: SidebarSectionDef;
   isExpanded: boolean;
   shouldShowLine: boolean;
   hasLabel: boolean;
@@ -99,7 +103,7 @@ function NavSectionSeparator({
         className={cn(
           "mx-2 bg-(--border-1)",
           "transition-all",
-          NAV_DURATION,
+          SIDEBAR_DURATION,
           shouldShowLine ? "mb-3 h-px opacity-100" : "mb-0 h-0 opacity-0"
         )}
       />
@@ -113,7 +117,7 @@ function NavSectionSeparator({
           className={cn(
             "overflow-hidden px-2.5 font-bold tracking-[0.12em] whitespace-nowrap text-(--text-3) uppercase",
             "transition-all",
-            NAV_DURATION,
+            SIDEBAR_DURATION,
             isExpanded
               ? "max-h-10 pb-2 text-[10px] opacity-100"
               : "max-h-0 pb-0 text-[10px] opacity-0"
