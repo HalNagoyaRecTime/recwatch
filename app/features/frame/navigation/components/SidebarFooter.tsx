@@ -4,7 +4,7 @@ import { useNavState } from "~/hooks/useNavState";
 
 import { NAV_DURATION } from "~/features/frame/navigation/styles/sidebar-styles";
 
-export function BottomBtn() {
+export function SidebarFooter() {
   const { isOpen, toggle } = useNavState();
 
   return (

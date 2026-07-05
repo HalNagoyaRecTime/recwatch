@@ -3,7 +3,7 @@ import { cn } from "~/lib/cn";
 import { useNavigationUI } from "~/features/frame/navigation/hooks/useNavigationUI";
 import { NAV_DURATION } from "~/features/frame/navigation/styles/sidebar-styles";
 
-export function SidebarBrand() {
+export function SidebarHeader() {
   const { isExpanded } = useNavigationUI();
 
   return (

@@ -2,13 +2,13 @@ import { useEffect } from "react";
 
 import { useNavState } from "~/hooks/useNavState";
 
-import { BottomBtn } from "~/features/frame/navigation/bottom-area/BottomBtn";
+import { SidebarFooter } from "~/features/frame/navigation/components/SidebarFooter";
 import { AppSidebar } from "~/features/frame/navigation/components/AppSidebar";
 import {
   NavigationUIProvider,
   useNavigationUI,
 } from "~/features/frame/navigation/hooks/useNavigationUI";
-import { SidebarBrand } from "~/features/frame/navigation/header-logo/SidebarBrand";
+import { SidebarHeader } from "~/features/frame/navigation/components/SidebarHeader";
 import {
   sidebarContainerStyle,
   sidebarPlaceholderStyle,
@@ -32,10 +32,10 @@ function NavigationContent() {
           onMouseEnter={() => setHovering(true)}
           onMouseLeave={() => setHovering(false)}
         >
-          <SidebarBrand />
+          <SidebarHeader />
           <AppSidebar />
         </div>
-        <BottomBtn />
+        <SidebarFooter />
       </div>
     </div>
   );
