@@ -6,7 +6,7 @@ import { useNavState } from "~/hooks/useNavState";
 import { cn } from "~/lib/cn";
 import { actionListItemStyle } from "~/components/ui/styles/action-list-styles";
 import type { NavItemDef, NavChildDef } from "~/types/nav";
-import { NAV_DURATION } from "../styles/sidebar-styles";
+import { NAV_DURATION, NAV_DURATION_MS } from "../styles/sidebar-styles";
 
 // パスの一致判定ユーティリティ
 function pathMatches(pathname: string, to: string) {
@@ -234,10 +234,10 @@ function NavAccordion({ item, isOpen, closeMenu }: NavAccordionProps) {
     } else {
       // 1. CSSで「閉じる」
       setActive(false);
-      // 2. アニメーション終了(200ms)を待ってから、DOMを破棄する
+      // 2. アニメーション終了(NAV_DURATION_MS)を待ってから、DOMを破棄する
       timer2 = setTimeout(() => {
         setMounted(false);
-      }, 200);
+      }, NAV_DURATION_MS);
     }
 
     return () => {

@@ -2,6 +2,8 @@ import { cn } from "~/lib/cn";
 import { PanelLeftCloseIcon } from "lucide-react";
 import { useNavState } from "~/hooks/useNavState";
 
+import { NAV_DURATION } from "~/features/frame/navigation/styles/sidebar-styles";
+
 export function BottomBtn() {
   const { isOpen, toggle } = useNavState();
 
@@ -17,7 +19,8 @@ export function BottomBtn() {
       >
         <PanelLeftCloseIcon
           className={cn(
-            "transition-transform duration-200",
+            "transition-transform",
+            NAV_DURATION,
             !isOpen ? "scale-x-[-1]" : ""
           )}
         />

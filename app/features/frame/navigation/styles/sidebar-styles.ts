@@ -1,6 +1,7 @@
 import { cva } from "~/lib/cva";
 
-export const NAV_DURATION = "duration-2000 ease-[cubic-bezier(0.4,0,0.2,1)]";
+export const NAV_DURATION_MS = 200;
+export const NAV_DURATION = "duration-200 ease-[cubic-bezier(0.4,0,0.2,1)]";
 
 export const sidebarPlaceholderStyle = cva(
   "relative z-99 overflow-visible transition-[width] " + NAV_DURATION,
