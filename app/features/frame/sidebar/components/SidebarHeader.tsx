@@ -1,10 +1,10 @@
 import { cn } from "~/lib/cn";
 
-import { useNavigationUI } from "~/features/frame/navigation/hooks/useNavigationUI";
-import { NAV_DURATION } from "~/features/frame/navigation/styles/sidebar-styles";
+import { useSidebarUI } from "~/features/frame/sidebar/hooks/useSidebarUI";
+import { NAV_DURATION } from "~/features/frame/sidebar/styles/sidebar-styles";
 
 export function SidebarHeader() {
-  const { isExpanded } = useNavigationUI();
+  const { isExpanded } = useSidebarUI();
 
   return (
     <div className="main-header-height hidden items-center gap-3 border-b border-(--border-1) pl-4 md:flex">

@@ -1,11 +1,11 @@
 import { cn } from "~/lib/cn";
 import { PanelLeftCloseIcon } from "lucide-react";
-import { useNavState } from "~/hooks/useNavState";
+import { useSidebarState } from "~/hooks/useSidebarState";
 
-import { NAV_DURATION } from "~/features/frame/navigation/styles/sidebar-styles";
+import { NAV_DURATION } from "~/features/frame/sidebar/styles/sidebar-styles";
 
 export function SidebarFooter() {
-  const { isOpen, toggle } = useNavState();
+  const { isOpen, toggle } = useSidebarState();
 
   return (
     <div className="main-footer-height flex border-t border-(--border-1) p-1 pl-3">

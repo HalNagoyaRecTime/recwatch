@@ -1,14 +1,14 @@
-import { NavigationShell } from "~/features/frame/navigation/NavigationShell";
+import { SidebarShell } from "~/features/frame/sidebar/SidebarShell";
 import { MainShell } from "~/features/frame/main-header/MainShell";
-import { NavigationStateProvider } from "~/hooks/useNavState";
+import { SidebarStateProvider } from "~/hooks/useSidebarState";
 
 export function AppShell() {
   return (
-    <NavigationStateProvider>
+    <SidebarStateProvider>
       <div className="flex h-dvh overflow-hidden md:flex-row">
-        <NavigationShell />
+        <SidebarShell />
         <MainShell />
       </div>
-    </NavigationStateProvider>
+    </SidebarStateProvider>
   );
 }

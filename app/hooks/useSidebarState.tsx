@@ -9,7 +9,7 @@ import {
 /**
  * アプリ全体のナビゲーション開閉状態を表すデータ型です。
  */
-type NavState = {
+type SidebarState = {
   isOpen: boolean;
   openAccordions: string[];
   toggle: () => void;
@@ -20,13 +20,13 @@ type NavState = {
 /**
  * ナビゲーションの開閉状態をコンポーネントツリー全体に共有するためのContextオブジェクトです。
  */
-const NavStateContext = createContext<NavState | undefined>(undefined);
+const SidebarStateContext = createContext<SidebarState | undefined>(undefined);
 
 /**
  * ナビゲーション状態（開閉状態・アコーディオン）を管理し、セッションストレージと同期させるProviderです。
  * アプリのルート付近（AppShell等）で一度だけ呼び出されます。
  */
-export function NavigationStateProvider({ children }: { children: ReactNode }) {
+export function SidebarStateProvider({ children }: { children: ReactNode }) {
   const [isOpen, setIsOpen] = useState(true);
   const [openAccordions, setOpenAccordions] = useState<string[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
@@ -90,7 +90,7 @@ export function NavigationStateProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <NavStateContext.Provider
+    <SidebarStateContext.Provider
       value={{
         isOpen,
         openAccordions,
@@ -100,7 +100,7 @@ export function NavigationStateProvider({ children }: { children: ReactNode }) {
       }}
     >
       {children}
-    </NavStateContext.Provider>
+    </SidebarStateContext.Provider>
   );
 }
 
@@ -111,11 +111,11 @@ export function NavigationStateProvider({ children }: { children: ReactNode }) {
  * アプリのどこからでもサイドバーの「ピン留め状態（開閉）」を操作・参照するために使用します。
  */
 // eslint-disable-next-line react-refresh/only-export-components
-export function useNavState() {
-  const context = useContext(NavStateContext);
+export function useSidebarState() {
+  const context = useContext(SidebarStateContext);
   if (!context) {
     throw new Error(
-      "useNavState は NavigationStateProvider の内側で使用する必要があります"
+      "useSidebarState は SidebarStateProvider の内側で使用する必要があります"
     );
   }
   return context;

@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { NavLink } from "react-router";
 import { ChevronRightIcon } from "lucide-react";
-import { useNavigationUI } from "~/features/frame/navigation/hooks/useNavigationUI";
-import { useNavState } from "~/hooks/useNavState";
+import { useSidebarUI } from "~/features/frame/sidebar/hooks/useSidebarUI";
+import { useSidebarState } from "~/hooks/useSidebarState";
 import { cn } from "~/lib/cn";
 import { actionListItemStyle } from "~/components/ui/styles/action-list-styles";
 import type { NavItemDef, NavChildDef } from "~/types/nav";
@@ -42,8 +42,8 @@ type NavFolderProps = {
 };
 
 function NavFolder({ item, pathname }: NavFolderProps) {
-  const { isExpanded } = useNavigationUI();
-  const { openAccordions, toggleAccordion, closeForMobile } = useNavState();
+  const { isExpanded } = useSidebarUI();
+  const { openAccordions, toggleAccordion, closeForMobile } = useSidebarState();
 
   const isAccordionOpen = openAccordions.includes(item.id);
   const hasActiveChild =
@@ -91,8 +91,8 @@ type NavLinkItemProps = {
 };
 
 function NavLinkItem({ item }: NavLinkItemProps) {
-  const { isExpanded } = useNavigationUI();
-  const { closeForMobile } = useNavState();
+  const { isExpanded } = useSidebarUI();
+  const { closeForMobile } = useSidebarState();
 
   if (!item.to) return null;
 

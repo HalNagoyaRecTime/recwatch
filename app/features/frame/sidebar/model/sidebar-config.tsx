@@ -87,7 +87,7 @@ function mapSection(
   };
 }
 
-export function getVisibleNavSections(role: AppRole = currentUser.role) {
+export function getVisibleSidebarSections(role: AppRole = currentUser.role) {
   return navSections
     .map((section) => mapSection(role, section))
     .filter((section): section is NavSectionDef => section !== null);
