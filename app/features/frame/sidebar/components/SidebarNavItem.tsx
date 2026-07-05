@@ -174,7 +174,7 @@ function NavPopup({ item, closeMenu }: NavPopupProps) {
   return (
     <div
       className={cn(
-        "shadow-shadow-soft pointer-events-none absolute top-0 left-[66px] z-100 min-w-[180px] translate-x-[-4px] opacity-0",
+        "shadow-shadow-soft pointer-events-none absolute top-0 left-16.5 z-100 min-w-45 -translate-x-1 opacity-0",
         "transition-all",
         SIDEBAR_DURATION,
         "group-hover/nav:pointer-events-auto group-hover/nav:translate-x-0 group-hover/nav:opacity-100"
@@ -197,7 +197,7 @@ function NavPopup({ item, closeMenu }: NavPopupProps) {
             </div>
           </>
         ) : (
-          <div className="text-text-1 px-[11px] py-[5px] text-[12.5px] font-medium">
+          <div className="text-text-1 px-2.75 py-1.25 text-[12.5px] font-medium">
             {item.label}
           </div>
         )}
