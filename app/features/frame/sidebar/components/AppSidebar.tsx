@@ -4,8 +4,8 @@ import { cn } from "~/lib/cn";
 import { useSidebarUI } from "~/features/frame/sidebar/hooks/useSidebarUI";
 import { getVisibleSidebarSections } from "~/features/frame/sidebar/model/sidebar-config";
 import type { SidebarSectionDef } from "~/types/sidebar";
-import { SidebarNavItem } from "./SidebarNavItem";
-import { SIDEBAR_DURATION } from "../styles/sidebar-styles";
+import { SidebarNavItem } from "~/features/frame/sidebar/components/SidebarNavItem";
+import { SIDEBAR_DURATION } from "~/features/frame/sidebar/styles/sidebar-styles";
 
 export function AppSidebar() {
   const sections = getVisibleSidebarSections(currentUser.role);
