@@ -1,4 +1,3 @@
-import { useEffect, useState } from "react";
 import { NavLink } from "react-router";
 import { ChevronRightIcon } from "lucide-react";
 import { useSidebarUI } from "~/features/frame/sidebar/hooks/useSidebarUI";
@@ -6,10 +5,7 @@ import { useSidebarState } from "~/hooks/useSidebarState";
 import { cn } from "~/lib/cn";
 import { actionListItemStyle } from "~/components/ui/styles/action-list-styles";
 import type { SidebarItemDef, SidebarChildDef } from "~/types/sidebar";
-import {
-  SIDEBAR_DURATION,
-  SIDEBAR_DURATION_MS,
-} from "~/features/frame/sidebar/styles/sidebar-styles";
+import { SIDEBAR_DURATION } from "~/features/frame/sidebar/styles/sidebar-styles";
 
 // パスの一致判定ユーティリティ
 function pathMatches(pathname: string, to: string) {
@@ -217,39 +213,7 @@ type NavAccordionProps = {
 };
 
 function NavAccordion({ item, isOpen, closeMenu }: NavAccordionProps) {
-  // DOMをマウントするかどうか
-  const [mounted, setMounted] = useState(isOpen);
-  // CSSの「開いた状態」を適用するかどうか。初期値は絶対にfalse（閉じた状態でDOMを作るため）
-  const [active, setActive] = useState(false);
-
-  useEffect(() => {
-    let timer1: NodeJS.Timeout;
-    let timer2: NodeJS.Timeout;
-
-    if (isOpen) {
-      // 1. DOMを生成する
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setMounted(true);
-      // 2. DOM生成（ブラウザの描画）を少し待ってから、CSSで「開く」
-      timer1 = setTimeout(() => {
-        setActive(true);
-      }, 10);
-    } else {
-      // 1. CSSで「閉じる」
-      setActive(false);
-      // 2. アニメーション終了(SIDEBAR_DURATION_MS)を待ってから、DOMを破棄する
-      timer2 = setTimeout(() => {
-        setMounted(false);
-      }, SIDEBAR_DURATION_MS);
-    }
-
-    return () => {
-      clearTimeout(timer1);
-      clearTimeout(timer2);
-    };
-  }, [isOpen]);
-
-  if (!item.children || !mounted) return null;
+  if (!item.children) return null;
 
   return (
     <div
@@ -257,7 +221,7 @@ function NavAccordion({ item, isOpen, closeMenu }: NavAccordionProps) {
         "grid",
         "transition-all",
         SIDEBAR_DURATION,
-        active ? "visible grid-rows-[1fr]" : "invisible grid-rows-[0fr]"
+        isOpen ? "visible grid-rows-[1fr]" : "invisible grid-rows-[0fr]"
       )}
     >
       <div className="border-border-1 ml-[17.5px] min-h-0 overflow-hidden border-l pl-[7.5px]">

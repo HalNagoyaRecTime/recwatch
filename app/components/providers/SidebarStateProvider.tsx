@@ -50,13 +50,7 @@ export function SidebarStateProvider({ children }: { children: ReactNode }) {
   }, [isOpen, openAccordions, isLoaded]);
 
   const toggle = () => {
-    setIsOpen((prevIsOpen) => {
-      const nextIsOpen = !prevIsOpen;
-      return nextIsOpen;
-    });
-    setOpenAccordions((prev) => {
-      return isOpen ? [] : prev;
-    });
+    setIsOpen((prevIsOpen) => !prevIsOpen);
   };
 
   const toggleAccordion = (id: string) => {
