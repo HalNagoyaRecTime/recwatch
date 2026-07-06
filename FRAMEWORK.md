@@ -49,13 +49,11 @@ app/
       parts/        # ページに特化したプレゼンテーションコンポーネント
   hooks/            # クライアント側のアプリケーションロジック
   usecases/         # サーバー側のアプリケーションロジック（オプション。必要に応じて作成）
-  domain/           # ドメイン型と純粋なビジネスロジック
   service/          # 外部I/Oの抽象化と正規化
   lib/              # 技術的なユーティリティのみ（ビジネスロジックは不可）
+  types/            # API型定義
   context/          # 横断的なUI/セッション状態
-server/
-  db/               # サーバー専用のDBクライアント
-  repositories/     # サーバー専用の永続化ロジック
+
 ```
 
 ### File Responsibility Principle（ファイルの単一責任原則）
