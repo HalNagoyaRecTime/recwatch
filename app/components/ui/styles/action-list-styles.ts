@@ -9,7 +9,6 @@ export const actionListItemStyle = cva(
     variants: {
       intent: {
         primary: "text-text-1 hover:bg-surface-2",
-        nav: "text-text-2 hover:bg-surface-2 hover:text-text-1",
         danger: "text-tone-danger-text hover:bg-tone-danger-bg-hover",
       },
       active: {
