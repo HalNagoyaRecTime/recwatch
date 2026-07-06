@@ -33,5 +33,3 @@ export default function HomeroomRoute() {
   const Homerooms = useLoaderData<typeof loader>();
   return <HomeRoomPage homerooms={Homerooms} />;
 }
-
-// クラス名 SQL likeを使用して絞り込みを実装する
