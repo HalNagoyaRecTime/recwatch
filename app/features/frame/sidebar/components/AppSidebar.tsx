@@ -114,12 +114,10 @@ function SidebarSectionSeparator({
       {hasLabel && (
         <div
           className={cn(
-            "text-text-3 overflow-hidden px-2.5 font-bold tracking-[0.12em] whitespace-nowrap uppercase",
+            "text-text-3 overflow-hidden px-2.5 text-[10px] font-bold tracking-[0.12em] whitespace-nowrap uppercase",
             "transition-all",
             SIDEBAR_DURATION,
-            isExpanded
-              ? "text-2.5 max-h-10 pb-2 opacity-100"
-              : "text-2.5 max-h-0 pb-0 opacity-0"
+            isExpanded ? "max-h-10 pb-2 opacity-100" : "max-h-0 pb-0 opacity-0"
           )}
         >
           {section.label}
