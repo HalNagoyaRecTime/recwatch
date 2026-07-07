@@ -1,4 +1,5 @@
 import {
+  BellIcon,
   CalendarIcon,
   Clock3Icon,
   FileTextIcon,
@@ -25,6 +26,7 @@ const iconSize = 15;
 
 // https://lucide.dev/icons/
 const iconMap: Record<NavIconKey, ReactNode> = {
+  bell: <BellIcon size={iconSize} strokeWidth={1.8} />,
   calendar: <CalendarIcon size={iconSize} strokeWidth={1.8} />,
   clock: <Clock3Icon size={iconSize} strokeWidth={1.8} />,
   dashboard: <LayoutDashboardIcon size={iconSize} strokeWidth={1.8} />,
