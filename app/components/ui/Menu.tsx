@@ -110,12 +110,12 @@ export function MenuActionItem({
       </div>
       {endIcon && (
         <div className="text-text-3 flex shrink-0 items-center justify-center">
-          {typeof endIcon === "function" ? (
-            // @ts-expect-error valid element type
-            <endIcon size={14} strokeWidth={1.8} />
-          ) : (
-            endIcon
-          )}
+          {typeof endIcon === "function"
+            ? (() => {
+                const EndIcon = endIcon;
+                return <EndIcon size={14} strokeWidth={1.8} />;
+              })()
+            : endIcon}
         </div>
       )}
     </button>
