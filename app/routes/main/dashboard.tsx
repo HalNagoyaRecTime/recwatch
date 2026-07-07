@@ -8,13 +8,13 @@ export function meta() {
   return [{ title: "Dashboard | recwatch" }];
 }
 
-export async function loader() {
+export async function clientLoader() {
   const res = await fetch(`${env.backendBaseUrl}/`);
   return res.json();
 }
 
 export default function DashboardRoute() {
-  const data = useLoaderData<typeof loader>();
+  const data = useLoaderData<typeof clientLoader>();
 
   return (
     <div className="flex flex-col gap-[18px]">
