@@ -72,7 +72,7 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
 
   return (
     <main className="min-h-dvh p-6 md:p-8">
-      <div className="mx-auto max-w-5xl rounded-[1.5rem] border border-[color:var(--border-1)] bg-[color:var(--surface-1)] p-6 shadow-[var(--shadow-soft)] md:p-8">
+      <div className="mx-auto max-w-5xl rounded-[1.5rem] border border-[color:var(--border-1)] bg-[color:var(--surface-1)] p-6 shadow-[var(--app-shadow-soft)] md:p-8">
         <div className="font-['DM_Mono'] text-xs tracking-[0.18em] text-[color:var(--brand-2)] uppercase">
           Failure Boundary
         </div>

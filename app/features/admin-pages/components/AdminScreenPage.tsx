@@ -50,7 +50,7 @@ export function AdminScreenPage({
   return (
     <div className="flex flex-col gap-[18px]">
       <section className="grid gap-[18px] xl:grid-cols-[minmax(0,1.4fr)_minmax(280px,0.9fr)]">
-        <div className="rounded-[18px] border border-[color:var(--border-1)] bg-[linear-gradient(180deg,var(--surface-card-gloss),transparent),var(--surface-1)] p-6 shadow-[var(--shadow-soft)]">
+        <div className="rounded-[18px] border border-[color:var(--border-1)] bg-[linear-gradient(180deg,var(--surface-card-gloss),transparent),var(--surface-1)] p-6 shadow-[var(--app-shadow-soft)]">
           <div className="font-['DM_Mono'] text-xs tracking-[0.12em] text-[color:var(--brand-2)] uppercase">
             {eyebrow}
           </div>
@@ -61,7 +61,7 @@ export function AdminScreenPage({
             {description}
           </p>
         </div>
-        <div className="flex flex-col gap-3 rounded-[18px] border border-[color:var(--border-1)] bg-[linear-gradient(180deg,var(--surface-card-gloss),transparent),var(--surface-1)] p-5 shadow-[var(--shadow-soft)]">
+        <div className="flex flex-col gap-3 rounded-[18px] border border-[color:var(--border-1)] bg-[linear-gradient(180deg,var(--surface-card-gloss),transparent),var(--surface-1)] p-5 shadow-[var(--app-shadow-soft)]">
           <div className="flex items-center justify-between gap-3">
             <div className="text-sm font-semibold">{panelTitle}</div>
             <div className="text-xs text-[color:var(--text-3)]">
@@ -96,7 +96,7 @@ export function AdminScreenPage({
         {metrics.map((metric) => (
           <article
             key={metric.label}
-            className="rounded-[18px] border border-[color:var(--border-1)] bg-[linear-gradient(180deg,var(--surface-card-gloss),transparent),var(--surface-1)] p-[18px] shadow-[var(--shadow-soft)]"
+            className="rounded-[18px] border border-[color:var(--border-1)] bg-[linear-gradient(180deg,var(--surface-card-gloss),transparent),var(--surface-1)] p-[18px] shadow-[var(--app-shadow-soft)]"
           >
             <div className="font-['DM_Mono'] text-[11px] tracking-[0.08em] text-[color:var(--text-3)] uppercase">
               {metric.label}
@@ -111,7 +111,7 @@ export function AdminScreenPage({
         ))}
       </section>
 
-      <section className="flex flex-col gap-3 rounded-[18px] border border-[color:var(--border-1)] bg-[linear-gradient(180deg,var(--surface-card-gloss),transparent),var(--surface-1)] p-5 shadow-[var(--shadow-soft)]">
+      <section className="flex flex-col gap-3 rounded-[18px] border border-[color:var(--border-1)] bg-[linear-gradient(180deg,var(--surface-card-gloss),transparent),var(--surface-1)] p-5 shadow-[var(--app-shadow-soft)]">
         <div className="flex items-center justify-between gap-3">
           <div className="text-sm font-semibold">{activityTitle}</div>
           <div className="text-xs text-[color:var(--text-3)]">

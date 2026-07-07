@@ -12,7 +12,7 @@ export function EventSwitcherPanel({
   onSelect,
 }: EventSwitcherPanelProps) {
   return (
-    <div className="absolute top-[calc(100%+6px)] left-0 z-120 min-w-full rounded-xl border border-(--border-2) bg-(--surface-overlay-strong) p-1.5 shadow-(--shadow-soft) backdrop-blur-xl">
+    <div className="absolute top-[calc(100%+6px)] left-0 z-120 min-w-full rounded-xl border border-(--border-2) bg-(--surface-overlay-strong) p-1.5 shadow-(--app-shadow-soft) backdrop-blur-xl">
       {events.map((event) => (
         <MenuActionButton
           key={event.id}

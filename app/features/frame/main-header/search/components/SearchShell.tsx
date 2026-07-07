@@ -12,7 +12,7 @@ export function SearchShell({ children, rootRef, isOpen }: SearchShellProps) {
     <div
       ref={rootRef}
       className={cn(
-        "app-rounded relative flex h-full flex-col overflow-hidden shadow-(--shadow-soft) transition-[padding,background-color] duration-400 ease-in-out",
+        "app-rounded relative flex h-full flex-col overflow-hidden shadow-(--app-shadow-soft) transition-[padding,background-color] duration-400 ease-in-out",
         isOpen ? "bg-(--bg-top) p-5" : "bg-transparent p-0"
       )}
     >
