@@ -2,7 +2,7 @@ import { CompetitionListPage } from "~/features/sports/pages/CompetitionListPage
 import type { CompetitionData } from "~/features/sports/model/competition";
 
 export function meta() {
-  return [{ title: "Sports List | recwatch" }];
+  return [{ title: "イベント一覧 | recwatch" }];
 }
 
 export default function SportsRoute() {
