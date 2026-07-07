@@ -6,7 +6,7 @@ import {
 import { HomeroomPage } from "~/features/homeroom/pages/HomeRoomPage";
 import { getHomeroomData } from "~/features/homeroom/model/homeroom-data";
 
-export async function loader() {
+export async function clientLoader() {
   return getHomeroomData();
 }
 
@@ -30,6 +30,6 @@ export function ErrorBoundary() {
 }
 
 export default function HomeroomRoute() {
-  const Homerooms = useLoaderData<typeof loader>();
+  const Homerooms = useLoaderData<typeof clientLoader>();
   return <HomeroomPage homerooms={Homerooms} />;
 }
