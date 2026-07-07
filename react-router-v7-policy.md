@@ -1,12 +1,12 @@
-# React Router v7 Policy (Full Stack)
+# React Router v7 Policy (SPA)
 
 ## 1. Scope
 
-- This document defines implementation rules for React Router v7 (Full Stack) projects.
-- Full Stack configuration means loader and action functions run on the server.
+- This document defines implementation rules for this React Router v7 SPA project.
+- Route data and mutations run in the browser through `clientLoader` and `clientAction`.
 - It derives from the architectural principles defined in AGENTS.md.
 - It does not redefine abstract architectural theory.
-- Client-only (SPA) configuration is out of scope.
+- Runtime server rendering and server route modules are out of scope.
 
 ---
 
@@ -26,7 +26,7 @@ Dependency direction must always move inward.
 - Infrastructure → Domain
 - Domain → must not depend on outer layers
 
-Route modules act as HTTP boundary adapters and must not contain business logic.
+Route modules act as browser-side boundary adapters and must not contain business logic.
 
 Domain defines business invariants and pure rules.
 Use cases orchestrate domain rules and infrastructure interactions.
@@ -48,14 +48,11 @@ app/
       pages/        # route-level page components (composed by route, not reused)
       parts/        # page-local presentational components
   hooks/            # client-side application logic
-  usecases/         # server-side application logic (optional, promoted when needed)
+  usecases/         # application logic (optional, promoted when needed)
   domain/           # domain types and pure business logic
-  service/          # external I/O abstraction and normalization
+  service/          # browser-side external I/O abstraction and normalization
   lib/              # technical utilities only (no business logic)
   context/          # cross-cutting UI/session state
-server/
-  db/               # server-only DB clients
-  repositories/     # server-only persistence logic
 ```
 
 ### File Responsibility Principle
@@ -70,21 +67,20 @@ Each file must represent a single cohesive responsibility.
 - Increasing file count is acceptable if it preserves structural clarity.
 - If a file name requires "and" to describe its purpose, split it.
 
-### Server-Only Rule
+### Client Boundary Rule
 
-Code under `server/` must never be imported into client-side code.
+All route, hook, use case, and service code is included in the client application.
 
-Secrets, environment variables, DB clients, and Node-only APIs must exist under `server/`.
-
-Route modules and services may import from `server/`.
-
-Components and hooks must not import from `server/`.
+- Secrets, private environment variables, DB clients, and Node-only APIs must not be imported.
+- Client environment variables must be safe to expose publicly.
+- External APIs must provide browser-compatible authentication and CORS behavior.
+- Direct database access is prohibited.
 
 ---
 
-## 4. Route Responsibilities (loader / action)
+## 4. Route Responsibilities (clientLoader / clientAction)
 
-Routes are HTTP boundary adapters.
+Routes are browser-side boundary adapters.
 
 Each route file corresponds to one route responsibility.
 
@@ -92,15 +88,15 @@ Each route file corresponds to one route responsibility.
 
 Route files may export:
 
-- `loader`
-- `action`
+- `clientLoader`
+- `clientAction`
 - `ErrorBoundary`
 - default component
 
 Route files must:
 
 - Parse and validate route params and form data
-- Perform authentication and authorization checks
+- Initiate browser-compatible authentication and authorization flows
 - Call service or use case functions
 - Return normalized Domain types
 - Redirect when necessary
@@ -145,7 +141,7 @@ Global dumping of UI constants is prohibited.
 
 ## 6. Application Logic Placement Rules
 
-Application logic is divided into client-side and server-side.
+Application logic runs on the client.
 
 ### Client-Side Logic
 
@@ -156,7 +152,7 @@ Hooks may:
 - Manage UI state
 - Orchestrate user interaction
 - Call service functions
-- Consume loader data
+- Consume client loader data
 
 Hooks must not:
 
@@ -164,14 +160,14 @@ Hooks must not:
 - Access DB or server-only modules
 - Contain domain rules
 
-### Server-Side Logic (Use Cases)
+### Application Use Cases
 
 Placed under `usecases/` when procedural complexity exists.
 
 Use cases may:
 
 - Coordinate multiple service calls
-- Enforce authorization
+- Coordinate authorization flows
 - Apply domain rules
 - Convert infrastructure errors into AppError
 
@@ -242,7 +238,7 @@ Allowed:
 - Class name utilities
 - Generic formatting helpers
 - Generic functional utilities
-- Environment access helpers (client-safe env only; server-only env must live under `server/`)
+- Environment access helpers for public client environment variables
 
 Forbidden:
 
@@ -262,7 +258,7 @@ State must have a clear owner.
 
 - URL state: owned by route (search params, path params)
 - UI state: owned by component or hook
-- Server state: loaded in loader and consumed via `useLoaderData`
+- Remote state: loaded in `clientLoader` and consumed via `useLoaderData`
 - Application flow state: managed in hooks
 
 Global state must not be used for unrelated concerns.
@@ -291,7 +287,7 @@ Root-level `ErrorBoundary` handles global failures.
 
 Routes represent screens.
 
-Mutation operations must default to using `action` within the same route.
+Mutation operations must default to using `clientAction` within the same route.
 
 Separate routes for mutation are allowed only when a distinct screen exists.
 
@@ -305,6 +301,6 @@ CRUD endpoints must not be mechanically mapped to separate routes.
 - Service: tests with external system mocks/fakes
 - Use cases: tests with service mocks
 - Hooks: tests with service mocks (no render)
-- Routes: verify loader/action return shape and redirect behavior
+- Routes: verify clientLoader/clientAction return shape and redirect behavior
 - Components: interaction-based tests (render + user event)
 - Implementation details must not be tested

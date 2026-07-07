@@ -9,7 +9,7 @@
     "format:check": "prettier --check .",
     "lint": "eslint .",
     "prepare": "husky",
-    "start": "react-router-serve ./build/server/index.js",
+    "preview": "vite preview --host 0.0.0.0",
     "typecheck": "react-router typegen && tsc"
   },
   "dependencies": {
