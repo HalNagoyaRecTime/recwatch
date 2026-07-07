@@ -8,7 +8,7 @@ export function CompetitionListPage({
 }) {
   return (
     <div className="flex flex-col gap-4">
-      <h1 className="text-2xl font-bold text-[var(--text-1)]">Sports List</h1>
+      <h1 className="text-2xl font-bold text-[var(--text-1)]">競技一覧</h1>
       <CompetitionTable competitions={competitions} />
     </div>
   );
