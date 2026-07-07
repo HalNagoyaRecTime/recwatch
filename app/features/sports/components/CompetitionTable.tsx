@@ -17,17 +17,28 @@ export function CompetitionTable({
           </tr>
         </thead>
         <tbody className="bg-[var(--surface-1)]">
-          {competitions.map((competition) => (
-            <tr
-              key={competition.CompetitionId}
-              className="border-t border-t-[var(--border-1)] hover:bg-[var(--surface-2)]"
-            >
-              <td className="px-4 py-3">{competition.CompetitionId}</td>
-              <td className="px-4 py-3">{competition.CompetitionName}</td>
-              <td className="px-4 py-3">{competition.Venue}</td>
-              <td className="px-4 py-3">{competition.StartTime}</td>
+          {competitions.length === 0 ? (
+            <tr>
+              <td
+                colSpan={4}
+                className="px-4 py-6 text-center text-[var(--text-2)]"
+              >
+                競技データがありません
+              </td>
             </tr>
-          ))}
+          ) : (
+            competitions.map((competition) => (
+              <tr
+                key={competition.CompetitionId}
+                className="border-t border-t-[var(--border-1)] hover:bg-[var(--surface-2)]"
+              >
+                <td className="px-4 py-3">{competition.CompetitionId}</td>
+                <td className="px-4 py-3">{competition.CompetitionName}</td>
+                <td className="px-4 py-3">{competition.Venue}</td>
+                <td className="px-4 py-3">{competition.StartTime}</td>
+              </tr>
+            ))
+          )}
         </tbody>
       </table>
     </div>
