@@ -11,9 +11,9 @@ export function CompetitionTable({
         <thead className="border-b border-b-[var(--border-2)] bg-[var(--surface-2)] text-left text-xs">
           <tr>
             <th className="px-4 py-3">ID</th>
-            <th className="px-4 py-3">Sports Name</th>
-            <th className="px-4 py-3">Venue</th>
-            <th className="px-4 py-3">StartTime</th>
+            <th className="px-4 py-3">競技名</th>
+            <th className="px-4 py-3">場所</th>
+            <th className="px-4 py-3">開始時間</th>
           </tr>
         </thead>
         <tbody className="bg-[var(--surface-1)]">
