@@ -18,13 +18,7 @@ export function AccountBtn({ onLogout }: AccountBtnProps) {
       onOpenChange={setIsOpen}
       placement="bottom-end"
       interaction="click"
-      trigger={
-        <AccountMenuBtn
-          account={account}
-          isOpen={isOpen}
-          onToggle={() => setIsOpen(!isOpen)}
-        />
-      }
+      trigger={<AccountMenuBtn account={account} isOpen={isOpen} />}
       content={
         <AccountMenuPanel
           account={account}

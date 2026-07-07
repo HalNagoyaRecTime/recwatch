@@ -7,14 +7,9 @@ import type { AccountBtnData } from "~/features/frame/main-header/account-menu/m
 type AccountMenuBtnProps = {
   account: AccountBtnData;
   isOpen: boolean;
-  onToggle: () => void;
 };
 
-export function AccountMenuBtn({
-  account,
-  isOpen,
-  onToggle,
-}: AccountMenuBtnProps) {
+export function AccountMenuBtn({ account, isOpen }: AccountMenuBtnProps) {
   return (
     <button
       type="button"
@@ -23,7 +18,6 @@ export function AccountMenuBtn({
         "hover:border-(--border-strong) hover:bg-(--surface-2)",
         isOpen ? "bg-(--surface-2)" : ""
       )}
-      onClick={onToggle}
     >
       {/* 背景とボーダー描画用div */}
       <div
