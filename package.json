@@ -14,18 +14,18 @@
   },
   "dependencies": {
     "@floating-ui/react": "^0.27.19",
-    "@react-router/node": "7.13.1",
-    "@react-router/serve": "7.13.1",
+    "@react-router/node": "7.18.1",
+    "@react-router/serve": "^7.18.1",
     "isbot": "^5.1.31",
     "lucide-react": "^0.577.0",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
-    "react-router": "7.13.1",
+    "react-router": "7.18.1",
     "zustand": "^5.0.12"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.4",
-    "@react-router/dev": "7.13.1",
+    "@react-router/dev": "^7.18.1",
     "@tailwindcss/vite": "^4.1.13",
     "@types/node": "^22",
     "@types/react": "^19.2.7",
