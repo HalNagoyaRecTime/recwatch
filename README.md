@@ -71,6 +71,37 @@ Cloudflare PagesのSPAフォールバックを使用するため、トップレ�
 `VITE_BACKEND_BASE_URL`には公開可能なAPIのURLを設定し、
 バックエンド側でCloudflare PagesのオリジンをCORS許可する。
 
+#### 環境変数とCORS
+
+Cloudflare Pagesでは、フロント環境変数として
+`VITE_BACKEND_BASE_URL`を設定する。
+
+| 変数                    | 設定する値                                 |
+| ----------------------- | ------------------------------------------ |
+| `VITE_BACKEND_BASE_URL` | ブラウザからアクセス可能なrectime-apiのURL |
+
+例:
+
+```text
+VITE_BACKEND_BASE_URL=https://rectime-api.rectime-project.workers.dev
+```
+
+バックエンド側のCORS許可設定には、APIのURLではなく、実際にブラウザで開く
+Cloudflare Pagesのフロントオリジンを設定する。
+
+```text
+# フロント環境変数
+VITE_BACKEND_BASE_URL=https://rectime-api.rectime-project.workers.dev
+
+# バックエンド側のCORS許可オリジン
+ALLOWED_ORIGINS=https://<recwatchのpagesドメイン>
+```
+
+develop、preview、productionでCloudflare PagesのURLが異なる場合は、
+実際に検証するフロントURLのオリジンをバックエンド側で許可する。
+PR previewのURLを利用する場合も、Cloudflare DashboardのURLではなく、
+ブラウザで開く`https://...pages.dev`のURLを対象にする。
+
 ---
 
 ## その他のコマンド
