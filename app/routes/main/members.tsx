@@ -2,7 +2,7 @@ import { useLoaderData } from "react-router";
 import { MembersPage } from "~/features/members/pages/MembersPage";
 import { getStudentsData } from "~/features/members/model/students-data";
 
-export async function loader() {
+export async function clientLoader() {
   return getStudentsData();
 }
 export function meta() {
@@ -17,6 +17,6 @@ export function ErrorBoundary() {
   );
 }
 export default function MembersRoute() {
-  const students = useLoaderData<typeof loader>();
+  const students = useLoaderData<typeof clientLoader>();
   return <MembersPage students={students} />;
 }
