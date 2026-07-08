@@ -15,18 +15,12 @@ type SidebarRoleConfig = {
   roles: AppRole[];
 };
 
-export type SidebarChildConfig = SidebarRoleConfig & {
-  id: string;
-  label: string;
-  to: string;
-};
-
 export type SidebarItemConfig = SidebarRoleConfig & {
   id: string;
   label: string;
-  icon: SidebarIconKey;
+  icon?: SidebarIconKey;
   to?: string;
-  children?: SidebarChildConfig[];
+  children?: SidebarItemConfig[];
 };
 
 export type SidebarSectionConfig = {
@@ -59,8 +53,21 @@ export const sidebarSections = [
           {
             id: "reports-summary",
             label: "サマリー",
-            to: "/reports/summary",
             roles: ["admin", "manager"],
+            children: [
+              {
+                id: "reports-summary-daily",
+                label: "日次レポート",
+                to: "/reports/summary/daily",
+                roles: ["admin", "manager"],
+              },
+              {
+                id: "reports-summary-monthly",
+                label: "月次レポート",
+                to: "/reports/summary/monthly/department",
+                roles: ["admin", "manager"],
+              },
+            ],
           },
           {
             id: "reports-detail",

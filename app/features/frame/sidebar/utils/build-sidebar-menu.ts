@@ -6,31 +6,17 @@ import {
 } from "~/config/routes";
 import { canAccess } from "~/utils/permissions";
 import { sidebarIconMap } from "~/features/frame/sidebar/utils/sidebar-icon-mapper";
-import type {
-  SidebarChildDef,
-  SidebarItemDef,
-  SidebarSectionDef,
-} from "~/types/sidebar";
-
-function mapChildren(
-  role: AppRole,
-  children: SidebarItemConfig["children"] = []
-) {
-  return children
-    .filter((child) => canAccess(role, child.roles))
-    .map<SidebarChildDef>(({ id, label, to, roles }) => ({
-      id,
-      label,
-      to,
-      roles,
-    }));
-}
+import type { SidebarItemDef, SidebarSectionDef } from "~/types/sidebar";
 
 function mapItem(
   role: AppRole,
   item: SidebarItemConfig
 ): SidebarItemDef | null {
-  const children = mapChildren(role, item.children);
+  const children =
+    item.children
+      ?.map((child) => mapItem(role, child))
+      .filter((child): child is SidebarItemDef => child !== null) ?? [];
+
   const isDirectlyVisible = canAccess(role, item.roles);
   const hasVisibleChildren = children.length > 0;
 
@@ -41,9 +27,9 @@ function mapItem(
   return {
     id: item.id,
     label: item.label,
-    icon: sidebarIconMap[item.icon],
+    icon: item.icon ? sidebarIconMap[item.icon] : undefined,
     to: isDirectlyVisible ? item.to : undefined,
-    children,
+    children: children.length > 0 ? children : undefined,
     roles: item.roles,
   };
 }

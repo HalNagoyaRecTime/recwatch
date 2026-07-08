@@ -4,7 +4,7 @@ import { useSidebarUI } from "~/features/frame/sidebar/hooks/useSidebarUI";
 import { useSidebarState } from "~/hooks/useSidebarState";
 import { cn } from "~/lib/cn";
 import { actionListItemStyle } from "~/components/ui/styles/action-list-styles";
-import type { SidebarItemDef, SidebarChildDef } from "~/types/sidebar";
+import type { SidebarItemDef } from "~/types/sidebar";
 import { SIDEBAR_DURATION } from "~/features/frame/sidebar/styles/sidebar-styles";
 
 // パスの一致判定ユーティリティ
@@ -13,6 +13,16 @@ function pathMatches(pathname: string, to: string) {
     return pathname === "/dashboard";
   }
   return pathname === to || pathname.startsWith(`${to}/`);
+}
+
+// 子孫要素のどれかがアクティブか再帰的に判定する
+function hasActiveChild(item: SidebarItemDef, pathname: string): boolean {
+  if (!item.children) return false;
+  return item.children.some((child) => {
+    if (child.to && pathMatches(pathname, child.to)) return true;
+    if (child.children) return hasActiveChild(child, pathname);
+    return false;
+  });
 }
 
 // --- 外部から呼ばれるメインコンポーネント ---
@@ -45,8 +55,7 @@ function NavFolder({ item, pathname }: NavFolderProps) {
   const { openAccordions, toggleAccordion, closeForMobile } = useSidebarState();
 
   const isAccordionOpen = openAccordions.includes(item.id);
-  const hasActiveChild =
-    item.children?.some((child) => pathMatches(pathname, child.to)) ?? false;
+  const isActive = hasActiveChild(item, pathname);
 
   const handleToggle = () => {
     if (isExpanded) toggleAccordion(item.id);
@@ -62,7 +71,7 @@ function NavFolder({ item, pathname }: NavFolderProps) {
           "transition-all",
           SIDEBAR_DURATION,
           !isExpanded && "gap-0 pr-0 pl-3",
-          hasActiveChild && "hover:bg-transparent"
+          isActive && "hover:bg-transparent"
         )}
         onClick={handleToggle}
       >
@@ -79,7 +88,7 @@ function NavFolder({ item, pathname }: NavFolderProps) {
       <NavAccordion
         item={item}
         isOpen={isExpanded && isAccordionOpen}
-        closeMenu={closeForMobile}
+        pathname={pathname}
       />
     </div>
   );
@@ -133,15 +142,18 @@ function NavTriggerContent({
 }: NavTriggerContentProps) {
   return (
     <>
-      <span className="inline-flex w-4 min-w-4 items-center justify-center">
-        {item.icon}
-      </span>
+      {item.icon && (
+        <span className="inline-flex w-4 min-w-4 items-center justify-center">
+          {item.icon}
+        </span>
+      )}
       <span
         className={cn(
           "overflow-hidden text-[13px] font-medium whitespace-nowrap",
           "transition-all",
           SIDEBAR_DURATION,
-          isExpanded ? "max-w-40 opacity-100" : "max-w-0 opacity-0"
+          isExpanded ? "max-w-40 opacity-100" : "max-w-0 opacity-0",
+          !item.icon && "pl-2" // アイコンがない場合は少し左に余白
         )}
       >
         {item.label}
@@ -184,15 +196,21 @@ function NavPopup({ item, closeMenu }: NavPopupProps) {
         {hasChildren && item.children ? (
           <>
             <div className="text-text-1 flex items-center gap-2.5 px-2.5 pt-1 pb-2 text-[12.5px] font-semibold">
-              <span className="inline-flex w-4 min-w-4 items-center justify-center">
-                {item.icon}
-              </span>
+              {item.icon && (
+                <span className="inline-flex w-4 min-w-4 items-center justify-center">
+                  {item.icon}
+                </span>
+              )}
               <span>{item.label}</span>
             </div>
             <div className="bg-border-1 mx-1 my-1 h-px" />
             <div className="flex flex-col">
               {item.children.map((child) => (
-                <NavSubItem key={child.id} item={child} onClick={closeMenu} />
+                <PopupNestedItem
+                  key={child.id}
+                  item={child}
+                  closeMenu={closeMenu}
+                />
               ))}
             </div>
           </>
@@ -206,13 +224,66 @@ function NavPopup({ item, closeMenu }: NavPopupProps) {
   );
 }
 
+function PopupNestedItem({
+  item,
+  closeMenu,
+  depth = 0,
+}: {
+  item: SidebarItemDef;
+  closeMenu: () => void;
+  depth?: number;
+}) {
+  if (item.children && item.children.length > 0) {
+    return (
+      <div className="flex flex-col">
+        <div
+          className="text-text-2 flex items-center gap-2 px-2.5 pt-1.5 pb-1 text-[12px] font-semibold tracking-wider uppercase"
+          style={{ paddingLeft: `${10 + depth * 12}px` }}
+        >
+          {item.icon && (
+            <span className="inline-flex w-3.5 min-w-3.5 items-center justify-center">
+              {item.icon}
+            </span>
+          )}
+          <span>{item.label}</span>
+        </div>
+        {item.children.map((child) => (
+          <PopupNestedItem
+            key={child.id}
+            item={child}
+            closeMenu={closeMenu}
+            depth={depth + 1}
+          />
+        ))}
+      </div>
+    );
+  }
+
+  if (!item.to) return null;
+
+  return (
+    <NavLink
+      to={item.to}
+      className={({ isActive }) =>
+        cn(actionListItemStyle({ active: isActive }), "w-full")
+      }
+      onClick={closeMenu}
+      style={{ paddingLeft: `${10 + depth * 12}px` }}
+    >
+      <span className="overflow-hidden text-[13px] font-medium whitespace-nowrap opacity-100">
+        {item.label}
+      </span>
+    </NavLink>
+  );
+}
+
 type NavAccordionProps = {
   item: SidebarItemDef;
   isOpen: boolean;
-  closeMenu: () => void;
+  pathname: string;
 };
 
-function NavAccordion({ item, isOpen, closeMenu }: NavAccordionProps) {
+function NavAccordion({ item, isOpen, pathname }: NavAccordionProps) {
   if (!item.children) return null;
 
   return (
@@ -226,30 +297,9 @@ function NavAccordion({ item, isOpen, closeMenu }: NavAccordionProps) {
     >
       <div className="border-border-1 ml-[17.5px] min-h-0 overflow-hidden border-l pl-[7.5px]">
         {item.children.map((child) => (
-          <NavSubItem key={child.id} item={child} onClick={closeMenu} />
+          <SidebarNavItem key={child.id} item={child} pathname={pathname} />
         ))}
       </div>
     </div>
-  );
-}
-
-type NavSubItemProps = {
-  item: SidebarChildDef;
-  onClick?: () => void;
-};
-
-function NavSubItem({ item, onClick }: NavSubItemProps) {
-  if (!item.to) return null;
-
-  return (
-    <NavLink
-      to={item.to}
-      className={({ isActive }) => actionListItemStyle({ active: isActive })}
-      onClick={onClick}
-    >
-      <span className="overflow-hidden text-[13px] font-medium whitespace-nowrap opacity-100">
-        {item.label}
-      </span>
-    </NavLink>
   );
 }

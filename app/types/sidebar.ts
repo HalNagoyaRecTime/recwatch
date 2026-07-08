@@ -2,19 +2,12 @@ import type { ReactNode } from "react";
 
 import type { AppRole } from "~/config/permissions";
 
-export type SidebarChildDef = {
-  id: string;
-  label: string;
-  to: string;
-  roles: AppRole[];
-};
-
 export type SidebarItemDef = {
   id: string;
   label: string;
-  icon: ReactNode;
+  icon?: ReactNode;
   to?: string;
-  children?: SidebarChildDef[];
+  children?: SidebarItemDef[];
   roles: AppRole[];
 };
 
