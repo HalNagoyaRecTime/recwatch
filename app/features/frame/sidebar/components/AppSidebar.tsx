@@ -14,7 +14,15 @@ export function AppSidebar() {
   const pathname = location.pathname;
 
   return (
-    <aside className="flex min-h-0 flex-1 flex-col overflow-visible">
+    <aside className="relative flex min-h-0 flex-1 flex-col overflow-visible">
+      {/* 上グラデーション */}
+      <div
+        className={cn(
+          "pointer-events-none absolute inset-x-0 top-0 z-10 h-6",
+          "from-surface-overlay via-surface-overlay/80 bg-linear-to-b to-transparent"
+        )}
+      />
+
       <div
         className={cn(
           "flex-1 overflow-x-hidden overflow-y-auto overscroll-y-contain py-3",
@@ -32,6 +40,14 @@ export function AppSidebar() {
           />
         ))}
       </div>
+
+      {/* 下グラデーション */}
+      <div
+        className={cn(
+          "pointer-events-none absolute inset-x-0 bottom-0 z-10 h-6",
+          "from-surface-overlay via-surface-overlay/80 bg-linear-to-t to-transparent"
+        )}
+      />
     </aside>
   );
 }
