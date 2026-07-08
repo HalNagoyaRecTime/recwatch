@@ -30,17 +30,19 @@ function hasActiveChild(item: SidebarItemDef, pathname: string): boolean {
 export function SidebarNavItem({
   item,
   pathname,
+  depth = 0,
 }: {
   item: SidebarItemDef;
   pathname: string;
+  depth?: number;
 }) {
   const hasChildren = Boolean(item.children?.length);
 
   if (hasChildren) {
-    return <NavFolder item={item} pathname={pathname} />;
+    return <NavFolder item={item} pathname={pathname} depth={depth} />;
   }
 
-  return <NavLinkItem item={item} />;
+  return <NavLinkItem item={item} depth={depth} />;
 }
 
 // --- ファイル内専用の部品コンポーネント ---
@@ -48,9 +50,10 @@ export function SidebarNavItem({
 type NavFolderProps = {
   item: SidebarItemDef;
   pathname: string;
+  depth: number;
 };
 
-function NavFolder({ item, pathname }: NavFolderProps) {
+function NavFolder({ item, pathname, depth }: NavFolderProps) {
   const { isExpanded } = useSidebarUI();
   const { openAccordions, toggleAccordion, closeForMobile } = useSidebarState();
 
@@ -80,6 +83,7 @@ function NavFolder({ item, pathname }: NavFolderProps) {
           isExpanded={isExpanded}
           isAccordionOpen={isAccordionOpen}
           hasChildren={true}
+          depth={depth}
         />
       </button>
 
@@ -89,6 +93,7 @@ function NavFolder({ item, pathname }: NavFolderProps) {
         item={item}
         isOpen={isExpanded && isAccordionOpen}
         pathname={pathname}
+        depth={depth}
       />
     </div>
   );
@@ -96,9 +101,10 @@ function NavFolder({ item, pathname }: NavFolderProps) {
 
 type NavLinkItemProps = {
   item: SidebarItemDef;
+  depth: number;
 };
 
-function NavLinkItem({ item }: NavLinkItemProps) {
+function NavLinkItem({ item, depth }: NavLinkItemProps) {
   const { isExpanded } = useSidebarUI();
   const { closeForMobile } = useSidebarState();
 
@@ -119,7 +125,7 @@ function NavLinkItem({ item }: NavLinkItemProps) {
         }
         onClick={closeForMobile}
       >
-        <NavTriggerContent item={item} isExpanded={isExpanded} />
+        <NavTriggerContent item={item} isExpanded={isExpanded} depth={depth} />
       </NavLink>
 
       {!isExpanded && <NavPopup item={item} closeMenu={closeForMobile} />}
@@ -132,6 +138,7 @@ type NavTriggerContentProps = {
   isExpanded: boolean;
   isAccordionOpen?: boolean;
   hasChildren?: boolean;
+  depth?: number;
 };
 
 function NavTriggerContent({
@@ -139,6 +146,7 @@ function NavTriggerContent({
   isExpanded,
   isAccordionOpen = false,
   hasChildren = false,
+  depth = 0,
 }: NavTriggerContentProps) {
   return (
     <>
@@ -153,7 +161,7 @@ function NavTriggerContent({
           "transition-all",
           SIDEBAR_DURATION,
           isExpanded ? "max-w-40 opacity-100" : "max-w-0 opacity-0",
-          !item.icon && "pl-2" // アイコンがない場合は少し左に余白
+          !item.icon && depth === 0 && "pl-2" // アイコンなし・第1子階層のみ左余白
         )}
       >
         {item.label}
@@ -281,9 +289,10 @@ type NavAccordionProps = {
   item: SidebarItemDef;
   isOpen: boolean;
   pathname: string;
+  depth: number;
 };
 
-function NavAccordion({ item, isOpen, pathname }: NavAccordionProps) {
+function NavAccordion({ item, isOpen, pathname, depth }: NavAccordionProps) {
   if (!item.children) return null;
 
   return (
@@ -297,7 +306,12 @@ function NavAccordion({ item, isOpen, pathname }: NavAccordionProps) {
     >
       <div className="border-border-1 ml-[17.5px] min-h-0 overflow-hidden border-l pl-[7.5px]">
         {item.children.map((child) => (
-          <SidebarNavItem key={child.id} item={child} pathname={pathname} />
+          <SidebarNavItem
+            key={child.id}
+            item={child}
+            pathname={pathname}
+            depth={depth + 1}
+          />
         ))}
       </div>
     </div>
