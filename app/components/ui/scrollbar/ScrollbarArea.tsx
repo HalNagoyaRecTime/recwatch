@@ -28,6 +28,7 @@ export function ScrollbarArea({
     isVisible,
     isDragging,
     onThumbMouseDown,
+    onTrackMouseDown,
     onScroll,
     onMouseEnter,
     onMouseLeave,
@@ -57,6 +58,7 @@ export function ScrollbarArea({
         isVisible={isVisible}
         isDragging={isDragging}
         onThumbMouseDown={onThumbMouseDown}
+        onTrackMouseDown={onTrackMouseDown}
       />
     </div>
   );

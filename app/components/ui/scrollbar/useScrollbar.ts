@@ -15,6 +15,8 @@ export type ScrollbarState = {
   trackRef: React.RefObject<HTMLDivElement | null>;
   /** サムのmousedownハンドラー */
   onThumbMouseDown: (e: React.MouseEvent) => void;
+  /** トラックのmousedownハンドラー（クリックでジャンプ） */
+  onTrackMouseDown: (e: React.MouseEvent) => void;
   /** コンテナのscrollハンドラー */
   onScroll: () => void;
   /** コンテナのmouseenterハンドラー */
@@ -23,7 +25,7 @@ export type ScrollbarState = {
   onMouseLeave: () => void;
 };
 
-const HIDE_DELAY_MS = 1000;
+const HIDE_DELAY_MS = 300;
 
 export function useScrollbar(): ScrollbarState {
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -147,11 +149,38 @@ export function useScrollbar(): ScrollbarState {
 
   const onThumbMouseDown = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
+    e.stopPropagation(); // トラックのクリックをトリガーしないようにする
     dragStartYRef.current = e.clientY;
     dragStartScrollTopRef.current = scrollRef.current?.scrollTop ?? 0;
     setIsDragging(true);
     setIsVisible(true);
     if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
+  }, []);
+
+  const onTrackMouseDown = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    const el = scrollRef.current;
+    const track = trackRef.current;
+    if (!el || !track) return;
+
+    // トラック上のクリック位置を取得（トラック上端からの相対Y座標）
+    const trackRect = track.getBoundingClientRect();
+    const clickY = e.clientY - trackRect.top;
+
+    // サムの中心がクリック位置に来るようにする
+    const thumbHalfHeight = thumbHeightRef.current / 2;
+    let targetThumbTop = clickY - thumbHalfHeight;
+
+    const trackHeight = track.clientHeight;
+    const maxThumbTop = trackHeight - thumbHeightRef.current;
+
+    // トラックの範囲内に収める
+    targetThumbTop = Math.max(0, Math.min(targetThumbTop, maxThumbTop));
+
+    // スクロール位置の比率を計算して適用
+    const maxScrollTop = el.scrollHeight - el.clientHeight;
+    const ratio = maxThumbTop > 0 ? targetThumbTop / maxThumbTop : 0;
+    el.scrollTop = ratio * maxScrollTop;
   }, []);
 
   return {
@@ -162,6 +191,7 @@ export function useScrollbar(): ScrollbarState {
     scrollRef,
     trackRef,
     onThumbMouseDown,
+    onTrackMouseDown,
     onScroll,
     onMouseEnter,
     onMouseLeave,
