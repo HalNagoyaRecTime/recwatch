@@ -13,11 +13,17 @@ import {
   safePolygon,
   type Placement,
 } from "@floating-ui/react";
-import { useState, type ReactNode } from "react";
+import {
+  useState,
+  isValidElement,
+  cloneElement,
+  type ReactNode,
+  type ReactElement,
+} from "react";
 import { cn } from "~/lib/cn";
 
 export type FloatingPanelProps = {
-  trigger: ReactNode;
+  trigger: ReactElement;
   content: ReactNode;
   placement?: Placement;
   interaction?: "click" | "hover";
@@ -74,13 +80,21 @@ export function FloatingPanel({
 
   return (
     <>
-      <div
-        ref={refs.setReference}
-        {...getReferenceProps()}
-        className={cn("inline-block", triggerClassName)}
-      >
-        {trigger}
-      </div>
+      {isValidElement(trigger)
+        ? cloneElement(
+            trigger,
+            // eslint-disable-next-line react-hooks/refs
+            getReferenceProps({
+              // eslint-disable-next-line react-hooks/refs
+              ref: refs.setReference,
+              ...(trigger.props as Record<string, unknown>),
+              className: cn(
+                (trigger.props as { className?: string }).className,
+                triggerClassName
+              ),
+            })
+          )
+        : trigger}
       {isOpen && (
         <div
           // eslint-disable-next-line react-hooks/refs

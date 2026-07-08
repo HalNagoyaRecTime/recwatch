@@ -1,4 +1,4 @@
-import type { ReactNode, ElementType } from "react";
+import type { ReactNode, ElementType, ComponentProps } from "react";
 import { cn } from "~/lib/cn";
 import {
   actionListContainerStyle,
@@ -72,12 +72,11 @@ export function Menu({ items, className }: MenuProps) {
   );
 }
 
-type MenuActionItemProps = {
+type MenuActionItemProps = ComponentProps<"button"> & {
   label: string;
   icon?: ElementType;
   endIcon?: ElementType | ReactNode;
   danger?: boolean;
-  onClick?: () => void;
 };
 
 /**
@@ -91,18 +90,22 @@ export function MenuActionItem({
   icon: Icon,
   endIcon,
   danger,
-  onClick,
+  className,
+  ref,
+  ...props
 }: MenuActionItemProps) {
   return (
     <button
+      ref={ref}
       type="button"
-      onClick={onClick}
       className={cn(
         actionListItemStyle({
           intent: danger ? "danger" : "primary",
         }),
-        endIcon ? "justify-between" : undefined
+        endIcon ? "justify-between" : undefined,
+        className
       )}
+      {...props}
     >
       <div className="flex items-center gap-2.5">
         {Icon && <Icon size={14} strokeWidth={1.8} className="shrink-0" />}

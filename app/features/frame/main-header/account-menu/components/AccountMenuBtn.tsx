@@ -1,23 +1,33 @@
 import { ChevronDownIcon } from "lucide-react";
 
+import type { ComponentProps } from "react";
 import { cn } from "~/lib/cn";
 
 import type { AccountBtnData } from "~/features/frame/main-header/account-menu/model/account-btn-data";
 
-type AccountMenuBtnProps = {
+type AccountMenuBtnProps = ComponentProps<"button"> & {
   account: AccountBtnData;
   isOpen: boolean;
 };
 
-export function AccountMenuBtn({ account, isOpen }: AccountMenuBtnProps) {
+export function AccountMenuBtn({
+  account,
+  isOpen,
+  className,
+  ref,
+  ...props
+}: AccountMenuBtnProps) {
   return (
     <button
+      ref={ref}
       type="button"
       className={cn(
         "app-rounded relative flex h-full cursor-pointer items-center gap-2 overflow-hidden rounded-l-[20px]! bg-transparent text-(--text-1) transition",
         "hover:border-(--border-strong) hover:bg-(--surface-2)",
-        isOpen ? "bg-(--surface-2)" : ""
+        isOpen ? "bg-(--surface-2)" : "",
+        className
       )}
+      {...props}
     >
       {/* 背景とボーダー描画用div */}
       <div
