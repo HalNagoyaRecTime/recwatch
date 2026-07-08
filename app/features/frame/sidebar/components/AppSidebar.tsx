@@ -6,6 +6,7 @@ import { buildSidebarMenu } from "~/features/frame/sidebar/utils/build-sidebar-m
 import type { SidebarSectionDef } from "~/types/sidebar";
 import { SidebarNavItem } from "~/features/frame/sidebar/components/SidebarNavItem";
 import { SIDEBAR_DURATION } from "~/features/frame/sidebar/styles/sidebar-styles";
+import { ScrollbarArea } from "~/components/ui/scrollbar/ScrollbarArea";
 
 export function AppSidebar() {
   const sections = buildSidebarMenu(currentUser.role);
@@ -23,9 +24,9 @@ export function AppSidebar() {
         )}
       />
 
-      <div
+      <ScrollbarArea
         className={cn(
-          "flex-1 overflow-x-hidden overflow-y-auto overscroll-y-contain py-3",
+          "overscroll-y-contain py-3",
           "transition-all",
           SIDEBAR_DURATION,
           isExpanded ? "px-3.5" : "px-2"
@@ -39,7 +40,7 @@ export function AppSidebar() {
             isExpanded={isExpanded}
           />
         ))}
-      </div>
+      </ScrollbarArea>
 
       {/* 下グラデーション */}
       <div

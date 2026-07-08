@@ -202,3 +202,10 @@ input {
     transition-duration: 0.01ms !important;
   }
 }
+
+@utility scrollbar-none {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
