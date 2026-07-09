@@ -1,7 +1,7 @@
-import type { HomeroomData } from "~/features/homeroom/model/homeroom";
-import { HomeroomTable } from "~/features/homeroom/components/HomeroomTable";
+import type { HomeRoomData } from "~/features/homeroom/model/homeroom";
+import { HomeRoomTable } from "~/features/homeroom/components/HomeroomTable";
 
-export function HomeroomPage({ homerooms }: { homerooms: HomeroomData[] }) {
+export function HomeRoomPage({ homerooms }: { homerooms: HomeRoomData[] }) {
   return (
     <div className="flex flex-col gap-4">
       <h1 className="text-2xl font-bold">Homerooms</h1>
@@ -10,7 +10,7 @@ export function HomeroomPage({ homerooms }: { homerooms: HomeroomData[] }) {
         type="text"
         placeholder="Filter by name"
       />
-      <HomeroomTable homerooms={homerooms} />
+      <HomeRoomTable homerooms={homerooms} />
     </div>
   );
 }

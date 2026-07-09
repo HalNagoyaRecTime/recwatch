@@ -1,15 +1,15 @@
 import type { HomeroomDTO } from "~/features/homeroom/api";
 
-export type HomeroomData = {
-  HomeroomId: number;
-  HomeroomCode: string;
-  HomeroomName: string;
+export type HomeRoomData = {
+  HomeRoomId: number;
+  HomeRoomCode: string;
+  HomeRoomName: string;
 };
 
-export function toHomeroomData(dto: HomeroomDTO): HomeroomData {
+export function toHomeRoomData(dto: HomeroomDTO): HomeRoomData {
   return {
-    HomeroomId: dto.class_room_id,
-    HomeroomCode: dto.class_code,
-    HomeroomName: dto.name,
+    HomeRoomId: dto.class_room_id,
+    HomeRoomCode: dto.class_code,
+    HomeRoomName: dto.name,
   };
 }

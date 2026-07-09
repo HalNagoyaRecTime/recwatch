@@ -3,11 +3,11 @@ import {
   useRouteError,
   isRouteErrorResponse,
 } from "react-router";
-import { HomeroomPage } from "~/features/homeroom/pages/HomeRoomPage";
-import { getHomeroomData } from "~/features/homeroom/model/homeroom-data";
+import { HomeRoomPage } from "~/features/homeroom/pages/HomeRoomPage";
+import { getHomeRoomData } from "~/features/homeroom/model/homeroom-data";
 
 export async function loader() {
-  return getHomeroomData();
+  return getHomeRoomData();
 }
 
 export function HydrateFallback() {
@@ -31,5 +31,5 @@ export function ErrorBoundary() {
 
 export default function HomeroomRoute() {
   const Homerooms = useLoaderData<typeof loader>();
-  return <HomeroomPage homerooms={Homerooms} />;
+  return <HomeRoomPage homerooms={Homerooms} />;
 }
