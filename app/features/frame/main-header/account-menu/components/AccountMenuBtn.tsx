@@ -6,12 +6,14 @@ import type { AccountBtnData } from "~/features/frame/main-header/account-menu/m
 
 type AccountMenuBtnProps = {
   account: AccountBtnData;
+  photoUrl?: string | null;
   isOpen: boolean;
   onToggle: () => void;
 };
 
 export function AccountMenuBtn({
   account,
+  photoUrl,
   isOpen,
   onToggle,
 }: AccountMenuBtnProps) {
@@ -38,13 +40,24 @@ export function AccountMenuBtn({
         className="absolute z-20 aspect-square h-full rounded-full border-2 p-0.5"
         style={{ borderColor: account.borderColor }}
       >
-        <div className="h-full w-full overflow-hidden rounded-full bg-amber-200">
+        {photoUrl ? (
           <img
-            className="aspect-square h-full object-cover"
-            src={account.imageUrl}
-            alt={account.name}
+            className="h-full w-full rounded-full object-cover"
+            src={photoUrl}
+            alt=""
           />
-        </div>
+        ) : (
+          <div
+            className="flex h-full w-full items-center justify-center rounded-full text-[10px] font-bold"
+            style={{
+              color: account.textColor,
+              background: account.bgColor,
+            }}
+            aria-hidden="true"
+          >
+            {account.abbr_label}
+          </div>
+        )}
       </div>
 
       <span className="z-15 pr-2 pl-9 text-xs font-semibold">
