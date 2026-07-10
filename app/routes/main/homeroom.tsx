@@ -10,10 +10,6 @@ export async function clientLoader() {
   return getHomeroomData();
 }
 
-// export function HydrateFallback() {
-//   return <div className="p-6 text-gray-500">読み込み中...</div>;
-// }
-
 export function meta() {
   return [{ title: "Homeroom | recwatch" }];
 }
