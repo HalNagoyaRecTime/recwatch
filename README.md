@@ -80,6 +80,21 @@ GitHub Actions では、`npm run build` を実行するジョブに対象ブラ�
 `VITE_` で始まる変数はブラウザへ公開されるため、Backend の公開 URL のみを設定し、
 認証情報などの秘密情報は設定しない。
 
+### GitHub Actions と Cloudflare の事前設定
+
+`.github/workflows/deploy-cloudflare-pages.yml` は、GitHub Actions 上でビルドし、
+Wrangler CLI で Cloudflare Pages へデプロイする。
+
+GitHub では以下を設定する。
+
+- `production` Environment に `VITE_BACKEND_BASE_URL`（本番 Backend の公開 URL）
+- `development` Environment に `VITE_BACKEND_BASE_URL`（開発 Backend の公開 URL）
+- リポジトリ Secret `CLOUDFLARE_API_TOKEN`（Pages Write 権限を持つ API トークン）
+- リポジトリ Secret `CLOUDFLARE_ACCOUNT_ID`（Cloudflare アカウント ID）
+
+Cloudflare Pages の Git 連携による自動デプロイは全ブランチで無効化する。
+以後は GitHub Actions が `main` と `develop` の push をデプロイする。
+
 Cloudflare PagesのSPAフォールバックを使用するため、トップレベルの
 `404.html`は配置しない。
 
