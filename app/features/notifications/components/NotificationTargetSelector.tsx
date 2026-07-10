@@ -6,20 +6,29 @@ import {
 } from "~/features/notifications/model/notification-target";
 
 type NotificationTargetSelectorProps = {
-  selectedTargetId: string;
+  selectedTargetIds: string[];
   selectedTargetType: NotificationTargetType;
-  onTargetIdChange: (targetId: string) => void;
+  onTargetIdsChange: (targetIds: string[]) => void;
   onTargetTypeChange: (targetType: NotificationTargetType) => void;
 };
 
 export function NotificationTargetSelector({
-  selectedTargetId,
+  selectedTargetIds,
   selectedTargetType,
-  onTargetIdChange,
+  onTargetIdsChange,
   onTargetTypeChange,
 }: NotificationTargetSelectorProps) {
   const selectedOption = getTargetOption(selectedTargetType);
   const candidates = getTargetCandidates(selectedTargetType);
+
+  const toggleTargetId = (targetId: string) => {
+    if (selectedTargetIds.includes(targetId)) {
+      onTargetIdsChange(selectedTargetIds.filter((id) => id !== targetId));
+      return;
+    }
+
+    onTargetIdsChange([...selectedTargetIds, targetId]);
+  };
 
   return (
     <section className="rounded-[18px] border border-[color:var(--border-1)] bg-[linear-gradient(180deg,var(--surface-card-gloss),transparent),var(--surface-1)] p-5 shadow-[var(--shadow-soft)]">
@@ -28,11 +37,11 @@ export function NotificationTargetSelector({
           通知対象
         </h2>
         <p className="mt-1 text-sm leading-6 text-[color:var(--text-2)]">
-          個人単位ではなく、運営で扱いやすい大きな単位で配信対象を選択します。
+          MVPでは個人検索を行わず、全体またはグループ・チーム単位で配信対象を選択します。
         </p>
       </div>
 
-      <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+      <div className="mt-5 grid gap-3 md:grid-cols-2">
         {notificationTargetOptions.map((option) => {
           const isSelected = option.type === selectedTargetType;
 
@@ -42,7 +51,7 @@ export function NotificationTargetSelector({
               type="button"
               onClick={() => {
                 onTargetTypeChange(option.type);
-                onTargetIdChange("");
+                onTargetIdsChange([]);
               }}
               className={`rounded-2xl border p-4 text-left transition ${
                 isSelected
@@ -61,24 +70,35 @@ export function NotificationTargetSelector({
         })}
       </div>
 
-      {selectedTargetType !== "all" ? (
-        <label className="mt-5 block">
-          <span className="text-xs font-semibold tracking-[0.08em] text-[color:var(--text-3)] uppercase">
+      {selectedTargetType === "group" ? (
+        <fieldset className="mt-5">
+          <legend className="text-xs font-semibold tracking-[0.08em] text-[color:var(--text-3)] uppercase">
             {selectedOption?.label}の選択
-          </span>
-          <select
-            value={selectedTargetId}
-            onChange={(event) => onTargetIdChange(event.target.value)}
-            className="mt-2 h-11 w-full rounded-xl border border-[color:var(--border-2)] bg-[color:var(--surface-1)] px-3 text-sm text-[color:var(--text-1)] outline-none focus:border-[color:var(--brand-1)] focus:ring-4 focus:ring-[color:var(--surface-brand-soft)]"
-          >
-            <option value="">対象を選択してください</option>
+          </legend>
+          <div className="mt-2 grid gap-2">
             {candidates.map((candidate) => (
-              <option key={candidate.id} value={candidate.id}>
-                {candidate.label}（{candidate.recipientCount}件）
-              </option>
+              <label
+                key={candidate.id}
+                className="flex cursor-pointer items-start gap-3 rounded-xl border border-[color:var(--border-1)] bg-[color:var(--surface-row)] px-3 py-3 transition hover:border-[color:var(--border-strong)] hover:bg-[color:var(--surface-2)]"
+              >
+                <input
+                  type="checkbox"
+                  checked={selectedTargetIds.includes(candidate.id)}
+                  onChange={() => toggleTargetId(candidate.id)}
+                  className="mt-1"
+                />
+                <span>
+                  <span className="block text-sm font-semibold text-[color:var(--text-1)]">
+                    {candidate.label}（{candidate.recipientCount}件）
+                  </span>
+                  <span className="mt-1 block text-xs leading-5 text-[color:var(--text-2)]">
+                    {candidate.description}
+                  </span>
+                </span>
+              </label>
             ))}
-          </select>
-        </label>
+          </div>
+        </fieldset>
       ) : null}
     </section>
   );

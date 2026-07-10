@@ -1,5 +1,4 @@
 import type { NotificationDraft } from "~/features/notifications/model/notification-draft";
-import { relatedNotificationResources } from "~/features/notifications/model/notification-draft";
 import {
   getTargetCandidates,
   getTargetOption,
@@ -14,11 +13,11 @@ function resolveTargetLabel(draft: NotificationDraft) {
     return "全体";
   }
 
-  const target = getTargetCandidates(draft.targetType).find(
-    (candidate) => candidate.id === draft.targetId
-  );
+  const labels = getTargetCandidates(draft.targetType)
+    .filter((candidate) => draft.targetIds.includes(candidate.id))
+    .map((candidate) => candidate.label);
 
-  return target?.label ?? "未選択";
+  return labels.length > 0 ? labels.join("、") : "未選択";
 }
 
 function resolveRecipientCount(draft: NotificationDraft) {
@@ -26,18 +25,9 @@ function resolveRecipientCount(draft: NotificationDraft) {
     return 420;
   }
 
-  const target = getTargetCandidates(draft.targetType).find(
-    (candidate) => candidate.id === draft.targetId
-  );
-
-  return target?.recipientCount ?? 0;
-}
-
-function resolveRelatedResourceLabel(resourceId: string) {
-  return (
-    relatedNotificationResources.find((resource) => resource.id === resourceId)
-      ?.label ?? "未指定"
-  );
+  return getTargetCandidates(draft.targetType)
+    .filter((candidate) => draft.targetIds.includes(candidate.id))
+    .reduce((sum, candidate) => sum + candidate.recipientCount, 0);
 }
 
 export function NotificationPreviewPanel({
@@ -46,9 +36,6 @@ export function NotificationPreviewPanel({
   const targetOption = getTargetOption(draft.targetType);
   const targetLabel = resolveTargetLabel(draft);
   const recipientCount = resolveRecipientCount(draft);
-  const relatedResourceLabel = resolveRelatedResourceLabel(
-    draft.relatedResourceId
-  );
 
   return (
     <aside className="rounded-[18px] border border-[color:var(--border-1)] bg-[linear-gradient(180deg,var(--surface-card-gloss),transparent),var(--surface-1)] p-5 shadow-[var(--shadow-soft)]">
@@ -81,9 +68,9 @@ export function NotificationPreviewPanel({
           </dd>
         </div>
         <div className="rounded-xl border border-[color:var(--border-1)] bg-[color:var(--surface-row)] p-3">
-          <dt className="text-xs text-[color:var(--text-3)]">関連情報</dt>
+          <dt className="text-xs text-[color:var(--text-3)]">送信方法</dt>
           <dd className="mt-1 font-semibold text-[color:var(--text-1)]">
-            {relatedResourceLabel}
+            即時送信
           </dd>
         </div>
       </dl>

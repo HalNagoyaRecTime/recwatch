@@ -1,12 +1,16 @@
 import { AdminPageTitle } from "~/features/admin-pages/components/AdminPageTitle";
 import { NotificationHistoryTable } from "~/features/notifications/components/NotificationHistoryTable";
-import { notificationHistoryItems } from "~/features/notifications/model/notification-history";
+import type { NotificationHistoryItem } from "~/features/notifications/model/notification-history";
 
-export function NotificationHistoryPage() {
-  const sentCount = notificationHistoryItems.filter(
-    (item) => item.status === "sent"
-  ).length;
-  const totalRecipientCount = notificationHistoryItems.reduce(
+type NotificationHistoryPageProps = {
+  items: NotificationHistoryItem[];
+};
+
+export function NotificationHistoryPage({
+  items,
+}: NotificationHistoryPageProps) {
+  const sentCount = items.filter((item) => item.status === "sent").length;
+  const totalRecipientCount = items.reduce(
     (sum, item) => sum + item.recipientCount,
     0
   );
@@ -25,7 +29,7 @@ export function NotificationHistoryPage() {
             通知件数
           </div>
           <div className="mt-2 text-3xl font-semibold text-[color:var(--text-1)]">
-            {notificationHistoryItems.length}
+            {items.length}
           </div>
           <p className="mt-2 text-sm text-[color:var(--text-2)]">
             履歴に表示している通知件数
@@ -55,7 +59,7 @@ export function NotificationHistoryPage() {
         </article>
       </section>
 
-      <NotificationHistoryTable items={notificationHistoryItems} />
+      <NotificationHistoryTable items={items} />
     </div>
   );
 }

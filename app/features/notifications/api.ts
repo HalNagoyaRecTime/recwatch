@@ -5,9 +5,16 @@ import {
   type NotificationTargetType,
 } from "~/features/notifications/model/notification-target";
 
+export type ManualNotificationRequest = {
+  title: string;
+  body: string;
+  targetType: NotificationTargetType;
+  targetIds: string[];
+};
+
 export type NotificationPreviewResponse = {
   targetType: NotificationTargetType;
-  targetName: string;
+  targetNames: string[];
   recipientCount: number;
 };
 
@@ -20,57 +27,65 @@ export type NotificationSendResponse = {
   status: "sent" | "failed";
 };
 
-function resolveTargetName(
+function resolveTargetNames(
   targetType: NotificationTargetType,
-  targetId: string
+  targetIds: string[]
 ) {
   if (targetType === "all") {
-    return "全体";
+    return ["全体"];
   }
 
-  return (
-    getTargetCandidates(targetType).find(
-      (candidate) => candidate.id === targetId
-    )?.label ?? "未選択"
-  );
+  return getTargetCandidates(targetType)
+    .filter((candidate) => targetIds.includes(candidate.id))
+    .map((candidate) => candidate.label);
 }
 
 function resolveRecipientCount(
   targetType: NotificationTargetType,
-  targetId: string
+  targetIds: string[]
 ) {
   if (targetType === "all") {
     return 420;
   }
 
-  return (
-    getTargetCandidates(targetType).find(
-      (candidate) => candidate.id === targetId
-    )?.recipientCount ?? 0
-  );
+  return getTargetCandidates(targetType)
+    .filter((candidate) => targetIds.includes(candidate.id))
+    .reduce((sum, candidate) => sum + candidate.recipientCount, 0);
+}
+
+function toManualNotificationRequest(
+  draft: NotificationDraft
+): ManualNotificationRequest {
+  return {
+    title: draft.title,
+    body: draft.body,
+    targetType: draft.targetType,
+    targetIds: draft.targetType === "all" ? [] : draft.targetIds,
+  };
 }
 
 export const notificationsApi = {
   async previewTarget(
     targetType: NotificationTargetType,
-    targetId: string
+    targetIds: string[]
   ): Promise<NotificationPreviewResponse> {
     return {
       targetType,
-      targetName: resolveTargetName(targetType, targetId),
-      recipientCount: resolveRecipientCount(targetType, targetId),
+      targetNames: resolveTargetNames(targetType, targetIds),
+      recipientCount: resolveRecipientCount(targetType, targetIds),
     };
   },
 
   async send(draft: NotificationDraft): Promise<NotificationSendResponse> {
+    const request = toManualNotificationRequest(draft);
     const recipientCount = resolveRecipientCount(
-      draft.targetType,
-      draft.targetId
+      request.targetType,
+      request.targetIds
     );
 
     return {
       notificationId: Date.now(),
-      targetType: draft.targetType,
+      targetType: request.targetType,
       recipientCount,
       sent: recipientCount,
       failed: 0,

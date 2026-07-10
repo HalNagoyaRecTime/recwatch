@@ -5,7 +5,6 @@ export type NotificationHistoryItem = {
   title: string;
   body: string;
   targetLabel: string;
-  relatedResourceLabel: string;
   deliveredAt: string;
   recipientCount: number;
   status: NotificationDeliveryStatus;
@@ -14,12 +13,11 @@ export type NotificationHistoryItem = {
 export const notificationHistoryItems = [
   {
     id: "notification-001",
-    title: "サッカー A グループ集合",
-    body: "サッカー A グループは10:00にグラウンドへ集合してください。",
-    targetLabel: "サッカー A グループ",
-    relatedResourceLabel: "サッカー集合 / 10:00 グラウンド",
+    title: "集合場所の案内",
+    body: "赤チームは体育館前に集合してください。",
+    targetLabel: "赤チーム",
     deliveredAt: "2026-07-07 09:45",
-    recipientCount: 14,
+    recipientCount: 28,
     status: "sent",
   },
   {
@@ -27,19 +25,17 @@ export const notificationHistoryItems = [
     title: "開会式の案内",
     body: "全体開会式を09:00から体育館で行います。",
     targetLabel: "全体",
-    relatedResourceLabel: "開会式 / 09:00 体育館",
     deliveredAt: "2026-07-07 08:30",
     recipientCount: 420,
     status: "sent",
   },
   {
     id: "notification-003",
-    title: "リレー担当者連絡",
-    body: "リレー担当者は運営本部で進行確認をお願いします。",
-    targetLabel: "リレー担当者",
-    relatedResourceLabel: "リレー",
+    title: "持ち物確認",
+    body: "青チームはタオルと飲み物を持って集合してください。",
+    targetLabel: "青チーム",
     deliveredAt: "2026-07-07 10:10",
-    recipientCount: 5,
+    recipientCount: 24,
     status: "sending",
   },
 ] satisfies NotificationHistoryItem[];

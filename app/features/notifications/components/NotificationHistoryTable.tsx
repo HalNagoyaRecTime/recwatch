@@ -27,12 +27,11 @@ export function NotificationHistoryTable({
   return (
     <div className="overflow-hidden rounded-[18px] border border-[color:var(--border-1)] bg-[linear-gradient(180deg,var(--surface-card-gloss),transparent),var(--surface-1)] shadow-[var(--shadow-soft)]">
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[880px] text-left text-sm">
+        <table className="w-full min-w-[760px] text-left text-sm">
           <thead className="border-b border-[color:var(--border-1)] bg-[color:var(--surface-2)] text-xs text-[color:var(--text-3)] uppercase">
             <tr>
               <th className="px-4 py-3">件名</th>
               <th className="px-4 py-3">配信対象</th>
-              <th className="px-4 py-3">関連情報</th>
               <th className="px-4 py-3">配信日時</th>
               <th className="px-4 py-3">対象者数</th>
               <th className="px-4 py-3">状態</th>
@@ -54,9 +53,6 @@ export function NotificationHistoryTable({
                 </td>
                 <td className="px-4 py-4 align-top text-[color:var(--text-1)]">
                   {item.targetLabel}
-                </td>
-                <td className="px-4 py-4 align-top text-[color:var(--text-2)]">
-                  {item.relatedResourceLabel}
                 </td>
                 <td className="px-4 py-4 align-top text-[color:var(--text-2)]">
                   {item.deliveredAt}
