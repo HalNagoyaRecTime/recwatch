@@ -64,18 +64,21 @@ npm run preview
 - Build output directory: `build/client`
 - Deploy command: 設定しない
 
-Cloudflare Pages の Settings > Environment variables で、同じ変数名に
-環境ごとの Backend URL を設定する。
+GitHub Actions のデプロイワークフローで、ビルド時に
+`VITE_BACKEND_BASE_URL` を注入する。
 
-| 対象               | Cloudflare Pages 環境 | `VITE_BACKEND_BASE_URL` |
-| ------------------ | --------------------- | ----------------------- |
-| `main` ブランチ    | Production            | 本番 Backend の公開 URL |
-| `develop` ブランチ | Preview               | 開発 Backend の公開 URL |
-| ローカル開発       | `.env`                | ローカル Backend の URL |
+| 対象               | `VITE_BACKEND_BASE_URL` の注入元          | 設定する値              |
+| ------------------ | ----------------------------------------- | ----------------------- |
+| `main` ブランチ    | GitHub Actions の本番デプロイワークフロー | 本番 Backend の公開 URL |
+| `develop` ブランチ | GitHub Actions の開発デプロイワークフロー | 開発 Backend の公開 URL |
+| ローカル開発       | `.env`                                    | ローカル Backend の URL |
 
-`main` を Production branch に設定し、`develop` は Preview deployment として
-デプロイする。環境変数は Vite のビルド時に埋め込まれるため、値を変更した後は
-対象ブランチを再デプロイする。
+GitHub Actions では、`npm run build` を実行するジョブに対象ブランチ用の
+`VITE_BACKEND_BASE_URL` を渡す。環境変数は Vite のビルド時に埋め込まれるため、
+値を変更した後は対象ブランチを再デプロイする。
+
+`VITE_` で始まる変数はブラウザへ公開されるため、Backend の公開 URL のみを設定し、
+認証情報などの秘密情報は設定しない。
 
 Cloudflare PagesのSPAフォールバックを使用するため、トップレベルの
 `404.html`は配置しない。
