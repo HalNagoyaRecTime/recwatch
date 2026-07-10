@@ -64,6 +64,19 @@ npm run preview
 - Build output directory: `build/client`
 - Deploy command: 設定しない
 
+Cloudflare Pages の Settings > Environment variables で、同じ変数名に
+環境ごとの Backend URL を設定する。
+
+| 対象               | Cloudflare Pages 環境 | `VITE_BACKEND_BASE_URL` |
+| ------------------ | --------------------- | ----------------------- |
+| `main` ブランチ    | Production            | 本番 Backend の公開 URL |
+| `develop` ブランチ | Preview               | 開発 Backend の公開 URL |
+| ローカル開発       | `.env`                | ローカル Backend の URL |
+
+`main` を Production branch に設定し、`develop` は Preview deployment として
+デプロイする。環境変数は Vite のビルド時に埋め込まれるため、値を変更した後は
+対象ブランチを再デプロイする。
+
 Cloudflare PagesのSPAフォールバックを使用するため、トップレベルの
 `404.html`は配置しない。
 
