@@ -1,32 +1,31 @@
-import { HomeRoomPage } from "~/features/homeroom/pages/HomeRoomPage";
-import type { HomeRoomData } from "~/features/homeroom/model/homeroom";
+import {
+  useLoaderData,
+  useRouteError,
+  isRouteErrorResponse,
+} from "react-router";
+import { HomeroomPage } from "~/features/homeroom/pages/HomeRoomPage";
+import { getHomeroomData } from "~/features/homeroom/model/homeroom-data";
+
+export async function clientLoader() {
+  return getHomeroomData();
+}
 
 export function meta() {
   return [{ title: "Homeroom | recwatch" }];
 }
 
-export default function HomeroomRoute() {
-  return <HomeRoomPage homerooms={Homeroom} />;
+export function ErrorBoundary() {
+  const error = useRouteError();
+  let message = "予期しないエラーが発生しました。";
+  if (isRouteErrorResponse(error)) {
+    if (error.status === 401)
+      message = "認証が必要です。再ログインしてください。";
+    else message = `エラー${error.status}:${error.data || error.statusText} `;
+  }
+  return <div className="p-6 text-red-500">{message}</div>;
 }
 
-// ダミーデータ
-
-const Homeroom: HomeRoomData[] = [
-  {
-    HomeRoomId: 1,
-    HomeRoomCode: "11A",
-    HomeRoomName: "1年Aクラス",
-  },
-  {
-    HomeRoomId: 2,
-    HomeRoomCode: "11B",
-    HomeRoomName: "1年Bクラス",
-  },
-  {
-    HomeRoomId: 3,
-    HomeRoomCode: "12A",
-    HomeRoomName: "2年Aクラス",
-  },
-];
-
-// クラス名 SQL likeを使用して絞り込みを実装する
+export default function HomeroomRoute() {
+  const Homerooms = useLoaderData<typeof clientLoader>();
+  return <HomeroomPage homerooms={Homerooms} />;
+}
