@@ -1,7 +1,17 @@
-import { env } from "~/config/env";
+import { buildBackendUrl } from "~/config/env";
+
+function requireBackendUrl(path: string) {
+  const url = buildBackendUrl(path);
+
+  if (!url) {
+    throw new Error("VITE_BACKEND_BASE_URL is not configured.");
+  }
+
+  return url;
+}
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(`${env.backendBaseUrl}${path}`, init);
+  const res = await fetch(requireBackendUrl(path), init);
   if (!res.ok) {
     throw new Response(res.statusText, { status: res.status });
   }
