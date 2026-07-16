@@ -6,7 +6,7 @@ export type NavIconKey =
   | "dashboard"
   | "file"
   | "settings"
-  | "homeroom"
+  | "classRoom"
   | "timing"
   | "trophy"
   | "users";
@@ -103,10 +103,10 @@ export const navSections = [
         ],
       },
       {
-        id: "homeroom",
-        label: "Homerooms",
-        icon: "homeroom",
-        to: "/homeroom",
+        id: "classRoom",
+        label: "Class Rooms",
+        icon: "classRoom",
+        to: "/classRoom",
         roles: ["admin", "manager"],
       },
       {

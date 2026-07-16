@@ -30,7 +30,7 @@ const iconMap: Record<NavIconKey, ReactNode> = {
   dashboard: <LayoutDashboardIcon size={iconSize} strokeWidth={1.8} />,
   file: <FileTextIcon size={iconSize} strokeWidth={1.8} />,
   settings: <Settings2Icon size={iconSize} strokeWidth={1.8} />,
-  homeroom: <GraduationCap size={iconSize} strokeWidth={1.8} />,
+  classRoom: <GraduationCap size={iconSize} strokeWidth={1.8} />,
   timing: <TimerResetIcon size={iconSize} strokeWidth={1.8} />,
   trophy: <TrophyIcon size={iconSize} strokeWidth={1.8} />,
   users: <UsersIcon size={iconSize} strokeWidth={1.8} />,
