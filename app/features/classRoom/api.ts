@@ -7,5 +7,5 @@ export type classRoomDTO = {
 };
 
 export const ClassRoomApi = {
-  getClassRooms: () => apiClient.get<classRoomDTO[]>("/api/v1/classes"),
+  getClassRooms: () => apiClient.get<classRoomDTO[]>("/api/v1/classrooms"),
 };
