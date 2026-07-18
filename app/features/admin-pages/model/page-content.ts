@@ -110,18 +110,18 @@ export const pageContent = {
       },
     ],
   },
-  homeroom: {
-    eyebrow: "Homeroom",
-    title: "Homeroom Management",
-    description: "Management page for homerooms.",
+  classRoom: {
+    eyebrow: "classRoom",
+    title: "Class Room Management",
+    description: "Management page for class rooms.",
     sections: [
       {
-        title: "homeroom table",
+        title: "classRoom table",
         description: "This area will hold the table, search, and filters.",
       },
       {
-        title: "homeroom Detail",
-        description: "This area will show details for the selected homeroom.",
+        title: "classRoom Detail",
+        description: "This area will show details for the selected classRoom.",
       },
     ],
   },
