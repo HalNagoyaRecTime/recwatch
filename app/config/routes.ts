@@ -7,6 +7,7 @@ export type NavIconKey =
   | "file"
   | "settings"
   | "homeroom"
+  | "notificationHistory"
   | "timing"
   | "trophy"
   | "users";
@@ -179,6 +180,13 @@ export const navSections = [
         icon: "clock",
         to: "/schedule",
         roles: ["admin", "manager", "member"],
+      },
+      {
+        id: "notification-management",
+        label: "通知管理",
+        icon: "notificationHistory",
+        to: "/notifications",
+        roles: ["admin", "manager"],
       },
     ],
   },
