@@ -91,3 +91,7 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
     </main>
   );
 }
+
+export function HydrateFallback() {
+  return <div className="bg-[color:var(--surface-2)] p-6">読み込み中...</div>;
+}

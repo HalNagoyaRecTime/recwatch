@@ -5,6 +5,7 @@ import { useState } from "react";
 import { FloatingPanel } from "~/components/shared/FloatingPanel";
 
 type AccountBtnProps = {
+  user?: AccountUser | null;
   onLogout?: () => void;
 };
 
