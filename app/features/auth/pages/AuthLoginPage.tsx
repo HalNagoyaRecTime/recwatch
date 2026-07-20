@@ -21,7 +21,9 @@ export function AuthLoginPage({
   initialError?: string | null;
 } = {}) {
   const [errorMessage, setErrorMessage] = useState(
-    initialError ? (initialErrorMessages[initialError] ?? "") : ""
+    initialError
+      ? (initialErrorMessages[initialError] ?? initialErrorMessages.auth_failed)
+      : ""
   );
   const [isOAuthSubmitting, setIsOAuthSubmitting] = useState(false);
 
@@ -35,7 +37,7 @@ export function AuthLoginPage({
         return;
       }
 
-      const healthUrl = buildBackendUrl("/");
+      const healthUrl = buildBackendUrl("/health");
       const loginUrl = buildBackendUrl("/api/v1/auth/microsoft/login");
       if (!healthUrl || !loginUrl) {
         setErrorMessage(backendUnavailableMessage);
