@@ -111,10 +111,6 @@ export async function clientLoader(): Promise<FrameLoaderData> {
   };
 }
 
-export function HydrateFallback() {
-  return null;
-}
-
 export default function FrameRoute() {
   const data = useLoaderData<typeof clientLoader>();
 
