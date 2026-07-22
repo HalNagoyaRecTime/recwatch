@@ -69,7 +69,7 @@ export const navSections = [
         id: "classRoom",
         label: "Class Rooms",
         icon: "classRoom",
-        to: "/classRoom",
+        to: "/classroom",
         roles: ["admin", "manager"],
       },
     ],

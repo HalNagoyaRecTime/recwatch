@@ -30,7 +30,7 @@ export function MembersPage() {
           学生
         </span>
         <Link
-          to="/homeroom"
+          to="/classroom"
           className="rounded-[10px] border border-[#d2d2d2] bg-white px-4 py-2 text-sm font-bold"
         >
           クラス
