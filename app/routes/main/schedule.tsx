@@ -1,10 +1,9 @@
-import { AdminPlaceholderPage } from "~/features/admin-pages/components/AdminPlaceholderPage";
-import { pageContent } from "~/features/admin-pages/model/page-content";
+import { ScheduleListPage } from "~/features/schedule/pages/ScheduleListPage";
 
 export function meta() {
-  return [{ title: "Schedule | recwatch" }];
+  return [{ title: "スケジュール管理 | recwatch" }];
 }
 
 export default function ScheduleRoute() {
-  return <AdminPlaceholderPage {...pageContent.schedule} />;
+  return <ScheduleListPage />;
 }

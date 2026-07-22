@@ -2,7 +2,7 @@ import { AdminPlaceholderPage } from "~/features/admin-pages/components/AdminPla
 import { pageContent } from "~/features/admin-pages/model/page-content";
 
 export function meta() {
-  return [{ title: "Tournament | recwatch" }];
+  return [{ title: "Tournament Setup | recwatch" }];
 }
 
 export default function SportsTournamentRoute() {

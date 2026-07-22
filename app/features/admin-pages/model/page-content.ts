@@ -20,51 +20,6 @@ export const pageContent = {
       },
     ],
   },
-  eventsActive: {
-    eyebrow: "Events",
-    title: "Active Events",
-    description: "Operational page for monitoring active events.",
-    sections: [
-      {
-        title: "Event List",
-        description: "This area will hold the active event list and status.",
-      },
-      {
-        title: "Operational Status",
-        description: "This area will surface alerts, delays, and assignments.",
-      },
-    ],
-  },
-  eventsPast: {
-    eyebrow: "Events",
-    title: "Past Events",
-    description: "Archive page for completed events.",
-    sections: [
-      {
-        title: "Archive List",
-        description: "This area will hold archived events and filters.",
-      },
-      {
-        title: "Export History",
-        description: "This area will show reports and export history.",
-      },
-    ],
-  },
-  eventsNew: {
-    eyebrow: "Events",
-    title: "Create Event",
-    description: "Creation page for a new event.",
-    sections: [
-      {
-        title: "Basic Information",
-        description: "This area will hold event name, date, and venue inputs.",
-      },
-      {
-        title: "Setup Blocks",
-        description: "This area will hold category and setup configuration.",
-      },
-    ],
-  },
   members: {
     eyebrow: "Members",
     title: "Member List",
@@ -77,21 +32,6 @@ export const pageContent = {
       {
         title: "Member Detail",
         description: "This area will show details for the selected member.",
-      },
-    ],
-  },
-  membersTeams: {
-    eyebrow: "Members",
-    title: "Teams",
-    description: "Management page for team assignments.",
-    sections: [
-      {
-        title: "Team List",
-        description: "This area will hold the team list and status.",
-      },
-      {
-        title: "Assignment Detail",
-        description: "This area will show assignment and team detail.",
       },
     ],
   },
@@ -110,33 +50,93 @@ export const pageContent = {
       },
     ],
   },
+  membersTeams: {
+    eyebrow: "Members",
+    title: "Teams",
+    description: "Team management page for members.",
+    sections: [
+      {
+        title: "Team List",
+        description: "This area will hold team rosters and assignments.",
+      },
+      {
+        title: "Team Detail",
+        description: "This area will show details for the selected team.",
+      },
+    ],
+  },
   classRoom: {
-    eyebrow: "classRoom",
+    eyebrow: "Class Room",
     title: "Class Room Management",
     description: "Management page for class rooms.",
     sections: [
       {
-        title: "classRoom table",
+        title: "Class Room Table",
         description: "This area will hold the table, search, and filters.",
       },
       {
-        title: "classRoom Detail",
+        title: "Class Room Detail",
         description: "This area will show details for the selected classRoom.",
+      },
+    ],
+  },
+  eventsActive: {
+    eyebrow: "Events",
+    title: "Active Events",
+    description: "Operational page for currently active events.",
+    sections: [
+      {
+        title: "Active Event List",
+        description: "This area will show live event status and ownership.",
+      },
+      {
+        title: "Event Detail",
+        description: "This area will show timing, alerts, and staff notes.",
+      },
+    ],
+  },
+  eventsPast: {
+    eyebrow: "Events",
+    title: "Past Events",
+    description: "Archive page for completed events.",
+    sections: [
+      {
+        title: "Event Archive",
+        description: "This area will hold completed event records.",
+      },
+      {
+        title: "Review Notes",
+        description: "This area will show post-event summaries and issues.",
+      },
+    ],
+  },
+  eventsNew: {
+    eyebrow: "Events",
+    title: "Create Event",
+    description: "Creation page for a new event.",
+    sections: [
+      {
+        title: "Event Form",
+        description: "This area will hold event setup fields.",
+      },
+      {
+        title: "Validation",
+        description: "This area will show setup checks before publishing.",
       },
     ],
   },
   timing: {
     eyebrow: "Timing",
-    title: "Timing Control",
-    description: "Control page for timing operations.",
+    title: "Timing",
+    description: "Operational page for timing status.",
     sections: [
       {
-        title: "Device Status",
-        description: "This area will show connected device status.",
+        title: "Timing Monitor",
+        description: "This area will show active timing feeds and gaps.",
       },
       {
-        title: "Incident Log",
-        description: "This area will show incidents and manual actions.",
+        title: "Incident Queue",
+        description: "This area will hold timing issues that need review.",
       },
     ],
   },
@@ -157,76 +157,76 @@ export const pageContent = {
   },
   sportsTournament: {
     eyebrow: "Sports",
-    title: "Tournament",
-    description: "Setup page for tournament rules.",
+    title: "Tournament Setup",
+    description: "Management page for tournament brackets.",
     sections: [
       {
-        title: "Bracket Rules",
-        description: "This area will define seeding and bracket rules.",
+        title: "Bracket Structure",
+        description: "This area will hold tournament bracket settings.",
       },
       {
-        title: "Validation",
-        description: "This area will show validation and missing settings.",
+        title: "Seeding Rules",
+        description: "This area will show seeding and advancement rules.",
       },
     ],
   },
   sportsScoring: {
     eyebrow: "Sports",
-    title: "Scoring Rules",
+    title: "Scoring Setup",
     description: "Management page for scoring rules.",
     sections: [
       {
-        title: "Scoring Profiles",
-        description: "This area will list scoring profiles and formulas.",
+        title: "Score Rules",
+        description: "This area will hold scoring methods and limits.",
       },
       {
-        title: "Audit Trail",
-        description: "This area will show change history and activation state.",
+        title: "Result Mapping",
+        description: "This area will show how results map to standings.",
       },
     ],
   },
   reportsSummary: {
     eyebrow: "Reports",
-    title: "Summary",
-    description: "Summary page for reports.",
+    title: "Summary Report",
+    description: "Summary reporting page.",
     sections: [
       {
-        title: "Summary Filters",
-        description: "This area will hold filters for report scope.",
+        title: "Summary Metrics",
+        description: "This area will hold high-level report metrics.",
       },
       {
-        title: "Summary Result",
-        description: "This area will show summary metrics and deltas.",
+        title: "Trend View",
+        description: "This area will show report trends over time.",
       },
     ],
   },
   reportsDetail: {
     eyebrow: "Reports",
-    title: "Detail",
-    description: "Detailed report page.",
+    title: "Detail Report",
+    description: "Detailed reporting page.",
     sections: [
       {
-        title: "Detail Filters",
-        description: "This area will hold filters and drilldown controls.",
+        title: "Detail Table",
+        description: "This area will hold detailed report rows.",
       },
       {
-        title: "Detail Result",
-        description: "This area will show detailed rows and drilldown results.",
+        title: "Filters",
+        description: "This area will hold report filter controls.",
       },
     ],
   },
   reportsExport: {
     eyebrow: "Reports",
     title: "Export",
-    description: "Export page for report outputs.",
+    description: "Report export page.",
     sections: [
       {
-        title: "Export Jobs",
-        description: "This area will list export jobs and statuses.",
+        title: "Export Options",
+        description: "This area will hold file format and scope settings.",
       },
       {
-        title: "Output Settings",
-        description: "This area will hold format and destination settings.",
+        title: "Export History",
+        description: "This area will show recent report exports.",
       },
     ],
   },
