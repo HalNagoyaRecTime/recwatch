@@ -54,7 +54,7 @@ function getAuthErrorMessage(status: number) {
     return "バックエンドでエラーが発生しました。時間をおいてもう一度お試しください。";
   }
 
-  return "バックエンドに接続できませんでした。APIサーバーが起動しているか確認してください。";
+  return `バックエンドから予期しない応答がありました(status: ${status})。時間をおいてもう一度お試しください。`;
 }
 
 export async function clientLoader(): Promise<FrameLoaderData> {
@@ -70,7 +70,10 @@ export async function clientLoader(): Promise<FrameLoaderData> {
   const res = await fetch(authMeUrl, {
     credentials: "include",
     headers: WEB_CLIENT_HEADERS,
-  }).catch(() => null);
+  }).catch((error: unknown) => {
+    console.error("Failed to fetch /api/v1/auth/me", error);
+    return null;
+  });
 
   if (!res) {
     return {
@@ -91,7 +94,10 @@ export async function clientLoader(): Promise<FrameLoaderData> {
     };
   }
 
-  const payload: unknown = await res.json().catch(() => null);
+  const payload: unknown = await res.json().catch((error: unknown) => {
+    console.error("Failed to parse /api/v1/auth/me response", error);
+    return null;
+  });
   if (!isAuthMeResponse(payload)) {
     return {
       status: "backend_error",
