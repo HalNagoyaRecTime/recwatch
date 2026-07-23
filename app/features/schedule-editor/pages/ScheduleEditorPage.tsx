@@ -31,8 +31,31 @@ export function ScheduleEditorPage({
   const [submitted, setSubmitted] = useState(false);
 
   function handleChange(nextDraft: ScheduleDraft) {
+    setErrors((currentErrors) => {
+      const nextErrors = { ...currentErrors };
+      const changedFields = (
+        Object.keys(nextDraft) as Array<keyof ScheduleDraft>
+      ).filter((field) => draft[field] !== nextDraft[field]);
+
+      for (const field of changedFields) {
+        delete nextErrors[field];
+      }
+
+      if (
+        changedFields.includes("startTime") ||
+        changedFields.includes("endTime")
+      ) {
+        delete nextErrors.startTime;
+        delete nextErrors.endTime;
+      }
+
+      if (changedFields.includes("type")) {
+        delete nextErrors.eventId;
+      }
+
+      return nextErrors;
+    });
     setDraft(nextDraft);
-    setErrors({});
     setSubmitted(false);
   }
 

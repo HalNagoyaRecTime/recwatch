@@ -1,16 +1,9 @@
-import { mockScheduleFormOptions } from "~/features/schedule-editor/infrastructure/mock-schedule-form-options";
-import { mockScheduleSubmitter } from "~/features/schedule-editor/infrastructure/mock-schedule-submitter";
-import { ScheduleEditorPage } from "~/features/schedule-editor/pages/ScheduleEditorPage";
+import { ScheduleListPage } from "~/features/schedule/pages/ScheduleListPage";
 
 export function meta() {
-  return [{ title: "スケジュール新規登録 | REC TIME" }];
+  return [{ title: "スケジュール管理 | recwatch" }];
 }
 
 export default function ScheduleRoute() {
-  return (
-    <ScheduleEditorPage
-      submitter={mockScheduleSubmitter}
-      options={mockScheduleFormOptions}
-    />
-  );
+  return <ScheduleListPage />;
 }

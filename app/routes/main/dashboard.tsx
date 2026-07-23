@@ -1,9 +1,8 @@
 import { useLoaderData } from "react-router";
 
 import { buildBackendUrl } from "~/config/env";
-import { AdminScreenPage } from "~/features/admin-pages/components/AdminScreenPage";
-import { dashboardContent } from "~/features/admin-pages/model/dashboard-content";
 import { WEB_CLIENT_HEADERS } from "~/features/auth/lib/logout";
+import { DashboardPage } from "~/features/dashboard/pages/DashboardPage";
 
 export function meta() {
   return [{ title: "Dashboard | recwatch" }];
@@ -32,6 +31,7 @@ export async function clientLoader(): Promise<DashboardLoaderData> {
   const res = await fetch(dashboardUrl, {
     credentials: "include",
     headers: WEB_CLIENT_HEADERS,
+    signal: AbortSignal.timeout(1000),
   }).catch(() => null);
 
   if (!res) {
@@ -62,11 +62,9 @@ export async function clientLoader(): Promise<DashboardLoaderData> {
 
 export default function DashboardRoute() {
   const result = useLoaderData<typeof clientLoader>();
-
   return (
-    <div className="flex flex-col gap-[18px]">
-      <pre className="text-sm">{JSON.stringify(result, null, 2)}</pre>
-      <AdminScreenPage {...dashboardContent} />
-    </div>
+    <DashboardPage
+      connectionError={result.status === "error" ? result.error : undefined}
+    />
   );
 }

@@ -1,10 +1,9 @@
-import { AdminPlaceholderPage } from "~/features/admin-pages/components/AdminPlaceholderPage";
-import { pageContent } from "~/features/admin-pages/model/page-content";
+import { MembersImportConfirmationPage } from "~/features/members/pages/MembersImportConfirmationPage";
 
 export function meta() {
-  return [{ title: "Import | recwatch" }];
+  return [{ title: "取り込み確認 | recwatch" }];
 }
 
 export default function MembersImportRoute() {
-  return <AdminPlaceholderPage {...pageContent.membersImport} />;
+  return <MembersImportConfirmationPage />;
 }
