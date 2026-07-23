@@ -29,6 +29,7 @@ export function ScheduleEditorPage({
   const [errors, setErrors] = useState<ScheduleDraftErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [submissionError, setSubmissionError] = useState<string | null>(null);
 
   function handleChange(nextDraft: ScheduleDraft) {
     setErrors((currentErrors) => {
@@ -57,12 +58,14 @@ export function ScheduleEditorPage({
     });
     setDraft(nextDraft);
     setSubmitted(false);
+    setSubmissionError(null);
   }
 
   function handleReset() {
     setDraft(initialDraft);
     setErrors({});
     setSubmitted(false);
+    setSubmissionError(null);
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -76,10 +79,15 @@ export function ScheduleEditorPage({
 
     setIsSubmitting(true);
     setSubmitted(false);
+    setSubmissionError(null);
 
     try {
       await submitter.submit(draft);
       setSubmitted(true);
+    } catch {
+      setSubmissionError(
+        "スケジュールを登録できませんでした。時間をおいて再度お試しください。"
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -107,9 +115,14 @@ export function ScheduleEditorPage({
           />
           <div
             aria-live="polite"
-            className="mt-4 min-h-5 text-sm text-[color:var(--tone-green-text)]"
+            className={`mt-4 min-h-5 text-sm ${
+              submissionError
+                ? "text-red-600"
+                : "text-[color:var(--tone-green-text)]"
+            }`}
           >
-            {submitted ? "スケジュール内容を確認しました。" : null}
+            {submissionError ??
+              (submitted ? "スケジュール内容を確認しました。" : null)}
           </div>
         </section>
 

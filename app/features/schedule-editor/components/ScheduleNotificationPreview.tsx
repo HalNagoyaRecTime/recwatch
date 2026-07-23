@@ -1,4 +1,5 @@
 import type { ScheduleDraft } from "../model/schedule-draft";
+import { scheduleTypeLabels } from "../model/schedule-draft";
 import type { ScheduleFormOptions } from "../model/schedule-option";
 
 type ScheduleNotificationPreviewProps = {
@@ -25,7 +26,13 @@ export function ScheduleNotificationPreview({
     );
   }
 
-  const eventName = findName(options.events, draft.eventId) || "競技";
+  const scheduleName =
+    draft.type === "competition"
+      ? findName(options.events, draft.eventId) ||
+        scheduleTypeLabels.competition
+      : draft.type
+        ? scheduleTypeLabels[draft.type]
+        : "スケジュール";
   const gatheringSpot =
     findName(options.gatheringSpots, draft.gatheringSpotId) || "集合場所";
   const previewTime = draft.startTime || "9:00";
@@ -50,7 +57,7 @@ export function ScheduleNotificationPreview({
             <div className="min-w-0">
               <div className="text-[9px] font-semibold">rectime</div>
               <div className="mt-0.5 line-clamp-2 text-[8px] leading-[1.45]">
-                {eventName}の開始時間が近づいています。{gatheringSpot}
+                {scheduleName}の開始時間が近づいています。{gatheringSpot}
                 に集合してください。
               </div>
             </div>
