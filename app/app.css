@@ -157,6 +157,10 @@
   --tone-cyan-bg: rgba(56, 189, 248, 0.12);
   --tone-cyan-text: #0369a1;
 
+  --tone-red-border: var(--tone-danger-border);
+  --tone-red-bg: var(--tone-danger-bg);
+  --tone-red-text: var(--tone-danger-text);
+
   --shadow-soft: 0 20px 45px rgba(15, 23, 42, 0.12);
 }
 
@@ -233,6 +237,10 @@
   --tone-cyan-bg: rgba(56, 189, 248, 0.12);
   --tone-cyan-text: #7dd3fc;
 
+  --tone-red-border: var(--tone-danger-border);
+  --tone-red-bg: var(--tone-danger-bg);
+  --tone-red-text: var(--tone-danger-text);
+
   --shadow-soft: 0 20px 45px rgba(0, 0, 0, 0.28);
 }
 
@@ -292,11 +300,13 @@
     font-size: 14px;
   }
 
-  .sidebar-close-width {
+  .sidebar-close-width,
+  .left-navigation-close-width {
     width: 56px;
   }
 
-  .sidebar-open-width {
+  .sidebar-open-width,
+  .left-navigation-open-width {
     width: 224px;
   }
 }
