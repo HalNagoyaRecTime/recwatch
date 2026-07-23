@@ -3,6 +3,7 @@ import type { AppRole } from "./permissions";
 export type NavIconKey =
   | "clock"
   | "dashboard"
+  | "notification"
   | "settings"
   | "classRoom"
   | "trophy"
@@ -97,6 +98,13 @@ export const navSections = [
         icon: "clock",
         to: "/schedule",
         roles: ["admin", "manager", "member"],
+      },
+      {
+        id: "notification-create",
+        label: "通知作成",
+        icon: "notification",
+        to: "/notifications/new",
+        roles: ["admin", "manager"],
       },
     ],
   },

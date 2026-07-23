@@ -1,110 +1,134 @@
-import { useState } from "react";
-import { Link } from "react-router";
+import { useEffect, useState, type FormEvent } from "react";
 
-export function NotificationCreatePage() {
-  const [title, setTitle] = useState("競技開始時間の変更");
-  const [body, setBody] = useState(
-    "走れ！〇人〇脚！の開始時間が 09:00 から 09:10 に変更になりました。"
+import { NotificationForm } from "../components/NotificationForm";
+import { NotificationPhonePreview } from "../components/NotificationPhonePreview";
+import { NotificationSummary } from "../components/NotificationSummary";
+import type { NotificationSubmitter } from "../application/notification-submitter";
+import {
+  initialNotificationDraft,
+  type NotificationDraft,
+} from "../model/notification-draft";
+import {
+  validateNotificationDraft,
+  type NotificationDraftErrors,
+} from "../model/notification-draft-validation";
+import type { NotificationGroup } from "../model/notification-group";
+
+function formatPreviewDate(date: Date) {
+  return new Intl.DateTimeFormat("ja-JP", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    weekday: "short",
+  }).format(date);
+}
+
+function formatPreviewTime(date: Date) {
+  return new Intl.DateTimeFormat("ja-JP", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).format(date);
+}
+
+type NotificationCreatePageProps = {
+  submitter: NotificationSubmitter;
+  groups: NotificationGroup[];
+};
+
+export function NotificationCreatePage({
+  submitter,
+  groups,
+}: NotificationCreatePageProps) {
+  const [draft, setDraft] = useState<NotificationDraft>(
+    initialNotificationDraft
   );
-  const [target, setTarget] = useState("全体");
+  const [errors, setErrors] = useState<NotificationDraftErrors>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+  const [previewDate, setPreviewDate] = useState<Date | null>(null);
+
+  useEffect(() => {
+    setPreviewDate(new Date());
+  }, []);
+
+  const previewTime = previewDate ? formatPreviewTime(previewDate) : "--:--";
+  const previewDateLabel = previewDate
+    ? formatPreviewDate(previewDate)
+    : "----/--/--";
+
+  function handleChange(nextDraft: NotificationDraft) {
+    setDraft(nextDraft);
+    setSubmitted(false);
+    setErrors((current) => ({
+      ...current,
+      title: nextDraft.title.trim() ? undefined : current.title,
+      body: nextDraft.body.trim() ? undefined : current.body,
+      groupId: nextDraft.groupId ? undefined : current.groupId,
+    }));
+  }
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const nextErrors = validateNotificationDraft(draft);
+    setErrors(nextErrors);
+
+    if (Object.keys(nextErrors).length > 0 || isSubmitting) {
+      return;
+    }
+
+    setIsSubmitting(true);
+    setSubmitted(false);
+
+    try {
+      await submitter.submit(draft);
+      setSubmitted(true);
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
 
   return (
-    <div className="min-h-full bg-[#f7faff] p-1 text-[#0a0a0a]">
-      <h1 className="text-[17px] font-bold">通知作成</h1>
-      <p className="mt-1 text-xs text-black/40">
-        生徒や関係者に配信するプッシュ通知を作成します
-      </p>
-
-      <div className="mt-5 grid gap-8 xl:grid-cols-[minmax(360px,512px)_minmax(420px,576px)]">
-        <div className="space-y-4">
-          <label className="block text-sm font-bold">
-            タイトル <span className="text-red-500">*</span>
-            <input
-              value={title}
-              onChange={(event) => setTitle(event.target.value)}
-              placeholder="タイトルを入力"
-              className="mt-1 block h-[38px] w-full rounded-[10px] border border-[#d2d2d2] bg-white px-3 font-normal outline-none focus:border-[#0070bb]"
+    <div className="mx-auto w-full max-w-[1240px]">
+      <div className="grid gap-10 xl:grid-cols-[minmax(420px,1fr)_minmax(480px,1.05fr)]">
+        <section className="min-w-0">
+          <h1 className="text-xl font-semibold">通知作成</h1>
+          <p className="mt-4 text-sm text-[color:var(--text-3)]">
+            生徒や関係者に配信するプッシュ通知を作成します
+          </p>
+          <div className="mt-5 max-w-[560px]">
+            <NotificationForm
+              draft={draft}
+              errors={errors}
+              groups={groups}
+              isSubmitting={isSubmitting}
+              onChange={handleChange}
+              onSubmit={handleSubmit}
             />
-          </label>
-          <label className="block text-sm font-bold">
-            本文 <span className="text-red-500">*</span>
-            <textarea
-              value={body}
-              onChange={(event) => setBody(event.target.value)}
-              placeholder="本文を入力"
-              className="mt-1 block h-24 w-full resize-none rounded-[10px] border border-[#d2d2d2] bg-white px-3 py-2 font-normal outline-none focus:border-[#0070bb]"
-            />
-          </label>
-          <label className="block text-sm font-bold">
-            通知対象 <span className="text-red-500">*</span>
-            <select
-              value={target}
-              onChange={(event) => setTarget(event.target.value)}
-              className="mt-1 block h-[38px] w-full rounded-[10px] border border-[#d2d2d2] bg-white px-3 font-normal"
-            >
-              <option>全体</option>
-              <option>クラスA</option>
-              <option>競技参加者</option>
-            </select>
-          </label>
-          <p className="text-xs text-black/40">全体 / クラス / 競技参加者</p>
-          <div className="flex gap-3">
-            <Link
-              to="/notifications"
-              className="rounded-[10px] border border-[#d2d2d2] bg-white px-5 py-2 text-sm"
-            >
-              キャンセル
-            </Link>
-            <button
-              type="button"
-              className="rounded-[10px] bg-[#0070bb] px-5 py-2 text-sm text-white"
-            >
-              配信する
-            </button>
           </div>
-        </div>
+          <div
+            aria-live="polite"
+            className="mt-4 min-h-5 text-sm text-[color:var(--tone-green-text)]"
+          >
+            {submitted ? "通知内容を確認しました。" : null}
+          </div>
+        </section>
 
-        <div className="space-y-5">
-          <div className="overflow-hidden rounded-[14px] border border-[#d2d2d2] bg-white text-sm">
-            {[
-              ["タイトル", title || "—"],
-              ["本文", body || "—"],
-              ["通知対象", target],
-              ["配信時間", "09:00"],
-            ].map(([label, value]) => (
-              <div
-                key={label}
-                className="grid grid-cols-[96px_1fr] gap-6 border-b border-[#d2d2d2] px-5 py-4 last:border-b-0"
-              >
-                <span className="text-xs text-black/40">{label}</span>
-                <span>{value}</span>
-              </div>
-            ))}
+        <section className="min-w-0 pt-9">
+          <NotificationSummary
+            draft={draft}
+            deliveryTime={previewTime}
+            groups={groups}
+          />
+          <div className="mt-5">
+            <NotificationPhonePreview
+              title={draft.title}
+              body={draft.body}
+              time={previewTime}
+              date={previewDateLabel}
+            />
           </div>
-          <div>
-            <p className="mb-2 text-xs font-bold text-black/50">
-              配信先イメージ（スマートフォン通知）
-            </p>
-            <div className="relative h-[398px] w-[187px] overflow-hidden rounded-[24px] border border-[#bbb] bg-white p-4 shadow-md">
-              <div className="flex justify-between text-[10px] font-bold">
-                <span>9:00</span>
-                <span>● ◒ ▰</span>
-              </div>
-              <div className="mt-10 text-center">
-                <div className="text-[32px] font-thin">9:00</div>
-                <div className="text-[9px]">2025年11月07日 金曜日</div>
-              </div>
-              <div className="mt-14 rounded-[10px] bg-[#d1d1d1]/90 p-2 text-[6px]">
-                <div className="font-bold">recwatch</div>
-                <div className="mt-1 font-bold">{title || "通知タイトル"}</div>
-                <div className="mt-1 line-clamp-2">{body || "通知本文"}</div>
-              </div>
-              <div className="absolute right-0 bottom-7 left-0 text-center text-[9px] text-[#aaa]">
-                上にスワイプして開く
-              </div>
-            </div>
-          </div>
-        </div>
+        </section>
       </div>
     </div>
   );
