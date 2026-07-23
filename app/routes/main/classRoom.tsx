@@ -3,15 +3,15 @@ import {
   useRouteError,
   isRouteErrorResponse,
 } from "react-router";
-import { HomeroomPage } from "~/features/homeroom/pages/HomeRoomPage";
-import { getHomeroomData } from "~/features/homeroom/model/homeroom-data";
+import { ClassRoomPage } from "~/features/classRoom/pages/classRoomPage";
+import { getClassRoomData } from "~/features/classRoom/model/classRoom-data";
 
 export async function clientLoader() {
-  return getHomeroomData();
+  return getClassRoomData();
 }
 
 export function meta() {
-  return [{ title: "Homeroom | recwatch" }];
+  return [{ title: "Class Room | recwatch" }];
 }
 
 export function ErrorBoundary() {
@@ -25,7 +25,7 @@ export function ErrorBoundary() {
   return <div className="p-6 text-red-500">{message}</div>;
 }
 
-export default function HomeroomRoute() {
-  const Homerooms = useLoaderData<typeof clientLoader>();
-  return <HomeroomPage homerooms={Homerooms} />;
+export default function ClassRoomRoute() {
+  const classRooms = useLoaderData<typeof clientLoader>();
+  return <ClassRoomPage classRooms={classRooms} />;
 }
