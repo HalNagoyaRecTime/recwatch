@@ -25,7 +25,7 @@ const iconMap: Record<NavIconKey, ReactNode> = {
   clock: <Clock3Icon size={iconSize} strokeWidth={1.8} />,
   dashboard: <LayoutDashboardIcon size={iconSize} strokeWidth={1.8} />,
   settings: <Settings2Icon size={iconSize} strokeWidth={1.8} />,
-  homeroom: <GraduationCap size={iconSize} strokeWidth={1.8} />,
+  classRoom: <GraduationCap size={iconSize} strokeWidth={1.8} />,
   trophy: <TrophyIcon size={iconSize} strokeWidth={1.8} />,
   users: <UsersIcon size={iconSize} strokeWidth={1.8} />,
 };
