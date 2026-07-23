@@ -1,14 +1,11 @@
 import type { AppRole } from "./permissions";
 
 export type NavIconKey =
-  | "calendar"
   | "clock"
   | "dashboard"
-  | "file"
   | "notification"
   | "settings"
-  | "homeroom"
-  | "timing"
+  | "classRoom"
   | "trophy"
   | "users";
 
@@ -49,34 +46,6 @@ export const navSections = [
         roles: ["admin", "manager", "member"],
       },
       {
-        id: "events",
-        label: "Events",
-        icon: "calendar",
-        badge: 3,
-        roles: ["admin", "manager", "member"],
-        children: [
-          {
-            id: "events-active",
-            label: "Active Events",
-            to: "/events/active",
-            roles: ["admin", "manager", "member"],
-          },
-          {
-            id: "events-past",
-            label: "Past Events",
-            to: "/events/past",
-            roles: ["admin", "manager"],
-          },
-          {
-            id: "events-new",
-            label: "Create Event",
-            to: "/events/new",
-            badge: "Beta",
-            roles: ["admin", "manager"],
-          },
-        ],
-      },
-      {
         id: "members",
         label: "Members",
         icon: "users",
@@ -90,12 +59,6 @@ export const navSections = [
             roles: ["admin", "manager"],
           },
           {
-            id: "members-teams",
-            label: "Teams",
-            to: "/members/teams",
-            roles: ["admin", "manager"],
-          },
-          {
             id: "members-import",
             label: "Import",
             to: "/members/import",
@@ -104,17 +67,10 @@ export const navSections = [
         ],
       },
       {
-        id: "homeroom",
-        label: "Homerooms",
-        icon: "homeroom",
-        to: "/homeroom",
-        roles: ["admin", "manager"],
-      },
-      {
-        id: "timing",
-        label: "Timing Control",
-        icon: "timing",
-        to: "/timing",
+        id: "classRoom",
+        label: "Class Rooms",
+        icon: "classRoom",
+        to: "/classroom",
         roles: ["admin", "manager"],
       },
     ],
@@ -133,44 +89,6 @@ export const navSections = [
             label: "Sports List",
             to: "/sports",
             roles: ["admin", "manager"],
-          },
-          {
-            id: "sports-tournament",
-            label: "Tournament",
-            to: "/sports/tournament",
-            roles: ["admin"],
-          },
-          {
-            id: "sports-scoring",
-            label: "Scoring Rules",
-            to: "/sports/scoring",
-            roles: ["admin", "manager"],
-          },
-        ],
-      },
-      {
-        id: "reports",
-        label: "Reports",
-        icon: "file",
-        roles: ["admin", "manager"],
-        children: [
-          {
-            id: "reports-summary",
-            label: "Summary",
-            to: "/reports/summary",
-            roles: ["admin", "manager"],
-          },
-          {
-            id: "reports-detail",
-            label: "Detail",
-            to: "/reports/detail",
-            roles: ["admin"],
-          },
-          {
-            id: "reports-export",
-            label: "Export",
-            to: "/reports/export",
-            roles: ["admin"],
           },
         ],
       },
