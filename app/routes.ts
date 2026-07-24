@@ -17,6 +17,7 @@ export default [
     route("members/import", "routes/main/members.import.tsx"),
     route("classroom", "routes/main/classRoom.tsx"),
     route("instructors", "routes/main/instructors.tsx"),
+    route("instructors/:teacherId", "routes/main/instructors.$teacherId.tsx"),
     route("timing", "routes/main/timing.tsx"),
     route("sports", "routes/main/sports.tsx"),
     route("sports/tournament", "routes/main/sports.tournament.tsx"),

@@ -1,17 +1,29 @@
-import { Ban, Pencil, Search, Trash2, Upload } from "lucide-react";
+import { MoreHorizontal, Search, Upload } from "lucide-react";
+import { useMemo, useState } from "react";
 import { Link } from "react-router";
+import type { TeacherRow } from "~/features/instructors/model/teacher";
 
-const instructors = [
-  ["0001", "NH-STAFF01", "佐藤 健一"],
-  ["0002", "NH-STAFF02", "鈴木 美穂"],
-  ["0003", "NH-STAFF03", "中村亮太"],
-  ["0004", "NH-STAFF04", "渡辺 葵"],
-] as const;
+export function InstructorsPage({ teachers }: { teachers: TeacherRow[] }) {
+  const [query, setQuery] = useState("");
 
-export function InstructorsPage() {
+  const filteredTeachers = useMemo(() => {
+    const normalizedQuery = query.trim().toLowerCase();
+    if (!normalizedQuery) return teachers;
+
+    return teachers.filter((teacher) => {
+      const haystack = [
+        teacher.displayName,
+        ...teacher.classRooms.map((c) => c.className),
+      ]
+        .join(" ")
+        .toLowerCase();
+      return haystack.includes(normalizedQuery);
+    });
+  }, [teachers, query]);
+
   return (
     <div className="min-h-full bg-[#f7faff] p-1 text-[#0a0a0a]">
-      <h1 className="text-[17px] font-bold">マスターデータ管理</h1>
+      <h1 className="text-[17px] font-bold">ユーザー管理（教官）</h1>
       <p className="mt-1 text-xs text-black/40">
         学生・クラス・教官の基本情報を管理します
       </p>
@@ -47,6 +59,8 @@ export function InstructorsPage() {
       <label className="mt-4 flex h-[38px] w-full max-w-[260px] items-center gap-2 rounded-[10px] border border-[#d2d2d2] bg-white px-3 text-sm">
         <Search className="size-4 text-black/35" />
         <input
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
           className="min-w-0 flex-1 outline-none"
           placeholder="クラス名・担任で検索..."
         />
@@ -55,7 +69,7 @@ export function InstructorsPage() {
         <table className="w-full min-w-[620px] text-left text-sm">
           <thead className="bg-[#f9fafb] text-[11px] text-black/50">
             <tr>
-              {["通し番号", "教官ID", "氏名", "操作"].map((h) => (
+              {["教官ID", "教官名", "担当クラス", "操作"].map((h) => (
                 <th key={h} className="border-b border-[#d2d2d2] px-4 py-2">
                   {h}
                 </th>
@@ -63,31 +77,39 @@ export function InstructorsPage() {
             </tr>
           </thead>
           <tbody>
-            {instructors.map((row) => (
+            {filteredTeachers.map((teacher) => (
               <tr
-                key={row[0]}
+                key={teacher.teacherId}
                 className="border-b border-[#d2d2d2] last:border-b-0"
               >
-                {row.map((cell) => (
-                  <td key={cell} className="px-4 py-3">
-                    {cell}
-                  </td>
-                ))}
+                <td className="px-4 py-3">{teacher.teacherCode}</td>
+                <td className="px-4 py-3">{teacher.displayName}</td>
+                <td className="px-4 py-3 whitespace-pre-line">
+                  {teacher.classRooms.length > 0
+                    ? teacher.classRooms.map((c) => c.className).join("\n")
+                    : "-"}
+                </td>
                 <td className="px-4 py-3">
-                  <div className="flex gap-3 text-black/45">
-                    <button type="button" aria-label="編集">
-                      <Pencil className="size-4" />
-                    </button>
-                    <button type="button" aria-label="無効化">
-                      <Ban className="size-4" />
-                    </button>
-                    <button type="button" aria-label="削除">
-                      <Trash2 className="size-4" />
-                    </button>
-                  </div>
+                  <Link
+                    to={`/instructors/${teacher.teacherId}`}
+                    aria-label={`${teacher.displayName}の詳細・操作`}
+                    className="inline-flex size-7 items-center justify-center rounded-md text-black/45 hover:bg-[#f2f4f7]"
+                  >
+                    <MoreHorizontal className="size-4" />
+                  </Link>
                 </td>
               </tr>
             ))}
+            {filteredTeachers.length === 0 ? (
+              <tr>
+                <td
+                  colSpan={4}
+                  className="px-4 py-6 text-center text-xs text-black/40"
+                >
+                  該当する教官が見つかりません。
+                </td>
+              </tr>
+            ) : null}
           </tbody>
         </table>
       </div>
