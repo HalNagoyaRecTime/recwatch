@@ -30,11 +30,22 @@ async function requestApi<T>(path: string, init?: RequestInit): Promise<T> {
 
   if (!response.ok) {
     const body: unknown = await response.json().catch(() => null);
-    const message =
-      typeof body === "object" && body !== null && "error" in body
-        ? String(body.error)
-        : `API request failed (${response.status})`;
-    throw new Error(message);
+    if (typeof body === "object" && body !== null) {
+      if ("error" in body && typeof body.error === "string") {
+        let msg = body.error;
+        if ("details" in body && body.details) {
+          if (
+            typeof body.details === "object" &&
+            "formErrors" in (body.details as Record<string, unknown>)
+          ) {
+            const fe = (body.details as { formErrors?: string[] }).formErrors;
+            if (fe && fe.length > 0) msg += `: ${fe.join(", ")}`;
+          }
+        }
+        throw new Error(msg);
+      }
+    }
+    throw new Error(`API request failed (${response.status})`);
   }
 
   if (response.status === 204) {
@@ -50,9 +61,17 @@ function formatTimeForDisplay(value: string) {
     : value;
 }
 
-function formatTimeForSubmit(value: string) {
-  const cleaned = value.replace(":", "").trim();
-  return /^\d{4}$/.test(cleaned) ? cleaned : value;
+function formatTimeForSubmit(value: string): string | null {
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  const parts = trimmed.split(":");
+  let formatted = "";
+  if (parts.length === 2) {
+    formatted = parts[0].padStart(2, "0") + parts[1].padStart(2, "0");
+  } else {
+    formatted = trimmed.replace(":", "").padStart(4, "0");
+  }
+  return /^([01]\d|2[0-3])[0-5]\d$/.test(formatted) ? formatted : null;
 }
 
 export function CompetitionEditPage() {
@@ -125,6 +144,21 @@ export function CompetitionEditPage() {
       return;
     }
 
+    const startTime = formatTimeForSubmit(form.start);
+    const endTime = formatTimeForSubmit(form.end);
+
+    if (!startTime || !endTime) {
+      setSubmitError(
+        "開始時間および終了時間を正しい形式（例 09:10）で入力してください。"
+      );
+      return;
+    }
+
+    if (startTime >= endTime) {
+      setSubmitError("終了時間は開始時間より後の時刻を指定してください。");
+      return;
+    }
+
     setIsSubmitting(true);
     setSubmitError(null);
 
@@ -138,8 +172,8 @@ export function CompetitionEditPage() {
           event_name: form.name.trim(),
           rule_text: form.rules.trim() || null,
           venue: form.venue.trim(),
-          start_time: formatTimeForSubmit(form.start),
-          end_time: formatTimeForSubmit(form.end),
+          start_time: startTime,
+          end_time: endTime,
         }),
       });
 
