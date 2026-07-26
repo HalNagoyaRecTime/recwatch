@@ -1,6 +1,7 @@
 import {
   Clock3Icon,
   GraduationCap,
+  HistoryIcon,
   LayoutDashboardIcon,
   SendIcon,
   Settings2Icon,
@@ -27,6 +28,7 @@ const iconMap: Record<NavIconKey, ReactNode> = {
   dashboard: <LayoutDashboardIcon size={iconSize} strokeWidth={1.8} />,
   notification: <SendIcon size={iconSize} strokeWidth={1.8} />,
   settings: <Settings2Icon size={iconSize} strokeWidth={1.8} />,
+  notificationHistory: <HistoryIcon size={iconSize} strokeWidth={1.8} />,
   classRoom: <GraduationCap size={iconSize} strokeWidth={1.8} />,
   trophy: <TrophyIcon size={iconSize} strokeWidth={1.8} />,
   users: <UsersIcon size={iconSize} strokeWidth={1.8} />,
