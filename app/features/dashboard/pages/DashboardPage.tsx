@@ -32,6 +32,7 @@ const pageGroups = [
       ["競技登録", "/sports/new"],
       ["競技編集", "/sports/2/edit"],
       ["競技割り当て", "/sports/assignments"],
+      ["集合場所管理", "/gathering-spots"],
     ],
   },
   {
