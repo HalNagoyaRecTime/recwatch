@@ -1,4 +1,5 @@
 import { buildBackendUrl } from "~/config/env";
+import { ApiClientError } from "./api-client-error";
 
 function requireBackendUrl(path: string) {
   const url = buildBackendUrl(path);
@@ -11,12 +12,23 @@ function requireBackendUrl(path: string) {
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(requireBackendUrl(path), init);
+  const res = await fetch(requireBackendUrl(path), {
+    ...init,
+    credentials: "include",
+  });
   if (!res.ok) {
-    throw new Response(res.statusText, { status: res.status });
+    throw new ApiClientError(res.status, await readErrorMessage(res));
   }
 
   return res.json() as Promise<T>;
+}
+
+async function readErrorMessage(response: Response) {
+  const body = (await response.json().catch(() => null)) as {
+    error?: unknown;
+  } | null;
+
+  return typeof body?.error === "string" ? body.error : response.statusText;
 }
 
 export const apiClient = {

@@ -1,5 +1,5 @@
 import { NotificationCreatePage } from "~/features/notifications/pages/NotificationCreatePage";
-import { mockNotificationGroups } from "~/features/notifications/infrastructure/mock-notification-groups";
+import { mockNotificationAudienceOptions } from "~/features/notifications/infrastructure/mock-notification-audience-options";
 import { mockNotificationSubmitter } from "~/features/notifications/infrastructure/mock-notification-submitter";
 
 export function meta() {
@@ -10,7 +10,7 @@ export default function NotificationsNewRoute() {
   return (
     <NotificationCreatePage
       submitter={mockNotificationSubmitter}
-      groups={mockNotificationGroups}
+      audienceOptions={mockNotificationAudienceOptions}
     />
   );
 }

@@ -5,6 +5,10 @@ import { NotificationPhonePreview } from "../components/NotificationPhonePreview
 import { NotificationSummary } from "../components/NotificationSummary";
 import type { NotificationSubmitter } from "../application/notification-submitter";
 import {
+  NotificationSubmissionError,
+  notificationSubmissionErrorMessages,
+} from "../application/notification-submission-error";
+import {
   initialNotificationDraft,
   type NotificationDraft,
 } from "../model/notification-draft";
@@ -12,7 +16,7 @@ import {
   validateNotificationDraft,
   type NotificationDraftErrors,
 } from "../model/notification-draft-validation";
-import type { NotificationGroup } from "../model/notification-group";
+import type { NotificationAudienceOption } from "../model/notification-audience-option";
 
 function formatPreviewDate(date: Date) {
   return new Intl.DateTimeFormat("ja-JP", {
@@ -33,12 +37,12 @@ function formatPreviewTime(date: Date) {
 
 type NotificationCreatePageProps = {
   submitter: NotificationSubmitter;
-  groups: NotificationGroup[];
+  audienceOptions: NotificationAudienceOption[];
 };
 
 export function NotificationCreatePage({
   submitter,
-  groups,
+  audienceOptions,
 }: NotificationCreatePageProps) {
   const [draft, setDraft] = useState<NotificationDraft>(
     initialNotificationDraft
@@ -46,6 +50,7 @@ export function NotificationCreatePage({
   const [errors, setErrors] = useState<NotificationDraftErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [submissionError, setSubmissionError] = useState<string | null>(null);
   const [previewDate, setPreviewDate] = useState<Date | null>(null);
 
   useEffect(() => {
@@ -60,11 +65,12 @@ export function NotificationCreatePage({
   function handleChange(nextDraft: NotificationDraft) {
     setDraft(nextDraft);
     setSubmitted(false);
+    setSubmissionError(null);
     setErrors((current) => ({
       ...current,
       title: nextDraft.title.trim() ? undefined : current.title,
       body: nextDraft.body.trim() ? undefined : current.body,
-      groupId: nextDraft.groupId ? undefined : current.groupId,
+      audienceId: nextDraft.audienceId ? undefined : current.audienceId,
     }));
   }
 
@@ -79,10 +85,17 @@ export function NotificationCreatePage({
 
     setIsSubmitting(true);
     setSubmitted(false);
+    setSubmissionError(null);
 
     try {
       await submitter.submit(draft);
       setSubmitted(true);
+    } catch (error) {
+      setSubmissionError(
+        error instanceof NotificationSubmissionError
+          ? notificationSubmissionErrorMessages[error.kind]
+          : notificationSubmissionErrorMessages.unexpected
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -100,7 +113,7 @@ export function NotificationCreatePage({
             <NotificationForm
               draft={draft}
               errors={errors}
-              groups={groups}
+              audienceOptions={audienceOptions}
               isSubmitting={isSubmitting}
               onChange={handleChange}
               onSubmit={handleSubmit}
@@ -108,9 +121,14 @@ export function NotificationCreatePage({
           </div>
           <div
             aria-live="polite"
-            className="mt-4 min-h-5 text-sm text-[color:var(--tone-green-text)]"
+            className={`mt-4 min-h-5 text-sm ${
+              submissionError
+                ? "text-red-600"
+                : "text-[color:var(--tone-green-text)]"
+            }`}
           >
-            {submitted ? "通知内容を確認しました。" : null}
+            {submissionError ??
+              (submitted ? "通知を配信予定に登録しました。" : null)}
           </div>
         </section>
 
@@ -118,7 +136,7 @@ export function NotificationCreatePage({
           <NotificationSummary
             draft={draft}
             deliveryTime={previewTime}
-            groups={groups}
+            audienceOptions={audienceOptions}
           />
           <div className="mt-5">
             <NotificationPhonePreview

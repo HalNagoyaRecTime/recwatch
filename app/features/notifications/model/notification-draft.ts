@@ -1,17 +1,21 @@
-export type NotificationAudienceType = "all" | "group";
+export type NotificationAudienceType =
+  | "all"
+  | "class_room"
+  | "gathering_group"
+  | "event_participants";
 
 export type NotificationDraft = {
   title: string;
   body: string;
   audienceType: NotificationAudienceType;
-  groupId: string;
+  audienceId: string;
 };
 
 export const initialNotificationDraft: NotificationDraft = {
   title: "",
   body: "",
   audienceType: "all",
-  groupId: "",
+  audienceId: "",
 };
 
 export const notificationAudienceLabels: Record<
@@ -19,5 +23,7 @@ export const notificationAudienceLabels: Record<
   string
 > = {
   all: "全体",
-  group: "グループ・チーム",
+  class_room: "クラス",
+  gathering_group: "集合グループ",
+  event_participants: "競技参加者",
 };

@@ -1,7 +1,9 @@
 import type { NotificationDraft } from "../model/notification-draft";
 
 export type NotificationSubmission = {
-  draftId: string;
+  notificationId: number;
+  scheduleCount: number;
+  status: "draft";
 };
 
 export interface NotificationSubmitter {
