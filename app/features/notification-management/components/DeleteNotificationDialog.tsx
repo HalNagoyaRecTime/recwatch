@@ -1,21 +1,21 @@
 import { AlertTriangleIcon } from "lucide-react";
 import { useEffect } from "react";
 
-import type { NotificationSchedule } from "../model/notification-schedule";
+import type { ManagedNotification } from "../model/managed-notification";
 
-type CancelNotificationDialogProps = {
-  schedule: NotificationSchedule;
+type DeleteNotificationDialogProps = {
+  notification: ManagedNotification;
   isSubmitting: boolean;
   onClose: () => void;
   onConfirm: () => void;
 };
 
-export function CancelNotificationDialog({
-  schedule,
+export function DeleteNotificationDialog({
+  notification,
   isSubmitting,
   onClose,
   onConfirm,
-}: CancelNotificationDialogProps) {
+}: DeleteNotificationDialogProps) {
   useEffect(() => {
     function handleEscape(event: KeyboardEvent) {
       if (event.key === "Escape" && !isSubmitting) {
@@ -40,8 +40,8 @@ export function CancelNotificationDialog({
       <div
         role="alertdialog"
         aria-modal="true"
-        aria-labelledby="cancel-notification-title"
-        aria-describedby="cancel-notification-description"
+        aria-labelledby="delete-notification-title"
+        aria-describedby="delete-notification-description"
         className="w-full max-w-[420px] rounded-lg border border-[color:var(--border-2)] bg-[color:var(--surface-overlay-strong)] p-5 shadow-[var(--shadow-soft)]"
       >
         <div className="flex items-start gap-3">
@@ -49,15 +49,15 @@ export function CancelNotificationDialog({
             <AlertTriangleIcon size={18} aria-hidden="true" />
           </span>
           <div className="min-w-0">
-            <h2 id="cancel-notification-title" className="font-semibold">
-              この通知予定をキャンセルしますか？
+            <h2 id="delete-notification-title" className="font-semibold">
+              この未送信通知を削除しますか？
             </h2>
             <p
-              id="cancel-notification-description"
+              id="delete-notification-description"
               className="mt-2 text-sm leading-6 text-[color:var(--text-2)]"
             >
-              「{schedule.title}
-              」は今後配信されません。この操作は元に戻せません。
+              「{notification.title}
+              」は配信されず、一覧から削除されます。この操作は元に戻せません。
             </p>
           </div>
         </div>
@@ -77,7 +77,7 @@ export function CancelNotificationDialog({
             className="h-9 rounded-lg bg-red-600 px-4 text-sm font-semibold text-white transition hover:bg-red-700 disabled:opacity-50"
             onClick={onConfirm}
           >
-            {isSubmitting ? "処理中..." : "キャンセルする"}
+            {isSubmitting ? "削除中..." : "削除する"}
           </button>
         </div>
       </div>

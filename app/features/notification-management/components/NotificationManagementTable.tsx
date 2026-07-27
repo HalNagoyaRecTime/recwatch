@@ -1,11 +1,12 @@
 import { Trash2Icon } from "lucide-react";
 
-import type { NotificationSchedule } from "../model/notification-schedule";
+import type { ManagedNotification } from "../model/managed-notification";
+import { canModifyNotification } from "../model/managed-notification";
 import { NotificationStatusBadge } from "./NotificationStatusBadge";
 
-type NotificationScheduleTableProps = {
-  schedules: NotificationSchedule[];
-  onCancel: (schedule: NotificationSchedule) => void;
+type NotificationManagementTableProps = {
+  notifications: ManagedNotification[];
+  onDelete: (notification: ManagedNotification) => void;
 };
 
 function formatScheduledAt(value: string) {
@@ -22,10 +23,10 @@ function fallback(value: string | null) {
   return value || "-";
 }
 
-export function NotificationScheduleTable({
-  schedules,
-  onCancel,
-}: NotificationScheduleTableProps) {
+export function NotificationManagementTable({
+  notifications,
+  onDelete,
+}: NotificationManagementTableProps) {
   return (
     <div className="overflow-x-auto rounded-lg border border-[color:var(--border-2)] bg-[color:var(--surface-overlay-strong)]">
       <table className="w-full min-w-[1120px] border-collapse text-left text-sm">
@@ -36,51 +37,52 @@ export function NotificationScheduleTable({
             <th className="px-3 py-3 font-medium">配信日時</th>
             <th className="px-3 py-3 font-medium">作成・配信者</th>
             <th className="px-3 py-3 font-medium">関連競技</th>
-            <th className="px-3 py-3 font-medium">関連スケジュール</th>
+            <th className="px-3 py-3 font-medium">配信件数</th>
             <th className="px-3 py-3 font-medium">状態</th>
             <th className="w-28 px-4 py-3 text-right font-medium">操作</th>
           </tr>
         </thead>
         <tbody>
-          {schedules.map((schedule) => (
+          {notifications.map((notification) => (
             <tr
-              key={schedule.id}
+              key={notification.id}
               className="border-t border-[color:var(--border-1)] align-top"
             >
               <td className="px-4 py-3">
                 <div className="font-semibold text-[color:var(--text-1)]">
-                  {schedule.title}
+                  {notification.title}
                 </div>
                 <div className="mt-1 line-clamp-2 text-xs leading-5 text-[color:var(--text-3)]">
-                  {schedule.body}
+                  {notification.body}
                 </div>
               </td>
               <td className="px-3 py-3 whitespace-nowrap">
-                {schedule.audienceName}
+                {notification.audienceName}
               </td>
               <td className="px-3 py-3 whitespace-nowrap">
-                {formatScheduledAt(schedule.scheduledAt)}
+                {formatScheduledAt(notification.scheduledAt)}
               </td>
               <td className="px-3 py-3 whitespace-nowrap">
-                {schedule.creatorName}
+                {notification.creatorName}
               </td>
               <td className="px-3 py-3">
-                {fallback(schedule.relatedEventName)}
+                {fallback(notification.relatedEventName)}
+              </td>
+              <td className="px-3 py-3 whitespace-nowrap">
+                {notification.deliverySummary.sent}/
+                {notification.deliverySummary.total}
               </td>
               <td className="px-3 py-3">
-                {fallback(schedule.relatedScheduleName)}
-              </td>
-              <td className="px-3 py-3">
-                <NotificationStatusBadge status={schedule.status} />
+                <NotificationStatusBadge status={notification.status} />
               </td>
               <td className="px-4 py-3 text-right">
-                {schedule.status === "draft" ? (
+                {canModifyNotification(notification) ? (
                   <button
                     type="button"
-                    aria-label={`「${schedule.title}」をキャンセル`}
-                    title="通知予定をキャンセル"
+                    aria-label={`「${notification.title}」を削除`}
+                    title="未送信通知を削除"
                     className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-[color:var(--text-3)] transition hover:bg-[color:var(--tone-red-bg)] hover:text-[color:var(--tone-red-text)]"
-                    onClick={() => onCancel(schedule)}
+                    onClick={() => onDelete(notification)}
                   >
                     <Trash2Icon size={15} aria-hidden="true" />
                   </button>

@@ -1,13 +1,13 @@
 import { cn } from "~/lib/cn";
 
-import type { NotificationScheduleStatus } from "../model/notification-schedule";
+import type { ManagedNotificationStatus } from "../model/managed-notification";
 
 type NotificationStatusBadgeProps = {
-  status: NotificationScheduleStatus;
+  status: ManagedNotificationStatus;
 };
 
 const statusPresentation: Record<
-  NotificationScheduleStatus,
+  ManagedNotificationStatus,
   { label: string; className: string }
 > = {
   draft: {
@@ -29,11 +29,6 @@ const statusPresentation: Record<
     label: "送信失敗",
     className:
       "border-[color:var(--tone-red-border)] bg-[color:var(--tone-red-bg)] text-[color:var(--tone-red-text)]",
-  },
-  canceled: {
-    label: "キャンセル済み",
-    className:
-      "border-[color:var(--border-2)] bg-[color:var(--surface-2)] text-[color:var(--text-2)]",
   },
 };
 

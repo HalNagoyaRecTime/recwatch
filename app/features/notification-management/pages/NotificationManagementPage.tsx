@@ -1,23 +1,27 @@
 import { useEffect, useState } from "react";
 import { CircleAlertIcon } from "lucide-react";
 
-import type { NotificationScheduleGateway } from "../application/notification-schedule-gateway";
-import { CancelNotificationDialog } from "../components/CancelNotificationDialog";
-import { NotificationScheduleTable } from "../components/NotificationScheduleTable";
-import type { NotificationSchedule } from "../model/notification-schedule";
+import type { AdminNotificationManagementGateway } from "../application/admin-notification-management-gateway";
+import {
+  NotificationManagementError,
+  notificationManagementErrorMessages,
+} from "../application/notification-management-error";
+import { DeleteNotificationDialog } from "../components/DeleteNotificationDialog";
+import { NotificationManagementTable } from "../components/NotificationManagementTable";
+import type { ManagedNotification } from "../model/managed-notification";
 
 type NotificationManagementPageProps = {
-  gateway: NotificationScheduleGateway;
+  gateway: AdminNotificationManagementGateway;
 };
 
 export function NotificationManagementPage({
   gateway,
 }: NotificationManagementPageProps) {
-  const [schedules, setSchedules] = useState<NotificationSchedule[]>([]);
-  const [selectedSchedule, setSelectedSchedule] =
-    useState<NotificationSchedule | null>(null);
+  const [notifications, setNotifications] = useState<ManagedNotification[]>([]);
+  const [selectedNotification, setSelectedNotification] =
+    useState<ManagedNotification | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isCanceling, setIsCanceling] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
@@ -27,7 +31,7 @@ export function NotificationManagementPage({
       .list()
       .then((items) => {
         if (active) {
-          setSchedules(items);
+          setNotifications(items.notifications);
         }
       })
       .catch(() => {
@@ -46,26 +50,40 @@ export function NotificationManagementPage({
     };
   }, [gateway]);
 
-  async function handleCancel() {
-    if (!selectedSchedule || isCanceling) {
+  async function handleDelete() {
+    if (!selectedNotification || isDeleting) {
       return;
     }
 
-    setIsCanceling(true);
+    setIsDeleting(true);
     setErrorMessage("");
 
     try {
-      const canceledSchedule = await gateway.cancel(selectedSchedule.id);
-      setSchedules((current) =>
-        current.map((schedule) =>
-          schedule.id === canceledSchedule.id ? canceledSchedule : schedule
+      await gateway.delete(selectedNotification.id);
+      setNotifications((current) =>
+        current.filter(
+          (notification) => notification.id !== selectedNotification.id
         )
       );
-      setSelectedSchedule(null);
-    } catch {
-      setErrorMessage("通知予定をキャンセルできませんでした。");
+      setSelectedNotification(null);
+    } catch (error) {
+      setErrorMessage(
+        error instanceof NotificationManagementError
+          ? notificationManagementErrorMessages[error.kind]
+          : notificationManagementErrorMessages.unexpected
+      );
+      if (
+        error instanceof NotificationManagementError &&
+        error.kind === "conflict"
+      ) {
+        const page = await gateway.list().catch(() => null);
+        if (page) {
+          setNotifications(page.notifications);
+        }
+        setSelectedNotification(null);
+      }
     } finally {
-      setIsCanceling(false);
+      setIsDeleting(false);
     }
   }
 
@@ -89,7 +107,7 @@ export function NotificationManagementPage({
       <div className="mt-2 flex min-h-12 items-center gap-2.5 rounded-lg border border-amber-400/70 bg-amber-400/10 px-4 py-3 text-sm text-amber-700 dark:text-amber-300">
         <CircleAlertIcon size={16} className="shrink-0" aria-hidden="true" />
         <p>
-          配信件数・成功件数の詳細は FCM（Firebase Cloud
+          端末単位の配信結果の詳細は FCM（Firebase Cloud
           Messaging）の管理画面で確認してください。
         </p>
       </div>
@@ -99,24 +117,24 @@ export function NotificationManagementPage({
           <div className="rounded-lg border border-[color:var(--border-2)] bg-[color:var(--surface-overlay-strong)] p-8 text-center text-sm text-[color:var(--text-3)]">
             読み込み中...
           </div>
-        ) : schedules.length === 0 ? (
+        ) : notifications.length === 0 ? (
           <div className="rounded-lg border border-[color:var(--border-2)] bg-[color:var(--surface-overlay-strong)] p-8 text-center text-sm text-[color:var(--text-3)]">
             通知予定はありません
           </div>
         ) : (
-          <NotificationScheduleTable
-            schedules={schedules}
-            onCancel={setSelectedSchedule}
+          <NotificationManagementTable
+            notifications={notifications}
+            onDelete={setSelectedNotification}
           />
         )}
       </section>
 
-      {selectedSchedule ? (
-        <CancelNotificationDialog
-          schedule={selectedSchedule}
-          isSubmitting={isCanceling}
-          onClose={() => setSelectedSchedule(null)}
-          onConfirm={handleCancel}
+      {selectedNotification ? (
+        <DeleteNotificationDialog
+          notification={selectedNotification}
+          isSubmitting={isDeleting}
+          onClose={() => setSelectedNotification(null)}
+          onConfirm={handleDelete}
         />
       ) : null}
     </div>
