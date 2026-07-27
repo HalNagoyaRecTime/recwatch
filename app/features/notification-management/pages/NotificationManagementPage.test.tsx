@@ -49,6 +49,65 @@ function createGateway(
 }
 
 describe("NotificationManagementPage", () => {
+  it("50件を超える通知を追加で読み込む", async () => {
+    const firstPage = Array.from({ length: 50 }, (_, index) => ({
+      ...draftNotification,
+      id: index + 1,
+      title: `通知${index + 1}`,
+    }));
+    const list = vi
+      .fn()
+      .mockResolvedValueOnce({
+        notifications: firstPage,
+        total: 51,
+        limit: 50,
+        offset: 0,
+      })
+      .mockResolvedValueOnce({
+        notifications: [
+          {
+            ...draftNotification,
+            id: 51,
+            title: "通知51",
+          },
+        ],
+        total: 51,
+        limit: 50,
+        offset: 50,
+      });
+    const user = userEvent.setup();
+
+    render(<NotificationManagementPage gateway={createGateway({ list })} />);
+
+    await user.click(
+      await screen.findByRole("button", { name: "さらに読み込む" })
+    );
+
+    expect(await screen.findByText("通知51")).toBeInTheDocument();
+    expect(list).toHaveBeenNthCalledWith(1, { limit: 50, offset: 0 });
+    expect(list).toHaveBeenNthCalledWith(2, { limit: 50, offset: 50 });
+    expect(
+      screen.queryByRole("button", { name: "さらに読み込む" })
+    ).not.toBeInTheDocument();
+  });
+
+  it.each([
+    ["authentication_required", "ログインが必要です。"],
+    ["forbidden", "通知を管理する権限がありません。"],
+  ] as const)("一覧取得時の%sエラーを表示する", async (kind, message) => {
+    render(
+      <NotificationManagementPage
+        gateway={createGateway({
+          list: vi
+            .fn()
+            .mockRejectedValue(new NotificationManagementError(kind)),
+        })}
+      />
+    );
+
+    expect(await screen.findByText(message)).toBeInTheDocument();
+  });
+
   it("削除成功後に対象の通知を一覧から除外する", async () => {
     const deleteNotification = vi.fn().mockResolvedValue(undefined);
     const user = userEvent.setup();
