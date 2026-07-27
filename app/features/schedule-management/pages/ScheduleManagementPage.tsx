@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useLocation, useNavigate } from "react-router";
 
 import type { ScheduleManagementGateway } from "../application/schedule-management-gateway";
 import { DeleteScheduleDialog } from "../components/DeleteScheduleDialog";
@@ -15,6 +16,9 @@ type ScheduleManagementPageProps = {
 export function ScheduleManagementPage({
   gateway,
 }: ScheduleManagementPageProps) {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const navigationFeedback = readNavigationFeedback(location.state);
   const [schedules, setSchedules] = useState<ManagedSchedule[]>([]);
   const [query, setQuery] = useState("");
   const [selectedSchedule, setSelectedSchedule] =
@@ -24,7 +28,13 @@ export function ScheduleManagementPage({
   const [isLoading, setIsLoading] = useState(true);
   const [isDeleting, setIsDeleting] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
-  const [feedbackMessage, setFeedbackMessage] = useState("");
+  const [feedbackMessage, setFeedbackMessage] = useState(navigationFeedback);
+
+  useEffect(() => {
+    if (navigationFeedback) {
+      void navigate(location.pathname, { replace: true, state: null });
+    }
+  }, [location.pathname, navigate, navigationFeedback]);
 
   const loadSchedules = useCallback(async () => {
     setIsLoading(true);
@@ -164,4 +174,17 @@ export function ScheduleManagementPage({
       ) : null}
     </div>
   );
+}
+
+function readNavigationFeedback(state: unknown): string {
+  if (
+    typeof state === "object" &&
+    state !== null &&
+    "feedbackMessage" in state &&
+    typeof state.feedbackMessage === "string"
+  ) {
+    return state.feedbackMessage;
+  }
+
+  return "";
 }

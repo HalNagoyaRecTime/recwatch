@@ -45,15 +45,29 @@ function createGateway(
   };
 }
 
-function renderPage(gateway: ScheduleManagementGateway) {
+function renderPage(
+  gateway: ScheduleManagementGateway,
+  state?: { feedbackMessage: string }
+) {
   return render(
-    <MemoryRouter>
+    <MemoryRouter initialEntries={[{ pathname: "/schedule", state }]}>
       <ScheduleManagementPage gateway={gateway} />
     </MemoryRouter>
   );
 }
 
 describe("ScheduleManagementPage", () => {
+  it("編集完了後のフィードバックを表示する", async () => {
+    renderPage(createGateway(), {
+      feedbackMessage: "スケジュールを更新しました。",
+    });
+
+    expect(
+      screen.getByText("スケジュールを更新しました。")
+    ).toBeInTheDocument();
+    expect(await screen.findByText("走れ！〇人〇脚！")).toBeInTheDocument();
+  });
+
   it("一覧を取得し、キーワードで絞り込む", async () => {
     const user = userEvent.setup();
     renderPage(createGateway());

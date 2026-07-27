@@ -6,6 +6,7 @@ import { cn } from "~/lib/cn";
 import type { ScheduleDraft, ScheduleType } from "../model/schedule-draft";
 import { scheduleTypeLabels } from "../model/schedule-draft";
 import type { ScheduleDraftErrors } from "../model/schedule-draft-validation";
+import { isScheduleDraftSubmittable } from "../model/schedule-draft-validation";
 import type { ScheduleFormOptions } from "../model/schedule-option";
 import { scheduleTimeOptions } from "../model/schedule-time-options";
 
@@ -37,13 +38,8 @@ export function ScheduleForm({
   onReset,
   onSubmit,
 }: ScheduleFormProps) {
-  const canSubmit =
-    draft.type !== null &&
-    draft.startTime.length > 0 &&
-    draft.endTime.length > 0 &&
-    draft.startTime < draft.endTime &&
-    draft.venueId.length > 0 &&
-    (draft.type !== "competition" || draft.eventId.length > 0);
+  const canSubmit = isScheduleDraftSubmittable(draft);
+  const isGathering = draft.type === "gathering";
 
   return (
     <form className="flex flex-col gap-4" onSubmit={onSubmit} noValidate>
@@ -132,7 +128,8 @@ export function ScheduleForm({
 
       <div>
         <label htmlFor="schedule-venue" className="text-sm font-semibold">
-          実施場所<span className="ml-0.5 text-red-500">*</span>
+          実施場所
+          {!isGathering ? <span className="ml-0.5 text-red-500">*</span> : null}
         </label>
         <select
           id="schedule-venue"
@@ -161,6 +158,7 @@ export function ScheduleForm({
           className="text-sm font-semibold"
         >
           集合場所
+          {isGathering ? <span className="ml-0.5 text-red-500">*</span> : null}
         </label>
         <select
           id="schedule-gathering-spot"
@@ -170,13 +168,20 @@ export function ScheduleForm({
             onChange({ ...draft, gatheringSpotId: event.currentTarget.value })
           }
         >
-          <option value="">例：集合場所A（任意）</option>
+          <option value="">
+            {isGathering ? "例：集合場所A" : "例：集合場所A（任意）"}
+          </option>
           {options.gatheringSpots.map((option) => (
             <option key={option.id} value={option.id}>
               {option.name}
             </option>
           ))}
         </select>
+        {errors.gatheringSpotId ? (
+          <p className="mt-1.5 text-xs text-red-600">
+            {errors.gatheringSpotId}
+          </p>
+        ) : null}
       </div>
 
       <div>

@@ -59,6 +59,8 @@ export function ScheduleEditorPage({
 
       if (changedFields.includes("type")) {
         delete nextErrors.eventId;
+        delete nextErrors.venueId;
+        delete nextErrors.gatheringSpotId;
       }
 
       return nextErrors;

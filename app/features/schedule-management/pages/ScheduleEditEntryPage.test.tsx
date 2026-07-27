@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter, Route, Routes } from "react-router";
+import { MemoryRouter, Route, Routes, useLocation } from "react-router";
 import { describe, expect, it, vi } from "vitest";
 
 import type { ScheduleSubmitter } from "~/features/schedule-editor/application/schedule-submitter";
@@ -30,22 +30,28 @@ describe("ScheduleEditEntryPage", () => {
     delete: vi.fn().mockResolvedValue(undefined),
   };
 
-  function renderEditPage(submitter: ScheduleSubmitter) {
+  function renderEditPage(
+    submitter: ScheduleSubmitter,
+    targetSchedule = schedule
+  ) {
     render(
-      <MemoryRouter initialEntries={[`/schedule/${schedule.id}/edit`]}>
+      <MemoryRouter initialEntries={[`/schedule/${targetSchedule.id}/edit`]}>
         <Routes>
           <Route
             path="/schedule/:scheduleId/edit"
             element={
               <ScheduleEditEntryPage
-                scheduleId={schedule.id}
-                gateway={gateway}
+                scheduleId={targetSchedule.id}
+                gateway={{
+                  ...gateway,
+                  get: vi.fn().mockResolvedValue(targetSchedule),
+                }}
                 submitter={submitter}
                 options={mockScheduleFormOptions}
               />
             }
           />
-          <Route path="/schedule" element={<p>スケジュール一覧</p>} />
+          <Route path="/schedule" element={<ScheduleListDestination />} />
         </Routes>
       </MemoryRouter>
     );
@@ -84,6 +90,51 @@ describe("ScheduleEditEntryPage", () => {
     await user.click(await screen.findByRole("button", { name: "変更を保存" }));
 
     expect(await screen.findByText("スケジュール一覧")).toBeInTheDocument();
+    expect(
+      screen.getByText("スケジュールを更新しました。")
+    ).toBeInTheDocument();
+    expect(submit).toHaveBeenCalledTimes(1);
+  });
+
+  it("集合は実施場所がなくても集合場所があれば更新できる", async () => {
+    const gatheringSchedule: ManagedSchedule = {
+      ...schedule,
+      id: "schedule-003",
+      type: "gathering",
+      venueName: null,
+      gatheringSpotName: mockScheduleFormOptions.gatheringSpots[0].name,
+      relatedEventName: null,
+    };
+    const submit = vi.fn().mockResolvedValue({
+      scheduleId: gatheringSchedule.id,
+    });
+    const user = userEvent.setup();
+    renderEditPage({ submit }, gatheringSchedule);
+
+    const saveButton = await screen.findByRole("button", {
+      name: "変更を保存",
+    });
+    expect(saveButton).toBeEnabled();
+    await user.click(saveButton);
+
     expect(submit).toHaveBeenCalledTimes(1);
   });
 });
+
+function ScheduleListDestination() {
+  const location = useLocation();
+  const state =
+    typeof location.state === "object" && location.state !== null
+      ? location.state
+      : {};
+
+  return (
+    <>
+      <p>スケジュール一覧</p>
+      {"feedbackMessage" in state &&
+      typeof state.feedbackMessage === "string" ? (
+        <p>{state.feedbackMessage}</p>
+      ) : null}
+    </>
+  );
+}

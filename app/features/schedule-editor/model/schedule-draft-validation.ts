@@ -2,6 +2,22 @@ import type { ScheduleDraft } from "./schedule-draft";
 
 export type ScheduleDraftErrors = Partial<Record<keyof ScheduleDraft, string>>;
 
+export function isScheduleDraftSubmittable(draft: ScheduleDraft): boolean {
+  const hasRequiredLocation =
+    draft.type === "gathering"
+      ? draft.gatheringSpotId.length > 0
+      : draft.venueId.length > 0;
+
+  return (
+    draft.type !== null &&
+    draft.startTime.length > 0 &&
+    draft.endTime.length > 0 &&
+    draft.startTime < draft.endTime &&
+    hasRequiredLocation &&
+    (draft.type !== "competition" || draft.eventId.length > 0)
+  );
+}
+
 export function validateScheduleDraft(
   draft: ScheduleDraft
 ): ScheduleDraftErrors {
@@ -23,8 +39,12 @@ export function validateScheduleDraft(
     errors.endTime = "終了時間は開始時間より後に設定してください";
   }
 
-  if (!draft.venueId) {
+  if (draft.type !== "gathering" && !draft.venueId) {
     errors.venueId = "実施場所を選択してください";
+  }
+
+  if (draft.type === "gathering" && !draft.gatheringSpotId) {
+    errors.gatheringSpotId = "集合場所を選択してください";
   }
 
   if (draft.type === "competition" && !draft.eventId) {

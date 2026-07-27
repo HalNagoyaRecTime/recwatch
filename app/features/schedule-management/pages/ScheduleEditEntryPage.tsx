@@ -82,7 +82,11 @@ export function ScheduleEditEntryPage({
       initialDraft={mapScheduleToDraft(schedule, options)}
       mode="edit"
       onCancel={() => navigate("/schedule")}
-      onSubmitted={() => navigate("/schedule")}
+      onSubmitted={() =>
+        navigate("/schedule", {
+          state: { feedbackMessage: "スケジュールを更新しました。" },
+        })
+      }
     />
   );
 }
