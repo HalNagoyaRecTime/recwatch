@@ -187,7 +187,7 @@ export function CompetitionListPage() {
               />
             </label>
             <Link
-              to="/sports/new"
+              to="/events/new"
               className="flex items-center gap-1 rounded-[10px] bg-[#0070bb] px-4 py-2 text-sm text-white"
             >
               <Plus className="size-4" />
@@ -271,7 +271,7 @@ export function CompetitionListPage() {
                       </td>
                       <td className="px-2 py-3">
                         <Link
-                          to={`/sports/${competition.id}/edit`}
+                          to={`/events/${competition.id}/edit`}
                           aria-label={`${competition.name}を編集`}
                           onClick={(event) => event.stopPropagation()}
                         >
@@ -307,7 +307,7 @@ export function CompetitionListPage() {
               ))}
             </dl>
             <Link
-              to={`/sports/${selected.id}/edit`}
+              to={`/events/${selected.id}/edit`}
               className="mt-4 block rounded-[10px] border border-[#d2d2d2] px-4 py-2 text-center"
             >
               編集する

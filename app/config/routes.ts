@@ -87,7 +87,7 @@ export const navSections = [
           {
             id: "sports-list",
             label: "Sports List",
-            to: "/sports",
+            to: "/events",
             roles: ["admin", "manager"],
           },
         ],

@@ -177,7 +177,7 @@ export function CompetitionEditPage() {
         }),
       });
 
-      navigate("/sports");
+      navigate("/events");
     } catch (error) {
       setSubmitError(
         error instanceof Error
@@ -261,7 +261,7 @@ export function CompetitionEditPage() {
 
           <div className="flex gap-3 pt-2">
             <Link
-              to="/sports"
+              to="/events"
               className="rounded-[10px] border border-[#d2d2d2] bg-white px-5 py-2 text-sm"
             >
               キャンセル
