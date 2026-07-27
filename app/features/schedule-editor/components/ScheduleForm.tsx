@@ -14,6 +14,7 @@ type ScheduleFormProps = {
   errors: ScheduleDraftErrors;
   options: ScheduleFormOptions;
   isSubmitting: boolean;
+  submitLabel?: string;
   onChange: (draft: ScheduleDraft) => void;
   onReset: () => void;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
@@ -31,6 +32,7 @@ export function ScheduleForm({
   errors,
   options,
   isSubmitting,
+  submitLabel = "登録する",
   onChange,
   onReset,
   onSubmit,
@@ -272,7 +274,7 @@ export function ScheduleForm({
           disabled={!canSubmit || isSubmitting}
           className="h-10 rounded-lg bg-[color:var(--brand-button-1)] px-5 text-sm font-semibold text-white transition hover:bg-[color:var(--brand-button-2)] disabled:cursor-not-allowed disabled:opacity-45"
         >
-          {isSubmitting ? "確認中..." : "登録する"}
+          {isSubmitting ? "処理中..." : submitLabel}
         </button>
       </div>
     </form>

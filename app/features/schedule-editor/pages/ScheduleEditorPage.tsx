@@ -18,18 +18,25 @@ type ScheduleEditorPageProps = {
   submitter: ScheduleSubmitter;
   options: ScheduleFormOptions;
   initialDraft?: ScheduleDraft;
+  mode?: "create" | "edit";
+  onCancel?: () => void;
+  onSubmitted?: () => void;
 };
 
 export function ScheduleEditorPage({
   submitter,
   options,
   initialDraft = initialScheduleDraft,
+  mode = "create",
+  onCancel,
+  onSubmitted,
 }: ScheduleEditorPageProps) {
   const [draft, setDraft] = useState<ScheduleDraft>(initialDraft);
   const [errors, setErrors] = useState<ScheduleDraftErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [submissionError, setSubmissionError] = useState<string | null>(null);
+  const isEditMode = mode === "edit";
 
   function handleChange(nextDraft: ScheduleDraft) {
     setErrors((currentErrors) => {
@@ -84,6 +91,7 @@ export function ScheduleEditorPage({
     try {
       await submitter.submit(draft);
       setSubmitted(true);
+      onSubmitted?.();
     } catch {
       setSubmissionError(
         "スケジュールを登録できませんでした。時間をおいて再度お試しください。"
@@ -96,9 +104,13 @@ export function ScheduleEditorPage({
   return (
     <div className="mx-auto w-full max-w-[1440px]">
       <header>
-        <h1 className="text-xl font-semibold">スケジュール 新規登録</h1>
+        <h1 className="text-xl font-semibold">
+          {isEditMode ? "スケジュール編集" : "スケジュール 新規登録"}
+        </h1>
         <p className="mt-2 text-sm text-[color:var(--text-3)]">
-          登録内容はアプリのスケジュール表示に反映されます
+          {isEditMode
+            ? "変更内容はアプリのスケジュール表示に反映されます"
+            : "登録内容はアプリのスケジュール表示に反映されます"}
         </p>
       </header>
 
@@ -109,8 +121,9 @@ export function ScheduleEditorPage({
             errors={errors}
             options={options}
             isSubmitting={isSubmitting}
+            submitLabel={isEditMode ? "変更を保存" : "登録する"}
             onChange={handleChange}
-            onReset={handleReset}
+            onReset={onCancel ?? handleReset}
             onSubmit={handleSubmit}
           />
           <div
@@ -122,7 +135,11 @@ export function ScheduleEditorPage({
             }`}
           >
             {submissionError ??
-              (submitted ? "スケジュール内容を確認しました。" : null)}
+              (submitted
+                ? isEditMode
+                  ? "スケジュールを更新しました。"
+                  : "スケジュール内容を確認しました。"
+                : null)}
           </div>
         </section>
 
