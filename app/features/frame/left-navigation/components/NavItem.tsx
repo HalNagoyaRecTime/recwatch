@@ -1,10 +1,11 @@
 import { ChevronRightIcon } from "lucide-react";
-import { NavLink, useLocation } from "react-router";
+import { Link, useLocation } from "react-router";
 
 import { useNavState } from "~/hooks/useNavState";
 import { cn } from "~/lib/cn";
 import type { NavChildDef, NavItemDef } from "~/types/nav";
 
+import { getAllVisibleNavPaths } from "~/features/frame/left-navigation/model/nav-config";
 import { NavAccordion } from "~/features/frame/left-navigation/components/NavAccordion";
 import { useLeftNavigationExpanded } from "~/features/frame/left-navigation/hooks/useLeftNavigationExpanded";
 
@@ -12,12 +13,35 @@ type NavItemProps = {
   def: NavItemDef;
 };
 
+// `to` がpathnameのプレフィックスに一致するだけでは、`/members` が
+// `/members/import` のようなより具体的な別のナビゲーション項目のpathも
+// 誤って自分の一部として扱ってしまい、兄弟項目同士が同時にアクティブ表示
+// されてしまう(例: 「Import」を開いているのに「Member List」も選択済みに見える)。
+// 実際に表示されている全ナビゲーションpathの中に、より長く一致する候補が
+// 無い場合のみプレフィックス一致を有効にすることで、この誤ハイライトを防ぐ。
+// (ロールでフィルタされ表示されていない項目のtoは候補に含めない。含めてしまうと
+// 逆に、表示されている項目自体が正しくアクティブ表示されなくなる)
 function pathMatches(pathname: string, to: string) {
   if (to === "/dashboard") {
     return pathname === "/dashboard";
   }
 
-  return pathname === to || pathname.startsWith(`${to}/`);
+  if (pathname === to) {
+    return true;
+  }
+
+  if (!pathname.startsWith(`${to}/`)) {
+    return false;
+  }
+
+  const hasMoreSpecificMatch = getAllVisibleNavPaths().some(
+    (candidate) =>
+      candidate !== to &&
+      candidate.length > to.length &&
+      (pathname === candidate || pathname.startsWith(`${candidate}/`))
+  );
+
+  return !hasMoreSpecificMatch;
 }
 
 function closeOnSmallScreen(closeForMobile: () => void) {
@@ -47,27 +71,27 @@ function ChildLink({
   child: NavChildDef;
   closeForMobile: () => void;
 }) {
+  const pathname = useLocation().pathname;
+  // NavLinkの組み込みisActiveは単純なプレフィックス一致のため使わず、
+  // 兄弟ナビゲーション項目同士の誤ハイライトを防ぐ独自のpathMatchesで判定する。
+  const isActive = pathMatches(pathname, child.to);
+
   return (
-    <NavLink
+    <Link
       to={child.to}
-      className={({ isActive }) => itemBaseClass(isActive)}
+      aria-current={isActive ? "page" : undefined}
+      className={itemBaseClass(isActive)}
       onClick={() => closeOnSmallScreen(closeForMobile)}
     >
-      {({ isActive }) => (
-        <>
-          {isActive ? (
-            <span className="absolute inset-y-[5px] left-0 w-[2.5px] rounded-r-sm bg-[color:var(--brand-1)]" />
-          ) : null}
-          <span className="inline-flex w-4 min-w-4 items-center justify-center" />
-          <span className="overflow-hidden text-[13px] font-medium whitespace-nowrap opacity-100">
-            {child.label}
-          </span>
-          {child.badge ? (
-            <span className={badgeClass()}>{child.badge}</span>
-          ) : null}
-        </>
-      )}
-    </NavLink>
+      {isActive ? (
+        <span className="absolute inset-y-[5px] left-0 w-[2.5px] rounded-r-sm bg-[color:var(--brand-1)]" />
+      ) : null}
+      <span className="inline-flex w-4 min-w-4 items-center justify-center" />
+      <span className="overflow-hidden text-[13px] font-medium whitespace-nowrap opacity-100">
+        {child.label}
+      </span>
+      {child.badge ? <span className={badgeClass()}>{child.badge}</span> : null}
+    </Link>
   );
 }
 
@@ -157,9 +181,10 @@ export function NavItem({ def }: NavItemProps) {
                 const childActive = pathMatches(pathname, child.to);
 
                 return (
-                  <NavLink
+                  <Link
                     key={child.id}
                     to={child.to}
+                    aria-current={childActive ? "page" : undefined}
                     className={cn(
                       "flex min-h-[35px] items-center gap-2 rounded-lg px-2.5 text-[12.5px] transition",
                       childActive
@@ -172,7 +197,7 @@ export function NavItem({ def }: NavItemProps) {
                     {child.badge ? (
                       <span className={badgeClass()}>{child.badge}</span>
                     ) : null}
-                  </NavLink>
+                  </Link>
                 );
               })}
             </div>
@@ -188,40 +213,34 @@ export function NavItem({ def }: NavItemProps) {
 
   return (
     <div className="group/nav relative">
-      <NavLink
+      <Link
         to={def.to}
-        className={({ isActive: linkActive }) => itemBaseClass(linkActive)}
+        aria-current={isActive ? "page" : undefined}
+        className={itemBaseClass(isActive)}
         onClick={() => closeOnSmallScreen(closeForMobile)}
       >
-        {({ isActive: linkActive }) => (
-          <>
-            {linkActive ? (
-              <span className="absolute inset-y-[5px] left-0 w-[2.5px] rounded-r-sm bg-[color:var(--brand-1)]" />
-            ) : null}
-            <span className="inline-flex w-4 min-w-4 items-center justify-center">
-              {def.icon}
-            </span>
-            <span
-              className={cn(
-                "overflow-hidden text-[13px] font-medium whitespace-nowrap transition-[max-width,opacity] duration-200",
-                isExpanded ? "max-w-40 opacity-100" : "max-w-0 opacity-0"
-              )}
-            >
-              {def.label}
-            </span>
-            {def.badge ? (
-              <span
-                className={cn(
-                  badgeClass(),
-                  isExpanded ? "opacity-100" : "hidden"
-                )}
-              >
-                {def.badge}
-              </span>
-            ) : null}
-          </>
-        )}
-      </NavLink>
+        {isActive ? (
+          <span className="absolute inset-y-[5px] left-0 w-[2.5px] rounded-r-sm bg-[color:var(--brand-1)]" />
+        ) : null}
+        <span className="inline-flex w-4 min-w-4 items-center justify-center">
+          {def.icon}
+        </span>
+        <span
+          className={cn(
+            "overflow-hidden text-[13px] font-medium whitespace-nowrap transition-[max-width,opacity] duration-200",
+            isExpanded ? "max-w-40 opacity-100" : "max-w-0 opacity-0"
+          )}
+        >
+          {def.label}
+        </span>
+        {def.badge ? (
+          <span
+            className={cn(badgeClass(), isExpanded ? "opacity-100" : "hidden")}
+          >
+            {def.badge}
+          </span>
+        ) : null}
+      </Link>
       {!isExpanded ? (
         <div className="pointer-events-none absolute top-1/2 left-[66px] z-[200] translate-x-[-4px] -translate-y-1/2 rounded-lg border border-[color:var(--border-2)] bg-[color:var(--surface-overlay-strong)] px-[11px] py-[5px] text-[12.5px] font-medium text-[color:var(--text-1)] opacity-0 shadow-[var(--shadow-soft)] transition duration-150 group-hover/nav:pointer-events-auto group-hover/nav:translate-x-0 group-hover/nav:opacity-100">
           {def.label}
