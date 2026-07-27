@@ -1,7 +1,7 @@
-import { Check, Pencil, Plus, Search, Trash2, X } from "lucide-react";
+import { Check, Pencil, Plus, Search, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
-import { buildBackendUrl } from "~/config/env";
+import { apiClient } from "~/lib/api-client";
 
 type GatheringSpot = {
   gathering_spot_id: number;
@@ -9,37 +9,6 @@ type GatheringSpot = {
   created_at: string;
   updated_at: string;
 };
-
-async function requestApi<T>(path: string, init?: RequestInit): Promise<T> {
-  const url = buildBackendUrl(path);
-  if (!url) {
-    throw new Error("バックエンド URL が未設定です。");
-  }
-
-  const response = await fetch(url, {
-    credentials: "include",
-    ...init,
-    headers: {
-      Accept: "application/json",
-      ...init?.headers,
-    },
-  });
-
-  if (!response.ok) {
-    const body: unknown = await response.json().catch(() => null);
-    const message =
-      typeof body === "object" && body !== null && "error" in body
-        ? String(body.error)
-        : `API request failed (${response.status})`;
-    throw new Error(message);
-  }
-
-  if (response.status === 204) {
-    return undefined as T;
-  }
-
-  return response.json() as Promise<T>;
-}
 
 export function GatheringSpotsPage() {
   const [spots, setSpots] = useState<GatheringSpot[]>([]);
@@ -59,7 +28,7 @@ export function GatheringSpotsPage() {
 
     async function load() {
       try {
-        const spotList = await requestApi<GatheringSpot[]>(
+        const spotList = await apiClient.get<GatheringSpot[]>(
           "/api/v1/gathering-spots"
         );
         if (!isCurrent) return;
@@ -127,18 +96,9 @@ export function GatheringSpotsPage() {
 
     try {
       if (editingSpot) {
-        // PUT update
-        const updated = await requestApi<GatheringSpot>(
+        const updated = await apiClient.put<GatheringSpot>(
           `/api/v1/gathering-spots/${editingSpot.gathering_spot_id}`,
-          {
-            method: "PUT",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              gatheringSpotName: name,
-            }),
-          }
+          { gatheringSpotName: name }
         );
 
         setSpots((current) =>
@@ -149,18 +109,9 @@ export function GatheringSpotsPage() {
           )
         );
       } else {
-        // POST create
-        const created = await requestApi<GatheringSpot>(
+        const created = await apiClient.post<GatheringSpot>(
           "/api/v1/gathering-spots",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              gatheringSpotName: name,
-            }),
-          }
+          { gatheringSpotName: name }
         );
 
         setSpots((current) => [...current, created]);
@@ -175,38 +126,6 @@ export function GatheringSpotsPage() {
       );
     } finally {
       setIsSubmitting(false);
-    }
-  }
-
-  async function handleDelete(spot: GatheringSpot) {
-    if (
-      !confirm(
-        `集合場所「${spot.gathering_spot_name}」を削除してもよろしいですか？`
-      )
-    ) {
-      return;
-    }
-
-    setSubmitError(null);
-
-    try {
-      await requestApi(`/api/v1/gathering-spots/${spot.gathering_spot_id}`, {
-        method: "DELETE",
-      });
-
-      setSpots((current) =>
-        current.filter((s) => s.gathering_spot_id !== spot.gathering_spot_id)
-      );
-
-      if (editingSpot?.gathering_spot_id === spot.gathering_spot_id) {
-        handleCloseForm();
-      }
-    } catch (error) {
-      setSubmitError(
-        error instanceof Error
-          ? error.message
-          : "集合場所の削除に失敗しました。"
-      );
     }
   }
 
@@ -337,20 +256,13 @@ export function GatheringSpotsPage() {
                       {spot.created_at || "—"}
                     </td>
                     <td className="px-4 py-3">
-                      <div className="flex gap-3 text-black/45">
+                      <div className="text-black/45">
                         <button
                           type="button"
                           aria-label={`${spot.gathering_spot_name}を編集`}
                           onClick={() => handleOpenEdit(spot)}
                         >
                           <Pencil className="size-4 hover:text-[#0070bb]" />
-                        </button>
-                        <button
-                          type="button"
-                          aria-label={`${spot.gathering_spot_name}を削除`}
-                          onClick={() => void handleDelete(spot)}
-                        >
-                          <Trash2 className="size-4 hover:text-red-500" />
                         </button>
                       </div>
                     </td>

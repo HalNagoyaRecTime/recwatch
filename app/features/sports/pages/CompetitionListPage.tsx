@@ -2,7 +2,7 @@ import { Pencil, Plus, Search } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router";
 
-import { buildBackendUrl } from "~/config/env";
+import { apiClient } from "~/lib/api-client";
 
 type Event = {
   event_id: number;
@@ -27,33 +27,6 @@ type EventPage = {
   total: number;
 };
 
-async function requestApi<T>(path: string, init?: RequestInit): Promise<T> {
-  const url = buildBackendUrl(path);
-  if (!url) {
-    throw new Error("バックエンド URL が未設定です。");
-  }
-
-  const response = await fetch(url, {
-    credentials: "include",
-    ...init,
-    headers: {
-      Accept: "application/json",
-      ...init?.headers,
-    },
-  });
-
-  if (!response.ok) {
-    const body: unknown = await response.json().catch(() => null);
-    const message =
-      typeof body === "object" && body !== null && "error" in body
-        ? String(body.error)
-        : `API request failed (${response.status})`;
-    throw new Error(message);
-  }
-
-  return response.json() as Promise<T>;
-}
-
 function formatTime(value: string) {
   return /^\d{4}$/.test(value)
     ? `${value.slice(0, 2)}:${value.slice(2)}`
@@ -74,8 +47,8 @@ export function CompetitionListPage() {
     async function load() {
       try {
         const [eventPage, gatheringList] = await Promise.all([
-          requestApi<EventPage>("/api/v1/events?limit=100&offset=0"),
-          requestApi<Gathering[]>("/api/v1/gatherings"),
+          apiClient.get<EventPage>("/api/v1/events?limit=100&offset=0"),
+          apiClient.get<Gathering[]>("/api/v1/gatherings"),
         ]);
 
         if (!isCurrent) return;
