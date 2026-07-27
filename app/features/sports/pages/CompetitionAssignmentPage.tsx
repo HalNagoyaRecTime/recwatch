@@ -415,7 +415,10 @@ export function CompetitionAssignmentPage() {
           <div className="grid grid-cols-3 gap-2">
             {[
               ["実施場所", selectedSpot?.gathering_spot_name ?? "取得中"],
-              ["集合時間", gatheringTime || "未設定"],
+              [
+                "集合時間",
+                gatheringTime ? formatTime(gatheringTime) : "未設定",
+              ],
               [
                 "開始時間",
                 selectedEvent ? formatTime(selectedEvent.start_time) : "取得中",
