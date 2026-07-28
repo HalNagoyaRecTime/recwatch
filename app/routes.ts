@@ -32,6 +32,7 @@ export default [
     route("schedule", "routes/main/schedule.tsx"),
     route("schedule/new", "routes/main/schedule.new.tsx"),
     route("participants", "routes/main/participants.tsx"),
+    route("gathering-spots", "routes/main/gatheringSpots.tsx"),
     route("settings", "routes/main/settings.tsx"),
   ]),
 ] satisfies RouteConfig;

@@ -2,7 +2,7 @@ import { Check } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router";
 
-import { buildBackendUrl } from "~/config/env";
+import { apiClient } from "~/lib/api-client";
 
 type Event = {
   event_id: number;
@@ -12,48 +12,6 @@ type Event = {
   start_time: string;
   end_time: string;
 };
-
-async function requestApi<T>(path: string, init?: RequestInit): Promise<T> {
-  const url = buildBackendUrl(path);
-  if (!url) {
-    throw new Error("バックエンド URL が未設定です。");
-  }
-
-  const response = await fetch(url, {
-    credentials: "include",
-    ...init,
-    headers: {
-      Accept: "application/json",
-      ...init?.headers,
-    },
-  });
-
-  if (!response.ok) {
-    const body: unknown = await response.json().catch(() => null);
-    if (typeof body === "object" && body !== null) {
-      if ("error" in body && typeof body.error === "string") {
-        let msg = body.error;
-        if ("details" in body && body.details) {
-          if (
-            typeof body.details === "object" &&
-            "formErrors" in (body.details as Record<string, unknown>)
-          ) {
-            const fe = (body.details as { formErrors?: string[] }).formErrors;
-            if (fe && fe.length > 0) msg += `: ${fe.join(", ")}`;
-          }
-        }
-        throw new Error(msg);
-      }
-    }
-    throw new Error(`API request failed (${response.status})`);
-  }
-
-  if (response.status === 204) {
-    return undefined as T;
-  }
-
-  return response.json() as Promise<T>;
-}
 
 function formatTimeForDisplay(value: string) {
   return /^\d{4}$/.test(value)
@@ -102,7 +60,7 @@ export function CompetitionEditPage() {
       }
 
       try {
-        const event = await requestApi<Event>(
+        const event = await apiClient.get<Event>(
           `/api/v1/events/${competitionId}`
         );
         if (!isCurrent) return;
@@ -163,18 +121,12 @@ export function CompetitionEditPage() {
     setSubmitError(null);
 
     try {
-      await requestApi(`/api/v1/events/${competitionId}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          event_name: form.name.trim(),
-          rule_text: form.rules.trim() || null,
-          venue: form.venue.trim(),
-          start_time: startTime,
-          end_time: endTime,
-        }),
+      await apiClient.put(`/api/v1/events/${competitionId}`, {
+        event_name: form.name.trim(),
+        rule_text: form.rules.trim() || null,
+        venue: form.venue.trim(),
+        start_time: startTime,
+        end_time: endTime,
       });
 
       navigate("/events");

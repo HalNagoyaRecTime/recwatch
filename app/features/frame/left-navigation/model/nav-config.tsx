@@ -1,6 +1,7 @@
 import {
   Clock3Icon,
   GraduationCap,
+  HistoryIcon,
   LayoutDashboardIcon,
   SendIcon,
   Settings2Icon,
@@ -27,6 +28,7 @@ const iconMap: Record<NavIconKey, ReactNode> = {
   dashboard: <LayoutDashboardIcon size={iconSize} strokeWidth={1.8} />,
   notification: <SendIcon size={iconSize} strokeWidth={1.8} />,
   settings: <Settings2Icon size={iconSize} strokeWidth={1.8} />,
+  notificationHistory: <HistoryIcon size={iconSize} strokeWidth={1.8} />,
   classRoom: <GraduationCap size={iconSize} strokeWidth={1.8} />,
   trophy: <TrophyIcon size={iconSize} strokeWidth={1.8} />,
   users: <UsersIcon size={iconSize} strokeWidth={1.8} />,
@@ -94,4 +96,25 @@ export function getVisibleNavSections(role: AppRole = currentUser.role) {
 
 export function getVisibleSettingsItem(role: AppRole = currentUser.role) {
   return mapItem(role, settingsItemConfig);
+}
+
+// そのロールに実際に表示されるナビゲーション項目のtoを平坦化した一覧。
+// あるtoがpathnameのプレフィックスに一致しても、より具体的な(長い)toを持つ
+// 別の"表示されている"ナビゲーション項目が存在する場合はそちらを優先させ、
+// 兄弟項目同士が誤って同時にアクティブ表示されるのを防ぐために使う。
+// ロールでフィルタされ実際には表示されていない項目のtoを含めてしまうと、
+// 逆に表示されている項目が正しくアクティブ表示されなくなるため、
+// 必ず表示対象と同じロールフィルタを通した結果から算出する。
+export function getAllVisibleNavPaths(role: AppRole = currentUser.role) {
+  const sections = getVisibleNavSections(role);
+  const settings = getVisibleSettingsItem(role);
+
+  const sectionPaths = sections.flatMap((section) =>
+    section.items.flatMap((item) => [
+      ...(item.to ? [item.to] : []),
+      ...(item.children?.map((child) => child.to) ?? []),
+    ])
+  );
+
+  return settings?.to ? [...sectionPaths, settings.to] : sectionPaths;
 }

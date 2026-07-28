@@ -28,10 +28,11 @@ const pageGroups = [
   {
     label: "競技管理",
     pages: [
-      ["競技一覧", "/events"],
-      ["競技登録", "/events/new"],
-      ["競技編集", "/events/2/edit"],
-      ["競技割り当て", "/events/assignments"],
+      ["競技一覧", "/sports"],
+      ["競技登録", "/sports/new"],
+      ["競技編集", "/sports/2/edit"],
+      ["競技割り当て", "/sports/assignments"],
+      ["集合場所管理", "/gathering-spots"],
     ],
   },
   {
