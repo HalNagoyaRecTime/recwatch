@@ -1,22 +1,11 @@
 import type { ScheduleDraft } from "../model/schedule-draft";
-import { scheduleTypeLabels } from "../model/schedule-draft";
-import type { ScheduleFormOptions } from "../model/schedule-option";
 
 type ScheduleNotificationPreviewProps = {
   draft: ScheduleDraft;
-  options: ScheduleFormOptions;
 };
-
-function findName(
-  options: ScheduleFormOptions[keyof ScheduleFormOptions],
-  id: string
-) {
-  return options.find((option) => option.id === id)?.name;
-}
 
 export function ScheduleNotificationPreview({
   draft,
-  options,
 }: ScheduleNotificationPreviewProps) {
   if (!draft.notificationEnabled) {
     return (
@@ -26,15 +15,8 @@ export function ScheduleNotificationPreview({
     );
   }
 
-  const scheduleName =
-    draft.type === "competition"
-      ? findName(options.events, draft.eventId) ||
-        scheduleTypeLabels.competition
-      : draft.type
-        ? scheduleTypeLabels[draft.type]
-        : "スケジュール";
-  const gatheringSpot =
-    findName(options.gatheringSpots, draft.gatheringSpotId) || "集合場所";
+  const scheduleName = draft.eventName.trim() || "イベント";
+  const gatheringSpot = draft.venue.trim() || "集合場所";
   const previewTime = draft.startTime || "9:00";
 
   return (

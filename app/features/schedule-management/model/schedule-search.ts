@@ -1,4 +1,4 @@
-import { managedScheduleTypeLabels, type ManagedSchedule } from "./schedule";
+import type { ManagedSchedule } from "./schedule";
 
 export function filterSchedules(schedules: ManagedSchedule[], query: string) {
   const normalizedQuery = query.trim().toLocaleLowerCase("ja-JP");
@@ -9,12 +9,10 @@ export function filterSchedules(schedules: ManagedSchedule[], query: string) {
 
   return schedules.filter((schedule) => {
     const searchableText = [
-      managedScheduleTypeLabels[schedule.type],
+      schedule.relatedEventName,
       schedule.startTime,
       schedule.endTime,
       schedule.venueName,
-      schedule.gatheringSpotName,
-      schedule.relatedEventName,
       schedule.notes,
     ]
       .filter((value): value is string => Boolean(value))

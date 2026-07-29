@@ -9,6 +9,10 @@ type SchedulePublicationLabelProps = {
 export function SchedulePublicationLabel({
   publication,
 }: SchedulePublicationLabelProps) {
+  if (publication.mode === "none") {
+    return <span className="text-xs text-[color:var(--text-3)]">通知なし</span>;
+  }
+
   if (publication.mode === "immediate") {
     return <span className="text-xs text-[color:var(--text-3)]">即時公開</span>;
   }

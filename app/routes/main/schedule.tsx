@@ -2,7 +2,7 @@ import { mockScheduleManagementGateway } from "~/features/schedule-management/in
 import { ScheduleManagementPage } from "~/features/schedule-management/pages/ScheduleManagementPage";
 
 export function meta() {
-  return [{ title: "スケジュール管理 | recwatch" }];
+  return [{ title: "イベント管理 | recwatch" }];
 }
 
 export default function ScheduleRoute() {

@@ -2,10 +2,7 @@ import { BellIcon, BellOffIcon, PencilIcon, XIcon } from "lucide-react";
 import { useEffect } from "react";
 import { Link } from "react-router";
 
-import {
-  managedScheduleTypeLabels,
-  type ManagedSchedule,
-} from "../model/schedule";
+import type { ManagedSchedule } from "../model/schedule";
 import { SchedulePublicationLabel } from "./SchedulePublicationLabel";
 
 type ScheduleDetailDialogProps = {
@@ -56,17 +53,17 @@ export function ScheduleDetailDialog({
       <section
         role="dialog"
         aria-modal="true"
-        aria-labelledby="schedule-detail-title"
+        aria-labelledby="event-detail-title"
         className="w-full max-w-[560px] rounded-lg border border-[color:var(--border-2)] bg-[color:var(--surface-overlay-strong)] shadow-[var(--shadow-soft)]"
       >
         <header className="flex items-center justify-between border-b border-[color:var(--border-1)] px-5 py-4">
           <div>
-            <h2 id="schedule-detail-title" className="font-semibold">
-              スケジュール詳細
+            <h2 id="event-detail-title" className="font-semibold">
+              イベント詳細
             </h2>
             <p className="mt-1 text-xs text-[color:var(--text-3)]">
-              {managedScheduleTypeLabels[schedule.type]}・{schedule.startTime}〜
-              {schedule.endTime}
+              {schedule.relatedEventName || "名称未設定"}・{schedule.startTime}
+              〜{schedule.endTime}
             </p>
           </div>
           <button
@@ -82,19 +79,13 @@ export function ScheduleDetailDialog({
         </header>
 
         <dl className="grid gap-x-6 gap-y-5 px-5 py-5 sm:grid-cols-2">
-          <DetailItem label="種別">
-            {managedScheduleTypeLabels[schedule.type]}
+          <DetailItem label="イベント名">
+            {schedule.relatedEventName || "—"}
           </DetailItem>
           <DetailItem label="開催時間">
             {schedule.startTime}〜{schedule.endTime}
           </DetailItem>
-          <DetailItem label="開催場所">{schedule.venueName || "—"}</DetailItem>
-          <DetailItem label="集合場所">
-            {schedule.gatheringSpotName || "—"}
-          </DetailItem>
-          <DetailItem label="関連イベント">
-            {schedule.relatedEventName || "—"}
-          </DetailItem>
+          <DetailItem label="集合場所">{schedule.venueName || "—"}</DetailItem>
           <DetailItem label="予約投稿">
             <SchedulePublicationLabel publication={schedule.publication} />
           </DetailItem>

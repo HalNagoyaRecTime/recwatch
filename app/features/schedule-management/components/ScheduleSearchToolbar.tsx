@@ -21,11 +21,11 @@ export function ScheduleSearchToolbar({
             className="shrink-0 text-[color:var(--text-3)]"
             aria-hidden="true"
           />
-          <span className="sr-only">スケジュールを検索</span>
+          <span className="sr-only">イベントを検索</span>
           <input
             type="search"
             value={query}
-            placeholder="種別・競技名・場所で検索"
+            placeholder="イベント名・集合場所で検索"
             className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-[color:var(--text-3)]"
             onChange={(event) => onQueryChange(event.currentTarget.value)}
           />

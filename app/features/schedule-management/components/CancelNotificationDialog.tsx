@@ -1,24 +1,21 @@
 import { AlertTriangleIcon } from "lucide-react";
 import { useEffect } from "react";
 
-import {
-  managedScheduleTypeLabels,
-  type ManagedSchedule,
-} from "../model/schedule";
+import type { ManagedSchedule } from "../model/schedule";
 
-type DeleteScheduleDialogProps = {
+type CancelNotificationDialogProps = {
   schedule: ManagedSchedule;
   isSubmitting: boolean;
   onClose: () => void;
   onConfirm: () => void;
 };
 
-export function DeleteScheduleDialog({
+export function CancelNotificationDialog({
   schedule,
   isSubmitting,
   onClose,
   onConfirm,
-}: DeleteScheduleDialogProps) {
+}: CancelNotificationDialogProps) {
   useEffect(() => {
     function handleEscape(event: KeyboardEvent) {
       if (event.key === "Escape" && !isSubmitting) {
@@ -53,15 +50,14 @@ export function DeleteScheduleDialog({
           </span>
           <div className="min-w-0">
             <h2 id="delete-schedule-title" className="font-semibold">
-              このスケジュールを削除しますか？
+              この通知予定を削除しますか？
             </h2>
             <p
               id="delete-schedule-description"
               className="mt-2 text-sm leading-6 text-[color:var(--text-2)]"
             >
-              {managedScheduleTypeLabels[schedule.type]}（{schedule.startTime}〜
-              {schedule.endTime}）を削除します。関連する未送信通知の扱いは
-              Backend側で判定されます。
+              {schedule.relatedEventName || "名称未設定"}の未送信通知を
+              削除します。イベント情報は削除されません。
             </p>
           </div>
         </div>

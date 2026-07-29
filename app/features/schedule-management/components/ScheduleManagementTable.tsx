@@ -4,12 +4,11 @@ import { Link } from "react-router";
 
 import type { ManagedSchedule } from "../model/schedule";
 import { SchedulePublicationLabel } from "./SchedulePublicationLabel";
-import { ScheduleTypeBadge } from "./ScheduleTypeBadge";
 
 type ScheduleManagementTableProps = {
   schedules: ManagedSchedule[];
   onShowDetail: (schedule: ManagedSchedule) => void;
-  onDelete: (schedule: ManagedSchedule) => void;
+  onCancelNotification: (schedule: ManagedSchedule) => void;
 };
 
 function fallback(value: string | null) {
@@ -19,7 +18,7 @@ function fallback(value: string | null) {
 export function ScheduleManagementTable({
   schedules,
   onShowDetail,
-  onDelete,
+  onCancelNotification,
 }: ScheduleManagementTableProps) {
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
 
@@ -58,11 +57,9 @@ export function ScheduleManagementTable({
       <table className="w-full min-w-[1040px] border-collapse text-left text-sm">
         <thead className="bg-[color:var(--surface-2)] text-xs text-[color:var(--text-2)]">
           <tr>
-            <th className="px-4 py-3 font-medium">種別</th>
+            <th className="px-4 py-3 font-medium">イベント名</th>
             <th className="px-3 py-3 font-medium">開催時間</th>
-            <th className="px-3 py-3 font-medium">開催場所</th>
             <th className="px-3 py-3 font-medium">集合場所</th>
-            <th className="px-3 py-3 font-medium">関連イベント</th>
             <th className="w-[220px] px-3 py-3 font-medium">備考</th>
             <th className="px-3 py-3 font-medium">予約投稿</th>
             <th className="w-20 px-4 py-3 text-right font-medium">操作</th>
@@ -74,13 +71,13 @@ export function ScheduleManagementTable({
               key={schedule.id}
               className="border-t border-[color:var(--border-1)] transition hover:bg-[color:var(--surface-2)]"
             >
-              <td className="px-4 py-3">
+              <td className="px-4 py-3 font-medium">
                 <button
                   type="button"
-                  className="rounded-full focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--brand-1)]"
+                  className="text-left hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--brand-1)]"
                   onClick={() => onShowDetail(schedule)}
                 >
-                  <ScheduleTypeBadge type={schedule.type} />
+                  {fallback(schedule.relatedEventName)}
                 </button>
               </td>
               <td className="px-3 py-3 whitespace-nowrap">
@@ -90,16 +87,6 @@ export function ScheduleManagementTable({
                 className={`px-3 py-3 ${schedule.venueName ? "" : "text-[color:var(--text-3)]"}`}
               >
                 {fallback(schedule.venueName)}
-              </td>
-              <td
-                className={`px-3 py-3 ${schedule.gatheringSpotName ? "" : "text-[color:var(--text-3)]"}`}
-              >
-                {fallback(schedule.gatheringSpotName)}
-              </td>
-              <td
-                className={`px-3 py-3 ${schedule.relatedEventName ? "" : "text-[color:var(--text-3)]"}`}
-              >
-                {fallback(schedule.relatedEventName)}
               </td>
               <td
                 className={`max-w-[220px] truncate px-3 py-3 ${schedule.notes ? "" : "text-[color:var(--text-3)]"}`}
@@ -117,7 +104,7 @@ export function ScheduleManagementTable({
                 >
                   <button
                     type="button"
-                    aria-label={`${schedule.startTime}のスケジュール操作`}
+                    aria-label={`${schedule.relatedEventName || schedule.startTime}のイベント操作`}
                     aria-haspopup="menu"
                     aria-expanded={openMenuId === schedule.id}
                     title="操作"
@@ -155,18 +142,20 @@ export function ScheduleManagementTable({
                         <PencilIcon size={14} aria-hidden="true" />
                         編集
                       </Link>
-                      <button
-                        type="button"
-                        role="menuitem"
-                        className="flex h-9 w-full items-center gap-2 rounded-md px-3 text-left text-sm text-[color:var(--tone-red-text)] hover:bg-[color:var(--tone-red-bg)]"
-                        onClick={() => {
-                          setOpenMenuId(null);
-                          onDelete(schedule);
-                        }}
-                      >
-                        <Trash2Icon size={14} aria-hidden="true" />
-                        削除
-                      </button>
+                      {schedule.notificationEnabled ? (
+                        <button
+                          type="button"
+                          role="menuitem"
+                          className="flex h-9 w-full items-center gap-2 rounded-md px-3 text-left text-sm text-[color:var(--tone-red-text)] hover:bg-[color:var(--tone-red-bg)]"
+                          onClick={() => {
+                            setOpenMenuId(null);
+                            onCancelNotification(schedule);
+                          }}
+                        >
+                          <Trash2Icon size={14} aria-hidden="true" />
+                          通知を削除
+                        </button>
+                      ) : null}
                     </div>
                   ) : null}
                 </div>

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router";
 
 import type { ScheduleManagementGateway } from "../application/schedule-management-gateway";
-import { DeleteScheduleDialog } from "../components/DeleteScheduleDialog";
+import { CancelNotificationDialog } from "../components/CancelNotificationDialog";
 import { ScheduleDetailDialog } from "../components/ScheduleDetailDialog";
 import { ScheduleManagementTable } from "../components/ScheduleManagementTable";
 import { ScheduleSearchToolbar } from "../components/ScheduleSearchToolbar";
@@ -23,7 +23,7 @@ export function ScheduleManagementPage({
   const [query, setQuery] = useState("");
   const [selectedSchedule, setSelectedSchedule] =
     useState<ManagedSchedule | null>(null);
-  const [scheduleToDelete, setScheduleToDelete] =
+  const [notificationToCancel, setNotificationToCancel] =
     useState<ManagedSchedule | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -44,7 +44,7 @@ export function ScheduleManagementPage({
       setSchedules(await gateway.list());
     } catch {
       setErrorMessage(
-        "スケジュールを取得できませんでした。時間をおいて再度お試しください。"
+        "イベントを取得できませんでした。時間をおいて再度お試しください。"
       );
     } finally {
       setIsLoading(false);
@@ -60,29 +60,31 @@ export function ScheduleManagementPage({
     [query, schedules]
   );
 
-  async function handleDelete() {
-    if (!scheduleToDelete || isDeleting) {
+  async function handleCancelNotification() {
+    if (!notificationToCancel || isDeleting) {
       return;
     }
 
-    const target = scheduleToDelete;
+    const target = notificationToCancel;
     setIsDeleting(true);
     setErrorMessage("");
     setFeedbackMessage("");
 
     try {
-      await gateway.delete(target.id);
+      const updatedSchedule = await gateway.cancelNotification(target.id);
       setSchedules((current) =>
-        current.filter((schedule) => schedule.id !== target.id)
+        current.map((schedule) =>
+          schedule.id === target.id ? updatedSchedule : schedule
+        )
       );
       setSelectedSchedule((current) =>
-        current?.id === target.id ? null : current
+        current?.id === target.id ? updatedSchedule : current
       );
-      setScheduleToDelete(null);
-      setFeedbackMessage("スケジュールを削除しました。");
+      setNotificationToCancel(null);
+      setFeedbackMessage("未送信の通知予定を削除しました。");
     } catch {
       setErrorMessage(
-        "スケジュールを削除できませんでした。最新の状態を確認して再度お試しください。"
+        "通知予定を削除できませんでした。最新の状態を確認して再度お試しください。"
       );
     } finally {
       setIsDeleting(false);
@@ -92,9 +94,9 @@ export function ScheduleManagementPage({
   return (
     <div className="mx-auto w-full max-w-[1440px]">
       <header>
-        <h1 className="text-xl font-semibold">スケジュール管理</h1>
+        <h1 className="text-xl font-semibold">イベント管理</h1>
         <p className="mt-2 text-sm text-[color:var(--text-3)]">
-          当日のスケジュール・競技予定・集合予定を管理します
+          イベントの開催時間・集合場所・通知設定を管理します
         </p>
       </header>
 
@@ -119,7 +121,7 @@ export function ScheduleManagementPage({
         ) : null}
       </div>
 
-      <section className="mt-2" aria-label="スケジュール一覧">
+      <section className="mt-2" aria-label="イベント一覧">
         <ScheduleSearchToolbar
           query={query}
           resultCount={filteredSchedules.length}
@@ -135,7 +137,7 @@ export function ScheduleManagementPage({
               role="status"
               className="rounded-lg border border-[color:var(--border-2)] bg-[color:var(--surface-overlay-strong)] p-10 text-center text-sm text-[color:var(--text-3)]"
             >
-              スケジュールを読み込んでいます...
+              イベントを読み込んでいます...
             </div>
           ) : errorMessage && schedules.length === 0 ? (
             <div className="rounded-lg border border-dashed border-[color:var(--border-2)] p-10 text-center text-sm text-[color:var(--text-3)]">
@@ -144,14 +146,14 @@ export function ScheduleManagementPage({
           ) : filteredSchedules.length === 0 ? (
             <div className="rounded-lg border border-dashed border-[color:var(--border-2)] p-10 text-center text-sm text-[color:var(--text-3)]">
               {query
-                ? "検索条件に一致するスケジュールはありません"
-                : "登録済みのスケジュールはありません"}
+                ? "検索条件に一致するイベントはありません"
+                : "登録済みのイベントはありません"}
             </div>
           ) : (
             <ScheduleManagementTable
               schedules={filteredSchedules}
               onShowDetail={setSelectedSchedule}
-              onDelete={setScheduleToDelete}
+              onCancelNotification={setNotificationToCancel}
             />
           )}
         </div>
@@ -164,12 +166,12 @@ export function ScheduleManagementPage({
         />
       ) : null}
 
-      {scheduleToDelete ? (
-        <DeleteScheduleDialog
-          schedule={scheduleToDelete}
+      {notificationToCancel ? (
+        <CancelNotificationDialog
+          schedule={notificationToCancel}
           isSubmitting={isDeleting}
-          onClose={() => setScheduleToDelete(null)}
-          onConfirm={handleDelete}
+          onClose={() => setNotificationToCancel(null)}
+          onConfirm={handleCancelNotification}
         />
       ) : null}
     </div>

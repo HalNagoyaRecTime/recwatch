@@ -12,11 +12,9 @@ import {
   validateScheduleDraft,
   type ScheduleDraftErrors,
 } from "../model/schedule-draft-validation";
-import type { ScheduleFormOptions } from "../model/schedule-option";
 
 type ScheduleEditorPageProps = {
   submitter: ScheduleSubmitter;
-  options: ScheduleFormOptions;
   initialDraft?: ScheduleDraft;
   mode?: "create" | "edit";
   onCancel?: () => void;
@@ -25,7 +23,6 @@ type ScheduleEditorPageProps = {
 
 export function ScheduleEditorPage({
   submitter,
-  options,
   initialDraft = initialScheduleDraft,
   mode = "create",
   onCancel,
@@ -55,12 +52,6 @@ export function ScheduleEditorPage({
       ) {
         delete nextErrors.startTime;
         delete nextErrors.endTime;
-      }
-
-      if (changedFields.includes("type")) {
-        delete nextErrors.eventId;
-        delete nextErrors.venueId;
-        delete nextErrors.gatheringSpotId;
       }
 
       return nextErrors;
@@ -96,7 +87,7 @@ export function ScheduleEditorPage({
       onSubmitted?.();
     } catch {
       setSubmissionError(
-        "スケジュールを登録できませんでした。時間をおいて再度お試しください。"
+        "イベントを登録できませんでした。時間をおいて再度お試しください。"
       );
     } finally {
       setIsSubmitting(false);
@@ -107,12 +98,12 @@ export function ScheduleEditorPage({
     <div className="mx-auto w-full max-w-[1440px]">
       <header>
         <h1 className="text-xl font-semibold">
-          {isEditMode ? "スケジュール編集" : "スケジュール 新規登録"}
+          {isEditMode ? "イベント編集" : "イベント新規登録"}
         </h1>
         <p className="mt-2 text-sm text-[color:var(--text-3)]">
           {isEditMode
-            ? "変更内容はアプリのスケジュール表示に反映されます"
-            : "登録内容はアプリのスケジュール表示に反映されます"}
+            ? "変更内容はイベント情報と通知予定に反映されます"
+            : "登録内容はイベント情報に反映されます"}
         </p>
       </header>
 
@@ -121,7 +112,6 @@ export function ScheduleEditorPage({
           <ScheduleForm
             draft={draft}
             errors={errors}
-            options={options}
             isSubmitting={isSubmitting}
             submitLabel={isEditMode ? "変更を保存" : "登録する"}
             onChange={handleChange}
@@ -139,16 +129,16 @@ export function ScheduleEditorPage({
             {submissionError ??
               (submitted
                 ? isEditMode
-                  ? "スケジュールを更新しました。"
-                  : "スケジュール内容を確認しました。"
+                  ? "イベントを更新しました。"
+                  : "イベント内容を確認しました。"
                 : null)}
           </div>
         </section>
 
         <section className="min-w-0">
-          <ScheduleRowPreview draft={draft} options={options} />
+          <ScheduleRowPreview draft={draft} />
           <div className="mt-5">
-            <ScheduleNotificationPreview draft={draft} options={options} />
+            <ScheduleNotificationPreview draft={draft} />
           </div>
         </section>
       </div>

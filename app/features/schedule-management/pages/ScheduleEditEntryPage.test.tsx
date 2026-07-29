@@ -4,7 +4,6 @@ import { MemoryRouter, Route, Routes, useLocation } from "react-router";
 import { describe, expect, it, vi } from "vitest";
 
 import type { ScheduleSubmitter } from "~/features/schedule-editor/application/schedule-submitter";
-import { mockScheduleFormOptions } from "~/features/schedule-editor/infrastructure/mock-schedule-form-options";
 
 import type { ScheduleManagementGateway } from "../application/schedule-management-gateway";
 import type { ManagedSchedule } from "../model/schedule";
@@ -12,12 +11,11 @@ import { ScheduleEditEntryPage } from "./ScheduleEditEntryPage";
 
 const schedule: ManagedSchedule = {
   id: "schedule-1",
-  type: "competition",
   startTime: "09:10",
   endTime: "10:10",
-  venueName: mockScheduleFormOptions.venues[0].name,
-  gatheringSpotName: mockScheduleFormOptions.gatheringSpots[0].name,
-  relatedEventName: mockScheduleFormOptions.events[0].name,
+  venueName: "コートA",
+  gatheringSpotName: null,
+  relatedEventName: "走れ！〇人〇脚！",
   notes: null,
   publication: { mode: "immediate" },
   notificationEnabled: true,
@@ -27,7 +25,7 @@ describe("ScheduleEditEntryPage", () => {
   const gateway: ScheduleManagementGateway = {
     list: vi.fn().mockResolvedValue([]),
     get: vi.fn().mockResolvedValue(schedule),
-    delete: vi.fn().mockResolvedValue(undefined),
+    cancelNotification: vi.fn().mockRejectedValue(new Error("Not used")),
   };
 
   function renderEditPage(
@@ -47,7 +45,6 @@ describe("ScheduleEditEntryPage", () => {
                   get: vi.fn().mockResolvedValue(targetSchedule),
                 }}
                 submitter={submitter}
-                options={mockScheduleFormOptions}
               />
             }
           />
@@ -63,7 +60,7 @@ describe("ScheduleEditEntryPage", () => {
     });
 
     expect(
-      await screen.findByRole("heading", { name: "スケジュール編集" })
+      await screen.findByRole("heading", { name: "イベント編集" })
     ).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: "変更を保存" })
@@ -79,7 +76,7 @@ describe("ScheduleEditEntryPage", () => {
 
     await user.click(await screen.findByRole("button", { name: "キャンセル" }));
 
-    expect(screen.getByText("スケジュール一覧")).toBeInTheDocument();
+    expect(screen.getByText("イベント一覧")).toBeInTheDocument();
   });
 
   it("更新に成功すると一覧へ戻る", async () => {
@@ -89,27 +86,24 @@ describe("ScheduleEditEntryPage", () => {
 
     await user.click(await screen.findByRole("button", { name: "変更を保存" }));
 
-    expect(await screen.findByText("スケジュール一覧")).toBeInTheDocument();
-    expect(
-      screen.getByText("スケジュールを更新しました。")
-    ).toBeInTheDocument();
+    expect(await screen.findByText("イベント一覧")).toBeInTheDocument();
+    expect(screen.getByText("イベントを更新しました。")).toBeInTheDocument();
     expect(submit).toHaveBeenCalledTimes(1);
   });
 
-  it("集合は実施場所がなくても集合場所があれば更新できる", async () => {
-    const gatheringSchedule: ManagedSchedule = {
+  it("イベント名と集合場所を変更できる", async () => {
+    const targetSchedule: ManagedSchedule = {
       ...schedule,
       id: "schedule-003",
-      type: "gathering",
-      venueName: null,
-      gatheringSpotName: mockScheduleFormOptions.gatheringSpots[0].name,
-      relatedEventName: null,
+      venueName: "コートB",
+      gatheringSpotName: null,
+      relatedEventName: "ガチンコ綱引き",
     };
     const submit = vi.fn().mockResolvedValue({
-      scheduleId: gatheringSchedule.id,
+      scheduleId: targetSchedule.id,
     });
     const user = userEvent.setup();
-    renderEditPage({ submit }, gatheringSchedule);
+    renderEditPage({ submit }, targetSchedule);
 
     const saveButton = await screen.findByRole("button", {
       name: "変更を保存",
@@ -130,7 +124,7 @@ function ScheduleListDestination() {
 
   return (
     <>
-      <p>スケジュール一覧</p>
+      <p>イベント一覧</p>
       {"feedbackMessage" in state &&
       typeof state.feedbackMessage === "string" ? (
         <p>{state.feedbackMessage}</p>

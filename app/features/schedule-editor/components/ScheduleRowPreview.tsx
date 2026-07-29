@@ -1,25 +1,12 @@
 import { PencilIcon, Trash2Icon } from "lucide-react";
 
 import type { ScheduleDraft } from "../model/schedule-draft";
-import { scheduleTypeLabels } from "../model/schedule-draft";
-import type { ScheduleFormOptions } from "../model/schedule-option";
 
 type ScheduleRowPreviewProps = {
   draft: ScheduleDraft;
-  options: ScheduleFormOptions;
 };
 
-function optionName(
-  options: ScheduleFormOptions[keyof ScheduleFormOptions],
-  id: string
-) {
-  return options.find((option) => option.id === id)?.name || "-";
-}
-
-export function ScheduleRowPreview({
-  draft,
-  options,
-}: ScheduleRowPreviewProps) {
+export function ScheduleRowPreview({ draft }: ScheduleRowPreviewProps) {
   const time =
     draft.startTime && draft.endTime
       ? `${draft.startTime}-${draft.endTime}`
@@ -34,11 +21,9 @@ export function ScheduleRowPreview({
         <table className="w-full min-w-[760px] border-collapse text-left text-xs">
           <thead className="bg-[color:var(--surface-2)] text-[color:var(--text-2)]">
             <tr>
-              <th className="px-3 py-2.5 font-medium">種別</th>
+              <th className="px-3 py-2.5 font-medium">イベント名</th>
               <th className="px-3 py-2.5 font-medium">開催時間</th>
-              <th className="px-3 py-2.5 font-medium">開催場所</th>
               <th className="px-3 py-2.5 font-medium">集合場所</th>
-              <th className="px-3 py-2.5 font-medium">関連競技</th>
               <th className="px-3 py-2.5 font-medium">備考</th>
               <th className="px-3 py-2.5 font-medium">予約投稿</th>
               <th className="px-3 py-2.5 text-right font-medium">操作</th>
@@ -47,17 +32,11 @@ export function ScheduleRowPreview({
           <tbody>
             <tr className="border-t border-[color:var(--border-1)]">
               <td className="px-3 py-3 whitespace-nowrap">
-                {draft.type ? scheduleTypeLabels[draft.type] : "-"}
+                {draft.eventName || "-"}
               </td>
               <td className="px-3 py-3 whitespace-nowrap">{time}</td>
               <td className="px-3 py-3 whitespace-nowrap">
-                {optionName(options.venues, draft.venueId)}
-              </td>
-              <td className="px-3 py-3 whitespace-nowrap">
-                {optionName(options.gatheringSpots, draft.gatheringSpotId)}
-              </td>
-              <td className="px-3 py-3 whitespace-nowrap">
-                {optionName(options.events, draft.eventId)}
+                {draft.venue || "-"}
               </td>
               <td className="max-w-32 truncate px-3 py-3">
                 {draft.notes || "-"}

@@ -10,19 +10,17 @@ import { ScheduleManagementPage } from "./ScheduleManagementPage";
 const schedules: ManagedSchedule[] = [
   {
     id: "schedule-1",
-    type: "opening",
     startTime: "08:30",
     endTime: "09:00",
     venueName: "コートA",
     gatheringSpotName: null,
-    relatedEventName: null,
+    relatedEventName: "開会式",
     notes: null,
-    publication: { mode: "immediate" },
+    publication: { mode: "none" },
     notificationEnabled: false,
   },
   {
     id: "schedule-2",
-    type: "competition",
     startTime: "09:10",
     endTime: "10:10",
     venueName: "コートB",
@@ -40,7 +38,17 @@ function createGateway(
   return {
     list: vi.fn().mockResolvedValue(schedules),
     get: vi.fn().mockRejectedValue(new Error("Not used")),
-    delete: vi.fn().mockResolvedValue(undefined),
+    cancelNotification: vi.fn().mockImplementation(async (scheduleId) => {
+      const target = schedules.find((schedule) => schedule.id === scheduleId);
+      if (!target) {
+        throw new Error("Not found");
+      }
+      return {
+        ...target,
+        publication: { mode: "none" as const },
+        notificationEnabled: false,
+      };
+    }),
     ...overrides,
   };
 }
@@ -59,12 +67,10 @@ function renderPage(
 describe("ScheduleManagementPage", () => {
   it("編集完了後のフィードバックを表示する", async () => {
     renderPage(createGateway(), {
-      feedbackMessage: "スケジュールを更新しました。",
+      feedbackMessage: "イベントを更新しました。",
     });
 
-    expect(
-      screen.getByText("スケジュールを更新しました。")
-    ).toBeInTheDocument();
+    expect(screen.getByText("イベントを更新しました。")).toBeInTheDocument();
     expect(await screen.findByText("走れ！〇人〇脚！")).toBeInTheDocument();
   });
 
@@ -75,7 +81,7 @@ describe("ScheduleManagementPage", () => {
     expect(await screen.findByText("走れ！〇人〇脚！")).toBeInTheDocument();
 
     await user.type(
-      screen.getByRole("searchbox", { name: "スケジュールを検索" }),
+      screen.getByRole("searchbox", { name: "イベントを検索" }),
       "開会式"
     );
 
@@ -83,14 +89,14 @@ describe("ScheduleManagementPage", () => {
     expect(screen.queryByText("走れ！〇人〇脚！")).not.toBeInTheDocument();
   });
 
-  it("選択したスケジュールの詳細を表示する", async () => {
+  it("選択したイベントの詳細を表示する", async () => {
     const user = userEvent.setup();
     renderPage(createGateway());
 
-    const typeButton = await screen.findByRole("button", { name: "開会式" });
-    await user.click(typeButton);
+    const eventButton = await screen.findByRole("button", { name: "開会式" });
+    await user.click(eventButton);
 
-    const dialog = screen.getByRole("dialog", { name: "スケジュール詳細" });
+    const dialog = screen.getByRole("dialog", { name: "イベント詳細" });
     expect(within(dialog).getByText("08:30〜09:00")).toBeInTheDocument();
     expect(within(dialog).getByText("コートA")).toBeInTheDocument();
     expect(
@@ -98,47 +104,50 @@ describe("ScheduleManagementPage", () => {
     ).toHaveAttribute("href", "/schedule/schedule-1/edit");
   });
 
-  it("削除成功後に該当行を一覧から取り除く", async () => {
-    const deleteSchedule = vi.fn().mockResolvedValue(undefined);
+  it("通知予定の削除後もイベントを一覧に残す", async () => {
+    const cancelNotification = vi.fn().mockResolvedValue({
+      ...schedules[1],
+      publication: { mode: "none" as const },
+      notificationEnabled: false,
+    });
     const user = userEvent.setup();
-    renderPage(createGateway({ delete: deleteSchedule }));
+    renderPage(createGateway({ cancelNotification }));
 
     const actionButton = await screen.findByRole("button", {
-      name: "08:30のスケジュール操作",
+      name: "走れ！〇人〇脚！のイベント操作",
     });
 
     await user.click(actionButton);
-    await user.click(screen.getByRole("menuitem", { name: "削除" }));
+    await user.click(screen.getByRole("menuitem", { name: "通知を削除" }));
     await user.click(screen.getByRole("button", { name: "削除する" }));
 
     await waitFor(() =>
-      expect(deleteSchedule).toHaveBeenCalledWith("schedule-1")
+      expect(cancelNotification).toHaveBeenCalledWith("schedule-2")
     );
+    expect(screen.getByRole("button", { name: "開会式" })).toBeInTheDocument();
+    expect(screen.getAllByText("通知なし")).toHaveLength(2);
     expect(
-      screen.queryByRole("button", { name: "開会式" })
-    ).not.toBeInTheDocument();
-    expect(
-      screen.getByText("スケジュールを削除しました。")
+      screen.getByText("未送信の通知予定を削除しました。")
     ).toBeInTheDocument();
   });
 
   it("削除に失敗した場合は行を残してエラーを表示する", async () => {
-    const deleteSchedule = vi
+    const cancelNotification = vi
       .fn()
       .mockRejectedValue(new Error("Request failed"));
     const user = userEvent.setup();
-    renderPage(createGateway({ delete: deleteSchedule }));
+    renderPage(createGateway({ cancelNotification }));
 
     const actionButton = await screen.findByRole("button", {
-      name: "08:30のスケジュール操作",
+      name: "走れ！〇人〇脚！のイベント操作",
     });
     await user.click(actionButton);
-    await user.click(screen.getByRole("menuitem", { name: "削除" }));
+    await user.click(screen.getByRole("menuitem", { name: "通知を削除" }));
     await user.click(screen.getByRole("button", { name: "削除する" }));
 
     expect(
       await screen.findByText(
-        "スケジュールを削除できませんでした。最新の状態を確認して再度お試しください。"
+        "通知予定を削除できませんでした。最新の状態を確認して再度お試しください。"
       )
     ).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "開会式" })).toBeInTheDocument();
@@ -151,7 +160,7 @@ describe("ScheduleManagementPage", () => {
 
     expect(
       await screen.findByText(
-        "スケジュールを取得できませんでした。時間をおいて再度お試しください。"
+        "イベントを取得できませんでした。時間をおいて再度お試しください。"
       )
     ).toBeInTheDocument();
     expect(

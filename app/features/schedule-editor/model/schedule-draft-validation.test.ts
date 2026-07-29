@@ -6,29 +6,36 @@ import {
   validateScheduleDraft,
 } from "./schedule-draft-validation";
 
-const gatheringDraft: ScheduleDraft = {
-  type: "gathering",
+const eventDraft: ScheduleDraft = {
+  eventName: "走れ！〇人〇脚！",
   startTime: "10:15",
   endTime: "10:25",
-  venueId: "",
-  gatheringSpotId: "spot-1",
-  eventId: "",
+  venue: "コートA",
   notes: "",
   notificationEnabled: true,
 };
 
 describe("schedule draft validation", () => {
-  it("集合は集合場所があれば実施場所なしで送信できる", () => {
-    expect(isScheduleDraftSubmittable(gatheringDraft)).toBe(true);
-    expect(validateScheduleDraft(gatheringDraft)).toEqual({});
+  it("イベント・時間・集合場所があれば送信できる", () => {
+    expect(isScheduleDraftSubmittable(eventDraft)).toBe(true);
+    expect(validateScheduleDraft(eventDraft)).toEqual({});
   });
 
-  it("集合場所がない集合は送信できない", () => {
-    const draft = { ...gatheringDraft, gatheringSpotId: "" };
+  it("集合場所がないイベントは送信できない", () => {
+    const draft = { ...eventDraft, venue: "" };
 
     expect(isScheduleDraftSubmittable(draft)).toBe(false);
     expect(validateScheduleDraft(draft)).toMatchObject({
-      gatheringSpotId: "集合場所を選択してください",
+      venue: "集合場所を入力してください",
+    });
+  });
+
+  it("イベントが選択されていない場合は送信できない", () => {
+    const draft = { ...eventDraft, eventName: "" };
+
+    expect(isScheduleDraftSubmittable(draft)).toBe(false);
+    expect(validateScheduleDraft(draft)).toMatchObject({
+      eventName: "イベント名を入力してください",
     });
   });
 });
