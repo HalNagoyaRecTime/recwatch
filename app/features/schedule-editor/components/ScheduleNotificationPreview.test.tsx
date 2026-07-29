@@ -1,7 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
-import { mockScheduleFormOptions } from "../infrastructure/mock-schedule-form-options";
 import {
   initialScheduleDraft,
   type ScheduleDraft,
@@ -9,26 +8,22 @@ import {
 import { ScheduleNotificationPreview } from "./ScheduleNotificationPreview";
 
 describe("ScheduleNotificationPreview", () => {
-  it("競技以外では選択された種別名を通知文に表示する", () => {
+  it("選択されたイベント名と集合場所を通知文に表示する", () => {
     const draft: ScheduleDraft = {
       ...initialScheduleDraft,
-      type: "opening",
       startTime: "09:00",
-      eventId: "",
+      eventName: "走れ！〇人〇脚！",
+      venue: "コートA",
     };
 
-    render(
-      <ScheduleNotificationPreview
-        draft={draft}
-        options={mockScheduleFormOptions}
-      />
-    );
+    render(<ScheduleNotificationPreview draft={draft} />);
 
     expect(
-      screen.getByText(/開会式の開始時間が近づいています/)
+      screen.getByText(
+        new RegExp(
+          `${draft.eventName}の開始時間が近づいています。${draft.venue}に集合してください。`
+        )
+      )
     ).toBeInTheDocument();
-    expect(
-      screen.queryByText(/競技の開始時間が近づいています/)
-    ).not.toBeInTheDocument();
   });
 });

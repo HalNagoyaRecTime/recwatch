@@ -3,17 +3,14 @@ import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 
 import type { ScheduleSubmitter } from "../application/schedule-submitter";
-import { mockScheduleFormOptions } from "../infrastructure/mock-schedule-form-options";
 import type { ScheduleDraft } from "../model/schedule-draft";
 import { ScheduleEditorPage } from "./ScheduleEditorPage";
 
 const validDraft: ScheduleDraft = {
-  type: "competition",
+  eventName: "走れ！〇人〇脚！",
   startTime: "09:00",
   endTime: "10:00",
-  venueId: mockScheduleFormOptions.venues[0].id,
-  gatheringSpotId: "",
-  eventId: mockScheduleFormOptions.events[0].id,
+  venue: "コートA",
   notes: "",
   notificationEnabled: true,
 };
@@ -30,7 +27,6 @@ describe("ScheduleEditorPage", () => {
     render(
       <ScheduleEditorPage
         submitter={failingSubmitter}
-        options={mockScheduleFormOptions}
         initialDraft={validDraft}
       />
     );
@@ -40,7 +36,7 @@ describe("ScheduleEditorPage", () => {
 
     expect(
       await screen.findByText(
-        "スケジュールを登録できませんでした。時間をおいて再度お試しください。"
+        "イベントを登録できませんでした。時間をおいて再度お試しください。"
       )
     ).toBeInTheDocument();
     await waitFor(() => expect(submitButton).toBeEnabled());

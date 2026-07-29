@@ -2,14 +2,20 @@ import type { ScheduleDraft } from "./schedule-draft";
 
 export type ScheduleDraftErrors = Partial<Record<keyof ScheduleDraft, string>>;
 
+export function isScheduleDraftSubmittable(draft: ScheduleDraft): boolean {
+  return (
+    draft.eventName.trim().length > 0 &&
+    draft.startTime.length > 0 &&
+    draft.endTime.length > 0 &&
+    draft.startTime < draft.endTime &&
+    draft.venue.trim().length > 0
+  );
+}
+
 export function validateScheduleDraft(
   draft: ScheduleDraft
 ): ScheduleDraftErrors {
   const errors: ScheduleDraftErrors = {};
-
-  if (!draft.type) {
-    errors.type = "種別を選択してください";
-  }
 
   if (!draft.startTime) {
     errors.startTime = "開始時間を入力してください";
@@ -23,12 +29,12 @@ export function validateScheduleDraft(
     errors.endTime = "終了時間は開始時間より後に設定してください";
   }
 
-  if (!draft.venueId) {
-    errors.venueId = "実施場所を選択してください";
+  if (!draft.venue.trim()) {
+    errors.venue = "集合場所を入力してください";
   }
 
-  if (draft.type === "competition" && !draft.eventId) {
-    errors.eventId = "関連競技を選択してください";
+  if (!draft.eventName.trim()) {
+    errors.eventName = "イベント名を入力してください";
   }
 
   return errors;

@@ -12,24 +12,28 @@ import {
   validateScheduleDraft,
   type ScheduleDraftErrors,
 } from "../model/schedule-draft-validation";
-import type { ScheduleFormOptions } from "../model/schedule-option";
 
 type ScheduleEditorPageProps = {
   submitter: ScheduleSubmitter;
-  options: ScheduleFormOptions;
   initialDraft?: ScheduleDraft;
+  mode?: "create" | "edit";
+  onCancel?: () => void;
+  onSubmitted?: () => void;
 };
 
 export function ScheduleEditorPage({
   submitter,
-  options,
   initialDraft = initialScheduleDraft,
+  mode = "create",
+  onCancel,
+  onSubmitted,
 }: ScheduleEditorPageProps) {
   const [draft, setDraft] = useState<ScheduleDraft>(initialDraft);
   const [errors, setErrors] = useState<ScheduleDraftErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [submissionError, setSubmissionError] = useState<string | null>(null);
+  const isEditMode = mode === "edit";
 
   function handleChange(nextDraft: ScheduleDraft) {
     setErrors((currentErrors) => {
@@ -48,10 +52,6 @@ export function ScheduleEditorPage({
       ) {
         delete nextErrors.startTime;
         delete nextErrors.endTime;
-      }
-
-      if (changedFields.includes("type")) {
-        delete nextErrors.eventId;
       }
 
       return nextErrors;
@@ -84,9 +84,10 @@ export function ScheduleEditorPage({
     try {
       await submitter.submit(draft);
       setSubmitted(true);
+      onSubmitted?.();
     } catch {
       setSubmissionError(
-        "スケジュールを登録できませんでした。時間をおいて再度お試しください。"
+        "イベントを登録できませんでした。時間をおいて再度お試しください。"
       );
     } finally {
       setIsSubmitting(false);
@@ -96,9 +97,13 @@ export function ScheduleEditorPage({
   return (
     <div className="mx-auto w-full max-w-[1440px]">
       <header>
-        <h1 className="text-xl font-semibold">スケジュール 新規登録</h1>
+        <h1 className="text-xl font-semibold">
+          {isEditMode ? "イベント編集" : "イベント新規登録"}
+        </h1>
         <p className="mt-2 text-sm text-[color:var(--text-3)]">
-          登録内容はアプリのスケジュール表示に反映されます
+          {isEditMode
+            ? "変更内容はイベント情報と通知予定に反映されます"
+            : "登録内容はイベント情報に反映されます"}
         </p>
       </header>
 
@@ -107,10 +112,10 @@ export function ScheduleEditorPage({
           <ScheduleForm
             draft={draft}
             errors={errors}
-            options={options}
             isSubmitting={isSubmitting}
+            submitLabel={isEditMode ? "変更を保存" : "登録する"}
             onChange={handleChange}
-            onReset={handleReset}
+            onReset={onCancel ?? handleReset}
             onSubmit={handleSubmit}
           />
           <div
@@ -122,14 +127,18 @@ export function ScheduleEditorPage({
             }`}
           >
             {submissionError ??
-              (submitted ? "スケジュール内容を確認しました。" : null)}
+              (submitted
+                ? isEditMode
+                  ? "イベントを更新しました。"
+                  : "イベント内容を確認しました。"
+                : null)}
           </div>
         </section>
 
         <section className="min-w-0">
-          <ScheduleRowPreview draft={draft} options={options} />
+          <ScheduleRowPreview draft={draft} />
           <div className="mt-5">
-            <ScheduleNotificationPreview draft={draft} options={options} />
+            <ScheduleNotificationPreview draft={draft} />
           </div>
         </section>
       </div>
