@@ -91,7 +91,7 @@ describe("ScheduleEditEntryPage", () => {
     expect(submit).toHaveBeenCalledTimes(1);
   });
 
-  it("イベント名と集合場所を変更できる", async () => {
+  it("イベント名と開催場所を変更できる", async () => {
     const targetSchedule: ManagedSchedule = {
       ...schedule,
       id: "schedule-003",

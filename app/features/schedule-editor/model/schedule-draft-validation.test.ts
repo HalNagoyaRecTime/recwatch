@@ -16,17 +16,17 @@ const eventDraft: ScheduleDraft = {
 };
 
 describe("schedule draft validation", () => {
-  it("イベント・時間・集合場所があれば送信できる", () => {
+  it("イベント・時間・開催場所があれば送信できる", () => {
     expect(isScheduleDraftSubmittable(eventDraft)).toBe(true);
     expect(validateScheduleDraft(eventDraft)).toEqual({});
   });
 
-  it("集合場所がないイベントは送信できない", () => {
+  it("開催場所がないイベントは送信できない", () => {
     const draft = { ...eventDraft, venue: "" };
 
     expect(isScheduleDraftSubmittable(draft)).toBe(false);
     expect(validateScheduleDraft(draft)).toMatchObject({
-      venue: "集合場所を入力してください",
+      venue: "開催場所を入力してください",
     });
   });
 

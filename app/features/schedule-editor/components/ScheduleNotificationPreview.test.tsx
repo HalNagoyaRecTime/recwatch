@@ -8,7 +8,7 @@ import {
 import { ScheduleNotificationPreview } from "./ScheduleNotificationPreview";
 
 describe("ScheduleNotificationPreview", () => {
-  it("選択されたイベント名と集合場所を通知文に表示する", () => {
+  it("イベント名を表示し、venueを集合場所として使用しない", () => {
     const draft: ScheduleDraft = {
       ...initialScheduleDraft,
       startTime: "09:00",
@@ -21,9 +21,10 @@ describe("ScheduleNotificationPreview", () => {
     expect(
       screen.getByText(
         new RegExp(
-          `${draft.eventName}の開始時間が近づいています。${draft.venue}に集合してください。`
+          `${draft.eventName}の開始時間が近づいています。指定された集合場所に集合してください。`
         )
       )
     ).toBeInTheDocument();
+    expect(screen.queryByText(new RegExp(draft.venue))).not.toBeInTheDocument();
   });
 });

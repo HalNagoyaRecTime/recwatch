@@ -96,7 +96,7 @@ export function ScheduleManagementPage({
       <header>
         <h1 className="text-xl font-semibold">イベント管理</h1>
         <p className="mt-2 text-sm text-[color:var(--text-3)]">
-          イベントの開催時間・集合場所・通知設定を管理します
+          イベントの開催時間・開催場所・通知設定を管理します
         </p>
       </header>
 

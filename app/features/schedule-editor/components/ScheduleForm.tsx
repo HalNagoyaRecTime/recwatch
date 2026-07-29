@@ -111,14 +111,14 @@ export function ScheduleForm({
 
       <div>
         <label htmlFor="schedule-venue" className="text-sm font-semibold">
-          集合場所<span className="ml-0.5 text-red-500">*</span>
+          開催場所<span className="ml-0.5 text-red-500">*</span>
         </label>
         <input
           id="schedule-venue"
           className={`${fieldClassName} mt-2 h-10`}
           value={draft.venue}
           aria-invalid={Boolean(errors.venue)}
-          placeholder="例：コートA"
+          placeholder="例：体育館"
           onChange={(event) =>
             onChange({ ...draft, venue: event.currentTarget.value })
           }
