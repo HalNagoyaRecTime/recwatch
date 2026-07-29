@@ -30,19 +30,14 @@ type GatheringSpot = {
   gathering_spot_name: string;
 };
 
-type GatheringGroup = {
-  gathering_group_id: number;
-};
-
 type Gathering = {
   gathering_id: number;
-  gathering_group_id: number;
   event_id: number;
   gathering_spot_id: number;
   gathering_time: string;
 };
 
-type GatheringGroupMember = {
+type GatheringMember = {
   user_id: number;
 };
 
@@ -95,8 +90,11 @@ export function CompetitionAssignmentPage() {
   const [gatherings, setGatherings] = useState<Gathering[]>([]);
   const [selectedClassId, setSelectedClassId] = useState<number | null>(null);
   const [selectedEventId, setSelectedEventId] = useState<number | null>(null);
-  const [selectedGatheringGroupId, setSelectedGatheringGroupId] =
-    useState("new");
+  const [selectedGatheringId, setSelectedGatheringId] = useState("new");
+  const [newGatheringSpotId, setNewGatheringSpotId] = useState<number | null>(
+    null
+  );
+  const [newGatheringTime, setNewGatheringTime] = useState("");
   const [selectedUserIds, setSelectedUserIds] = useState<number[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -125,6 +123,7 @@ export function CompetitionAssignmentPage() {
         setEvents(eventPage.events);
         setGatheringSpots(spots);
         setGatherings(gatheringList);
+        setNewGatheringSpotId(spots[0]?.gathering_spot_id ?? null);
         setSelectedClassId(classRoomPage.classrooms[0]?.class_room_id ?? null);
         setSelectedEventId(
           eventPage.events.find((event) =>
@@ -155,26 +154,35 @@ export function CompetitionAssignmentPage() {
   }, []);
 
   useEffect(() => {
-    const firstGathering = gatherings.find(
+    const eventGatherings = gatherings.filter(
       (gathering) => gathering.event_id === selectedEventId
     );
-    setSelectedGatheringGroupId(
-      firstGathering ? String(firstGathering.gathering_group_id) : ""
-    );
+    setSelectedGatheringId((current) => {
+      const currentGatheringStillExists = eventGatherings.some(
+        (gathering) => gathering.gathering_id === Number.parseInt(current, 10)
+      );
+
+      if (currentGatheringStillExists) {
+        return current;
+      }
+
+      const firstGathering = eventGatherings[0];
+      return firstGathering ? String(firstGathering.gathering_id) : "new";
+    });
   }, [gatherings, selectedEventId]);
 
   useEffect(() => {
     let isCurrent = true;
 
     async function loadMembers() {
-      if (!selectedGatheringGroupId || selectedGatheringGroupId === "new") {
+      if (!selectedGatheringId || selectedGatheringId === "new") {
         setSelectedUserIds([]);
         return;
       }
 
       try {
-        const members = await requestApi<GatheringGroupMember[]>(
-          `/api/v1/gathering-groups/${selectedGatheringGroupId}/members`
+        const members = await requestApi<GatheringMember[]>(
+          `/api/v1/gatherings/${selectedGatheringId}/members`
         );
         if (isCurrent) {
           setSelectedUserIds(members.map((member) => member.user_id));
@@ -184,7 +192,7 @@ export function CompetitionAssignmentPage() {
           setSubmitError(
             error instanceof Error
               ? error.message
-              : "集合グループのメンバーを取得できませんでした。"
+              : "集合予定のメンバーを取得できませんでした。"
           );
         }
       }
@@ -194,7 +202,7 @@ export function CompetitionAssignmentPage() {
     return () => {
       isCurrent = false;
     };
-  }, [selectedGatheringGroupId]);
+  }, [selectedGatheringId]);
 
   const selectedClass = classrooms.find(
     (classroom) => classroom.class_room_id === selectedClassId
@@ -205,15 +213,20 @@ export function CompetitionAssignmentPage() {
   const eventGatherings = gatherings.filter(
     (gathering) => gathering.event_id === selectedEventId
   );
-  const selectedGathering =
-    eventGatherings.find(
-      (gathering) =>
-        gathering.gathering_group_id === Number(selectedGatheringGroupId)
-    ) ?? eventGatherings[0];
-  const selectedSpot = gatheringSpots.find(
-    (spot) => spot.gathering_spot_id === selectedGathering?.gathering_spot_id
+  const isCreatingGathering = selectedGatheringId === "new";
+  const selectedGathering = eventGatherings.find(
+    (gathering) => gathering.gathering_id === Number(selectedGatheringId)
   );
-  const gatheringTime = selectedGathering?.gathering_time ?? "";
+  const selectedSpot = gatheringSpots.find(
+    (spot) =>
+      spot.gathering_spot_id ===
+      (isCreatingGathering
+        ? newGatheringSpotId
+        : selectedGathering?.gathering_spot_id)
+  );
+  const gatheringTime = isCreatingGathering
+    ? newGatheringTime
+    : (selectedGathering?.gathering_time ?? "");
   const visibleStudents = useMemo(
     () =>
       selectedClassId === null
@@ -237,7 +250,7 @@ export function CompetitionAssignmentPage() {
       selectedUserIds.length === 0
     ) {
       setSubmitError(
-        "イベント、実施場所、割り当てメンバーを選択してください。"
+        "イベント、集合場所、集合時間、割り当てメンバーを選択してください。"
       );
       return;
     }
@@ -247,42 +260,35 @@ export function CompetitionAssignmentPage() {
     setIsComplete(false);
 
     try {
-      let gatheringGroupId: number;
+      let gatheringId: number;
+      let createdGathering: Gathering | null = null;
 
-      if (selectedGatheringGroupId === "new") {
-        const newGroup = await requestApi<GatheringGroup>(
-          "/api/v1/gathering-groups",
-          {
-            method: "POST",
-          }
-        );
-        gatheringGroupId = newGroup.gathering_group_id;
-
-        await Promise.all(
-          selectedUserIds.map((userId) =>
-            requestApi(`/api/v1/gathering-groups/${gatheringGroupId}/members`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ userId }),
-            })
-          )
-        );
-
-        await requestApi("/api/v1/gatherings", {
+      if (selectedGatheringId === "new") {
+        createdGathering = await requestApi<Gathering>("/api/v1/gatherings", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            gatheringGroupId,
             eventId: selectedEvent.event_id,
             gatheringSpotId: selectedSpot.gathering_spot_id,
             gatheringTime,
             round: 1,
           }),
         });
+        gatheringId = createdGathering.gathering_id;
+
+        await Promise.all(
+          selectedUserIds.map((userId) =>
+            requestApi(`/api/v1/gatherings/${gatheringId}/members`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ userId }),
+            })
+          )
+        );
       } else {
-        gatheringGroupId = Number(selectedGatheringGroupId);
-        const currentMembers = await requestApi<GatheringGroupMember[]>(
-          `/api/v1/gathering-groups/${gatheringGroupId}/members`
+        gatheringId = Number(selectedGatheringId);
+        const currentMembers = await requestApi<GatheringMember[]>(
+          `/api/v1/gatherings/${gatheringId}/members`
         );
         const currentMemberUserIds = currentMembers.map((m) => m.user_id);
 
@@ -295,33 +301,25 @@ export function CompetitionAssignmentPage() {
 
         await Promise.all([
           ...toAdd.map((userId) =>
-            requestApi(`/api/v1/gathering-groups/${gatheringGroupId}/members`, {
+            requestApi(`/api/v1/gatherings/${gatheringId}/members`, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ userId }),
             })
           ),
           ...toRemove.map((userId) =>
-            requestApi(
-              `/api/v1/gathering-groups/${gatheringGroupId}/members/${userId}`,
-              { method: "DELETE" }
-            )
+            requestApi(`/api/v1/gatherings/${gatheringId}/members/${userId}`, {
+              method: "DELETE",
+            })
           ),
         ]);
       }
 
       setIsComplete(true);
-      setGatherings((current) => [
-        ...current,
-        {
-          gathering_id: -gatheringGroupId,
-          gathering_group_id: gatheringGroupId,
-          event_id: selectedEvent.event_id,
-          gathering_spot_id: selectedSpot.gathering_spot_id,
-          gathering_time: gatheringTime,
-        },
-      ]);
-      setSelectedGatheringGroupId(String(gatheringGroupId));
+      if (createdGathering) {
+        setGatherings((current) => [...current, createdGathering]);
+      }
+      setSelectedGatheringId(String(gatheringId));
     } catch (error) {
       setSubmitError(
         error instanceof Error
@@ -386,52 +384,90 @@ export function CompetitionAssignmentPage() {
           </label>
 
           <label className="block text-sm font-bold">
-            集合グループ <span className="text-red-500">*</span>
+            集合予定 <span className="text-red-500">*</span>
             <select
-              disabled={isLoading || eventGatherings.length === 0}
-              value={selectedGatheringGroupId}
-              onChange={(event) =>
-                setSelectedGatheringGroupId(event.target.value)
-              }
+              disabled={isLoading}
+              value={selectedGatheringId}
+              onChange={(event) => setSelectedGatheringId(event.target.value)}
               className="mt-1 h-[38px] w-full rounded-[10px] border border-[#0070bb] bg-white px-3 font-normal disabled:opacity-50"
             >
-              {eventGatherings.length === 0 ? (
-                <option value="" disabled>
-                  集合グループがありません
+              <option value="new">新しい集合予定を作成</option>
+              {eventGatherings.map((gathering) => (
+                <option
+                  key={gathering.gathering_id}
+                  value={gathering.gathering_id}
+                >
+                  集合予定 #{gathering.gathering_id}
                 </option>
-              ) : (
-                eventGatherings.map((gathering) => (
-                  <option
-                    key={gathering.gathering_group_id}
-                    value={gathering.gathering_group_id}
-                  >
-                    集合グループ #{gathering.gathering_group_id}
-                  </option>
-                ))
-              )}
+              ))}
             </select>
           </label>
 
           <div className="grid grid-cols-3 gap-2">
-            {[
-              ["実施場所", selectedSpot?.gathering_spot_name ?? "取得中"],
+            {isCreatingGathering ? (
+              <>
+                <label className="rounded-[10px] border border-[#d2d2d2] bg-white px-3 py-2">
+                  <span className="text-[10px] text-black/35">集合場所</span>
+                  <select
+                    disabled={isLoading || gatheringSpots.length === 0}
+                    value={newGatheringSpotId ?? ""}
+                    onChange={(event) =>
+                      setNewGatheringSpotId(Number(event.target.value))
+                    }
+                    className="mt-0.5 block w-full bg-transparent text-xs text-black/70 outline-none disabled:opacity-50"
+                  >
+                    {gatheringSpots.length === 0 ? (
+                      <option value="">未登録</option>
+                    ) : (
+                      gatheringSpots.map((spot) => (
+                        <option
+                          key={spot.gathering_spot_id}
+                          value={spot.gathering_spot_id}
+                        >
+                          {spot.gathering_spot_name}
+                        </option>
+                      ))
+                    )}
+                  </select>
+                </label>
+                <label className="rounded-[10px] border border-[#d2d2d2] bg-white px-3 py-2">
+                  <span className="text-[10px] text-black/35">集合時間</span>
+                  <input
+                    type="time"
+                    disabled={isLoading}
+                    value={newGatheringTime}
+                    onChange={(event) =>
+                      setNewGatheringTime(event.target.value)
+                    }
+                    className="mt-0.5 block w-full bg-transparent text-xs text-black/70 outline-none disabled:opacity-50"
+                  />
+                </label>
+              </>
+            ) : (
               [
-                "集合時間",
-                gatheringTime ? formatTime(gatheringTime) : "未設定",
-              ],
-              [
-                "開始時間",
-                selectedEvent ? formatTime(selectedEvent.start_time) : "取得中",
-              ],
-            ].map(([label, value]) => (
-              <div
-                key={label}
-                className="rounded-[10px] border border-[#d2d2d2] bg-white px-3 py-2"
-              >
-                <p className="text-[10px] text-black/35">{label}</p>
-                <p className="mt-0.5 text-xs text-black/45">{value}</p>
-              </div>
-            ))}
+                ["集合場所", selectedSpot?.gathering_spot_name ?? "未設定"],
+                [
+                  "集合時間",
+                  gatheringTime ? formatTime(gatheringTime) : "未設定",
+                ],
+              ].map(([label, value]) => (
+                <div
+                  key={label}
+                  className="rounded-[10px] border border-[#d2d2d2] bg-white px-3 py-2"
+                >
+                  <p className="text-[10px] text-black/35">{label}</p>
+                  <p className="mt-0.5 text-xs text-black/45">{value}</p>
+                </div>
+              ))
+            )}
+            <div className="rounded-[10px] border border-[#d2d2d2] bg-white px-3 py-2">
+              <p className="text-[10px] text-black/35">開始時間</p>
+              <p className="mt-0.5 text-xs text-black/45">
+                {selectedEvent
+                  ? formatTime(selectedEvent.start_time)
+                  : "取得中"}
+              </p>
+            </div>
           </div>
 
           <div>
@@ -532,7 +568,7 @@ export function CompetitionAssignmentPage() {
             {[
               ["クラス", selectedClass?.class_name ?? "未選択"],
               ["イベント", selectedEvent?.event_name ?? "未選択"],
-              ["実施場所", selectedSpot?.gathering_spot_name ?? "未選択"],
+              ["集合場所", selectedSpot?.gathering_spot_name ?? "未選択"],
             ].map(([label, value]) => (
               <div
                 key={label}
