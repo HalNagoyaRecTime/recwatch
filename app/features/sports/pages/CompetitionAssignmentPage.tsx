@@ -2,7 +2,7 @@ import { Check } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router";
 
-import { buildBackendUrl } from "~/config/env";
+import { apiClient } from "~/lib/api-client";
 
 type ClassRoom = {
   class_room_id: number;
@@ -45,37 +45,6 @@ type ClassRoomPage = { classrooms: ClassRoom[] };
 type StudentPage = { students: Student[] };
 type EventPage = { events: Event[] };
 
-async function requestApi<T>(path: string, init?: RequestInit): Promise<T> {
-  const url = buildBackendUrl(path);
-  if (!url) {
-    throw new Error("バックエンド URL が未設定です。");
-  }
-
-  const response = await fetch(url, {
-    credentials: "include",
-    ...init,
-    headers: {
-      Accept: "application/json",
-      ...init?.headers,
-    },
-  });
-
-  if (!response.ok) {
-    const body: unknown = await response.json().catch(() => null);
-    const message =
-      typeof body === "object" && body !== null && "error" in body
-        ? String(body.error)
-        : `API request failed (${response.status})`;
-    throw new Error(message);
-  }
-
-  if (response.status === 204) {
-    return undefined as T;
-  }
-
-  return response.json() as Promise<T>;
-}
-
 function formatTime(value: string) {
   return /^\d{4}$/.test(value)
     ? `${value.slice(0, 2)}:${value.slice(2)}`
@@ -109,11 +78,13 @@ export function CompetitionAssignmentPage() {
       try {
         const [classRoomPage, studentPage, eventPage, spots, gatheringList] =
           await Promise.all([
-            requestApi<ClassRoomPage>("/api/v1/classrooms?limit=100&offset=0"),
-            requestApi<StudentPage>("/api/v1/students?limit=100&offset=0"),
-            requestApi<EventPage>("/api/v1/events?limit=100&offset=0"),
-            requestApi<GatheringSpot[]>("/api/v1/gathering-spots"),
-            requestApi<Gathering[]>("/api/v1/gatherings"),
+            apiClient.get<ClassRoomPage>(
+              "/api/v1/classrooms?limit=100&offset=0"
+            ),
+            apiClient.get<StudentPage>("/api/v1/students?limit=100&offset=0"),
+            apiClient.get<EventPage>("/api/v1/events?limit=100&offset=0"),
+            apiClient.get<GatheringSpot[]>("/api/v1/gathering-spots"),
+            apiClient.get<Gathering[]>("/api/v1/gatherings"),
           ]);
 
         if (!isCurrent) return;
@@ -181,7 +152,7 @@ export function CompetitionAssignmentPage() {
       }
 
       try {
-        const members = await requestApi<GatheringMember[]>(
+        const members = await apiClient.get<GatheringMember[]>(
           `/api/v1/gatherings/${selectedGatheringId}/members`
         );
         if (isCurrent) {
@@ -264,30 +235,28 @@ export function CompetitionAssignmentPage() {
       let createdGathering: Gathering | null = null;
 
       if (selectedGatheringId === "new") {
-        createdGathering = await requestApi<Gathering>("/api/v1/gatherings", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
+        createdGathering = await apiClient.post<Gathering>(
+          "/api/v1/gatherings",
+          {
             eventId: selectedEvent.event_id,
             gatheringSpotId: selectedSpot.gathering_spot_id,
             gatheringTime,
             round: 1,
-          }),
-        });
+          }
+        );
         gatheringId = createdGathering.gathering_id;
 
         await Promise.all(
           selectedUserIds.map((userId) =>
-            requestApi(`/api/v1/gatherings/${gatheringId}/members`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ userId }),
-            })
+            apiClient.post<GatheringMember>(
+              `/api/v1/gatherings/${gatheringId}/members`,
+              { userId }
+            )
           )
         );
       } else {
         gatheringId = Number(selectedGatheringId);
-        const currentMembers = await requestApi<GatheringMember[]>(
+        const currentMembers = await apiClient.get<GatheringMember[]>(
           `/api/v1/gatherings/${gatheringId}/members`
         );
         const currentMemberUserIds = currentMembers.map((m) => m.user_id);
@@ -301,16 +270,15 @@ export function CompetitionAssignmentPage() {
 
         await Promise.all([
           ...toAdd.map((userId) =>
-            requestApi(`/api/v1/gatherings/${gatheringId}/members`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ userId }),
-            })
+            apiClient.post<GatheringMember>(
+              `/api/v1/gatherings/${gatheringId}/members`,
+              { userId }
+            )
           ),
           ...toRemove.map((userId) =>
-            requestApi(`/api/v1/gatherings/${gatheringId}/members/${userId}`, {
-              method: "DELETE",
-            })
+            apiClient.delete(
+              `/api/v1/gatherings/${gatheringId}/members/${userId}`
+            )
           ),
         ]);
       }
