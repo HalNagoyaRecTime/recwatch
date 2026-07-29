@@ -39,7 +39,7 @@ export function ParticipantsPage() {
           </div>
         </div>
         <Link
-          to="/sports/assignments"
+          to="/events/assignments"
           className="flex items-center gap-1 rounded-[10px] bg-[#0070bb] px-4 py-2 text-sm text-white"
         >
           <Plus className="size-4" />
