@@ -13,7 +13,7 @@ describe("mapScheduleToDraft", () => {
       gatheringSpotName: null,
       relatedEventName: "走れ！〇人〇脚！",
       notes: "備考",
-      publication: { mode: "immediate" },
+      publication: { mode: "sent" },
       notificationEnabled: true,
     };
 

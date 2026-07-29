@@ -51,7 +51,7 @@ export function ScheduleSearchToolbar({
         className="inline-flex h-10 items-center gap-1.5 rounded-lg bg-[color:var(--brand-button-1)] px-4 text-sm font-semibold text-white transition hover:bg-[color:var(--brand-button-2)]"
       >
         <PlusIcon size={15} aria-hidden="true" />
-        新規登録
+        時間登録
       </Link>
     </div>
   );

@@ -100,8 +100,8 @@ describe("ScheduleManagementPage", () => {
     expect(within(dialog).getByText("08:30〜09:00")).toBeInTheDocument();
     expect(within(dialog).getByText("コートA")).toBeInTheDocument();
     expect(
-      within(dialog).getByRole("link", { name: "編集する" })
-    ).toHaveAttribute("href", "/schedule/schedule-1/edit");
+      within(dialog).queryByRole("link", { name: "編集する" })
+    ).not.toBeInTheDocument();
   });
 
   it("通知予定の削除後もイベントを一覧に残す", async () => {

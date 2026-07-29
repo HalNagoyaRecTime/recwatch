@@ -13,8 +13,24 @@ export function SchedulePublicationLabel({
     return <span className="text-xs text-[color:var(--text-3)]">通知なし</span>;
   }
 
-  if (publication.mode === "immediate") {
-    return <span className="text-xs text-[color:var(--text-3)]">即時公開</span>;
+  if (publication.mode === "sent") {
+    return (
+      <span className="text-xs text-[color:var(--tone-green-text)]">
+        配信済み
+      </span>
+    );
+  }
+
+  if (publication.mode === "sending") {
+    return <span className="text-xs text-[color:var(--text-2)]">送信中</span>;
+  }
+
+  if (publication.mode === "failed") {
+    return (
+      <span className="text-xs text-[color:var(--tone-red-text)]">
+        送信失敗
+      </span>
+    );
   }
 
   return (

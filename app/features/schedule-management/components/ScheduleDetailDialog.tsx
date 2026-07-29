@@ -1,6 +1,5 @@
-import { BellIcon, BellOffIcon, PencilIcon, XIcon } from "lucide-react";
+import { BellIcon, BellOffIcon, XIcon } from "lucide-react";
 import { useEffect } from "react";
-import { Link } from "react-router";
 
 import type { ManagedSchedule } from "../model/schedule";
 import { SchedulePublicationLabel } from "./SchedulePublicationLabel";
@@ -112,13 +111,6 @@ export function ScheduleDetailDialog({
           >
             閉じる
           </button>
-          <Link
-            to={`/schedule/${schedule.id}/edit`}
-            className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-[color:var(--brand-button-1)] px-4 text-sm font-semibold text-white hover:bg-[color:var(--brand-button-2)]"
-          >
-            <PencilIcon size={14} aria-hidden="true" />
-            編集する
-          </Link>
         </footer>
       </section>
     </div>

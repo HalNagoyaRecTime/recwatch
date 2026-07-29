@@ -1,6 +1,8 @@
 export type SchedulePublication =
   | { mode: "none" }
-  | { mode: "immediate" }
+  | { mode: "sending" }
+  | { mode: "sent" }
+  | { mode: "failed" }
   | { mode: "scheduled"; publishAt: string };
 
 export type ManagedSchedule = {

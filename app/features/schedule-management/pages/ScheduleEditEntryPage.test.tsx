@@ -17,7 +17,7 @@ const schedule: ManagedSchedule = {
   gatheringSpotName: null,
   relatedEventName: "走れ！〇人〇脚！",
   notes: null,
-  publication: { mode: "immediate" },
+  publication: { mode: "sent" },
   notificationEnabled: true,
 };
 
@@ -44,7 +44,7 @@ describe("ScheduleEditEntryPage", () => {
                   ...gateway,
                   get: vi.fn().mockResolvedValue(targetSchedule),
                 }}
-                submitter={submitter}
+                createSubmitter={() => submitter}
               />
             }
           />

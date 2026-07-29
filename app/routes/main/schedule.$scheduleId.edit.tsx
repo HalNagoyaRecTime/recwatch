@@ -1,7 +1,10 @@
 import { useParams } from "react-router";
 
-import { createMockScheduleUpdater } from "~/features/schedule-management/infrastructure/create-mock-schedule-updater";
-import { mockScheduleManagementGateway } from "~/features/schedule-management/infrastructure/mock-schedule-management-gateway";
+import { createEventScheduleUpdater } from "~/features/schedule-management/application/create-event-schedule-updater";
+import {
+  httpEventNotificationGateway,
+  httpScheduleManagementGateway,
+} from "~/features/schedule-management/infrastructure/http-event-management-dependencies";
 import { ScheduleEditEntryPage } from "~/features/schedule-management/pages/ScheduleEditEntryPage";
 
 export function meta() {
@@ -18,8 +21,10 @@ export default function ScheduleEditRoute() {
   return (
     <ScheduleEditEntryPage
       scheduleId={scheduleId}
-      gateway={mockScheduleManagementGateway}
-      submitter={createMockScheduleUpdater(scheduleId)}
+      gateway={httpScheduleManagementGateway}
+      createSubmitter={(schedule) =>
+        createEventScheduleUpdater(schedule, httpEventNotificationGateway)
+      }
     />
   );
 }

@@ -17,6 +17,9 @@ type ScheduleEditorPageProps = {
   submitter: ScheduleSubmitter;
   initialDraft?: ScheduleDraft;
   mode?: "create" | "edit";
+  title?: string;
+  description?: string;
+  submitLabel?: string;
   onCancel?: () => void;
   onSubmitted?: () => void;
 };
@@ -25,6 +28,9 @@ export function ScheduleEditorPage({
   submitter,
   initialDraft = initialScheduleDraft,
   mode = "create",
+  title,
+  description,
+  submitLabel,
   onCancel,
   onSubmitted,
 }: ScheduleEditorPageProps) {
@@ -98,12 +104,13 @@ export function ScheduleEditorPage({
     <div className="mx-auto w-full max-w-[1440px]">
       <header>
         <h1 className="text-xl font-semibold">
-          {isEditMode ? "イベント編集" : "イベント新規登録"}
+          {title ?? (isEditMode ? "イベント編集" : "イベント新規登録")}
         </h1>
         <p className="mt-2 text-sm text-[color:var(--text-3)]">
-          {isEditMode
-            ? "変更内容はイベント情報と通知予定に反映されます"
-            : "登録内容はイベント情報に反映されます"}
+          {description ??
+            (isEditMode
+              ? "変更内容はイベント情報と通知予定に反映されます"
+              : "登録内容はイベント情報に反映されます")}
         </p>
       </header>
 
@@ -113,7 +120,9 @@ export function ScheduleEditorPage({
             draft={draft}
             errors={errors}
             isSubmitting={isSubmitting}
-            submitLabel={isEditMode ? "変更を保存" : "登録する"}
+            submitLabel={
+              submitLabel ?? (isEditMode ? "変更を保存" : "登録する")
+            }
             onChange={handleChange}
             onReset={onCancel ?? handleReset}
             onSubmit={handleSubmit}

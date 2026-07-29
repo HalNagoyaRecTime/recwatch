@@ -20,7 +20,7 @@ let schedules: ManagedSchedule[] = [
     gatheringSpotName: null,
     relatedEventName: "走れ！〇人〇脚！",
     notes: null,
-    publication: { mode: "immediate" },
+    publication: { mode: "sent" },
     notificationEnabled: true,
   },
   {
@@ -42,7 +42,7 @@ let schedules: ManagedSchedule[] = [
     gatheringSpotName: null,
     relatedEventName: "ガチンコ綱引き",
     notes: null,
-    publication: { mode: "immediate" },
+    publication: { mode: "sent" },
     notificationEnabled: true,
   },
   {
@@ -53,7 +53,7 @@ let schedules: ManagedSchedule[] = [
     gatheringSpotName: null,
     relatedEventName: "四天王ドッチボール",
     notes: null,
-    publication: { mode: "immediate" },
+    publication: { mode: "sent" },
     notificationEnabled: true,
   },
   {
@@ -86,7 +86,7 @@ let schedules: ManagedSchedule[] = [
     gatheringSpotName: null,
     relatedEventName: "学科別対抗リレー",
     notes: null,
-    publication: { mode: "immediate" },
+    publication: { mode: "sent" },
     notificationEnabled: true,
   },
   {

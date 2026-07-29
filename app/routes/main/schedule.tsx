@@ -1,4 +1,4 @@
-import { mockScheduleManagementGateway } from "~/features/schedule-management/infrastructure/mock-schedule-management-gateway";
+import { httpScheduleManagementGateway } from "~/features/schedule-management/infrastructure/http-event-management-dependencies";
 import { ScheduleManagementPage } from "~/features/schedule-management/pages/ScheduleManagementPage";
 
 export function meta() {
@@ -6,5 +6,5 @@ export function meta() {
 }
 
 export default function ScheduleRoute() {
-  return <ScheduleManagementPage gateway={mockScheduleManagementGateway} />;
+  return <ScheduleManagementPage gateway={httpScheduleManagementGateway} />;
 }

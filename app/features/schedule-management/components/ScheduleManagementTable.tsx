@@ -1,6 +1,5 @@
-import { EllipsisIcon, EyeIcon, PencilIcon, Trash2Icon } from "lucide-react";
+import { EllipsisIcon, EyeIcon, Trash2Icon } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Link } from "react-router";
 
 import type { ManagedSchedule } from "../model/schedule";
 import { SchedulePublicationLabel } from "./SchedulePublicationLabel";
@@ -134,14 +133,6 @@ export function ScheduleManagementTable({
                         <EyeIcon size={14} aria-hidden="true" />
                         詳細
                       </button>
-                      <Link
-                        role="menuitem"
-                        to={`/schedule/${schedule.id}/edit`}
-                        className="flex h-9 items-center gap-2 rounded-md px-3 text-sm hover:bg-[color:var(--surface-2)]"
-                      >
-                        <PencilIcon size={14} aria-hidden="true" />
-                        編集
-                      </Link>
                       {schedule.notificationEnabled ? (
                         <button
                           type="button"

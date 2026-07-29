@@ -11,13 +11,13 @@ import type { ManagedSchedule } from "../model/schedule";
 type ScheduleEditEntryPageProps = {
   scheduleId: string;
   gateway: ScheduleManagementGateway;
-  submitter: ScheduleSubmitter;
+  createSubmitter: (schedule: ManagedSchedule) => ScheduleSubmitter;
 };
 
 export function ScheduleEditEntryPage({
   scheduleId,
   gateway,
-  submitter,
+  createSubmitter,
 }: ScheduleEditEntryPageProps) {
   const navigate = useNavigate();
   const [schedule, setSchedule] = useState<ManagedSchedule | null>(null);
@@ -74,7 +74,7 @@ export function ScheduleEditEntryPage({
 
   return (
     <ScheduleEditorPage
-      submitter={submitter}
+      submitter={createSubmitter(schedule)}
       initialDraft={mapScheduleToDraft(schedule)}
       mode="edit"
       onCancel={() => navigate("/schedule")}

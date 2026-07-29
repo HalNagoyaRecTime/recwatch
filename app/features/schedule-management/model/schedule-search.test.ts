@@ -12,7 +12,7 @@ const schedules: ManagedSchedule[] = [
     gatheringSpotName: null,
     relatedEventName: "開会式",
     notes: null,
-    publication: { mode: "immediate" },
+    publication: { mode: "sent" },
     notificationEnabled: false,
   },
   {
@@ -23,7 +23,7 @@ const schedules: ManagedSchedule[] = [
     gatheringSpotName: null,
     relatedEventName: "走れ！〇人〇脚！",
     notes: "午前の競技",
-    publication: { mode: "immediate" },
+    publication: { mode: "sent" },
     notificationEnabled: true,
   },
 ];
