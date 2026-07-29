@@ -16,7 +16,6 @@ export function ScheduleNotificationPreview({
   }
 
   const scheduleName = draft.eventName.trim() || "イベント";
-  const gatheringSpot = draft.venue.trim() || "集合場所";
   const previewTime = draft.startTime || "9:00";
 
   return (
@@ -39,8 +38,7 @@ export function ScheduleNotificationPreview({
             <div className="min-w-0">
               <div className="text-[9px] font-semibold">rectime</div>
               <div className="mt-0.5 line-clamp-2 text-[8px] leading-[1.45]">
-                {scheduleName}の開始時間が近づいています。{gatheringSpot}
-                に集合してください。
+                {`${scheduleName}の開始時間が近づいています。指定された集合場所に集合してください。`}
               </div>
             </div>
           </div>

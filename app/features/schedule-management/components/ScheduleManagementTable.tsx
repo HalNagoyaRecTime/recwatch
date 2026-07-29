@@ -59,7 +59,7 @@ export function ScheduleManagementTable({
           <tr>
             <th className="px-4 py-3 font-medium">イベント名</th>
             <th className="px-3 py-3 font-medium">開催時間</th>
-            <th className="px-3 py-3 font-medium">集合場所</th>
+            <th className="px-3 py-3 font-medium">開催場所</th>
             <th className="w-[220px] px-3 py-3 font-medium">備考</th>
             <th className="px-3 py-3 font-medium">予約投稿</th>
             <th className="w-20 px-4 py-3 text-right font-medium">操作</th>

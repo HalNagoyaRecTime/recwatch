@@ -29,7 +29,7 @@ const schedules: ManagedSchedule[] = [
 ];
 
 describe("filterSchedules", () => {
-  it("イベント名・集合場所を対象に検索する", () => {
+  it("イベント名・開催場所を対象に検索する", () => {
     expect(filterSchedules(schedules, "開会式")).toEqual([schedules[0]]);
     expect(filterSchedules(schedules, "〇人〇脚")).toEqual([schedules[1]]);
     expect(filterSchedules(schedules, "コートB")).toEqual([schedules[1]]);

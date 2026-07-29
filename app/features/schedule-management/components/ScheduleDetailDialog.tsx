@@ -85,7 +85,7 @@ export function ScheduleDetailDialog({
           <DetailItem label="開催時間">
             {schedule.startTime}〜{schedule.endTime}
           </DetailItem>
-          <DetailItem label="集合場所">{schedule.venueName || "—"}</DetailItem>
+          <DetailItem label="開催場所">{schedule.venueName || "—"}</DetailItem>
           <DetailItem label="予約投稿">
             <SchedulePublicationLabel publication={schedule.publication} />
           </DetailItem>

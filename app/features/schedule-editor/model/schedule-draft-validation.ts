@@ -30,7 +30,7 @@ export function validateScheduleDraft(
   }
 
   if (!draft.venue.trim()) {
-    errors.venue = "集合場所を入力してください";
+    errors.venue = "開催場所を入力してください";
   }
 
   if (!draft.eventName.trim()) {

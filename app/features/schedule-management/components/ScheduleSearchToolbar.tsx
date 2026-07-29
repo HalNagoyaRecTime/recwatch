@@ -25,7 +25,7 @@ export function ScheduleSearchToolbar({
           <input
             type="search"
             value={query}
-            placeholder="イベント名・集合場所で検索"
+            placeholder="イベント名・開催場所で検索"
             className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-[color:var(--text-3)]"
             onChange={(event) => onQueryChange(event.currentTarget.value)}
           />
