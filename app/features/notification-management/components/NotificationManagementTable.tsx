@@ -6,6 +6,7 @@ import { NotificationStatusBadge } from "./NotificationStatusBadge";
 
 type NotificationManagementTableProps = {
   notifications: ManagedNotification[];
+  isDeleteDisabled?: boolean;
   onDelete: (notification: ManagedNotification) => void;
 };
 
@@ -25,6 +26,7 @@ function fallback(value: string | null) {
 
 export function NotificationManagementTable({
   notifications,
+  isDeleteDisabled = false,
   onDelete,
 }: NotificationManagementTableProps) {
   return (
@@ -79,9 +81,10 @@ export function NotificationManagementTable({
                 {canModifyNotification(notification) ? (
                   <button
                     type="button"
+                    disabled={isDeleteDisabled}
                     aria-label={`「${notification.title}」を削除`}
                     title="未送信通知を削除"
-                    className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-[color:var(--text-3)] transition hover:bg-[color:var(--tone-red-bg)] hover:text-[color:var(--tone-red-text)]"
+                    className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-[color:var(--text-3)] transition hover:bg-[color:var(--tone-red-bg)] hover:text-[color:var(--tone-red-text)] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent disabled:hover:text-[color:var(--text-3)]"
                     onClick={() => onDelete(notification)}
                   >
                     <Trash2Icon size={15} aria-hidden="true" />

@@ -89,7 +89,7 @@ export function NotificationManagementPage({
   }
 
   async function handleDelete() {
-    if (!selectedNotification || isDeleting) {
+    if (!selectedNotification || isDeleting || isLoadingMore) {
       return;
     }
 
@@ -164,6 +164,7 @@ export function NotificationManagementPage({
           <>
             <NotificationManagementTable
               notifications={notifications}
+              isDeleteDisabled={isLoadingMore}
               onDelete={setSelectedNotification}
             />
             {notifications.length < total ? (

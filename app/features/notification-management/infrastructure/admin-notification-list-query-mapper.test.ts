@@ -6,7 +6,7 @@ describe("toAdminNotificationListPath", () => {
   it("一覧条件をBackendのQueryへ変換する", () => {
     expect(
       toAdminNotificationListPath({
-        status: "draft",
+        sendStatus: "draft",
         eventId: 3,
         from: "2026-11-07T09:00:00+09:00",
         to: "2026-11-07T10:00:00+09:00",

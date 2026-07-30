@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
+import { ApiClientError } from "~/lib/api-client-error";
 import { NotificationManagementError } from "../application/notification-management-error";
 import {
   createHttpAdminNotificationManagementGateway,
@@ -30,7 +31,7 @@ describe("createHttpAdminNotificationManagementGateway", () => {
       createClient({ get })
     );
 
-    await expect(gateway.list({ status: "draft" })).resolves.toMatchObject({
+    await expect(gateway.list({ sendStatus: "draft" })).resolves.toMatchObject({
       total: 1,
       notifications: [{ id: 10, status: "draft" }],
     });
@@ -86,7 +87,9 @@ describe("createHttpAdminNotificationManagementGateway", () => {
   it("409を競合エラーへ変換する", async () => {
     const gateway = createHttpAdminNotificationManagementGateway(
       createClient({
-        delete: vi.fn().mockRejectedValue({ status: 409 }),
+        delete: vi
+          .fn()
+          .mockRejectedValue(new ApiClientError(409, "Notification is in use")),
       })
     );
 

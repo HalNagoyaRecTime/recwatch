@@ -3,7 +3,7 @@ import type { NotificationListQuery } from "../model/managed-notification";
 export function toAdminNotificationListPath(query: NotificationListQuery) {
   const search = new URLSearchParams();
 
-  if (query.status) search.set("sendStatus", query.status);
+  if (query.sendStatus) search.set("sendStatus", query.sendStatus);
   if (query.eventId !== undefined) {
     search.set("eventId", String(query.eventId));
   }

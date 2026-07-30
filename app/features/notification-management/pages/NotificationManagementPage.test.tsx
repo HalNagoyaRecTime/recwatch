@@ -108,6 +108,54 @@ describe("NotificationManagementPage", () => {
     expect(await screen.findByText(message)).toBeInTheDocument();
   });
 
+  it("追加読込が完了するまで削除操作を無効にする", async () => {
+    let resolveNextPage!: (value: {
+      notifications: ManagedNotification[];
+      total: number;
+      limit: number;
+      offset: number;
+    }) => void;
+    const nextPage = new Promise<{
+      notifications: ManagedNotification[];
+      total: number;
+      limit: number;
+      offset: number;
+    }>((resolve) => {
+      resolveNextPage = resolve;
+    });
+    const list = vi
+      .fn()
+      .mockResolvedValueOnce({
+        notifications: [draftNotification],
+        total: 2,
+        limit: 50,
+        offset: 0,
+      })
+      .mockReturnValueOnce(nextPage);
+    const user = userEvent.setup();
+
+    render(<NotificationManagementPage gateway={createGateway({ list })} />);
+
+    await user.click(
+      await screen.findByRole("button", { name: "さらに読み込む" })
+    );
+
+    const deleteButton = screen.getByRole("button", {
+      name: "「集合場所変更」を削除",
+    });
+    expect(deleteButton).toBeDisabled();
+
+    resolveNextPage({
+      notifications: [{ ...draftNotification, id: 11, title: "通知11" }],
+      total: 2,
+      limit: 50,
+      offset: 1,
+    });
+
+    expect(await screen.findByText("通知11")).toBeInTheDocument();
+    expect(deleteButton).toBeEnabled();
+  });
+
   it("削除成功後に対象の通知を一覧から除外する", async () => {
     const deleteNotification = vi.fn().mockResolvedValue(undefined);
     const user = userEvent.setup();

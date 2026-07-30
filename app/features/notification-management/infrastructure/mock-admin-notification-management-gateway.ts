@@ -51,6 +51,26 @@ let notifications: ManagedNotification[] = [
     status: "failed",
     count: 24,
   }),
+  {
+    ...createNotification({
+      id: 105,
+      title: "一部配信済み通知",
+      body: "未送信と送信済みの配信予定を含みます。",
+      audienceName: "配信対象者 2名",
+      scheduledAt: "2026-11-07T13:30:00+09:00",
+      relatedEventId: null,
+      relatedEventName: null,
+      status: "sending",
+      count: 2,
+    }),
+    deliverySummary: {
+      total: 2,
+      draft: 1,
+      sending: 0,
+      sent: 1,
+      failed: 0,
+    },
+  },
 ];
 
 function createNotification(
@@ -91,9 +111,10 @@ export const mockAdminNotificationManagementGateway: AdminNotificationManagement
   {
     async list(query = {}) {
       await new Promise((resolve) => window.setTimeout(resolve, 250));
-      const filtered = query.status
+      const filtered = query.sendStatus
         ? notifications.filter(
-            (notification) => notification.status === query.status
+            (notification) =>
+              notification.deliverySummary[query.sendStatus!] > 0
           )
         : notifications;
       const offset = query.offset ?? 0;

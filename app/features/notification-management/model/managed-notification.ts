@@ -32,7 +32,7 @@ export type ManagedNotificationPage = {
 };
 
 export type NotificationListQuery = {
-  status?: ManagedNotificationStatus;
+  sendStatus?: ManagedNotificationStatus;
   eventId?: number;
   from?: string;
   to?: string;
