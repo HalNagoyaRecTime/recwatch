@@ -48,6 +48,6 @@ export type AdminNotificationUpdateRequest = {
   audience?:
     | { type: "all" }
     | { type: "class_room"; classRoomId: number }
-    | { type: "gathering_group"; gatheringGroupId: number }
+    | { type: "gathering"; gatheringId: number }
     | { type: "event_participants"; eventId: number };
 };

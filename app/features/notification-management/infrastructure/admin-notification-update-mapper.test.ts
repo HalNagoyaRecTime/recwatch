@@ -15,4 +15,14 @@ describe("toAdminNotificationUpdateRequest", () => {
       new NotificationManagementError("invalid_request")
     );
   });
+
+  it("集合対象をBackendのgathering契約へ変換する", () => {
+    expect(
+      toAdminNotificationUpdateRequest({
+        audience: { type: "gathering", gatheringId: 23 },
+      })
+    ).toEqual({
+      audience: { type: "gathering", gatheringId: 23 },
+    });
+  });
 });
