@@ -9,11 +9,7 @@ describe("toCreateAdminNotificationRequest", () => {
   it.each([
     ["all", "", { type: "all" }],
     ["class_room", "12", { type: "class_room", classRoomId: 12 }],
-    [
-      "gathering_group",
-      "23",
-      { type: "gathering_group", gatheringGroupId: 23 },
-    ],
+    ["gathering", "23", { type: "gathering", gatheringId: 23 }],
     ["event_participants", "34", { type: "event_participants", eventId: 34 }],
   ] as const)(
     "%s の通知対象をAPI Requestへ変換する",

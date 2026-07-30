@@ -1,7 +1,7 @@
 export type NotificationAudienceType =
   | "all"
   | "class_room"
-  | "gathering_group"
+  | "gathering"
   | "event_participants";
 
 export type NotificationDraft = {
@@ -24,6 +24,6 @@ export const notificationAudienceLabels: Record<
 > = {
   all: "全体",
   class_room: "クラス",
-  gathering_group: "集合グループ",
+  gathering: "集合",
   event_participants: "競技参加者",
 };

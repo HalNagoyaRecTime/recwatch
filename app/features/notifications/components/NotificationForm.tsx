@@ -119,7 +119,7 @@ export function NotificationForm({
           ))}
         </select>
         <p className="mt-1.5 text-xs text-[color:var(--text-3)]">
-          全体 / クラス / 集合グループ / 競技参加者
+          全体 / クラス / 集合 / 競技参加者
         </p>
       </div>
 

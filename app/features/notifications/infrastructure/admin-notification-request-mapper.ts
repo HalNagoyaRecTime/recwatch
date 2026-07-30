@@ -32,8 +32,8 @@ function toAudienceRequest(
   switch (draft.audienceType) {
     case "class_room":
       return { type: draft.audienceType, classRoomId: audienceId };
-    case "gathering_group":
-      return { type: draft.audienceType, gatheringGroupId: audienceId };
+    case "gathering":
+      return { type: draft.audienceType, gatheringId: audienceId };
     case "event_participants":
       return { type: draft.audienceType, eventId: audienceId };
   }
