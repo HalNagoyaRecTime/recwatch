@@ -27,7 +27,11 @@ describe("apiClient", () => {
     expect(fetchMock).toHaveBeenCalledWith("https://api.example.com/resource", {
       method: "POST",
       credentials: "include",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+        "X-Client-Type": "web",
+      },
       body: JSON.stringify({ name: "value" }),
     });
   });

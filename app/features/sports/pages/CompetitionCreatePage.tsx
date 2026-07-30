@@ -1,78 +1,177 @@
 import { useState } from "react";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
+
+import { apiClient } from "~/lib/api-client";
+
+type Event = {
+  event_id: number;
+  event_name: string;
+  rule_text: string | null;
+  venue: string;
+  start_time: string;
+  end_time: string;
+};
+
+function formatTimeForSubmit(value: string): string | null {
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  const parts = trimmed.split(":");
+  let formatted = "";
+  if (parts.length === 2) {
+    formatted = parts[0].padStart(2, "0") + parts[1].padStart(2, "0");
+  } else {
+    formatted = trimmed.replace(":", "").padStart(4, "0");
+  }
+  return /^([01]\d|2[0-3])[0-5]\d$/.test(formatted) ? formatted : null;
+}
 
 export function CompetitionCreatePage() {
+  const navigate = useNavigate();
+
   const [form, setForm] = useState({
     name: "",
     rules: "",
     venue: "",
-    meeting: "",
     start: "",
     end: "",
-    meetingPlace: "",
   });
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+
   const update = (key: keyof typeof form, value: string) =>
     setForm((current) => ({ ...current, [key]: value }));
+
+  async function handleSubmit() {
+    if (!form.name.trim() || !form.venue.trim()) {
+      setSubmitError("競技名および実施場所を入力してください。");
+      return;
+    }
+
+    const startTime = formatTimeForSubmit(form.start);
+    const endTime = formatTimeForSubmit(form.end);
+
+    if (!startTime || !endTime) {
+      setSubmitError(
+        "開始時間および終了時間を正しい形式（例 09:10）で入力してください。"
+      );
+      return;
+    }
+
+    if (startTime >= endTime) {
+      setSubmitError("終了時間は開始時間より後の時刻を指定してください。");
+      return;
+    }
+
+    setIsSubmitting(true);
+    setSubmitError(null);
+
+    try {
+      await apiClient.post<Event>("/api/v1/events", {
+        event_name: form.name.trim(),
+        rule_text: form.rules.trim() || null,
+        venue: form.venue.trim(),
+        start_time: startTime,
+        end_time: endTime,
+      });
+
+      navigate("/events");
+    } catch (error) {
+      setSubmitError(
+        error instanceof Error
+          ? error.message
+          : "競技データの登録に失敗しました。"
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
   return (
     <div className="min-h-full bg-[#f7faff] p-1 text-[#0a0a0a]">
       <h1 className="text-[17px] font-bold">競技 新規登録</h1>
       <p className="mt-1 text-xs text-black/40">
         アプリの競技一覧・競技詳細に反映されます
       </p>
+
       <div className="mt-5 grid gap-6 lg:grid-cols-[440px_minmax(320px,384px)]">
         <div className="space-y-3">
           <label className="block text-sm font-bold">
             競技名 <span className="text-red-500">*</span>
             <input
+              disabled={isSubmitting}
               value={form.name}
               onChange={(e) => update("name", e.target.value)}
               placeholder="例：走れ！〇人〇脚！"
-              className="mt-1 h-8 w-full rounded-[10px] border border-[#d2d2d2] bg-white px-3 font-normal outline-none"
+              className="mt-1 h-8 w-full rounded-[10px] border border-[#d2d2d2] bg-white px-3 font-normal outline-none disabled:opacity-50"
             />
           </label>
           <label className="block text-sm font-bold">
             競技ルール <span className="text-red-500">*</span>
             <textarea
+              disabled={isSubmitting}
               value={form.rules}
               onChange={(e) => update("rules", e.target.value)}
               placeholder="ルールの詳細を入力"
-              className="mt-1 h-16 w-full resize-none rounded-[10px] border border-[#d2d2d2] bg-white px-3 py-2 font-normal outline-none"
+              className="mt-1 h-16 w-full resize-none rounded-[10px] border border-[#d2d2d2] bg-white px-3 py-2 font-normal outline-none disabled:opacity-50"
             />
           </label>
-          {[
-            ["venue", "実施場所", "例：コートA"],
-            ["meeting", "集合時間", "例：08:55"],
-            ["start", "開始時間", "例：09:10"],
-            ["end", "終了時間", "例：10:30"],
-            ["meetingPlace", "集合場所", "例：集合場所A"],
-          ].map(([key, label, placeholder]) => (
-            <label key={key} className="block text-sm font-bold">
-              {label} <span className="text-red-500">*</span>
-              <input
-                value={form[key as keyof typeof form]}
-                onChange={(e) =>
-                  update(key as keyof typeof form, e.target.value)
-                }
-                placeholder={placeholder}
-                className="mt-1 h-8 w-full rounded-[10px] border border-[#d2d2d2] bg-white px-3 font-normal outline-none"
-              />
-            </label>
-          ))}
+
+          <label className="block text-sm font-bold">
+            実施場所 <span className="text-red-500">*</span>
+            <input
+              disabled={isSubmitting}
+              value={form.venue}
+              onChange={(e) => update("venue", e.target.value)}
+              placeholder="例：コートA"
+              className="mt-1 h-8 w-full rounded-[10px] border border-[#d2d2d2] bg-white px-3 font-normal outline-none disabled:opacity-50"
+            />
+          </label>
+
+          <label className="block text-sm font-bold">
+            開始時間 <span className="text-red-500">*</span>
+            <input
+              disabled={isSubmitting}
+              value={form.start}
+              onChange={(e) => update("start", e.target.value)}
+              placeholder="例：09:10"
+              className="mt-1 h-8 w-full rounded-[10px] border border-[#d2d2d2] bg-white px-3 font-normal outline-none disabled:opacity-50"
+            />
+          </label>
+
+          <label className="block text-sm font-bold">
+            終了時間 <span className="text-red-500">*</span>
+            <input
+              disabled={isSubmitting}
+              value={form.end}
+              onChange={(e) => update("end", e.target.value)}
+              placeholder="例：10:30"
+              className="mt-1 h-8 w-full rounded-[10px] border border-[#d2d2d2] bg-white px-3 font-normal outline-none disabled:opacity-50"
+            />
+          </label>
+
+          {submitError ? (
+            <p className="text-sm text-red-600">{submitError}</p>
+          ) : null}
+
           <div className="flex gap-3 pt-2">
             <Link
-              to="/sports"
+              to="/events"
               className="rounded-[10px] border border-[#d2d2d2] bg-white px-5 py-2 text-sm"
             >
               キャンセル
             </Link>
             <button
               type="button"
-              className="rounded-[10px] bg-[#0070bb] px-5 py-2 text-sm text-white"
+              disabled={isSubmitting}
+              onClick={() => void handleSubmit()}
+              className="rounded-[10px] bg-[#0070bb] px-5 py-2 text-sm text-white disabled:cursor-not-allowed disabled:opacity-50"
             >
-              登録する
+              {isSubmitting ? "登録中..." : "登録する"}
             </button>
           </div>
         </div>
+
         <div>
           <p className="mb-2 text-xs text-black/40">アプリ表示プレビュー</p>
           <div className="overflow-hidden rounded-[14px] border border-[#d2d2d2] bg-white">
@@ -80,10 +179,8 @@ export function CompetitionCreatePage() {
               ["競技名", form.name],
               ["競技ルール", form.rules],
               ["実施場所", form.venue],
-              ["集合時間", form.meeting],
               ["開始時間", form.start],
               ["終了時間", form.end],
-              ["集合場所", form.meetingPlace],
             ].map(([label, value]) => (
               <div
                 key={label}
