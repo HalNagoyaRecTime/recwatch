@@ -10,6 +10,27 @@ import { NotificationCreatePage } from "./NotificationCreatePage";
 afterEach(cleanup);
 
 describe("NotificationCreatePage", () => {
+  it("API未接続時は送信操作と成功表示を無効にする", async () => {
+    const submit = vi.fn();
+
+    render(
+      <NotificationCreatePage
+        submitter={{ submit }}
+        audienceOptions={mockNotificationAudienceOptions}
+        isSubmissionEnabled={false}
+      />
+    );
+
+    expect(
+      screen.getByText("API接続後に通知を配信できます。")
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "配信する" })).toBeDisabled();
+    expect(
+      screen.queryByText("通知を配信予定に登録しました。")
+    ).not.toBeInTheDocument();
+    expect(submit).not.toHaveBeenCalled();
+  });
+
   it("送信中の二重登録を防止して成功メッセージを表示する", async () => {
     let resolveSubmission: (() => void) | undefined;
     const submit = vi.fn(

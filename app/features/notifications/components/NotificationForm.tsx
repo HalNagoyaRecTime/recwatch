@@ -12,6 +12,7 @@ type NotificationFormProps = {
   draft: NotificationDraft;
   errors: NotificationDraftErrors;
   audienceOptions: NotificationAudienceOption[];
+  isSubmissionDisabled?: boolean;
   isSubmitting: boolean;
   onChange: (draft: NotificationDraft) => void;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
@@ -24,6 +25,7 @@ export function NotificationForm({
   draft,
   errors,
   audienceOptions,
+  isSubmissionDisabled = false,
   isSubmitting,
   onChange,
   onSubmit,
@@ -166,7 +168,7 @@ export function NotificationForm({
       <div className="pt-1">
         <button
           type="submit"
-          disabled={!canSubmit || isSubmitting}
+          disabled={!canSubmit || isSubmissionDisabled || isSubmitting}
           className="inline-flex h-10 min-w-24 items-center justify-center rounded-lg bg-[color:var(--brand-button-1)] px-5 text-sm font-semibold text-white transition hover:bg-[color:var(--brand-button-2)] disabled:cursor-not-allowed disabled:opacity-45"
         >
           {isSubmitting ? "確認中..." : "配信する"}

@@ -38,11 +38,13 @@ function formatPreviewTime(date: Date) {
 type NotificationCreatePageProps = {
   submitter: NotificationSubmitter;
   audienceOptions: NotificationAudienceOption[];
+  isSubmissionEnabled?: boolean;
 };
 
 export function NotificationCreatePage({
   submitter,
   audienceOptions,
+  isSubmissionEnabled = true,
 }: NotificationCreatePageProps) {
   const [draft, setDraft] = useState<NotificationDraft>(
     initialNotificationDraft
@@ -76,6 +78,10 @@ export function NotificationCreatePage({
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (!isSubmissionEnabled) {
+      return;
+    }
+
     const nextErrors = validateNotificationDraft(draft);
     setErrors(nextErrors);
 
@@ -114,6 +120,7 @@ export function NotificationCreatePage({
               draft={draft}
               errors={errors}
               audienceOptions={audienceOptions}
+              isSubmissionDisabled={!isSubmissionEnabled}
               isSubmitting={isSubmitting}
               onChange={handleChange}
               onSubmit={handleSubmit}
@@ -127,8 +134,10 @@ export function NotificationCreatePage({
                 : "text-[color:var(--tone-green-text)]"
             }`}
           >
-            {submissionError ??
-              (submitted ? "通知を配信予定に登録しました。" : null)}
+            {!isSubmissionEnabled
+              ? "API接続後に通知を配信できます。"
+              : (submissionError ??
+                (submitted ? "通知を配信予定に登録しました。" : null))}
           </div>
         </section>
 

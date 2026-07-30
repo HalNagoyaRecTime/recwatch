@@ -11,6 +11,7 @@ export default function NotificationsNewRoute() {
     <NotificationCreatePage
       submitter={mockNotificationSubmitter}
       audienceOptions={mockNotificationAudienceOptions}
+      isSubmissionEnabled={false}
     />
   );
 }
