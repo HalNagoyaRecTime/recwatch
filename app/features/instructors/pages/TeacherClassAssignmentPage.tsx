@@ -168,33 +168,6 @@ export function TeacherClassAssignmentPage({
               </span>
             </div>
           </div>
-
-          <div className="overflow-x-auto rounded-[14px] border border-[#d2d2d2] bg-white">
-            <table className="w-full text-left text-sm">
-              <thead className="bg-[#f9fafb] text-[11px] text-black/50">
-                <tr>
-                  {["教官ID", "教官名", "担当クラス"].map((h) => (
-                    <th key={h} className="border-b border-[#d2d2d2] px-4 py-2">
-                      {h}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {selectedTeacher ? (
-                  <tr>
-                    <td className="px-4 py-3">{selectedTeacher.teacherCode}</td>
-                    <td className="px-4 py-3">{selectedTeacher.displayName}</td>
-                    <td className="px-4 py-3 whitespace-pre-line">
-                      {previewClassRoomNames.length > 0
-                        ? previewClassRoomNames.join("\n")
-                        : "-"}
-                    </td>
-                  </tr>
-                ) : null}
-              </tbody>
-            </table>
-          </div>
         </div>
       </div>
     </div>
