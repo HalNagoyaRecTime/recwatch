@@ -83,7 +83,26 @@ export function AuthLoginPage({
             ? "ログイン中..."
             : "Microsoft アカウントでログイン"}
         </AuthPrimaryButton>
+
+        {import.meta.env.DEV ? <DevLoginBypassLink /> : null}
       </div>
     </AuthLayout>
+  );
+}
+
+// Skips the Microsoft OAuth flow via a backend-only endpoint that is inert
+// unless the API is running with NODE_ENV=development. Only rendered in
+// local dev builds (import.meta.env.DEV), never in a production bundle.
+function DevLoginBypassLink() {
+  const devLoginUrl = buildBackendUrl("/api/v1/auth/dev-login");
+  if (!devLoginUrl) return null;
+
+  return (
+    <a
+      href={devLoginUrl}
+      className="block text-center text-xs text-black/40 underline hover:text-black/60"
+    >
+      開発用: ログインをバイパスする
+    </a>
   );
 }

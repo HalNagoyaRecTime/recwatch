@@ -4,6 +4,7 @@ export type classRoomData = {
   ClassRoomId: number;
   ClassRoomCode: string;
   ClassRoomName: string;
+  StudentCount: number;
 };
 
 export function toClassRoomData(dto: classRoomDTO): classRoomData {
@@ -11,5 +12,6 @@ export function toClassRoomData(dto: classRoomDTO): classRoomData {
     ClassRoomId: dto.class_room_id,
     ClassRoomCode: dto.class_code,
     ClassRoomName: dto.class_name,
+    StudentCount: dto.student_count,
   };
 }

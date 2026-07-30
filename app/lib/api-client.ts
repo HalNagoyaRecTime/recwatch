@@ -10,8 +10,8 @@ function requireBackendUrl(path: string) {
   return url;
 }
 
-async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(requireBackendUrl(path), {
+function performRequest(path: string, init?: RequestInit) {
+  return fetch(requireBackendUrl(path), {
     credentials: "include",
     ...init,
     headers: {
@@ -20,6 +20,10 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
       ...init?.headers,
     },
   });
+}
+
+async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  const res = await performRequest(path, init);
 
   if (!res.ok) {
     const body: unknown = await res.json().catch(() => null);
@@ -31,6 +35,25 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   }
 
   return res.json() as Promise<T>;
+}
+
+// Some endpoints return a meaningful JSON body on specific non-2xx statuses
+// (e.g. 422 with per-row validation errors) instead of a generic error shape.
+async function requestAllowingStatuses<T>(
+  path: string,
+  init: RequestInit | undefined,
+  allowedStatuses: number[]
+): Promise<{ status: number; data: T }> {
+  const res = await performRequest(path, init);
+
+  if (!res.ok && !allowedStatuses.includes(res.status)) {
+    const body: unknown = await res.json().catch(() => null);
+    throw new Error(getApiErrorMessage(body, res.status));
+  }
+
+  const data =
+    res.status === 204 ? (undefined as T) : ((await res.json()) as T);
+  return { status: res.status, data };
 }
 
 function getApiErrorMessage(body: unknown, status: number): string {
@@ -67,4 +90,18 @@ export const apiClient = {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
     }),
+  postAllowingStatuses: <T>(
+    path: string,
+    body: unknown,
+    allowedStatuses: number[]
+  ) =>
+    requestAllowingStatuses<T>(
+      path,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      },
+      allowedStatuses
+    ),
 };
