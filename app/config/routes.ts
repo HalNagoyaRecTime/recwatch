@@ -5,6 +5,7 @@ export type NavIconKey =
   | "dashboard"
   | "notification"
   | "settings"
+  | "notificationHistory"
   | "classRoom"
   | "trophy"
   | "users";
@@ -87,14 +88,14 @@ export const navSections = [
           {
             id: "sports-list",
             label: "Sports List",
-            to: "/sports",
+            to: "/events",
             roles: ["admin", "manager"],
           },
         ],
       },
       {
         id: "schedule",
-        label: "Schedule",
+        label: "イベント管理",
         icon: "clock",
         to: "/schedule",
         roles: ["admin", "manager", "member"],
@@ -104,6 +105,13 @@ export const navSections = [
         label: "通知作成",
         icon: "notification",
         to: "/notifications/new",
+        roles: ["admin", "manager"],
+      },
+      {
+        id: "notification-management",
+        label: "通知管理",
+        icon: "notificationHistory",
+        to: "/notifications",
         roles: ["admin", "manager"],
       },
     ],

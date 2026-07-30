@@ -1,9 +1,18 @@
-import { ScheduleCreatePage } from "~/features/schedule/pages/ScheduleCreatePage";
+import {
+  httpEventNotificationGateway,
+  httpScheduleManagementGateway,
+} from "~/features/schedule-management/infrastructure/http-event-management-dependencies";
+import { EventTimeRegistrationPage } from "~/features/schedule-management/pages/EventTimeRegistrationPage";
 
 export function meta() {
-  return [{ title: "スケジュール 新規登録 | recwatch" }];
+  return [{ title: "イベント時間登録 | REC TIME" }];
 }
 
 export default function ScheduleCreateRoute() {
-  return <ScheduleCreatePage />;
+  return (
+    <EventTimeRegistrationPage
+      gateway={httpScheduleManagementGateway}
+      eventNotificationGateway={httpEventNotificationGateway}
+    />
+  );
 }

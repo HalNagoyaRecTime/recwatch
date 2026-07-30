@@ -6,12 +6,13 @@ import type {
 } from "../model/notification-draft";
 import { notificationAudienceLabels } from "../model/notification-draft";
 import type { NotificationDraftErrors } from "../model/notification-draft-validation";
-import type { NotificationGroup } from "../model/notification-group";
+import type { NotificationAudienceOption } from "../model/notification-audience-option";
 
 type NotificationFormProps = {
   draft: NotificationDraft;
   errors: NotificationDraftErrors;
-  groups: NotificationGroup[];
+  audienceOptions: NotificationAudienceOption[];
+  isSubmissionDisabled?: boolean;
   isSubmitting: boolean;
   onChange: (draft: NotificationDraft) => void;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
@@ -23,7 +24,8 @@ const fieldClassName =
 export function NotificationForm({
   draft,
   errors,
-  groups,
+  audienceOptions,
+  isSubmissionDisabled = false,
   isSubmitting,
   onChange,
   onSubmit,
@@ -31,7 +33,10 @@ export function NotificationForm({
   const canSubmit =
     draft.title.trim().length > 0 &&
     draft.body.trim().length > 0 &&
-    (draft.audienceType === "all" || draft.groupId.length > 0);
+    (draft.audienceType === "all" || draft.audienceId.length > 0);
+  const filteredAudienceOptions = audienceOptions.filter(
+    (option) => option.type === draft.audienceType
+  );
 
   return (
     <form className="flex flex-col gap-4" onSubmit={onSubmit} noValidate>
@@ -105,8 +110,7 @@ export function NotificationForm({
               ...draft,
               audienceType: event.currentTarget
                 .value as NotificationAudienceType,
-              groupId:
-                event.currentTarget.value === "group" ? draft.groupId : "",
+              audienceId: "",
             })
           }
         >
@@ -117,40 +121,45 @@ export function NotificationForm({
           ))}
         </select>
         <p className="mt-1.5 text-xs text-[color:var(--text-3)]">
-          全体 / グループ・チーム
+          全体 / クラス / 集合 / 競技参加者
         </p>
       </div>
 
-      {draft.audienceType === "group" ? (
+      {draft.audienceType !== "all" ? (
         <div>
-          <label htmlFor="notification-group" className="text-sm font-semibold">
-            対象グループ<span className="ml-0.5 text-red-500">*</span>
+          <label
+            htmlFor="notification-audience-target"
+            className="text-sm font-semibold"
+          >
+            対象<span className="ml-0.5 text-red-500">*</span>
           </label>
           <select
-            id="notification-group"
+            id="notification-audience-target"
             className={`${fieldClassName} mt-2 h-10 appearance-auto`}
-            value={draft.groupId}
-            aria-invalid={Boolean(errors.groupId)}
+            value={draft.audienceId}
+            aria-invalid={Boolean(errors.audienceId)}
             aria-describedby={
-              errors.groupId ? "notification-group-error" : undefined
+              errors.audienceId
+                ? "notification-audience-target-error"
+                : undefined
             }
             onChange={(event) =>
-              onChange({ ...draft, groupId: event.currentTarget.value })
+              onChange({ ...draft, audienceId: event.currentTarget.value })
             }
           >
-            <option value="">グループを選択</option>
-            {groups.map((group) => (
-              <option key={group.id} value={group.id}>
-                {group.name}
+            <option value="">対象を選択</option>
+            {filteredAudienceOptions.map((option) => (
+              <option key={option.id} value={option.id}>
+                {option.name}
               </option>
             ))}
           </select>
-          {errors.groupId ? (
+          {errors.audienceId ? (
             <p
-              id="notification-group-error"
+              id="notification-audience-target-error"
               className="mt-1.5 text-xs text-red-600"
             >
-              {errors.groupId}
+              {errors.audienceId}
             </p>
           ) : null}
         </div>
@@ -159,7 +168,7 @@ export function NotificationForm({
       <div className="pt-1">
         <button
           type="submit"
-          disabled={!canSubmit || isSubmitting}
+          disabled={!canSubmit || isSubmissionDisabled || isSubmitting}
           className="inline-flex h-10 min-w-24 items-center justify-center rounded-lg bg-[color:var(--brand-button-1)] px-5 text-sm font-semibold text-white transition hover:bg-[color:var(--brand-button-2)] disabled:cursor-not-allowed disabled:opacity-45"
         >
           {isSubmitting ? "確認中..." : "配信する"}

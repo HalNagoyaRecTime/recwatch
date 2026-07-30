@@ -17,9 +17,8 @@ export type TeacherDTO = {
 export type TeacherPageDTO = {
   items: TeacherDTO[];
   total: number;
-  page: number;
   limit: number;
-  total_pages: number;
+  offset: number;
 };
 
 export type TeacherUpdateRequest = {
@@ -43,7 +42,7 @@ export type ClassRoomPageDTO = {
   offset: number;
 };
 
-const ALL_TEACHERS_LIMIT = 200;
+const ALL_TEACHERS_LIMIT = 100;
 const ALL_CLASSROOMS_LIMIT = 100;
 
 export const TeacherApi = {

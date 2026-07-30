@@ -17,8 +17,8 @@ export function validateNotificationDraft(
     errors.body = "本文を入力してください";
   }
 
-  if (draft.audienceType === "group" && !draft.groupId) {
-    errors.groupId = "対象グループを選択してください";
+  if (draft.audienceType !== "all" && !draft.audienceId) {
+    errors.audienceId = "通知対象を選択してください";
   }
 
   return errors;

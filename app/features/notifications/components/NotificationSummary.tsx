@@ -1,11 +1,11 @@
 import type { NotificationDraft } from "../model/notification-draft";
 import { notificationAudienceLabels } from "../model/notification-draft";
-import type { NotificationGroup } from "../model/notification-group";
+import type { NotificationAudienceOption } from "../model/notification-audience-option";
 
 type NotificationSummaryProps = {
   draft: NotificationDraft;
   deliveryTime: string;
-  groups: NotificationGroup[];
+  audienceOptions: NotificationAudienceOption[];
 };
 
 type NotificationSummaryKey =
@@ -24,16 +24,17 @@ const rows: Array<{ key: NotificationSummaryKey; label: string }> = [
 export function NotificationSummary({
   draft,
   deliveryTime,
-  groups,
+  audienceOptions,
 }: NotificationSummaryProps) {
-  const selectedGroup = groups.find((group) => group.id === draft.groupId);
+  const selectedAudience = audienceOptions.find(
+    (option) =>
+      option.type === draft.audienceType && option.id === draft.audienceId
+  );
   const values: Record<(typeof rows)[number]["key"], string> = {
     title: draft.title || "-",
     body: draft.body || "-",
     audienceType:
-      draft.audienceType === "group"
-        ? selectedGroup?.name || notificationAudienceLabels.group
-        : notificationAudienceLabels.all,
+      selectedAudience?.name ?? notificationAudienceLabels[draft.audienceType],
     deliveryTime,
   };
 
