@@ -1,3 +1,4 @@
+import { MoreHorizontal } from "lucide-react";
 import type { ClassRoomData } from "~/features/classRoom/model/classRoom";
 
 export function ClassRoomTable({
@@ -16,13 +17,14 @@ export function ClassRoomTable({
             <th className="border-b border-[#d2d2d2] px-4 py-2">クラス記号</th>
             <th className="border-b border-[#d2d2d2] px-4 py-2">教官名</th>
             <th className="border-b border-[#d2d2d2] px-4 py-2">学生数</th>
+            <th className="border-b border-[#d2d2d2] px-4 py-2">操作</th>
           </tr>
         </thead>
         <tbody>
           {classRooms.length === 0 ? (
             <tr>
               <td
-                colSpan={4}
+                colSpan={5}
                 className="px-4 py-8 text-center text-xs text-black/40"
               >
                 該当するクラスが見つかりません。
@@ -40,6 +42,17 @@ export function ClassRoomTable({
                   {classRoom.teacherName ?? "未設定"}
                 </td>
                 <td className="px-4 py-3">{classRoom.studentCount}名</td>
+                <td className="px-4 py-3">
+                  <button
+                    type="button"
+                    aria-label={`${classRoom.classRoomName}の詳細・操作`}
+                    title="編集・削除は未実装"
+                    disabled
+                    className="text-black/45 disabled:cursor-not-allowed"
+                  >
+                    <MoreHorizontal className="size-4" />
+                  </button>
+                </td>
               </tr>
             ))
           )}

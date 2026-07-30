@@ -40,8 +40,18 @@ describe("ClassRoomPage", () => {
     expect(screen.getByText("32名")).toBeInTheDocument();
     expect(screen.getByText("未設定")).toBeInTheDocument();
     expect(
-      screen.queryByRole("columnheader", { name: "操作" })
-    ).not.toBeInTheDocument();
+      screen.getByRole("columnheader", { name: "操作" })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", {
+        name: "情報処理学科1年A組の詳細・操作",
+      })
+    ).toBeDisabled();
+    expect(
+      screen.getByRole("button", {
+        name: "高度情報学科1年A組の詳細・操作",
+      })
+    ).toBeDisabled();
   });
 
   it("クラス記号・クラス名・教官名で一覧を絞り込む", async () => {
