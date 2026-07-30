@@ -1,16 +1,18 @@
-import { mockScheduleFormOptions } from "~/features/schedule-editor/infrastructure/mock-schedule-form-options";
-import { mockScheduleSubmitter } from "~/features/schedule-editor/infrastructure/mock-schedule-submitter";
-import { ScheduleEditorPage } from "~/features/schedule-editor/pages/ScheduleEditorPage";
+import {
+  httpEventNotificationGateway,
+  httpScheduleManagementGateway,
+} from "~/features/schedule-management/infrastructure/http-event-management-dependencies";
+import { EventTimeRegistrationPage } from "~/features/schedule-management/pages/EventTimeRegistrationPage";
 
 export function meta() {
-  return [{ title: "スケジュール新規登録 | REC TIME" }];
+  return [{ title: "イベント時間登録 | REC TIME" }];
 }
 
 export default function ScheduleCreateRoute() {
   return (
-    <ScheduleEditorPage
-      submitter={mockScheduleSubmitter}
-      options={mockScheduleFormOptions}
+    <EventTimeRegistrationPage
+      gateway={httpScheduleManagementGateway}
+      eventNotificationGateway={httpEventNotificationGateway}
     />
   );
 }

@@ -1,38 +1,53 @@
 import { useEffect, useState } from "react";
 import { CircleAlertIcon } from "lucide-react";
 
-import type { NotificationScheduleGateway } from "../application/notification-schedule-gateway";
-import { CancelNotificationDialog } from "../components/CancelNotificationDialog";
-import { NotificationScheduleTable } from "../components/NotificationScheduleTable";
-import type { NotificationSchedule } from "../model/notification-schedule";
+import type { AdminNotificationManagementGateway } from "../application/admin-notification-management-gateway";
+import {
+  NotificationManagementError,
+  notificationManagementErrorMessages,
+} from "../application/notification-management-error";
+import { DeleteNotificationDialog } from "../components/DeleteNotificationDialog";
+import { NotificationManagementTable } from "../components/NotificationManagementTable";
+import type { ManagedNotification } from "../model/managed-notification";
 
 type NotificationManagementPageProps = {
-  gateway: NotificationScheduleGateway;
+  gateway: AdminNotificationManagementGateway;
 };
+
+const PAGE_SIZE = 50;
+
+function toErrorMessage(error: unknown) {
+  return error instanceof NotificationManagementError
+    ? notificationManagementErrorMessages[error.kind]
+    : notificationManagementErrorMessages.unexpected;
+}
 
 export function NotificationManagementPage({
   gateway,
 }: NotificationManagementPageProps) {
-  const [schedules, setSchedules] = useState<NotificationSchedule[]>([]);
-  const [selectedSchedule, setSelectedSchedule] =
-    useState<NotificationSchedule | null>(null);
+  const [notifications, setNotifications] = useState<ManagedNotification[]>([]);
+  const [total, setTotal] = useState(0);
+  const [selectedNotification, setSelectedNotification] =
+    useState<ManagedNotification | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isCanceling, setIsCanceling] = useState(false);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
     let active = true;
 
     gateway
-      .list()
+      .list({ limit: PAGE_SIZE, offset: 0 })
       .then((items) => {
         if (active) {
-          setSchedules(items);
+          setNotifications(items.notifications);
+          setTotal(items.total);
         }
       })
-      .catch(() => {
+      .catch((error: unknown) => {
         if (active) {
-          setErrorMessage("通知予定を取得できませんでした。");
+          setErrorMessage(toErrorMessage(error));
         }
       })
       .finally(() => {
@@ -46,26 +61,68 @@ export function NotificationManagementPage({
     };
   }, [gateway]);
 
-  async function handleCancel() {
-    if (!selectedSchedule || isCanceling) {
+  async function handleLoadMore() {
+    if (isLoadingMore || notifications.length >= total) {
       return;
     }
 
-    setIsCanceling(true);
+    setIsLoadingMore(true);
     setErrorMessage("");
 
     try {
-      const canceledSchedule = await gateway.cancel(selectedSchedule.id);
-      setSchedules((current) =>
-        current.map((schedule) =>
-          schedule.id === canceledSchedule.id ? canceledSchedule : schedule
+      const page = await gateway.list({
+        limit: PAGE_SIZE,
+        offset: notifications.length,
+      });
+      setNotifications((current) => [
+        ...current,
+        ...page.notifications.filter(
+          (item) => !current.some((notification) => notification.id === item.id)
+        ),
+      ]);
+      setTotal(page.total);
+    } catch (error) {
+      setErrorMessage(toErrorMessage(error));
+    } finally {
+      setIsLoadingMore(false);
+    }
+  }
+
+  async function handleDelete() {
+    if (!selectedNotification || isDeleting || isLoadingMore) {
+      return;
+    }
+
+    setIsDeleting(true);
+    setErrorMessage("");
+
+    try {
+      await gateway.delete(selectedNotification.id);
+      setNotifications((current) =>
+        current.filter(
+          (notification) => notification.id !== selectedNotification.id
         )
       );
-      setSelectedSchedule(null);
-    } catch {
-      setErrorMessage("通知予定をキャンセルできませんでした。");
+      setTotal((current) => Math.max(0, current - 1));
+      setSelectedNotification(null);
+    } catch (error) {
+      setErrorMessage(toErrorMessage(error));
+      if (
+        error instanceof NotificationManagementError &&
+        error.kind === "conflict"
+      ) {
+        const refreshed = await reloadVisibleNotifications(
+          gateway,
+          notifications.length
+        ).catch(() => null);
+        if (refreshed) {
+          setNotifications(refreshed.notifications);
+          setTotal(refreshed.total);
+        }
+        setSelectedNotification(null);
+      }
     } finally {
-      setIsCanceling(false);
+      setIsDeleting(false);
     }
   }
 
@@ -89,7 +146,7 @@ export function NotificationManagementPage({
       <div className="mt-2 flex min-h-12 items-center gap-2.5 rounded-lg border border-amber-400/70 bg-amber-400/10 px-4 py-3 text-sm text-amber-700 dark:text-amber-300">
         <CircleAlertIcon size={16} className="shrink-0" aria-hidden="true" />
         <p>
-          配信件数・成功件数の詳細は FCM（Firebase Cloud
+          端末単位の配信結果の詳細は FCM（Firebase Cloud
           Messaging）の管理画面で確認してください。
         </p>
       </div>
@@ -99,26 +156,63 @@ export function NotificationManagementPage({
           <div className="rounded-lg border border-[color:var(--border-2)] bg-[color:var(--surface-overlay-strong)] p-8 text-center text-sm text-[color:var(--text-3)]">
             読み込み中...
           </div>
-        ) : schedules.length === 0 ? (
+        ) : notifications.length === 0 ? (
           <div className="rounded-lg border border-[color:var(--border-2)] bg-[color:var(--surface-overlay-strong)] p-8 text-center text-sm text-[color:var(--text-3)]">
             通知予定はありません
           </div>
         ) : (
-          <NotificationScheduleTable
-            schedules={schedules}
-            onCancel={setSelectedSchedule}
-          />
+          <>
+            <NotificationManagementTable
+              notifications={notifications}
+              isDeleteDisabled={isLoadingMore}
+              onDelete={setSelectedNotification}
+            />
+            {notifications.length < total ? (
+              <div className="mt-4 flex justify-center">
+                <button
+                  type="button"
+                  disabled={isLoadingMore}
+                  className="h-9 rounded-lg border border-[color:var(--border-2)] bg-[color:var(--surface-overlay-strong)] px-5 text-sm font-medium transition hover:bg-[color:var(--surface-2)] disabled:cursor-not-allowed disabled:opacity-50"
+                  onClick={handleLoadMore}
+                >
+                  {isLoadingMore ? "読み込み中..." : "さらに読み込む"}
+                </button>
+              </div>
+            ) : null}
+          </>
         )}
       </section>
 
-      {selectedSchedule ? (
-        <CancelNotificationDialog
-          schedule={selectedSchedule}
-          isSubmitting={isCanceling}
-          onClose={() => setSelectedSchedule(null)}
-          onConfirm={handleCancel}
+      {selectedNotification ? (
+        <DeleteNotificationDialog
+          notification={selectedNotification}
+          isSubmitting={isDeleting}
+          onClose={() => setSelectedNotification(null)}
+          onConfirm={handleDelete}
         />
       ) : null}
     </div>
   );
+}
+
+async function reloadVisibleNotifications(
+  gateway: AdminNotificationManagementGateway,
+  visibleCount: number
+) {
+  const notifications: ManagedNotification[] = [];
+  let total = 0;
+  let offset = 0;
+
+  do {
+    const page = await gateway.list({ limit: PAGE_SIZE, offset });
+    notifications.push(...page.notifications);
+    total = page.total;
+    offset += page.notifications.length;
+
+    if (page.notifications.length === 0) {
+      break;
+    }
+  } while (notifications.length < visibleCount && notifications.length < total);
+
+  return { notifications, total };
 }

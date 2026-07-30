@@ -1,36 +1,17 @@
-export type ScheduleType =
-  | "opening"
-  | "competition"
-  | "gathering"
-  | "lunch"
-  | "closing";
-
 export type ScheduleDraft = {
-  type: ScheduleType | null;
+  eventName: string;
   startTime: string;
   endTime: string;
-  venueId: string;
-  gatheringSpotId: string;
-  eventId: string;
+  venue: string;
   notes: string;
   notificationEnabled: boolean;
 };
 
 export const initialScheduleDraft: ScheduleDraft = {
-  type: null,
+  eventName: "",
   startTime: "",
   endTime: "",
-  venueId: "",
-  gatheringSpotId: "",
-  eventId: "",
+  venue: "",
   notes: "",
   notificationEnabled: true,
-};
-
-export const scheduleTypeLabels: Record<ScheduleType, string> = {
-  opening: "開会式",
-  competition: "競技",
-  gathering: "集合",
-  lunch: "昼休み",
-  closing: "閉会式",
 };
