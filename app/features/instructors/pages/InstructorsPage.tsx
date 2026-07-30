@@ -93,7 +93,7 @@ export function InstructorsPage({ teachers }: { teachers: TeacherRow[] }) {
                   <Link
                     to={`/instructors/${teacher.teacherId}`}
                     aria-label={`${teacher.displayName}の詳細・操作`}
-                    className="inline-flex size-7 items-center justify-center rounded-md text-black/45 hover:bg-[#f2f4f7]"
+                    className="text-black/45"
                   >
                     <MoreHorizontal className="size-4" />
                   </Link>
