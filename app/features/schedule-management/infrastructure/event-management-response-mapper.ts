@@ -48,6 +48,6 @@ export function toManagedSchedule(
     relatedEventName: event.event_name,
     notes: event.rule_text,
     publication: toPublication(summary),
-    notificationEnabled: summary.status === "draft",
+    notificationEnabled: summary.draft > 0,
   };
 }

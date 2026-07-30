@@ -45,11 +45,32 @@ describe("createEventScheduleUpdater", () => {
       eventId: 12,
       startTime: "09:20",
       venue: "コートB",
-      notificationEnabled: true,
     });
   });
 
-  it("変更がない場合も現在の通知設定をPATCHする", async () => {
+  it("通知設定を変更した場合だけnotificationEnabledをPATCHする", async () => {
+    const patchEvent = vi.fn().mockResolvedValue(undefined);
+    const submitter = createEventScheduleUpdater(
+      event,
+      createGateway(patchEvent)
+    );
+
+    await submitter.submit({
+      eventName: event.relatedEventName ?? "",
+      startTime: event.startTime,
+      endTime: event.endTime,
+      venue: event.venueName ?? "",
+      notes: "",
+      notificationEnabled: false,
+    });
+
+    expect(patchEvent).toHaveBeenCalledWith({
+      eventId: 12,
+      notificationEnabled: false,
+    });
+  });
+
+  it("変更がない場合はPATCHしない", async () => {
     const patchEvent = vi.fn();
     const submitter = createEventScheduleUpdater(
       event,
@@ -65,9 +86,6 @@ describe("createEventScheduleUpdater", () => {
       notificationEnabled: event.notificationEnabled,
     });
 
-    expect(patchEvent).toHaveBeenCalledWith({
-      eventId: 12,
-      notificationEnabled: true,
-    });
+    expect(patchEvent).not.toHaveBeenCalled();
   });
 });

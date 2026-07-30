@@ -28,10 +28,14 @@ export function createEventScheduleUpdater(
         ...(draft.notes.trim() !== (initial.notes ?? "")
           ? { ruleText: draft.notes }
           : {}),
-        notificationEnabled: draft.notificationEnabled,
+        ...(draft.notificationEnabled !== initial.notificationEnabled
+          ? { notificationEnabled: draft.notificationEnabled }
+          : {}),
       };
 
-      await gateway.patchEvent(patch);
+      if (Object.keys(patch).length > 1) {
+        await gateway.patchEvent(patch);
+      }
 
       return { scheduleId: initial.id };
     },
