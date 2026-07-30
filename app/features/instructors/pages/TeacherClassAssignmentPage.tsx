@@ -54,7 +54,7 @@ export function TeacherClassAssignmentPage({
     try {
       await TeacherApi.updateTeacher(teacherId, {
         userName: selectedTeacher.displayName,
-        isLiveActive: true,
+        isLiveActive: selectedTeacher.isLiveActive,
         classRoomIds: checkedClassRoomIds,
       });
       navigate("/instructors");
