@@ -5,7 +5,14 @@ vi.mock("~/lib/api-client", () => ({
   apiClient: { get: (...args: unknown[]) => getMock(...args) },
 }));
 
-import { TeacherApi, type TeacherDTO, type TeacherPageDTO } from "./api";
+import {
+  ClassRoomApi,
+  TeacherApi,
+  type ClassRoomDTO,
+  type ClassRoomPageDTO,
+  type TeacherDTO,
+  type TeacherPageDTO,
+} from "./api";
 
 function makeTeacher(id: number): TeacherDTO {
   return {
@@ -17,7 +24,17 @@ function makeTeacher(id: number): TeacherDTO {
   };
 }
 
-describe("TeacherApi.getAllTeachers", () => {
+function makeClassRoom(id: number): ClassRoomDTO {
+  return {
+    class_room_id: id,
+    class_code: `C${id}`,
+    class_name: `クラス${id}`,
+    student_count: 0,
+    teacher: null,
+  };
+}
+
+describe("TeacherApi.getTeachers", () => {
   it("101件目以降もpageを進めながら全ページ取得する", async () => {
     const page1 = Array.from({ length: 100 }, (_, i) => makeTeacher(i + 1));
     const page2 = [makeTeacher(101)];
@@ -37,9 +54,10 @@ describe("TeacherApi.getAllTeachers", () => {
         total_pages: 2,
       } satisfies TeacherPageDTO);
 
-    const result = await TeacherApi.getAllTeachers();
+    const result = await TeacherApi.getTeachers();
 
-    expect(result).toHaveLength(101);
+    expect(result.items).toHaveLength(101);
+    expect(result.total).toBe(101);
     expect(getMock).toHaveBeenCalledTimes(2);
     expect(getMock).toHaveBeenNthCalledWith(
       2,
@@ -57,9 +75,39 @@ describe("TeacherApi.getAllTeachers", () => {
       total_pages: 0,
     } satisfies TeacherPageDTO);
 
-    const result = await TeacherApi.getAllTeachers();
+    const result = await TeacherApi.getTeachers();
 
-    expect(result).toEqual([]);
+    expect(result.items).toEqual([]);
     expect(getMock).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("ClassRoomApi.getClassRooms", () => {
+  it("101件目以降もoffsetを進めながら全ページ取得する", async () => {
+    getMock.mockReset();
+    const page1 = Array.from({ length: 100 }, (_, i) => makeClassRoom(i + 1));
+    const page2 = [makeClassRoom(101)];
+    getMock
+      .mockResolvedValueOnce({
+        classrooms: page1,
+        total: 101,
+        limit: 100,
+        offset: 0,
+      } satisfies ClassRoomPageDTO)
+      .mockResolvedValueOnce({
+        classrooms: page2,
+        total: 101,
+        limit: 100,
+        offset: 100,
+      } satisfies ClassRoomPageDTO);
+
+    const result = await ClassRoomApi.getClassRooms();
+
+    expect(result.classrooms).toHaveLength(101);
+    expect(getMock).toHaveBeenCalledTimes(2);
+    expect(getMock).toHaveBeenNthCalledWith(
+      2,
+      "/api/v1/classrooms?limit=100&offset=100"
+    );
   });
 });
