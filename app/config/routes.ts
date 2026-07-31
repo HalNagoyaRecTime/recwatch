@@ -95,7 +95,7 @@ export const navSections = [
       },
       {
         id: "schedule",
-        label: "Schedule",
+        label: "イベント管理",
         icon: "clock",
         to: "/schedule",
         roles: ["admin", "manager", "member"],

@@ -31,6 +31,10 @@ export default [
     route("reports/export", "routes/main/reports.export.tsx"),
     route("schedule", "routes/main/schedule.tsx"),
     route("schedule/new", "routes/main/schedule.new.tsx"),
+    route(
+      "schedule/:scheduleId/edit",
+      "routes/main/schedule.$scheduleId.edit.tsx"
+    ),
     route("participants", "routes/main/participants.tsx"),
     route("gathering-spots", "routes/main/gatheringSpots.tsx"),
     route("settings", "routes/main/settings.tsx"),

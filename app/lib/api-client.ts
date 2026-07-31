@@ -1,4 +1,5 @@
 import { buildBackendUrl } from "~/config/env";
+import { ApiClientError } from "./api-client-error";
 
 function requireBackendUrl(path: string) {
   const url = buildBackendUrl(path);
@@ -23,7 +24,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 
   if (!res.ok) {
     const body: unknown = await res.json().catch(() => null);
-    throw new Error(getApiErrorMessage(body, res.status));
+    throw new ApiClientError(res.status, getApiErrorMessage(body, res.status));
   }
 
   if (res.status === 204) {
@@ -61,6 +62,12 @@ export const apiClient = {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
     }),
+  patch: <T>(path: string, body: unknown) =>
+    request<T>(path, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    }),
   put: <T>(path: string, body: unknown) =>
     request<T>(path, {
       method: "PUT",
@@ -69,4 +76,8 @@ export const apiClient = {
     }),
   postForm: <T>(path: string, body: FormData) =>
     request<T>(path, { method: "POST", body }),
+  delete: (path: string) =>
+    request<void>(path, {
+      method: "DELETE",
+    }),
 };
