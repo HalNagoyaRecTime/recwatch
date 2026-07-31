@@ -6,13 +6,17 @@ vi.mock("~/config/env", () => ({
 
 import { ApiClientError } from "./api-client-error";
 import { apiClient } from "./api-client";
+import { setAccessToken } from "~/features/auth/lib/accessTokenStore";
+import { setRefreshTokenId } from "~/features/auth/lib/refreshTokenStore";
 
 afterEach(() => {
   vi.unstubAllGlobals();
+  setAccessToken(null);
+  setRefreshTokenId(null);
 });
 
 describe("apiClient", () => {
-  it("セッションCookieを含めてJSONをPOSTする", async () => {
+  it("アクセストークン無しでJSONをPOSTする", async () => {
     const fetchMock = vi.fn().mockResolvedValue(
       new Response(JSON.stringify({ id: 1 }), {
         status: 200,
@@ -26,7 +30,6 @@ describe("apiClient", () => {
     ).resolves.toEqual({ id: 1 });
     expect(fetchMock).toHaveBeenCalledWith("https://api.example.com/resource", {
       method: "POST",
-      credentials: "include",
       headers: {
         Accept: "application/json",
         "Content-Type": "application/json",
@@ -34,6 +37,64 @@ describe("apiClient", () => {
       },
       body: JSON.stringify({ name: "value" }),
     });
+  });
+
+  it("アクセストークンがある場合はAuthorizationヘッダーを付与する", async () => {
+    setAccessToken("access-token");
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ id: 1 }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      })
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(apiClient.get("/resource")).resolves.toEqual({ id: 1 });
+    expect(fetchMock).toHaveBeenCalledWith("https://api.example.com/resource", {
+      headers: {
+        Accept: "application/json",
+        "X-Client-Type": "web",
+        Authorization: "Bearer access-token",
+      },
+    });
+  });
+
+  it("401の場合はアクセストークンを更新してから1回だけ再試行する", async () => {
+    setAccessToken("expired-token");
+    setRefreshTokenId("refresh-id");
+    const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
+      if (url === "https://api.example.com/api/v1/auth/refresh") {
+        return new Response(
+          JSON.stringify({
+            access_token: "refreshed-token",
+            refresh_token_id: "new-refresh-id",
+          }),
+          { status: 200, headers: { "Content-Type": "application/json" } }
+        );
+      }
+
+      const authHeader = (init?.headers as Record<string, string>)
+        ?.Authorization;
+      if (authHeader === "Bearer expired-token") {
+        return new Response(null, { status: 401 });
+      }
+      return new Response(JSON.stringify({ id: 1 }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(apiClient.get("/resource")).resolves.toEqual({ id: 1 });
+
+    const resourceCalls = fetchMock.mock.calls.filter(
+      ([url]) => url === "https://api.example.com/resource"
+    );
+    expect(resourceCalls).toHaveLength(2);
+    const [, secondInit] = resourceCalls[1];
+    expect((secondInit?.headers as Record<string, string>).Authorization).toBe(
+      "Bearer refreshed-token"
+    );
   });
 
   it("エラーレスポンスをApiClientErrorへ変換する", async () => {
@@ -81,7 +142,6 @@ describe("apiClient", () => {
     expect(fetchMock).toHaveBeenCalledWith(
       "https://api.example.com/admin/notifications/10",
       {
-        credentials: "include",
         method: "DELETE",
         headers: {
           Accept: "application/json",
