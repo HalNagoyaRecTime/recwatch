@@ -15,9 +15,9 @@ export function InstructorsPage() {
 
     async function load() {
       try {
-        const page = await TeacherApi.getTeachers();
+        const allTeachers = await TeacherApi.getAllTeachers();
         if (!isCurrent) return;
-        setInstructors(page.items);
+        setInstructors(allTeachers);
       } catch (error) {
         if (isCurrent) {
           setLoadError(

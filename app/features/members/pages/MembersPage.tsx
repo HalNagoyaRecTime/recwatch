@@ -15,9 +15,9 @@ export function MembersPage() {
 
     async function load() {
       try {
-        const page = await StudentApi.getStudents();
+        const allStudents = await StudentApi.getAllStudents();
         if (!isCurrent) return;
-        setStudents(page.students);
+        setStudents(allStudents);
       } catch (error) {
         if (isCurrent) {
           setLoadError(

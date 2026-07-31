@@ -22,7 +22,23 @@ export type TeacherPageDTO = {
   total_pages: number;
 };
 
+const PAGE_LIMIT = 100;
+
 export const TeacherApi = {
-  getTeachers: () =>
-    apiClient.get<TeacherPageDTO>("/api/v1/teachers?limit=100"),
+  async getAllTeachers(): Promise<TeacherDTO[]> {
+    const teachers: TeacherDTO[] = [];
+    let page = 1;
+
+    while (true) {
+      const result = await apiClient.get<TeacherPageDTO>(
+        `/api/v1/teachers?limit=${PAGE_LIMIT}&page=${page}`
+      );
+      teachers.push(...result.items);
+
+      if (result.items.length === 0 || page >= result.total_pages) break;
+      page += 1;
+    }
+
+    return teachers;
+  },
 };

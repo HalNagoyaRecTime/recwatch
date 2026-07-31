@@ -161,8 +161,8 @@ export function MembersImportConfirmationPage() {
             {session.error_count}
             件のエラーがあります。修正したファイルを再度取り込んでください。
           </div>
-          <ul className="mt-2 list-disc space-y-1 pl-5 text-xs">
-            {session.errors.slice(0, 10).map((error, index) => (
+          <ul className="mt-2 max-h-60 list-disc space-y-1 overflow-y-auto pl-5 text-xs">
+            {session.errors.map((error, index) => (
               <li key={index}>
                 {error.row_index + 1}行目：
                 {MASTER_IMPORT_ERROR_REASON_LABEL[error.reason] ?? error.reason}

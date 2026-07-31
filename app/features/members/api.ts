@@ -17,7 +17,23 @@ export type StudentPageDTO = {
   offset: number;
 };
 
+const PAGE_LIMIT = 100;
+
 export const StudentApi = {
-  getStudents: () =>
-    apiClient.get<StudentPageDTO>("/api/v1/students?limit=100&offset=0"),
+  async getAllStudents(): Promise<StudentDTO[]> {
+    const students: StudentDTO[] = [];
+    let offset = 0;
+
+    while (true) {
+      const page = await apiClient.get<StudentPageDTO>(
+        `/api/v1/students?limit=${PAGE_LIMIT}&offset=${offset}`
+      );
+      students.push(...page.students);
+      offset += page.students.length;
+
+      if (page.students.length === 0 || offset >= page.total) break;
+    }
+
+    return students;
+  },
 };

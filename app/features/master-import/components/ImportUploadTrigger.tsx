@@ -60,7 +60,7 @@ export function ImportUploadTrigger({
         <input
           ref={inputRef}
           type="file"
-          accept=".csv,.xlsx,.xls"
+          accept=".csv,.xlsx"
           className="hidden"
           onChange={(event) => void handleFileChange(event)}
         />

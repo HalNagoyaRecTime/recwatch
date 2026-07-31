@@ -14,7 +14,23 @@ export type classRoomPageDTO = {
   offset: number;
 };
 
+const PAGE_LIMIT = 100;
+
 export const ClassRoomApi = {
-  getClassRooms: () =>
-    apiClient.get<classRoomPageDTO>("/api/v1/classrooms?limit=100&offset=0"),
+  async getAllClassRooms(): Promise<classRoomDTO[]> {
+    const classrooms: classRoomDTO[] = [];
+    let offset = 0;
+
+    while (true) {
+      const page = await apiClient.get<classRoomPageDTO>(
+        `/api/v1/classrooms?limit=${PAGE_LIMIT}&offset=${offset}`
+      );
+      classrooms.push(...page.classrooms);
+      offset += page.classrooms.length;
+
+      if (page.classrooms.length === 0 || offset >= page.total) break;
+    }
+
+    return classrooms;
+  },
 };
