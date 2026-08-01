@@ -8,6 +8,11 @@ import {
   NotificationSubmissionError,
   notificationSubmissionErrorMessages,
 } from "../application/notification-submission-error";
+import type { NotificationAudienceLoader } from "../application/notification-audience-loader";
+import {
+  NotificationAudienceLoadingError,
+  notificationAudienceLoadingErrorMessages,
+} from "../application/notification-audience-loading-error";
 import {
   initialNotificationDraft,
   type NotificationDraft,
@@ -37,13 +42,13 @@ function formatPreviewTime(date: Date) {
 
 type NotificationCreatePageProps = {
   submitter: NotificationSubmitter;
-  audienceOptions: NotificationAudienceOption[];
+  audienceLoader: NotificationAudienceLoader;
   isSubmissionEnabled?: boolean;
 };
 
 export function NotificationCreatePage({
   submitter,
-  audienceOptions,
+  audienceLoader,
   isSubmissionEnabled = true,
 }: NotificationCreatePageProps) {
   const [draft, setDraft] = useState<NotificationDraft>(
@@ -54,10 +59,49 @@ export function NotificationCreatePage({
   const [submitted, setSubmitted] = useState(false);
   const [submissionError, setSubmissionError] = useState<string | null>(null);
   const [previewDate, setPreviewDate] = useState<Date | null>(null);
+  const [audienceOptions, setAudienceOptions] = useState<
+    NotificationAudienceOption[]
+  >([]);
+  const [isAudienceLoading, setIsAudienceLoading] = useState(true);
+  const [audienceError, setAudienceError] = useState<string | null>(null);
+  const [audienceReloadKey, setAudienceReloadKey] = useState(0);
 
   useEffect(() => {
     setPreviewDate(new Date());
   }, []);
+
+  useEffect(() => {
+    let active = true;
+    setIsAudienceLoading(true);
+    setAudienceError(null);
+
+    audienceLoader
+      .load()
+      .then((options) => {
+        if (active) {
+          setAudienceOptions(options);
+        }
+      })
+      .catch((error: unknown) => {
+        if (active) {
+          setAudienceOptions([]);
+          setAudienceError(
+            error instanceof NotificationAudienceLoadingError
+              ? notificationAudienceLoadingErrorMessages[error.kind]
+              : notificationAudienceLoadingErrorMessages.unexpected
+          );
+        }
+      })
+      .finally(() => {
+        if (active) {
+          setIsAudienceLoading(false);
+        }
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [audienceLoader, audienceReloadKey]);
 
   const previewTime = previewDate ? formatPreviewTime(previewDate) : "--:--";
   const previewDateLabel = previewDate
@@ -120,10 +164,15 @@ export function NotificationCreatePage({
               draft={draft}
               errors={errors}
               audienceOptions={audienceOptions}
+              isAudienceLoading={isAudienceLoading}
+              audienceError={audienceError}
               isSubmissionDisabled={!isSubmissionEnabled}
               isSubmitting={isSubmitting}
               onChange={handleChange}
               onSubmit={handleSubmit}
+              onAudienceReload={() =>
+                setAudienceReloadKey((current) => current + 1)
+              }
             />
           </div>
           <div

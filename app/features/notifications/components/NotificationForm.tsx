@@ -12,10 +12,13 @@ type NotificationFormProps = {
   draft: NotificationDraft;
   errors: NotificationDraftErrors;
   audienceOptions: NotificationAudienceOption[];
+  isAudienceLoading?: boolean;
+  audienceError?: string | null;
   isSubmissionDisabled?: boolean;
   isSubmitting: boolean;
   onChange: (draft: NotificationDraft) => void;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
+  onAudienceReload?: () => void;
 };
 
 const fieldClassName =
@@ -25,10 +28,13 @@ export function NotificationForm({
   draft,
   errors,
   audienceOptions,
+  isAudienceLoading = false,
+  audienceError = null,
   isSubmissionDisabled = false,
   isSubmitting,
   onChange,
   onSubmit,
+  onAudienceReload,
 }: NotificationFormProps) {
   const canSubmit =
     draft.title.trim().length > 0 &&
@@ -37,6 +43,7 @@ export function NotificationForm({
   const filteredAudienceOptions = audienceOptions.filter(
     (option) => option.type === draft.audienceType
   );
+  const requiresAudienceOption = draft.audienceType !== "all";
 
   return (
     <form className="flex flex-col gap-4" onSubmit={onSubmit} noValidate>
@@ -137,6 +144,7 @@ export function NotificationForm({
             id="notification-audience-target"
             className={`${fieldClassName} mt-2 h-10 appearance-auto`}
             value={draft.audienceId}
+            disabled={isAudienceLoading || Boolean(audienceError)}
             aria-invalid={Boolean(errors.audienceId)}
             aria-describedby={
               errors.audienceId
@@ -154,6 +162,30 @@ export function NotificationForm({
               </option>
             ))}
           </select>
+          {isAudienceLoading ? (
+            <p className="mt-1.5 text-xs text-[color:var(--text-3)]">
+              通知対象を読み込み中...
+            </p>
+          ) : audienceError ? (
+            <div className="mt-1.5 flex items-center gap-3">
+              <p className="text-xs text-[color:var(--tone-red-text)]">
+                {audienceError}
+              </p>
+              {onAudienceReload ? (
+                <button
+                  type="button"
+                  className="text-xs font-semibold text-[color:var(--brand-1)] underline underline-offset-2"
+                  onClick={onAudienceReload}
+                >
+                  再試行
+                </button>
+              ) : null}
+            </div>
+          ) : filteredAudienceOptions.length === 0 ? (
+            <p className="mt-1.5 text-xs text-[color:var(--text-3)]">
+              選択できる対象がありません。
+            </p>
+          ) : null}
           {errors.audienceId ? (
             <p
               id="notification-audience-target-error"
@@ -168,7 +200,13 @@ export function NotificationForm({
       <div className="pt-1">
         <button
           type="submit"
-          disabled={!canSubmit || isSubmissionDisabled || isSubmitting}
+          disabled={
+            !canSubmit ||
+            isSubmissionDisabled ||
+            isSubmitting ||
+            (requiresAudienceOption &&
+              (isAudienceLoading || Boolean(audienceError)))
+          }
           className="inline-flex h-10 min-w-24 items-center justify-center rounded-lg bg-[color:var(--brand-button-1)] px-5 text-sm font-semibold text-white transition hover:bg-[color:var(--brand-button-2)] disabled:cursor-not-allowed disabled:opacity-45"
         >
           {isSubmitting ? "確認中..." : "配信する"}
