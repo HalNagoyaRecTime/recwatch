@@ -84,4 +84,58 @@ describe("http notification audience loader", () => {
       })
     );
   });
+
+  it.each([
+    ["classrooms", "/api/v1/classrooms", "/api/v1/events"],
+    ["events", "/api/v1/events", "/api/v1/classrooms"],
+  ] as const)(
+    "%sのページネーションが上限に達した場合は読み込みを中止する",
+    async (_, loopingPath, completedPath) => {
+      const get = vi.fn(async (path: string) => {
+        if (path.startsWith(loopingPath)) {
+          const isClassroom = loopingPath.endsWith("classrooms");
+          return isClassroom
+            ? {
+                classrooms: [
+                  {
+                    class_room_id: 1,
+                    class_code: "1A",
+                    class_name: "1組",
+                  },
+                ],
+                total: 10_000,
+                limit: 100,
+                offset: 0,
+              }
+            : {
+                events: [{ event_id: 1, event_name: "競技1" }],
+                total: 10_000,
+                limit: 100,
+                offset: 0,
+              };
+        }
+        if (path.startsWith(completedPath)) {
+          return completedPath.endsWith("classrooms")
+            ? { classrooms: [], total: 0, limit: 100, offset: 0 }
+            : { events: [], total: 0, limit: 100, offset: 0 };
+        }
+        if (path === "/api/v1/gatherings") {
+          return [];
+        }
+        throw new Error(`Unexpected path: ${path}`);
+      });
+
+      await expect(
+        createHttpNotificationAudienceLoader({ get }).load()
+      ).rejects.toEqual(
+        expect.objectContaining<Partial<NotificationAudienceLoadingError>>({
+          kind: "unexpected",
+        })
+      );
+
+      expect(
+        get.mock.calls.filter(([path]) => path.startsWith(loopingPath))
+      ).toHaveLength(100);
+    }
+  );
 });

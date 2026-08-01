@@ -14,6 +14,7 @@ import {
 } from "./notification-audience-response-mapper";
 
 const PAGE_SIZE = 100;
+const MAX_PAGES = 100;
 
 type NotificationAudienceHttpClient = {
   get(path: string): Promise<unknown>;
@@ -64,7 +65,7 @@ export function createHttpNotificationAudienceLoader(
 async function loadAllClassrooms(client: NotificationAudienceHttpClient) {
   const classrooms: ClassRoomAudienceApiDto[] = [];
 
-  while (true) {
+  for (let pageIndex = 0; pageIndex < MAX_PAGES; pageIndex += 1) {
     const page = toClassRoomAudiencePage(
       await client.get(
         `/api/v1/classrooms?limit=${PAGE_SIZE}&offset=${classrooms.length}`
@@ -76,12 +77,14 @@ async function loadAllClassrooms(client: NotificationAudienceHttpClient) {
       return classrooms;
     }
   }
+
+  throw new NotificationAudienceLoadingError("unexpected");
 }
 
 async function loadAllEvents(client: NotificationAudienceHttpClient) {
   const events: EventAudienceApiDto[] = [];
 
-  while (true) {
+  for (let pageIndex = 0; pageIndex < MAX_PAGES; pageIndex += 1) {
     const page = toEventAudiencePage(
       await client.get(
         `/api/v1/events?limit=${PAGE_SIZE}&offset=${events.length}`
@@ -93,6 +96,8 @@ async function loadAllEvents(client: NotificationAudienceHttpClient) {
       return events;
     }
   }
+
+  throw new NotificationAudienceLoadingError("unexpected");
 }
 
 export const httpNotificationAudienceLoader =
