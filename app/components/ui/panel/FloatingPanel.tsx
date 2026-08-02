@@ -75,9 +75,18 @@ export function FloatingPanel({
   });
   const click = useClick(context, { enabled: interaction === "click" });
   const focus = useFocus(context);
-  // Prevent dismiss events from bubbling through a nested floating tree.
-  // This is important when a child panel is rendered in a portal.
-  const dismiss = useDismiss(context, { bubbles: false });
+  // A nested panel is rendered in its own portal, so its clicks are outside
+  // the parent's DOM subtree. Treat every FloatingPanel surface as inside to
+  // keep parent panels open while an item in a nested panel is selected.
+  const dismiss = useDismiss(context, {
+    bubbles: false,
+    outsidePress: (event) => {
+      const target = event.target;
+      return !(
+        target instanceof Element && target.closest("[data-floating-panel]")
+      );
+    },
+  });
   const role = useRole(context);
 
   const { getReferenceProps, getFloatingProps } = useInteractions([
@@ -111,6 +120,7 @@ export function FloatingPanel({
           <div
             // eslint-disable-next-line react-hooks/refs
             ref={refs.setFloating}
+            data-floating-panel
             style={floatingStyles}
             {...getFloatingProps()}
             className={cn("z-140", className)}
