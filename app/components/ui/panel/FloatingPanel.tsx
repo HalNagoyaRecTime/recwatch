@@ -16,7 +16,6 @@ import {
   useFloatingNodeId,
   useFloatingTree,
   type Placement,
-  type OpenChangeReason,
 } from "@floating-ui/react";
 import {
   cloneElement,
@@ -35,11 +34,7 @@ export type FloatingPanelProps = {
   interaction?: "click" | "hover";
   offsetValue?: number;
   isOpen?: boolean;
-  onOpenChange?: (
-    open: boolean,
-    event?: Event,
-    reason?: OpenChangeReason
-  ) => void;
+  onOpenChange?: (open: boolean) => void;
   className?: string;
   triggerClassName?: string;
 };
@@ -79,7 +74,9 @@ export function FloatingPanel({
     handleClose: safePolygon(),
   });
   const click = useClick(context, { enabled: interaction === "click" });
-  const focus = useFocus(context);
+  // Click menus must not close when focus moves into a nested portal. Hover
+  // panels keep focus support so they remain accessible by keyboard.
+  const focus = useFocus(context, { enabled: interaction === "hover" });
   // Prevent dismiss events from bubbling through a nested floating tree.
   // This is important when a child panel is rendered in a portal.
   const dismiss = useDismiss(context, { bubbles: false });
