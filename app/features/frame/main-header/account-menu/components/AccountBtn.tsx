@@ -1,13 +1,14 @@
+import { useState } from "react";
+import { FloatingTree } from "@floating-ui/react";
+
+import { FloatingPanel } from "~/components/ui/panel/FloatingPanel";
 import { AccountMenuBtn } from "~/features/frame/main-header/account-menu/components/AccountMenuBtn";
 import { AccountMenuPanel } from "~/features/frame/main-header/account-menu/components/AccountMenuPanel";
+import { useAccountPhoto } from "~/features/frame/main-header/account-menu/hooks/useAccountPhoto";
 import {
   getAccountBtnData,
   type AccountUser,
 } from "~/features/frame/main-header/account-menu/model/account-btn-data";
-import { useAccountPhoto } from "~/features/frame/main-header/account-menu/hooks/useAccountPhoto";
-import { useState } from "react";
-import { FloatingTree } from "@floating-ui/react";
-import { FloatingPanel } from "~/components/ui/panel/FloatingPanel";
 
 type AccountBtnProps = {
   user?: AccountUser | null;
