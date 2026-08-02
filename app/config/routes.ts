@@ -48,20 +48,6 @@ export const sidebarSections = [
     label: "管理",
     items: [
       {
-        id: "events",
-        label: "イベント",
-        icon: "calendar",
-        roles: ["admin", "manager", "member"],
-        children: [
-          {
-            id: "events-new",
-            label: "新規作成",
-            to: "/events/new",
-            roles: ["admin", "manager"],
-          },
-        ],
-      },
-      {
         id: "members",
         label: "メンバー",
         icon: "users",
@@ -69,7 +55,7 @@ export const sidebarSections = [
         children: [
           {
             id: "members-list",
-            label: "メンバー一覧",
+            label: "ユーザー管理",
             to: "/members",
             roles: ["admin", "manager"],
           },
@@ -79,19 +65,19 @@ export const sidebarSections = [
             to: "/members/import",
             roles: ["admin"],
           },
+          {
+            id: "classRoom",
+            label: "クラス一覧",
+            icon: "classRoom",
+            to: "/classroom",
+            roles: ["admin", "manager"],
+          },
         ],
-      },
-      {
-        id: "classRoom",
-        label: "Class Rooms",
-        icon: "classRoom",
-        to: "/classroom",
-        roles: ["admin", "manager"],
       },
     ],
   },
   {
-    label: "Operations",
+    label: "イベント",
     items: [
       {
         id: "sports",
@@ -106,15 +92,9 @@ export const sidebarSections = [
             roles: ["admin", "manager"],
           },
           {
-            id: "sports-tournament",
-            label: "Tournament",
-            to: "/sports/tournament",
-            roles: ["admin"],
-          },
-          {
-            id: "sports-scoring",
-            label: "Scoring Rules",
-            to: "/sports/scoring",
+            id: "events-new",
+            label: "新規登録",
+            to: "/events/new",
             roles: ["admin", "manager"],
           },
         ],
@@ -130,20 +110,22 @@ export const sidebarSections = [
         icon: "calendar",
         to: "/schedule",
         roles: ["admin", "manager", "member"],
-      },
-      {
-        id: "notification-create",
-        label: "通知作成",
-        icon: "notification",
-        to: "/notifications/new",
-        roles: ["admin", "manager"],
-      },
-      {
-        id: "notification-management",
-        label: "通知管理",
-        icon: "notificationHistory",
-        to: "/notifications",
-        roles: ["admin", "manager"],
+        children: [
+          {
+            id: "notification-create",
+            label: "通知作成",
+            icon: "notification",
+            to: "/notifications/new",
+            roles: ["admin", "manager"],
+          },
+          {
+            id: "notification-management",
+            label: "通知管理",
+            icon: "notificationHistory",
+            to: "/notifications",
+            roles: ["admin", "manager"],
+          },
+        ],
       },
     ],
   },
@@ -152,7 +134,7 @@ export const sidebarSections = [
     items: [
       {
         id: "settings",
-        label: "イベント管理",
+        label: "設定",
         icon: "settings",
         to: "/settings",
         roles: ["admin", "manager"],
