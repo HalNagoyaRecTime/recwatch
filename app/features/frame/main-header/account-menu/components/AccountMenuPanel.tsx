@@ -101,7 +101,7 @@ export function AccountMenuPanel({
       content: (
         <FloatingPanel
           placement="right-start"
-          interaction="click"
+          interaction="hover"
           offsetValue={6}
           triggerClassName="block w-full"
           trigger={
