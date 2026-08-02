@@ -190,7 +190,11 @@ export function Select<T extends string>({
             {...getFloatingProps()}
             className="z-140 w-max max-w-full"
           >
-            <FloatingListSurface id={listboxId} aria-label={ariaLabel}>
+            <FloatingListSurface
+              id={listboxId}
+              aria-label={ariaLabel}
+              role="listbox"
+            >
               {options.map((option, index) => {
                 const selected = option.value === value;
 

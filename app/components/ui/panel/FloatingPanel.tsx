@@ -17,11 +17,18 @@ import {
   useFloatingTree,
   type Placement,
 } from "@floating-ui/react";
-import { useState, type ReactNode } from "react";
+import {
+  cloneElement,
+  isValidElement,
+  useState,
+  type ReactElement,
+  type ReactNode,
+} from "react";
 import { cn } from "~/lib/cn";
 
 export type FloatingPanelProps = {
-  trigger: ReactNode;
+  /** A single element that can receive refs and interaction props. */
+  trigger: ReactElement;
   content: ReactNode;
   placement?: Placement;
   interaction?: "click" | "hover";
@@ -81,15 +88,24 @@ export function FloatingPanel({
     role,
   ]);
 
+  const triggerElement = isValidElement(trigger)
+    ? cloneElement(
+        trigger,
+        // eslint-disable-next-line react-hooks/refs
+        getReferenceProps({
+          // eslint-disable-next-line react-hooks/refs
+          ref: refs.setReference,
+          className: cn(
+            (trigger.props as { className?: string }).className,
+            triggerClassName
+          ),
+        })
+      )
+    : trigger;
+
   const panel = (
     <>
-      <div
-        ref={refs.setReference}
-        {...getReferenceProps()}
-        className={cn("inline-block", triggerClassName)}
-      >
-        {trigger}
-      </div>
+      {triggerElement}
       {isOpen && (
         <FloatingPortal>
           <div

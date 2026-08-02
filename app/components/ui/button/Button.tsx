@@ -1,4 +1,4 @@
-import type { ButtonHTMLAttributes, ReactNode } from "react";
+import { forwardRef, type ButtonHTMLAttributes, type ReactNode } from "react";
 import type { LucideIcon } from "lucide-react";
 
 import {
@@ -29,29 +29,35 @@ type IconOnlyButtonProps = ButtonBaseProps & {
 
 export type ButtonProps = LabeledButtonProps | IconOnlyButtonProps;
 
-export function Button({
-  icon: Icon,
-  variant = "secondary",
-  size = "md",
-  iconOnly = false,
-  type = "button",
-  children,
-  ...props
-}: ButtonProps) {
-  return (
-    <button
-      {...props}
-      type={type}
-      className={buttonStyle({
-        variant,
-        size,
-        layout: iconOnly ? "icon" : "content",
-      })}
-    >
-      {Icon && (
-        <Icon aria-hidden="true" className={buttonIconStyle({ variant })} />
-      )}
-      {!iconOnly && <span className="truncate">{children}</span>}
-    </button>
-  );
-}
+export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
+  function Button(
+    {
+      icon: Icon,
+      variant = "secondary",
+      size = "md",
+      iconOnly = false,
+      type = "button",
+      children,
+      ...props
+    },
+    ref
+  ) {
+    return (
+      <button
+        ref={ref}
+        {...props}
+        type={type}
+        className={buttonStyle({
+          variant,
+          size,
+          layout: iconOnly ? "icon" : "content",
+        })}
+      >
+        {Icon && (
+          <Icon aria-hidden="true" className={buttonIconStyle({ variant })} />
+        )}
+        {!iconOnly && <span className="truncate">{children}</span>}
+      </button>
+    );
+  }
+);

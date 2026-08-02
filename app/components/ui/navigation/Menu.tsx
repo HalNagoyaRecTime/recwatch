@@ -1,6 +1,8 @@
 import {
   createElement,
+  forwardRef,
   type ComponentType,
+  type ComponentPropsWithoutRef,
   type ReactNode,
   type ElementType,
 } from "react";
@@ -82,7 +84,10 @@ export function Menu({ items }: MenuProps) {
   );
 }
 
-type MenuActionItemProps = {
+type MenuActionItemProps = Omit<
+  ComponentPropsWithoutRef<"button">,
+  "children" | "type"
+> & {
   label: string;
   icon?: ElementType;
   endIcon?: MenuIconComponent | ReactNode;
@@ -96,24 +101,26 @@ type MenuActionItemProps = {
  * ポップオーバー（FloatingPanel）を開くためのトリガーボタン等として、
  * 他の項目と見た目を揃えたい時にも使用できます。
  */
-export function MenuActionItem({
-  label,
-  icon: Icon,
-  endIcon,
-  danger,
-  onClick,
-}: MenuActionItemProps) {
+export const MenuActionItem = forwardRef<
+  HTMLButtonElement,
+  MenuActionItemProps
+>(function MenuActionItem(
+  { label, icon: Icon, endIcon, danger, className, ...buttonProps },
+  ref
+) {
   const EndIcon = typeof endIcon === "function" ? endIcon : undefined;
 
   return (
     <button
+      ref={ref}
       type="button"
-      onClick={onClick}
+      {...buttonProps}
       className={cn(
         floatingListActionItemStyle({
           intent: danger ? "danger" : "default",
         }),
-        endIcon ? "justify-between" : undefined
+        endIcon ? "justify-between" : undefined,
+        className
       )}
     >
       <div className="flex items-center gap-2.5">
@@ -129,4 +136,4 @@ export function MenuActionItem({
       )}
     </button>
   );
-}
+});
