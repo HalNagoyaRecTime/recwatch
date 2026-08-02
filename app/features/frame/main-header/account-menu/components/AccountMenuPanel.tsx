@@ -32,7 +32,7 @@ export function AccountMenuPanel({
   const isDark = theme === "dark";
 
   return (
-    <div className="absolute top-[calc(100%+6px)] right-0 z-140 rounded-xl border border-(--border-2) bg-(--surface-overlay-strong) p-2 shadow-(--shadow-soft) backdrop-blur-xl">
+    <div className="rounded-xl border border-(--border-2) bg-(--surface-overlay-strong) p-2 shadow-(--shadow-soft) backdrop-blur-xl">
       <div className="px-2 py-2">
         <div className="flex h-10 items-center gap-3">
           {/* アカウントの画像 */}

@@ -1,31 +1,37 @@
 import { ChevronDownIcon } from "lucide-react";
+import { forwardRef, type ComponentPropsWithoutRef } from "react";
 
 import { cn } from "~/lib/cn";
 
 import type { AccountBtnData } from "~/features/frame/main-header/account-menu/model/account-btn-data";
 
-type AccountMenuBtnProps = {
+type AccountMenuBtnProps = Omit<
+  ComponentPropsWithoutRef<"button">,
+  "children" | "type"
+> & {
   account: AccountBtnData;
   photoUrl?: string | null;
   isOpen: boolean;
-  onToggle: () => void;
 };
 
-export function AccountMenuBtn({
-  account,
-  photoUrl,
-  isOpen,
-  onToggle,
-}: AccountMenuBtnProps) {
+export const AccountMenuBtn = forwardRef<
+  HTMLButtonElement,
+  AccountMenuBtnProps
+>(function AccountMenuBtn(
+  { account, photoUrl, isOpen, className, ...buttonProps },
+  ref
+) {
   return (
     <button
+      ref={ref}
       type="button"
+      {...buttonProps}
       className={cn(
         "app-rounded relative flex h-full cursor-pointer items-center gap-2 overflow-hidden rounded-l-[20px]! bg-transparent text-(--text-1) transition",
         "hover:border-(--border-strong) hover:bg-(--surface-2)",
-        isOpen ? "bg-(--surface-2)" : ""
+        isOpen ? "bg-(--surface-2)" : "",
+        className
       )}
-      onClick={onToggle}
     >
       {/* 背景とボーダー描画用div */}
       <div
@@ -70,4 +76,4 @@ export function AccountMenuBtn({
       />
     </button>
   );
-}
+});

@@ -4,8 +4,10 @@ import {
   getAccountBtnData,
   type AccountUser,
 } from "~/features/frame/main-header/account-menu/model/account-btn-data";
-import { useAccountBtn } from "~/features/frame/main-header/account-menu/hooks/useAccountBtn";
 import { useAccountPhoto } from "~/features/frame/main-header/account-menu/hooks/useAccountPhoto";
+import { useState } from "react";
+import { FloatingTree } from "@floating-ui/react";
+import { FloatingPanel } from "~/components/ui/panel/FloatingPanel";
 
 type AccountBtnProps = {
   user?: AccountUser | null;
@@ -15,24 +17,31 @@ type AccountBtnProps = {
 export function AccountBtn({ user, onLogout }: AccountBtnProps) {
   const account = getAccountBtnData(user);
   const photoUrl = useAccountPhoto(user);
-  const { close, isOpen, rootRef, toggle } = useAccountBtn();
+  const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <div className="relative" ref={rootRef}>
-      <AccountMenuBtn
-        account={account}
-        photoUrl={photoUrl}
+    <FloatingTree>
+      <FloatingPanel
         isOpen={isOpen}
-        onToggle={toggle}
+        onOpenChange={setIsOpen}
+        placement="bottom-end"
+        interaction="click"
+        trigger={
+          <AccountMenuBtn
+            account={account}
+            photoUrl={photoUrl}
+            isOpen={isOpen}
+          />
+        }
+        content={
+          <AccountMenuPanel
+            account={account}
+            photoUrl={photoUrl}
+            onClose={() => setIsOpen(false)}
+            onLogout={onLogout}
+          />
+        }
       />
-      {isOpen ? (
-        <AccountMenuPanel
-          account={account}
-          photoUrl={photoUrl}
-          onClose={close}
-          onLogout={onLogout}
-        />
-      ) : null}
-    </div>
+    </FloatingTree>
   );
 }
