@@ -9,6 +9,7 @@ import {
 
 import type { Route } from "./+types/root";
 import { THEME_STORAGE_KEY } from "./lib/theme";
+import { ThemeProvider } from "~/components/providers/ThemeProvider";
 import "./app.css";
 
 export const links: Route.LinksFunction = () => [];
@@ -52,7 +53,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
-  return <Outlet />;
+  return (
+    <ThemeProvider>
+      <Outlet />
+    </ThemeProvider>
+  );
 }
 
 export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
