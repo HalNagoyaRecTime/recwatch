@@ -16,6 +16,7 @@ import {
   useFloatingNodeId,
   useFloatingTree,
   type Placement,
+  type OpenChangeReason,
 } from "@floating-ui/react";
 import {
   cloneElement,
@@ -34,7 +35,11 @@ export type FloatingPanelProps = {
   interaction?: "click" | "hover";
   offsetValue?: number;
   isOpen?: boolean;
-  onOpenChange?: (open: boolean) => void;
+  onOpenChange?: (
+    open: boolean,
+    event?: Event,
+    reason?: OpenChangeReason
+  ) => void;
   className?: string;
   triggerClassName?: string;
 };
