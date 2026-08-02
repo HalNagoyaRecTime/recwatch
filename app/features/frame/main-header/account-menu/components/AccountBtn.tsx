@@ -20,27 +20,11 @@ export function AccountBtn({ user, onLogout }: AccountBtnProps) {
   const photoUrl = useAccountPhoto(user);
   const [isOpen, setIsOpen] = useState(false);
 
-  const handleOpenChange = (nextOpen: boolean, event?: Event) => {
-    const target = event?.target;
-
-    // Theme choices live in a nested portal. A press on that portal must not
-    // be treated as an outside press for the account menu.
-    if (
-      !nextOpen &&
-      target instanceof Element &&
-      target.closest("[data-account-theme-menu]")
-    ) {
-      return;
-    }
-
-    setIsOpen(nextOpen);
-  };
-
   return (
     <FloatingTree>
       <FloatingPanel
         isOpen={isOpen}
-        onOpenChange={handleOpenChange}
+        onOpenChange={setIsOpen}
         placement="bottom-end"
         interaction="click"
         trigger={

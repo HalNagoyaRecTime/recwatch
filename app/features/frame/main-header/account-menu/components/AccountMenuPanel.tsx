@@ -117,11 +117,7 @@ export function AccountMenuPanel({
               }
             />
           }
-          content={
-            <div data-account-theme-menu>
-              <Menu items={themeMenuItems} />
-            </div>
-          }
+          content={<Menu items={themeMenuItems} />}
         />
       ),
     },
