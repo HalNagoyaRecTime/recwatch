@@ -3,6 +3,44 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
+  /***** new *****/
+  --color-bg-gradient-start: var(--bg-gradient-start);
+  --color-bg-gradient-end: var(--bg-gradient-end);
+  --color-bg-gradient-glow: var(--bg-gradient-glow);
+
+  --color-surface-layout: var(--surface-layout);
+  --color-surface-base: var(--surface-base);
+  --color-surface-muted: var(--surface-muted);
+  --color-surface-subtle: var(--surface-subtle);
+  --color-surface-hover: var(--surface-hover);
+
+  --color-border-subtle: var(--border-subtle);
+  --color-border-base: var(--border-base);
+  --color-border-strong: var(--border-strong);
+
+  --color-text-base: var(--text-base);
+  --color-text-muted: var(--text-muted);
+  --color-text-subtle: var(--text-subtle);
+  --color-text-base-inverse: var(--text-base-inverse);
+  --color-text-muted-inverse: var(--text-muted-inverse);
+  --color-text-subtle-inverse: var(--text-subtle-inverse);
+
+  --color-brand-primary: var(--brand-primary);
+
+  --color-button-brand-gradient-start: var(--button-brand-gradient-start);
+  --color-button-brand-gradient-end: var(--button-brand-gradient-end);
+
+  --color-tone-success-bg: var(--tone-success-bg);
+  --color-tone-success-bg-hover: var(--tone-success-bg-hover);
+  --color-tone-success-border: var(--tone-success-border);
+  --color-tone-success-text: var(--tone-success-text);
+
+  --color-tone-danger-bg: var(--tone-danger-bg);
+  --color-tone-danger-bg-hover: var(--tone-danger-bg-hover);
+  --color-tone-danger-border: var(--tone-danger-border);
+  --color-tone-danger-text: var(--tone-danger-text);
+
+  /***** old *****/
   --color-surface-1: var(--surface-1);
   --color-surface-2: var(--surface-2);
   --color-surface-overlay: var(--surface-overlay);
@@ -13,7 +51,6 @@
 
   --color-border-1: var(--border-1);
   --color-border-2: var(--border-2);
-  --color-border-strong: var(--border-strong);
 
   --color-text-1: var(--text-1);
   --color-text-2: var(--text-2);
@@ -37,18 +74,55 @@
   --color-tone-cyan-bg: var(--tone-cyan-bg);
   --color-tone-cyan-text: var(--tone-cyan-text);
 
-  --color-tone-danger-bg: var(--tone-danger-bg);
-  --color-tone-danger-bg-hover: var(--tone-danger-bg-hover);
-  --color-tone-danger-border: var(--tone-danger-border);
-  --color-tone-danger-text: var(--tone-danger-text);
-
   --shadow-soft: var(--shadow-soft);
 }
 
 :root {
+  /***** new *****/
+  --bg-gradient-start: #eef8ff;
+  --bg-gradient-end: #f8fcff;
+  --bg-gradient-glow: rgba(56, 189, 248, 0.2);
+
+  --surface-layout: rgba(255, 255, 255, 0.78);
+  --surface-base: #ffffff;
+  --surface-muted: #f4f4f4;
+  --surface-subtle: #bfbebe;
+  --surface-hover: rgba(226, 242, 252, 0.82);
+
+  /* TODO半透明ではないボーダーを設定 */
+  /*--border-subtle: rgba(15, 23, 42, 0.08);*/
+  /*--border-base: rgba(15, 23, 42, 0.14);*/
+  /*--border-strong: rgba(15, 23, 42, 0.24);*/
+  --border-subtle: #ececee;
+  --border-base: #dddfe1;
+  --border-strong: #c5c7cc;
+
+  --text-base: #05233a;
+  --text-muted: #45657d;
+  --text-subtle: #7b95ab;
+  --text-base-inverse: #f5f9fc;
+  --text-muted-inverse: #c2d2de;
+  --text-subtle-inverse: #91a9ba;
+
+  --brand-primary: #38bdf8;
+
+  --button-brand-gradient-start: #2397d6;
+  --button-brand-gradient-end: #63c2f0;
+
+  --tone-success-bg: rgba(34, 197, 94, 0.12);
+  --tone-success-bg-hover: rgba(34, 197, 94, 0.2);
+  --tone-success-border: rgba(34, 197, 94, 0.28);
+  --tone-success-text: #15803d;
+
+  --tone-danger-bg: rgba(239, 68, 68, 0.12);
+  --tone-danger-bg-hover: rgba(239, 68, 68, 0.2);
+  --tone-danger-border: rgba(239, 68, 68, 0.28);
+  --tone-danger-text: #dc2626;
+
+  /***** old *****/
   --bg-top: #eef8ff;
   --bg-bottom: #f8fcff;
-  --bg-glow: rgba(56, 189, 248, 0.16);
+  --bg-glow: rgba(56, 189, 248, 0.2);
 
   --surface-1: rgba(255, 255, 255, 0.84);
   --surface-2: rgba(226, 242, 252, 0.82);
@@ -60,7 +134,6 @@
 
   --border-1: rgba(15, 23, 42, 0.08);
   --border-2: rgba(15, 23, 42, 0.14);
-  --border-strong: rgba(15, 23, 42, 0.24);
 
   --text-1: #05233a;
   --text-2: #45657d;
@@ -84,18 +157,55 @@
   --tone-cyan-bg: rgba(56, 189, 248, 0.12);
   --tone-cyan-text: #0369a1;
 
-  --tone-danger-bg: rgba(239, 68, 68, 0.12);
-  --tone-danger-bg-hover: rgba(239, 68, 68, 0.2);
-  --tone-danger-border: rgba(239, 68, 68, 0.28);
-  --tone-danger-text: #dc2626;
+  --tone-red-border: var(--tone-danger-border);
+  --tone-red-bg: var(--tone-danger-bg);
+  --tone-red-text: var(--tone-danger-text);
 
   --shadow-soft: 0 20px 45px rgba(15, 23, 42, 0.12);
 }
 
 .dark {
+  /***** new *****/
+  --bg-gradient-start: #03131d;
+  --bg-gradient-end: #07131b;
+  --bg-gradient-glow: rgba(56, 189, 248, 0.2);
+
+  --surface-layout: rgba(8, 20, 28, 0.86);
+  --surface-base: #08141c;
+  --surface-muted: #10212d;
+  --surface-subtle: #192730;
+  --surface-hover: rgba(16, 33, 45, 0.82);
+
+  --border-subtle: rgba(255, 255, 255, 0.07);
+  --border-base: rgba(255, 255, 255, 0.12);
+  --border-strong: rgba(255, 255, 255, 0.2);
+
+  --text-base: #eff9ff;
+  --text-muted: #8fb0c4;
+  --text-subtle: #557187;
+  --text-base-inverse: #05233a;
+  --text-muted-inverse: #45657d;
+  --text-subtle-inverse: #7b95ab;
+
+  --brand-primary: #38bdf8;
+
+  --button-brand-gradient-start: #1b6ea8;
+  --button-brand-gradient-end: #3a9cda;
+
+  --tone-success-bg: rgba(34, 197, 94, 0.12);
+  --tone-success-bg-hover: rgba(34, 197, 94, 0.2);
+  --tone-success-border: rgba(34, 197, 94, 0.28);
+  --tone-success-text: #15803d;
+
+  --tone-danger-bg: rgba(239, 68, 68, 0.12);
+  --tone-danger-bg-hover: rgba(239, 68, 68, 0.2);
+  --tone-danger-border: rgba(239, 68, 68, 0.36);
+  --tone-danger-text: #ff8d8d;
+
+  /***** old *****/
   --bg-top: #03131d;
   --bg-bottom: #07131b;
-  --bg-glow: rgba(56, 189, 248, 0.12);
+  --bg-glow: rgba(56, 189, 248, 0.2);
 
   --surface-1: #0b1720;
   --surface-2: #10212d;
@@ -107,7 +217,6 @@
 
   --border-1: rgba(255, 255, 255, 0.07);
   --border-2: rgba(255, 255, 255, 0.12);
-  --border-strong: rgba(255, 255, 255, 0.2);
 
   --text-1: #eff9ff;
   --text-2: #8fb0c4;
@@ -128,68 +237,78 @@
   --tone-cyan-bg: rgba(56, 189, 248, 0.12);
   --tone-cyan-text: #7dd3fc;
 
-  --tone-danger-bg: rgba(239, 68, 68, 0.12);
-  --tone-danger-bg-hover: rgba(239, 68, 68, 0.2);
-  --tone-danger-border: rgba(239, 68, 68, 0.36);
-  --tone-danger-text: #ff8d8d;
+  --tone-red-border: var(--tone-danger-border);
+  --tone-red-bg: var(--tone-danger-bg);
+  --tone-red-text: var(--tone-danger-text);
 
   --shadow-soft: 0 20px 45px rgba(0, 0, 0, 0.28);
 }
 
-html,
-body {
-  margin: 0;
-  height: 100%;
-  color: var(--text-1);
-  font-family: Meiryo, system-ui, sans-serif;
+@layer base {
+  html,
+  body {
+    margin: 0;
+    height: 100%;
+    color: var(--text-1);
+    font-family: Meiryo, system-ui, sans-serif;
+  }
+
+  body {
+    height: 100dvh;
+    overscroll-behavior-y: none;
+    overflow: hidden;
+  }
+
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  button,
+  input {
+    font: inherit;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--brand-primary);
+    outline-offset: 2px;
+  }
+
+  #app {
+    height: 100dvh;
+  }
+
+  ::selection {
+    background: color-mix(in srgb, var(--brand-1) 28%, transparent);
+  }
 }
 
-body {
-  height: 100dvh;
-  overscroll-behavior-y: none;
-  overflow: hidden;
-}
+@layer utilities {
+  .main-header-height {
+    height: 52px;
+  }
 
-a {
-  color: inherit;
-  text-decoration: none;
-}
+  .main-footer-height {
+    height: 42px;
+  }
 
-button,
-input {
-  font: inherit;
-}
+  .app-rounded {
+    border-radius: 8px;
+  }
 
-#app {
-  height: 100dvh;
-}
+  .app-text-small {
+    font-size: 14px;
+  }
 
-::selection {
-  background: color-mix(in srgb, var(--brand-1) 28%, transparent);
-}
+  .sidebar-close-width,
+  .left-navigation-close-width {
+    width: 56px;
+  }
 
-.main-header-height {
-  height: 52px;
-}
-
-.main-footer-height {
-  height: 42px;
-}
-
-.app-rounded {
-  border-radius: 8px;
-}
-
-.app-text-small {
-  font-size: 14px;
-}
-
-.sidebar-close-width {
-  width: 56px;
-}
-
-.sidebar-open-width {
-  width: 224px;
+  .sidebar-open-width,
+  .left-navigation-open-width {
+    width: 224px;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

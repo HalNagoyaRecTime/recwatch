@@ -1,7 +1,7 @@
 {
   "eyebrow": "Control Room",
   "title": "Live operations without losing the event-wide picture.",
-  "description": "Monitor active events, timing issues, staff load, and unresolved reports from one place. The frame stays narrow, explicit, and optimized for fast context switching.",
+  "description": "Monitor active events, timing issues, staff load, and unresolved incidents from one place. The frame stays narrow, explicit, and optimized for fast context switching.",
   "metrics": [
     {
       "label": "Active events",
@@ -35,8 +35,8 @@
       "status": "Done"
     },
     {
-      "name": "Report export queued",
-      "meta": "Summary package for directors",
+      "name": "Lane 2 readiness confirmed",
+      "meta": "Main arena",
       "tone": "blue",
       "status": "Queued"
     }

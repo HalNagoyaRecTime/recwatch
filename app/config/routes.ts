@@ -4,9 +4,12 @@ export type SidebarIconKey =
   | "calendar"
   | "clock"
   | "dashboard"
+  | "notification"
   | "file"
   | "home"
   | "settings"
+  | "notificationHistory"
+  | "classRoom"
   | "timing"
   | "trophy"
   | "users";
@@ -42,50 +45,6 @@ export const sidebarSections = [
     ],
   },
   {
-    label: "分析",
-    items: [
-      {
-        id: "reports",
-        label: "レポート",
-        icon: "file",
-        roles: ["admin", "manager"],
-        children: [
-          {
-            id: "reports-summary",
-            label: "サマリー",
-            roles: ["admin", "manager"],
-            children: [
-              {
-                id: "reports-summary-daily",
-                label: "日次レポート",
-                to: "/reports/summary/daily",
-                roles: ["admin", "manager"],
-              },
-              {
-                id: "reports-summary-monthly",
-                label: "月次レポート",
-                to: "/reports/summary/monthly/department",
-                roles: ["admin", "manager"],
-              },
-            ],
-          },
-          {
-            id: "reports-detail",
-            label: "詳細",
-            to: "/reports/detail",
-            roles: ["admin"],
-          },
-          {
-            id: "reports-export",
-            label: "エクスポート",
-            to: "/reports/export",
-            roles: ["admin"],
-          },
-        ],
-      },
-    ],
-  },
-  {
     label: "管理",
     items: [
       {
@@ -94,18 +53,6 @@ export const sidebarSections = [
         icon: "calendar",
         roles: ["admin", "manager", "member"],
         children: [
-          {
-            id: "events-active",
-            label: "開催中",
-            to: "/events/active",
-            roles: ["admin", "manager", "member"],
-          },
-          {
-            id: "events-past",
-            label: "過去のイベント",
-            to: "/events/past",
-            roles: ["admin", "manager"],
-          },
           {
             id: "events-new",
             label: "新規作成",
@@ -127,12 +74,6 @@ export const sidebarSections = [
             roles: ["admin", "manager"],
           },
           {
-            id: "members-teams",
-            label: "チーム",
-            to: "/members/teams",
-            roles: ["admin", "manager"],
-          },
-          {
             id: "members-import",
             label: "インポート",
             to: "/members/import",
@@ -140,6 +81,18 @@ export const sidebarSections = [
           },
         ],
       },
+      {
+        id: "classRoom",
+        label: "Class Rooms",
+        icon: "classRoom",
+        to: "/classroom",
+        roles: ["admin", "manager"],
+      },
+    ],
+  },
+  {
+    label: "Operations",
+    items: [
       {
         id: "sports",
         label: "競技マスター",
@@ -154,20 +107,14 @@ export const sidebarSections = [
           },
           {
             id: "sports-tournament",
-            label: "トーナメント",
+            label: "Tournament",
             to: "/sports/tournament",
             roles: ["admin"],
           },
           {
             id: "sports-scoring",
-            label: "採点ルール",
+            label: "Scoring Rules",
             to: "/sports/scoring",
-            roles: ["admin", "manager"],
-          },
-          {
-            id: "homeroom",
-            label: "ホームルーム",
-            to: "/homeroom",
             roles: ["admin", "manager"],
           },
         ],
@@ -185,10 +132,17 @@ export const sidebarSections = [
         roles: ["admin", "manager", "member"],
       },
       {
-        id: "timing",
-        label: "計測コントロール",
-        icon: "timing",
-        to: "/timing",
+        id: "notification-create",
+        label: "通知作成",
+        icon: "notification",
+        to: "/notifications/new",
+        roles: ["admin", "manager"],
+      },
+      {
+        id: "notification-management",
+        label: "通知管理",
+        icon: "notificationHistory",
+        to: "/notifications",
         roles: ["admin", "manager"],
       },
     ],
