@@ -47,7 +47,7 @@ export const AccountMenuBtn = forwardRef<
         className="absolute z-20"
       />
 
-      <span className="text-text-base z-15 pr-2 pl-9 text-xs font-semibold whitespace-nowrap">
+      <span className="text-text-base z-15 pl-9 text-xs font-semibold whitespace-nowrap">
         {account.name}
       </span>
       <ChevronDownIcon
