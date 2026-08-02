@@ -56,7 +56,6 @@ export function AccountMenuPanel({
           className={cn(theme !== "light" && "opacity-0")}
         />
       ),
-      onPointerDown: () => setTheme("light"),
       onClick: () => setTheme("light"),
     },
     {
@@ -71,7 +70,6 @@ export function AccountMenuPanel({
           className={cn(theme !== "dark" && "opacity-0")}
         />
       ),
-      onPointerDown: () => setTheme("dark"),
       onClick: () => setTheme("dark"),
     },
     {
@@ -86,7 +84,6 @@ export function AccountMenuPanel({
           className={cn(theme !== "system" && "opacity-0")}
         />
       ),
-      onPointerDown: () => setTheme("system"),
       onClick: () => setTheme("system"),
     },
   ];
@@ -120,7 +117,11 @@ export function AccountMenuPanel({
               }
             />
           }
-          content={<Menu items={themeMenuItems} />}
+          content={
+            <div data-account-theme-menu>
+              <Menu items={themeMenuItems} />
+            </div>
+          }
         />
       ),
     },
