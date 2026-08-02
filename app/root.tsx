@@ -9,6 +9,7 @@ import {
 
 import type { Route } from "./+types/root";
 import { THEME_STORAGE_KEY } from "./lib/theme";
+import { ThemeProvider } from "~/components/providers/ThemeProvider";
 import "./app.css";
 
 export const links: Route.LinksFunction = () => [];
@@ -27,9 +28,15 @@ export function Layout({ children }: { children: React.ReactNode }) {
               (function() {
                 var storageKey = ${JSON.stringify(THEME_STORAGE_KEY)};
                 var storedTheme = window.localStorage.getItem(storageKey);
-                var theme = storedTheme === "light" ? "light" : "dark";
+                var theme = ["light", "dark", "system"].includes(storedTheme)
+                  ? storedTheme
+                  : "system";
                 var root = document.documentElement;
-                root.classList.toggle("dark", theme === "dark");
+                var isDark =
+                  theme === "dark" ||
+                  (theme === "system" &&
+                    window.matchMedia("(prefers-color-scheme: dark)").matches);
+                root.classList.toggle("dark", isDark);
                 root.dataset.theme = theme;
               })();
             `,
@@ -46,7 +53,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
-  return <Outlet />;
+  return (
+    <ThemeProvider>
+      <Outlet />
+    </ThemeProvider>
+  );
 }
 
 export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
