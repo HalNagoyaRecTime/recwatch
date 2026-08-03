@@ -80,15 +80,15 @@ export const sidebarSections = [
     label: "イベント",
     items: [
       {
-        id: "sports",
+        id: "events",
         label: "競技マスター",
         icon: "trophy",
         roles: ["admin", "manager"],
         children: [
           {
-            id: "sports-list",
+            id: "events-list",
             label: "競技一覧",
-            to: "/sports",
+            to: "/events",
             roles: ["admin", "manager"],
           },
           {
