@@ -39,6 +39,6 @@ export default [
     ),
     route("participants", "routes/main/participants.tsx"),
     route("gathering-spots", "routes/main/gatheringSpots.tsx"),
-    route("settings", "routes/main/settings.tsx"),
+    route("user/settings", "routes/main/user.settings.tsx"),
   ]),
 ] satisfies RouteConfig;
