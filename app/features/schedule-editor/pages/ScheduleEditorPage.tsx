@@ -1,5 +1,7 @@
 import { useState, type FormEvent } from "react";
 
+import { getEventNotificationErrorMessage } from "~/features/event-notification/application/event-notification-error-messages";
+
 import type { ScheduleSubmitter } from "../application/schedule-submitter";
 import { ScheduleForm } from "../components/ScheduleForm";
 import { ScheduleNotificationPreview } from "../components/ScheduleNotificationPreview";
@@ -91,10 +93,8 @@ export function ScheduleEditorPage({
       await submitter.submit(draft);
       setSubmitted(true);
       onSubmitted?.();
-    } catch {
-      setSubmissionError(
-        "イベントを登録できませんでした。時間をおいて再度お試しください。"
-      );
+    } catch (error) {
+      setSubmissionError(getEventNotificationErrorMessage(error, "submission"));
     } finally {
       setIsSubmitting(false);
     }

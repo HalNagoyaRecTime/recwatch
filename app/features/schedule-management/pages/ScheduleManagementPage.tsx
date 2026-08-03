@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router";
 
+import { getEventNotificationErrorMessage } from "~/features/event-notification/application/event-notification-error-messages";
+
 import type { ScheduleManagementGateway } from "../application/schedule-management-gateway";
 import { CancelNotificationDialog } from "../components/CancelNotificationDialog";
 import { ScheduleDetailDialog } from "../components/ScheduleDetailDialog";
@@ -42,10 +44,8 @@ export function ScheduleManagementPage({
 
     try {
       setSchedules(await gateway.list());
-    } catch {
-      setErrorMessage(
-        "イベントを取得できませんでした。時間をおいて再度お試しください。"
-      );
+    } catch (error) {
+      setErrorMessage(getEventNotificationErrorMessage(error, "list"));
     } finally {
       setIsLoading(false);
     }
@@ -82,10 +82,8 @@ export function ScheduleManagementPage({
       );
       setNotificationToCancel(null);
       setFeedbackMessage("未送信の通知予定を削除しました。");
-    } catch {
-      setErrorMessage(
-        "通知予定を削除できませんでした。最新の状態を確認して再度お試しください。"
-      );
+    } catch (error) {
+      setErrorMessage(getEventNotificationErrorMessage(error, "notification"));
     } finally {
       setIsDeleting(false);
     }

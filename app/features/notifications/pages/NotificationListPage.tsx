@@ -1,4 +1,4 @@
-import { CalendarDays, Ellipsis, Grid2X2, List, Plus } from "lucide-react";
+import { CalendarDays, Grid2X2, List, Plus, RefreshCw } from "lucide-react";
 import { useState } from "react";
 
 import { Button } from "~/components/ui/button/Button";
@@ -115,11 +115,13 @@ export function NotificationListPage({ api }: NotificationListPageProps) {
             value={viewMode}
           />
           <Button
-            icon={Ellipsis}
+            aria-label="通知一覧を再読み込み"
+            disabled={state.isLoading || state.isDeleting}
             iconOnly
-            aria-label="その他の操作"
-            variant="secondary"
+            icon={RefreshCw}
+            onClick={() => void state.reload()}
             size="md"
+            variant="secondary"
           />
         </div>
 

@@ -1,3 +1,5 @@
+import { EventNotificationError } from "~/features/event-notification/application/event-notification-error";
+
 import type { ManagedSchedule } from "../model/schedule";
 
 let schedules: ManagedSchedule[] = [
@@ -124,7 +126,7 @@ export const mockScheduleManagementStore = {
     const schedule = schedules.find((item) => item.id === scheduleId);
 
     if (!schedule) {
-      throw new Error("Schedule not found");
+      throw new EventNotificationError("not_found");
     }
 
     return cloneSchedule(schedule);
@@ -136,7 +138,7 @@ export const mockScheduleManagementStore = {
     const schedule = schedules.find((item) => item.id === scheduleId);
 
     if (!schedule) {
-      throw new Error("Schedule not found");
+      throw new EventNotificationError("not_found");
     }
 
     const updatedSchedule: ManagedSchedule = {
@@ -156,7 +158,7 @@ export const mockScheduleManagementStore = {
     await wait(350);
 
     if (!schedules.some((item) => item.id === updatedSchedule.id)) {
-      throw new Error("Schedule not found");
+      throw new EventNotificationError("not_found");
     }
 
     schedules = schedules.map((item) =>

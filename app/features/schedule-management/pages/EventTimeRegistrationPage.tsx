@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 
+import { getEventNotificationErrorMessage } from "~/features/event-notification/application/event-notification-error-messages";
 import type { EventNotificationGateway } from "~/features/event-notification/application/event-notification-gateway";
 import { ScheduleEditorPage } from "~/features/schedule-editor/pages/ScheduleEditorPage";
 
@@ -34,9 +35,9 @@ export function EventTimeRegistrationPage({
           setEvents(result);
         }
       })
-      .catch(() => {
+      .catch((error: unknown) => {
         if (active) {
-          setErrorMessage("イベントを取得できませんでした。");
+          setErrorMessage(getEventNotificationErrorMessage(error, "list"));
         }
       })
       .finally(() => {

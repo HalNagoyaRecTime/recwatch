@@ -104,6 +104,35 @@ describe("NotificationListPage", () => {
     expect(list).toHaveBeenNthCalledWith(2, { limit: 20, offset: 20 });
   });
 
+  it("再読み込みボタンで現在ページの一覧を再取得して表示を更新する", async () => {
+    const list = vi
+      .fn()
+      .mockResolvedValueOnce({
+        notifications: [draftNotification],
+        total: 1,
+        limit: 20,
+        offset: 0,
+      })
+      .mockResolvedValueOnce({
+        notifications: [{ ...draftNotification, title: "更新された通知" }],
+        total: 1,
+        limit: 20,
+        offset: 0,
+      });
+    const user = userEvent.setup();
+
+    renderPage(<NotificationListPage api={createGateway({ list })} />);
+
+    await screen.findByText("集合場所変更");
+    await user.click(
+      screen.getByRole("button", { name: "通知一覧を再読み込み" })
+    );
+
+    expect(await screen.findByText("更新された通知")).toBeInTheDocument();
+    expect(list).toHaveBeenNthCalledWith(1, { limit: 20, offset: 0 });
+    expect(list).toHaveBeenNthCalledWith(2, { limit: 20, offset: 0 });
+  });
+
   it.each([
     ["authentication_required", "ログインが必要です。"],
     ["forbidden", "通知を管理する権限がありません。"],

@@ -54,6 +54,11 @@ export function useNotificationList({ api }: UseNotificationListOptions) {
     void loadPage(currentPage);
   }, [currentPage, loadPage]);
 
+  const reload = useCallback(
+    () => loadPage(currentPage),
+    [currentPage, loadPage]
+  );
+
   const items = useMemo(
     () => sortItems(notifications.map(toListItem), sort),
     [notifications, sort]
@@ -116,6 +121,7 @@ export function useNotificationList({ api }: UseNotificationListOptions) {
     items,
     onDeleteRequest: handleDeleteRequest,
     onPageChange: setCurrentPage,
+    reload,
     onSortChange: handleSortChange,
     pageCount,
     selectedNotification,

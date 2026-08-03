@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router";
 
+import { getEventNotificationErrorMessage } from "~/features/event-notification/application/event-notification-error-messages";
 import type { ScheduleSubmitter } from "~/features/schedule-editor/application/schedule-submitter";
 import { ScheduleEditorPage } from "~/features/schedule-editor/pages/ScheduleEditorPage";
 
@@ -33,9 +34,9 @@ export function ScheduleEditEntryPage({
           setSchedule(result);
         }
       })
-      .catch(() => {
+      .catch((error: unknown) => {
         if (active) {
-          setErrorMessage("イベントの詳細を取得できませんでした。");
+          setErrorMessage(getEventNotificationErrorMessage(error, "detail"));
         }
       });
 
