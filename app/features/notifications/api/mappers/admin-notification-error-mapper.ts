@@ -1,8 +1,9 @@
-import { ApiClientError } from "~/lib/api-client-error";
 import {
   NotificationSubmissionError,
   type NotificationSubmissionErrorKind,
 } from "~/features/notifications/api/contracts/errors/notification-submission-error";
+
+import { readApiErrorStatus } from "./notification-api-error-mapper";
 
 const errorKindByStatus: Partial<
   Record<number, NotificationSubmissionErrorKind>
@@ -19,11 +20,8 @@ export function toNotificationSubmissionError(error: unknown) {
     return error;
   }
 
-  if (error instanceof ApiClientError) {
-    return new NotificationSubmissionError(
-      errorKindByStatus[error.status] ?? "unexpected"
-    );
-  }
-
-  return new NotificationSubmissionError("unexpected");
+  const status = readApiErrorStatus(error);
+  return new NotificationSubmissionError(
+    status === null ? "unexpected" : (errorKindByStatus[status] ?? "unexpected")
+  );
 }

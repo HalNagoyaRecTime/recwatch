@@ -5,9 +5,9 @@ import {
   toManagedNotification,
   toManagedNotificationPage,
 } from "~/features/notifications/api/mappers/admin-notification-management-response-mapper";
-import { createAdminNotificationResponse } from "~/features/notifications/test/fixtures/admin-notification-management-response";
+import { createNotificationResponse } from "~/features/notifications/test/fixtures/admin-notification-management-response";
 
-describe("admin notification response mapper", () => {
+describe("notification management response mapper", () => {
   it.each([
     [{ total: 2, draft: 2, sending: 0, sent: 0, failed: 0 }, "draft"],
     [{ total: 2, draft: 0, sending: 2, sent: 0, failed: 0 }, "sending"],
@@ -17,7 +17,7 @@ describe("admin notification response mapper", () => {
   ] as const)("配信件数から%s状態を導出する", (deliverySummary, status) => {
     expect(
       toManagedNotification(
-        createAdminNotificationResponse({
+        createNotificationResponse({
           recipient_count: 2,
           audience: {
             type: "resolved_recipients",
@@ -32,7 +32,7 @@ describe("admin notification response mapper", () => {
   it("一覧Responseを画面モデルへ正規化する", () => {
     const page = toManagedNotificationPage({
       notifications: [
-        createAdminNotificationResponse({
+        createNotificationResponse({
           related_event_id: 3,
           related_event_name: "リレー",
           audience: {
@@ -59,7 +59,7 @@ describe("admin notification response mapper", () => {
   it("編集用に配信対象の識別子を保持する", () => {
     expect(
       toManagedNotification(
-        createAdminNotificationResponse({
+        createNotificationResponse({
           audience: {
             type: "class_room",
             class_room_id: 3,
@@ -73,7 +73,7 @@ describe("admin notification response mapper", () => {
   it("件数の合計が一致しないResponseを拒否する", () => {
     expect(() =>
       toManagedNotification(
-        createAdminNotificationResponse({
+        createNotificationResponse({
           delivery_summary: {
             total: 30,
             draft: 29,

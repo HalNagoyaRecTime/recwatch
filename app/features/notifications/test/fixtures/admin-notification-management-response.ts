@@ -1,4 +1,4 @@
-export function createAdminNotificationResponse(
+export function createNotificationResponse(
   overrides: Record<string, unknown> = {}
 ) {
   return {

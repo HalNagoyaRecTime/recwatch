@@ -3,6 +3,8 @@ import {
   type NotificationManagementErrorKind,
 } from "~/features/notifications/api/contracts/errors/notification-management-error";
 
+import { readApiErrorStatus } from "./notification-api-error-mapper";
+
 const errorKindByStatus: Partial<
   Record<number, NotificationManagementErrorKind>
 > = {
@@ -18,20 +20,8 @@ export function toNotificationManagementError(error: unknown) {
     return error;
   }
 
-  const status = readStatus(error);
+  const status = readApiErrorStatus(error);
   return new NotificationManagementError(
     status === null ? "unexpected" : (errorKindByStatus[status] ?? "unexpected")
   );
-}
-
-function readStatus(error: unknown) {
-  if (
-    typeof error === "object" &&
-    error !== null &&
-    "status" in error &&
-    typeof error.status === "number"
-  ) {
-    return error.status;
-  }
-  return null;
 }

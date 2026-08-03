@@ -6,7 +6,7 @@ import {
   createHttpNotificationManagementApi,
   type AdminNotificationManagementHttpClient,
 } from "~/features/notifications/api/http/notification-management-api";
-import { createAdminNotificationResponse } from "~/features/notifications/test/fixtures/admin-notification-management-response";
+import { createNotificationResponse } from "~/features/notifications/test/fixtures/admin-notification-management-response";
 
 function createClient(
   overrides: Partial<AdminNotificationManagementHttpClient> = {}
@@ -22,7 +22,7 @@ function createClient(
 describe("createHttpNotificationManagementApi", () => {
   it("通知一覧を取得する", async () => {
     const get = vi.fn().mockResolvedValue({
-      notifications: [createAdminNotificationResponse()],
+      notifications: [createNotificationResponse()],
       total: 1,
       limit: 50,
       offset: 0,
@@ -39,7 +39,7 @@ describe("createHttpNotificationManagementApi", () => {
   });
 
   it("通知詳細を取得する", async () => {
-    const get = vi.fn().mockResolvedValue(createAdminNotificationResponse());
+    const get = vi.fn().mockResolvedValue(createNotificationResponse());
     const gateway = createHttpNotificationManagementApi(createClient({ get }));
 
     await expect(gateway.getById(10)).resolves.toMatchObject({ id: 10 });
@@ -48,7 +48,7 @@ describe("createHttpNotificationManagementApi", () => {
 
   it("未送信通知を更新する", async () => {
     const put = vi.fn().mockResolvedValue(
-      createAdminNotificationResponse({
+      createNotificationResponse({
         title: "変更後",
       })
     );

@@ -7,17 +7,19 @@ import type {
   EventAudiencePageApiDto,
   GatheringAudienceApiDto,
 } from "~/features/notifications/api/dto/notification-audience-api-dto";
+import {
+  isClassRoomAudiencePageResponse,
+  isClassRoomAudienceResponse,
+  isEventAudiencePageResponse,
+  isEventAudienceResponse,
+  isGatheringAudienceItemResponse,
+  isGatheringAudienceResponse,
+} from "~/features/notifications/api/mappers/notification-audience-response-validator";
 
 export function toClassRoomAudiencePage(
   response: unknown
 ): ClassRoomAudiencePageApiDto {
-  if (
-    !isRecord(response) ||
-    !Array.isArray(response.classrooms) ||
-    !isNonNegativeInteger(response.total) ||
-    !isPositiveInteger(response.limit) ||
-    !isNonNegativeInteger(response.offset)
-  ) {
+  if (!isClassRoomAudiencePageResponse(response)) {
     throw unexpectedResponse();
   }
 
@@ -32,13 +34,7 @@ export function toClassRoomAudiencePage(
 export function toEventAudiencePage(
   response: unknown
 ): EventAudiencePageApiDto {
-  if (
-    !isRecord(response) ||
-    !Array.isArray(response.events) ||
-    !isNonNegativeInteger(response.total) ||
-    !isPositiveInteger(response.limit) ||
-    !isNonNegativeInteger(response.offset)
-  ) {
+  if (!isEventAudiencePageResponse(response)) {
     throw unexpectedResponse();
   }
 
@@ -53,7 +49,7 @@ export function toEventAudiencePage(
 export function toGatheringAudienceDtos(
   response: unknown
 ): GatheringAudienceApiDto[] {
-  if (!Array.isArray(response)) {
+  if (!isGatheringAudienceResponse(response)) {
     throw unexpectedResponse();
   }
 
@@ -85,12 +81,7 @@ export function toNotificationAudienceOptions(input: {
 }
 
 function toClassRoomDto(value: unknown): ClassRoomAudienceApiDto {
-  if (
-    !isRecord(value) ||
-    !isPositiveInteger(value.class_room_id) ||
-    !isNonEmptyString(value.class_code) ||
-    !isNonEmptyString(value.class_name)
-  ) {
+  if (!isClassRoomAudienceResponse(value)) {
     throw unexpectedResponse();
   }
 
@@ -102,11 +93,7 @@ function toClassRoomDto(value: unknown): ClassRoomAudienceApiDto {
 }
 
 function toEventDto(value: unknown): EventAudienceApiDto {
-  if (
-    !isRecord(value) ||
-    !isPositiveInteger(value.event_id) ||
-    !isNonEmptyString(value.event_name)
-  ) {
+  if (!isEventAudienceResponse(value)) {
     throw unexpectedResponse();
   }
 
@@ -117,13 +104,7 @@ function toEventDto(value: unknown): EventAudienceApiDto {
 }
 
 function toGatheringDto(value: unknown): GatheringAudienceApiDto {
-  if (
-    !isRecord(value) ||
-    !isPositiveInteger(value.gathering_id) ||
-    !isNonEmptyString(value.event_name) ||
-    !isNonEmptyString(value.gathering_spot_name) ||
-    !isNonEmptyString(value.gathering_time)
-  ) {
+  if (!isGatheringAudienceItemResponse(value)) {
     throw unexpectedResponse();
   }
 
@@ -145,20 +126,4 @@ function formatGatheringName(gathering: GatheringAudienceApiDto) {
 
 function unexpectedResponse() {
   return new NotificationAudienceLoadingError("unexpected");
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null;
-}
-
-function isNonEmptyString(value: unknown): value is string {
-  return typeof value === "string" && value.trim().length > 0;
-}
-
-function isPositiveInteger(value: unknown): value is number {
-  return Number.isSafeInteger(value) && Number(value) > 0;
-}
-
-function isNonNegativeInteger(value: unknown): value is number {
-  return Number.isSafeInteger(value) && Number(value) >= 0;
 }
