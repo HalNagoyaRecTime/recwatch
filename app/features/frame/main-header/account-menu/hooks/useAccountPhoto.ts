@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 
 import { buildBackendUrl } from "~/config/env";
-import { WEB_CLIENT_HEADERS } from "~/features/auth/lib/logout";
+import { getAccessToken } from "~/features/auth/lib/accessTokenStore";
+import { WEB_CLIENT_HEADERS } from "~/features/auth/lib/webClientHeaders";
 import type { AccountUser } from "~/features/frame/main-header/account-menu/model/account-btn-data";
 import {
   buildAccountPhotoApiUrl,
@@ -81,10 +82,15 @@ export function useAccountPhoto(user?: AccountUser | null) {
         return;
       }
 
+      const accessToken = getAccessToken();
       const init: RequestInit = isBackendOrigin(photoUrl)
         ? {
-            credentials: "include",
-            headers: WEB_CLIENT_HEADERS,
+            headers: {
+              ...WEB_CLIENT_HEADERS,
+              ...(accessToken
+                ? { Authorization: `Bearer ${accessToken}` }
+                : {}),
+            },
           }
         : {};
 
