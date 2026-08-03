@@ -1,4 +1,4 @@
-import type { NotificationDraft } from "./notification-draft";
+import type { NotificationDraft } from "~/features/notifications/model/notification-draft";
 
 export type NotificationDraftErrors = Partial<
   Record<keyof NotificationDraft, string>

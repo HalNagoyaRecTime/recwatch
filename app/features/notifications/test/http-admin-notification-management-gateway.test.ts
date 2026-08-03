@@ -1,12 +1,12 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { ApiClientError } from "~/lib/api-client-error";
-import { NotificationManagementError } from "../application/notification-management-error";
+import { NotificationManagementError } from "~/features/notifications/application/notification-management-error";
 import {
   createHttpAdminNotificationManagementGateway,
   type AdminNotificationManagementHttpClient,
-} from "../infrastructure/http-admin-notification-management-gateway";
-import { createAdminNotificationResponse } from "../infrastructure/admin-notification-management-test-fixture";
+} from "~/features/notifications/infrastructure/http-admin-notification-management-gateway";
+import { createAdminNotificationResponse } from "~/features/notifications/infrastructure/admin-notification-management-test-fixture";
 
 function createClient(
   overrides: Partial<AdminNotificationManagementHttpClient> = {}

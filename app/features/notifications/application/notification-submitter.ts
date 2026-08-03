@@ -1,4 +1,4 @@
-import type { NotificationDraft } from "../model/notification-draft";
+import type { NotificationDraft } from "~/features/notifications/model/notification-draft";
 
 export type NotificationSubmission = {
   notificationId: number;

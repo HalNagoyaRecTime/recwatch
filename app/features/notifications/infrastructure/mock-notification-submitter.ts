@@ -1,7 +1,7 @@
 import type {
   NotificationSubmission,
   NotificationSubmitter,
-} from "../application/notification-submitter";
+} from "~/features/notifications/application/notification-submitter";
 
 export const mockNotificationSubmitter: NotificationSubmitter = {
   async submit(): Promise<NotificationSubmission> {

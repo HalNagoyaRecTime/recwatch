@@ -1,17 +1,17 @@
 import { ApiClientError } from "~/lib/api-client-error";
 import { apiClient } from "~/lib/api-client";
-import type { NotificationAudienceLoader } from "../application/notification-audience-loader";
-import { NotificationAudienceLoadingError } from "../application/notification-audience-loading-error";
+import type { NotificationAudienceLoader } from "~/features/notifications/application/notification-audience-loader";
+import { NotificationAudienceLoadingError } from "~/features/notifications/application/notification-audience-loading-error";
 import type {
   ClassRoomAudienceApiDto,
   EventAudienceApiDto,
-} from "./notification-audience-api-dto";
+} from "~/features/notifications/infrastructure/notification-audience-api-dto";
 import {
   toClassRoomAudiencePage,
   toEventAudiencePage,
   toGatheringAudienceDtos,
   toNotificationAudienceOptions,
-} from "./notification-audience-response-mapper";
+} from "~/features/notifications/infrastructure/notification-audience-response-mapper";
 
 const PAGE_SIZE = 100;
 const MAX_PAGES = 100;

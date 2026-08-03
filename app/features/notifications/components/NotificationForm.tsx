@@ -8,14 +8,14 @@ import { SegmentedControl } from "~/components/ui/form/SegmentedControl";
 import { Select } from "~/components/ui/form/Select";
 import { LayeredPanel } from "~/components/ui/panel/LayeredPanel";
 
-import type { NotificationAudienceOption } from "../model/notification-audience-option";
+import type { NotificationAudienceOption } from "~/features/notifications/model/notification-audience-option";
 import type {
   NotificationAudienceType,
   NotificationDeliveryTiming,
   NotificationDraft,
-} from "../model/notification-draft";
-import { notificationAudienceLabels } from "../model/notification-draft";
-import type { NotificationDraftErrors } from "../model/notification-draft-validation";
+} from "~/features/notifications/model/notification-draft";
+import { notificationAudienceLabels } from "~/features/notifications/model/notification-draft";
+import type { NotificationDraftErrors } from "~/features/notifications/model/notification-draft-validation";
 
 type NotificationFormProps = {
   draft: NotificationDraft;

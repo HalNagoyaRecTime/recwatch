@@ -1,7 +1,7 @@
 import {
   NotificationManagementError,
   type NotificationManagementErrorKind,
-} from "../application/notification-management-error";
+} from "~/features/notifications/application/notification-management-error";
 
 const errorKindByStatus: Partial<
   Record<number, NotificationManagementErrorKind>

@@ -1,6 +1,6 @@
-import type { NotificationDraft } from "../model/notification-draft";
-import { notificationAudienceLabels } from "../model/notification-draft";
-import type { NotificationAudienceOption } from "../model/notification-audience-option";
+import type { NotificationDraft } from "~/features/notifications/model/notification-draft";
+import { notificationAudienceLabels } from "~/features/notifications/model/notification-draft";
+import type { NotificationAudienceOption } from "~/features/notifications/model/notification-audience-option";
 
 type NotificationSummaryProps = {
   draft: NotificationDraft;

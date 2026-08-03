@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { mockAdminNotificationManagementGateway } from "../infrastructure/mock-admin-notification-management-gateway";
+import { mockAdminNotificationManagementGateway } from "~/features/notifications/infrastructure/mock-admin-notification-management-gateway";
 
 describe("mockAdminNotificationManagementGateway", () => {
   it("指定したToken状態を1件でも含む通知を返す", async () => {

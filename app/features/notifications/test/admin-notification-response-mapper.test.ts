@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import { NotificationSubmissionError } from "../application/notification-submission-error";
-import { toNotificationSubmission } from "../infrastructure/admin-notification-response-mapper";
+import { NotificationSubmissionError } from "~/features/notifications/application/notification-submission-error";
+import { toNotificationSubmission } from "~/features/notifications/infrastructure/admin-notification-response-mapper";
 
 describe("toNotificationSubmission", () => {
   it("API ResponseをApplicationの結果へ変換する", () => {

@@ -1,4 +1,4 @@
-import type { NotificationListQuery } from "../model/managed-notification";
+import type { NotificationListQuery } from "~/features/notifications/model/managed-notification";
 
 export function toAdminNotificationListPath(query: NotificationListQuery) {
   const search = new URLSearchParams();

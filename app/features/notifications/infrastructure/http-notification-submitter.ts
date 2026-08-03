@@ -2,11 +2,11 @@ import { apiClient } from "~/lib/api-client";
 import type {
   NotificationSubmission,
   NotificationSubmitter,
-} from "../application/notification-submitter";
-import type { NotificationDraft } from "../model/notification-draft";
-import { toNotificationSubmissionError } from "./admin-notification-error-mapper";
-import { toCreateAdminNotificationRequest } from "./admin-notification-request-mapper";
-import { toNotificationSubmission } from "./admin-notification-response-mapper";
+} from "~/features/notifications/application/notification-submitter";
+import type { NotificationDraft } from "~/features/notifications/model/notification-draft";
+import { toNotificationSubmissionError } from "~/features/notifications/infrastructure/admin-notification-error-mapper";
+import { toCreateAdminNotificationRequest } from "~/features/notifications/infrastructure/admin-notification-request-mapper";
+import { toNotificationSubmission } from "~/features/notifications/infrastructure/admin-notification-response-mapper";
 
 type AdminNotificationClient = {
   post(path: string, body: unknown): Promise<unknown>;

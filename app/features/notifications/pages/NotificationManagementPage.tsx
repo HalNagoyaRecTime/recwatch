@@ -9,13 +9,13 @@ import {
 import type { NotificationListItem } from "~/features/notifications/model/notification-list-item";
 import { NotificationsListPage } from "~/features/notifications/pages/NotificationsListPage";
 
-import type { AdminNotificationManagementGateway } from "../application/admin-notification-management-gateway";
+import type { AdminNotificationManagementGateway } from "~/features/notifications/application/admin-notification-management-gateway";
 import {
   NotificationManagementError,
   notificationManagementErrorMessages,
-} from "../application/notification-management-error";
-import { DeleteNotificationDialog } from "../components/DeleteNotificationDialog";
-import type { ManagedNotification } from "../model/managed-notification";
+} from "~/features/notifications/application/notification-management-error";
+import { DeleteNotificationDialog } from "~/features/notifications/components/DeleteNotificationDialog";
+import type { ManagedNotification } from "~/features/notifications/model/managed-notification";
 
 type NotificationManagementPageProps = {
   gateway: AdminNotificationManagementGateway;

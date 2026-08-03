@@ -1,9 +1,9 @@
-import { NotificationSubmissionError } from "../application/notification-submission-error";
-import type { NotificationDraft } from "../model/notification-draft";
+import { NotificationSubmissionError } from "~/features/notifications/application/notification-submission-error";
+import type { NotificationDraft } from "~/features/notifications/model/notification-draft";
 import type {
   AdminNotificationAudienceRequest,
   CreateAdminNotificationRequest,
-} from "./admin-notification-api-dto";
+} from "~/features/notifications/infrastructure/admin-notification-api-dto";
 
 export function toCreateAdminNotificationRequest(
   draft: NotificationDraft,

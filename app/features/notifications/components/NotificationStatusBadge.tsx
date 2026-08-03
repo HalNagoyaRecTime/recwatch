@@ -1,6 +1,6 @@
 import { cn } from "~/lib/cn";
 
-import type { ManagedNotificationStatus } from "../model/managed-notification";
+import type { ManagedNotificationStatus } from "~/features/notifications/model/managed-notification";
 
 type NotificationStatusBadgeProps = {
   status: ManagedNotificationStatus;

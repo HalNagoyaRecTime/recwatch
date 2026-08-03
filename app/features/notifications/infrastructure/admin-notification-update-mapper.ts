@@ -1,6 +1,6 @@
-import { NotificationManagementError } from "../application/notification-management-error";
-import type { NotificationUpdate } from "../model/managed-notification";
-import type { AdminNotificationUpdateRequest } from "./admin-notification-management-api-dto";
+import { NotificationManagementError } from "~/features/notifications/application/notification-management-error";
+import type { NotificationUpdate } from "~/features/notifications/model/managed-notification";
+import type { AdminNotificationUpdateRequest } from "~/features/notifications/infrastructure/admin-notification-management-api-dto";
 
 export function toAdminNotificationUpdateRequest(
   update: NotificationUpdate

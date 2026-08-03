@@ -1,4 +1,4 @@
-import type { NotificationAudienceOption } from "../model/notification-audience-option";
+import type { NotificationAudienceOption } from "~/features/notifications/model/notification-audience-option";
 
 export const mockNotificationAudienceOptions: NotificationAudienceOption[] = [
   { id: "1", name: "1年A組", type: "class_room" },

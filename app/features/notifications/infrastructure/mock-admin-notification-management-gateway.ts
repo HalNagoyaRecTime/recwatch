@@ -1,10 +1,10 @@
-import type { AdminNotificationManagementGateway } from "../application/admin-notification-management-gateway";
-import { NotificationManagementError } from "../application/notification-management-error";
+import type { AdminNotificationManagementGateway } from "~/features/notifications/application/admin-notification-management-gateway";
+import { NotificationManagementError } from "~/features/notifications/application/notification-management-error";
 import type {
   ManagedNotification,
   NotificationUpdate,
-} from "../model/managed-notification";
-import { canModifyNotification } from "../model/managed-notification";
+} from "~/features/notifications/model/managed-notification";
+import { canModifyNotification } from "~/features/notifications/model/managed-notification";
 
 let notifications: ManagedNotification[] = [
   createNotification({

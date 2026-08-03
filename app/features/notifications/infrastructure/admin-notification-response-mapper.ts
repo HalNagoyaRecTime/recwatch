@@ -1,5 +1,5 @@
-import { NotificationSubmissionError } from "../application/notification-submission-error";
-import type { NotificationSubmission } from "../application/notification-submitter";
+import { NotificationSubmissionError } from "~/features/notifications/application/notification-submission-error";
+import type { NotificationSubmission } from "~/features/notifications/application/notification-submitter";
 
 export function toNotificationSubmission(
   response: unknown

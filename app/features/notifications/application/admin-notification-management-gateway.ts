@@ -3,7 +3,7 @@ import type {
   ManagedNotificationPage,
   NotificationListQuery,
   NotificationUpdate,
-} from "../model/managed-notification";
+} from "~/features/notifications/model/managed-notification";
 
 export interface AdminNotificationManagementGateway {
   list(query?: NotificationListQuery): Promise<ManagedNotificationPage>;

@@ -1,16 +1,16 @@
-import { NotificationManagementError } from "../application/notification-management-error";
+import { NotificationManagementError } from "~/features/notifications/application/notification-management-error";
 import type {
   ManagedNotification,
   ManagedNotificationPage,
   ManagedNotificationStatus,
   NotificationDeliverySummary,
-} from "../model/managed-notification";
+} from "~/features/notifications/model/managed-notification";
 import type {
   AdminNotificationAudienceResponse,
   AdminNotificationDeliverySummaryResponse,
   AdminNotificationListResponse,
   AdminNotificationResponse,
-} from "./admin-notification-management-api-dto";
+} from "~/features/notifications/infrastructure/admin-notification-management-api-dto";
 
 export function toManagedNotificationPage(
   response: unknown

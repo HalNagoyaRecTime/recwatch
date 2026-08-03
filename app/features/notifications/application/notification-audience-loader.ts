@@ -1,4 +1,4 @@
-import type { NotificationAudienceOption } from "../model/notification-audience-option";
+import type { NotificationAudienceOption } from "~/features/notifications/model/notification-audience-option";
 
 export interface NotificationAudienceLoader {
   load(): Promise<NotificationAudienceOption[]>;

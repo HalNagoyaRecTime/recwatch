@@ -1,4 +1,4 @@
-import type { NotificationAudienceType } from "./notification-draft";
+import type { NotificationAudienceType } from "~/features/notifications/model/notification-draft";
 
 export type NotificationAudienceOption = {
   id: string;

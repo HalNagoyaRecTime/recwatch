@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { ApiClientError } from "~/lib/api-client-error";
-import { NotificationAudienceLoadingError } from "../application/notification-audience-loading-error";
-import { createHttpNotificationAudienceLoader } from "../infrastructure/http-notification-audience-loader";
+import { NotificationAudienceLoadingError } from "~/features/notifications/application/notification-audience-loading-error";
+import { createHttpNotificationAudienceLoader } from "~/features/notifications/infrastructure/http-notification-audience-loader";
 
 describe("http notification audience loader", () => {
   it("classroomsとeventsを最後のページまで取得する", async () => {

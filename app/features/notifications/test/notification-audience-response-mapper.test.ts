@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest";
 
-import { NotificationAudienceLoadingError } from "../application/notification-audience-loading-error";
+import { NotificationAudienceLoadingError } from "~/features/notifications/application/notification-audience-loading-error";
 import {
   toClassRoomAudiencePage,
   toEventAudiencePage,
   toGatheringAudienceDtos,
   toNotificationAudienceOptions,
-} from "../infrastructure/notification-audience-response-mapper";
+} from "~/features/notifications/infrastructure/notification-audience-response-mapper";
 
 describe("notification audience response mapper", () => {
   it("外部DTOを通知対象の内部モデルへ変換する", () => {

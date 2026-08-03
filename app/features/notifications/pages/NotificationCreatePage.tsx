@@ -3,27 +3,27 @@ import { useEffect, useState, type FormEvent } from "react";
 import { PageHeader } from "~/components/ui/layout/PageHeader";
 import { PagePadding } from "~/features/frame/page-layout/PagePadding";
 import { PageLayout } from "~/features/frame/page-layout/PageLayout";
-import type { NotificationAudienceLoader } from "../application/notification-audience-loader";
+import type { NotificationAudienceLoader } from "~/features/notifications/application/notification-audience-loader";
 import {
   NotificationAudienceLoadingError,
   notificationAudienceLoadingErrorMessages,
-} from "../application/notification-audience-loading-error";
-import type { NotificationSubmitter } from "../application/notification-submitter";
+} from "~/features/notifications/application/notification-audience-loading-error";
+import type { NotificationSubmitter } from "~/features/notifications/application/notification-submitter";
 import {
   NotificationSubmissionError,
   notificationSubmissionErrorMessages,
-} from "../application/notification-submission-error";
-import { NotificationForm } from "../components/NotificationForm";
-import { NotificationPreviewPanel } from "../components/NotificationPreviewPanel";
-import type { NotificationAudienceOption } from "../model/notification-audience-option";
+} from "~/features/notifications/application/notification-submission-error";
+import { NotificationForm } from "~/features/notifications/components/NotificationForm";
+import { NotificationPreviewPanel } from "~/features/notifications/components/NotificationPreviewPanel";
+import type { NotificationAudienceOption } from "~/features/notifications/model/notification-audience-option";
 import {
   initialNotificationDraft,
   type NotificationDraft,
-} from "../model/notification-draft";
+} from "~/features/notifications/model/notification-draft";
 import {
   validateNotificationDraft,
   type NotificationDraftErrors,
-} from "../model/notification-draft-validation";
+} from "~/features/notifications/model/notification-draft-validation";
 
 type NotificationCreatePageProps = {
   submitter: NotificationSubmitter;

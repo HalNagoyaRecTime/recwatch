@@ -4,12 +4,12 @@ import { MemoryRouter } from "react-router";
 import type { ReactElement } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { NotificationSubmissionError } from "../application/notification-submission-error";
-import type { NotificationSubmitter } from "../application/notification-submitter";
-import type { NotificationAudienceLoader } from "../application/notification-audience-loader";
-import { NotificationAudienceLoadingError } from "../application/notification-audience-loading-error";
-import { mockNotificationAudienceOptions } from "../infrastructure/mock-notification-audience-options";
-import { NotificationCreatePage } from "../pages/NotificationCreatePage";
+import { NotificationSubmissionError } from "~/features/notifications/application/notification-submission-error";
+import type { NotificationSubmitter } from "~/features/notifications/application/notification-submitter";
+import type { NotificationAudienceLoader } from "~/features/notifications/application/notification-audience-loader";
+import { NotificationAudienceLoadingError } from "~/features/notifications/application/notification-audience-loading-error";
+import { mockNotificationAudienceOptions } from "~/features/notifications/infrastructure/mock-notification-audience-options";
+import { NotificationCreatePage } from "~/features/notifications/pages/NotificationCreatePage";
 
 afterEach(cleanup);
 

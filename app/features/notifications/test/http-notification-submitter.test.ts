@@ -1,9 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { ApiClientError } from "~/lib/api-client-error";
-import { NotificationSubmissionError } from "../application/notification-submission-error";
-import type { NotificationDraft } from "../model/notification-draft";
-import { createHttpNotificationSubmitter } from "../infrastructure/http-notification-submitter";
+import { NotificationSubmissionError } from "~/features/notifications/application/notification-submission-error";
+import type { NotificationDraft } from "~/features/notifications/model/notification-draft";
+import { createHttpNotificationSubmitter } from "~/features/notifications/infrastructure/http-notification-submitter";
 
 const draft: NotificationDraft = {
   title: "集合場所変更",

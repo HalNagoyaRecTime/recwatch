@@ -4,10 +4,10 @@ import type { ReactElement } from "react";
 import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import type { AdminNotificationManagementGateway } from "../application/admin-notification-management-gateway";
-import { NotificationManagementError } from "../application/notification-management-error";
-import type { ManagedNotification } from "../model/managed-notification";
-import { NotificationManagementPage } from "../pages/NotificationManagementPage";
+import type { AdminNotificationManagementGateway } from "~/features/notifications/application/admin-notification-management-gateway";
+import { NotificationManagementError } from "~/features/notifications/application/notification-management-error";
+import type { ManagedNotification } from "~/features/notifications/model/managed-notification";
+import { NotificationManagementPage } from "~/features/notifications/pages/NotificationManagementPage";
 
 afterEach(cleanup);
 

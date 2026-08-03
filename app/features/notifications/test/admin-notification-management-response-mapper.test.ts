@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { NotificationManagementError } from "../application/notification-management-error";
+import { NotificationManagementError } from "~/features/notifications/application/notification-management-error";
 import {
   toManagedNotification,
   toManagedNotificationPage,
-} from "../infrastructure/admin-notification-management-response-mapper";
-import { createAdminNotificationResponse } from "../infrastructure/admin-notification-management-test-fixture";
+} from "~/features/notifications/infrastructure/admin-notification-management-response-mapper";
+import { createAdminNotificationResponse } from "~/features/notifications/infrastructure/admin-notification-management-test-fixture";
 
 describe("admin notification response mapper", () => {
   it.each([
