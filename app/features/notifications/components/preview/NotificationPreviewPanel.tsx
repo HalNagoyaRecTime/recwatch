@@ -2,7 +2,7 @@ import { useState } from "react";
 
 import { SegmentedControl } from "~/components/ui/form/SegmentedControl";
 import { ScrollbarArea } from "~/components/ui/scrollbar/ScrollbarArea";
-import { NotificationMobilePreview } from "~/features/notifications/components/NotificationMobilePreview";
+import { NotificationMobilePreview } from "~/features/notifications/components/preview/NotificationMobilePreview";
 import type { NotificationDraft } from "~/features/notifications/model/notification-draft";
 
 const notificationPreviewOptions = [

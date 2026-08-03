@@ -1,6 +1,7 @@
 import { AlertTriangleIcon } from "lucide-react";
 import { useEffect } from "react";
 
+import { Button } from "~/components/ui/button/Button";
 import type { ManagedNotification } from "~/features/notifications/model/managed-notification";
 
 type DeleteNotificationDialogProps = {
@@ -42,10 +43,10 @@ export function DeleteNotificationDialog({
         aria-modal="true"
         aria-labelledby="delete-notification-title"
         aria-describedby="delete-notification-description"
-        className="w-full max-w-[420px] rounded-lg border border-[color:var(--border-2)] bg-[color:var(--surface-overlay-strong)] p-5 shadow-[var(--shadow-soft)]"
+        className="app-rounded border-border-base bg-surface-base shadow-soft w-full max-w-[420px] border p-5"
       >
         <div className="flex items-start gap-3">
-          <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[color:var(--tone-red-bg)] text-[color:var(--tone-red-text)]">
+          <span className="bg-tone-danger-surface text-tone-danger-text inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full">
             <AlertTriangleIcon size={18} aria-hidden="true" />
           </span>
           <div className="min-w-0">
@@ -54,7 +55,7 @@ export function DeleteNotificationDialog({
             </h2>
             <p
               id="delete-notification-description"
-              className="mt-2 text-sm leading-6 text-[color:var(--text-2)]"
+              className="text-text-muted mt-2 text-sm leading-6"
             >
               「{notification.title}
               」は配信されず、一覧から削除されます。この操作は元に戻せません。
@@ -62,23 +63,23 @@ export function DeleteNotificationDialog({
           </div>
         </div>
         <div className="mt-5 flex justify-end gap-2">
-          <button
-            type="button"
+          <Button
             autoFocus
             disabled={isSubmitting}
-            className="h-9 rounded-lg border border-[color:var(--border-2)] px-4 text-sm font-medium transition hover:bg-[color:var(--surface-2)] disabled:opacity-50"
             onClick={onClose}
+            size="md"
+            variant="secondary"
           >
             戻る
-          </button>
-          <button
-            type="button"
+          </Button>
+          <Button
             disabled={isSubmitting}
-            className="h-9 rounded-lg bg-red-600 px-4 text-sm font-semibold text-white transition hover:bg-red-700 disabled:opacity-50"
             onClick={onConfirm}
+            size="md"
+            variant="danger"
           >
             {isSubmitting ? "削除中..." : "削除する"}
-          </button>
+          </Button>
         </div>
       </div>
     </div>

@@ -3,8 +3,8 @@ import { PagePadding } from "~/features/frame/page-layout/PagePadding";
 import { PageLayout } from "~/features/frame/page-layout/PageLayout";
 import type { NotificationAudienceApi } from "~/features/notifications/api/contracts/notification-audience-api";
 import type { NotificationSubmissionApi } from "~/features/notifications/api/contracts/notification-submission-api";
-import { NotificationForm } from "~/features/notifications/components/NotificationForm";
-import { NotificationPreviewPanel } from "~/features/notifications/components/NotificationPreviewPanel";
+import { NotificationForm } from "~/features/notifications/components/form/NotificationForm";
+import { NotificationPreviewPanel } from "~/features/notifications/components/preview/NotificationPreviewPanel";
 import { useNotificationCreate } from "~/features/notifications/hooks/useNotificationCreate";
 
 type NotificationCreatePageProps = {

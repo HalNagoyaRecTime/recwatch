@@ -1,6 +1,6 @@
 import { Ellipsis, Eye, Pencil, Trash2 } from "lucide-react";
-import { useNavigate } from "react-router";
 import { useState } from "react";
+import { useNavigate } from "react-router";
 
 import { Button } from "~/components/ui/button/Button";
 import { Menu, type MenuItemType } from "~/components/ui/navigation/Menu";
