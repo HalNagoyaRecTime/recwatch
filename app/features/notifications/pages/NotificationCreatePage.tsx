@@ -1,134 +1,38 @@
-import { useEffect, useState, type FormEvent } from "react";
+import type { FormEvent } from "react";
 
 import { PageHeader } from "~/components/ui/layout/PageHeader";
 import { PagePadding } from "~/features/frame/page-layout/PagePadding";
 import { PageLayout } from "~/features/frame/page-layout/PageLayout";
-import type { NotificationAudienceLoader } from "~/features/notifications/application/notification-audience-loader";
-import {
-  NotificationAudienceLoadingError,
-  notificationAudienceLoadingErrorMessages,
-} from "~/features/notifications/application/notification-audience-loading-error";
-import type { NotificationSubmitter } from "~/features/notifications/application/notification-submitter";
-import {
-  NotificationSubmissionError,
-  notificationSubmissionErrorMessages,
-} from "~/features/notifications/application/notification-submission-error";
+import type { NotificationAudienceApi } from "~/features/notifications/api/contracts/notification-audience-api";
+import type { NotificationSubmissionApi } from "~/features/notifications/api/contracts/notification-submission-api";
 import { NotificationForm } from "~/features/notifications/components/NotificationForm";
 import { NotificationPreviewPanel } from "~/features/notifications/components/NotificationPreviewPanel";
-import type { NotificationAudienceOption } from "~/features/notifications/model/notification-audience-option";
-import {
-  initialNotificationDraft,
-  type NotificationDraft,
-} from "~/features/notifications/model/notification-draft";
-import {
-  validateNotificationDraft,
-  type NotificationDraftErrors,
-} from "~/features/notifications/model/notification-draft-validation";
+import { useNotificationCreate } from "~/features/notifications/hooks/useNotificationCreate";
 
 type NotificationCreatePageProps = {
-  submitter: NotificationSubmitter;
-  audienceLoader: NotificationAudienceLoader;
+  api: NotificationSubmissionApi;
+  audienceApi: NotificationAudienceApi;
   isSubmissionEnabled?: boolean;
 };
 
 export function NotificationCreatePage({
-  submitter,
-  audienceLoader,
+  api,
+  audienceApi,
   isSubmissionEnabled = true,
 }: NotificationCreatePageProps) {
-  const [draft, setDraft] = useState<NotificationDraft>(
-    initialNotificationDraft
-  );
-  const [errors, setErrors] = useState<NotificationDraftErrors>({});
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
-  const [submissionError, setSubmissionError] = useState<string | null>(null);
-  const [audienceOptions, setAudienceOptions] = useState<
-    NotificationAudienceOption[]
-  >([]);
-  const [isAudienceLoading, setIsAudienceLoading] = useState(true);
-  const [audienceError, setAudienceError] = useState<string | null>(null);
-  const [audienceReloadKey, setAudienceReloadKey] = useState(0);
+  const state = useNotificationCreate({
+    api,
+    audienceApi,
+    isSubmissionEnabled,
+  });
 
-  useEffect(() => {
-    let active = true;
-    setIsAudienceLoading(true);
-    setAudienceError(null);
-
-    audienceLoader
-      .load()
-      .then((options) => {
-        if (active) {
-          setAudienceOptions(options);
-        }
-      })
-      .catch((error: unknown) => {
-        if (active) {
-          setAudienceOptions([]);
-          setAudienceError(
-            error instanceof NotificationAudienceLoadingError
-              ? notificationAudienceLoadingErrorMessages[error.kind]
-              : notificationAudienceLoadingErrorMessages.unexpected
-          );
-        }
-      })
-      .finally(() => {
-        if (active) {
-          setIsAudienceLoading(false);
-        }
-      });
-
-    return () => {
-      active = false;
-    };
-  }, [audienceLoader, audienceReloadKey]);
-
-  function handleChange(nextDraft: NotificationDraft) {
-    setDraft(nextDraft);
-    setSubmitted(false);
-    setSubmissionError(null);
-    setErrors((current) => ({
-      ...current,
-      title: nextDraft.title.trim() ? undefined : current.title,
-      body: nextDraft.body.trim() ? undefined : current.body,
-      audienceId: nextDraft.audienceId ? undefined : current.audienceId,
-      scheduledAt: nextDraft.scheduledAt ? undefined : current.scheduledAt,
-    }));
-  }
-
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!isSubmissionEnabled) {
-      return;
-    }
-
-    const nextErrors = validateNotificationDraft(draft);
-    setErrors(nextErrors);
-
-    if (Object.keys(nextErrors).length > 0 || isSubmitting) {
-      return;
-    }
-
-    setIsSubmitting(true);
-    setSubmitted(false);
-    setSubmissionError(null);
-
-    try {
-      await submitter.submit(draft);
-      setSubmitted(true);
-    } catch (error) {
-      setSubmissionError(
-        error instanceof NotificationSubmissionError
-          ? notificationSubmissionErrorMessages[error.kind]
-          : notificationSubmissionErrorMessages.unexpected
-      );
-    } finally {
-      setIsSubmitting(false);
-    }
+    void state.submit();
   }
 
   return (
-    <PageLayout right={<NotificationPreviewPanel draft={draft} />}>
+    <PageLayout right={<NotificationPreviewPanel draft={state.draft} />}>
       <PagePadding>
         <div className="mx-auto flex w-full min-w-0 flex-col gap-6">
           <PageHeader
@@ -136,31 +40,29 @@ export function NotificationCreatePage({
             description="アプリを利用するメンバーへプッシュ通知を配信します"
           />
           <NotificationForm
-            draft={draft}
-            errors={errors}
-            audienceOptions={audienceOptions}
-            audienceError={audienceError}
-            isAudienceLoading={isAudienceLoading}
+            audienceError={state.audienceError}
+            audienceOptions={state.audienceOptions}
+            draft={state.draft}
+            errors={state.errors}
+            isAudienceLoading={state.isAudienceLoading}
             isSubmissionDisabled={!isSubmissionEnabled}
-            isSubmitting={isSubmitting}
-            onAudienceReload={() =>
-              setAudienceReloadKey((current) => current + 1)
-            }
-            onChange={handleChange}
+            isSubmitting={state.isSubmitting}
+            onAudienceReload={state.onAudienceReload}
+            onChange={state.onChange}
             onSubmit={handleSubmit}
           />
           <div
             aria-live="polite"
             className={`min-h-5 text-sm ${
-              submissionError
+              state.submissionError
                 ? "text-tone-danger-text"
                 : "text-tone-success-text"
             }`}
           >
             {!isSubmissionEnabled
               ? "API接続後に通知を配信できます。"
-              : (submissionError ??
-                (submitted ? "通知を配信予定に登録しました。" : null))}
+              : (state.submissionError ??
+                (state.submitted ? "通知を配信予定に登録しました。" : null))}
           </div>
         </div>
       </PagePadding>

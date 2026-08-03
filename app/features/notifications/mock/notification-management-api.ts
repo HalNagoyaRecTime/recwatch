@@ -1,5 +1,5 @@
-import type { AdminNotificationManagementGateway } from "~/features/notifications/application/admin-notification-management-gateway";
-import { NotificationManagementError } from "~/features/notifications/application/notification-management-error";
+import type { NotificationManagementApi } from "~/features/notifications/api/contracts/notification-management-api";
+import { NotificationManagementError } from "~/features/notifications/model/notification-management-error";
 import type {
   ManagedNotification,
   NotificationUpdate,
@@ -12,6 +12,7 @@ let notifications: ManagedNotification[] = [
     title: "競技開始時間の変更",
     body: "走れ！〇人〇脚！の開始時間が09:00から09:10に変更になりました。",
     audienceName: "競技参加者 30名",
+    audience: { type: "event_participants", eventId: 1 },
     scheduledAt: "2026-11-07T09:05:00+09:00",
     relatedEventId: 1,
     relatedEventName: "走れ！〇人〇脚！",
@@ -107,73 +108,69 @@ function cloneNotification(notification: ManagedNotification) {
   };
 }
 
-export const mockAdminNotificationManagementGateway: AdminNotificationManagementGateway =
-  {
-    async list(query = {}) {
-      await new Promise((resolve) => window.setTimeout(resolve, 250));
-      const filtered = query.sendStatus
-        ? notifications.filter(
-            (notification) =>
-              notification.deliverySummary[query.sendStatus!] > 0
-          )
-        : notifications;
-      const offset = query.offset ?? 0;
-      const limit = query.limit ?? 50;
+export const mockNotificationManagementApi: NotificationManagementApi = {
+  async list(query = {}) {
+    await new Promise((resolve) => window.setTimeout(resolve, 250));
+    const filtered = query.sendStatus
+      ? notifications.filter(
+          (notification) => notification.deliverySummary[query.sendStatus!] > 0
+        )
+      : notifications;
+    const offset = query.offset ?? 0;
+    const limit = query.limit ?? 50;
 
-      return {
-        notifications: filtered
-          .slice(offset, offset + limit)
-          .map(cloneNotification),
-        total: filtered.length,
-        limit,
-        offset,
-      };
-    },
+    return {
+      notifications: filtered
+        .slice(offset, offset + limit)
+        .map(cloneNotification),
+      total: filtered.length,
+      limit,
+      offset,
+    };
+  },
 
-    async getById(notificationId) {
-      const notification = notifications.find(
-        (item) => item.id === notificationId
-      );
-      if (!notification) {
-        throw new NotificationManagementError("not_found");
-      }
-      return cloneNotification(notification);
-    },
+  async getById(notificationId) {
+    const notification = notifications.find(
+      (item) => item.id === notificationId
+    );
+    if (!notification) {
+      throw new NotificationManagementError("not_found");
+    }
+    return cloneNotification(notification);
+  },
 
-    async update(notificationId, update) {
-      const notification = notifications.find(
-        (item) => item.id === notificationId
-      );
-      if (!notification) {
-        throw new NotificationManagementError("not_found");
-      }
-      if (!canModifyNotification(notification)) {
-        throw new NotificationManagementError("conflict");
-      }
+  async update(notificationId, update) {
+    const notification = notifications.find(
+      (item) => item.id === notificationId
+    );
+    if (!notification) {
+      throw new NotificationManagementError("not_found");
+    }
+    if (!canModifyNotification(notification)) {
+      throw new NotificationManagementError("conflict");
+    }
 
-      const updated = applyUpdate(notification, update);
-      notifications = notifications.map((item) =>
-        item.id === notificationId ? updated : item
-      );
-      return cloneNotification(updated);
-    },
+    const updated = applyUpdate(notification, update);
+    notifications = notifications.map((item) =>
+      item.id === notificationId ? updated : item
+    );
+    return cloneNotification(updated);
+  },
 
-    async delete(notificationId) {
-      await new Promise((resolve) => window.setTimeout(resolve, 350));
-      const notification = notifications.find(
-        (item) => item.id === notificationId
-      );
-      if (!notification) {
-        throw new NotificationManagementError("not_found");
-      }
-      if (!canModifyNotification(notification)) {
-        throw new NotificationManagementError("conflict");
-      }
-      notifications = notifications.filter(
-        (item) => item.id !== notificationId
-      );
-    },
-  };
+  async delete(notificationId) {
+    await new Promise((resolve) => window.setTimeout(resolve, 350));
+    const notification = notifications.find(
+      (item) => item.id === notificationId
+    );
+    if (!notification) {
+      throw new NotificationManagementError("not_found");
+    }
+    if (!canModifyNotification(notification)) {
+      throw new NotificationManagementError("conflict");
+    }
+    notifications = notifications.filter((item) => item.id !== notificationId);
+  },
+};
 
 function applyUpdate(
   notification: ManagedNotification,
@@ -183,6 +180,7 @@ function applyUpdate(
     ...notification,
     title: update.title ?? notification.title,
     body: update.body ?? notification.body,
+    audience: update.audience ?? notification.audience,
     scheduledAt: update.scheduledAt ?? notification.scheduledAt,
     updatedAt: new Date().toISOString(),
   };

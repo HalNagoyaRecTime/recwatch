@@ -1,9 +1,9 @@
 import type {
   NotificationSubmission,
-  NotificationSubmitter,
-} from "~/features/notifications/application/notification-submitter";
+  NotificationSubmissionApi,
+} from "~/features/notifications/api/contracts/notification-submission-api";
 
-export const mockNotificationSubmitter: NotificationSubmitter = {
+export const mockNotificationSubmissionApi: NotificationSubmissionApi = {
   async submit(): Promise<NotificationSubmission> {
     await new Promise((resolve) => window.setTimeout(resolve, 450));
 

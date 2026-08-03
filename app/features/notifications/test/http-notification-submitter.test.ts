@@ -1,9 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { ApiClientError } from "~/lib/api-client-error";
-import { NotificationSubmissionError } from "~/features/notifications/application/notification-submission-error";
+import { NotificationSubmissionError } from "~/features/notifications/model/notification-submission-error";
 import type { NotificationDraft } from "~/features/notifications/model/notification-draft";
-import { createHttpNotificationSubmitter } from "~/features/notifications/infrastructure/http-notification-submitter";
+import { createHttpNotificationSubmissionApi } from "~/features/notifications/api/http/notification-submission-api";
 
 const draft: NotificationDraft = {
   title: "集合場所変更",
@@ -12,14 +12,14 @@ const draft: NotificationDraft = {
   audienceId: "3",
 };
 
-describe("createHttpNotificationSubmitter", () => {
+describe("createHttpNotificationSubmissionApi", () => {
   it("管理者通知APIへ送信して結果を正規化する", async () => {
     const post = vi.fn().mockResolvedValue({
       notification_id: 7,
       schedule_count: 30,
       send_status: "draft",
     });
-    const submitter = createHttpNotificationSubmitter(
+    const submitter = createHttpNotificationSubmissionApi(
       { post },
       () => new Date("2026-11-07T09:00:00+09:00")
     );
@@ -45,7 +45,7 @@ describe("createHttpNotificationSubmitter", () => {
     [409, "no_active_devices"],
     [500, "unexpected"],
   ] as const)("HTTP %sを%sエラーへ変換する", async (status, kind) => {
-    const submitter = createHttpNotificationSubmitter({
+    const submitter = createHttpNotificationSubmissionApi({
       post: vi.fn().mockRejectedValue(new ApiClientError(status, "error")),
     });
 

@@ -1,16 +1,16 @@
 import { apiClient } from "~/lib/api-client";
-import type { AdminNotificationManagementGateway } from "~/features/notifications/application/admin-notification-management-gateway";
+import type { NotificationManagementApi } from "~/features/notifications/api/contracts/notification-management-api";
 import type {
   NotificationListQuery,
   NotificationUpdate,
 } from "~/features/notifications/model/managed-notification";
-import { toNotificationManagementError } from "~/features/notifications/infrastructure/admin-notification-management-error-mapper";
+import { toNotificationManagementError } from "~/features/notifications/api/mappers/admin-notification-management-error-mapper";
 import {
   toManagedNotification,
   toManagedNotificationPage,
-} from "~/features/notifications/infrastructure/admin-notification-management-response-mapper";
-import { toAdminNotificationListPath } from "~/features/notifications/infrastructure/admin-notification-list-query-mapper";
-import { toAdminNotificationUpdateRequest } from "~/features/notifications/infrastructure/admin-notification-update-mapper";
+} from "~/features/notifications/api/mappers/admin-notification-management-response-mapper";
+import { toAdminNotificationListPath } from "~/features/notifications/api/mappers/admin-notification-list-query-mapper";
+import { toAdminNotificationUpdateRequest } from "~/features/notifications/api/mappers/admin-notification-update-mapper";
 
 export type AdminNotificationManagementHttpClient = {
   get(path: string): Promise<unknown>;
@@ -18,9 +18,9 @@ export type AdminNotificationManagementHttpClient = {
   delete(path: string): Promise<void>;
 };
 
-export function createHttpAdminNotificationManagementGateway(
+export function createHttpNotificationManagementApi(
   client: AdminNotificationManagementHttpClient = apiClient
-): AdminNotificationManagementGateway {
+): NotificationManagementApi {
   return {
     async list(query: NotificationListQuery = {}) {
       try {
@@ -64,5 +64,5 @@ export function createHttpAdminNotificationManagementGateway(
   };
 }
 
-export const httpAdminNotificationManagementGateway =
-  createHttpAdminNotificationManagementGateway();
+export const httpNotificationManagementApi =
+  createHttpNotificationManagementApi();

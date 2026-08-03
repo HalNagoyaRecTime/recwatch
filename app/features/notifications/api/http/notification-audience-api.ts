@@ -1,17 +1,17 @@
 import { ApiClientError } from "~/lib/api-client-error";
 import { apiClient } from "~/lib/api-client";
-import type { NotificationAudienceLoader } from "~/features/notifications/application/notification-audience-loader";
-import { NotificationAudienceLoadingError } from "~/features/notifications/application/notification-audience-loading-error";
+import type { NotificationAudienceApi } from "~/features/notifications/api/contracts/notification-audience-api";
+import { NotificationAudienceLoadingError } from "~/features/notifications/model/notification-audience-loading-error";
 import type {
   ClassRoomAudienceApiDto,
   EventAudienceApiDto,
-} from "~/features/notifications/infrastructure/notification-audience-api-dto";
+} from "~/features/notifications/api/dto/notification-audience-api-dto";
 import {
   toClassRoomAudiencePage,
   toEventAudiencePage,
   toGatheringAudienceDtos,
   toNotificationAudienceOptions,
-} from "~/features/notifications/infrastructure/notification-audience-response-mapper";
+} from "~/features/notifications/api/mappers/notification-audience-response-mapper";
 
 const PAGE_SIZE = 100;
 const MAX_PAGES = 100;
@@ -20,9 +20,9 @@ type NotificationAudienceHttpClient = {
   get(path: string): Promise<unknown>;
 };
 
-export function createHttpNotificationAudienceLoader(
+export function createHttpNotificationAudienceApi(
   client: NotificationAudienceHttpClient = apiClient
-): NotificationAudienceLoader {
+): NotificationAudienceApi {
   return {
     async load() {
       try {
@@ -100,5 +100,4 @@ async function loadAllEvents(client: NotificationAudienceHttpClient) {
   throw new NotificationAudienceLoadingError("unexpected");
 }
 
-export const httpNotificationAudienceLoader =
-  createHttpNotificationAudienceLoader();
+export const httpNotificationAudienceApi = createHttpNotificationAudienceApi();

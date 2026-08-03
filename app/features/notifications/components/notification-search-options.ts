@@ -1,7 +1,7 @@
 import { Bell } from "lucide-react";
 
 import type { SearchOption } from "~/components/ui/form/SearchCombobox";
-import notificationSearchJson from "~/mock/notification-search.json";
+import notificationSearchJson from "~/features/notifications/mock/notification-search.json";
 
 type NotificationSearchMockItem = {
   category: string;

@@ -5,7 +5,7 @@ import type {
   NotificationUpdate,
 } from "~/features/notifications/model/managed-notification";
 
-export interface AdminNotificationManagementGateway {
+export interface NotificationManagementApi {
   list(query?: NotificationListQuery): Promise<ManagedNotificationPage>;
   getById(notificationId: number): Promise<ManagedNotification>;
   update(

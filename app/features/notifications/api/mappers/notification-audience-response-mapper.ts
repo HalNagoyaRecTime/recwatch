@@ -1,4 +1,4 @@
-import { NotificationAudienceLoadingError } from "~/features/notifications/application/notification-audience-loading-error";
+import { NotificationAudienceLoadingError } from "~/features/notifications/model/notification-audience-loading-error";
 import type { NotificationAudienceOption } from "~/features/notifications/model/notification-audience-option";
 import type {
   ClassRoomAudienceApiDto,
@@ -6,7 +6,7 @@ import type {
   EventAudienceApiDto,
   EventAudiencePageApiDto,
   GatheringAudienceApiDto,
-} from "~/features/notifications/infrastructure/notification-audience-api-dto";
+} from "~/features/notifications/api/dto/notification-audience-api-dto";
 
 export function toClassRoomAudiencePage(
   response: unknown

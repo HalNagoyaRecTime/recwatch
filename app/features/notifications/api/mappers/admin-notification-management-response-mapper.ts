@@ -1,4 +1,4 @@
-import { NotificationManagementError } from "~/features/notifications/application/notification-management-error";
+import { NotificationManagementError } from "~/features/notifications/model/notification-management-error";
 import type {
   ManagedNotification,
   ManagedNotificationPage,
@@ -10,7 +10,7 @@ import type {
   AdminNotificationDeliverySummaryResponse,
   AdminNotificationListResponse,
   AdminNotificationResponse,
-} from "~/features/notifications/infrastructure/admin-notification-management-api-dto";
+} from "~/features/notifications/api/dto/admin-notification-management-api-dto";
 
 export function toManagedNotificationPage(
   response: unknown
@@ -37,6 +37,7 @@ export function toManagedNotification(response: unknown): ManagedNotification {
     title: response.title,
     body: response.body,
     audienceName: toAudienceName(response.audience),
+    audience: toManagedAudience(response.audience),
     recipientCount: response.recipient_count,
     scheduledAt: response.scheduled_at,
     creatorName: response.creator_name ?? "-",
@@ -63,6 +64,27 @@ function toAudienceName(audience: AdminNotificationAudienceResponse) {
   return audience.type === "event_participants"
     ? `競技参加者（${audience.recipient_count}名）`
     : `配信対象者（${audience.recipient_count}名）`;
+}
+
+function toManagedAudience(audience: AdminNotificationAudienceResponse) {
+  switch (audience.type) {
+    case "all":
+      return { type: "all" as const };
+    case "class_room":
+      return {
+        type: "class_room" as const,
+        classRoomId: audience.class_room_id,
+      };
+    case "gathering":
+      return { type: "gathering" as const, gatheringId: audience.gathering_id };
+    case "event_participants":
+      return {
+        type: "event_participants" as const,
+        eventId: audience.event_id,
+      };
+    case "resolved_recipients":
+      return { type: "resolved_recipients" as const };
+  }
 }
 
 function isAdminNotificationListResponse(
@@ -109,10 +131,20 @@ function isAudience(
   if (!isRecord(value) || !isPositiveInteger(value.recipient_count)) {
     return false;
   }
-  if (value.type === "resolved_recipients") return true;
-  return (
-    value.type === "event_participants" && isPositiveInteger(value.event_id)
-  );
+
+  switch (value.type) {
+    case "all":
+    case "resolved_recipients":
+      return true;
+    case "class_room":
+      return isPositiveInteger(value.class_room_id);
+    case "gathering":
+      return isPositiveInteger(value.gathering_id);
+    case "event_participants":
+      return isPositiveInteger(value.event_id);
+    default:
+      return false;
+  }
 }
 
 function isDeliverySummary(

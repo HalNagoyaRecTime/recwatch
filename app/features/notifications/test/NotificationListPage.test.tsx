@@ -4,8 +4,8 @@ import type { ReactElement } from "react";
 import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import type { AdminNotificationManagementGateway } from "~/features/notifications/application/admin-notification-management-gateway";
-import { NotificationManagementError } from "~/features/notifications/application/notification-management-error";
+import type { NotificationManagementApi } from "~/features/notifications/api/contracts/notification-management-api";
+import { NotificationManagementError } from "~/features/notifications/model/notification-management-error";
 import type { ManagedNotification } from "~/features/notifications/model/managed-notification";
 import { NotificationListPage } from "~/features/notifications/pages/NotificationListPage";
 
@@ -47,8 +47,8 @@ const draftNotification: ManagedNotification = {
 };
 
 function createGateway(
-  overrides: Partial<AdminNotificationManagementGateway> = {}
-): AdminNotificationManagementGateway {
+  overrides: Partial<NotificationManagementApi> = {}
+): NotificationManagementApi {
   return {
     list: vi.fn().mockResolvedValue({
       notifications: [draftNotification],
@@ -95,7 +95,7 @@ describe("NotificationListPage", () => {
       });
     const user = userEvent.setup();
 
-    renderPage(<NotificationListPage gateway={createGateway({ list })} />);
+    renderPage(<NotificationListPage api={createGateway({ list })} />);
 
     await user.click(await screen.findByRole("button", { name: "次のページ" }));
 
@@ -112,7 +112,7 @@ describe("NotificationListPage", () => {
     async (kind, message) => {
       renderPage(
         <NotificationListPage
-          gateway={createGateway({
+          api={createGateway({
             list: vi
               .fn()
               .mockRejectedValue(new NotificationManagementError(kind)),
@@ -146,7 +146,7 @@ describe("NotificationListPage", () => {
 
     renderPage(
       <NotificationListPage
-        gateway={createGateway({ delete: deleteNotification, list })}
+        api={createGateway({ delete: deleteNotification, list })}
       />
     );
 
@@ -188,7 +188,7 @@ describe("NotificationListPage", () => {
 
     renderPage(
       <NotificationListPage
-        gateway={createGateway({
+        api={createGateway({
           list,
           delete: vi
             .fn()

@@ -8,11 +8,19 @@ export type NotificationDeliverySummary = {
   failed: number;
 };
 
+export type ManagedNotificationAudience =
+  | { type: "all" }
+  | { type: "class_room"; classRoomId: number }
+  | { type: "gathering"; gatheringId: number }
+  | { type: "event_participants"; eventId: number }
+  | { type: "resolved_recipients" };
+
 export type ManagedNotification = {
   id: number;
   title: string;
   body: string;
   audienceName: string;
+  audience?: ManagedNotificationAudience;
   recipientCount: number;
   scheduledAt: string;
   creatorName: string;

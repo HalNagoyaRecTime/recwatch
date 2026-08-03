@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import type { NotificationDraft } from "~/features/notifications/model/notification-draft";
-import { toCreateAdminNotificationRequest } from "~/features/notifications/infrastructure/admin-notification-request-mapper";
+import { toCreateAdminNotificationRequest } from "~/features/notifications/api/mappers/admin-notification-request-mapper";
 
 const scheduledAt = new Date("2026-11-07T09:00:00+09:00");
 

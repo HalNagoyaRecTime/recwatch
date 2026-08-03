@@ -26,6 +26,7 @@ export type SelectOption<T extends string> = {
 
 type SelectProps<T extends string> = {
   ariaLabel: string;
+  disabled?: boolean;
   onValueChange: (value: T) => void;
   options: readonly SelectOption<T>[];
   variant?: "default" | "grouped";
@@ -33,7 +34,7 @@ type SelectProps<T extends string> = {
 };
 
 const selectTriggerStyle = cva(
-  "border-border-base hover:border-border-strong bg-surface-base text-text-base col-start-1 row-start-1 flex h-9 w-full min-w-0 cursor-pointer items-center justify-between gap-1.5 border text-sm font-medium transition-colors",
+  "border-border-base hover:border-border-strong bg-surface-base text-text-base col-start-1 row-start-1 flex h-9 w-full min-w-0 cursor-pointer items-center justify-between gap-1.5 border text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50",
   {
     variants: {
       variant: {
@@ -65,6 +66,7 @@ const selectWidthProbeStyle = cva(
 
 export function Select<T extends string>({
   ariaLabel,
+  disabled = false,
   onValueChange,
   options,
   variant = "default",
@@ -115,6 +117,10 @@ export function Select<T extends string>({
   };
 
   const handleTriggerKeyDown = (event: KeyboardEvent<HTMLButtonElement>) => {
+    if (disabled) {
+      return;
+    }
+
     if (event.key === "ArrowDown" || event.key === "ArrowUp") {
       event.preventDefault();
       setIsOpen(true);
@@ -174,6 +180,7 @@ export function Select<T extends string>({
           aria-expanded={isOpen}
           aria-label={ariaLabel}
           className={selectTriggerStyle({ variant })}
+          disabled={disabled}
           type="button"
         >
           <span className="truncate">{selectedOption?.label}</span>

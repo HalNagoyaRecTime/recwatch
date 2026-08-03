@@ -1,12 +1,12 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { ApiClientError } from "~/lib/api-client-error";
-import { NotificationManagementError } from "~/features/notifications/application/notification-management-error";
+import { NotificationManagementError } from "~/features/notifications/model/notification-management-error";
 import {
-  createHttpAdminNotificationManagementGateway,
+  createHttpNotificationManagementApi,
   type AdminNotificationManagementHttpClient,
-} from "~/features/notifications/infrastructure/http-admin-notification-management-gateway";
-import { createAdminNotificationResponse } from "~/features/notifications/infrastructure/admin-notification-management-test-fixture";
+} from "~/features/notifications/api/http/notification-management-api";
+import { createAdminNotificationResponse } from "~/features/notifications/test/fixtures/admin-notification-management-response";
 
 function createClient(
   overrides: Partial<AdminNotificationManagementHttpClient> = {}
@@ -19,7 +19,7 @@ function createClient(
   };
 }
 
-describe("createHttpAdminNotificationManagementGateway", () => {
+describe("createHttpNotificationManagementApi", () => {
   it("通知一覧を取得する", async () => {
     const get = vi.fn().mockResolvedValue({
       notifications: [createAdminNotificationResponse()],
@@ -27,9 +27,7 @@ describe("createHttpAdminNotificationManagementGateway", () => {
       limit: 50,
       offset: 0,
     });
-    const gateway = createHttpAdminNotificationManagementGateway(
-      createClient({ get })
-    );
+    const gateway = createHttpNotificationManagementApi(createClient({ get }));
 
     await expect(gateway.list({ sendStatus: "draft" })).resolves.toMatchObject({
       total: 1,
@@ -42,9 +40,7 @@ describe("createHttpAdminNotificationManagementGateway", () => {
 
   it("通知詳細を取得する", async () => {
     const get = vi.fn().mockResolvedValue(createAdminNotificationResponse());
-    const gateway = createHttpAdminNotificationManagementGateway(
-      createClient({ get })
-    );
+    const gateway = createHttpNotificationManagementApi(createClient({ get }));
 
     await expect(gateway.getById(10)).resolves.toMatchObject({ id: 10 });
     expect(get).toHaveBeenCalledWith("/api/v1/admin/notifications/10");
@@ -56,9 +52,7 @@ describe("createHttpAdminNotificationManagementGateway", () => {
         title: "変更後",
       })
     );
-    const gateway = createHttpAdminNotificationManagementGateway(
-      createClient({ put })
-    );
+    const gateway = createHttpNotificationManagementApi(createClient({ put }));
 
     await expect(
       gateway.update(10, {
@@ -74,7 +68,7 @@ describe("createHttpAdminNotificationManagementGateway", () => {
 
   it("未送信通知を削除する", async () => {
     const deleteRequest = vi.fn().mockResolvedValue(undefined);
-    const gateway = createHttpAdminNotificationManagementGateway(
+    const gateway = createHttpNotificationManagementApi(
       createClient({ delete: deleteRequest })
     );
 
@@ -85,7 +79,7 @@ describe("createHttpAdminNotificationManagementGateway", () => {
   });
 
   it("409を競合エラーへ変換する", async () => {
-    const gateway = createHttpAdminNotificationManagementGateway(
+    const gateway = createHttpNotificationManagementApi(
       createClient({
         delete: vi
           .fn()

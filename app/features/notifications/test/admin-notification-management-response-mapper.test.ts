@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { NotificationManagementError } from "~/features/notifications/application/notification-management-error";
+import { NotificationManagementError } from "~/features/notifications/model/notification-management-error";
 import {
   toManagedNotification,
   toManagedNotificationPage,
-} from "~/features/notifications/infrastructure/admin-notification-management-response-mapper";
-import { createAdminNotificationResponse } from "~/features/notifications/infrastructure/admin-notification-management-test-fixture";
+} from "~/features/notifications/api/mappers/admin-notification-management-response-mapper";
+import { createAdminNotificationResponse } from "~/features/notifications/test/fixtures/admin-notification-management-response";
 
 describe("admin notification response mapper", () => {
   it.each([
@@ -54,6 +54,20 @@ describe("admin notification response mapper", () => {
       relatedEventName: "リレー",
       status: "draft",
     });
+  });
+
+  it("編集用に配信対象の識別子を保持する", () => {
+    expect(
+      toManagedNotification(
+        createAdminNotificationResponse({
+          audience: {
+            type: "class_room",
+            class_room_id: 3,
+            recipient_count: 30,
+          },
+        })
+      ).audience
+    ).toEqual({ type: "class_room", classRoomId: 3 });
   });
 
   it("件数の合計が一致しないResponseを拒否する", () => {

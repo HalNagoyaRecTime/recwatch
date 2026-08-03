@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { mockAdminNotificationManagementGateway } from "~/features/notifications/infrastructure/mock-admin-notification-management-gateway";
+import { mockNotificationManagementApi } from "~/features/notifications/mock/notification-management-api";
 
-describe("mockAdminNotificationManagementGateway", () => {
+describe("mockNotificationManagementApi", () => {
   it("指定したToken状態を1件でも含む通知を返す", async () => {
-    const page = await mockAdminNotificationManagementGateway.list({
+    const page = await mockNotificationManagementApi.list({
       sendStatus: "draft",
     });
 

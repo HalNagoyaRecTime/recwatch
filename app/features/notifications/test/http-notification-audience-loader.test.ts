@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { ApiClientError } from "~/lib/api-client-error";
-import { NotificationAudienceLoadingError } from "~/features/notifications/application/notification-audience-loading-error";
-import { createHttpNotificationAudienceLoader } from "~/features/notifications/infrastructure/http-notification-audience-loader";
+import { NotificationAudienceLoadingError } from "~/features/notifications/model/notification-audience-loading-error";
+import { createHttpNotificationAudienceApi } from "~/features/notifications/api/http/notification-audience-api";
 
 describe("http notification audience loader", () => {
   it("classroomsとeventsを最後のページまで取得する", async () => {
@@ -54,7 +54,7 @@ describe("http notification audience loader", () => {
       }
     });
 
-    const options = await createHttpNotificationAudienceLoader({ get }).load();
+    const options = await createHttpNotificationAudienceApi({ get }).load();
 
     expect(options).toHaveLength(202);
     expect(options).toContainEqual({
@@ -74,7 +74,7 @@ describe("http notification audience loader", () => {
     [403, "forbidden"],
     [500, "unexpected"],
   ] as const)("HTTP %sを%sへ変換する", async (status, kind) => {
-    const loader = createHttpNotificationAudienceLoader({
+    const loader = createHttpNotificationAudienceApi({
       get: vi.fn().mockRejectedValue(new ApiClientError(status, "failed")),
     });
 
@@ -126,7 +126,7 @@ describe("http notification audience loader", () => {
       });
 
       await expect(
-        createHttpNotificationAudienceLoader({ get }).load()
+        createHttpNotificationAudienceApi({ get }).load()
       ).rejects.toEqual(
         expect.objectContaining<Partial<NotificationAudienceLoadingError>>({
           kind: "unexpected",

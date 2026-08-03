@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import { NotificationManagementError } from "~/features/notifications/application/notification-management-error";
-import { toAdminNotificationUpdateRequest } from "~/features/notifications/infrastructure/admin-notification-update-mapper";
+import { NotificationManagementError } from "~/features/notifications/model/notification-management-error";
+import { toAdminNotificationUpdateRequest } from "~/features/notifications/api/mappers/admin-notification-update-mapper";
 
 describe("toAdminNotificationUpdateRequest", () => {
   it("空の更新を拒否する", () => {

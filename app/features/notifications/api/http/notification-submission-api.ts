@@ -1,21 +1,21 @@
 import { apiClient } from "~/lib/api-client";
 import type {
   NotificationSubmission,
-  NotificationSubmitter,
-} from "~/features/notifications/application/notification-submitter";
+  NotificationSubmissionApi,
+} from "~/features/notifications/api/contracts/notification-submission-api";
 import type { NotificationDraft } from "~/features/notifications/model/notification-draft";
-import { toNotificationSubmissionError } from "~/features/notifications/infrastructure/admin-notification-error-mapper";
-import { toCreateAdminNotificationRequest } from "~/features/notifications/infrastructure/admin-notification-request-mapper";
-import { toNotificationSubmission } from "~/features/notifications/infrastructure/admin-notification-response-mapper";
+import { toNotificationSubmissionError } from "~/features/notifications/api/mappers/admin-notification-error-mapper";
+import { toCreateAdminNotificationRequest } from "~/features/notifications/api/mappers/admin-notification-request-mapper";
+import { toNotificationSubmission } from "~/features/notifications/api/mappers/admin-notification-response-mapper";
 
 type AdminNotificationClient = {
   post(path: string, body: unknown): Promise<unknown>;
 };
 
-export function createHttpNotificationSubmitter(
+export function createHttpNotificationSubmissionApi(
   client: AdminNotificationClient = apiClient,
   now: () => Date = () => new Date()
-): NotificationSubmitter {
+): NotificationSubmissionApi {
   return {
     async submit(draft: NotificationDraft): Promise<NotificationSubmission> {
       try {
@@ -32,4 +32,5 @@ export function createHttpNotificationSubmitter(
   };
 }
 
-export const httpNotificationSubmitter = createHttpNotificationSubmitter();
+export const httpNotificationSubmissionApi =
+  createHttpNotificationSubmissionApi();

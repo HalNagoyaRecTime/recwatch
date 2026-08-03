@@ -1,13 +1,13 @@
 export type AdminNotificationAudienceResponse =
+  | { type: "all"; recipient_count: number }
+  | { type: "class_room"; class_room_id: number; recipient_count: number }
+  | { type: "gathering"; gathering_id: number; recipient_count: number }
   | {
       type: "event_participants";
       event_id: number;
       recipient_count: number;
     }
-  | {
-      type: "resolved_recipients";
-      recipient_count: number;
-    };
+  | { type: "resolved_recipients"; recipient_count: number };
 
 export type AdminNotificationDeliverySummaryResponse = {
   total: number;

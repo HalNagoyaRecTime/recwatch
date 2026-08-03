@@ -12,7 +12,7 @@ import { NotificationsTable } from "~/features/notifications/components/Notifica
 import { notificationListPageSize } from "~/features/notifications/model/notification-list-pagination";
 import type { NotificationListItem } from "~/features/notifications/model/notification-list-item";
 import type { NotificationListSort } from "~/features/notifications/model/notification-list-sort";
-import { notificationSearchOptions } from "~/features/notifications/search/notification-search-options";
+import { notificationSearchOptions } from "~/features/notifications/components/notification-search-options";
 
 const notificationViewOptions = [
   {

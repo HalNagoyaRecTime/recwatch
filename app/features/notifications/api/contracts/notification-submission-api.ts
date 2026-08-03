@@ -6,6 +6,6 @@ export type NotificationSubmission = {
   status: "draft";
 };
 
-export interface NotificationSubmitter {
+export interface NotificationSubmissionApi {
   submit(draft: NotificationDraft): Promise<NotificationSubmission>;
 }

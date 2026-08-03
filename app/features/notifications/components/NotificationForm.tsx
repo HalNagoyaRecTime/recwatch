@@ -25,6 +25,9 @@ type NotificationFormProps = {
   audienceError?: string | null;
   isSubmissionDisabled?: boolean;
   isSubmitting: boolean;
+  isAudienceDisabled?: boolean;
+  submitLabel?: string;
+  cancelTo?: string;
   onChange: (draft: NotificationDraft) => void;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
   onAudienceReload?: () => void;
@@ -50,6 +53,9 @@ export function NotificationForm({
   audienceError = null,
   isSubmissionDisabled = false,
   isSubmitting,
+  isAudienceDisabled = false,
+  submitLabel,
+  cancelTo = "/notifications",
   onChange,
   onSubmit,
   onAudienceReload,
@@ -142,6 +148,7 @@ export function NotificationForm({
             </p>
             <Select
               ariaLabel="通知対象"
+              disabled={isAudienceDisabled}
               onValueChange={(audienceType) =>
                 onChange({ ...draft, audienceType, audienceId: "" })
               }
@@ -165,7 +172,11 @@ export function NotificationForm({
                 id="notification-audience-target"
                 className={`${inputClassName} h-9 appearance-auto`}
                 value={draft.audienceId}
-                disabled={isAudienceLoading || Boolean(audienceError)}
+                disabled={
+                  isAudienceDisabled ||
+                  isAudienceLoading ||
+                  Boolean(audienceError)
+                }
                 aria-invalid={Boolean(errors.audienceId)}
                 onChange={(event) =>
                   onChange({ ...draft, audienceId: event.currentTarget.value })
@@ -266,7 +277,7 @@ export function NotificationForm({
       </LayeredPanel>
 
       <div className="mt-5 flex flex-wrap justify-end gap-3">
-        <ButtonLink to="/notifications" variant="secondary" size="lg">
+        <ButtonLink to={cancelTo} variant="secondary" size="lg">
           キャンセル
         </ButtonLink>
         <Button
@@ -284,9 +295,8 @@ export function NotificationForm({
         >
           {isSubmitting
             ? "確認中..."
-            : deliveryTiming === "now"
-              ? "通知を配信"
-              : "配信を予約"}
+            : (submitLabel ??
+              (deliveryTiming === "now" ? "通知を配信" : "配信を予約"))}
         </Button>
       </div>
     </form>
