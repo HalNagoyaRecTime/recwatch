@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { NotificationManagementError } from "~/features/notifications/model/notification-management-error";
+import { NotificationManagementError } from "~/features/notifications/api/contracts/errors/notification-management-error";
 import { toAdminNotificationUpdateRequest } from "~/features/notifications/api/mappers/admin-notification-update-mapper";
 
 describe("toAdminNotificationUpdateRequest", () => {

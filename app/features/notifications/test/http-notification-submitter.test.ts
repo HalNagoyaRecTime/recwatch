@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { ApiClientError } from "~/lib/api-client-error";
-import { NotificationSubmissionError } from "~/features/notifications/model/notification-submission-error";
+import { NotificationSubmissionError } from "~/features/notifications/api/contracts/errors/notification-submission-error";
 import type { NotificationDraft } from "~/features/notifications/model/notification-draft";
 import { createHttpNotificationSubmissionApi } from "~/features/notifications/api/http/notification-submission-api";
 

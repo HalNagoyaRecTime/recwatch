@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { ApiClientError } from "~/lib/api-client-error";
-import { NotificationAudienceLoadingError } from "~/features/notifications/model/notification-audience-loading-error";
+import { NotificationAudienceLoadingError } from "~/features/notifications/api/contracts/errors/notification-audience-loading-error";
 import { createHttpNotificationAudienceApi } from "~/features/notifications/api/http/notification-audience-api";
 
 describe("http notification audience loader", () => {

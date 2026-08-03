@@ -1,4 +1,4 @@
-import { NotificationSubmissionError } from "~/features/notifications/model/notification-submission-error";
+import { NotificationSubmissionError } from "~/features/notifications/api/contracts/errors/notification-submission-error";
 import type { NotificationSubmission } from "~/features/notifications/api/contracts/notification-submission-api";
 
 export function toNotificationSubmission(

@@ -1,9 +1,9 @@
 import { apiClient } from "~/lib/api-client";
-import type { NotificationManagementApi } from "~/features/notifications/api/contracts/notification-management-api";
 import type {
+  NotificationManagementApi,
   NotificationListQuery,
   NotificationUpdate,
-} from "~/features/notifications/model/managed-notification";
+} from "~/features/notifications/api/contracts/notification-management-api";
 import { toNotificationManagementError } from "~/features/notifications/api/mappers/admin-notification-management-error-mapper";
 import {
   toManagedNotification,

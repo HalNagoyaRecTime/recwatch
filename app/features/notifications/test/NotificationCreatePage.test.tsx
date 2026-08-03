@@ -6,8 +6,8 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { NotificationSubmissionApi } from "~/features/notifications/api/contracts/notification-submission-api";
 import type { NotificationAudienceApi } from "~/features/notifications/api/contracts/notification-audience-api";
-import { NotificationAudienceLoadingError } from "~/features/notifications/model/notification-audience-loading-error";
-import { NotificationSubmissionError } from "~/features/notifications/model/notification-submission-error";
+import { NotificationAudienceLoadingError } from "~/features/notifications/api/contracts/errors/notification-audience-loading-error";
+import { NotificationSubmissionError } from "~/features/notifications/api/contracts/errors/notification-submission-error";
 import { mockNotificationAudienceOptions } from "~/features/notifications/mock/notification-audience-api";
 import { NotificationCreatePage } from "~/features/notifications/pages/NotificationCreatePage";
 

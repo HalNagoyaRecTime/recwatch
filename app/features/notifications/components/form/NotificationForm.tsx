@@ -6,13 +6,14 @@ import { SegmentedControl } from "~/components/ui/form/SegmentedControl";
 import { Select } from "~/components/ui/form/Select";
 import { LayeredPanel } from "~/components/ui/panel/LayeredPanel";
 
-import type { NotificationAudienceOption } from "~/features/notifications/model/notification-audience-option";
 import type {
+  NotificationAudienceOption,
   NotificationAudienceType,
+} from "~/features/notifications/model/notification-audience";
+import type {
   NotificationDeliveryTiming,
   NotificationDraft,
 } from "~/features/notifications/model/notification-draft";
-import { notificationAudienceLabels } from "~/features/notifications/model/notification-draft";
 import type { NotificationDraftErrors } from "~/features/notifications/model/notification-draft-validation";
 
 type NotificationFormProps = {
@@ -29,6 +30,13 @@ type NotificationFormProps = {
   onChange: (draft: NotificationDraft) => void;
   onSubmit: () => void | Promise<void>;
   onAudienceReload?: () => void;
+};
+
+const notificationAudienceLabels: Record<NotificationAudienceType, string> = {
+  all: "全体",
+  class_room: "クラス",
+  gathering: "集合",
+  event_participants: "競技参加者",
 };
 
 const audienceTypeOptions = Object.entries(notificationAudienceLabels).map(

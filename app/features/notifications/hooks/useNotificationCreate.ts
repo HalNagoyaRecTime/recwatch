@@ -2,15 +2,13 @@ import { useEffect, useState } from "react";
 
 import type { NotificationAudienceApi } from "~/features/notifications/api/contracts/notification-audience-api";
 import type { NotificationSubmissionApi } from "~/features/notifications/api/contracts/notification-submission-api";
+import { NotificationAudienceLoadingError } from "~/features/notifications/api/contracts/errors/notification-audience-loading-error";
+import { NotificationSubmissionError } from "~/features/notifications/api/contracts/errors/notification-submission-error";
 import {
-  NotificationAudienceLoadingError,
-  notificationAudienceLoadingErrorMessages,
-} from "~/features/notifications/model/notification-audience-loading-error";
-import {
-  NotificationSubmissionError,
-  notificationSubmissionErrorMessages,
-} from "~/features/notifications/model/notification-submission-error";
-import type { NotificationAudienceOption } from "~/features/notifications/model/notification-audience-option";
+  getNotificationAudienceLoadingErrorMessage,
+  getNotificationSubmissionErrorMessage,
+} from "~/features/notifications/hooks/notification-error-messages";
+import type { NotificationAudienceOption } from "~/features/notifications/model/notification-audience";
 import {
   initialNotificationDraft,
   type NotificationDraft,
@@ -108,9 +106,11 @@ export function useNotificationCreate({
       setSubmitted(true);
     } catch (error) {
       setSubmissionError(
-        error instanceof NotificationSubmissionError
-          ? notificationSubmissionErrorMessages[error.kind]
-          : notificationSubmissionErrorMessages.unexpected
+        getNotificationSubmissionErrorMessage(
+          error instanceof NotificationSubmissionError
+            ? error.kind
+            : "unexpected"
+        )
       );
     } finally {
       setIsSubmitting(false);
@@ -133,7 +133,9 @@ export function useNotificationCreate({
 }
 
 function toAudienceErrorMessage(error: unknown) {
-  return error instanceof NotificationAudienceLoadingError
-    ? notificationAudienceLoadingErrorMessages[error.kind]
-    : notificationAudienceLoadingErrorMessages.unexpected;
+  return getNotificationAudienceLoadingErrorMessage(
+    error instanceof NotificationAudienceLoadingError
+      ? error.kind
+      : "unexpected"
+  );
 }

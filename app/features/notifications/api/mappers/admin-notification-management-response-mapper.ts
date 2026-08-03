@@ -1,10 +1,10 @@
-import { NotificationManagementError } from "~/features/notifications/model/notification-management-error";
+import { NotificationManagementError } from "~/features/notifications/api/contracts/errors/notification-management-error";
+import type { ManagedNotificationPage } from "~/features/notifications/api/contracts/notification-management-api";
 import type {
   ManagedNotification,
-  ManagedNotificationPage,
   ManagedNotificationStatus,
   NotificationDeliverySummary,
-} from "~/features/notifications/model/managed-notification";
+} from "~/features/notifications/model/notification";
 import type {
   AdminNotificationAudienceResponse,
   AdminNotificationDeliverySummaryResponse,

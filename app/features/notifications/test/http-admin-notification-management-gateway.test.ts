@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { ApiClientError } from "~/lib/api-client-error";
-import { NotificationManagementError } from "~/features/notifications/model/notification-management-error";
+import { NotificationManagementError } from "~/features/notifications/api/contracts/errors/notification-management-error";
 import {
   createHttpNotificationManagementApi,
   type AdminNotificationManagementHttpClient,

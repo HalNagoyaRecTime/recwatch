@@ -1,10 +1,12 @@
-import type { NotificationManagementApi } from "~/features/notifications/api/contracts/notification-management-api";
-import { NotificationManagementError } from "~/features/notifications/model/notification-management-error";
 import type {
-  ManagedNotification,
+  NotificationManagementApi,
   NotificationUpdate,
-} from "~/features/notifications/model/managed-notification";
-import { canModifyNotification } from "~/features/notifications/model/managed-notification";
+} from "~/features/notifications/api/contracts/notification-management-api";
+import { NotificationManagementError } from "~/features/notifications/api/contracts/errors/notification-management-error";
+import {
+  canModifyNotification,
+  type ManagedNotification,
+} from "~/features/notifications/model/notification";
 
 let notifications: ManagedNotification[] = [
   createNotification({

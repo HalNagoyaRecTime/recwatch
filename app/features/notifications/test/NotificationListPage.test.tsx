@@ -5,8 +5,8 @@ import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { NotificationManagementApi } from "~/features/notifications/api/contracts/notification-management-api";
-import { NotificationManagementError } from "~/features/notifications/model/notification-management-error";
-import type { ManagedNotification } from "~/features/notifications/model/managed-notification";
+import { NotificationManagementError } from "~/features/notifications/api/contracts/errors/notification-management-error";
+import type { ManagedNotification } from "~/features/notifications/model/notification";
 import { NotificationListPage } from "~/features/notifications/pages/NotificationListPage";
 
 afterEach(cleanup);

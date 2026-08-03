@@ -1,4 +1,4 @@
-import { NotificationSubmissionError } from "~/features/notifications/model/notification-submission-error";
+import { NotificationSubmissionError } from "~/features/notifications/api/contracts/errors/notification-submission-error";
 import type { NotificationDraft } from "~/features/notifications/model/notification-draft";
 import type {
   AdminNotificationAudienceRequest,

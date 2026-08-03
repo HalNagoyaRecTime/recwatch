@@ -6,7 +6,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import type { NotificationAudienceApi } from "~/features/notifications/api/contracts/notification-audience-api";
 import type { NotificationManagementApi } from "~/features/notifications/api/contracts/notification-management-api";
 import { mockNotificationAudienceOptions } from "~/features/notifications/mock/notification-audience-api";
-import type { ManagedNotification } from "~/features/notifications/model/managed-notification";
+import type { ManagedNotification } from "~/features/notifications/model/notification";
 import { NotificationEditPage } from "~/features/notifications/pages/NotificationEditPage";
 
 afterEach(cleanup);

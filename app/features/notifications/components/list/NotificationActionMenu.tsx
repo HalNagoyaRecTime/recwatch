@@ -5,7 +5,7 @@ import { useNavigate } from "react-router";
 import { Button } from "~/components/ui/button/Button";
 import { Menu, type MenuItemType } from "~/components/ui/navigation/Menu";
 import { FloatingPanel } from "~/components/ui/panel/FloatingPanel";
-import type { NotificationListItem } from "~/features/notifications/model/notification-list-item";
+import type { NotificationListItem } from "~/features/notifications/model/notification-list";
 
 type NotificationActionMenuProps = {
   notification: NotificationListItem;

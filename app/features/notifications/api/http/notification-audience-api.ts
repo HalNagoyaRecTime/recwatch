@@ -1,7 +1,7 @@
 import { ApiClientError } from "~/lib/api-client-error";
 import { apiClient } from "~/lib/api-client";
 import type { NotificationAudienceApi } from "~/features/notifications/api/contracts/notification-audience-api";
-import { NotificationAudienceLoadingError } from "~/features/notifications/model/notification-audience-loading-error";
+import { NotificationAudienceLoadingError } from "~/features/notifications/api/contracts/errors/notification-audience-loading-error";
 import type {
   ClassRoomAudienceApiDto,
   EventAudienceApiDto,

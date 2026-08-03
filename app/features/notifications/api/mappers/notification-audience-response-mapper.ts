@@ -1,5 +1,5 @@
-import { NotificationAudienceLoadingError } from "~/features/notifications/model/notification-audience-loading-error";
-import type { NotificationAudienceOption } from "~/features/notifications/model/notification-audience-option";
+import { NotificationAudienceLoadingError } from "~/features/notifications/api/contracts/errors/notification-audience-loading-error";
+import type { NotificationAudienceOption } from "~/features/notifications/model/notification-audience";
 import type {
   ClassRoomAudienceApiDto,
   ClassRoomAudiencePageApiDto,

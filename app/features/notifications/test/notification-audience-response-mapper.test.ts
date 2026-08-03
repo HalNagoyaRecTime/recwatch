@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { NotificationAudienceLoadingError } from "~/features/notifications/model/notification-audience-loading-error";
+import { NotificationAudienceLoadingError } from "~/features/notifications/api/contracts/errors/notification-audience-loading-error";
 import {
   toClassRoomAudiencePage,
   toEventAudiencePage,

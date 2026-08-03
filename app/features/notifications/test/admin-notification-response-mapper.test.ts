@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { NotificationSubmissionError } from "~/features/notifications/model/notification-submission-error";
+import { NotificationSubmissionError } from "~/features/notifications/api/contracts/errors/notification-submission-error";
 import { toNotificationSubmission } from "~/features/notifications/api/mappers/admin-notification-response-mapper";
 
 describe("toNotificationSubmission", () => {

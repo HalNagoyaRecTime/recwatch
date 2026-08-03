@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   canModifyNotification,
   type ManagedNotification,
-} from "~/features/notifications/model/managed-notification";
+} from "~/features/notifications/model/notification";
 
 function createNotification(
   deliverySummary: ManagedNotification["deliverySummary"]

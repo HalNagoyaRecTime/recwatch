@@ -1,8 +1,4 @@
-export type NotificationAudienceType =
-  | "all"
-  | "class_room"
-  | "gathering"
-  | "event_participants";
+import type { NotificationAudienceType } from "~/features/notifications/model/notification-audience";
 
 export type NotificationDeliveryTiming = "now" | "scheduled";
 
@@ -22,14 +18,4 @@ export const initialNotificationDraft: NotificationDraft = {
   audienceId: "",
   deliveryTiming: "now",
   scheduledAt: "",
-};
-
-export const notificationAudienceLabels: Record<
-  NotificationAudienceType,
-  string
-> = {
-  all: "全体",
-  class_room: "クラス",
-  gathering: "集合",
-  event_participants: "競技参加者",
 };

@@ -1,22 +1,22 @@
 import { useEffect, useState } from "react";
 
 import type { NotificationAudienceApi } from "~/features/notifications/api/contracts/notification-audience-api";
-import type { NotificationManagementApi } from "~/features/notifications/api/contracts/notification-management-api";
+import type {
+  NotificationManagementApi,
+  NotificationUpdate,
+  NotificationUpdateAudience,
+} from "~/features/notifications/api/contracts/notification-management-api";
+import { NotificationAudienceLoadingError } from "~/features/notifications/api/contracts/errors/notification-audience-loading-error";
+import { NotificationManagementError } from "~/features/notifications/api/contracts/errors/notification-management-error";
 import {
-  NotificationAudienceLoadingError,
-  notificationAudienceLoadingErrorMessages,
-} from "~/features/notifications/model/notification-audience-loading-error";
-import {
-  NotificationManagementError,
-  notificationManagementErrorMessages,
-} from "~/features/notifications/model/notification-management-error";
-import type { NotificationAudienceOption } from "~/features/notifications/model/notification-audience-option";
+  getNotificationAudienceLoadingErrorMessage,
+  getNotificationManagementErrorMessage,
+} from "~/features/notifications/hooks/notification-error-messages";
+import type { NotificationAudienceOption } from "~/features/notifications/model/notification-audience";
 import {
   canModifyNotification,
   type ManagedNotification,
-  type ManagedNotificationAudience,
-  type NotificationUpdate,
-} from "~/features/notifications/model/managed-notification";
+} from "~/features/notifications/model/notification";
 import {
   initialNotificationDraft,
   type NotificationDraft,
@@ -151,7 +151,9 @@ export function useNotificationEdit({
       isAudienceEditableFor(notification)
     );
     if (!update) {
-      setSubmissionError(notificationManagementErrorMessages.invalid_request);
+      setSubmissionError(
+        getNotificationManagementErrorMessage("invalid_request")
+      );
       return false;
     }
 
@@ -189,15 +191,17 @@ export function useNotificationEdit({
 }
 
 function toManagementErrorMessage(error: unknown) {
-  return error instanceof NotificationManagementError
-    ? notificationManagementErrorMessages[error.kind]
-    : notificationManagementErrorMessages.unexpected;
+  return getNotificationManagementErrorMessage(
+    error instanceof NotificationManagementError ? error.kind : "unexpected"
+  );
 }
 
 function toAudienceErrorMessage(error: unknown) {
-  return error instanceof NotificationAudienceLoadingError
-    ? notificationAudienceLoadingErrorMessages[error.kind]
-    : notificationAudienceLoadingErrorMessages.unexpected;
+  return getNotificationAudienceLoadingErrorMessage(
+    error instanceof NotificationAudienceLoadingError
+      ? error.kind
+      : "unexpected"
+  );
 }
 
 function toNotificationDraft(
@@ -282,10 +286,7 @@ function toUpdateAudience(draft: NotificationDraft) {
   const id = Number(draft.audienceId);
   if (!Number.isSafeInteger(id) || id <= 0) return null;
 
-  const audience: Exclude<
-    ManagedNotificationAudience,
-    { type: "resolved_recipients" }
-  > =
+  const audience: NotificationUpdateAudience =
     draft.audienceType === "class_room"
       ? { type: "class_room", classRoomId: id }
       : draft.audienceType === "gathering"

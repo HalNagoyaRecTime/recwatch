@@ -9,7 +9,7 @@ import type { NotificationManagementApi } from "~/features/notifications/api/con
 import { NotificationForm } from "~/features/notifications/components/form/NotificationForm";
 import { NotificationPreviewPanel } from "~/features/notifications/components/preview/NotificationPreviewPanel";
 import { useNotificationEdit } from "~/features/notifications/hooks/useNotificationEdit";
-import { notificationManagementErrorMessages } from "~/features/notifications/model/notification-management-error";
+import { getNotificationManagementErrorMessage } from "~/features/notifications/hooks/notification-error-messages";
 
 type NotificationEditPageProps = {
   notificationId: number;
@@ -49,7 +49,7 @@ export function NotificationEditPage({
             <div aria-live="polite" className="space-y-3" role="alert">
               <p className="text-tone-danger-text text-sm">
                 {state.loadError ??
-                  notificationManagementErrorMessages.unexpected}
+                  getNotificationManagementErrorMessage("unexpected")}
               </p>
               <ButtonLink to="/notifications" size="md" variant="secondary">
                 通知一覧へ戻る
@@ -59,7 +59,7 @@ export function NotificationEditPage({
             <>
               {!state.isEditable ? (
                 <p className="text-tone-danger-text text-sm" role="alert">
-                  {notificationManagementErrorMessages.conflict}
+                  {getNotificationManagementErrorMessage("conflict")}
                 </p>
               ) : null}
               {!state.canEditAudience ? (

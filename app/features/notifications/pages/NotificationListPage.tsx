@@ -15,7 +15,7 @@ import type { NotificationManagementApi } from "~/features/notifications/api/con
 import { DeleteNotificationDialog } from "~/features/notifications/components/list/DeleteNotificationDialog";
 import { NotificationsTable } from "~/features/notifications/components/list/NotificationsTable";
 import { useNotificationList } from "~/features/notifications/hooks/useNotificationList";
-import { notificationListPageSize } from "~/features/notifications/model/notification-list-pagination";
+import { notificationListPageSize } from "~/features/notifications/model/notification-list";
 
 const notificationViewOptions = [
   {

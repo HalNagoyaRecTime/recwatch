@@ -2,7 +2,7 @@ import { ApiClientError } from "~/lib/api-client-error";
 import {
   NotificationSubmissionError,
   type NotificationSubmissionErrorKind,
-} from "~/features/notifications/model/notification-submission-error";
+} from "~/features/notifications/api/contracts/errors/notification-submission-error";
 
 const errorKindByStatus: Partial<
   Record<number, NotificationSubmissionErrorKind>

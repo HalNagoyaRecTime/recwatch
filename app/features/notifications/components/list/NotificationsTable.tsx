@@ -6,8 +6,10 @@ import {
   DataTable,
   type DataTableColumn,
 } from "~/components/ui/data-table/DataTable";
-import type { NotificationListItem } from "~/features/notifications/model/notification-list-item";
-import type { NotificationListSort } from "~/features/notifications/model/notification-list-sort";
+import type {
+  NotificationListItem,
+  NotificationListSort,
+} from "~/features/notifications/model/notification-list";
 import { NotificationActionMenu } from "~/features/notifications/components/list/NotificationActionMenu";
 
 const notificationTableColumns: readonly DataTableColumn<NotificationListItem>[] =

@@ -1,18 +1,16 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import type { NotificationManagementApi } from "~/features/notifications/api/contracts/notification-management-api";
-import {
-  NotificationManagementError,
-  notificationManagementErrorMessages,
-} from "~/features/notifications/model/notification-management-error";
-import type { ManagedNotification } from "~/features/notifications/model/managed-notification";
-import { notificationListPageSize } from "~/features/notifications/model/notification-list-pagination";
-import type { NotificationListItem } from "~/features/notifications/model/notification-list-item";
+import { NotificationManagementError } from "~/features/notifications/api/contracts/errors/notification-management-error";
+import { getNotificationManagementErrorMessage } from "~/features/notifications/hooks/notification-error-messages";
+import type { ManagedNotification } from "~/features/notifications/model/notification";
 import {
   getNextNotificationListSort,
   isNotificationSortableColumnId,
+  notificationListPageSize,
+  type NotificationListItem,
   type NotificationListSort,
-} from "~/features/notifications/model/notification-list-sort";
+} from "~/features/notifications/model/notification-list";
 
 type UseNotificationListOptions = {
   api: NotificationManagementApi;
@@ -127,9 +125,9 @@ export function useNotificationList({ api }: UseNotificationListOptions) {
 }
 
 function toErrorMessage(error: unknown) {
-  return error instanceof NotificationManagementError
-    ? notificationManagementErrorMessages[error.kind]
-    : notificationManagementErrorMessages.unexpected;
+  return getNotificationManagementErrorMessage(
+    error instanceof NotificationManagementError ? error.kind : "unexpected"
+  );
 }
 
 function formatDate(value: string) {

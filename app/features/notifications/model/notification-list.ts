@@ -1,4 +1,17 @@
-import type { NotificationListItem } from "~/features/notifications/model/notification-list-item";
+export type NotificationDeliveryStatus = "delivered" | "failed" | "pending";
+
+export type NotificationListItem = {
+  audience: string;
+  competition: string;
+  deliveredAt: string;
+  id: string;
+  schedule: string;
+  sender: string;
+  status: NotificationDeliveryStatus;
+  title: string;
+};
+
+export const notificationListPageSize = 20;
 
 export const notificationSortableColumnIds = [
   "title",
@@ -19,22 +32,6 @@ export type NotificationListSort = {
   columnId: NotificationSortableColumnId;
   direction: NotificationListSortDirection;
 };
-
-export function parseNotificationListSort(
-  searchParams: URLSearchParams
-): NotificationListSort | undefined {
-  const columnId = searchParams.get("sort");
-  const direction = searchParams.get("order");
-
-  if (
-    !isNotificationSortableColumnId(columnId) ||
-    (direction !== "asc" && direction !== "desc")
-  ) {
-    return undefined;
-  }
-
-  return { columnId, direction };
-}
 
 export function getNextNotificationListSort(
   current: NotificationListSort | undefined,
