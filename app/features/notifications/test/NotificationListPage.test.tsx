@@ -7,7 +7,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import type { AdminNotificationManagementGateway } from "~/features/notifications/application/admin-notification-management-gateway";
 import { NotificationManagementError } from "~/features/notifications/application/notification-management-error";
 import type { ManagedNotification } from "~/features/notifications/model/managed-notification";
-import { NotificationManagementPage } from "~/features/notifications/pages/NotificationManagementPage";
+import { NotificationListPage } from "~/features/notifications/pages/NotificationListPage";
 
 afterEach(cleanup);
 
@@ -72,7 +72,7 @@ async function openDeleteMenu(user: ReturnType<typeof userEvent.setup>) {
   await user.click(screen.getByRole("button", { name: "通知を削除" }));
 }
 
-describe("NotificationManagementPage", () => {
+describe("NotificationListPage", () => {
   it("ページ移動時にmake-pageのページサイズで次の一覧を取得する", async () => {
     const firstPage = Array.from({ length: 20 }, (_, index) => ({
       ...draftNotification,
@@ -95,9 +95,7 @@ describe("NotificationManagementPage", () => {
       });
     const user = userEvent.setup();
 
-    renderPage(
-      <NotificationManagementPage gateway={createGateway({ list })} />
-    );
+    renderPage(<NotificationListPage gateway={createGateway({ list })} />);
 
     await user.click(await screen.findByRole("button", { name: "次のページ" }));
 
@@ -113,7 +111,7 @@ describe("NotificationManagementPage", () => {
     "一覧取得時の%sエラーはアクセシブルに通知する",
     async (kind, message) => {
       renderPage(
-        <NotificationManagementPage
+        <NotificationListPage
           gateway={createGateway({
             list: vi
               .fn()
@@ -147,7 +145,7 @@ describe("NotificationManagementPage", () => {
     const user = userEvent.setup();
 
     renderPage(
-      <NotificationManagementPage
+      <NotificationListPage
         gateway={createGateway({ delete: deleteNotification, list })}
       />
     );
@@ -189,7 +187,7 @@ describe("NotificationManagementPage", () => {
     const user = userEvent.setup();
 
     renderPage(
-      <NotificationManagementPage
+      <NotificationListPage
         gateway={createGateway({
           list,
           delete: vi

@@ -1,5 +1,5 @@
 import { httpAdminNotificationManagementGateway } from "~/features/notifications/infrastructure/http-admin-notification-management-gateway";
-import { NotificationManagementPage } from "~/features/notifications/pages/NotificationManagementPage";
+import { NotificationListPage } from "~/features/notifications/pages/NotificationListPage";
 import { PagePadding } from "~/features/frame/page-layout/PagePadding";
 import { PageLayout } from "~/features/frame/page-layout/PageLayout";
 
@@ -11,7 +11,7 @@ export default function NotificationsRoute() {
   return (
     <PageLayout>
       <PagePadding>
-        <NotificationManagementPage
+        <NotificationListPage
           gateway={httpAdminNotificationManagementGateway}
         />
       </PagePadding>

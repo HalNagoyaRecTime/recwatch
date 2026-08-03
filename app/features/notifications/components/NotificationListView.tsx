@@ -44,7 +44,7 @@ const notificationDisplayOptions = [
 type NotificationDisplayMode =
   (typeof notificationDisplayOptions)[number]["value"];
 
-export function NotificationsListPage({
+export function NotificationListView({
   currentPage,
   items,
   onDelete,

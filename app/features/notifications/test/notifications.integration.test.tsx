@@ -2,7 +2,7 @@ import { isValidElement, type ReactElement } from "react";
 import { describe, expect, it } from "vitest";
 
 import { httpAdminNotificationManagementGateway } from "~/features/notifications/infrastructure/http-admin-notification-management-gateway";
-import type { NotificationManagementPage } from "~/features/notifications/pages/NotificationManagementPage";
+import type { NotificationListPage } from "~/features/notifications/pages/NotificationListPage";
 import { httpNotificationAudienceLoader } from "~/features/notifications/infrastructure/http-notification-audience-loader";
 import { httpNotificationSubmitter } from "~/features/notifications/infrastructure/http-notification-submitter";
 import type { NotificationCreatePage } from "~/features/notifications/pages/NotificationCreatePage";
@@ -10,9 +10,7 @@ import NotificationsNewRoute from "~/routes/main/notifications.new";
 import NotificationsRoute from "~/routes/main/notifications";
 
 type NotificationCreatePageProps = Parameters<typeof NotificationCreatePage>[0];
-type NotificationManagementPageProps = Parameters<
-  typeof NotificationManagementPage
->[0];
+type NotificationListPageProps = Parameters<typeof NotificationListPage>[0];
 
 describe("notification routes", () => {
   it("通知作成画面へHTTP依存を注入する", () => {
@@ -34,7 +32,7 @@ describe("notification routes", () => {
     expect(isValidElement(pagePadding)).toBe(true);
 
     const element = pagePadding.props
-      .children as ReactElement<NotificationManagementPageProps>;
+      .children as ReactElement<NotificationListPageProps>;
     expect(isValidElement(element)).toBe(true);
     expect(element.props.gateway).toBe(httpAdminNotificationManagementGateway);
   });

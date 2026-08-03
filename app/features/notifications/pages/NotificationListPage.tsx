@@ -7,7 +7,7 @@ import {
   type NotificationListSort,
 } from "~/features/notifications/model/notification-list-sort";
 import type { NotificationListItem } from "~/features/notifications/model/notification-list-item";
-import { NotificationsListPage } from "~/features/notifications/pages/NotificationsListPage";
+import { NotificationListView } from "~/features/notifications/components/NotificationListView";
 
 import type { AdminNotificationManagementGateway } from "~/features/notifications/application/admin-notification-management-gateway";
 import {
@@ -17,7 +17,7 @@ import {
 import { DeleteNotificationDialog } from "~/features/notifications/components/DeleteNotificationDialog";
 import type { ManagedNotification } from "~/features/notifications/model/managed-notification";
 
-type NotificationManagementPageProps = {
+type NotificationListPageProps = {
   gateway: AdminNotificationManagementGateway;
 };
 
@@ -77,9 +77,7 @@ function sortItems(
   });
 }
 
-export function NotificationManagementPage({
-  gateway,
-}: NotificationManagementPageProps) {
+export function NotificationListPage({ gateway }: NotificationListPageProps) {
   const [notifications, setNotifications] = useState<ManagedNotification[]>([]);
   const [total, setTotal] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
@@ -184,7 +182,7 @@ export function NotificationManagementPage({
           通知を読み込み中
         </div>
       ) : null}
-      <NotificationsListPage
+      <NotificationListView
         currentPage={currentPage}
         items={items}
         onDelete={handleDeleteRequest}
