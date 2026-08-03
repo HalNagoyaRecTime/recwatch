@@ -213,7 +213,7 @@ export function NotificationForm({
                   {onAudienceReload ? (
                     <button
                       type="button"
-                      className="text-brand-1 text-xs font-semibold underline underline-offset-2"
+                      className="text-brand-primary text-xs font-semibold underline underline-offset-2"
                       onClick={onAudienceReload}
                     >
                       再試行
