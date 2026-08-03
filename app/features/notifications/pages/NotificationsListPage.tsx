@@ -38,6 +38,7 @@ const notificationDisplayOptions = [
   { label: "すべて表示", value: "all" },
   { label: "自動", value: "automatic" },
   { label: "手動", value: "manual" },
+  { label: "未実装", value: "unimplemented" },
 ] as const;
 
 type NotificationDisplayMode =
@@ -86,11 +87,11 @@ export function NotificationsListPage({
 
       <div className="flex gap-3">
         <SearchCombobox
-          ariaLabel="通知を検索"
+          ariaLabel="通知を検索（未実装）"
           onOptionSelect={(option) => setSearchQuery(option.label)}
           onQueryChange={setSearchQuery}
           options={notificationSearchOptions}
-          placeholder="通知を検索"
+          placeholder="通知を検索（未実装）"
           query={searchQuery}
         />
         <Select
