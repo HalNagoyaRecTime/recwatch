@@ -133,6 +133,51 @@ describe("NotificationListPage", () => {
     expect(list).toHaveBeenNthCalledWith(2, { limit: 20, offset: 0 });
   });
 
+  it("配信中の通知では編集・削除を表示しない", async () => {
+    const user = userEvent.setup();
+    const sendingNotification: ManagedNotification = {
+      ...draftNotification,
+      status: "sending",
+      deliverySummary: {
+        total: 30,
+        draft: 0,
+        sending: 30,
+        sent: 0,
+        failed: 0,
+      },
+    };
+
+    renderPage(
+      <NotificationListPage
+        api={createGateway({
+          list: vi.fn().mockResolvedValue({
+            notifications: [sendingNotification],
+            total: 1,
+            limit: 20,
+            offset: 0,
+          }),
+        })}
+      />
+    );
+
+    await user.click(
+      await screen.findByRole("button", {
+        name: "集合場所変更のその他の操作",
+      })
+    );
+
+    expect(
+      screen.getByRole("button", { name: "通知詳細" })
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "通知を編集" })
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "通知を削除" })
+    ).not.toBeInTheDocument();
+    expect(screen.getByText("送信中")).toBeInTheDocument();
+  });
+
   it.each([
     ["authentication_required", "ログインが必要です。"],
     ["forbidden", "通知を管理する権限がありません。"],

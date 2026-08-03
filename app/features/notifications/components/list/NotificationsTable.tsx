@@ -157,27 +157,34 @@ function DeliveryStatus({
 }: {
   status: NotificationListItem["status"];
 }) {
-  const delivered = status === "delivered";
-  const pending = status === "pending";
+  const delivered = status === "sent";
+  const draft = status === "draft";
+  const sending = status === "sending";
 
   return (
     <span
       className={`inline-flex items-center gap-1 font-medium ${
         delivered
           ? "text-tone-success-text"
-          : pending
+          : draft || sending
             ? "text-text-muted"
             : "text-tone-danger-text"
       }`}
     >
       {delivered ? (
         <Check aria-hidden="true" className="size-4" />
-      ) : pending ? (
+      ) : draft || sending ? (
         <Clock3 aria-hidden="true" className="size-4" />
       ) : (
         <X aria-hidden="true" className="size-4" />
       )}
-      {delivered ? "配信済" : pending ? "送信中" : "送信失敗"}
+      {delivered
+        ? "配信済"
+        : draft
+          ? "未送信"
+          : sending
+            ? "送信中"
+            : "送信失敗"}
     </span>
   );
 }

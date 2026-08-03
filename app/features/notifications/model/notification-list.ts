@@ -1,7 +1,10 @@
-export type NotificationDeliveryStatus = "delivered" | "failed" | "pending";
+import type { ManagedNotificationStatus } from "~/features/notifications/model/notification";
+
+export type NotificationDeliveryStatus = ManagedNotificationStatus;
 
 export type NotificationListItem = {
   audience: string;
+  canModify: boolean;
   competition: string;
   deliveredAt: string;
   id: string;

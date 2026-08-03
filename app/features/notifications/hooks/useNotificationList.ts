@@ -3,7 +3,10 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import type { NotificationManagementApi } from "~/features/notifications/api/contracts/notification-management-api";
 import { NotificationManagementError } from "~/features/notifications/api/contracts/errors/notification-management-error";
 import { getNotificationManagementErrorMessage } from "~/features/notifications/hooks/notification-error-messages";
-import type { ManagedNotification } from "~/features/notifications/model/notification";
+import {
+  canModifyNotification,
+  type ManagedNotification,
+} from "~/features/notifications/model/notification";
 import {
   getNextNotificationListSort,
   isNotificationSortableColumnId,
@@ -154,17 +157,13 @@ function formatDate(value: string) {
 function toListItem(notification: ManagedNotification): NotificationListItem {
   return {
     audience: notification.audienceName,
+    canModify: canModifyNotification(notification),
     competition: notification.relatedEventName ?? "—",
     deliveredAt: formatDate(notification.scheduledAt),
     id: String(notification.id),
     schedule: formatDate(notification.scheduledAt),
     sender: notification.creatorName,
-    status:
-      notification.status === "failed"
-        ? "failed"
-        : notification.status === "sent"
-          ? "delivered"
-          : "pending",
+    status: notification.status,
     title: notification.title,
   };
 }
