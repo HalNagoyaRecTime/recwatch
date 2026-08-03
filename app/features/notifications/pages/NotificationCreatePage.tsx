@@ -3,7 +3,6 @@ import { useEffect, useState, type FormEvent } from "react";
 import { PageHeader } from "~/components/ui/layout/PageHeader";
 import { PagePadding } from "~/features/frame/page-layout/PagePadding";
 import { PageLayout } from "~/features/frame/page-layout/PageLayout";
-
 import type { NotificationAudienceLoader } from "../application/notification-audience-loader";
 import {
   NotificationAudienceLoadingError,
@@ -129,12 +128,7 @@ export function NotificationCreatePage({
   }
 
   return (
-    <PageLayout
-      panel={{
-        content: <NotificationPreviewPanel draft={draft} />,
-        placement: "right",
-      }}
-    >
+    <PageLayout right={<NotificationPreviewPanel draft={draft} />}>
       <PagePadding>
         <div className="mx-auto flex w-full min-w-0 flex-col gap-6">
           <PageHeader

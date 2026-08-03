@@ -144,19 +144,25 @@ export function useScrollbar(options?: {
     const el = scrollRef.current;
     if (!el) return;
 
-    const observer = new ResizeObserver(() => recalculate());
-    observer.observe(el);
-    Array.from(el.children).forEach((child) => observer.observe(child));
+    const observer =
+      typeof ResizeObserver === "undefined"
+        ? null
+        : new ResizeObserver(() => recalculate());
+    observer?.observe(el);
+    Array.from(el.children).forEach((child) => observer?.observe(child));
+    if (!observer) {
+      queueMicrotask(recalculate);
+    }
 
     const mutationObserver = new MutationObserver(() => {
-      Array.from(el.children).forEach((child) => observer.observe(child));
+      Array.from(el.children).forEach((child) => observer?.observe(child));
       recalculate();
     });
     mutationObserver.observe(el, { childList: true, subtree: true });
 
     return () => {
       mutationObserver.disconnect();
-      observer.disconnect();
+      observer?.disconnect();
     };
   }, [recalculate]);
 

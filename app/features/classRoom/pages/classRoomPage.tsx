@@ -1,5 +1,6 @@
 import { Ban, Pencil, Search, Trash2, Upload } from "lucide-react";
 import { Link } from "react-router";
+import type { classRoomData } from "~/features/classRoom/model/classRoom";
 
 const classRooms = [
   ["0001", "IH12A", "IH12A203", "32名"],
@@ -8,7 +9,13 @@ const classRooms = [
   ["0004", "PI12A", "PI12A203", "25名"],
 ] as const;
 
-export function ClassRoomPage() {
+type ClassRoomPageProps = {
+  classRooms: classRoomData[];
+};
+
+export function ClassRoomPage(_props: ClassRoomPageProps) {
+  void _props;
+
   return (
     <div className="min-h-full bg-[#f7faff] p-1 text-[#0a0a0a]">
       <h1 className="text-[17px] font-bold">マスターデータ管理</h1>

@@ -4,49 +4,39 @@ import { ScrollbarArea } from "~/components/ui/scrollbar/ScrollbarArea";
 import MainFooter from "~/features/frame/main-header/components/MainFooter";
 import { PagePanel } from "~/features/frame/page-layout/PagePanel";
 
-type PagePanelConfig = {
-  content: ReactNode;
-  placement: "left" | "right" | "top";
-};
-
 type PageLayoutProps = {
   children: ReactNode;
-  panel?: PagePanelConfig;
+  left?: ReactNode;
+  right?: ReactNode;
+  top?: ReactNode;
 };
 
-export function PageLayout({ children, panel }: PageLayoutProps) {
-  if (!panel) {
-    return (
-      <div className="flex h-full min-h-0 flex-col">
-        <PageMain>{children}</PageMain>
-      </div>
-    );
-  }
-
-  if (panel.placement === "top") {
-    return (
-      <div className="flex h-full min-h-0 flex-col">
-        <PagePanel placement="top">{panel.content}</PagePanel>
-        <PageMain>{children}</PageMain>
-      </div>
-    );
-  }
+export function PageLayout({ children, left, right, top }: PageLayoutProps) {
+  const hasLeftPanel = left != null;
+  const hasRightPanel = right != null;
+  const hasTopPanel = top != null;
+  const hasSidePanel = hasLeftPanel || hasRightPanel;
 
   return (
-    <div
-      className={
-        panel.placement === "left"
-          ? "grid h-full min-h-0 grid-cols-[auto_minmax(0,1fr)]"
-          : "grid h-full min-h-0 grid-cols-[minmax(0,1fr)_auto]"
-      }
-    >
-      {panel.placement === "left" && (
-        <PagePanel placement="left">{panel.content}</PagePanel>
-      )}
-      <PageMain>{children}</PageMain>
-      {panel.placement === "right" && (
-        <PagePanel placement="right">{panel.content}</PagePanel>
-      )}
+    <div className="flex h-full min-h-0 flex-col">
+      {hasTopPanel && <PagePanel placement="top">{top}</PagePanel>}
+      <div
+        className={
+          hasSidePanel
+            ? `grid min-h-0 flex-1 ${
+                hasLeftPanel && hasRightPanel
+                  ? "grid-cols-[auto_minmax(0,1fr)_auto]"
+                  : hasLeftPanel
+                    ? "grid-cols-[auto_minmax(0,1fr)]"
+                    : "grid-cols-[minmax(0,1fr)_auto]"
+              }`
+            : "min-h-0 flex-1"
+        }
+      >
+        {hasLeftPanel && <PagePanel placement="left">{left}</PagePanel>}
+        <PageMain>{children}</PageMain>
+        {hasRightPanel && <PagePanel placement="right">{right}</PagePanel>}
+      </div>
     </div>
   );
 }
