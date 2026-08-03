@@ -1,18 +1,22 @@
 import { useEffect, useState, type FormEvent } from "react";
 
-import { NotificationForm } from "../components/NotificationForm";
-import { NotificationPhonePreview } from "../components/NotificationPhonePreview";
-import { NotificationSummary } from "../components/NotificationSummary";
-import type { NotificationSubmitter } from "../application/notification-submitter";
-import {
-  NotificationSubmissionError,
-  notificationSubmissionErrorMessages,
-} from "../application/notification-submission-error";
+import { PageHeader } from "~/components/ui/layout/PageHeader";
+import { PagePadding } from "~/features/frame/page-layout/PagePadding";
+import { PageLayout } from "~/features/frame/page-layout/PageLayout";
+
 import type { NotificationAudienceLoader } from "../application/notification-audience-loader";
 import {
   NotificationAudienceLoadingError,
   notificationAudienceLoadingErrorMessages,
 } from "../application/notification-audience-loading-error";
+import type { NotificationSubmitter } from "../application/notification-submitter";
+import {
+  NotificationSubmissionError,
+  notificationSubmissionErrorMessages,
+} from "../application/notification-submission-error";
+import { NotificationForm } from "../components/NotificationForm";
+import { NotificationPreviewPanel } from "../components/NotificationPreviewPanel";
+import type { NotificationAudienceOption } from "../model/notification-audience-option";
 import {
   initialNotificationDraft,
   type NotificationDraft,
@@ -21,24 +25,6 @@ import {
   validateNotificationDraft,
   type NotificationDraftErrors,
 } from "../model/notification-draft-validation";
-import type { NotificationAudienceOption } from "../model/notification-audience-option";
-
-function formatPreviewDate(date: Date) {
-  return new Intl.DateTimeFormat("ja-JP", {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    weekday: "short",
-  }).format(date);
-}
-
-function formatPreviewTime(date: Date) {
-  return new Intl.DateTimeFormat("ja-JP", {
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-  }).format(date);
-}
 
 type NotificationCreatePageProps = {
   submitter: NotificationSubmitter;
@@ -58,17 +44,12 @@ export function NotificationCreatePage({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [submissionError, setSubmissionError] = useState<string | null>(null);
-  const [previewDate, setPreviewDate] = useState<Date | null>(null);
   const [audienceOptions, setAudienceOptions] = useState<
     NotificationAudienceOption[]
   >([]);
   const [isAudienceLoading, setIsAudienceLoading] = useState(true);
   const [audienceError, setAudienceError] = useState<string | null>(null);
   const [audienceReloadKey, setAudienceReloadKey] = useState(0);
-
-  useEffect(() => {
-    setPreviewDate(new Date());
-  }, []);
 
   useEffect(() => {
     let active = true;
@@ -103,11 +84,6 @@ export function NotificationCreatePage({
     };
   }, [audienceLoader, audienceReloadKey]);
 
-  const previewTime = previewDate ? formatPreviewTime(previewDate) : "--:--";
-  const previewDateLabel = previewDate
-    ? formatPreviewDate(previewDate)
-    : "----/--/--";
-
   function handleChange(nextDraft: NotificationDraft) {
     setDraft(nextDraft);
     setSubmitted(false);
@@ -117,6 +93,7 @@ export function NotificationCreatePage({
       title: nextDraft.title.trim() ? undefined : current.title,
       body: nextDraft.body.trim() ? undefined : current.body,
       audienceId: nextDraft.audienceId ? undefined : current.audienceId,
+      scheduledAt: nextDraft.scheduledAt ? undefined : current.scheduledAt,
     }));
   }
 
@@ -152,35 +129,38 @@ export function NotificationCreatePage({
   }
 
   return (
-    <div className="mx-auto w-full max-w-[1240px]">
-      <div className="grid gap-10 xl:grid-cols-[minmax(420px,1fr)_minmax(480px,1.05fr)]">
-        <section className="min-w-0">
-          <h1 className="text-xl font-semibold">通知作成</h1>
-          <p className="mt-4 text-sm text-[color:var(--text-3)]">
-            生徒や関係者に配信するプッシュ通知を作成します
-          </p>
-          <div className="mt-5 max-w-[560px]">
-            <NotificationForm
-              draft={draft}
-              errors={errors}
-              audienceOptions={audienceOptions}
-              isAudienceLoading={isAudienceLoading}
-              audienceError={audienceError}
-              isSubmissionDisabled={!isSubmissionEnabled}
-              isSubmitting={isSubmitting}
-              onChange={handleChange}
-              onSubmit={handleSubmit}
-              onAudienceReload={() =>
-                setAudienceReloadKey((current) => current + 1)
-              }
-            />
-          </div>
+    <PageLayout
+      panel={{
+        content: <NotificationPreviewPanel draft={draft} />,
+        placement: "right",
+      }}
+    >
+      <PagePadding>
+        <div className="mx-auto flex w-full min-w-0 flex-col gap-6">
+          <PageHeader
+            title="通知を作成"
+            description="アプリを利用するメンバーへプッシュ通知を配信します"
+          />
+          <NotificationForm
+            draft={draft}
+            errors={errors}
+            audienceOptions={audienceOptions}
+            audienceError={audienceError}
+            isAudienceLoading={isAudienceLoading}
+            isSubmissionDisabled={!isSubmissionEnabled}
+            isSubmitting={isSubmitting}
+            onAudienceReload={() =>
+              setAudienceReloadKey((current) => current + 1)
+            }
+            onChange={handleChange}
+            onSubmit={handleSubmit}
+          />
           <div
             aria-live="polite"
-            className={`mt-4 min-h-5 text-sm ${
+            className={`min-h-5 text-sm ${
               submissionError
-                ? "text-red-600"
-                : "text-[color:var(--tone-green-text)]"
+                ? "text-tone-danger-text"
+                : "text-tone-success-text"
             }`}
           >
             {!isSubmissionEnabled
@@ -188,24 +168,8 @@ export function NotificationCreatePage({
               : (submissionError ??
                 (submitted ? "通知を配信予定に登録しました。" : null))}
           </div>
-        </section>
-
-        <section className="min-w-0 pt-9">
-          <NotificationSummary
-            draft={draft}
-            deliveryTime={previewTime}
-            audienceOptions={audienceOptions}
-          />
-          <div className="mt-5">
-            <NotificationPhonePreview
-              title={draft.title}
-              body={draft.body}
-              time={previewTime}
-              date={previewDateLabel}
-            />
-          </div>
-        </section>
-      </div>
-    </div>
+        </div>
+      </PagePadding>
+    </PageLayout>
   );
 }

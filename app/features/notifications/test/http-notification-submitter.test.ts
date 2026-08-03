@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import { ApiClientError } from "~/lib/api-client-error";
 import { NotificationSubmissionError } from "../application/notification-submission-error";
 import type { NotificationDraft } from "../model/notification-draft";
-import { createHttpNotificationSubmitter } from "./http-notification-submitter";
+import { createHttpNotificationSubmitter } from "../infrastructure/http-notification-submitter";
 
 const draft: NotificationDraft = {
   title: "集合場所変更",

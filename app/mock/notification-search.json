@@ -1,0 +1,26 @@
+[
+  {
+    "id": "notice-search-1",
+    "title": "雨天時の競技進行について",
+    "description": "雨天の場合は一部競技を体育館へ変更します。",
+    "category": "運営連絡"
+  },
+  {
+    "id": "notice-search-2",
+    "title": "受付開始時刻の変更",
+    "description": "参加者受付を予定より15分早く開始します。",
+    "category": "時間変更"
+  },
+  {
+    "id": "notice-search-3",
+    "title": "落とし物のお知らせ",
+    "description": "本部テントで落とし物を保管しています。",
+    "category": "お知らせ"
+  },
+  {
+    "id": "notice-search-4",
+    "title": "救護室の利用案内",
+    "description": "体調不良の場合は体育館入口の救護室をご利用ください。",
+    "category": "安全管理"
+  }
+]

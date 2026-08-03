@@ -1,13 +1,13 @@
 import { isValidElement, type ReactElement } from "react";
 import { describe, expect, it } from "vitest";
 
-import { httpAdminNotificationManagementGateway } from "~/features/notification-management/infrastructure/http-admin-notification-management-gateway";
-import type { NotificationManagementPage } from "~/features/notification-management/pages/NotificationManagementPage";
+import { httpAdminNotificationManagementGateway } from "~/features/notifications/infrastructure/http-admin-notification-management-gateway";
+import type { NotificationManagementPage } from "~/features/notifications/pages/NotificationManagementPage";
 import { httpNotificationAudienceLoader } from "~/features/notifications/infrastructure/http-notification-audience-loader";
 import { httpNotificationSubmitter } from "~/features/notifications/infrastructure/http-notification-submitter";
 import type { NotificationCreatePage } from "~/features/notifications/pages/NotificationCreatePage";
-import NotificationsNewRoute from "./notifications.new";
-import NotificationsRoute from "./notifications";
+import NotificationsNewRoute from "~/routes/main/notifications.new";
+import NotificationsRoute from "~/routes/main/notifications";
 
 type NotificationCreatePageProps = Parameters<typeof NotificationCreatePage>[0];
 type NotificationManagementPageProps = Parameters<

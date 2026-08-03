@@ -4,8 +4,8 @@ import { NotificationManagementError } from "../application/notification-managem
 import {
   toManagedNotification,
   toManagedNotificationPage,
-} from "./admin-notification-management-response-mapper";
-import { createAdminNotificationResponse } from "./admin-notification-management-test-fixture";
+} from "../infrastructure/admin-notification-management-response-mapper";
+import { createAdminNotificationResponse } from "../infrastructure/admin-notification-management-test-fixture";
 
 describe("admin notification response mapper", () => {
   it.each([

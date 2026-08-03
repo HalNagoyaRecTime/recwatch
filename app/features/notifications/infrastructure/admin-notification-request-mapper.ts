@@ -9,11 +9,16 @@ export function toCreateAdminNotificationRequest(
   draft: NotificationDraft,
   scheduledAt: Date
 ): CreateAdminNotificationRequest {
+  const requestedScheduledAt =
+    draft.deliveryTiming === "scheduled" && draft.scheduledAt
+      ? new Date(draft.scheduledAt)
+      : scheduledAt;
+
   return {
     title: draft.title.trim(),
     body: draft.body.trim(),
     audience: toAudienceRequest(draft),
-    scheduledAt: scheduledAt.toISOString(),
+    scheduledAt: requestedScheduledAt.toISOString(),
   };
 }
 

@@ -4,11 +4,15 @@ export type NotificationAudienceType =
   | "gathering"
   | "event_participants";
 
+export type NotificationDeliveryTiming = "now" | "scheduled";
+
 export type NotificationDraft = {
   title: string;
   body: string;
   audienceType: NotificationAudienceType;
   audienceId: string;
+  deliveryTiming?: NotificationDeliveryTiming;
+  scheduledAt?: string;
 };
 
 export const initialNotificationDraft: NotificationDraft = {
@@ -16,6 +20,8 @@ export const initialNotificationDraft: NotificationDraft = {
   body: "",
   audienceType: "all",
   audienceId: "",
+  deliveryTiming: "now",
+  scheduledAt: "",
 };
 
 export const notificationAudienceLabels: Record<

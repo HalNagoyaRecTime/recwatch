@@ -5,8 +5,8 @@ import { NotificationManagementError } from "../application/notification-managem
 import {
   createHttpAdminNotificationManagementGateway,
   type AdminNotificationManagementHttpClient,
-} from "./http-admin-notification-management-gateway";
-import { createAdminNotificationResponse } from "./admin-notification-management-test-fixture";
+} from "../infrastructure/http-admin-notification-management-gateway";
+import { createAdminNotificationResponse } from "../infrastructure/admin-notification-management-test-fixture";
 
 function createClient(
   overrides: Partial<AdminNotificationManagementHttpClient> = {}

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { toAdminNotificationListPath } from "./admin-notification-list-query-mapper";
+import { toAdminNotificationListPath } from "../infrastructure/admin-notification-list-query-mapper";
 
 describe("toAdminNotificationListPath", () => {
   it("一覧条件をBackendのQueryへ変換する", () => {

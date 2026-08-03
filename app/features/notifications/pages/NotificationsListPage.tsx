@@ -1,141 +1,137 @@
-import { Check, CircleAlert, Trash2, X } from "lucide-react";
-import { Link } from "react-router";
+import { useState } from "react";
+import { CalendarDays, Ellipsis, Grid2X2, List, Plus } from "lucide-react";
 
-const notifications = [
+import { Button } from "~/components/ui/button/Button";
+import { ButtonLink } from "~/components/ui/button/ButtonLink";
+import { Pagination } from "~/components/ui/navigation/Pagination";
+import { PageHeader } from "~/components/ui/layout/PageHeader";
+import { SearchCombobox } from "~/components/ui/form/SearchCombobox";
+import { SegmentedControl } from "~/components/ui/form/SegmentedControl";
+import { Select } from "~/components/ui/form/Select";
+import { NotificationsTable } from "~/features/notifications/components/NotificationsTable";
+import { notificationListPageSize } from "~/features/notifications/model/notification-list-pagination";
+import type { NotificationListItem } from "~/features/notifications/model/notification-list-item";
+import type { NotificationListSort } from "~/features/notifications/model/notification-list-sort";
+import { notificationSearchOptions } from "~/features/notifications/search/notification-search-options";
+
+const notificationViewOptions = [
   {
-    title: "競技開始時間の変更",
-    body: "走れ！〇人〇脚！の開始時間が変更になりました。",
-    target: "全体",
-    sentAt: "11/07 09:05",
-    author: "HAL 太郎",
-    sport: "走れ！〇人〇脚！",
-    schedule: "09:10~10:10",
-    status: "配信済",
+    icon: CalendarDays,
+    label: "カレンダー表示",
+    value: "calendar",
   },
   {
-    title: "集合場所のお知らせ",
-    body: "ガチンコ綱引きの集合場所は集合場所Bです。",
-    target: "全体",
-    sentAt: "11/07 10:10",
-    author: "HAL 太郎",
-    sport: "ガチンコ綱引き",
-    schedule: "10:15~10:25",
-    status: "配信済",
+    icon: Grid2X2,
+    label: "グリッド表示",
+    value: "grid",
   },
   {
-    title: "緊急連絡",
-    body: "昼休み終了時刻を13:20に変更します。",
-    target: "全体",
-    sentAt: "11/07 12:50",
-    author: "HAL 太郎",
-    sport: "—",
-    schedule: "昼休み",
-    status: "配信済",
-  },
-  {
-    title: "紙飛行機飛ばし",
-    body: "紙飛行機飛ばしの集合場所は集合場所Cです。",
-    target: "競技参加者",
-    sentAt: "11/07 13:20",
-    author: "HAL 太郎",
-    sport: "紙飛行機飛ばし",
-    schedule: "13:30~14:10",
-    status: "送信失敗",
+    icon: List,
+    label: "リスト表示",
+    value: "list",
   },
 ] as const;
 
-export function NotificationsListPage() {
+type NotificationViewMode = (typeof notificationViewOptions)[number]["value"];
+
+const notificationDisplayOptions = [
+  { label: "すべて表示", value: "all" },
+  { label: "自動", value: "automatic" },
+  { label: "手動", value: "manual" },
+] as const;
+
+type NotificationDisplayMode =
+  (typeof notificationDisplayOptions)[number]["value"];
+
+export function NotificationsListPage({
+  currentPage,
+  items,
+  onDelete,
+  onPageChange,
+  onSortChange,
+  pageCount,
+  sort,
+  totalItems,
+}: {
+  currentPage: number;
+  items: readonly NotificationListItem[];
+  onDelete?: (item: NotificationListItem) => void;
+  onPageChange: (page: number) => void;
+  onSortChange: (columnId: string) => void;
+  pageCount: number;
+  sort?: NotificationListSort;
+  totalItems: number;
+}) {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [displayMode, setDisplayMode] =
+    useState<NotificationDisplayMode>("all");
+  const [viewMode, setViewMode] = useState<NotificationViewMode>("list");
+
   return (
-    <div className="min-h-full bg-[#f7faff] p-1 text-[#0a0a0a]">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-[17px] font-bold">通知管理</h1>
-          <p className="mt-1 text-xs text-black/40">
-            配信済み通知の一覧と配信状態を確認できます
-          </p>
-        </div>
-        <Link
-          to="/notifications/new"
-          className="rounded-[10px] bg-[#0070bb] px-4 py-2 text-sm text-white"
-        >
-          ＋ 通知作成
-        </Link>
+    <section className="mx-auto flex w-full flex-col gap-4">
+      <PageHeader
+        title="通知一覧"
+        description="配信済み通知の一覧と配信状況を確認できます"
+        actions={
+          <ButtonLink
+            icon={Plus}
+            to="/notifications/new"
+            variant="primary"
+            size="lg"
+          >
+            通知を作成
+          </ButtonLink>
+        }
+      />
+
+      <div className="flex gap-3">
+        <SearchCombobox
+          ariaLabel="通知を検索"
+          onOptionSelect={(option) => setSearchQuery(option.label)}
+          onQueryChange={setSearchQuery}
+          options={notificationSearchOptions}
+          placeholder="通知を検索"
+          query={searchQuery}
+        />
+        <Select
+          ariaLabel="通知の表示範囲"
+          onValueChange={setDisplayMode}
+          options={notificationDisplayOptions}
+          value={displayMode}
+        />
+        <SegmentedControl
+          ariaLabel="表示形式"
+          behavior="selection"
+          onValueChange={setViewMode}
+          options={notificationViewOptions}
+          value={viewMode}
+        />
+        <Button
+          icon={Ellipsis}
+          iconOnly
+          aria-label="その他の操作"
+          variant="secondary"
+          size="md"
+        />
       </div>
-      <div className="mt-5 flex items-start gap-2 rounded-[10px] border border-[#fcd34d] bg-[#fffbeb] p-3 text-xs text-[#b45309]">
-        <CircleAlert className="mt-px size-4 shrink-0" />
-        配信件数・成功件数の詳細は FCM（Firebase Cloud
-        Messaging）の管理画面で確認してください。
-      </div>
-      <div className="mt-4 overflow-x-auto rounded-[14px] border border-[#d2d2d2] bg-white">
-        <table className="w-full table-fixed border-collapse text-left text-[11px]">
-          <colgroup>
-            <col className="w-[26%]" />
-            <col className="w-[8%]" />
-            <col className="w-[10%]" />
-            <col className="w-[10%]" />
-            <col className="w-[14%]" />
-            <col className="w-[13%]" />
-            <col className="w-[10%]" />
-            <col className="w-[9%]" />
-          </colgroup>
-          <thead className="bg-[#f9fafb] text-[11px] text-black/50">
-            <tr>
-              {[
-                "件名 / 本文",
-                "配信対象",
-                "配信日時",
-                "作成・配信者",
-                "関連競技",
-                "関連スケジュール",
-                "状態",
-                "操作",
-              ].map((heading) => (
-                <th
-                  key={heading}
-                  className="border-b border-[#d2d2d2] px-2 py-2 font-bold"
-                >
-                  {heading}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {notifications.map((item) => (
-              <tr
-                key={item.title}
-                className="border-b border-[#d2d2d2] last:border-b-0"
-              >
-                <td className="px-2 py-3">
-                  <div className="text-sm font-bold">{item.title}</div>
-                  <div className="mt-1 text-black/50">{item.body}</div>
-                </td>
-                <td className="px-2 py-3">{item.target}</td>
-                <td className="px-2 py-3">{item.sentAt}</td>
-                <td className="px-2 py-3">{item.author}</td>
-                <td className="px-2 py-3">{item.sport}</td>
-                <td className="px-2 py-3">{item.schedule}</td>
-                <td className="px-2 py-3">
-                  <span
-                    className={`flex items-center gap-1 ${item.status === "配信済" ? "text-[#00a63e]" : "text-[#d1101d]"}`}
-                  >
-                    {item.status === "配信済" ? (
-                      <Check className="size-3" />
-                    ) : (
-                      <X className="size-3" />
-                    )}
-                    {item.status}
-                  </span>
-                </td>
-                <td className="px-2 py-3">
-                  <button type="button" aria-label={`${item.title}を削除`}>
-                    <Trash2 className="size-4 text-black/45" />
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
+
+      <NotificationsTable
+        footer={
+          pageCount > 1 ? (
+            <Pagination
+              currentPage={currentPage}
+              onPageChange={onPageChange}
+              pageCount={pageCount}
+              pageSize={notificationListPageSize}
+              totalItems={totalItems}
+            />
+          ) : undefined
+        }
+        items={items}
+        onDelete={onDelete}
+        onSortChange={onSortChange}
+        sort={sort}
+      />
+    </section>
   );
 }

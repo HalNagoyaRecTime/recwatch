@@ -6,7 +6,7 @@ import {
   toEventAudiencePage,
   toGatheringAudienceDtos,
   toNotificationAudienceOptions,
-} from "./notification-audience-response-mapper";
+} from "../infrastructure/notification-audience-response-mapper";
 
 describe("notification audience response mapper", () => {
   it("外部DTOを通知対象の内部モデルへ変換する", () => {
