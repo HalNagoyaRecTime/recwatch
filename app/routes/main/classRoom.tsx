@@ -7,11 +7,11 @@ import { ClassRoomPage } from "~/features/classRoom/pages/classRoomPage";
 import { getClassRoomData } from "~/features/classRoom/model/classRoom-data";
 
 export async function clientLoader() {
-  return getClassRoomData();
+  return { classRooms: await getClassRoomData() };
 }
 
 export function meta() {
-  return [{ title: "Class Room | recwatch" }];
+  return [{ title: "ユーザー管理（クラス） | recwatch" }];
 }
 
 export function ErrorBoundary() {
@@ -22,10 +22,14 @@ export function ErrorBoundary() {
       message = "認証が必要です。再ログインしてください。";
     else message = `エラー${error.status}:${error.data || error.statusText} `;
   }
-  return <div className="p-6 text-red-500">{message}</div>;
+  return (
+    <div role="alert" className="p-6 text-red-500">
+      {message}
+    </div>
+  );
 }
 
 export default function ClassRoomRoute() {
-  const classRooms = useLoaderData<typeof clientLoader>();
+  const { classRooms } = useLoaderData<typeof clientLoader>();
   return <ClassRoomPage classRooms={classRooms} />;
 }
