@@ -1,5 +1,3 @@
-import type { FormEvent } from "react";
-
 import { CalendarClock, Send } from "lucide-react";
 
 import { Button } from "~/components/ui/button/Button";
@@ -29,7 +27,7 @@ type NotificationFormProps = {
   submitLabel?: string;
   cancelTo?: string;
   onChange: (draft: NotificationDraft) => void;
-  onSubmit: (event: FormEvent<HTMLFormElement>) => void;
+  onSubmit: () => void | Promise<void>;
   onAudienceReload?: () => void;
 };
 
@@ -73,7 +71,13 @@ export function NotificationForm({
   const requiresAudienceOption = draft.audienceType !== "all";
 
   return (
-    <form onSubmit={onSubmit} noValidate>
+    <form
+      onSubmit={(event) => {
+        event.preventDefault();
+        void onSubmit();
+      }}
+      noValidate
+    >
       <LayeredPanel
         header={<h2 className="text-text-base font-semibold">通知内容</h2>}
       >

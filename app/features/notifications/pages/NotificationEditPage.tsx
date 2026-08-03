@@ -1,4 +1,3 @@
-import type { FormEvent } from "react";
 import { useNavigate } from "react-router";
 
 import { ButtonLink } from "~/components/ui/button/ButtonLink";
@@ -26,13 +25,11 @@ export function NotificationEditPage({
   const navigate = useNavigate();
   const state = useNotificationEdit({ api, audienceApi, notificationId });
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    void state.submit().then((updated) => {
-      if (updated) {
-        navigate("/notifications");
-      }
-    });
+  async function handleSubmit() {
+    const updated = await state.submit();
+    if (updated) {
+      navigate("/notifications");
+    }
   }
 
   return (

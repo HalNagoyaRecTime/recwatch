@@ -1,5 +1,3 @@
-import type { FormEvent } from "react";
-
 import { PageHeader } from "~/components/ui/layout/PageHeader";
 import { PagePadding } from "~/features/frame/page-layout/PagePadding";
 import { PageLayout } from "~/features/frame/page-layout/PageLayout";
@@ -26,11 +24,6 @@ export function NotificationCreatePage({
     isSubmissionEnabled,
   });
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    void state.submit();
-  }
-
   return (
     <PageLayout right={<NotificationPreviewPanel draft={state.draft} />}>
       <PagePadding>
@@ -49,7 +42,7 @@ export function NotificationCreatePage({
             isSubmitting={state.isSubmitting}
             onAudienceReload={state.onAudienceReload}
             onChange={state.onChange}
-            onSubmit={handleSubmit}
+            onSubmit={state.submit}
           />
           <div
             aria-live="polite"
