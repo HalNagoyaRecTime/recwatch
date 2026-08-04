@@ -6,24 +6,7 @@ import { cn } from "~/lib/cn";
 import { actionListItemStyle } from "~/components/ui/styles/action-list-styles";
 import type { SidebarItemDef } from "~/types/sidebar";
 import { SIDEBAR_DURATION } from "~/features/frame/sidebar/styles/sidebar-styles";
-
-// パスの一致判定ユーティリティ
-function pathMatches(pathname: string, to: string) {
-  if (to === "/dashboard") {
-    return pathname === "/dashboard";
-  }
-  return pathname === to || pathname.startsWith(`${to}/`);
-}
-
-// 子孫要素のどれかがアクティブか再帰的に判定する
-function hasActiveChild(item: SidebarItemDef, pathname: string): boolean {
-  if (!item.children) return false;
-  return item.children.some((child) => {
-    if (child.to && pathMatches(pathname, child.to)) return true;
-    if (child.children) return hasActiveChild(child, pathname);
-    return false;
-  });
-}
+import { isSidebarItemActive } from "~/features/frame/sidebar/utils/sidebar-active-matcher";
 
 // --- 外部から呼ばれるメインコンポーネント ---
 
@@ -42,7 +25,7 @@ export function SidebarNavItem({
     return <NavFolder item={item} pathname={pathname} depth={depth} />;
   }
 
-  return <NavLinkItem item={item} depth={depth} />;
+  return <NavLinkItem item={item} pathname={pathname} depth={depth} />;
 }
 
 // --- ファイル内専用の部品コンポーネント ---
@@ -58,7 +41,7 @@ function NavFolder({ item, pathname, depth }: NavFolderProps) {
   const { openAccordions, toggleAccordion, closeForMobile } = useSidebarState();
 
   const isAccordionOpen = openAccordions.includes(item.id);
-  const isActive = hasActiveChild(item, pathname);
+  const isActive = isSidebarItemActive(item, pathname);
 
   const handleToggle = () => {
     if (isExpanded) toggleAccordion(item.id);
@@ -87,7 +70,9 @@ function NavFolder({ item, pathname, depth }: NavFolderProps) {
         />
       </button>
 
-      {!isExpanded && <NavPopup item={item} closeMenu={closeForMobile} />}
+      {!isExpanded && (
+        <NavPopup item={item} pathname={pathname} closeMenu={closeForMobile} />
+      )}
 
       <NavAccordion
         item={item}
@@ -101,12 +86,14 @@ function NavFolder({ item, pathname, depth }: NavFolderProps) {
 
 type NavLinkItemProps = {
   item: SidebarItemDef;
+  pathname: string;
   depth: number;
 };
 
-function NavLinkItem({ item, depth }: NavLinkItemProps) {
+function NavLinkItem({ item, pathname, depth }: NavLinkItemProps) {
   const { isExpanded } = useSidebarUI();
   const { closeForMobile } = useSidebarState();
+  const isActive = isSidebarItemActive(item, pathname);
 
   if (!item.to) return null;
 
@@ -114,7 +101,9 @@ function NavLinkItem({ item, depth }: NavLinkItemProps) {
     <div className="group/nav relative">
       <NavLink
         to={item.to}
-        className={({ isActive }) =>
+        end
+        aria-current={isActive ? "page" : undefined}
+        className={() =>
           cn(
             actionListItemStyle({ active: isActive }),
             "w-full",
@@ -128,7 +117,9 @@ function NavLinkItem({ item, depth }: NavLinkItemProps) {
         <NavTriggerContent item={item} isExpanded={isExpanded} depth={depth} />
       </NavLink>
 
-      {!isExpanded && <NavPopup item={item} closeMenu={closeForMobile} />}
+      {!isExpanded && (
+        <NavPopup item={item} pathname={pathname} closeMenu={closeForMobile} />
+      )}
     </div>
   );
 }
@@ -185,10 +176,11 @@ function NavTriggerContent({
 
 type NavPopupProps = {
   item: SidebarItemDef;
+  pathname: string;
   closeMenu: () => void;
 };
 
-function NavPopup({ item, closeMenu }: NavPopupProps) {
+function NavPopup({ item, pathname, closeMenu }: NavPopupProps) {
   const hasChildren = Boolean(item.children?.length);
 
   return (
@@ -217,6 +209,7 @@ function NavPopup({ item, closeMenu }: NavPopupProps) {
                 <PopupNestedItem
                   key={child.id}
                   item={child}
+                  pathname={pathname}
                   closeMenu={closeMenu}
                 />
               ))}
@@ -234,10 +227,12 @@ function NavPopup({ item, closeMenu }: NavPopupProps) {
 
 function PopupNestedItem({
   item,
+  pathname,
   closeMenu,
   depth = 0,
 }: {
   item: SidebarItemDef;
+  pathname: string;
   closeMenu: () => void;
   depth?: number;
 }) {
@@ -259,6 +254,7 @@ function PopupNestedItem({
           <PopupNestedItem
             key={child.id}
             item={child}
+            pathname={pathname}
             closeMenu={closeMenu}
             depth={depth + 1}
           />
@@ -269,12 +265,14 @@ function PopupNestedItem({
 
   if (!item.to) return null;
 
+  const isActive = isSidebarItemActive(item, pathname);
+
   return (
     <NavLink
       to={item.to}
-      className={({ isActive }) =>
-        cn(actionListItemStyle({ active: isActive }), "w-full")
-      }
+      end
+      aria-current={isActive ? "page" : undefined}
+      className={() => cn(actionListItemStyle({ active: isActive }), "w-full")}
       onClick={closeMenu}
       style={{ paddingLeft: `${10 + depth * 12}px` }}
     >
