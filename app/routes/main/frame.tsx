@@ -1,7 +1,13 @@
 import { redirect, useLoaderData } from "react-router";
 import { Link } from "react-router";
 import { buildBackendUrl } from "~/config/env";
-import { WEB_CLIENT_HEADERS } from "~/features/auth/lib/logout";
+import {
+  getAccessToken,
+  setAccessToken,
+} from "~/features/auth/lib/accessTokenStore";
+import { WEB_CLIENT_HEADERS } from "~/features/auth/lib/webClientHeaders";
+import { refreshAccessToken } from "~/features/auth/lib/refreshAccessToken";
+import { setRefreshTokenId } from "~/features/auth/lib/refreshTokenStore";
 import { AppShell } from "~/features/frame/AppShell";
 import type { AccountUser } from "~/features/frame/main-header/account-menu/model/account-btn-data";
 
@@ -58,6 +64,11 @@ function getAuthErrorMessage(status: number) {
 }
 
 export async function clientLoader(): Promise<FrameLoaderData> {
+  const accessToken = getAccessToken() ?? (await refreshAccessToken());
+  if (!accessToken) {
+    throw redirect("/login?error=auth_failed");
+  }
+
   const authMeUrl = buildBackendUrl("/api/v1/auth/me");
   if (!authMeUrl) {
     return {
@@ -67,13 +78,28 @@ export async function clientLoader(): Promise<FrameLoaderData> {
     };
   }
 
-  const res = await fetch(authMeUrl, {
-    credentials: "include",
-    headers: WEB_CLIENT_HEADERS,
-  }).catch((error: unknown) => {
-    console.error("Failed to fetch /api/v1/auth/me", error);
-    return null;
-  });
+  const fetchMe = (token: string) =>
+    fetch(authMeUrl, {
+      headers: {
+        ...WEB_CLIENT_HEADERS,
+        Authorization: `Bearer ${token}`,
+      },
+    }).catch((error: unknown) => {
+      console.error("Failed to fetch /api/v1/auth/me", error);
+      return null;
+    });
+
+  let res = await fetchMe(accessToken);
+
+  if (res?.status === 401 || res?.status === 403) {
+    const refreshedToken = await refreshAccessToken();
+    if (!refreshedToken) {
+      setAccessToken(null);
+      setRefreshTokenId(null);
+      throw redirect("/login?error=auth_failed");
+    }
+    res = await fetchMe(refreshedToken);
+  }
 
   if (!res) {
     return {
@@ -84,6 +110,8 @@ export async function clientLoader(): Promise<FrameLoaderData> {
   }
 
   if (res.status === 401 || res.status === 403) {
+    setAccessToken(null);
+    setRefreshTokenId(null);
     throw redirect("/login?error=auth_failed");
   }
 

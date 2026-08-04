@@ -1,5 +1,8 @@
 import { buildBackendUrl } from "~/config/env";
 import { ApiClientError } from "./api-client-error";
+import { getAccessToken } from "~/features/auth/lib/accessTokenStore";
+import { refreshAccessToken } from "~/features/auth/lib/refreshAccessToken";
+import { WEB_CLIENT_HEADERS } from "~/features/auth/lib/webClientHeaders";
 
 function requireBackendUrl(path: string) {
   const url = buildBackendUrl(path);
@@ -11,16 +14,32 @@ function requireBackendUrl(path: string) {
   return url;
 }
 
-async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(requireBackendUrl(path), {
-    credentials: "include",
+function fetchWithToken(
+  url: string,
+  init: RequestInit | undefined,
+  token: string | null
+) {
+  return fetch(url, {
     ...init,
     headers: {
       Accept: "application/json",
-      "X-Client-Type": "web",
+      ...WEB_CLIENT_HEADERS,
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...init?.headers,
     },
   });
+}
+
+async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  const url = requireBackendUrl(path);
+  let res = await fetchWithToken(url, init, getAccessToken());
+
+  if (res.status === 401) {
+    const refreshedToken = await refreshAccessToken();
+    if (refreshedToken) {
+      res = await fetchWithToken(url, init, refreshedToken);
+    }
+  }
 
   if (!res.ok) {
     const body: unknown = await res.json().catch(() => null);

@@ -1,9 +1,9 @@
 import { cn } from "~/lib/cn";
 import { Menu } from "lucide-react";
-import { useNavState } from "~/hooks/useNavState";
+import { useSidebarState } from "~/hooks/useSidebarState";
 
 export function MobileHamburgerMenuBtn() {
-  const toggle = useNavState((state) => state.toggle);
+  const { toggle } = useSidebarState();
 
   return (
     <button

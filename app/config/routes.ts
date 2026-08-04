@@ -1,127 +1,144 @@
 import type { AppRole } from "./permissions";
 
-export type NavIconKey =
+export type SidebarIconKey =
+  | "calendar"
   | "clock"
   | "dashboard"
   | "notification"
+  | "file"
+  | "home"
   | "settings"
   | "notificationHistory"
   | "classRoom"
+  | "timing"
   | "trophy"
   | "users";
 
-type NavRoleConfig = {
+type SidebarRoleConfig = {
   roles: AppRole[];
 };
 
-export type NavChildConfig = NavRoleConfig & {
+export type SidebarItemConfig = SidebarRoleConfig & {
   id: string;
   label: string;
-  to: string;
-  badge?: number | string;
-};
-
-export type NavItemConfig = NavRoleConfig & {
-  id: string;
-  label: string;
-  icon: NavIconKey;
+  icon?: SidebarIconKey;
   to?: string;
-  badge?: number | string;
-  children?: NavChildConfig[];
+  children?: SidebarItemConfig[];
 };
 
-export type NavSectionConfig = {
-  label: string;
-  items: NavItemConfig[];
+export type SidebarSectionConfig = {
+  label?: string;
+  hasDivider?: boolean;
+  items: SidebarItemConfig[];
 };
 
-export const navSections = [
+export const sidebarSections = [
   {
-    label: "Main",
     items: [
       {
         id: "dashboard",
-        label: "Dashboard",
-        icon: "dashboard",
+        label: "ダッシュボード",
+        icon: "home",
         to: "/dashboard",
         roles: ["admin", "manager", "member"],
       },
+    ],
+  },
+  {
+    label: "管理",
+    items: [
       {
         id: "members",
-        label: "Members",
+        label: "メンバー",
         icon: "users",
-        badge: 128,
         roles: ["admin", "manager"],
         children: [
           {
             id: "members-list",
-            label: "Member List",
+            label: "ユーザー管理",
             to: "/members",
             roles: ["admin", "manager"],
           },
           {
             id: "members-import",
-            label: "Import",
+            label: "インポート",
             to: "/members/import",
             roles: ["admin"],
           },
-        ],
-      },
-      {
-        id: "classRoom",
-        label: "Class Rooms",
-        icon: "classRoom",
-        to: "/classroom",
-        roles: ["admin", "manager"],
-      },
-    ],
-  },
-  {
-    label: "Operations",
-    items: [
-      {
-        id: "sports",
-        label: "Sports Setup",
-        icon: "trophy",
-        roles: ["admin", "manager"],
-        children: [
           {
-            id: "sports-list",
-            label: "Sports List",
-            to: "/events",
+            id: "classRoom",
+            label: "クラス一覧",
+            icon: "classRoom",
+            to: "/classroom",
             roles: ["admin", "manager"],
           },
         ],
       },
+    ],
+  },
+  {
+    label: "イベント",
+    items: [
+      {
+        id: "events",
+        label: "競技マスター",
+        icon: "trophy",
+        roles: ["admin", "manager"],
+        children: [
+          {
+            id: "events-list",
+            label: "競技一覧",
+            to: "/events",
+            roles: ["admin", "manager"],
+          },
+          {
+            id: "events-new",
+            label: "新規登録",
+            to: "/events/new",
+            roles: ["admin", "manager"],
+          },
+        ],
+      },
+    ],
+  },
+  {
+    label: "運用",
+    items: [
       {
         id: "schedule",
-        label: "イベント管理",
-        icon: "clock",
+        label: "スケジュール",
+        icon: "calendar",
         to: "/schedule",
         roles: ["admin", "manager", "member"],
+        children: [
+          {
+            id: "notification-create",
+            label: "通知作成",
+            icon: "notification",
+            to: "/notifications/new",
+            roles: ["admin", "manager"],
+          },
+          {
+            id: "notification-management",
+            label: "通知管理",
+            icon: "notificationHistory",
+            to: "/notifications",
+            roles: ["admin", "manager"],
+          },
+        ],
       },
+    ],
+  },
+  {
+    hasDivider: true,
+    items: [
       {
-        id: "notification-create",
-        label: "通知作成",
-        icon: "notification",
-        to: "/notifications/new",
-        roles: ["admin", "manager"],
-      },
-      {
-        id: "notification-management",
-        label: "通知管理",
-        icon: "notificationHistory",
-        to: "/notifications",
+        id: "settings",
+        label: "設定",
+        icon: "settings",
+        to: "/settings",
         roles: ["admin", "manager"],
       },
     ],
   },
-] satisfies NavSectionConfig[];
-
-export const settingsItem = {
-  id: "settings",
-  label: "Settings",
-  icon: "settings",
-  to: "/settings",
-  roles: ["admin", "manager"],
-} satisfies NavItemConfig;
+] satisfies SidebarSectionConfig[];
