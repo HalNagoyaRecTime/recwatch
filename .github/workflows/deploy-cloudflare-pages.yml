@@ -1,49 +1,136 @@
 name: Deploy to Cloudflare Pages
 
 on:
-  push:
-    branches:
-      - main
-      - develop
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
   workflow_dispatch:
 
 concurrency:
-  group: cloudflare-pages-${{ github.ref_name }}
+  group: cloudflare-pages-${{ (github.event_name == 'workflow_dispatch' && github.ref_name == 'main') && 'production' || (github.event.workflow_run.event == 'push' && github.event.workflow_run.head_branch == 'main') && 'staging' || (github.event.workflow_run.event == 'push' && github.event.workflow_run.head_branch == 'develop') && 'development' || 'preview' }}
   cancel-in-progress: true
 
 permissions:
   contents: read
   deployments: write
+  pull-requests: write
 
 jobs:
   deploy:
-    if: github.ref_name == 'main' || github.ref_name == 'develop'
-    name: Deploy ${{ github.ref_name }}
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       (github.event.workflow_run.event == 'push' || github.event.workflow_run.event == 'pull_request'))
+    name: Deploy (${{ github.event.workflow_run.head_branch || github.ref_name }})
     runs-on: ubuntu-latest
-    environment: ${{ github.ref_name == 'main' && 'production' || 'development' }}
+    environment: ${{ (github.event_name == 'workflow_dispatch' && github.ref_name == 'main') && 'production' || (github.event.workflow_run.event == 'push' && github.event.workflow_run.head_branch == 'main') && 'staging' || (github.event.workflow_run.event == 'push' && github.event.workflow_run.head_branch == 'develop') && 'development' || 'preview' }}
     env:
       VITE_BACKEND_BASE_URL: ${{ vars.VITE_BACKEND_BASE_URL }}
 
     steps:
-      - name: Check out the repository
+      - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
 
-      - name: Set up Node.js
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 22
-          cache: npm
+          node-version: "22"
+          cache: "npm"
 
       - name: Install dependencies
         run: npm ci
 
+      - name: Set deploy target
+        id: target
+        env:
+          BRANCH: ${{ github.event.workflow_run.head_branch || github.ref_name }}
+          EVENT: ${{ github.event.workflow_run.event || 'workflow_dispatch' }}
+          PR_NUMBER: ${{ github.event.workflow_run.pull_requests[0].number }}
+        run: |
+          if [ "$EVENT" = "workflow_dispatch" ]; then
+            # 本番デプロイは手動実行(workflow_dispatch)のみで行うが、
+            # 誤って main 以外のブランチから実行され本番に反映されることを防ぐため、
+            # ブランチも合わせて検証する。
+            if [ "$BRANCH" != "main" ]; then
+              echo "::error::本番デプロイはmainブランチからのworkflow_dispatchのみ許可されています(現在のブランチ: $BRANCH)"
+              exit 1
+            fi
+            echo "mode=deploy" >> "$GITHUB_OUTPUT"
+            echo "pages_branch=main" >> "$GITHUB_OUTPUT"
+          elif [ "$EVENT" = "pull_request" ]; then
+            if [ -z "$PR_NUMBER" ]; then
+              echo "::error::workflow_runイベントからPR番号を取得できませんでした(フォークからのPRの可能性があります)"
+              exit 1
+            fi
+            # PRごとに独立したpreview URL(pr-<番号>.recwatch.pages.dev)を発行する。
+            echo "mode=pr-preview" >> "$GITHUB_OUTPUT"
+            echo "pages_branch=pr-${PR_NUMBER}" >> "$GITHUB_OUTPUT"
+            echo "pr_number=${PR_NUMBER}" >> "$GITHUB_OUTPUT"
+          elif [ "$BRANCH" = "main" ]; then
+            # mainへのpushはstagingへ自動デプロイする(本番はworkflow_dispatchのみ)。
+            # Cloudflare Pagesの「本番ブランチ」設定はmainのままのため、
+            # ここではmain以外のエイリアス(staging)でデプロイしプレビュー扱いにする。
+            echo "mode=deploy" >> "$GITHUB_OUTPUT"
+            echo "pages_branch=staging" >> "$GITHUB_OUTPUT"
+          elif [ "$BRANCH" = "develop" ]; then
+            echo "mode=deploy" >> "$GITHUB_OUTPUT"
+            echo "pages_branch=develop" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice::対象外のブランチ($BRANCH)のためデプロイをスキップします"
+            echo "mode=skip" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Build the frontend
+        if: steps.target.outputs.mode != 'skip'
         run: npm run build
 
       - name: Deploy to Cloudflare Pages
+        if: steps.target.outputs.mode != 'skip'
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy build/client --project-name=recwatch --branch=${{ github.ref_name }}
+          command: >-
+            pages deploy build/client --project-name=recwatch
+            --branch=${{ steps.target.outputs.pages_branch }}
           gitHubToken: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Comment preview URL on PR
+        if: steps.target.outputs.mode == 'pr-preview'
+        uses: actions/github-script@v7
+        env:
+          PAGES_BRANCH: ${{ steps.target.outputs.pages_branch }}
+          PR_NUMBER: ${{ steps.target.outputs.pr_number }}
+        with:
+          script: |
+            const branch = process.env.PAGES_BRANCH;
+            const url = `https://${branch}.recwatch.pages.dev`;
+            const prNumber = Number(process.env.PR_NUMBER);
+            const marker = "<!-- recwatch-preview-url -->";
+            const body = [
+              marker,
+              `🚀 Preview: ${url}`,
+            ].join("\n");
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+            });
+            const existing = comments.find((c) => c.body && c.body.includes(marker));
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                body,
+              });
+            }
