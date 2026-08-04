@@ -21,6 +21,14 @@ export default [
     ),
     route("notifications", "routes/main/notifications.tsx"),
     route("notifications/new", "routes/main/notifications.new.tsx"),
+    route(
+      "notifications/:notificationId",
+      "routes/main/notifications.$notificationId.tsx"
+    ),
+    route(
+      "notifications/:notificationId/edit",
+      "routes/main/notifications.$notificationId.edit.tsx"
+    ),
     route("members", "routes/main/members.tsx"),
     route("members/teams", "routes/main/members.teams.tsx"),
     route("members/import", "routes/main/members.import.tsx"),
