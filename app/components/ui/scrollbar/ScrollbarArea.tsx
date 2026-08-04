@@ -7,6 +7,10 @@ type ScrollbarAreaProps = {
   children: ReactNode;
   className?: string;
   style?: CSSProperties;
+  /** スクロールバーの方向（デフォルト: "vertical"） */
+  orientation?: "vertical" | "horizontal" | "both";
+  /** 縦スクロールバーのトラック下端に空ける余白（px） */
+  verticalTrackInsetBottom?: number;
 };
 
 /**
@@ -19,20 +23,31 @@ export function ScrollbarArea({
   children,
   className,
   style,
+  orientation = "vertical",
+  verticalTrackInsetBottom = 0,
 }: ScrollbarAreaProps) {
   const {
     scrollRef,
-    trackRef,
-    thumbHeight,
-    thumbTop,
+    verticalTrackRef,
+    horizontalTrackRef,
+    verticalThumbHeight,
+    verticalThumbTop,
+    verticalIsDragging,
+    onVerticalThumbMouseDown,
+    onVerticalTrackMouseDown,
+    horizontalThumbWidth,
+    horizontalThumbLeft,
+    horizontalIsDragging,
+    onHorizontalThumbMouseDown,
+    onHorizontalTrackMouseDown,
     isVisible,
-    isDragging,
-    onThumbMouseDown,
-    onTrackMouseDown,
     onScroll,
     onMouseEnter,
     onMouseLeave,
-  } = useScrollbar();
+  } = useScrollbar({ orientation });
+
+  const showVertical = orientation === "vertical" || orientation === "both";
+  const showHorizontal = orientation === "horizontal" || orientation === "both";
 
   return (
     <div
@@ -44,22 +59,46 @@ export function ScrollbarArea({
       <div
         ref={scrollRef}
         onScroll={onScroll}
-        className={cn("scrollbar-none flex-1 overflow-y-scroll", className)}
+        className={cn(
+          "scrollbar-none flex-1",
+          orientation === "vertical" && "overflow-x-hidden overflow-y-auto",
+          orientation === "horizontal" && "overflow-x-auto overflow-y-hidden",
+          orientation === "both" && "overflow-auto",
+          className
+        )}
         style={style}
       >
         {children}
       </div>
 
-      {/* カスタムスクロールバー */}
-      <Scrollbar
-        trackRef={trackRef}
-        thumbHeight={thumbHeight}
-        thumbTop={thumbTop}
-        isVisible={isVisible}
-        isDragging={isDragging}
-        onThumbMouseDown={onThumbMouseDown}
-        onTrackMouseDown={onTrackMouseDown}
-      />
+      {/* 縦方向カスタムスクロールバー */}
+      {showVertical && (
+        <Scrollbar
+          orientation="vertical"
+          trackRef={verticalTrackRef}
+          thumbSize={verticalThumbHeight}
+          thumbOffset={verticalThumbTop}
+          isVisible={isVisible}
+          isDragging={verticalIsDragging}
+          verticalTrackInsetBottom={verticalTrackInsetBottom}
+          onThumbMouseDown={onVerticalThumbMouseDown}
+          onTrackMouseDown={onVerticalTrackMouseDown}
+        />
+      )}
+
+      {/* 横方向カスタムスクロールバー */}
+      {showHorizontal && (
+        <Scrollbar
+          orientation="horizontal"
+          trackRef={horizontalTrackRef}
+          thumbSize={horizontalThumbWidth}
+          thumbOffset={horizontalThumbLeft}
+          isVisible={isVisible}
+          isDragging={horizontalIsDragging}
+          onThumbMouseDown={onHorizontalThumbMouseDown}
+          onTrackMouseDown={onHorizontalTrackMouseDown}
+        />
+      )}
     </div>
   );
 }
