@@ -15,13 +15,23 @@ import { NotificationActionMenu } from "~/features/notifications/components/list
 const notificationTableColumns: readonly DataTableColumn<NotificationListItem>[] =
   [
     {
+      header: "id",
+      id: "id",
+      sortable: true,
+      width: {
+        type: "fixed",
+        value: 72,
+      },
+      renderCell: (item) => item.id,
+    },
+    {
       header: "件名",
       id: "title",
       padding: "wide",
       sortable: true,
       width: {
         grow: 2.2,
-        min: 180,
+        min: 90,
         type: "fluid",
       },
       renderCell: (item) => (
@@ -67,7 +77,7 @@ const notificationTableColumns: readonly DataTableColumn<NotificationListItem>[]
       renderCell: (item) => item.sender,
     },
     {
-      header: "関連競技",
+      header: "関連イベント",
       id: "competition",
       sortable: true,
       width: {
@@ -83,7 +93,7 @@ const notificationTableColumns: readonly DataTableColumn<NotificationListItem>[]
       sortable: true,
       width: {
         grow: 1,
-        min: 170,
+        min: 160,
         type: "fluid",
       },
       renderCell: (item) => item.schedule,
@@ -94,7 +104,7 @@ const notificationTableColumns: readonly DataTableColumn<NotificationListItem>[]
       sortable: true,
       width: {
         grow: 0.7,
-        min: 104,
+        min: 90,
         resizable: false,
         type: "fluid",
       },
