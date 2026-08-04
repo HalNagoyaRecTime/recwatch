@@ -43,7 +43,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
           }}
         />
       </head>
-      <body className="min-h-dvh bg-[radial-gradient(circle_at_top_right,var(--bg-glow),transparent_32%),linear-gradient(180deg,var(--bg-top)_0%,var(--bg-bottom)_100%)] text-[color:var(--text-1)] antialiased transition-colors duration-200">
+      <body className="min-h-dvh bg-[radial-gradient(circle_at_top_right,var(--bg-gradient-glow),transparent_32%),linear-gradient(180deg,var(--bg-gradient-start)_0%,var(--bg-gradient-end)_100%)] text-[color:var(--text-base)] antialiased transition-colors duration-200">
         {children}
         <ScrollRestoration />
         <Scripts />
@@ -78,18 +78,18 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
 
   return (
     <main className="min-h-dvh p-6 md:p-8">
-      <div className="mx-auto max-w-5xl rounded-[1.5rem] border border-[color:var(--border-1)] bg-[color:var(--surface-1)] p-6 shadow-[var(--shadow-soft)] md:p-8">
-        <div className="font-['DM_Mono'] text-xs tracking-[0.18em] text-[color:var(--brand-2)] uppercase">
+      <div className="shadow-soft mx-auto max-w-5xl rounded-[1.5rem] border border-[color:var(--border-subtle)] bg-[color:var(--surface-base)] p-6 md:p-8">
+        <div className="font-['DM_Mono'] text-xs tracking-[0.18em] text-[color:var(--brand-primary)] uppercase">
           Failure Boundary
         </div>
         <h1 className="mt-3 text-[clamp(28px,4vw,40px)] leading-[1.04] font-semibold">
           {message}
         </h1>
-        <p className="mt-3 max-w-[50ch] text-sm leading-7 text-[color:var(--text-2)]">
+        <p className="mt-3 max-w-[50ch] text-sm leading-7 text-[color:var(--text-muted)]">
           {details}
         </p>
         {stack ? (
-          <pre className="mt-5 overflow-x-auto rounded-2xl border border-[color:var(--border-1)] bg-[color:var(--surface-2)] p-4 text-xs text-[color:var(--text-2)]">
+          <pre className="mt-5 overflow-x-auto rounded-2xl border border-[color:var(--border-subtle)] bg-[color:var(--surface-hover)] p-4 text-xs text-[color:var(--text-muted)]">
             <code>{stack}</code>
           </pre>
         ) : null}
@@ -99,5 +99,7 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
 }
 
 export function HydrateFallback() {
-  return <div className="bg-[color:var(--surface-2)] p-6">読み込み中...</div>;
+  return (
+    <div className="bg-[color:var(--surface-hover)] p-6">読み込み中...</div>
+  );
 }

@@ -152,17 +152,17 @@ export default function FrameRoute() {
 function BackendErrorScreen({ message }: { message: string }) {
   return (
     <main className="flex min-h-dvh items-center justify-center p-6">
-      <section className="w-full max-w-md rounded-2xl border border-(--border-1) bg-(--surface-1) p-6 shadow-(--shadow-soft)">
-        <div className="font-['DM_Mono'] text-xs tracking-[0.18em] text-(--brand-2) uppercase">
+      <section className="border-border-subtle bg-surface-base shadow-soft w-full max-w-md rounded-2xl border p-6">
+        <div className="text-brand-primary font-['DM_Mono'] text-xs tracking-[0.18em] uppercase">
           Backend unavailable
         </div>
         <h1 className="mt-3 text-2xl leading-tight font-semibold">
           バックエンドに接続できません
         </h1>
-        <p className="mt-3 text-sm leading-7 text-(--text-2)">{message}</p>
+        <p className="text-text-muted mt-3 text-sm leading-7">{message}</p>
         <Link
           to="/login"
-          className="mt-5 inline-block text-sm font-medium text-(--brand-1) hover:underline"
+          className="text-brand-primary mt-5 inline-block text-sm font-medium hover:underline"
         >
           ログインページへ戻る
         </Link>
