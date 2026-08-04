@@ -2,6 +2,8 @@ import { useLoaderData } from "react-router";
 import { ClassRoomApi, TeacherApi } from "~/features/instructors/api";
 import { toTeacherRow } from "~/features/instructors/model/teacher";
 import { TeacherClassAssignmentPage } from "~/features/instructors/pages/TeacherClassAssignmentPage";
+import { PagePadding } from "~/features/frame/page-layout/PagePadding";
+import { PageLayout } from "~/features/frame/page-layout/PageLayout";
 
 export function meta() {
   return [{ title: "クラス割り当て | recwatch" }];
@@ -34,10 +36,14 @@ export default function InstructorClassAssignmentRoute() {
     useLoaderData<typeof clientLoader>();
 
   return (
-    <TeacherClassAssignmentPage
-      teachers={teachers}
-      classRooms={classRooms}
-      selectedTeacherId={selectedTeacherId}
-    />
+    <PageLayout>
+      <PagePadding>
+        <TeacherClassAssignmentPage
+          teachers={teachers}
+          classRooms={classRooms}
+          selectedTeacherId={selectedTeacherId}
+        />
+      </PagePadding>
+    </PageLayout>
   );
 }
