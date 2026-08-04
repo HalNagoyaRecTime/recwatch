@@ -1,10 +1,10 @@
 import { isValidElement, type ReactElement } from "react";
 import { describe, expect, it } from "vitest";
 
-import { httpAdminNotificationManagementGateway } from "~/features/notification-management/infrastructure/http-admin-notification-management-gateway";
+import { httpNotificationManagementApi } from "~/features/notifications/api/http/notification-management-api";
 import type { NotificationManagementPage } from "~/features/notification-management/pages/NotificationManagementPage";
-import { httpNotificationAudienceLoader } from "~/features/notifications/infrastructure/http-notification-audience-loader";
-import { httpNotificationSubmitter } from "~/features/notifications/infrastructure/http-notification-submitter";
+import { httpNotificationAudienceApi } from "~/features/notifications/api/http/notification-audience-api";
+import { httpNotificationSubmissionApi } from "~/features/notifications/api/http/notification-submission-api";
 import type { NotificationCreatePage } from "~/features/notifications/pages/NotificationCreatePage";
 import NotificationsNewRoute from "./notifications.new";
 import NotificationsRoute from "./notifications";
@@ -20,8 +20,8 @@ describe("notification routes", () => {
       NotificationsNewRoute() as ReactElement<NotificationCreatePageProps>;
 
     expect(isValidElement(element)).toBe(true);
-    expect(element.props.submitter).toBe(httpNotificationSubmitter);
-    expect(element.props.audienceLoader).toBe(httpNotificationAudienceLoader);
+    expect(element.props.api).toBe(httpNotificationSubmissionApi);
+    expect(element.props.audienceApi).toBe(httpNotificationAudienceApi);
     expect(element.props.isSubmissionEnabled).not.toBe(false);
   });
 
@@ -36,6 +36,6 @@ describe("notification routes", () => {
     const element = pagePadding.props
       .children as ReactElement<NotificationManagementPageProps>;
     expect(isValidElement(element)).toBe(true);
-    expect(element.props.gateway).toBe(httpAdminNotificationManagementGateway);
+    expect(element.props.api).toBe(httpNotificationManagementApi);
   });
 });

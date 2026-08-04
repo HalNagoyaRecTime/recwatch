@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 
 import { PagePadding } from "~/features/frame/page-layout/PagePadding";
 import { PageLayout } from "~/features/frame/page-layout/PageLayout";
@@ -6,25 +6,9 @@ import { PageLayout } from "~/features/frame/page-layout/PageLayout";
 import { NotificationForm } from "../components/NotificationForm";
 import { NotificationPhonePreview } from "../components/NotificationPhonePreview";
 import { NotificationSummary } from "../components/NotificationSummary";
-import type { NotificationSubmitter } from "../application/notification-submitter";
-import {
-  NotificationSubmissionError,
-  notificationSubmissionErrorMessages,
-} from "../application/notification-submission-error";
-import type { NotificationAudienceLoader } from "../application/notification-audience-loader";
-import {
-  NotificationAudienceLoadingError,
-  notificationAudienceLoadingErrorMessages,
-} from "../application/notification-audience-loading-error";
-import {
-  initialNotificationDraft,
-  type NotificationDraft,
-} from "../model/notification-draft";
-import {
-  validateNotificationDraft,
-  type NotificationDraftErrors,
-} from "../model/notification-draft-validation";
-import type { NotificationAudienceOption } from "../model/notification-audience-option";
+import type { NotificationAudienceApi } from "~/features/notifications/api/contracts/notification-audience-api";
+import type { NotificationSubmissionApi } from "~/features/notifications/api/contracts/notification-submission-api";
+import { useNotificationCreate } from "~/features/notifications/hooks/useNotificationCreate";
 
 function formatPreviewDate(date: Date) {
   return new Intl.DateTimeFormat("ja-JP", {
@@ -44,114 +28,40 @@ function formatPreviewTime(date: Date) {
 }
 
 type NotificationCreatePageProps = {
-  submitter: NotificationSubmitter;
-  audienceLoader: NotificationAudienceLoader;
+  api: NotificationSubmissionApi;
+  audienceApi: NotificationAudienceApi;
   isSubmissionEnabled?: boolean;
 };
 
 export function NotificationCreatePage({
-  submitter,
-  audienceLoader,
+  api,
+  audienceApi,
   isSubmissionEnabled = true,
 }: NotificationCreatePageProps) {
-  const [draft, setDraft] = useState<NotificationDraft>(
-    initialNotificationDraft
-  );
-  const [errors, setErrors] = useState<NotificationDraftErrors>({});
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
-  const [submissionError, setSubmissionError] = useState<string | null>(null);
-  const [previewDate, setPreviewDate] = useState<Date | null>(null);
-  const [audienceOptions, setAudienceOptions] = useState<
-    NotificationAudienceOption[]
-  >([]);
-  const [isAudienceLoading, setIsAudienceLoading] = useState(true);
-  const [audienceError, setAudienceError] = useState<string | null>(null);
-  const [audienceReloadKey, setAudienceReloadKey] = useState(0);
+  const [previewDate] = useState(() => new Date());
 
-  useEffect(() => {
-    setPreviewDate(new Date());
-  }, []);
-
-  useEffect(() => {
-    let active = true;
-    setIsAudienceLoading(true);
-    setAudienceError(null);
-
-    audienceLoader
-      .load()
-      .then((options) => {
-        if (active) {
-          setAudienceOptions(options);
-        }
-      })
-      .catch((error: unknown) => {
-        if (active) {
-          setAudienceOptions([]);
-          setAudienceError(
-            error instanceof NotificationAudienceLoadingError
-              ? notificationAudienceLoadingErrorMessages[error.kind]
-              : notificationAudienceLoadingErrorMessages.unexpected
-          );
-        }
-      })
-      .finally(() => {
-        if (active) {
-          setIsAudienceLoading(false);
-        }
-      });
-
-    return () => {
-      active = false;
-    };
-  }, [audienceLoader, audienceReloadKey]);
+  const {
+    audienceError,
+    audienceOptions,
+    draft,
+    errors,
+    isAudienceLoading,
+    isSubmitting,
+    onAudienceReload,
+    onChange,
+    submitted,
+    submissionError,
+    submit,
+  } = useNotificationCreate({ api, audienceApi, isSubmissionEnabled });
 
   const previewTime = previewDate ? formatPreviewTime(previewDate) : "--:--";
   const previewDateLabel = previewDate
     ? formatPreviewDate(previewDate)
     : "----/--/--";
 
-  function handleChange(nextDraft: NotificationDraft) {
-    setDraft(nextDraft);
-    setSubmitted(false);
-    setSubmissionError(null);
-    setErrors((current) => ({
-      ...current,
-      title: nextDraft.title.trim() ? undefined : current.title,
-      body: nextDraft.body.trim() ? undefined : current.body,
-      audienceId: nextDraft.audienceId ? undefined : current.audienceId,
-    }));
-  }
-
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!isSubmissionEnabled) {
-      return;
-    }
-
-    const nextErrors = validateNotificationDraft(draft);
-    setErrors(nextErrors);
-
-    if (Object.keys(nextErrors).length > 0 || isSubmitting) {
-      return;
-    }
-
-    setIsSubmitting(true);
-    setSubmitted(false);
-    setSubmissionError(null);
-
-    try {
-      await submitter.submit(draft);
-      setSubmitted(true);
-    } catch (error) {
-      setSubmissionError(
-        error instanceof NotificationSubmissionError
-          ? notificationSubmissionErrorMessages[error.kind]
-          : notificationSubmissionErrorMessages.unexpected
-      );
-    } finally {
-      setIsSubmitting(false);
-    }
+    await submit();
   }
 
   return (
@@ -173,11 +83,9 @@ export function NotificationCreatePage({
                   audienceError={audienceError}
                   isSubmissionDisabled={!isSubmissionEnabled}
                   isSubmitting={isSubmitting}
-                  onChange={handleChange}
+                  onChange={onChange}
                   onSubmit={handleSubmit}
-                  onAudienceReload={() =>
-                    setAudienceReloadKey((current) => current + 1)
-                  }
+                  onAudienceReload={onAudienceReload}
                 />
               </div>
               <div
