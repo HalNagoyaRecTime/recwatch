@@ -1,30 +1,53 @@
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { MemoryRouter } from "react-router";
+import type { ReactElement } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { NotificationSubmissionError } from "../application/notification-submission-error";
-import type { NotificationSubmitter } from "../application/notification-submitter";
-import type { NotificationAudienceLoader } from "../application/notification-audience-loader";
-import { NotificationAudienceLoadingError } from "../application/notification-audience-loading-error";
-import { mockNotificationAudienceOptions } from "../infrastructure/mock-notification-audience-options";
-import { NotificationCreatePage } from "./NotificationCreatePage";
+import type { NotificationSubmissionApi } from "~/features/notifications/api/contracts/notification-submission-api";
+import type { NotificationAudienceApi } from "~/features/notifications/api/contracts/notification-audience-api";
+import { NotificationAudienceLoadingError } from "~/features/notifications/api/contracts/errors/notification-audience-loading-error";
+import { NotificationSubmissionError } from "~/features/notifications/api/contracts/errors/notification-submission-error";
+import { mockNotificationAudienceOptions } from "~/features/notifications/mock/notification-audience-api";
+import { NotificationCreatePage } from "~/features/notifications/pages/NotificationCreatePage";
 
 afterEach(cleanup);
 
+vi.stubGlobal(
+  "ResizeObserver",
+  class ResizeObserverStub {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  }
+);
+
 function createAudienceLoader(
   load = vi.fn().mockResolvedValue(mockNotificationAudienceOptions)
-): NotificationAudienceLoader {
+): NotificationAudienceApi {
   return { load };
+}
+
+function renderPage(ui: ReactElement) {
+  return render(<MemoryRouter>{ui}</MemoryRouter>);
+}
+
+async function selectAudience(
+  user: ReturnType<typeof userEvent.setup>,
+  label: string
+) {
+  await user.click(screen.getByRole("combobox", { name: "通知対象" }));
+  await user.click(screen.getByRole("option", { name: label }));
 }
 
 describe("NotificationCreatePage", () => {
   it("API未接続時は送信操作と成功表示を無効にする", async () => {
     const submit = vi.fn();
 
-    render(
+    renderPage(
       <NotificationCreatePage
-        submitter={{ submit }}
-        audienceLoader={createAudienceLoader()}
+        api={{ submit }}
+        audienceApi={createAudienceLoader()}
         isSubmissionEnabled={false}
       />
     );
@@ -32,7 +55,7 @@ describe("NotificationCreatePage", () => {
     expect(
       screen.getByText("API接続後に通知を配信できます。")
     ).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "配信する" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "通知を配信" })).toBeDisabled();
     expect(
       screen.queryByText("通知を配信予定に登録しました。")
     ).not.toBeInTheDocument();
@@ -58,16 +81,16 @@ describe("NotificationCreatePage", () => {
     );
     const user = userEvent.setup();
 
-    render(
+    renderPage(
       <NotificationCreatePage
-        submitter={{ submit }}
-        audienceLoader={createAudienceLoader()}
+        api={{ submit }}
+        audienceApi={createAudienceLoader()}
       />
     );
 
     await user.type(screen.getByLabelText("タイトル*"), "お知らせ");
     await user.type(screen.getByLabelText("本文*"), "本文です");
-    const button = screen.getByRole("button", { name: "配信する" });
+    const button = screen.getByRole("button", { name: "通知を配信" });
     await user.click(button);
     await user.click(button);
 
@@ -79,23 +102,20 @@ describe("NotificationCreatePage", () => {
   });
 
   it("APIエラーに対応したメッセージを表示する", async () => {
-    const submitter: NotificationSubmitter = {
+    const api: NotificationSubmissionApi = {
       async submit() {
         throw new NotificationSubmissionError("no_active_devices");
       },
     };
     const user = userEvent.setup();
 
-    render(
-      <NotificationCreatePage
-        submitter={submitter}
-        audienceLoader={createAudienceLoader()}
-      />
+    renderPage(
+      <NotificationCreatePage api={api} audienceApi={createAudienceLoader()} />
     );
 
     await user.type(screen.getByLabelText("タイトル*"), "お知らせ");
     await user.type(screen.getByLabelText("本文*"), "本文です");
-    await user.click(screen.getByRole("button", { name: "配信する" }));
+    await user.click(screen.getByRole("button", { name: "通知を配信" }));
 
     expect(
       await screen.findByText("通知対象に有効な端末がありません。")
@@ -111,14 +131,14 @@ describe("NotificationCreatePage", () => {
       .mockResolvedValueOnce(mockNotificationAudienceOptions);
     const user = userEvent.setup();
 
-    render(
+    renderPage(
       <NotificationCreatePage
-        submitter={{ submit: vi.fn() }}
-        audienceLoader={createAudienceLoader(load)}
+        api={{ submit: vi.fn() }}
+        audienceApi={createAudienceLoader(load)}
       />
     );
 
-    await user.selectOptions(screen.getByLabelText("通知対象*"), "class_room");
+    await selectAudience(user, "クラス");
     expect(await screen.findByText("ログインが必要です。")).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "再試行" }));
@@ -132,17 +152,14 @@ describe("NotificationCreatePage", () => {
   it("選択した通知対象に候補がない場合は空状態を表示する", async () => {
     const user = userEvent.setup();
 
-    render(
+    renderPage(
       <NotificationCreatePage
-        submitter={{ submit: vi.fn() }}
-        audienceLoader={createAudienceLoader(vi.fn().mockResolvedValue([]))}
+        api={{ submit: vi.fn() }}
+        audienceApi={createAudienceLoader(vi.fn().mockResolvedValue([]))}
       />
     );
 
-    await user.selectOptions(
-      screen.getByLabelText("通知対象*"),
-      "event_participants"
-    );
+    await selectAudience(user, "競技参加者");
 
     expect(
       await screen.findByText("選択できる対象がありません。")
