@@ -11,6 +11,7 @@ import type { Route } from "./+types/root";
 import { THEME_STORAGE_KEY } from "./lib/theme";
 import { ThemeProvider } from "~/components/providers/ThemeProvider";
 import "./app.css";
+import React from "react";
 
 export const links: Route.LinksFunction = () => [];
 
@@ -43,7 +44,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
           }}
         />
       </head>
-      <body className="min-h-dvh bg-[radial-gradient(circle_at_top_right,var(--bg-gradient-glow),transparent_32%),linear-gradient(180deg,var(--bg-gradient-start)_0%,var(--bg-gradient-end)_100%)] text-[color:var(--text-base)] antialiased transition-colors duration-200">
+      <body className="min-h-dvh bg-[radial-gradient(circle_at_top_right,var(--bg-gradient-glow),transparent_32%),linear-gradient(180deg,var(--bg-gradient-start)_0%,var(--bg-gradient-end)_100%)] text-(--text-base) antialiased transition-colors duration-200">
         {children}
         <ScrollRestoration />
         <Scripts />
@@ -78,18 +79,18 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
 
   return (
     <main className="min-h-dvh p-6 md:p-8">
-      <div className="shadow-soft mx-auto max-w-5xl rounded-[1.5rem] border border-[color:var(--border-subtle)] bg-[color:var(--surface-base)] p-6 md:p-8">
-        <div className="font-['DM_Mono'] text-xs tracking-[0.18em] text-[color:var(--brand-primary)] uppercase">
+      <div className="shadow-soft mx-auto max-w-5xl rounded-3xl border border-(--border-subtle) bg-(--surface-base) p-6 md:p-8">
+        <div className="font-['DM_Mono'] text-xs tracking-[0.18em] text-(--brand-primary) uppercase">
           Failure Boundary
         </div>
         <h1 className="mt-3 text-[clamp(28px,4vw,40px)] leading-[1.04] font-semibold">
           {message}
         </h1>
-        <p className="mt-3 max-w-[50ch] text-sm leading-7 text-[color:var(--text-muted)]">
+        <p className="mt-3 max-w-[50ch] text-sm leading-7 text-(--text-muted)">
           {details}
         </p>
         {stack ? (
-          <pre className="mt-5 overflow-x-auto rounded-2xl border border-[color:var(--border-subtle)] bg-[color:var(--surface-hover)] p-4 text-xs text-[color:var(--text-muted)]">
+          <pre className="mt-5 overflow-x-auto rounded-2xl border border-(--border-subtle) bg-(--surface-hover) p-4 text-xs text-(--text-muted)">
             <code>{stack}</code>
           </pre>
         ) : null}
@@ -99,7 +100,5 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
 }
 
 export function HydrateFallback() {
-  return (
-    <div className="bg-[color:var(--surface-hover)] p-6">読み込み中...</div>
-  );
+  return <div className="bg-(--surface-hover) p-6">読み込み中...</div>;
 }
