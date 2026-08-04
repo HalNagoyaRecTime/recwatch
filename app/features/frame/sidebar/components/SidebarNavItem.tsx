@@ -52,6 +52,9 @@ function NavFolder({ item, pathname, depth }: NavFolderProps) {
       <button
         type="button"
         className={cn(
+          // 親フォルダーは子ページが開いていても選択色を付けない。
+          // 親子を同時にアクティブ表示すると選択箇所が二重になるため、
+          // 実際のページに対応する末端項目だけをアクティブ表示する。
           actionListItemStyle({ active: false }),
           "w-full",
           "transition-all",

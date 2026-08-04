@@ -92,7 +92,15 @@ export const sidebarSections = [
             id: "events-list",
             label: "競技一覧",
             to: "/events",
-            activePatterns: ["/events", "/events/:competitionId/edit"],
+            activePatterns: [
+              "/events",
+              "/events/active",
+              "/events/past",
+              "/events/tournament",
+              "/events/scoring",
+              "/events/assignments",
+              "/events/:competitionId/edit",
+            ],
             roles: ["admin", "manager"],
           },
           {

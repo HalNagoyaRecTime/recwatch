@@ -39,6 +39,80 @@ describe("isSidebarItemActive", () => {
     ).toBe(false);
   });
 
+  it("競技一覧の派生ページを明示パターンで選択する", () => {
+    const eventsList = item({
+      id: "events-list",
+      label: "競技一覧",
+      to: "/events",
+      activePatterns: [
+        "/events",
+        "/events/active",
+        "/events/past",
+        "/events/tournament",
+        "/events/scoring",
+        "/events/assignments",
+        "/events/:competitionId/edit",
+      ],
+    });
+
+    for (const pathname of [
+      "/events/active",
+      "/events/past",
+      "/events/tournament",
+      "/events/scoring",
+      "/events/assignments",
+      "/events/competition-1/edit",
+    ]) {
+      expect(isSidebarItemActive(eventsList, pathname)).toBe(true);
+    }
+
+    expect(isSidebarItemActive(eventsList, "/events/new")).toBe(false);
+  });
+
+  it("スケジュールの派生ページを親フォルダーで選択する", () => {
+    const schedule = item({
+      id: "schedule",
+      label: "スケジュール",
+      to: "/schedule",
+      activePatterns: [
+        "/schedule",
+        "/schedule/new",
+        "/schedule/:scheduleId/edit",
+      ],
+      children: [
+        item({
+          id: "notification-management",
+          label: "通知管理",
+          to: "/notifications",
+        }),
+      ],
+    });
+
+    expect(isSidebarItemActive(schedule, "/schedule/new")).toBe(true);
+    expect(isSidebarItemActive(schedule, "/schedule/123/edit")).toBe(true);
+  });
+
+  it("表示されないインポート画面はメンバー親をフォールバック選択する", () => {
+    const members = item({
+      id: "members",
+      label: "メンバー",
+      to: undefined,
+      activePatterns: ["/members/import"],
+      children: [
+        item({
+          id: "members-list",
+          label: "ユーザー管理",
+          to: "/members",
+        }),
+      ],
+    });
+
+    expect(isSidebarItemActive(members, "/members/import")).toBe(true);
+    expect(isSidebarItemActive(members.children![0], "/members/import")).toBe(
+      false
+    );
+  });
+
   it("子ページがactiveなら親フォルダをactiveにする", () => {
     const schedule = item({
       id: "schedule",
