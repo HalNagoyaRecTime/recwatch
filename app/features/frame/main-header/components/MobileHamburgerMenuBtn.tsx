@@ -10,8 +10,8 @@ export function MobileHamburgerMenuBtn() {
       type="button"
       className={cn(
         "flex aspect-square h-full items-center justify-center rounded-lg border transition md:hidden",
-        "border-(--border-2) bg-transparent text-(--text-2)",
-        "hover:border-(--border-strong) hover:bg-(--surface-2) hover:text-(--text-1)"
+        "border-border-base text-text-muted bg-transparent",
+        "hover:border-border-strong hover:bg-surface-hover hover:text-text-base"
       )}
       onClick={toggle}
       aria-label="Toggle navigation"

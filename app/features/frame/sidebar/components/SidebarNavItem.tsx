@@ -3,7 +3,7 @@ import { ChevronRightIcon } from "lucide-react";
 import { useSidebarUI } from "~/features/frame/sidebar/hooks/useSidebarUI";
 import { useSidebarState } from "~/hooks/useSidebarState";
 import { cn } from "~/lib/cn";
-import { actionListItemStyle } from "~/components/ui/styles/action-list-styles";
+import { actionListItemStyle } from "~/components/ui/navigation/styles/action-list-styles";
 import type { SidebarItemDef } from "~/types/sidebar";
 import { SIDEBAR_DURATION } from "~/features/frame/sidebar/styles/sidebar-styles";
 import { isSidebarItemActive } from "~/features/frame/sidebar/utils/sidebar-active-matcher";
@@ -165,7 +165,7 @@ function NavTriggerContent({
           size={14}
           strokeWidth={1.8}
           className={cn(
-            "text-text-3 ml-auto",
+            "text-text-subtle ml-auto",
             "transition-all",
             SIDEBAR_DURATION,
             isExpanded ? "opacity-100" : "hidden",
@@ -189,16 +189,16 @@ function NavPopup({ item, pathname, closeMenu }: NavPopupProps) {
   return (
     <div
       className={cn(
-        "shadow-shadow-soft pointer-events-none absolute top-0 left-16.5 z-100 min-w-45 -translate-x-1 opacity-0",
+        "shadow-soft pointer-events-none absolute top-0 left-16.5 z-100 min-w-45 -translate-x-1 opacity-0",
         "transition-all",
         SIDEBAR_DURATION,
         "group-hover/nav:pointer-events-auto group-hover/nav:translate-x-0 group-hover/nav:opacity-100"
       )}
     >
-      <div className="border-border-2 bg-surface-overlay-strong rounded-lg border p-1">
+      <div className="border-border-base bg-surface-base rounded-lg border p-1">
         {hasChildren && item.children ? (
           <>
-            <div className="text-text-1 flex items-center gap-2.5 px-2.5 pt-1 pb-2 text-[12.5px] font-semibold">
+            <div className="text-text-base flex items-center gap-2.5 px-2.5 pt-1 pb-2 text-[12.5px] font-semibold">
               {item.icon && (
                 <span className="inline-flex w-4 min-w-4 items-center justify-center">
                   {item.icon}
@@ -206,7 +206,7 @@ function NavPopup({ item, pathname, closeMenu }: NavPopupProps) {
               )}
               <span>{item.label}</span>
             </div>
-            <div className="bg-border-1 mx-1 my-1 h-px" />
+            <div className="bg-border-subtle mx-1 my-1 h-px" />
             <div className="flex flex-col">
               {item.children.map((child) => (
                 <PopupNestedItem
@@ -219,7 +219,7 @@ function NavPopup({ item, pathname, closeMenu }: NavPopupProps) {
             </div>
           </>
         ) : (
-          <div className="text-text-1 px-2.75 py-1.25 text-[12.5px] font-medium">
+          <div className="text-text-base px-2.75 py-1.25 text-[12.5px] font-medium">
             {item.label}
           </div>
         )}
@@ -243,7 +243,7 @@ function PopupNestedItem({
     return (
       <div className="flex flex-col">
         <div
-          className="text-text-2 flex items-center gap-2 px-2.5 pt-1.5 pb-1 text-[12px] font-semibold tracking-wider uppercase"
+          className="text-text-muted flex items-center gap-2 px-2.5 pt-1.5 pb-1 text-[12px] font-semibold tracking-wider uppercase"
           style={{ paddingLeft: `${10 + depth * 12}px` }}
         >
           {item.icon && (
@@ -305,7 +305,7 @@ function NavAccordion({ item, isOpen, pathname, depth }: NavAccordionProps) {
         isOpen ? "visible grid-rows-[1fr]" : "invisible grid-rows-[0fr]"
       )}
     >
-      <div className="border-border-1 ml-[17.5px] min-h-0 overflow-hidden border-l pl-[7.5px]">
+      <div className="border-border-subtle ml-[17.5px] min-h-0 overflow-hidden border-l pl-[7.5px]">
         {item.children.map((child) => (
           <SidebarNavItem
             key={child.id}

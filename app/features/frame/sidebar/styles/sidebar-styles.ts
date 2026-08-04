@@ -15,7 +15,7 @@ export const sidebarPlaceholderStyle = cva(
 );
 
 export const sidebarContainerStyle = cva(
-  "navigation-expandable absolute z-99 flex h-full flex-col border-r bg-surface-overlay backdrop-blur-xl border-border-1 transition-[width] " +
+  "navigation-expandable absolute z-99 flex h-full flex-col border-r bg-surface-layout backdrop-blur-xl border-border-subtle transition-[width] " +
     SIDEBAR_DURATION,
   {
     variants: {
