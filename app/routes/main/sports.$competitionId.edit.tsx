@@ -1,9 +1,17 @@
 import { CompetitionEditPage } from "~/features/sports/pages/CompetitionEditPage";
+import { PagePadding } from "~/features/frame/page-layout/PagePadding";
+import { PageLayout } from "~/features/frame/page-layout/PageLayout";
 
 export function meta() {
   return [{ title: "競技 編集 | recwatch" }];
 }
 
 export default function CompetitionEditRoute() {
-  return <CompetitionEditPage />;
+  return (
+    <PageLayout>
+      <PagePadding>
+        <CompetitionEditPage />
+      </PagePadding>
+    </PageLayout>
+  );
 }

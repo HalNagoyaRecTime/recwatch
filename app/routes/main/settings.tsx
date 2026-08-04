@@ -4,14 +4,14 @@ import { PagePadding } from "~/features/frame/page-layout/PagePadding";
 import { PageLayout } from "~/features/frame/page-layout/PageLayout";
 
 export function meta() {
-  return [{ title: "Summary Report | recwatch" }];
+  return [{ title: "Settings | recwatch" }];
 }
 
-export default function ReportsSummaryRoute() {
+export default function SettingsRoute() {
   return (
     <PageLayout>
       <PagePadding>
-        <AdminPlaceholderPage {...pageContent.reportsSummary} />
+        <AdminPlaceholderPage {...pageContent.settings} />
       </PagePadding>
     </PageLayout>
   );
