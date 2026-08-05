@@ -26,9 +26,15 @@ describe("notification routes", () => {
   });
 
   it("通知管理画面へHTTP Gatewayを注入する", () => {
-    const element =
-      NotificationsRoute() as ReactElement<NotificationManagementPageProps>;
+    const layout = NotificationsRoute();
 
+    expect(isValidElement(layout)).toBe(true);
+
+    const pagePadding = layout.props.children;
+    expect(isValidElement(pagePadding)).toBe(true);
+
+    const element = pagePadding.props
+      .children as ReactElement<NotificationManagementPageProps>;
     expect(isValidElement(element)).toBe(true);
     expect(element.props.gateway).toBe(httpAdminNotificationManagementGateway);
   });

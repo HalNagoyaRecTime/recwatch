@@ -4,6 +4,8 @@ import {
   isRouteErrorResponse,
 } from "react-router";
 import { ClassRoomPage } from "~/features/classRoom/pages/classRoomPage";
+import { PagePadding } from "~/features/frame/page-layout/PagePadding";
+import { PageLayout } from "~/features/frame/page-layout/PageLayout";
 import { getClassRoomData } from "~/features/classRoom/model/classRoom-data";
 
 export async function clientLoader() {
@@ -23,13 +25,23 @@ export function ErrorBoundary() {
     else message = `エラー${error.status}:${error.data || error.statusText} `;
   }
   return (
-    <div role="alert" className="p-6 text-red-500">
-      {message}
-    </div>
+    <PageLayout>
+      <PagePadding>
+        <div role="alert" className="p-6 text-red-500">
+          {message}
+        </div>
+      </PagePadding>
+    </PageLayout>
   );
 }
 
 export default function ClassRoomRoute() {
   const { classRooms } = useLoaderData<typeof clientLoader>();
-  return <ClassRoomPage classRooms={classRooms} />;
+  return (
+    <PageLayout>
+      <PagePadding>
+        <ClassRoomPage classRooms={classRooms} />
+      </PagePadding>
+    </PageLayout>
+  );
 }

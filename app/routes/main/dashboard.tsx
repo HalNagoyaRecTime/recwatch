@@ -3,6 +3,8 @@ import { useLoaderData } from "react-router";
 import { buildBackendUrl } from "~/config/env";
 import { WEB_CLIENT_HEADERS } from "~/features/auth/lib/webClientHeaders";
 import { DashboardPage } from "~/features/dashboard/pages/DashboardPage";
+import { PagePadding } from "~/features/frame/page-layout/PagePadding";
+import { PageLayout } from "~/features/frame/page-layout/PageLayout";
 
 export function meta() {
   return [{ title: "Dashboard | recwatch" }];
@@ -63,8 +65,12 @@ export async function clientLoader(): Promise<DashboardLoaderData> {
 export default function DashboardRoute() {
   const result = useLoaderData<typeof clientLoader>();
   return (
-    <DashboardPage
-      connectionError={result.status === "error" ? result.error : undefined}
-    />
+    <PageLayout>
+      <PagePadding>
+        <DashboardPage
+          connectionError={result.status === "error" ? result.error : undefined}
+        />
+      </PagePadding>
+    </PageLayout>
   );
 }
