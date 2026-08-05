@@ -6,7 +6,7 @@ export function meta() {
   return [{ title: "ユーザー設定 | recwatch" }];
 }
 
-export default function SettingsRoute() {
+export default function UserSettingsRoute() {
   return (
     <PageLayout>
       <PagePadding>
