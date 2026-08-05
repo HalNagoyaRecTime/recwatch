@@ -12,6 +12,11 @@ import { cn } from "./cn";
 type Config<T> = {
   variants?: T;
   defaultVariants?: { [K in keyof T]?: keyof T[K] };
+  compoundVariants?: Array<
+    { className: string } & {
+      [K in keyof T]?: keyof T[K] | boolean;
+    }
+  >;
 };
 
 export function cva<T extends Record<string, Record<string, string>>>(
@@ -21,19 +26,48 @@ export function cva<T extends Record<string, Record<string, string>>>(
   return function (props?: { [K in keyof T]?: keyof T[K] | boolean }) {
     if (!config?.variants) return cn(baseClass);
 
-    const variantClasses = Object.entries(config.variants).map(
-      ([variantName, variantValues]) => {
-        let propValue = props?.[variantName as keyof T];
-        if (typeof propValue === "boolean") {
-          propValue = propValue ? "true" : "false";
-        }
-
-        const finalValue =
-          propValue ?? config.defaultVariants?.[variantName as keyof T];
-        return finalValue ? variantValues[finalValue as string] : undefined;
+    const resolvedVariants: Array<[string, string | undefined]> = Object.keys(
+      config.variants
+    ).map((variantName) => {
+      let propValue = props?.[variantName as keyof T];
+      if (typeof propValue === "boolean") {
+        propValue = propValue ? "true" : "false";
       }
-    );
 
-    return cn(baseClass, ...variantClasses);
+      const finalValue =
+        propValue ?? config.defaultVariants?.[variantName as keyof T];
+      return [
+        variantName,
+        finalValue === undefined ? undefined : String(finalValue),
+      ];
+    });
+
+    const variantClasses = resolvedVariants.map(([variantName, value]) => {
+      const variantValues = config.variants?.[variantName as keyof T];
+      return value ? variantValues?.[value as string] : undefined;
+    });
+
+    const compoundVariantClasses =
+      config.compoundVariants
+        ?.filter((compoundVariant) =>
+          Object.entries(compoundVariant)
+            .filter(([name]) => name !== "className")
+            .every(([variantName, expectedValue]) => {
+              const resolvedValue = resolvedVariants.find(
+                ([name]) => name === variantName
+              )?.[1];
+              const normalizedExpectedValue =
+                typeof expectedValue === "boolean"
+                  ? expectedValue
+                    ? "true"
+                    : "false"
+                  : expectedValue;
+
+              return resolvedValue === normalizedExpectedValue;
+            })
+        )
+        .map(({ className }) => className) ?? [];
+
+    return cn(baseClass, ...variantClasses, ...compoundVariantClasses);
   };
 }
