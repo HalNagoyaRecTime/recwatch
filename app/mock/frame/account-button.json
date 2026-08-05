@@ -1,6 +1,6 @@
 {
   "name": "HAL太郎",
-  "role": "Admin",
+  "role": "admin",
   "imageUrl": "https://picsum.photos/800/600?random=1",
   "abbr_label": "AD",
   "borderColor": "#a78bfa",

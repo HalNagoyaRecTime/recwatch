@@ -2,6 +2,7 @@ import { type RouteConfig, index, route } from "@react-router/dev/routes";
 
 export default [
   route("login", "routes/auth/auth.login.tsx"),
+  route("auth/callback", "routes/auth/auth.callback.tsx"),
   // 未実装・emailログイン
   // route("login/email", "routes/auth/auth.email.tsx"),
   route("/", "routes/main/frame.tsx", [
@@ -38,6 +39,6 @@ export default [
     ),
     route("participants", "routes/main/participants.tsx"),
     route("gathering-spots", "routes/main/gatheringSpots.tsx"),
-    route("settings", "routes/main/settings.tsx"),
+    route("user/settings", "routes/main/user.settings.tsx"),
   ]),
 ] satisfies RouteConfig;

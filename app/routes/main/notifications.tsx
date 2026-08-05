@@ -1,4 +1,4 @@
-import { mockAdminNotificationManagementGateway } from "~/features/notification-management/infrastructure/mock-admin-notification-management-gateway";
+import { httpAdminNotificationManagementGateway } from "~/features/notification-management/infrastructure/http-admin-notification-management-gateway";
 import { NotificationManagementPage } from "~/features/notification-management/pages/NotificationManagementPage";
 
 export function meta() {
@@ -8,7 +8,7 @@ export function meta() {
 export default function NotificationsRoute() {
   return (
     <NotificationManagementPage
-      gateway={mockAdminNotificationManagementGateway}
+      gateway={httpAdminNotificationManagementGateway}
     />
   );
 }

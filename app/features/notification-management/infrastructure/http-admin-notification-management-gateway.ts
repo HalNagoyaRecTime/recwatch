@@ -1,3 +1,4 @@
+import { apiClient } from "~/lib/api-client";
 import type { AdminNotificationManagementGateway } from "../application/admin-notification-management-gateway";
 import type {
   NotificationListQuery,
@@ -18,7 +19,7 @@ export type AdminNotificationManagementHttpClient = {
 };
 
 export function createHttpAdminNotificationManagementGateway(
-  client: AdminNotificationManagementHttpClient
+  client: AdminNotificationManagementHttpClient = apiClient
 ): AdminNotificationManagementGateway {
   return {
     async list(query: NotificationListQuery = {}) {
@@ -62,3 +63,6 @@ export function createHttpAdminNotificationManagementGateway(
     },
   };
 }
+
+export const httpAdminNotificationManagementGateway =
+  createHttpAdminNotificationManagementGateway();
