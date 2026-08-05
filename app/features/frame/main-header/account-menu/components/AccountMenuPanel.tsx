@@ -8,21 +8,28 @@ import {
   SunMediumIcon,
 } from "lucide-react";
 import { useNavigate } from "react-router";
+
+import {
+  Menu,
+  MenuActionItem,
+  type MenuItemType,
+} from "~/components/ui/navigation/Menu";
+import { FloatingPanel } from "~/components/ui/panel/FloatingPanel";
 import { cn } from "~/lib/cn";
 import { useThemeMode } from "~/hooks/useThemeMode";
-import type { AccountBtnData } from "~/features/frame/main-header/account-menu/model/account-btn-data";
-import { Menu, MenuActionItem, type MenuItemType } from "~/components/ui/Menu";
 import { AccountProfileHeader } from "~/features/frame/main-header/account-menu/components/AccountProfileHeader";
-import { FloatingPanel } from "~/components/shared/FloatingPanel";
+import type { AccountBtnData } from "~/features/frame/main-header/account-menu/model/account-btn-data";
 
 type AccountMenuPanelProps = {
   account: AccountBtnData;
+  photoUrl?: string | null;
   onClose: () => void;
   onLogout?: () => void;
 };
 
 export function AccountMenuPanel({
   account,
+  photoUrl,
   onClose,
   onLogout,
 }: AccountMenuPanelProps) {
@@ -36,7 +43,6 @@ export function AccountMenuPanel({
         ? SunMediumIcon
         : MonitorIcon;
 
-  // サブメニュー
   const themeMenuItems: MenuItemType[] = [
     {
       type: "action",
@@ -82,12 +88,11 @@ export function AccountMenuPanel({
     },
   ];
 
-  // メインメニュー
   const mainMenuItems: MenuItemType[] = [
     {
       type: "custom",
       id: "account-header",
-      content: <AccountProfileHeader account={account} />,
+      content: <AccountProfileHeader account={account} photoUrl={photoUrl} />,
     },
     { type: "divider", id: "div-1" },
     {
@@ -98,7 +103,7 @@ export function AccountMenuPanel({
           placement="right-start"
           interaction="hover"
           offsetValue={6}
-          triggerClassName="w-full block"
+          triggerClassName="block w-full"
           trigger={
             <MenuActionItem
               label="テーマ設定"
@@ -107,7 +112,7 @@ export function AccountMenuPanel({
                 <ChevronRightIcon
                   size={14}
                   strokeWidth={1.8}
-                  className="text-text-3"
+                  className="text-text-subtle"
                 />
               }
             />
