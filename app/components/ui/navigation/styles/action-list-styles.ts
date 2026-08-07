@@ -13,7 +13,7 @@ export const actionListItemStyle = cva(
         danger: "text-tone-danger-text hover:bg-tone-danger-bg-hover",
       },
       active: {
-        true: "bg-surface-muted text-text-base font-medium",
+        true: "bg-surface-hover text-text-base font-medium",
         false: "",
       },
     },

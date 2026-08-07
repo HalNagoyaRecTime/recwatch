@@ -7,6 +7,8 @@ export type SidebarItemDef = {
   label: string;
   icon?: ReactNode;
   to?: string;
+  activePatterns?: readonly string[];
+  activeExclusions?: readonly string[];
   children?: SidebarItemDef[];
   roles: AppRole[];
 };

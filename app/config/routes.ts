@@ -23,6 +23,8 @@ export type SidebarItemConfig = SidebarRoleConfig & {
   label: string;
   icon?: SidebarIconKey;
   to?: string;
+  activePatterns?: readonly string[];
+  activeExclusions?: readonly string[];
   children?: SidebarItemConfig[];
 };
 
@@ -57,6 +59,7 @@ export const sidebarSections = [
             id: "members-list",
             label: "ユーザー管理",
             to: "/members",
+            activePatterns: ["/members", "/members/teams"],
             roles: ["admin", "manager"],
           },
           {
@@ -89,6 +92,15 @@ export const sidebarSections = [
             id: "events-list",
             label: "競技一覧",
             to: "/events",
+            activePatterns: [
+              "/events",
+              "/events/active",
+              "/events/past",
+              "/events/tournament",
+              "/events/scoring",
+              "/events/assignments",
+              "/events/:competitionId/edit",
+            ],
             roles: ["admin", "manager"],
           },
           {
@@ -123,6 +135,12 @@ export const sidebarSections = [
             label: "通知管理",
             icon: "notificationHistory",
             to: "/notifications",
+            activePatterns: [
+              "/notifications",
+              "/notifications/:notificationId",
+              "/notifications/:notificationId/edit",
+            ],
+            activeExclusions: ["/notifications/new"],
             roles: ["admin", "manager"],
           },
         ],

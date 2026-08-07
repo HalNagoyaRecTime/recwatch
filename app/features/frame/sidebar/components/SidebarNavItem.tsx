@@ -3,27 +3,10 @@ import { ChevronRightIcon } from "lucide-react";
 import { useSidebarUI } from "~/features/frame/sidebar/hooks/useSidebarUI";
 import { useSidebarState } from "~/hooks/useSidebarState";
 import { cn } from "~/lib/cn";
-import { actionListItemStyle } from "~/components/ui/styles/action-list-styles";
+import { actionListItemStyle } from "~/components/ui/navigation/styles/action-list-styles";
 import type { SidebarItemDef } from "~/types/sidebar";
 import { SIDEBAR_DURATION } from "~/features/frame/sidebar/styles/sidebar-styles";
-
-// パスの一致判定ユーティリティ
-function pathMatches(pathname: string, to: string) {
-  if (to === "/dashboard") {
-    return pathname === "/dashboard";
-  }
-  return pathname === to || pathname.startsWith(`${to}/`);
-}
-
-// 子孫要素のどれかがアクティブか再帰的に判定する
-function hasActiveChild(item: SidebarItemDef, pathname: string): boolean {
-  if (!item.children) return false;
-  return item.children.some((child) => {
-    if (child.to && pathMatches(pathname, child.to)) return true;
-    if (child.children) return hasActiveChild(child, pathname);
-    return false;
-  });
-}
+import { isSidebarItemActive } from "~/features/frame/sidebar/utils/sidebar-active-matcher";
 
 // --- 外部から呼ばれるメインコンポーネント ---
 
@@ -42,7 +25,7 @@ export function SidebarNavItem({
     return <NavFolder item={item} pathname={pathname} depth={depth} />;
   }
 
-  return <NavLinkItem item={item} depth={depth} />;
+  return <NavLinkItem item={item} pathname={pathname} depth={depth} />;
 }
 
 // --- ファイル内専用の部品コンポーネント ---
@@ -58,7 +41,7 @@ function NavFolder({ item, pathname, depth }: NavFolderProps) {
   const { openAccordions, toggleAccordion, closeForMobile } = useSidebarState();
 
   const isAccordionOpen = openAccordions.includes(item.id);
-  const isActive = hasActiveChild(item, pathname);
+  const isActive = isSidebarItemActive(item, pathname);
 
   const handleToggle = () => {
     if (isExpanded) toggleAccordion(item.id);
@@ -69,6 +52,9 @@ function NavFolder({ item, pathname, depth }: NavFolderProps) {
       <button
         type="button"
         className={cn(
+          // 親フォルダーは子ページが開いていても選択色を付けない。
+          // 親子を同時にアクティブ表示すると選択箇所が二重になるため、
+          // 実際のページに対応する末端項目だけをアクティブ表示する。
           actionListItemStyle({ active: false }),
           "w-full",
           "transition-all",
@@ -87,7 +73,9 @@ function NavFolder({ item, pathname, depth }: NavFolderProps) {
         />
       </button>
 
-      {!isExpanded && <NavPopup item={item} closeMenu={closeForMobile} />}
+      {!isExpanded && (
+        <NavPopup item={item} pathname={pathname} closeMenu={closeForMobile} />
+      )}
 
       <NavAccordion
         item={item}
@@ -101,12 +89,14 @@ function NavFolder({ item, pathname, depth }: NavFolderProps) {
 
 type NavLinkItemProps = {
   item: SidebarItemDef;
+  pathname: string;
   depth: number;
 };
 
-function NavLinkItem({ item, depth }: NavLinkItemProps) {
+function NavLinkItem({ item, pathname, depth }: NavLinkItemProps) {
   const { isExpanded } = useSidebarUI();
   const { closeForMobile } = useSidebarState();
+  const isActive = isSidebarItemActive(item, pathname);
 
   if (!item.to) return null;
 
@@ -114,7 +104,9 @@ function NavLinkItem({ item, depth }: NavLinkItemProps) {
     <div className="group/nav relative">
       <NavLink
         to={item.to}
-        className={({ isActive }) =>
+        end
+        aria-current={isActive ? "page" : undefined}
+        className={() =>
           cn(
             actionListItemStyle({ active: isActive }),
             "w-full",
@@ -128,7 +120,9 @@ function NavLinkItem({ item, depth }: NavLinkItemProps) {
         <NavTriggerContent item={item} isExpanded={isExpanded} depth={depth} />
       </NavLink>
 
-      {!isExpanded && <NavPopup item={item} closeMenu={closeForMobile} />}
+      {!isExpanded && (
+        <NavPopup item={item} pathname={pathname} closeMenu={closeForMobile} />
+      )}
     </div>
   );
 }
@@ -171,7 +165,7 @@ function NavTriggerContent({
           size={14}
           strokeWidth={1.8}
           className={cn(
-            "text-text-3 ml-auto",
+            "text-text-subtle ml-auto",
             "transition-all",
             SIDEBAR_DURATION,
             isExpanded ? "opacity-100" : "hidden",
@@ -185,25 +179,26 @@ function NavTriggerContent({
 
 type NavPopupProps = {
   item: SidebarItemDef;
+  pathname: string;
   closeMenu: () => void;
 };
 
-function NavPopup({ item, closeMenu }: NavPopupProps) {
+function NavPopup({ item, pathname, closeMenu }: NavPopupProps) {
   const hasChildren = Boolean(item.children?.length);
 
   return (
     <div
       className={cn(
-        "shadow-shadow-soft pointer-events-none absolute top-0 left-16.5 z-100 min-w-45 -translate-x-1 opacity-0",
+        "shadow-soft pointer-events-none absolute top-0 left-16.5 z-100 min-w-45 -translate-x-1 opacity-0",
         "transition-all",
         SIDEBAR_DURATION,
         "group-hover/nav:pointer-events-auto group-hover/nav:translate-x-0 group-hover/nav:opacity-100"
       )}
     >
-      <div className="border-border-2 bg-surface-overlay-strong rounded-lg border p-1">
+      <div className="border-border-base bg-surface-base rounded-lg border p-1">
         {hasChildren && item.children ? (
           <>
-            <div className="text-text-1 flex items-center gap-2.5 px-2.5 pt-1 pb-2 text-[12.5px] font-semibold">
+            <div className="text-text-base flex items-center gap-2.5 px-2.5 pt-1 pb-2 text-[12.5px] font-semibold">
               {item.icon && (
                 <span className="inline-flex w-4 min-w-4 items-center justify-center">
                   {item.icon}
@@ -211,19 +206,20 @@ function NavPopup({ item, closeMenu }: NavPopupProps) {
               )}
               <span>{item.label}</span>
             </div>
-            <div className="bg-border-1 mx-1 my-1 h-px" />
+            <div className="bg-border-subtle mx-1 my-1 h-px" />
             <div className="flex flex-col">
               {item.children.map((child) => (
                 <PopupNestedItem
                   key={child.id}
                   item={child}
+                  pathname={pathname}
                   closeMenu={closeMenu}
                 />
               ))}
             </div>
           </>
         ) : (
-          <div className="text-text-1 px-2.75 py-1.25 text-[12.5px] font-medium">
+          <div className="text-text-base px-2.75 py-1.25 text-[12.5px] font-medium">
             {item.label}
           </div>
         )}
@@ -234,10 +230,12 @@ function NavPopup({ item, closeMenu }: NavPopupProps) {
 
 function PopupNestedItem({
   item,
+  pathname,
   closeMenu,
   depth = 0,
 }: {
   item: SidebarItemDef;
+  pathname: string;
   closeMenu: () => void;
   depth?: number;
 }) {
@@ -245,7 +243,7 @@ function PopupNestedItem({
     return (
       <div className="flex flex-col">
         <div
-          className="text-text-2 flex items-center gap-2 px-2.5 pt-1.5 pb-1 text-[12px] font-semibold tracking-wider uppercase"
+          className="text-text-muted flex items-center gap-2 px-2.5 pt-1.5 pb-1 text-[12px] font-semibold tracking-wider uppercase"
           style={{ paddingLeft: `${10 + depth * 12}px` }}
         >
           {item.icon && (
@@ -259,6 +257,7 @@ function PopupNestedItem({
           <PopupNestedItem
             key={child.id}
             item={child}
+            pathname={pathname}
             closeMenu={closeMenu}
             depth={depth + 1}
           />
@@ -269,12 +268,14 @@ function PopupNestedItem({
 
   if (!item.to) return null;
 
+  const isActive = isSidebarItemActive(item, pathname);
+
   return (
     <NavLink
       to={item.to}
-      className={({ isActive }) =>
-        cn(actionListItemStyle({ active: isActive }), "w-full")
-      }
+      end
+      aria-current={isActive ? "page" : undefined}
+      className={() => cn(actionListItemStyle({ active: isActive }), "w-full")}
       onClick={closeMenu}
       style={{ paddingLeft: `${10 + depth * 12}px` }}
     >
@@ -304,7 +305,7 @@ function NavAccordion({ item, isOpen, pathname, depth }: NavAccordionProps) {
         isOpen ? "visible grid-rows-[1fr]" : "invisible grid-rows-[0fr]"
       )}
     >
-      <div className="border-border-1 ml-[17.5px] min-h-0 overflow-hidden border-l pl-[7.5px]">
+      <div className="border-border-subtle ml-[17.5px] min-h-0 overflow-hidden border-l pl-[7.5px]">
         {item.children.map((child) => (
           <SidebarNavItem
             key={child.id}

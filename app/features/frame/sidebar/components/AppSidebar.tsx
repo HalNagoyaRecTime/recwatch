@@ -20,7 +20,7 @@ export function AppSidebar() {
       <div
         className={cn(
           "pointer-events-none absolute inset-x-0 top-0 z-10 h-6",
-          "from-surface-overlay via-surface-overlay/80 bg-linear-to-b to-transparent"
+          "from-surface-layout via-surface-layout/80 bg-linear-to-b to-transparent"
         )}
       />
 
@@ -46,7 +46,7 @@ export function AppSidebar() {
       <div
         className={cn(
           "pointer-events-none absolute inset-x-0 bottom-0 z-10 h-6",
-          "from-surface-overlay via-surface-overlay/80 bg-linear-to-t to-transparent"
+          "from-surface-layout via-surface-layout/80 bg-linear-to-t to-transparent"
         )}
       />
     </aside>
@@ -117,7 +117,7 @@ function SidebarSectionSeparator({
       */}
       <div
         className={cn(
-          "bg-border-1 mx-2",
+          "bg-border-subtle mx-2",
           "transition-all",
           SIDEBAR_DURATION,
           shouldShowLine ? "mb-3 h-px opacity-100" : "mb-0 h-0 opacity-0"
@@ -131,7 +131,7 @@ function SidebarSectionSeparator({
       {hasLabel && (
         <div
           className={cn(
-            "text-text-3 overflow-hidden px-2.5 text-[10px] font-bold tracking-[0.12em] whitespace-nowrap uppercase",
+            "text-text-subtle overflow-hidden px-2.5 text-[10px] font-bold tracking-[0.12em] whitespace-nowrap uppercase",
             "transition-all",
             SIDEBAR_DURATION,
             isExpanded ? "max-h-10 pb-2 opacity-100" : "max-h-0 pb-0 opacity-0"

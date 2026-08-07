@@ -29,6 +29,8 @@ function mapItem(
     label: item.label,
     icon: item.icon ? sidebarIconMap[item.icon] : undefined,
     to: isDirectlyVisible ? item.to : undefined,
+    activePatterns: item.activePatterns,
+    activeExclusions: item.activeExclusions,
     children: children.length > 0 ? children : undefined,
     roles: item.roles,
   };
