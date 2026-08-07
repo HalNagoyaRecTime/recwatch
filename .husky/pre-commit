@@ -1,2 +1,5 @@
 #!/usr/bin/env sh
-npx lint-staged
+set -eu
+
+npm exec -- lint-staged
+npm run typecheck:quick

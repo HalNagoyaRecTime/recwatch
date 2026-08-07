@@ -11,7 +11,8 @@
     "prepare": "husky",
     "preview": "vite preview --host 0.0.0.0",
     "test": "vitest run",
-    "typecheck": "react-router typegen && tsc"
+    "typecheck": "react-router typegen && tsc",
+    "typecheck:quick": "tsc --noEmit --pretty false"
   },
   "dependencies": {
     "@floating-ui/react": "^0.27.19",
