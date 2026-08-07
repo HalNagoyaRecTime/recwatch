@@ -9,6 +9,7 @@ type UseGatheringSpotsOptions = {
 
 export function useGatheringSpots({ gateway }: UseGatheringSpotsOptions) {
   const [spots, setSpots] = useState<GatheringSpot[]>([]);
+  const [total, setTotal] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
 
@@ -17,10 +18,11 @@ export function useGatheringSpots({ gateway }: UseGatheringSpotsOptions) {
 
     async function load() {
       try {
-        const nextSpots = await gateway.list();
+        const nextPage = await gateway.list();
         if (!isCurrent) return;
 
-        setSpots(nextSpots);
+        setSpots(nextPage.items);
+        setTotal(nextPage.total);
       } catch (error) {
         if (isCurrent) {
           setLoadError(
@@ -44,6 +46,7 @@ export function useGatheringSpots({ gateway }: UseGatheringSpotsOptions) {
     async (name: string) => {
       const created = await gateway.create(name);
       setSpots((current) => [...current, created]);
+      setTotal((current) => current + 1);
       return created;
     },
     [gateway]
@@ -60,11 +63,22 @@ export function useGatheringSpots({ gateway }: UseGatheringSpotsOptions) {
     [gateway]
   );
 
+  const deleteSpot = useCallback(
+    async (id: number) => {
+      await gateway.delete(id);
+      setSpots((current) => current.filter((spot) => spot.id !== id));
+      setTotal((current) => Math.max(0, current - 1));
+    },
+    [gateway]
+  );
+
   return {
     spots,
+    total,
     isLoading,
     loadError,
     createSpot,
     updateSpot,
+    deleteSpot,
   };
 }
