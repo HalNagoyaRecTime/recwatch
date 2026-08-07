@@ -1,7 +1,7 @@
 import { useLoaderData } from "react-router";
-import { TeacherApi } from "~/features/instructors/api";
-import { toTeacherRow } from "~/features/instructors/model/teacher";
-import { InstructorsPage } from "~/features/instructors/pages/InstructorsPage";
+import { TeacherApi } from "~/features/teachers/api";
+import { toTeacherRow } from "~/features/teachers/model/teacher";
+import { TeachersPage } from "~/features/teachers/pages/TeachersPage";
 import { PagePadding } from "~/features/frame/page-layout/PagePadding";
 import { PageLayout } from "~/features/frame/page-layout/PageLayout";
 
@@ -14,12 +14,12 @@ export async function clientLoader() {
   return { teachers: page.items.map(toTeacherRow) };
 }
 
-export default function InstructorsRoute() {
+export default function TeachersRoute() {
   const { teachers } = useLoaderData<typeof clientLoader>();
   return (
     <PageLayout>
       <PagePadding>
-        <InstructorsPage teachers={teachers} />
+        <TeachersPage teachers={teachers} />
       </PagePadding>
     </PageLayout>
   );

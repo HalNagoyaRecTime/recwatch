@@ -27,6 +27,8 @@ export type TeacherUpdateRequest = {
   classRoomIds: number[];
 };
 
+export type TeacherCreateRequest = TeacherUpdateRequest;
+
 export type ClassRoomDTO = {
   class_room_id: number;
   class_code: string;
@@ -54,6 +56,8 @@ export const TeacherApi = {
     apiClient.get<TeacherDTO>(`/api/v1/teachers/${teacherId}`),
   updateTeacher: (teacherId: number, body: TeacherUpdateRequest) =>
     apiClient.put<TeacherDTO>(`/api/v1/teachers/${teacherId}`, body),
+  createTeacher: (body: TeacherCreateRequest) =>
+    apiClient.post<TeacherDTO>("/api/v1/teachers", body),
 };
 
 export const ClassRoomApi = {

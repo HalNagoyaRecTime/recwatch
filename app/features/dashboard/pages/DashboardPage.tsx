@@ -22,7 +22,7 @@ const pageGroups = [
       ["学生一覧", "/members"],
       ["読み込み確認", "/members/import"],
       ["クラス管理", "/classroom"],
-      ["教官管理", "/instructors"],
+      ["教官管理", "/teachers"],
     ],
   },
   {

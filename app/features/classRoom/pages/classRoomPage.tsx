@@ -29,7 +29,7 @@ export function ClassRoomPage({ classRooms }: { classRooms: ClassRoomData[] }) {
           クラス
         </span>
         <Link
-          to="/instructors"
+          to="/teachers"
           className="rounded-[10px] border border-[#d2d2d2] bg-white px-4 py-2 text-sm font-bold"
         >
           教官

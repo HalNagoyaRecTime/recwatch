@@ -1,0 +1,43 @@
+import { Ellipsis, Pencil } from "lucide-react";
+import { useNavigate } from "react-router";
+
+import { Button } from "~/components/ui/button/Button";
+import { Menu } from "~/components/ui/navigation/Menu";
+import { FloatingPanel } from "~/components/ui/panel/FloatingPanel";
+import type { TeacherRow } from "~/features/teachers/model/teacher";
+
+type TeacherActionMenuProps = {
+  teacher: TeacherRow;
+};
+
+export function TeacherActionMenu({ teacher }: TeacherActionMenuProps) {
+  const navigate = useNavigate();
+
+  return (
+    <FloatingPanel
+      placement="bottom-end"
+      trigger={
+        <Button
+          aria-label={`${teacher.displayName}の操作`}
+          icon={Ellipsis}
+          iconOnly
+          size="sm"
+          variant="ghost"
+        />
+      }
+      content={
+        <Menu
+          items={[
+            {
+              icon: Pencil,
+              id: "edit",
+              label: "教官情報を編集",
+              onClick: () => navigate(`/teachers/${teacher.teacherId}/edit`),
+              type: "action",
+            },
+          ]}
+        />
+      }
+    />
+  );
+}
