@@ -2,7 +2,6 @@ import { Plus } from "lucide-react";
 
 import { Button } from "~/components/ui/button/Button";
 import { PageHeader } from "~/components/ui/layout/PageHeader";
-import { Pagination } from "~/components/ui/navigation/Pagination";
 import { ScrollbarArea } from "~/components/ui/scrollbar/ScrollbarArea";
 import type { GatheringSpotGateway } from "~/features/gathering-spots/api/contracts/gathering-spot-gateway";
 import { GatheringSpotForm } from "~/features/gathering-spots/components/form/GatheringSpotForm";
@@ -78,25 +77,20 @@ export function GatheringSpotsPage({ gateway }: GatheringSpotsPageProps) {
           ) : null}
 
           <GatheringSpotTable
+            currentPage={state.currentPage}
             isLoading={state.isLoading}
             items={state.sortedSpots}
             onDelete={state.handleDelete}
             onEdit={state.openEditForm}
+            onPageChange={state.handlePageChange}
             onQueryChange={state.handleQueryChange}
             onSortChange={state.handleSortChange}
+            pageCount={state.pageCount}
+            pageSize={state.pageSize}
             query={state.query}
             sort={state.sort}
+            totalItems={state.total}
           />
-
-          {state.pageCount > 1 ? (
-            <Pagination
-              currentPage={state.currentPage}
-              onPageChange={state.handlePageChange}
-              pageCount={state.pageCount}
-              pageSize={state.pageSize}
-              totalItems={state.total}
-            />
-          ) : null}
         </div>
       </PagePadding>
     </PageLayout>
