@@ -120,10 +120,6 @@
   --tone-danger-text: #dc2626;
 
   /***** old *****/
-  --bg-top: #eef8ff;
-  --bg-bottom: #f8fcff;
-  --bg-glow: rgba(56, 189, 248, 0.2);
-
   --surface-1: rgba(255, 255, 255, 0.84);
   --surface-2: rgba(226, 242, 252, 0.82);
   --surface-overlay: rgba(255, 255, 255, 0.78);
@@ -203,10 +199,6 @@
   --tone-danger-text: #ff8d8d;
 
   /***** old *****/
-  --bg-top: #03131d;
-  --bg-bottom: #07131b;
-  --bg-glow: rgba(56, 189, 248, 0.2);
-
   --surface-1: #0b1720;
   --surface-2: #10212d;
   --surface-overlay: rgba(8, 20, 28, 0.86);

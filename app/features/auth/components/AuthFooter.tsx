@@ -6,7 +6,7 @@ export function AuthFooter() {
   );
 
   return (
-    <footer className="w-full py-6 text-center text-xs font-medium tracking-[0.08em] text-[color:var(--text-2)]">
+    <footer className="text-text-muted w-full py-6 text-center text-xs font-medium tracking-[0.08em]">
       {footerText}
     </footer>
   );
