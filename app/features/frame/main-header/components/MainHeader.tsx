@@ -32,7 +32,7 @@ export function MainHeader({ user }: MainHeaderProps) {
   }
 
   return (
-    <header className="main-header-height sticky top-0 z-30 flex items-center justify-between border-b border-(--border-1) bg-(--surface-overlay)/95 px-3 py-2.5 backdrop-blur-xl">
+    <header className="main-header-height border-border-subtle bg-surface-layout/95 sticky top-0 z-30 flex items-center justify-between border-b px-3 py-2.5 backdrop-blur-xl">
       <div className="flex h-full">
         <MobileHamburgerMenuBtn />
       </div>
