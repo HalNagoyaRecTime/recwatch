@@ -6,7 +6,7 @@ import type {
 } from "../model/notification-draft";
 import { notificationAudienceLabels } from "../model/notification-draft";
 import type { NotificationDraftErrors } from "../model/notification-draft-validation";
-import type { NotificationAudienceOption } from "../model/notification-audience-option";
+import type { NotificationAudienceOption } from "../model/notification-audience";
 
 type NotificationFormProps = {
   draft: NotificationDraft;

@@ -1,29 +1,27 @@
 import { useEffect, useState } from "react";
 import { CircleAlertIcon } from "lucide-react";
 
-import type { AdminNotificationManagementGateway } from "../application/admin-notification-management-gateway";
-import {
-  NotificationManagementError,
-  notificationManagementErrorMessages,
-} from "../application/notification-management-error";
+import type { NotificationManagementApi } from "~/features/notifications/api/contracts/notification-management-api";
+import { NotificationManagementError } from "~/features/notifications/api/contracts/errors/notification-management-error";
+import { getNotificationManagementErrorMessage } from "~/features/notifications/hooks/notification-error-messages";
 import { DeleteNotificationDialog } from "../components/DeleteNotificationDialog";
 import { NotificationManagementTable } from "../components/NotificationManagementTable";
-import type { ManagedNotification } from "../model/managed-notification";
+import type { ManagedNotification } from "~/features/notifications/model/notification";
 
 type NotificationManagementPageProps = {
-  gateway: AdminNotificationManagementGateway;
+  api: NotificationManagementApi;
 };
 
 const PAGE_SIZE = 50;
 
 function toErrorMessage(error: unknown) {
   return error instanceof NotificationManagementError
-    ? notificationManagementErrorMessages[error.kind]
-    : notificationManagementErrorMessages.unexpected;
+    ? getNotificationManagementErrorMessage(error.kind)
+    : getNotificationManagementErrorMessage("unexpected");
 }
 
 export function NotificationManagementPage({
-  gateway,
+  api,
 }: NotificationManagementPageProps) {
   const [notifications, setNotifications] = useState<ManagedNotification[]>([]);
   const [total, setTotal] = useState(0);
@@ -37,7 +35,7 @@ export function NotificationManagementPage({
   useEffect(() => {
     let active = true;
 
-    gateway
+    api
       .list({ limit: PAGE_SIZE, offset: 0 })
       .then((items) => {
         if (active) {
@@ -59,7 +57,7 @@ export function NotificationManagementPage({
     return () => {
       active = false;
     };
-  }, [gateway]);
+  }, [api]);
 
   async function handleLoadMore() {
     if (isLoadingMore || notifications.length >= total) {
@@ -70,7 +68,7 @@ export function NotificationManagementPage({
     setErrorMessage("");
 
     try {
-      const page = await gateway.list({
+      const page = await api.list({
         limit: PAGE_SIZE,
         offset: notifications.length,
       });
@@ -97,7 +95,7 @@ export function NotificationManagementPage({
     setErrorMessage("");
 
     try {
-      await gateway.delete(selectedNotification.id);
+      await api.delete(selectedNotification.id);
       setNotifications((current) =>
         current.filter(
           (notification) => notification.id !== selectedNotification.id
@@ -112,7 +110,7 @@ export function NotificationManagementPage({
         error.kind === "conflict"
       ) {
         const refreshed = await reloadVisibleNotifications(
-          gateway,
+          api,
           notifications.length
         ).catch(() => null);
         if (refreshed) {
@@ -196,7 +194,7 @@ export function NotificationManagementPage({
 }
 
 async function reloadVisibleNotifications(
-  gateway: AdminNotificationManagementGateway,
+  api: NotificationManagementApi,
   visibleCount: number
 ) {
   const notifications: ManagedNotification[] = [];
@@ -204,7 +202,7 @@ async function reloadVisibleNotifications(
   let offset = 0;
 
   do {
-    const page = await gateway.list({ limit: PAGE_SIZE, offset });
+    const page = await api.list({ limit: PAGE_SIZE, offset });
     notifications.push(...page.notifications);
     total = page.total;
     offset += page.notifications.length;

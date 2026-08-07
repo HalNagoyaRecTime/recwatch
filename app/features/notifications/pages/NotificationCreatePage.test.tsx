@@ -2,18 +2,18 @@ import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { NotificationSubmissionError } from "../application/notification-submission-error";
-import type { NotificationSubmitter } from "../application/notification-submitter";
-import type { NotificationAudienceLoader } from "../application/notification-audience-loader";
-import { NotificationAudienceLoadingError } from "../application/notification-audience-loading-error";
-import { mockNotificationAudienceOptions } from "../infrastructure/mock-notification-audience-options";
+import { NotificationAudienceLoadingError } from "../api/contracts/errors/notification-audience-loading-error";
+import { NotificationSubmissionError } from "../api/contracts/errors/notification-submission-error";
+import type { NotificationAudienceApi } from "../api/contracts/notification-audience-api";
+import type { NotificationSubmissionApi } from "../api/contracts/notification-submission-api";
+import { mockNotificationAudienceOptions } from "../mock/notification-audience-api";
 import { NotificationCreatePage } from "./NotificationCreatePage";
 
 afterEach(cleanup);
 
-function createAudienceLoader(
+function createAudienceApi(
   load = vi.fn().mockResolvedValue(mockNotificationAudienceOptions)
-): NotificationAudienceLoader {
+): NotificationAudienceApi {
   return { load };
 }
 
@@ -23,8 +23,8 @@ describe("NotificationCreatePage", () => {
 
     render(
       <NotificationCreatePage
-        submitter={{ submit }}
-        audienceLoader={createAudienceLoader()}
+        api={{ submit }}
+        audienceApi={createAudienceApi()}
         isSubmissionEnabled={false}
       />
     );
@@ -60,8 +60,8 @@ describe("NotificationCreatePage", () => {
 
     render(
       <NotificationCreatePage
-        submitter={{ submit }}
-        audienceLoader={createAudienceLoader()}
+        api={{ submit }}
+        audienceApi={createAudienceApi()}
       />
     );
 
@@ -79,7 +79,7 @@ describe("NotificationCreatePage", () => {
   });
 
   it("APIエラーに対応したメッセージを表示する", async () => {
-    const submitter: NotificationSubmitter = {
+    const api: NotificationSubmissionApi = {
       async submit() {
         throw new NotificationSubmissionError("no_active_devices");
       },
@@ -87,10 +87,7 @@ describe("NotificationCreatePage", () => {
     const user = userEvent.setup();
 
     render(
-      <NotificationCreatePage
-        submitter={submitter}
-        audienceLoader={createAudienceLoader()}
-      />
+      <NotificationCreatePage api={api} audienceApi={createAudienceApi()} />
     );
 
     await user.type(screen.getByLabelText("タイトル*"), "お知らせ");
@@ -113,8 +110,8 @@ describe("NotificationCreatePage", () => {
 
     render(
       <NotificationCreatePage
-        submitter={{ submit: vi.fn() }}
-        audienceLoader={createAudienceLoader(load)}
+        api={{ submit: vi.fn() }}
+        audienceApi={createAudienceApi(load)}
       />
     );
 
@@ -134,8 +131,8 @@ describe("NotificationCreatePage", () => {
 
     render(
       <NotificationCreatePage
-        submitter={{ submit: vi.fn() }}
-        audienceLoader={createAudienceLoader(vi.fn().mockResolvedValue([]))}
+        api={{ submit: vi.fn() }}
+        audienceApi={createAudienceApi(vi.fn().mockResolvedValue([]))}
       />
     );
 
