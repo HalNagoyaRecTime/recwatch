@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import type { NotificationManagementApi } from "~/features/notifications/api/contracts/notification-management-api";
 import { NotificationManagementError } from "~/features/notifications/api/contracts/errors/notification-management-error";
@@ -29,9 +29,11 @@ export function useNotificationList({ api }: UseNotificationListOptions) {
   const [isLoading, setIsLoading] = useState(true);
   const [isDeleting, setIsDeleting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const requestSequence = useRef(0);
 
   const loadPage = useCallback(
     async (page: number) => {
+      const requestId = ++requestSequence.current;
       setIsLoading(true);
       setErrorMessage(null);
 
@@ -40,14 +42,22 @@ export function useNotificationList({ api }: UseNotificationListOptions) {
           limit: notificationListPageSize,
           offset: (page - 1) * notificationListPageSize,
         });
+        if (requestId !== requestSequence.current) {
+          return;
+        }
         setNotifications(result.notifications);
         setTotal(result.total);
       } catch (error) {
+        if (requestId !== requestSequence.current) {
+          return;
+        }
         setNotifications([]);
         setTotal(0);
         setErrorMessage(toErrorMessage(error));
       } finally {
-        setIsLoading(false);
+        if (requestId === requestSequence.current) {
+          setIsLoading(false);
+        }
       }
     },
     [api]
@@ -176,11 +186,13 @@ function sortItems(
     return items;
   }
 
+  const collator = new Intl.Collator("ja", {
+    numeric: true,
+    sensitivity: "base",
+  });
+
   return [...items].sort((left, right) => {
-    const result = left[sort.columnId].localeCompare(
-      right[sort.columnId],
-      "ja"
-    );
+    const result = collator.compare(left[sort.columnId], right[sort.columnId]);
     return sort.direction === "asc" ? result : -result;
   });
 }

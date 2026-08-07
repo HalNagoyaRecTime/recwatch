@@ -17,6 +17,7 @@ export type NotificationListItem = {
 export const notificationListPageSize = 20;
 
 export const notificationSortableColumnIds = [
+  "id",
   "title",
   "audience",
   "deliveredAt",
