@@ -1,13 +1,20 @@
 import { useCallback, useEffect, useState } from "react";
 
-import type { GatheringSpotGateway } from "~/features/gathering-spots/api/contracts/gathering-spot-gateway";
+import type {
+  GatheringSpotGateway,
+  GatheringSpotListOptions,
+} from "~/features/gathering-spots/api/contracts/gathering-spot-gateway";
 import type { GatheringSpot } from "~/features/gathering-spots/model/gathering-spot";
 
 type UseGatheringSpotsOptions = {
   gateway: GatheringSpotGateway;
+  listOptions?: GatheringSpotListOptions;
 };
 
-export function useGatheringSpots({ gateway }: UseGatheringSpotsOptions) {
+export function useGatheringSpots({
+  gateway,
+  listOptions,
+}: UseGatheringSpotsOptions) {
   const [spots, setSpots] = useState<GatheringSpot[]>([]);
   const [total, setTotal] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
@@ -17,8 +24,10 @@ export function useGatheringSpots({ gateway }: UseGatheringSpotsOptions) {
     let isCurrent = true;
 
     async function load() {
+      setIsLoading(true);
+      setLoadError(null);
       try {
-        const nextPage = await gateway.list();
+        const nextPage = await gateway.list(listOptions);
         if (!isCurrent) return;
 
         setSpots(nextPage.items);
@@ -40,7 +49,7 @@ export function useGatheringSpots({ gateway }: UseGatheringSpotsOptions) {
     return () => {
       isCurrent = false;
     };
-  }, [gateway]);
+  }, [gateway, listOptions]);
 
   const createSpot = useCallback(
     async (name: string) => {

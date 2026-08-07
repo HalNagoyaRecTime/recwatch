@@ -1,4 +1,4 @@
-import { Ellipsis, Pencil } from "lucide-react";
+import { Ellipsis, Pencil, Trash2 } from "lucide-react";
 import { useState } from "react";
 
 import { Button } from "~/components/ui/button/Button";
@@ -7,11 +7,13 @@ import { FloatingPanel } from "~/components/ui/panel/FloatingPanel";
 import type { GatheringSpot } from "~/features/gathering-spots/model/gathering-spot";
 
 type GatheringSpotActionMenuProps = {
+  onDelete: (spot: GatheringSpot) => void;
   onEdit: (spot: GatheringSpot) => void;
   spot: GatheringSpot;
 };
 
 export function GatheringSpotActionMenu({
+  onDelete,
   onEdit,
   spot,
 }: GatheringSpotActionMenuProps) {
@@ -25,6 +27,17 @@ export function GatheringSpotActionMenu({
       onClick: () => {
         setIsOpen(false);
         onEdit(spot);
+      },
+      type: "action",
+    },
+    {
+      icon: Trash2,
+      id: "delete",
+      label: "削除",
+      danger: true,
+      onClick: () => {
+        setIsOpen(false);
+        onDelete(spot);
       },
       type: "action",
     },

@@ -2,6 +2,7 @@ import { Plus } from "lucide-react";
 
 import { Button } from "~/components/ui/button/Button";
 import { PageHeader } from "~/components/ui/layout/PageHeader";
+import { Pagination } from "~/components/ui/navigation/Pagination";
 import { ScrollbarArea } from "~/components/ui/scrollbar/ScrollbarArea";
 import type { GatheringSpotGateway } from "~/features/gathering-spots/api/contracts/gathering-spot-gateway";
 import { GatheringSpotForm } from "~/features/gathering-spots/components/form/GatheringSpotForm";
@@ -62,6 +63,14 @@ export function GatheringSpotsPage({ gateway }: GatheringSpotsPageProps) {
             >
               {state.loadError}
             </p>
+          ) : state.actionError ? (
+            <p
+              aria-live="polite"
+              className="text-tone-danger-text border-tone-danger-text/30 bg-tone-danger-surface rounded-md border px-3 py-2 text-sm"
+              role="alert"
+            >
+              {state.actionError}
+            </p>
           ) : state.isLoading ? (
             <div aria-live="polite" className="sr-only">
               集合場所を読み込み中
@@ -70,13 +79,24 @@ export function GatheringSpotsPage({ gateway }: GatheringSpotsPageProps) {
 
           <GatheringSpotTable
             isLoading={state.isLoading}
-            items={state.filteredSpots}
+            items={state.sortedSpots}
+            onDelete={state.handleDelete}
             onEdit={state.openEditForm}
             onQueryChange={state.handleQueryChange}
             onSortChange={state.handleSortChange}
             query={state.query}
             sort={state.sort}
           />
+
+          {state.pageCount > 1 ? (
+            <Pagination
+              currentPage={state.currentPage}
+              onPageChange={state.handlePageChange}
+              pageCount={state.pageCount}
+              pageSize={state.pageSize}
+              totalItems={state.total}
+            />
+          ) : null}
         </div>
       </PagePadding>
     </PageLayout>

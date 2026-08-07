@@ -16,32 +16,43 @@ type UseGatheringSpotsPageOptions = {
 export function useGatheringSpotsPage({
   gateway,
 }: UseGatheringSpotsPageOptions) {
-  const { spots, isLoading, loadError, createSpot, updateSpot } =
-    useGatheringSpots({ gateway });
   const [query, setQuery] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 20;
+  const listOptions = useMemo(
+    () => ({
+      limit: pageSize,
+      name: query.trim() || undefined,
+      offset: (currentPage - 1) * pageSize,
+    }),
+    [currentPage, query]
+  );
+  const {
+    spots,
+    total,
+    isLoading,
+    loadError,
+    createSpot,
+    updateSpot,
+    deleteSpot,
+  } = useGatheringSpots({ gateway, listOptions });
   const [sort, setSort] = useState<GatheringSpotSort>();
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingSpot, setEditingSpot] = useState<GatheringSpot | null>(null);
   const [spotNameInput, setSpotNameInput] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
 
-  const filteredSpots = useMemo(() => {
-    const normalizedQuery = query.trim().toLowerCase();
-    const filtered = normalizedQuery
-      ? spots.filter((spot) =>
-          spot.name.toLowerCase().includes(normalizedQuery)
-        )
-      : spots;
-
-    if (!sort) return filtered;
+  const sortedSpots = useMemo(() => {
+    if (!sort) return spots;
 
     const collator = new Intl.Collator("ja", {
       numeric: true,
       sensitivity: "base",
     });
 
-    return [...filtered].sort((left, right) => {
+    return [...spots].sort((left, right) => {
       const result =
         sort.columnId === "id"
           ? left.id - right.id
@@ -52,7 +63,7 @@ export function useGatheringSpotsPage({
               : collator.compare(left.updatedAt, right.updatedAt);
       return sort.direction === "asc" ? result : -result;
     });
-  }, [query, sort, spots]);
+  }, [sort, spots]);
 
   function openCreateForm() {
     setEditingSpot(null);
@@ -77,6 +88,29 @@ export function useGatheringSpotsPage({
 
   function handleQueryChange(nextQuery: string) {
     setQuery(nextQuery);
+    setCurrentPage(1);
+  }
+
+  function handlePageChange(nextPage: number) {
+    setCurrentPage(Math.min(Math.max(1, nextPage), pageCount));
+  }
+
+  async function handleDelete(spot: GatheringSpot) {
+    if (!window.confirm(`「${spot.name}」を削除しますか？`)) return;
+
+    setActionError(null);
+    try {
+      await deleteSpot(spot.id);
+      if (spots.length === 1 && currentPage > 1) {
+        setCurrentPage((page) => page - 1);
+      }
+    } catch (error) {
+      setActionError(
+        error instanceof Error
+          ? error.message
+          : "集合場所の削除に失敗しました。"
+      );
+    }
   }
 
   function handleSpotNameChange(name: string) {
@@ -116,10 +150,15 @@ export function useGatheringSpotsPage({
     }
   }
 
+  const pageCount = Math.max(1, Math.ceil(total / pageSize));
+
   return {
     closeForm,
+    actionError,
+    currentPage,
     editingSpot,
-    filteredSpots,
+    handleDelete,
+    handlePageChange,
     handleQueryChange,
     handleSortChange,
     handleSpotNameChange,
@@ -129,10 +168,14 @@ export function useGatheringSpotsPage({
     loadError,
     openCreateForm,
     openEditForm,
+    pageCount,
+    pageSize,
     query,
     spotNameInput,
     submitError,
     submitForm,
     sort,
+    sortedSpots,
+    total,
   };
 }

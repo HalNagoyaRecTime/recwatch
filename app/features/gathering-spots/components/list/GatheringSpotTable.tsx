@@ -10,6 +10,7 @@ import type {
 type GatheringSpotTableProps = {
   isLoading: boolean;
   items: readonly GatheringSpot[];
+  onDelete: (spot: GatheringSpot) => void;
   onEdit: (spot: GatheringSpot) => void;
   onQueryChange: (query: string) => void;
   onSortChange: (columnId: string) => void;
@@ -20,6 +21,7 @@ type GatheringSpotTableProps = {
 export function GatheringSpotTable({
   isLoading,
   items,
+  onDelete,
   onEdit,
   onQueryChange,
   onSortChange,
@@ -66,7 +68,11 @@ export function GatheringSpotTable({
       align: "center",
       width: { type: "fixed", value: 64 },
       renderCell: (spot) => (
-        <GatheringSpotActionMenu onEdit={onEdit} spot={spot} />
+        <GatheringSpotActionMenu
+          onDelete={onDelete}
+          onEdit={onEdit}
+          spot={spot}
+        />
       ),
     },
   ];
