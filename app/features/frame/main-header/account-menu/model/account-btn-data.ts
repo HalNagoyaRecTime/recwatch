@@ -11,6 +11,7 @@ export type AccountUser = {
 export type AccountBtnData = {
   name: string;
   role: string;
+  imageUrl?: string;
   abbr_label: string;
   borderColor: string;
   bgColor: string;
@@ -18,11 +19,11 @@ export type AccountBtnData = {
 };
 
 function isProbablyMojibake(value: string) {
-  return /[\u0080-\u009f\u00c0-\u00ff]|縺|繧|螟|驛|�/.test(value);
+  return /[\u0080-\u009f\u00c0-\u00ff]|縺|繧|螟|驛|\uFFFD/.test(value);
 }
 
 function isDefinitelyMojibake(value: string) {
-  return /縺|繧|螟|驛|�/.test(value);
+  return /縺|繧|螟|驛|\uFFFD/.test(value);
 }
 
 function repairMojibake(value: string) {
@@ -40,7 +41,7 @@ function repairMojibake(value: string) {
   }
 
   const decoded = new TextDecoder("utf-8").decode(new Uint8Array(bytes));
-  return decoded.includes("�") ? value : decoded;
+  return decoded.includes("\uFFFD") ? value : decoded;
 }
 
 function getDisplayName(user?: AccountUser | null) {
