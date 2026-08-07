@@ -26,6 +26,7 @@ export type SelectOption<T extends string> = {
 
 type SelectProps<T extends string> = {
   ariaLabel: string;
+  disabled?: boolean;
   onValueChange: (value: T) => void;
   options: readonly SelectOption<T>[];
   variant?: "default" | "grouped";
@@ -65,6 +66,7 @@ const selectWidthProbeStyle = cva(
 
 export function Select<T extends string>({
   ariaLabel,
+  disabled = false,
   onValueChange,
   options,
   variant = "default",
@@ -93,7 +95,7 @@ export function Select<T extends string>({
     whileElementsMounted: autoUpdate,
   });
 
-  const click = useClick(context);
+  const click = useClick(context, { enabled: !disabled });
   const dismiss = useDismiss(context);
   const role = useRole(context, { role: "listbox" });
   const { getFloatingProps, getReferenceProps } = useInteractions([
@@ -173,7 +175,8 @@ export function Select<T extends string>({
           aria-controls={listboxId}
           aria-expanded={isOpen}
           aria-label={ariaLabel}
-          className={selectTriggerStyle({ variant })}
+          className={`${selectTriggerStyle({ variant })} disabled:cursor-not-allowed disabled:opacity-50`}
+          disabled={disabled}
           type="button"
         >
           <span className="truncate">{selectedOption?.label}</span>

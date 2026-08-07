@@ -1,5 +1,5 @@
 import { httpNotificationManagementApi } from "~/features/notifications/api/http/notification-management-api";
-import { NotificationManagementPage } from "~/features/notification-management/pages/NotificationManagementPage";
+import { NotificationListPage } from "~/features/notifications/pages/NotificationListPage";
 import { PagePadding } from "~/features/frame/page-layout/PagePadding";
 import { PageLayout } from "~/features/frame/page-layout/PageLayout";
 
@@ -11,7 +11,7 @@ export default function NotificationsRoute() {
   return (
     <PageLayout>
       <PagePadding>
-        <NotificationManagementPage api={httpNotificationManagementApi} />
+        <NotificationListPage api={httpNotificationManagementApi} />
       </PagePadding>
     </PageLayout>
   );
