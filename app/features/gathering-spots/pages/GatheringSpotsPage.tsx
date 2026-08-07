@@ -1,85 +1,14 @@
 import { Check, Pencil, Plus, Search, X } from "lucide-react";
-import { useMemo, useState } from "react";
 
 import type { GatheringSpotGateway } from "~/features/gathering-spots/api/contracts/gathering-spot-gateway";
-import { useGatheringSpots } from "~/features/gathering-spots/hooks/useGatheringSpots";
-import type { GatheringSpot } from "~/features/gathering-spots/model/gathering-spot";
+import { useGatheringSpotsPage } from "~/features/gathering-spots/hooks/useGatheringSpotsPage";
 
 type GatheringSpotsPageProps = {
   gateway: GatheringSpotGateway;
 };
 
 export function GatheringSpotsPage({ gateway }: GatheringSpotsPageProps) {
-  const { spots, isLoading, loadError, createSpot, updateSpot } =
-    useGatheringSpots({ gateway });
-  const [query, setQuery] = useState("");
-
-  // Form State for Create / Edit
-  const [isFormOpen, setIsFormOpen] = useState(false);
-  const [editingSpot, setEditingSpot] = useState<GatheringSpot | null>(null);
-  const [spotNameInput, setSpotNameInput] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitError, setSubmitError] = useState<string | null>(null);
-
-  const filteredSpots = useMemo(() => {
-    const normalizedQuery = query.trim().toLowerCase();
-    if (!normalizedQuery) {
-      return spots;
-    }
-    return spots.filter((spot) =>
-      spot.name.toLowerCase().includes(normalizedQuery)
-    );
-  }, [query, spots]);
-
-  function handleOpenCreate() {
-    setEditingSpot(null);
-    setSpotNameInput("");
-    setSubmitError(null);
-    setIsFormOpen(true);
-  }
-
-  function handleOpenEdit(spot: GatheringSpot) {
-    setEditingSpot(spot);
-    setSpotNameInput(spot.name);
-    setSubmitError(null);
-    setIsFormOpen(true);
-  }
-
-  function handleCloseForm() {
-    setIsFormOpen(false);
-    setEditingSpot(null);
-    setSpotNameInput("");
-    setSubmitError(null);
-  }
-
-  async function handleSubmitForm() {
-    const name = spotNameInput.trim();
-    if (!name) {
-      setSubmitError("集合場所名を入力してください。");
-      return;
-    }
-
-    setIsSubmitting(true);
-    setSubmitError(null);
-
-    try {
-      if (editingSpot) {
-        await updateSpot(editingSpot.id, name);
-      } else {
-        await createSpot(name);
-      }
-
-      handleCloseForm();
-    } catch (error) {
-      setSubmitError(
-        error instanceof Error
-          ? error.message
-          : "集合場所の保存に失敗しました。"
-      );
-    } finally {
-      setIsSubmitting(false);
-    }
-  }
+  const state = useGatheringSpotsPage({ gateway });
 
   return (
     <div className="min-h-full bg-[#f7faff] p-1 text-[#0a0a0a]">
@@ -88,9 +17,9 @@ export function GatheringSpotsPage({ gateway }: GatheringSpotsPageProps) {
         競技や集合イベントで使用する集合場所の管理を行います
       </p>
 
-      {loadError ? (
+      {state.loadError ? (
         <p className="mt-4 rounded-[10px] border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-          {loadError}
+          {state.loadError}
         </p>
       ) : null}
 
@@ -99,8 +28,10 @@ export function GatheringSpotsPage({ gateway }: GatheringSpotsPageProps) {
           <label className="flex h-[38px] w-[240px] items-center gap-2 rounded-[10px] border border-[#d2d2d2] bg-white px-3 text-sm">
             <Search className="size-4 text-black/35" />
             <input
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
+              value={state.query}
+              onChange={(event) =>
+                state.handleQueryChange(event.currentTarget.value)
+              }
               className="min-w-0 flex-1 outline-none"
               placeholder="集合場所名で検索..."
             />
@@ -108,7 +39,7 @@ export function GatheringSpotsPage({ gateway }: GatheringSpotsPageProps) {
 
           <button
             type="button"
-            onClick={handleOpenCreate}
+            onClick={state.openCreateForm}
             className="flex items-center gap-1 rounded-[10px] bg-[#0070bb] px-4 py-2 text-sm text-white"
           >
             <Plus className="size-4" />
@@ -116,13 +47,13 @@ export function GatheringSpotsPage({ gateway }: GatheringSpotsPageProps) {
           </button>
         </div>
 
-        {isFormOpen ? (
+        {state.isFormOpen ? (
           <div className="rounded-[14px] border border-[#0070bb]/30 bg-white p-4 shadow-sm">
             <div className="flex items-center justify-between">
               <h2 className="text-sm font-bold">
-                {editingSpot ? "集合場所の編集" : "新規集合場所の追加"}
+                {state.editingSpot ? "集合場所の編集" : "新規集合場所の追加"}
               </h2>
-              <button type="button" onClick={handleCloseForm}>
+              <button type="button" onClick={state.closeForm}>
                 <X className="size-4 text-black/40" />
               </button>
             </div>
@@ -131,34 +62,36 @@ export function GatheringSpotsPage({ gateway }: GatheringSpotsPageProps) {
               <label className="block text-sm font-bold">
                 集合場所名 <span className="text-red-500">*</span>
                 <input
-                  disabled={isSubmitting}
-                  value={spotNameInput}
-                  onChange={(e) => setSpotNameInput(e.target.value)}
+                  disabled={state.isSubmitting}
+                  value={state.spotNameInput}
+                  onChange={(event) =>
+                    state.handleSpotNameChange(event.currentTarget.value)
+                  }
                   placeholder="例：体育館前、コートA"
                   className="mt-1 h-8 w-full rounded-[10px] border border-[#d2d2d2] bg-white px-3 font-normal outline-none disabled:opacity-50"
                 />
               </label>
 
-              {submitError ? (
-                <p className="text-xs text-red-600">{submitError}</p>
+              {state.submitError ? (
+                <p className="text-xs text-red-600">{state.submitError}</p>
               ) : null}
 
               <div className="flex gap-2 pt-1">
                 <button
                   type="button"
-                  onClick={handleCloseForm}
+                  onClick={state.closeForm}
                   className="rounded-[10px] border border-[#d2d2d2] bg-white px-4 py-1.5 text-xs"
                 >
                   キャンセル
                 </button>
                 <button
                   type="button"
-                  disabled={isSubmitting}
-                  onClick={() => void handleSubmitForm()}
+                  disabled={state.isSubmitting}
+                  onClick={() => void state.submitForm()}
                   className="flex items-center gap-1 rounded-[10px] bg-[#0070bb] px-4 py-1.5 text-xs text-white disabled:opacity-50"
                 >
                   <Check className="size-3.5" />
-                  {isSubmitting ? "保存中..." : "保存する"}
+                  {state.isSubmitting ? "保存中..." : "保存する"}
                 </button>
               </div>
             </div>
@@ -182,20 +115,20 @@ export function GatheringSpotsPage({ gateway }: GatheringSpotsPageProps) {
               </tr>
             </thead>
             <tbody>
-              {isLoading ? (
+              {state.isLoading ? (
                 <tr>
                   <td colSpan={4} className="p-4 text-center text-black/40">
                     読み込み中...
                   </td>
                 </tr>
-              ) : filteredSpots.length === 0 ? (
+              ) : state.filteredSpots.length === 0 ? (
                 <tr>
                   <td colSpan={4} className="p-4 text-center text-black/40">
                     集合場所が見つかりません
                   </td>
                 </tr>
               ) : (
-                filteredSpots.map((spot) => (
+                state.filteredSpots.map((spot) => (
                   <tr
                     key={spot.id}
                     className="border-b border-[#d2d2d2] last:border-b-0"
@@ -210,7 +143,7 @@ export function GatheringSpotsPage({ gateway }: GatheringSpotsPageProps) {
                         <button
                           type="button"
                           aria-label={`${spot.name}を編集`}
-                          onClick={() => handleOpenEdit(spot)}
+                          onClick={() => state.openEditForm(spot)}
                         >
                           <Pencil className="size-4 hover:text-[#0070bb]" />
                         </button>
