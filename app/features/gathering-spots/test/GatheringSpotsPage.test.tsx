@@ -39,6 +39,31 @@ function createGateway(
 }
 
 describe("GatheringSpotsPage", () => {
+  it("検索入力を一覧APIのnameクエリへ反映する", async () => {
+    const list = vi.fn().mockResolvedValue({
+      items: [createSpot(1, "体育館前")],
+      total: 1,
+      limit: 20,
+      offset: 0,
+    });
+    const user = userEvent.setup();
+
+    render(<GatheringSpotsPage gateway={createGateway({ list })} />);
+
+    const search = await screen.findByRole("searchbox", {
+      name: "集合場所を検索",
+    });
+    await user.type(search, "体育館");
+
+    await waitFor(() =>
+      expect(list).toHaveBeenLastCalledWith({
+        limit: 20,
+        name: "体育館",
+        offset: 0,
+      })
+    );
+  });
+
   it("作成後に現在の検索条件で一覧を再取得する", async () => {
     const list = vi.fn().mockResolvedValue({
       items: [createSpot(1, "体育館前")],
