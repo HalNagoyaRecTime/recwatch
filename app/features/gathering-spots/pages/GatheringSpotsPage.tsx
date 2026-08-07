@@ -81,7 +81,7 @@ export function GatheringSpotsPage({ gateway }: GatheringSpotsPageProps) {
             currentPage={state.currentPage}
             isMutating={state.isDeleting || state.isSubmitting}
             isLoading={state.isLoading}
-            items={state.sortedSpots}
+            items={state.spots}
             onDelete={state.handleDelete}
             onEdit={state.openEditForm}
             onPageChange={state.handlePageChange}

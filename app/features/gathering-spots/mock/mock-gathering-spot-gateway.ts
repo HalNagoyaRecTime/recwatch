@@ -18,8 +18,21 @@ export function createMockGatheringSpotGateway(
         : spots;
       const limit = options?.limit ?? filtered.length;
       const offset = options?.offset ?? 0;
+      const sorted = [...filtered].sort((left, right) => {
+        const column = options?.sortBy ?? "id";
+        const leftValue = left[columnToModelKey(column)];
+        const rightValue = right[columnToModelKey(column)];
+        const result =
+          typeof leftValue === "number" && typeof rightValue === "number"
+            ? leftValue - rightValue
+            : String(leftValue).localeCompare(String(rightValue), "ja", {
+                numeric: true,
+                sensitivity: "base",
+              });
+        return options?.sortOrder === "desc" ? -result : result;
+      });
       return {
-        items: filtered.slice(offset, offset + limit),
+        items: sorted.slice(offset, offset + limit),
         total: filtered.length,
         limit,
         offset,
@@ -64,4 +77,10 @@ export function createMockGatheringSpotGateway(
       spots = spots.filter((spot) => spot.id !== id);
     },
   };
+}
+
+function columnToModelKey(
+  column: NonNullable<GatheringSpotListOptions["sortBy"]>
+): "id" | "name" | "createdAt" | "updatedAt" {
+  return column;
 }

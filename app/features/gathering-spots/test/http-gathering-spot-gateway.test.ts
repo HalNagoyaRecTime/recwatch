@@ -49,6 +49,32 @@ describe("createHttpGatheringSpotGateway", () => {
     );
   });
 
+  it("ソート条件を一覧APIへ渡す", async () => {
+    const get = vi.fn().mockResolvedValue({
+      gathering_spots: [],
+      total: 0,
+      limit: 20,
+      offset: 0,
+    });
+    const gateway = createHttpGatheringSpotGateway({
+      get,
+      post: vi.fn(),
+      put: vi.fn(),
+      delete: vi.fn(),
+    });
+
+    await gateway.list({
+      limit: 20,
+      offset: 0,
+      sortBy: "name",
+      sortOrder: "desc",
+    });
+
+    expect(get).toHaveBeenCalledWith(
+      "/api/v1/gathering-spots?limit=20&offset=0&sortBy=name&sortOrder=desc"
+    );
+  });
+
   it("クエリなしの従来配列レスポンスを一覧ページへ正規化する", async () => {
     const get = vi.fn().mockResolvedValue([createResponse()]);
     const gateway = createHttpGatheringSpotGateway(createClient({ get }));

@@ -310,4 +310,28 @@ describe("GatheringSpotsPage", () => {
       ).not.toBeDisabled()
     );
   });
+
+  it("ソート条件を一覧APIへ反映する", async () => {
+    const list = vi.fn().mockResolvedValue({
+      items: [createSpot(1, "体育館前")],
+      total: 1,
+      limit: 20,
+      offset: 0,
+    });
+    const user = userEvent.setup();
+
+    render(<GatheringSpotsPage gateway={createGateway({ list })} />);
+
+    await user.click(await screen.findByRole("button", { name: "集合場所名" }));
+
+    await waitFor(() =>
+      expect(list).toHaveBeenLastCalledWith({
+        limit: 20,
+        name: undefined,
+        offset: 0,
+        sortBy: "name",
+        sortOrder: "asc",
+      })
+    );
+  });
 });

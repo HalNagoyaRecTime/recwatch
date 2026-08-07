@@ -29,6 +29,8 @@ export function createHttpGatheringSpotGateway(
       if (options?.offset !== undefined)
         params.set("offset", String(options.offset));
       if (options?.name) params.set("name", options.name);
+      if (options?.sortBy) params.set("sortBy", options.sortBy);
+      if (options?.sortOrder) params.set("sortOrder", options.sortOrder);
 
       const query = params.toString();
       const response = await client.get<

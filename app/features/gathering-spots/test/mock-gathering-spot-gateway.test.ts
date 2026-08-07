@@ -39,4 +39,25 @@ describe("createMockGatheringSpotGateway", () => {
       total: 1,
     });
   });
+
+  it("一覧を指定した列と方向でソートする", async () => {
+    const gateway = createMockGatheringSpotGateway([
+      { ...spots[1], id: 1, name: "B会場" },
+      { ...spots[0], id: 2, name: "A会場" },
+    ]);
+
+    await expect(
+      gateway.list({
+        limit: 20,
+        offset: 0,
+        sortBy: "name",
+        sortOrder: "asc",
+      })
+    ).resolves.toMatchObject({
+      items: [
+        expect.objectContaining({ name: "A会場" }),
+        expect.objectContaining({ name: "B会場" }),
+      ],
+    });
+  });
 });

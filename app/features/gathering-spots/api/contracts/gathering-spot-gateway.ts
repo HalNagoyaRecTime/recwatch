@@ -4,7 +4,12 @@ export type GatheringSpotListOptions = {
   limit?: number;
   offset?: number;
   name?: string;
+  sortBy?: GatheringSpotSortBy;
+  sortOrder?: GatheringSpotSortOrder;
 };
+
+export type GatheringSpotSortBy = "id" | "name" | "createdAt" | "updatedAt";
+export type GatheringSpotSortOrder = "asc" | "desc";
 
 export type GatheringSpotPage = {
   items: GatheringSpot[];
