@@ -1,6 +1,6 @@
 import { Outlet, useLoaderData } from "react-router";
 import { TeacherApi, type TeacherApiSortOrder } from "~/features/teachers/api";
-import { toTeacherRow } from "~/features/teachers/model/teacher";
+import { toTeacherRow } from "~/features/teachers/api/mappers/teacher-mappers";
 import { TeachersPage } from "~/features/teachers/pages/TeachersPage";
 import { PagePadding } from "~/features/frame/page-layout/PagePadding";
 import { PageLayout } from "~/features/frame/page-layout/PageLayout";

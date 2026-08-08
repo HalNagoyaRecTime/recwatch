@@ -1,7 +1,7 @@
 import { useLoaderData } from "react-router";
 import { TeacherApi } from "~/features/teachers/api";
 import { getClassRoomData } from "~/features/classRoom/model/classRoom-data";
-import { toTeacherRow } from "~/features/teachers/model/teacher";
+import { toTeacherRow } from "~/features/teachers/api/mappers/teacher-mappers";
 import { TeacherEditPage } from "~/features/teachers/pages/TeacherEditPage";
 
 export function meta() {
