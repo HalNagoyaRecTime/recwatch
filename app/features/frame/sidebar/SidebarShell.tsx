@@ -45,18 +45,23 @@ function SidebarContent() {
           "fixed inset-0 z-40 bg-slate-950/25 transition-opacity md:hidden",
           isMobile && isOpen
             ? "pointer-events-auto opacity-100"
-            : "pointer-events-none opacity-0",
+            : "pointer-events-none opacity-0"
         )}
         onClick={closeForMobile}
       />
 
-      <div className={cn(sidebarPlaceholderStyle({ isOpen }), "max-md:w-0")}>
+      <div
+        className={cn(
+          sidebarPlaceholderStyle({ isOpen }),
+          "sidebar-mobile-placeholder max-md:w-0"
+        )}
+      >
         <div
           id="app-sidebar"
           className={cn(
             sidebarContainerStyle({ isExpanded }),
-            "max-md:fixed max-md:inset-y-0 max-md:left-0 max-md:z-100 max-md:w-72 max-md:transition-transform",
-            isOpen ? "max-md:translate-x-0" : "max-md:-translate-x-full",
+            "sidebar-mobile-container max-md:fixed max-md:inset-y-0 max-md:left-0 max-md:z-100 max-md:w-72 max-md:transition-transform",
+            isOpen ? "max-md:translate-x-0" : "max-md:-translate-x-full"
           )}
         >
           <div
