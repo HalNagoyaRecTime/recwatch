@@ -1,6 +1,6 @@
 import { useLoaderData } from "react-router";
 
-import { ClassRoomApi } from "~/features/teachers/api";
+import { getClassRoomData } from "~/features/classRoom/model/classRoom-data";
 import type { ClassRoomOption } from "~/features/teachers/model/teacher";
 import { TeacherCreatePage } from "~/features/teachers/pages/TeacherCreatePage";
 
@@ -9,13 +9,13 @@ export function meta() {
 }
 
 export async function clientLoader() {
-  const page = await ClassRoomApi.getClassRooms();
-  const classRooms: ClassRoomOption[] = page.classrooms.map((classRoom) => ({
-    classRoomId: classRoom.class_room_id,
-    className: classRoom.class_name,
+  const classRooms = await getClassRoomData();
+  const options: ClassRoomOption[] = classRooms.map((classRoom) => ({
+    classRoomId: classRoom.classRoomId,
+    className: classRoom.classRoomName,
   }));
 
-  return { classRooms };
+  return { classRooms: options };
 }
 
 export default function TeacherCreateRoute() {

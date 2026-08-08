@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useLocation, useNavigate } from "react-router";
+import { useLocation, useNavigate, useRevalidator } from "react-router";
 
 import { TeacherApi } from "~/features/teachers/api";
 import { TeacherForm } from "~/features/teachers/components/TeacherForm";
@@ -13,6 +13,7 @@ type TeacherCreatePageProps = {
 export function TeacherCreatePage({ classRooms }: TeacherCreatePageProps) {
   const navigate = useNavigate();
   const location = useLocation();
+  const revalidator = useRevalidator();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
@@ -28,6 +29,7 @@ export function TeacherCreatePage({ classRooms }: TeacherCreatePageProps) {
 
     try {
       await TeacherApi.createTeacher(input);
+      revalidator.revalidate();
       requestClose();
     } catch (error) {
       setSubmitError(
@@ -49,6 +51,7 @@ export function TeacherCreatePage({ classRooms }: TeacherCreatePageProps) {
     >
       {(requestClose) => (
         <TeacherForm
+          autoFocus
           classRooms={classRooms}
           isSubmitting={isSubmitting}
           onCancel={requestClose}

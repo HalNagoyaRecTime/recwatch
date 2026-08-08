@@ -2,6 +2,7 @@ import type { TeacherDTO } from "~/features/teachers/api";
 
 export type TeacherClassRoomRow = {
   classRoomId: number;
+  classCode: string;
   className: string;
 };
 
@@ -24,6 +25,7 @@ export function toTeacherRow(dto: TeacherDTO): TeacherRow {
     isLiveActive: dto.is_live_active,
     classRooms: dto.class_rooms.map((c) => ({
       classRoomId: c.class_room_id,
+      classCode: c.class_code,
       className: c.class_name,
     })),
   };

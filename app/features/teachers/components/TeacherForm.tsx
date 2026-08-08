@@ -7,6 +7,7 @@ import type {
 } from "~/features/teachers/model/teacher";
 
 type TeacherFormProps = {
+  autoFocus?: boolean;
   classRooms: readonly ClassRoomOption[];
   initialTeacher?: TeacherRow;
   isSubmitting: boolean;
@@ -16,6 +17,7 @@ type TeacherFormProps = {
 };
 
 export function TeacherForm({
+  autoFocus = false,
   classRooms,
   initialTeacher,
   isSubmitting,
@@ -55,6 +57,7 @@ export function TeacherForm({
       <label className="text-text-base block text-sm font-medium">
         教官名
         <input
+          autoFocus={autoFocus}
           className="border-border-base bg-surface-base text-text-base focus:border-border-strong mt-1 h-10 w-full rounded-md border px-3 outline-none"
           onChange={(event) => setUserName(event.target.value)}
           required

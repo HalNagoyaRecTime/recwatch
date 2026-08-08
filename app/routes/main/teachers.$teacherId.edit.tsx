@@ -1,5 +1,6 @@
 import { useLoaderData } from "react-router";
-import { ClassRoomApi, TeacherApi } from "~/features/teachers/api";
+import { TeacherApi } from "~/features/teachers/api";
+import { getClassRoomData } from "~/features/classRoom/model/classRoom-data";
 import { toTeacherRow } from "~/features/teachers/model/teacher";
 import { TeacherEditPage } from "~/features/teachers/pages/TeacherEditPage";
 
@@ -17,16 +18,16 @@ export async function clientLoader({
     throw new Response("教官IDが不正です。", { status: 400 });
   }
 
-  const [teacher, classRoomPage] = await Promise.all([
+  const [teacher, classRooms] = await Promise.all([
     TeacherApi.getTeacherById(teacherId),
-    ClassRoomApi.getClassRooms(),
+    getClassRoomData(),
   ]);
 
   return {
     teacher: toTeacherRow(teacher),
-    classRooms: classRoomPage.classrooms.map((c) => ({
-      classRoomId: c.class_room_id,
-      className: c.class_name,
+    classRooms: classRooms.map((c) => ({
+      classRoomId: c.classRoomId,
+      className: c.classRoomName,
     })),
   };
 }

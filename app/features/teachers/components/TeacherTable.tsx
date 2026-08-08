@@ -1,15 +1,23 @@
+import type { ReactNode } from "react";
+
 import { DataTable } from "~/components/ui/data-table/DataTable";
 import type { DataTableColumn } from "~/components/ui/data-table/data-table-types";
 import { TeacherActionMenu } from "~/features/teachers/components/TeacherActionMenu";
 import type { TeacherRow } from "~/features/teachers/model/teacher";
 
 type TeacherTableProps = {
+  footer?: ReactNode;
   items: readonly TeacherRow[];
   onSortChange: (columnId: string) => void;
   sort: { columnId: string; direction: "asc" | "desc" };
 };
 
-export function TeacherTable({ items, onSortChange, sort }: TeacherTableProps) {
+export function TeacherTable({
+  footer,
+  items,
+  onSortChange,
+  sort,
+}: TeacherTableProps) {
   const columns: readonly DataTableColumn<TeacherRow>[] = [
     {
       header: "ID",
@@ -53,6 +61,7 @@ export function TeacherTable({ items, onSortChange, sort }: TeacherTableProps) {
       items={items}
       onSortChange={onSortChange}
       sort={sort}
+      footer={footer}
     />
   );
 }

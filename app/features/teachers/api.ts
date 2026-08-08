@@ -21,6 +21,9 @@ export type TeacherPageDTO = {
   offset: number;
 };
 
+export type TeacherApiSortBy = "teacherId" | "displayName";
+export type TeacherApiSortOrder = "asc" | "desc";
+
 export type TeacherUpdateRequest = {
   userName: string;
   classRoomIds: number[];
@@ -31,40 +34,38 @@ export type TeacherCreateRequest = {
   classRoomIds: number[];
 };
 
-export type ClassRoomDTO = {
-  class_room_id: number;
-  class_code: string;
-  class_name: string;
-  student_count: number;
-  teacher: { teacher_id: number; display_name: string } | null;
-};
-
-export type ClassRoomPageDTO = {
-  classrooms: ClassRoomDTO[];
-  total: number;
-  limit: number;
-  offset: number;
-};
-
-const ALL_TEACHERS_LIMIT = 100;
-const ALL_CLASSROOMS_LIMIT = 100;
+const TEACHER_PAGE_SIZE = 50;
 
 export const TeacherApi = {
-  getTeachers: () =>
-    apiClient.get<TeacherPageDTO>(
-      `/api/v1/teachers?limit=${ALL_TEACHERS_LIMIT}`
-    ),
+  getTeachers: ({
+    limit = TEACHER_PAGE_SIZE,
+    offset = 0,
+    search,
+    sortBy,
+    sortOrder,
+  }: {
+    limit?: number;
+    offset?: number;
+    search?: string;
+    sortBy?: TeacherApiSortBy;
+    sortOrder?: TeacherApiSortOrder;
+  } = {}) => {
+    const query = new URLSearchParams({
+      limit: String(limit),
+      offset: String(offset),
+    });
+    if (search?.trim()) query.set("search", search.trim());
+    if (sortBy) query.set("sortBy", sortBy);
+    if (sortOrder) query.set("sortOrder", sortOrder);
+
+    return apiClient.get<TeacherPageDTO>(
+      `/api/v1/teachers?${query.toString()}`
+    );
+  },
   getTeacherById: (teacherId: number) =>
     apiClient.get<TeacherDTO>(`/api/v1/teachers/${teacherId}`),
   updateTeacher: (teacherId: number, body: TeacherUpdateRequest) =>
     apiClient.put<TeacherDTO>(`/api/v1/teachers/${teacherId}`, body),
   createTeacher: (body: TeacherCreateRequest) =>
     apiClient.post<TeacherDTO>("/api/v1/teachers", body),
-};
-
-export const ClassRoomApi = {
-  getClassRooms: () =>
-    apiClient.get<ClassRoomPageDTO>(
-      `/api/v1/classrooms?limit=${ALL_CLASSROOMS_LIMIT}`
-    ),
 };
