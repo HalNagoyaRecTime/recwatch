@@ -1,6 +1,18 @@
-import { createContext, useEffect, useState, type ReactNode } from "react";
+import {
+  createContext,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
+import {
+  SIDEBAR_MOBILE_MEDIA_QUERY,
+  getIsSidebarMobileViewport,
+} from "~/features/frame/sidebar/constants/sidebar-responsive";
 
 export type SidebarState = {
+  isMobile: boolean;
   isOpen: boolean;
   openAccordions: string[];
   toggle: () => void;
@@ -10,13 +22,45 @@ export type SidebarState = {
 
 // eslint-disable-next-line react-refresh/only-export-components
 export const SidebarStateContext = createContext<SidebarState | undefined>(
-  undefined
+  undefined,
 );
 
 export function SidebarStateProvider({ children }: { children: ReactNode }) {
-  const [isOpen, setIsOpen] = useState(true);
+  const initialIsMobile = getIsSidebarMobileViewport();
+  const [isMobile, setIsMobile] = useState(initialIsMobile);
+  const [isOpen, setIsOpen] = useState(!initialIsMobile);
   const [openAccordions, setOpenAccordions] = useState<string[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
+  const isMobileRef = useRef(initialIsMobile);
+  const isOpenRef = useRef(isOpen);
+  const desktopOpenPreference = useRef(!initialIsMobile);
+
+  useEffect(() => {
+    isOpenRef.current = isOpen;
+  }, [isOpen]);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia(SIDEBAR_MOBILE_MEDIA_QUERY);
+    const handleChange = () => {
+      const nextIsMobile = mediaQuery.matches;
+      if (nextIsMobile === isMobileRef.current) return;
+
+      if (nextIsMobile) {
+        desktopOpenPreference.current = isOpenRef.current;
+        setIsOpen(false);
+        setOpenAccordions([]);
+      } else {
+        setIsOpen(desktopOpenPreference.current);
+      }
+
+      isMobileRef.current = nextIsMobile;
+      setIsMobile(nextIsMobile);
+    };
+
+    handleChange();
+    mediaQuery.addEventListener("change", handleChange);
+    return () => mediaQuery.removeEventListener("change", handleChange);
+  }, []);
 
   useEffect(() => {
     const saved = sessionStorage.getItem("rectime-nav-state");
@@ -24,51 +68,53 @@ export function SidebarStateProvider({ children }: { children: ReactNode }) {
       try {
         const parsed = JSON.parse(saved);
         const stateData = parsed.state ? parsed.state : parsed;
-        if (stateData.isOpen !== undefined) {
+        if (!initialIsMobile && stateData.isOpen !== undefined) {
           // eslint-disable-next-line react-hooks/set-state-in-effect
           setIsOpen(stateData.isOpen);
+          desktopOpenPreference.current = stateData.isOpen;
         }
-        if (stateData.openAccordions !== undefined) {
+        if (!initialIsMobile && stateData.openAccordions !== undefined) {
           setOpenAccordions(stateData.openAccordions);
         }
       } catch (e) {
         console.error(
           "セッションストレージからのナビゲーション状態の復元に失敗しました",
-          e
+          e,
         );
       }
     }
     setIsLoaded(true);
-  }, []);
+  }, [initialIsMobile]);
 
   useEffect(() => {
-    if (!isLoaded) return;
+    if (!isLoaded || isMobile) return;
     sessionStorage.setItem(
       "rectime-nav-state",
-      JSON.stringify({ state: { isOpen, openAccordions }, version: 0 })
+      JSON.stringify({ state: { isOpen, openAccordions }, version: 0 }),
     );
-  }, [isOpen, openAccordions, isLoaded]);
+  }, [isOpen, openAccordions, isLoaded, isMobile]);
 
-  const toggle = () => {
+  const toggle = useCallback(() => {
     setIsOpen((prevIsOpen) => !prevIsOpen);
-  };
+  }, []);
 
-  const toggleAccordion = (id: string) => {
+  const toggleAccordion = useCallback((id: string) => {
     setOpenAccordions((prev) =>
-      prev.includes(id) ? prev.filter((v) => v !== id) : [...prev, id]
+      prev.includes(id) ? prev.filter((v) => v !== id) : [...prev, id],
     );
-  };
+  }, []);
 
-  const closeForMobile = () => {
-    if (typeof window !== "undefined" && window.innerWidth <= 720) {
+  const closeForMobile = useCallback(() => {
+    if (isMobile) {
       setIsOpen(false);
       setOpenAccordions([]);
     }
-  };
+  }, [isMobile]);
 
   return (
     <SidebarStateContext.Provider
       value={{
+        isMobile,
         isOpen,
         openAccordions,
         toggle,

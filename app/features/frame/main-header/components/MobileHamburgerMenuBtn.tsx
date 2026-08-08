@@ -3,7 +3,7 @@ import { Menu } from "lucide-react";
 import { useSidebarState } from "~/hooks/useSidebarState";
 
 export function MobileHamburgerMenuBtn() {
-  const { toggle } = useSidebarState();
+  const { isOpen, toggle } = useSidebarState();
 
   return (
     <button
@@ -11,10 +11,12 @@ export function MobileHamburgerMenuBtn() {
       className={cn(
         "flex aspect-square h-full items-center justify-center rounded-lg border transition md:hidden",
         "border-border-base text-text-muted bg-transparent",
-        "hover:border-border-strong hover:bg-surface-hover hover:text-text-base"
+        "hover:border-border-strong hover:bg-surface-hover hover:text-text-base",
       )}
       onClick={toggle}
       aria-label="Toggle navigation"
+      aria-expanded={isOpen}
+      aria-controls="app-sidebar"
     >
       <Menu size={17} strokeWidth={1.8} />
     </button>

@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 
 import { useSidebarState } from "~/hooks/useSidebarState";
+import { cn } from "~/lib/cn";
 
 import { SidebarFooter } from "~/features/frame/sidebar/components/SidebarFooter";
 import { AppSidebar } from "~/features/frame/sidebar/components/AppSidebar";
@@ -13,8 +14,21 @@ import {
 } from "~/features/frame/sidebar/styles/sidebar-styles";
 
 function SidebarContent() {
-  const { isOpen } = useSidebarState();
+  const { isMobile, isOpen, closeForMobile } = useSidebarState();
   const { isExpanded, setHovering } = useSidebarUI();
+
+  useEffect(() => {
+    if (!isMobile || !isOpen) return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        closeForMobile();
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [closeForMobile, isMobile, isOpen]);
 
   useEffect(() => {
     return () => {
@@ -23,19 +37,40 @@ function SidebarContent() {
   }, [setHovering]);
 
   return (
-    <div className={sidebarPlaceholderStyle({ isOpen })}>
-      <div className={sidebarContainerStyle({ isExpanded })}>
+    <>
+      <button
+        type="button"
+        aria-label="Close navigation"
+        className={cn(
+          "fixed inset-0 z-40 bg-slate-950/25 transition-opacity md:hidden",
+          isMobile && isOpen
+            ? "pointer-events-auto opacity-100"
+            : "pointer-events-none opacity-0",
+        )}
+        onClick={closeForMobile}
+      />
+
+      <div className={cn(sidebarPlaceholderStyle({ isOpen }), "max-md:w-0")}>
         <div
-          className="sidebar-hover-area flex flex-1 flex-col overflow-hidden"
-          onMouseEnter={() => setHovering(true)}
-          onMouseLeave={() => setHovering(false)}
+          id="app-sidebar"
+          className={cn(
+            sidebarContainerStyle({ isExpanded }),
+            "max-md:fixed max-md:inset-y-0 max-md:left-0 max-md:z-100 max-md:w-72 max-md:transition-transform",
+            isOpen ? "max-md:translate-x-0" : "max-md:-translate-x-full",
+          )}
         >
-          <SidebarHeader />
-          <AppSidebar />
+          <div
+            className="sidebar-hover-area flex flex-1 flex-col overflow-hidden"
+            onMouseEnter={() => setHovering(true)}
+            onMouseLeave={() => setHovering(false)}
+          >
+            <SidebarHeader />
+            <AppSidebar />
+          </div>
+          <SidebarFooter />
         </div>
-        <SidebarFooter />
       </div>
-    </div>
+    </>
   );
 }
 
