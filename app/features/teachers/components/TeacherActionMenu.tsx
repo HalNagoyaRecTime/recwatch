@@ -32,7 +32,7 @@ export function TeacherActionMenu({ teacher }: TeacherActionMenuProps) {
             {
               icon: Pencil,
               id: "edit",
-              label: "教官情報を編集",
+              label: "編集",
               onClick: () =>
                 navigate({
                   pathname: `/teachers/${teacher.teacherId}/edit`,
