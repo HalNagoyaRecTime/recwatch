@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { useNavigate } from "react-router";
+import { useLocation, useNavigate } from "react-router";
 
 import { TeacherApi } from "~/features/teachers/api";
 import { TeacherForm } from "~/features/teachers/components/TeacherForm";
+import { TeacherFormModal } from "~/features/teachers/components/TeacherFormModal";
 import type {
   ClassRoomOption,
   TeacherRow,
@@ -15,20 +16,23 @@ type TeacherEditPageProps = {
 
 export function TeacherEditPage({ classRooms, teacher }: TeacherEditPageProps) {
   const navigate = useNavigate();
+  const location = useLocation();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
-  async function handleSubmit(input: {
-    classRoomIds: number[];
-    isLiveActive: boolean;
-    userName: string;
-  }) {
+  async function handleSubmit(
+    input: {
+      classRoomIds: number[];
+      userName: string;
+    },
+    requestClose: () => void
+  ) {
     setIsSubmitting(true);
     setSubmitError(null);
 
     try {
       await TeacherApi.updateTeacher(teacher.teacherId, input);
-      navigate("/teachers");
+      requestClose();
     } catch (error) {
       setSubmitError(
         error instanceof Error
@@ -39,22 +43,26 @@ export function TeacherEditPage({ classRooms, teacher }: TeacherEditPageProps) {
     }
   }
 
+  function handleClose() {
+    navigate({ pathname: "/teachers", search: location.search });
+  }
+
   return (
-    <section className="mx-auto w-full max-w-2xl space-y-5">
-      <div>
-        <h1 className="app-text-title">教官情報を編集</h1>
-        <p className="text-text-muted mt-1 text-sm">
-          teacher_id: {teacher.teacherId}
-        </p>
-      </div>
-      <TeacherForm
-        classRooms={classRooms}
-        initialTeacher={teacher}
-        isSubmitting={isSubmitting}
-        onCancel={() => navigate("/teachers")}
-        onSubmit={handleSubmit}
-        submitError={submitError}
-      />
-    </section>
+    <TeacherFormModal
+      description={`teacher_id: ${teacher.teacherId}`}
+      onClose={handleClose}
+      title="教官情報を編集"
+    >
+      {(requestClose) => (
+        <TeacherForm
+          classRooms={classRooms}
+          initialTeacher={teacher}
+          isSubmitting={isSubmitting}
+          onCancel={requestClose}
+          onSubmit={(input) => void handleSubmit(input, requestClose)}
+          submitError={submitError}
+        />
+      )}
+    </TeacherFormModal>
   );
 }

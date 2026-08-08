@@ -1,4 +1,4 @@
-import { useLoaderData } from "react-router";
+import { Outlet, useLoaderData } from "react-router";
 import { TeacherApi } from "~/features/teachers/api";
 import { toTeacherRow } from "~/features/teachers/model/teacher";
 import { TeachersPage } from "~/features/teachers/pages/TeachersPage";
@@ -17,10 +17,13 @@ export async function clientLoader() {
 export default function TeachersRoute() {
   const { teachers } = useLoaderData<typeof clientLoader>();
   return (
-    <PageLayout>
-      <PagePadding>
-        <TeachersPage teachers={teachers} />
-      </PagePadding>
-    </PageLayout>
+    <>
+      <PageLayout>
+        <PagePadding>
+          <TeachersPage teachers={teachers} />
+        </PagePadding>
+      </PageLayout>
+      <Outlet />
+    </>
   );
 }

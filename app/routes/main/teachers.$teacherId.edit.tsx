@@ -2,8 +2,6 @@ import { useLoaderData } from "react-router";
 import { ClassRoomApi, TeacherApi } from "~/features/teachers/api";
 import { toTeacherRow } from "~/features/teachers/model/teacher";
 import { TeacherEditPage } from "~/features/teachers/pages/TeacherEditPage";
-import { PagePadding } from "~/features/frame/page-layout/PagePadding";
-import { PageLayout } from "~/features/frame/page-layout/PageLayout";
 
 export function meta() {
   return [{ title: "クラス割り当て | recwatch" }];
@@ -36,11 +34,5 @@ export async function clientLoader({
 export default function TeacherEditRoute() {
   const { teacher, classRooms } = useLoaderData<typeof clientLoader>();
 
-  return (
-    <PageLayout>
-      <PagePadding>
-        <TeacherEditPage teacher={teacher} classRooms={classRooms} />
-      </PagePadding>
-    </PageLayout>
-  );
+  return <TeacherEditPage teacher={teacher} classRooms={classRooms} />;
 }

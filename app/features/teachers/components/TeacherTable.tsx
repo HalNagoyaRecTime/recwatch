@@ -5,21 +5,34 @@ import type { TeacherRow } from "~/features/teachers/model/teacher";
 
 type TeacherTableProps = {
   items: readonly TeacherRow[];
+  onSortChange: (columnId: string) => void;
+  sort: { columnId: string; direction: "asc" | "desc" };
 };
 
-export function TeacherTable({ items }: TeacherTableProps) {
+export function TeacherTable({ items, onSortChange, sort }: TeacherTableProps) {
   const columns: readonly DataTableColumn<TeacherRow>[] = [
     {
       header: "ID",
       id: "teacher-id",
-      width: { type: "fixed", value: 120 },
+      sortable: true,
+      width: { type: "fixed", value: 72 },
       renderCell: (teacher) => String(teacher.teacherId),
     },
     {
-      header: "先生名",
+      header: "教官名",
       id: "display-name",
-      width: { type: "fluid", min: 180, grow: 1 },
+      sortable: true,
+      width: { type: "fluid", min: 110, grow: 1, resizable: true },
       renderCell: (teacher) => teacher.displayName,
+    },
+    {
+      header: "担当クラス",
+      id: "class-rooms",
+      sortable: true,
+      width: { type: "fluid", min: 220, grow: 1, resizable: true },
+      renderCell: (teacher) =>
+        teacher.classRooms.map((classRoom) => classRoom.className).join("、") ||
+        "—",
     },
     {
       align: "center",
@@ -38,6 +51,8 @@ export function TeacherTable({ items }: TeacherTableProps) {
       emptyMessage="該当する教官が見つかりません。"
       getRowKey={(teacher) => teacher.teacherId}
       items={items}
+      onSortChange={onSortChange}
+      sort={sort}
     />
   );
 }

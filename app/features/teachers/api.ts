@@ -23,11 +23,13 @@ export type TeacherPageDTO = {
 
 export type TeacherUpdateRequest = {
   userName: string;
-  isLiveActive: boolean;
   classRoomIds: number[];
 };
 
-export type TeacherCreateRequest = TeacherUpdateRequest;
+export type TeacherCreateRequest = {
+  userName: string;
+  classRoomIds: number[];
+};
 
 export type ClassRoomDTO = {
   class_room_id: number;

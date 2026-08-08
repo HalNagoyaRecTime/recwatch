@@ -1,5 +1,5 @@
 import { Ellipsis, Pencil } from "lucide-react";
-import { useNavigate } from "react-router";
+import { useLocation, useNavigate } from "react-router";
 
 import { Button } from "~/components/ui/button/Button";
 import { Menu } from "~/components/ui/navigation/Menu";
@@ -12,6 +12,7 @@ type TeacherActionMenuProps = {
 
 export function TeacherActionMenu({ teacher }: TeacherActionMenuProps) {
   const navigate = useNavigate();
+  const location = useLocation();
 
   return (
     <FloatingPanel
@@ -32,7 +33,11 @@ export function TeacherActionMenu({ teacher }: TeacherActionMenuProps) {
               icon: Pencil,
               id: "edit",
               label: "教官情報を編集",
-              onClick: () => navigate(`/teachers/${teacher.teacherId}/edit`),
+              onClick: () =>
+                navigate({
+                  pathname: `/teachers/${teacher.teacherId}/edit`,
+                  search: location.search,
+                }),
               type: "action",
             },
           ]}
