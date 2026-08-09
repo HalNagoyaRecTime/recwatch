@@ -8,6 +8,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "lint": "eslint .",
+    "check": "npm run format:check && npm run lint && npm run typecheck",
     "prepare": "husky",
     "preview": "vite preview --host 0.0.0.0",
     "test": "vitest run",

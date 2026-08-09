@@ -121,8 +121,8 @@ npm run format
 
 `npm install` の `prepare` スクリプトで Husky を初期化する。
 
-- `pre-commit`: 変更ファイルのPrettier/ESLint（`lint-staged`）と軽量型チェック
-- `pre-push`: `npm run typecheck`、`npm test`、`npm run build`
+- `pre-commit`: 変更ファイルのPrettier/ESLint（`lint-staged`）
+- `pre-push`: `npm run check`、`npm test`、`npm run build`
 - リモートブランチ削除だけの push では `pre-push` の検査をスキップする
 
 フックを手動で再設定する場合は `npm run prepare` を実行する。
