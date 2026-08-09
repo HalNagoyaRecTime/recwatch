@@ -1,31 +1,36 @@
 import { apiClient } from "~/lib/api-client";
 
-export type ClassRoomTeacherDTO = {
-  teacher_id: number;
-  user_id: number;
-  display_name: string;
-};
-
-export type ClassRoomDTO = {
+export type classRoomDTO = {
   class_room_id: number;
   class_code: string;
   class_name: string;
   student_count: number;
-  teacher: ClassRoomTeacherDTO | null;
 };
 
-export type ClassRoomPageDTO = {
-  classrooms: ClassRoomDTO[];
+export type classRoomPageDTO = {
+  classrooms: classRoomDTO[];
   total: number;
   limit: number;
   offset: number;
 };
 
-const CLASSROOM_LIST_LIMIT = 100;
+const PAGE_LIMIT = 100;
 
 export const ClassRoomApi = {
-  getClassRooms: (offset = 0) =>
-    apiClient.get<ClassRoomPageDTO>(
-      `/api/v1/classrooms?limit=${CLASSROOM_LIST_LIMIT}&offset=${offset}`
-    ),
+  async getAllClassRooms(): Promise<classRoomDTO[]> {
+    const classrooms: classRoomDTO[] = [];
+    let offset = 0;
+
+    while (true) {
+      const page = await apiClient.get<classRoomPageDTO>(
+        `/api/v1/classrooms?limit=${PAGE_LIMIT}&offset=${offset}`
+      );
+      classrooms.push(...page.classrooms);
+      offset += page.classrooms.length;
+
+      if (page.classrooms.length === 0 || offset >= page.total) break;
+    }
+
+    return classrooms;
+  },
 };

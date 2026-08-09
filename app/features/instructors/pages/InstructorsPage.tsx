@@ -1,7 +1,8 @@
-import { MoreHorizontal, Search, Upload } from "lucide-react";
+import { MoreHorizontal, Search } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Link } from "react-router";
 import type { TeacherRow } from "~/features/instructors/model/teacher";
+import { ImportUploadTrigger } from "~/features/master-import/components/ImportUploadTrigger";
 
 export function InstructorsPage({ teachers }: { teachers: TeacherRow[] }) {
   const [query, setQuery] = useState("");
@@ -27,17 +28,11 @@ export function InstructorsPage({ teachers }: { teachers: TeacherRow[] }) {
       <p className="mt-1 text-xs text-black/40">
         学生・クラス・教官の基本情報を管理します
       </p>
-      <div className="mt-5 flex flex-wrap items-center gap-2">
-        <button
-          type="button"
-          className="flex items-center gap-2 rounded-[10px] border border-[#d2d2d2] bg-white px-4 py-2 text-sm"
-        >
-          <Upload className="size-4" />
-          CSV / Excel を取り込む
-        </button>
-        <span className="text-xs text-black/40">
-          取り込み前にプレビューで内容・データ種別を確認できます
-        </span>
+      <div className="mt-5">
+        <ImportUploadTrigger
+          type="teachers"
+          helperText="取り込み前にプレビューで内容・データ種別を確認できます"
+        />
       </div>
       <div className="mt-4 flex gap-2">
         <Link
@@ -62,7 +57,7 @@ export function InstructorsPage({ teachers }: { teachers: TeacherRow[] }) {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           className="min-w-0 flex-1 outline-none"
-          placeholder="クラス名・担任で検索..."
+          placeholder="氏名・クラス名で検索..."
         />
       </label>
       <div className="mt-4 overflow-x-auto rounded-[14px] border border-[#d2d2d2] bg-white">

@@ -17,8 +17,9 @@ export type TeacherDTO = {
 export type TeacherPageDTO = {
   items: TeacherDTO[];
   total: number;
+  page: number;
   limit: number;
-  offset: number;
+  total_pages: number;
 };
 
 export type TeacherUpdateRequest = {
@@ -42,14 +43,27 @@ export type ClassRoomPageDTO = {
   offset: number;
 };
 
-const ALL_TEACHERS_LIMIT = 100;
-const ALL_CLASSROOMS_LIMIT = 100;
+const PAGE_LIMIT = 100;
 
 export const TeacherApi = {
-  getTeachers: () =>
-    apiClient.get<TeacherPageDTO>(
-      `/api/v1/teachers?limit=${ALL_TEACHERS_LIMIT}`
-    ),
+  async getTeachers(): Promise<TeacherPageDTO> {
+    const items: TeacherDTO[] = [];
+    let page = 1;
+    let total = 0;
+
+    while (true) {
+      const result = await apiClient.get<TeacherPageDTO>(
+        `/api/v1/teachers?limit=${PAGE_LIMIT}&page=${page}`
+      );
+      items.push(...result.items);
+      total = result.total;
+
+      if (result.items.length === 0 || page >= result.total_pages) break;
+      page += 1;
+    }
+
+    return { items, total, page: 1, limit: items.length, total_pages: 1 };
+  },
   getTeacherById: (teacherId: number) =>
     apiClient.get<TeacherDTO>(`/api/v1/teachers/${teacherId}`),
   updateTeacher: (teacherId: number, body: TeacherUpdateRequest) =>
@@ -57,8 +71,22 @@ export const TeacherApi = {
 };
 
 export const ClassRoomApi = {
-  getClassRooms: () =>
-    apiClient.get<ClassRoomPageDTO>(
-      `/api/v1/classrooms?limit=${ALL_CLASSROOMS_LIMIT}`
-    ),
+  async getClassRooms(): Promise<ClassRoomPageDTO> {
+    const classrooms: ClassRoomDTO[] = [];
+    let offset = 0;
+    let total = 0;
+
+    while (true) {
+      const result = await apiClient.get<ClassRoomPageDTO>(
+        `/api/v1/classrooms?limit=${PAGE_LIMIT}&offset=${offset}`
+      );
+      classrooms.push(...result.classrooms);
+      total = result.total;
+      offset += result.classrooms.length;
+
+      if (result.classrooms.length === 0 || offset >= total) break;
+    }
+
+    return { classrooms, total, limit: classrooms.length, offset: 0 };
+  },
 };

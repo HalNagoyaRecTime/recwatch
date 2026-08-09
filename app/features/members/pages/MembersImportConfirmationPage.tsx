@@ -1,61 +1,209 @@
-import { Check } from "lucide-react";
-import { Link } from "react-router";
+import { AlertTriangle, Check, Loader2 } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { Link, useSearchParams } from "react-router";
+import {
+  masterImportApi,
+  type MasterImportSessionDTO,
+} from "~/features/master-import/api";
+import {
+  MASTER_IMPORT_COLUMN_LABEL,
+  MASTER_IMPORT_ERROR_REASON_LABEL,
+  MASTER_IMPORT_LIST_PATH,
+  MASTER_IMPORT_TYPE_LABEL,
+} from "~/features/master-import/constants";
 
-const importedStudents = [
-  ["0001", "IA00B001", "01", "近藤 良助", "クラスA"],
-  ["0002", "IA00B002", "02", "山口 穂香", "クラスB"],
-  ["0003", "IA00B003", "03", "佐々木 瑞樹", "クラスC"],
-  ["0004", "IA00B004", "04", "田中 花音", "クラスD"],
-  ["0005", "IA00B005", "05", "鈴木 大輝", "クラスE"],
-  ["0006", "IA00B006", "06", "伊藤 咲良", "クラスA"],
-  ["0007", "IA00B007", "07", "渡辺 陽太", "クラスB"],
-  ["0008", "IA00B008", "08", "高橋 美玲", "クラスC"],
-  ["0009", "IA00B009", "09", "小林 蓮", "クラスD"],
-  ["0010", "IA00B010", "10", "加藤 結衣", "クラスE"],
-] as const;
+const PAGE_SIZE = 25;
 
 export function MembersImportConfirmationPage() {
+  const [searchParams] = useSearchParams();
+  const importId = searchParams.get("importId");
+
+  const [session, setSession] = useState<MasterImportSessionDTO | null>(null);
+  const [offset, setOffset] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [isCommitting, setIsCommitting] = useState(false);
+  const [commitError, setCommitError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!importId) {
+      setIsLoading(false);
+      return;
+    }
+
+    let isCurrent = true;
+    setIsLoading(true);
+    setLoadError(null);
+
+    masterImportApi
+      .get(importId, { offset, limit: PAGE_SIZE })
+      .then((result) => {
+        if (!isCurrent) return;
+        setSession(result);
+      })
+      .catch((error: unknown) => {
+        if (!isCurrent) return;
+        setLoadError(
+          error instanceof Error
+            ? error.message
+            : "取り込み内容の取得に失敗しました。"
+        );
+      })
+      .finally(() => {
+        if (isCurrent) setIsLoading(false);
+      });
+
+    return () => {
+      isCurrent = false;
+    };
+  }, [importId, offset]);
+
+  const columns = useMemo(() => {
+    const firstRow = session?.rows[0];
+    return firstRow ? Object.keys(firstRow) : [];
+  }, [session]);
+
+  const listPath = session ? MASTER_IMPORT_LIST_PATH[session.type] : "/members";
+
+  async function handleCommit() {
+    if (!importId) return;
+    setIsCommitting(true);
+    setCommitError(null);
+    try {
+      const result = await masterImportApi.commit(importId);
+      setSession(result);
+    } catch (error) {
+      setCommitError(
+        error instanceof Error ? error.message : "登録に失敗しました。"
+      );
+    } finally {
+      setIsCommitting(false);
+    }
+  }
+
+  if (!importId) {
+    return (
+      <div className="min-h-full bg-[#f7faff] p-1 text-[#0a0a0a]">
+        <p className="text-sm text-black/60">
+          取り込み対象が指定されていません。
+        </p>
+        <Link
+          to="/members"
+          className="mt-4 inline-block rounded-[10px] border border-[#d2d2d2] bg-white px-5 py-2 text-sm"
+        >
+          戻る
+        </Link>
+      </div>
+    );
+  }
+
+  if (isLoading && !session) {
+    return (
+      <div className="flex min-h-full items-center justify-center bg-[#f7faff] p-1">
+        <Loader2 className="size-6 animate-spin text-black/40" />
+      </div>
+    );
+  }
+
+  if (loadError && !session) {
+    return (
+      <div className="min-h-full bg-[#f7faff] p-1 text-[#0a0a0a]">
+        <p className="text-sm text-red-600">{loadError}</p>
+        <Link
+          to="/members"
+          className="mt-4 inline-block rounded-[10px] border border-[#d2d2d2] bg-white px-5 py-2 text-sm"
+        >
+          戻る
+        </Link>
+      </div>
+    );
+  }
+
+  if (!session) return null;
+
+  const isCommitted = session.status === "committed";
+  const hasErrors = session.error_count > 0;
+  const rangeStart = session.rows_total === 0 ? 0 : session.rows_offset + 1;
+  const rangeEnd = Math.min(
+    session.rows_offset + session.rows_limit,
+    session.rows_total
+  );
+
   return (
     <div className="min-h-full bg-[#f7faff] p-1 text-[#0a0a0a]">
-      <h1 className="text-[17px] font-bold">取り込み確認</h1>
+      <h1 className="text-[17px] font-bold">
+        {isCommitted ? "取り込み完了" : "取り込み確認"}
+      </h1>
       <p className="mt-1 text-xs text-black/40">
-        以下の内容を登録します。問題なければ「登録する」を押してください。
+        {isCommitted
+          ? "登録が完了しました。"
+          : "以下の内容を登録します。問題なければ「登録する」を押してください。"}
       </p>
       <div className="mt-4 flex h-16 w-40 flex-col items-center justify-center rounded-[14px] border border-[#d2d2d2] bg-white">
         <span className="text-xs text-black/40">取り込み件数</span>
-        <strong className="mt-1 text-xl">2,000件</strong>
+        <strong className="mt-1 text-xl">
+          {session.total.toLocaleString()}件
+        </strong>
       </div>
       <div className="mt-5 flex flex-wrap items-center gap-3 text-sm">
         <span>
-          ファイル：<strong>students_2025_fixed.csv</strong>
+          ファイル：<strong>{session.file_name}</strong>
         </span>
         <span className="rounded-full bg-[#eff6ff] px-2 py-1 text-xs text-[#1447e6]">
-          データ種別：学生
+          データ種別：{MASTER_IMPORT_TYPE_LABEL[session.type]}
         </span>
       </div>
+
+      {hasErrors && (
+        <div className="mt-4 rounded-[14px] border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+          <div className="flex items-center gap-2 font-bold">
+            <AlertTriangle className="size-4" />
+            {session.error_count}
+            件のエラーがあります。修正したファイルを再度取り込んでください。
+          </div>
+          <ul className="mt-2 max-h-60 list-disc space-y-1 overflow-y-auto pl-5 text-xs">
+            {session.errors.map((error, index) => (
+              <li key={index}>
+                {error.row_index + 1}行目：
+                {MASTER_IMPORT_ERROR_REASON_LABEL[error.reason] ?? error.reason}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {commitError && (
+        <p className="mt-4 text-sm text-red-600">{commitError}</p>
+      )}
+
+      {isCommitted && session.committed_result && (
+        <p className="mt-4 text-sm text-[#0070bb]">
+          {session.committed_result.imported.toLocaleString()}
+          件を登録しました。
+        </p>
+      )}
+
       <div className="mt-4 overflow-hidden rounded-[14px] border border-[#d2d2d2] bg-white">
         <div className="max-h-[330px] overflow-y-auto">
           <table className="w-full border-collapse text-left text-sm">
             <thead className="sticky top-0 bg-[#f9fafb] text-[11px] text-black/50">
               <tr>
-                {["通し番号", "学籍番号", "出席番号", "氏名", "クラス"].map(
-                  (h) => (
-                    <th key={h} className="border-b border-[#d2d2d2] px-4 py-2">
-                      {h}
-                    </th>
-                  )
-                )}
+                {columns.map((key) => (
+                  <th key={key} className="border-b border-[#d2d2d2] px-4 py-2">
+                    {MASTER_IMPORT_COLUMN_LABEL[key] ?? key}
+                  </th>
+                ))}
               </tr>
             </thead>
             <tbody>
-              {importedStudents.map((row) => (
+              {session.rows.map((row, index) => (
                 <tr
-                  key={row[0]}
+                  key={session.rows_offset + index}
                   className="border-b border-[#d2d2d2] even:bg-[#fafbfd]"
                 >
-                  {row.map((cell) => (
-                    <td key={cell} className="px-4 py-2">
-                      {cell}
+                  {columns.map((key) => (
+                    <td key={key} className="px-4 py-2">
+                      {String(row[key])}
                     </td>
                   ))}
                 </tr>
@@ -64,48 +212,52 @@ export function MembersImportConfirmationPage() {
           </table>
         </div>
         <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[#d2d2d2] px-4 py-3 text-xs text-black/50">
-          <span>2,000件中 1〜25件を表示</span>
+          <span>
+            {session.rows_total.toLocaleString()}件中 {rangeStart}〜{rangeEnd}
+            件を表示
+          </span>
           <div className="flex gap-1">
             <button
               type="button"
-              disabled
-              className="rounded border px-2 py-1 opacity-30"
+              disabled={offset === 0 || isLoading}
+              onClick={() => setOffset(Math.max(0, offset - PAGE_SIZE))}
+              className="rounded border px-2 py-1 disabled:opacity-30"
             >
-              ‹
+              ‹ 前へ
             </button>
-            {[1, 2, 3, 4].map((n) => (
-              <button
-                type="button"
-                key={n}
-                className={`rounded border px-2 py-1 ${n === 1 ? "border-[#0070bb] bg-[#0070bb] text-white" : "bg-white"}`}
-              >
-                {n}
-              </button>
-            ))}
-            <span className="px-2 py-1">…</span>
-            <button type="button" className="rounded border bg-white px-2 py-1">
-              40
-            </button>
-            <button type="button" className="rounded border bg-white px-2 py-1">
-              ›
+            <button
+              type="button"
+              disabled={rangeEnd >= session.rows_total || isLoading}
+              onClick={() => setOffset(offset + PAGE_SIZE)}
+              className="rounded border bg-white px-2 py-1 disabled:opacity-30"
+            >
+              次へ ›
             </button>
           </div>
         </div>
       </div>
       <div className="mt-4 flex gap-3">
         <Link
-          to="/members"
+          to={listPath}
           className="rounded-[10px] border border-[#d2d2d2] bg-white px-5 py-2 text-sm"
         >
-          戻る
+          {isCommitted ? "一覧に戻る" : "戻る"}
         </Link>
-        <button
-          type="button"
-          className="flex items-center gap-2 rounded-[10px] bg-[#0070bb] px-5 py-2 text-sm text-white"
-        >
-          <Check className="size-4" />
-          登録する（2,000件）
-        </button>
+        {!isCommitted && (
+          <button
+            type="button"
+            disabled={hasErrors || isCommitting}
+            onClick={() => void handleCommit()}
+            className="flex items-center gap-2 rounded-[10px] bg-[#0070bb] px-5 py-2 text-sm text-white disabled:opacity-50"
+          >
+            {isCommitting ? (
+              <Loader2 className="size-4 animate-spin" />
+            ) : (
+              <Check className="size-4" />
+            )}
+            登録する（{session.total.toLocaleString()}件）
+          </button>
+        )}
       </div>
     </div>
   );

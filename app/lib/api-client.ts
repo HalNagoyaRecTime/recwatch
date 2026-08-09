@@ -93,6 +93,8 @@ export const apiClient = {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
     }),
+  postForm: <T>(path: string, body: FormData) =>
+    request<T>(path, { method: "POST", body }),
   delete: (path: string) =>
     request<void>(path, {
       method: "DELETE",
