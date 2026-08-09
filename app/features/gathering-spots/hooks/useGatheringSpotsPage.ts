@@ -2,7 +2,12 @@ import { useMemo, useState } from "react";
 
 import type { GatheringSpotGateway } from "~/features/gathering-spots/api/contracts/gathering-spot-gateway";
 import { useGatheringSpots } from "~/features/gathering-spots/hooks/useGatheringSpots";
-import type { GatheringSpot } from "~/features/gathering-spots/model/gathering-spot";
+import {
+  getNextGatheringSpotSort,
+  isGatheringSpotSortableColumnId,
+  type GatheringSpot,
+  type GatheringSpotSort,
+} from "~/features/gathering-spots/model/gathering-spot";
 
 type UseGatheringSpotsPageOptions = {
   gateway: GatheringSpotGateway;
@@ -14,6 +19,7 @@ export function useGatheringSpotsPage({
   const { spots, isLoading, loadError, createSpot, updateSpot } =
     useGatheringSpots({ gateway });
   const [query, setQuery] = useState("");
+  const [sort, setSort] = useState<GatheringSpotSort>();
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingSpot, setEditingSpot] = useState<GatheringSpot | null>(null);
   const [spotNameInput, setSpotNameInput] = useState("");
@@ -22,12 +28,31 @@ export function useGatheringSpotsPage({
 
   const filteredSpots = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
-    if (!normalizedQuery) return spots;
+    const filtered = normalizedQuery
+      ? spots.filter((spot) =>
+          spot.name.toLowerCase().includes(normalizedQuery)
+        )
+      : spots;
 
-    return spots.filter((spot) =>
-      spot.name.toLowerCase().includes(normalizedQuery)
-    );
-  }, [query, spots]);
+    if (!sort) return filtered;
+
+    const collator = new Intl.Collator("ja", {
+      numeric: true,
+      sensitivity: "base",
+    });
+
+    return [...filtered].sort((left, right) => {
+      const result =
+        sort.columnId === "id"
+          ? left.id - right.id
+          : sort.columnId === "name"
+            ? collator.compare(left.name, right.name)
+            : sort.columnId === "created-at"
+              ? collator.compare(left.createdAt, right.createdAt)
+              : collator.compare(left.updatedAt, right.updatedAt);
+      return sort.direction === "asc" ? result : -result;
+    });
+  }, [query, sort, spots]);
 
   function openCreateForm() {
     setEditingSpot(null);
@@ -56,6 +81,11 @@ export function useGatheringSpotsPage({
 
   function handleSpotNameChange(name: string) {
     setSpotNameInput(name);
+  }
+
+  function handleSortChange(columnId: string) {
+    if (!isGatheringSpotSortableColumnId(columnId)) return;
+    setSort((current) => getNextGatheringSpotSort(current, columnId));
   }
 
   async function submitForm() {
@@ -91,6 +121,7 @@ export function useGatheringSpotsPage({
     editingSpot,
     filteredSpots,
     handleQueryChange,
+    handleSortChange,
     handleSpotNameChange,
     isFormOpen,
     isLoading,
@@ -102,5 +133,6 @@ export function useGatheringSpotsPage({
     spotNameInput,
     submitError,
     submitForm,
+    sort,
   };
 }
