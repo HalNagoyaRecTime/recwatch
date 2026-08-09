@@ -1,20 +1,18 @@
 import { Check, Pencil, Plus, Search, X } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 
-import { apiClient } from "~/lib/api-client";
+import type { GatheringSpotGateway } from "~/features/gathering-spots/api/contracts/gathering-spot-gateway";
+import { useGatheringSpots } from "~/features/gathering-spots/hooks/useGatheringSpots";
+import type { GatheringSpot } from "~/features/gathering-spots/model/gathering-spot";
 
-type GatheringSpot = {
-  gathering_spot_id: number;
-  gathering_spot_name: string;
-  created_at: string;
-  updated_at: string;
+type GatheringSpotsPageProps = {
+  gateway: GatheringSpotGateway;
 };
 
-export function GatheringSpotsPage() {
-  const [spots, setSpots] = useState<GatheringSpot[]>([]);
+export function GatheringSpotsPage({ gateway }: GatheringSpotsPageProps) {
+  const { spots, isLoading, loadError, createSpot, updateSpot } =
+    useGatheringSpots({ gateway });
   const [query, setQuery] = useState("");
-  const [isLoading, setIsLoading] = useState(true);
-  const [loadError, setLoadError] = useState<string | null>(null);
 
   // Form State for Create / Edit
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -23,43 +21,13 @@ export function GatheringSpotsPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
-  useEffect(() => {
-    let isCurrent = true;
-
-    async function load() {
-      try {
-        const spotList = await apiClient.get<GatheringSpot[]>(
-          "/api/v1/gathering-spots"
-        );
-        if (!isCurrent) return;
-
-        setSpots(spotList);
-      } catch (error) {
-        if (isCurrent) {
-          setLoadError(
-            error instanceof Error
-              ? error.message
-              : "集合場所の取得に失敗しました。"
-          );
-        }
-      } finally {
-        if (isCurrent) setIsLoading(false);
-      }
-    }
-
-    void load();
-    return () => {
-      isCurrent = false;
-    };
-  }, []);
-
   const filteredSpots = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
     if (!normalizedQuery) {
       return spots;
     }
     return spots.filter((spot) =>
-      spot.gathering_spot_name.toLowerCase().includes(normalizedQuery)
+      spot.name.toLowerCase().includes(normalizedQuery)
     );
   }, [query, spots]);
 
@@ -72,7 +40,7 @@ export function GatheringSpotsPage() {
 
   function handleOpenEdit(spot: GatheringSpot) {
     setEditingSpot(spot);
-    setSpotNameInput(spot.gathering_spot_name);
+    setSpotNameInput(spot.name);
     setSubmitError(null);
     setIsFormOpen(true);
   }
@@ -96,25 +64,9 @@ export function GatheringSpotsPage() {
 
     try {
       if (editingSpot) {
-        const updated = await apiClient.put<GatheringSpot>(
-          `/api/v1/gathering-spots/${editingSpot.gathering_spot_id}`,
-          { gatheringSpotName: name }
-        );
-
-        setSpots((current) =>
-          current.map((spot) =>
-            spot.gathering_spot_id === updated.gathering_spot_id
-              ? updated
-              : spot
-          )
-        );
+        await updateSpot(editingSpot.id, name);
       } else {
-        const created = await apiClient.post<GatheringSpot>(
-          "/api/v1/gathering-spots",
-          { gatheringSpotName: name }
-        );
-
-        setSpots((current) => [...current, created]);
+        await createSpot(name);
       }
 
       handleCloseForm();
@@ -245,21 +197,19 @@ export function GatheringSpotsPage() {
               ) : (
                 filteredSpots.map((spot) => (
                   <tr
-                    key={spot.gathering_spot_id}
+                    key={spot.id}
                     className="border-b border-[#d2d2d2] last:border-b-0"
                   >
-                    <td className="px-4 py-3">{spot.gathering_spot_id}</td>
-                    <td className="px-4 py-3 font-bold">
-                      {spot.gathering_spot_name}
-                    </td>
+                    <td className="px-4 py-3">{spot.id}</td>
+                    <td className="px-4 py-3 font-bold">{spot.name}</td>
                     <td className="px-4 py-3 text-xs text-black/50">
-                      {spot.created_at || "—"}
+                      {spot.createdAt || "—"}
                     </td>
                     <td className="px-4 py-3">
                       <div className="text-black/45">
                         <button
                           type="button"
-                          aria-label={`${spot.gathering_spot_name}を編集`}
+                          aria-label={`${spot.name}を編集`}
                           onClick={() => handleOpenEdit(spot)}
                         >
                           <Pencil className="size-4 hover:text-[#0070bb]" />

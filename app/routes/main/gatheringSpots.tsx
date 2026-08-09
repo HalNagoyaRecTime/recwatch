@@ -1,3 +1,4 @@
+import { httpGatheringSpotGateway } from "~/features/gathering-spots/api/http/gathering-spot-dependencies";
 import { GatheringSpotsPage } from "~/features/gathering-spots/pages/GatheringSpotsPage";
 import { PagePadding } from "~/features/frame/page-layout/PagePadding";
 import { PageLayout } from "~/features/frame/page-layout/PageLayout";
@@ -10,7 +11,7 @@ export default function GatheringSpotsRoute() {
   return (
     <PageLayout>
       <PagePadding>
-        <GatheringSpotsPage />
+        <GatheringSpotsPage gateway={httpGatheringSpotGateway} />
       </PagePadding>
     </PageLayout>
   );
