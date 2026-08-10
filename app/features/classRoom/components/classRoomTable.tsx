@@ -1,10 +1,10 @@
 import { MoreHorizontal } from "lucide-react";
-import type { ClassRoomData } from "~/features/classRoom/model/classRoom";
+import type { classRoomData } from "~/features/classRoom/model/classRoom";
 
 export function ClassRoomTable({
   classRooms,
 }: {
-  classRooms: ClassRoomData[];
+  classRooms: classRoomData[];
 }) {
   return (
     <div className="mt-4 overflow-x-auto rounded-[14px] border border-[#d2d2d2] bg-white">
@@ -15,7 +15,7 @@ export function ClassRoomTable({
               <span className="sr-only">番号</span>
             </th>
             <th className="border-b border-[#d2d2d2] px-4 py-2">クラス記号</th>
-            <th className="border-b border-[#d2d2d2] px-4 py-2">教官名</th>
+            <th className="border-b border-[#d2d2d2] px-4 py-2">クラス名</th>
             <th className="border-b border-[#d2d2d2] px-4 py-2">学生数</th>
             <th className="border-b border-[#d2d2d2] px-4 py-2">操作</th>
           </tr>
@@ -33,19 +33,17 @@ export function ClassRoomTable({
           ) : (
             classRooms.map((classRoom, index) => (
               <tr
-                key={classRoom.classRoomId}
+                key={classRoom.ClassRoomId}
                 className="border-b border-[#d2d2d2] last:border-b-0"
               >
                 <td className="px-4 py-3">{index + 1}</td>
-                <td className="px-4 py-3">{classRoom.classRoomCode}</td>
-                <td className="px-4 py-3">
-                  {classRoom.teacherName ?? "未設定"}
-                </td>
-                <td className="px-4 py-3">{classRoom.studentCount}名</td>
+                <td className="px-4 py-3">{classRoom.ClassRoomCode}</td>
+                <td className="px-4 py-3">{classRoom.ClassRoomName}</td>
+                <td className="px-4 py-3">{classRoom.StudentCount}名</td>
                 <td className="px-4 py-3">
                   <button
                     type="button"
-                    aria-label={`${classRoom.classRoomName}の詳細・操作`}
+                    aria-label={`${classRoom.ClassRoomName}の詳細・操作`}
                     title="編集・削除は未実装"
                     disabled
                     className="text-black/45 disabled:cursor-not-allowed"

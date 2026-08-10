@@ -1,20 +1,16 @@
-import type { ClassRoomData } from "~/features/classRoom/model/classRoom";
+import type { classRoomData } from "~/features/classRoom/model/classRoom";
 
 export function filterClassRooms(
-  classRooms: ClassRoomData[],
+  classRooms: classRoomData[],
   query: string
-): ClassRoomData[] {
+): classRoomData[] {
   const normalizedQuery = normalizeForSearch(query);
   if (!normalizedQuery) {
     return classRooms;
   }
 
   return classRooms.filter((classRoom) => {
-    const searchableText = [
-      classRoom.classRoomCode,
-      classRoom.classRoomName,
-      classRoom.teacherName ?? "",
-    ]
+    const searchableText = [classRoom.ClassRoomCode, classRoom.ClassRoomName]
       .join(" ")
       .normalize("NFKC")
       .toLowerCase();

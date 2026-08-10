@@ -8,11 +8,6 @@ const firstClassRoom = {
   class_code: "IH12A203",
   class_name: "情報処理学科1年A組",
   student_count: 32,
-  teacher: {
-    teacher_id: 2,
-    user_id: 10,
-    display_name: "佐橋 晴斗",
-  },
 };
 
 const secondClassRoom = {
@@ -20,7 +15,6 @@ const secondClassRoom = {
   class_code: "PI12A203",
   class_name: "高度情報学科1年A組",
   student_count: 25,
-  teacher: null,
 };
 
 describe("getClassRoomData", () => {
@@ -29,62 +23,33 @@ describe("getClassRoomData", () => {
   });
 
   it("全ページを取得して画面用データへ変換する", async () => {
-    const getClassRooms = vi
-      .spyOn(ClassRoomApi, "getClassRooms")
-      .mockResolvedValueOnce({
-        classrooms: [firstClassRoom],
-        total: 2,
-        limit: 1,
-        offset: 0,
-      })
-      .mockResolvedValueOnce({
-        classrooms: [secondClassRoom],
-        total: 2,
-        limit: 1,
-        offset: 1,
-      });
+    const getAllClassRooms = vi
+      .spyOn(ClassRoomApi, "getAllClassRooms")
+      .mockResolvedValue([firstClassRoom, secondClassRoom]);
 
     await expect(getClassRoomData()).resolves.toEqual([
       {
-        classRoomId: 1,
-        classRoomCode: "IH12A203",
-        classRoomName: "情報処理学科1年A組",
-        studentCount: 32,
-        teacherName: "佐橋 晴斗",
+        ClassRoomId: 1,
+        ClassRoomCode: "IH12A203",
+        ClassRoomName: "情報処理学科1年A組",
+        StudentCount: 32,
       },
       {
-        classRoomId: 2,
-        classRoomCode: "PI12A203",
-        classRoomName: "高度情報学科1年A組",
-        studentCount: 25,
-        teacherName: null,
+        ClassRoomId: 2,
+        ClassRoomCode: "PI12A203",
+        ClassRoomName: "高度情報学科1年A組",
+        StudentCount: 25,
       },
     ]);
-    expect(getClassRooms).toHaveBeenNthCalledWith(1, 0);
-    expect(getClassRooms).toHaveBeenNthCalledWith(2, 1);
+    expect(getAllClassRooms).toHaveBeenCalledTimes(1);
   });
 
-  it("空のページが返った場合は追加取得を終了する", async () => {
-    const getClassRooms = vi
-      .spyOn(ClassRoomApi, "getClassRooms")
-      .mockResolvedValue({
-        classrooms: [],
-        total: 1,
-        limit: 100,
-        offset: 0,
-      });
+  it("空の一覧を返す", async () => {
+    const getAllClassRooms = vi
+      .spyOn(ClassRoomApi, "getAllClassRooms")
+      .mockResolvedValue([]);
 
     await expect(getClassRoomData()).resolves.toEqual([]);
-    expect(getClassRooms).toHaveBeenCalledTimes(1);
-  });
-
-  it("ページ形式でないレスポンスをエラーにする", async () => {
-    vi.spyOn(ClassRoomApi, "getClassRooms").mockResolvedValue(
-      [] as unknown as Awaited<ReturnType<typeof ClassRoomApi.getClassRooms>>
-    );
-
-    await expect(getClassRoomData()).rejects.toThrow(
-      "予期しない形式のレスポンス"
-    );
+    expect(getAllClassRooms).toHaveBeenCalledTimes(1);
   });
 });

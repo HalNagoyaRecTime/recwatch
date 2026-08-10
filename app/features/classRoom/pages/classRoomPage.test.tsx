@@ -3,23 +3,21 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
 import { describe, expect, it } from "vitest";
 
-import type { ClassRoomData } from "~/features/classRoom/model/classRoom";
+import type { classRoomData } from "~/features/classRoom/model/classRoom";
 import { ClassRoomPage } from "~/features/classRoom/pages/classRoomPage";
 
-const classRooms: ClassRoomData[] = [
+const classRooms: classRoomData[] = [
   {
-    classRoomId: 1,
-    classRoomCode: "IH12A203",
-    classRoomName: "情報処理学科1年A組",
-    studentCount: 32,
-    teacherName: "佐橋 晴斗",
+    ClassRoomId: 1,
+    ClassRoomCode: "IH12A203",
+    ClassRoomName: "情報処理学科1年A組",
+    StudentCount: 32,
   },
   {
-    classRoomId: 2,
-    classRoomCode: "PI12A203",
-    classRoomName: "高度情報学科1年A組",
-    studentCount: 25,
-    teacherName: null,
+    ClassRoomId: 2,
+    ClassRoomCode: "PI12A203",
+    ClassRoomName: "高度情報学科1年A組",
+    StudentCount: 25,
   },
 ];
 
@@ -32,41 +30,34 @@ function renderPage() {
 }
 
 describe("ClassRoomPage", () => {
-  it("クラス一覧を表示し、担任未設定を区別する", () => {
+  it("クラス一覧を表示する", () => {
     renderPage();
 
     expect(screen.getByText("IH12A203")).toBeInTheDocument();
-    expect(screen.getByText("佐橋 晴斗")).toBeInTheDocument();
     expect(screen.getByText("32名")).toBeInTheDocument();
-    expect(screen.getByText("未設定")).toBeInTheDocument();
+    expect(screen.getByText("情報処理学科1年A組")).toBeInTheDocument();
     expect(
       screen.getByRole("columnheader", { name: "操作" })
     ).toBeInTheDocument();
     expect(
       screen.getByRole("button", {
-        name: "情報処理学科1年A組の詳細・操作",
+        name: "情報処理学科1年A組を編集",
       })
-    ).toBeDisabled();
+    ).toBeInTheDocument();
     expect(
       screen.getByRole("button", {
-        name: "高度情報学科1年A組の詳細・操作",
+        name: "高度情報学科1年A組を編集",
       })
-    ).toBeDisabled();
+    ).toBeInTheDocument();
   });
 
-  it("クラス記号・クラス名・教官名で一覧を絞り込む", async () => {
+  it("クラス名で一覧を絞り込む", async () => {
     const user = userEvent.setup();
     renderPage();
 
     const searchbox = screen.getByRole("searchbox", {
       name: "クラスを検索",
     });
-    await user.type(searchbox, "佐橋");
-
-    expect(screen.getByText("IH12A203")).toBeInTheDocument();
-    expect(screen.queryByText("PI12A203")).not.toBeInTheDocument();
-
-    await user.clear(searchbox);
     await user.type(searchbox, "高度情報");
 
     expect(screen.getByText("PI12A203")).toBeInTheDocument();
@@ -82,8 +73,6 @@ describe("ClassRoomPage", () => {
       "存在しないクラス"
     );
 
-    expect(
-      screen.getByText("該当するクラスが見つかりません。")
-    ).toBeInTheDocument();
+    expect(screen.getByText("クラスが見つかりません")).toBeInTheDocument();
   });
 });

@@ -48,8 +48,10 @@ export function ClassRoomPage({ classRooms }: { classRooms: classRoomData[] }) {
       <label className="mt-4 flex h-[38px] w-full max-w-[240px] items-center gap-2 rounded-[10px] border border-[#d2d2d2] bg-white px-3 text-sm">
         <Search className="size-4 text-black/35" />
         <input
+          type="search"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
+          aria-label="クラスを検索"
           className="min-w-0 flex-1 outline-none"
           placeholder="クラス名・担任で検索..."
         />
