@@ -116,3 +116,13 @@ npm run lint
 # フォーマット
 npm run format
 ```
+
+### Git hooks
+
+`npm install` の `prepare` スクリプトで Husky を初期化する。
+
+- `pre-commit`: 変更ファイルのPrettier/ESLint（`lint-staged`）
+- `pre-push`: `npm run check`、`npm test`、`npm run build`
+- リモートブランチ削除だけの push では `pre-push` の検査をスキップする
+
+フックを手動で再設定する場合は `npm run prepare` を実行する。
