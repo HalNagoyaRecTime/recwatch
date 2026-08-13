@@ -77,6 +77,7 @@ export function NotificationForm({
     (option) => option.type === draft.audienceType
   );
   const requiresAudienceOption = draft.audienceType !== "all";
+  const minimumScheduledAt = getMinimumScheduledAt();
 
   return (
     <form
@@ -266,6 +267,7 @@ export function NotificationForm({
                       scheduledAt: event.currentTarget.value,
                     })
                   }
+                  min={minimumScheduledAt}
                   required
                   type="datetime-local"
                   value={draft.scheduledAt ?? ""}
@@ -317,3 +319,14 @@ export function NotificationForm({
 
 const inputClassName =
   "border-border-base bg-surface-base text-text-base placeholder:text-text-subtle focus:border-border-strong h-9 w-full rounded-md border px-3 text-sm outline-none transition-colors";
+
+function getMinimumScheduledAt() {
+  const minimum = new Date();
+  minimum.setSeconds(0, 0);
+  minimum.setMinutes(minimum.getMinutes() + 1);
+
+  const localMinimum = new Date(
+    minimum.getTime() - minimum.getTimezoneOffset() * 60_000
+  );
+  return localMinimum.toISOString().slice(0, 16);
+}

@@ -1,4 +1,10 @@
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
 import type { ReactElement } from "react";
@@ -41,6 +47,32 @@ async function selectAudience(
 }
 
 describe("NotificationCreatePage", () => {
+  it("過去の予約日時では通知を送信しない", async () => {
+    const submit = vi.fn();
+    const user = userEvent.setup();
+
+    renderPage(
+      <NotificationCreatePage
+        api={{ submit }}
+        audienceApi={createAudienceLoader()}
+      />
+    );
+
+    await user.type(screen.getByLabelText("タイトル*"), "お知らせ");
+    await user.type(screen.getByLabelText("本文*"), "本文です");
+    await user.click(screen.getByRole("button", { name: "予約配信" }));
+    fireEvent.change(screen.getByLabelText("予約配信日時"), {
+      target: { value: "2020-01-01T00:00" },
+    });
+
+    await user.click(screen.getByRole("button", { name: "配信を予約" }));
+
+    expect(
+      screen.getByText("現在より後の日時を指定してください")
+    ).toBeInTheDocument();
+    expect(submit).not.toHaveBeenCalled();
+  });
+
   it("未実装のモバイルプレビュー形式では未実装と表示する", async () => {
     const user = userEvent.setup();
 
