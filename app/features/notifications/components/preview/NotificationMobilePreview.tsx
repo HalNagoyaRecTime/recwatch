@@ -5,11 +5,30 @@ import type { NotificationDraft } from "~/features/notifications/model/notificat
 
 type NotificationMobilePreviewProps = {
   draft: NotificationDraft;
+  mode: NotificationPreviewMode;
 };
+
+export type NotificationPreviewMode =
+  | "lock-screen"
+  | "notification-detail"
+  | "data-display";
 
 export function NotificationMobilePreview({
   draft,
+  mode,
 }: NotificationMobilePreviewProps) {
+  if (mode !== "lock-screen") {
+    return (
+      <div
+        aria-label="モバイルプレビュー（未実装）"
+        role="status"
+        className="text-text-subtle flex aspect-9/20 h-[clamp(18.75rem,calc(100cqh-2.25rem),44.444rem)] w-auto shrink-0 items-center justify-center text-sm"
+      >
+        未実装
+      </div>
+    );
+  }
+
   return (
     <div className="aspect-9/20 h-[clamp(18.75rem,calc(100cqh-2.25rem),44.444rem)] w-auto shrink-0">
       <MobileDeviceFrame>

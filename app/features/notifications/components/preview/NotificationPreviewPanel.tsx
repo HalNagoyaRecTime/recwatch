@@ -2,17 +2,17 @@ import { useState } from "react";
 
 import { SegmentedControl } from "~/components/ui/form/SegmentedControl";
 import { ScrollbarArea } from "~/components/ui/scrollbar/ScrollbarArea";
-import { NotificationMobilePreview } from "~/features/notifications/components/preview/NotificationMobilePreview";
+import {
+  NotificationMobilePreview,
+  type NotificationPreviewMode,
+} from "~/features/notifications/components/preview/NotificationMobilePreview";
 import type { NotificationDraft } from "~/features/notifications/model/notification-draft";
 
 const notificationPreviewOptions = [
   { label: "ロック画面", value: "lock-screen" },
-  { label: "通知詳細", value: "notification-detail" },
-  { label: "データ表示", value: "data-display" },
+  { label: "通知詳細（未実装）", value: "notification-detail" },
+  { label: "データ表示（未実装）", value: "data-display" },
 ] as const;
-
-type NotificationPreviewMode =
-  (typeof notificationPreviewOptions)[number]["value"];
 
 type NotificationPreviewPanelProps = {
   draft: NotificationDraft;
@@ -38,7 +38,7 @@ export function NotificationPreviewPanel({
 
       <ScrollbarArea className="@container-[size]">
         <div className="flex min-h-full justify-center p-4.5">
-          <NotificationMobilePreview draft={draft} />
+          <NotificationMobilePreview draft={draft} mode={previewMode} />
         </div>
       </ScrollbarArea>
 

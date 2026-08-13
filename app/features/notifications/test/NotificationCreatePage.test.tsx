@@ -41,6 +41,29 @@ async function selectAudience(
 }
 
 describe("NotificationCreatePage", () => {
+  it("未実装のモバイルプレビュー形式では未実装と表示する", async () => {
+    const user = userEvent.setup();
+
+    renderPage(
+      <NotificationCreatePage
+        api={{ submit: vi.fn() }}
+        audienceApi={createAudienceLoader()}
+      />
+    );
+
+    await user.click(
+      screen.getByRole("button", { name: "通知詳細（未実装）" })
+    );
+    expect(
+      screen.getByRole("status", { name: "モバイルプレビュー（未実装）" })
+    ).toHaveTextContent("未実装");
+
+    await user.click(screen.getByRole("button", { name: "ロック画面" }));
+    expect(
+      screen.queryByRole("status", { name: "モバイルプレビュー（未実装）" })
+    ).not.toBeInTheDocument();
+  });
+
   it("API未接続時は送信操作と成功表示を無効にする", async () => {
     const submit = vi.fn();
 
