@@ -1,7 +1,7 @@
 import { Trash2Icon } from "lucide-react";
 
-import type { ManagedNotification } from "../model/managed-notification";
-import { canModifyNotification } from "../model/managed-notification";
+import type { ManagedNotification } from "~/features/notifications/model/notification";
+import { canModifyNotification } from "~/features/notifications/model/notification";
 import { NotificationStatusBadge } from "./NotificationStatusBadge";
 
 type NotificationManagementTableProps = {

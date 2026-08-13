@@ -1,7 +1,7 @@
 import { AlertTriangleIcon } from "lucide-react";
 import { useEffect } from "react";
 
-import type { ManagedNotification } from "../model/managed-notification";
+import type { ManagedNotification } from "~/features/notifications/model/notification";
 
 type DeleteNotificationDialogProps = {
   notification: ManagedNotification;

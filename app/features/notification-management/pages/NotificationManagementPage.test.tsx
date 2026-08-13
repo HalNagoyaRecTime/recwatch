@@ -2,9 +2,9 @@ import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import type { AdminNotificationManagementGateway } from "../application/admin-notification-management-gateway";
-import { NotificationManagementError } from "../application/notification-management-error";
-import type { ManagedNotification } from "../model/managed-notification";
+import type { NotificationManagementApi } from "~/features/notifications/api/contracts/notification-management-api";
+import { NotificationManagementError } from "~/features/notifications/api/contracts/errors/notification-management-error";
+import type { ManagedNotification } from "~/features/notifications/model/notification";
 import { NotificationManagementPage } from "./NotificationManagementPage";
 
 afterEach(cleanup);
@@ -32,8 +32,8 @@ const draftNotification: ManagedNotification = {
 };
 
 function createGateway(
-  overrides: Partial<AdminNotificationManagementGateway> = {}
-): AdminNotificationManagementGateway {
+  overrides: Partial<NotificationManagementApi> = {}
+): NotificationManagementApi {
   return {
     list: vi.fn().mockResolvedValue({
       notifications: [draftNotification],
@@ -77,7 +77,7 @@ describe("NotificationManagementPage", () => {
       });
     const user = userEvent.setup();
 
-    render(<NotificationManagementPage gateway={createGateway({ list })} />);
+    render(<NotificationManagementPage api={createGateway({ list })} />);
 
     await user.click(
       await screen.findByRole("button", { name: "さらに読み込む" })
@@ -97,7 +97,7 @@ describe("NotificationManagementPage", () => {
   ] as const)("一覧取得時の%sエラーを表示する", async (kind, message) => {
     render(
       <NotificationManagementPage
-        gateway={createGateway({
+        api={createGateway({
           list: vi
             .fn()
             .mockRejectedValue(new NotificationManagementError(kind)),
@@ -134,7 +134,7 @@ describe("NotificationManagementPage", () => {
       .mockReturnValueOnce(nextPage);
     const user = userEvent.setup();
 
-    render(<NotificationManagementPage gateway={createGateway({ list })} />);
+    render(<NotificationManagementPage api={createGateway({ list })} />);
 
     await user.click(
       await screen.findByRole("button", { name: "さらに読み込む" })
@@ -162,7 +162,7 @@ describe("NotificationManagementPage", () => {
 
     render(
       <NotificationManagementPage
-        gateway={createGateway({ delete: deleteNotification })}
+        api={createGateway({ delete: deleteNotification })}
       />
     );
 
@@ -208,7 +208,7 @@ describe("NotificationManagementPage", () => {
 
     render(
       <NotificationManagementPage
-        gateway={createGateway({
+        api={createGateway({
           list,
           delete: vi
             .fn()

@@ -1,6 +1,6 @@
 import { NotificationCreatePage } from "~/features/notifications/pages/NotificationCreatePage";
-import { httpNotificationAudienceLoader } from "~/features/notifications/infrastructure/http-notification-audience-loader";
-import { httpNotificationSubmitter } from "~/features/notifications/infrastructure/http-notification-submitter";
+import { httpNotificationAudienceApi } from "~/features/notifications/api/http/notification-audience-api";
+import { httpNotificationSubmissionApi } from "~/features/notifications/api/http/notification-submission-api";
 
 export function meta() {
   return [{ title: "通知作成 | REC TIME" }];
@@ -9,8 +9,8 @@ export function meta() {
 export default function NotificationsNewRoute() {
   return (
     <NotificationCreatePage
-      submitter={httpNotificationSubmitter}
-      audienceLoader={httpNotificationAudienceLoader}
+      api={httpNotificationSubmissionApi}
+      audienceApi={httpNotificationAudienceApi}
     />
   );
 }
