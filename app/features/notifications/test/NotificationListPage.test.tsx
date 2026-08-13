@@ -73,6 +73,39 @@ async function openDeleteMenu(user: ReturnType<typeof userEvent.setup>) {
 }
 
 describe("NotificationListPage", () => {
+  it("カレンダー・グリッド表示では一覧を隠して未実装を表示する", async () => {
+    const user = userEvent.setup();
+
+    renderPage(<NotificationListPage api={createGateway()} />);
+
+    await user.click(
+      await screen.findByRole("button", { name: "カレンダー表示" })
+    );
+
+    expect(
+      screen.getByRole("status", { name: "通知の表示形式（未実装）" })
+    ).toHaveTextContent("未実装");
+    expect(
+      screen.queryByRole("table", { name: "通知一覧" })
+    ).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "グリッド表示" }));
+
+    expect(
+      screen.getByRole("status", { name: "通知の表示形式（未実装）" })
+    ).toHaveTextContent("未実装");
+    expect(
+      screen.queryByRole("table", { name: "通知一覧" })
+    ).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "リスト表示" }));
+
+    expect(screen.getByRole("table", { name: "通知一覧" })).toBeInTheDocument();
+    expect(
+      screen.queryByRole("status", { name: "通知の表示形式（未実装）" })
+    ).not.toBeInTheDocument();
+  });
+
   it("ページ移動時にmake-pageのページサイズで次の一覧を取得する", async () => {
     const firstPage = Array.from({ length: 20 }, (_, index) => ({
       ...draftNotification,

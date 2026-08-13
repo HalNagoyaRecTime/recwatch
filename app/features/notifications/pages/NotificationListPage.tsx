@@ -125,23 +125,33 @@ export function NotificationListPage({ api }: NotificationListPageProps) {
           />
         </div>
 
-        <NotificationsTable
-          footer={
-            state.pageCount > 1 ? (
-              <Pagination
-                currentPage={state.currentPage}
-                onPageChange={state.onPageChange}
-                pageCount={state.pageCount}
-                pageSize={notificationListPageSize}
-                totalItems={state.totalItems}
-              />
-            ) : undefined
-          }
-          items={state.items}
-          onDelete={state.onDeleteRequest}
-          onSortChange={state.onSortChange}
-          sort={state.sort}
-        />
+        {viewMode === "list" ? (
+          <NotificationsTable
+            footer={
+              state.pageCount > 1 ? (
+                <Pagination
+                  currentPage={state.currentPage}
+                  onPageChange={state.onPageChange}
+                  pageCount={state.pageCount}
+                  pageSize={notificationListPageSize}
+                  totalItems={state.totalItems}
+                />
+              ) : undefined
+            }
+            items={state.items}
+            onDelete={state.onDeleteRequest}
+            onSortChange={state.onSortChange}
+            sort={state.sort}
+          />
+        ) : (
+          <div
+            aria-label="通知の表示形式（未実装）"
+            className="text-text-muted flex min-h-60 items-center justify-center text-lg"
+            role="status"
+          >
+            未実装
+          </div>
+        )}
       </section>
       {state.selectedNotification ? (
         <DeleteNotificationDialog

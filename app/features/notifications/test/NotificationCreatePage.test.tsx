@@ -51,16 +51,16 @@ describe("NotificationCreatePage", () => {
       />
     );
 
-    await user.click(
-      screen.getByRole("button", { name: "通知詳細（未実装）" })
-    );
+    expect(screen.getByText("プレビュー")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "通知詳細" }));
     expect(
-      screen.getByRole("status", { name: "モバイルプレビュー（未実装）" })
+      screen.getByRole("status", { name: "プレビュー（未実装）" })
     ).toHaveTextContent("未実装");
 
     await user.click(screen.getByRole("button", { name: "ロック画面" }));
     expect(
-      screen.queryByRole("status", { name: "モバイルプレビュー（未実装）" })
+      screen.queryByRole("status", { name: "プレビュー（未実装）" })
     ).not.toBeInTheDocument();
   });
 
