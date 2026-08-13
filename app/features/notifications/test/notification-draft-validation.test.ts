@@ -3,7 +3,8 @@ import { describe, expect, it } from "vitest";
 import { validateNotificationDraft } from "~/features/notifications/model/notification-draft-validation";
 import type { NotificationDraft } from "~/features/notifications/model/notification-draft";
 
-const now = new Date("2026-11-07T09:00:00+09:00");
+// datetime-localの値と同じローカル時刻として基準日時を作る。
+const now = new Date(2026, 10, 7, 9, 0);
 
 function createScheduledDraft(scheduledAt: string): NotificationDraft {
   return {
