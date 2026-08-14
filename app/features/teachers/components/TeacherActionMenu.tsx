@@ -1,9 +1,10 @@
-import { Ellipsis, ExternalLink, Pencil } from "lucide-react";
-import { useNavigate } from "react-router";
+import { Ellipsis, Pencil } from "lucide-react";
+import { useLocation, useNavigate } from "react-router";
 
 import { Button } from "~/components/ui/button/Button";
 import { Menu } from "~/components/ui/navigation/Menu";
 import { FloatingPanel } from "~/components/ui/panel/FloatingPanel";
+import { teacherEditTarget } from "~/features/teachers/application/teacher-navigation";
 import type { TeacherRow } from "~/features/teachers/model/teacher";
 
 type TeacherActionMenuProps = {
@@ -12,6 +13,7 @@ type TeacherActionMenuProps = {
 
 export function TeacherActionMenu({ teacher }: TeacherActionMenuProps) {
   const navigate = useNavigate();
+  const location = useLocation();
 
   return (
     <FloatingPanel
@@ -32,14 +34,8 @@ export function TeacherActionMenu({ teacher }: TeacherActionMenuProps) {
               icon: Pencil,
               id: "edit",
               label: "教官情報を編集",
-              onClick: () => navigate(`/teachers/${teacher.teacherId}/edit`),
-              type: "action",
-            },
-            {
-              icon: ExternalLink,
-              id: "details",
-              label: "詳細・クラス割り当て",
-              onClick: () => navigate(`/teachers/${teacher.teacherId}`),
+              onClick: () =>
+                navigate(teacherEditTarget(teacher.teacherId, location.search)),
               type: "action",
             },
           ]}

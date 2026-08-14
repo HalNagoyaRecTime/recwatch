@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useLocation, useNavigate } from "react-router";
 
 import { TeacherApi } from "~/features/teachers/api";
+import { teacherListTarget } from "~/features/teachers/application/teacher-navigation";
 import {
   TeacherForm,
   type TeacherFormInput,
@@ -41,7 +42,7 @@ export function TeacherEditPage({
   }
 
   function close() {
-    navigate({ pathname: "/teachers", search: location.search });
+    navigate(teacherListTarget(location.search));
   }
 
   return (
