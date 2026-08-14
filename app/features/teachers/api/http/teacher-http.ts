@@ -7,8 +7,10 @@ import type {
 } from "../dto/teacher-dto";
 
 export const teacherHttpApi = {
-  getTeachersPage: (page: number) =>
-    apiClient.get<TeacherPageDTO>(`/api/v1/teachers?limit=100&page=${page}`),
+  getTeachersPage: (offset: number) =>
+    apiClient.get<TeacherPageDTO>(
+      `/api/v1/teachers?limit=100&offset=${offset}`
+    ),
   getTeacherById: (teacherId: number) =>
     apiClient.get<TeacherDTO>(`/api/v1/teachers/${teacherId}`),
   updateTeacher: (teacherId: number, body: TeacherUpdateRequest) =>

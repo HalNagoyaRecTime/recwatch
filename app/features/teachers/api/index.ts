@@ -10,19 +10,25 @@ import type { TeacherUpdateRequest } from "./contracts/teacher-api";
 export const TeacherApi = {
   async getTeachers(): Promise<TeacherPageDTO> {
     const items: TeacherDTO[] = [];
-    let page = 1;
+    let offset = 0;
     let total = 0;
 
     while (true) {
-      const result = await teacherHttpApi.getTeachersPage(page);
+      const result = await teacherHttpApi.getTeachersPage(offset);
       items.push(...result.items);
       total = result.total;
 
-      if (result.items.length === 0 || page >= result.total_pages) break;
-      page += 1;
+      if (
+        result.items.length === 0 ||
+        items.length >= total ||
+        result.items.length < result.limit
+      ) {
+        break;
+      }
+      offset += result.items.length;
     }
 
-    return { items, total, page: 1, limit: items.length, total_pages: 1 };
+    return { items, total, limit: items.length, offset: 0 };
   },
   getTeacherById: (teacherId: number) =>
     teacherHttpApi.getTeacherById(teacherId),

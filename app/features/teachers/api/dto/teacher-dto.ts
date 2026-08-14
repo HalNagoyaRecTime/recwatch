@@ -15,9 +15,8 @@ export type TeacherDTO = {
 export type TeacherPageDTO = {
   items: TeacherDTO[];
   total: number;
-  page: number;
   limit: number;
-  total_pages: number;
+  offset: number;
 };
 
 export type ClassRoomDTO = {
