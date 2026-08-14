@@ -3,6 +3,11 @@ export type TeacherClassRoomRow = {
   className: string;
 };
 
+export type ClassRoomOption = {
+  classRoomId: number;
+  className: string;
+};
+
 export type TeacherRow = {
   teacherId: number;
   displayName: string;

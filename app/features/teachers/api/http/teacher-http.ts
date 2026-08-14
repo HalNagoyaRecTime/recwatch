@@ -1,5 +1,8 @@
 import { apiClient } from "~/lib/api-client";
-import type { TeacherUpdateRequest } from "../contracts/teacher-api";
+import type {
+  TeacherCreateRequest,
+  TeacherUpdateRequest,
+} from "../contracts/teacher-api";
 import type {
   ClassRoomPageDTO,
   TeacherDTO,
@@ -7,6 +10,8 @@ import type {
 } from "../dto/teacher-dto";
 
 export const teacherHttpApi = {
+  createTeacher: (body: TeacherCreateRequest) =>
+    apiClient.post<TeacherDTO>("/api/v1/teachers", body),
   getTeachersPage: (offset: number) =>
     apiClient.get<TeacherPageDTO>(
       `/api/v1/teachers?limit=100&offset=${offset}`

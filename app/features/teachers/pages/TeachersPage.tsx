@@ -1,3 +1,6 @@
+import { Plus } from "lucide-react";
+import { useNavigate } from "react-router";
+import { Button } from "~/components/ui/button/Button";
 import { PageHeader } from "~/components/ui/layout/PageHeader";
 import { SearchField } from "~/components/ui/form/SearchField";
 import { useTeacherSearch } from "~/features/teachers/application/useTeacherSearch";
@@ -6,11 +9,25 @@ import type { TeacherRow } from "~/features/teachers/model/teacher";
 import { ImportUploadTrigger } from "~/features/master-import/components/ImportUploadTrigger";
 
 export function TeachersPage({ teachers }: { teachers: TeacherRow[] }) {
+  const navigate = useNavigate();
   const { filteredTeachers, query, setQuery } = useTeacherSearch(teachers);
 
   return (
     <div className="min-h-full space-y-5">
-      <PageHeader description="教官の基本情報を管理します" title="教官管理" />
+      <PageHeader
+        actions={
+          <Button
+            icon={Plus}
+            onClick={() => navigate("/teachers/new")}
+            size="lg"
+            variant="primary"
+          >
+            新規登録
+          </Button>
+        }
+        description="教官の基本情報を管理します"
+        title="教官管理"
+      />
       <div>
         <ImportUploadTrigger
           type="teachers"
