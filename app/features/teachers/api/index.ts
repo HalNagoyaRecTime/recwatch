@@ -17,6 +17,7 @@ export const TeacherApi = {
     teacherHttpApi.createTeacher(body),
   getTeacherList: (query: TeacherListQuery) =>
     teacherHttpApi.getTeacherList(query),
+  deleteTeacher: (teacherId: number) => teacherHttpApi.deleteTeacher(teacherId),
   async getTeachers(): Promise<TeacherPageDTO> {
     const items: TeacherDTO[] = [];
     let offset = 0;

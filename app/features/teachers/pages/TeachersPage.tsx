@@ -1,4 +1,5 @@
 import { Plus } from "lucide-react";
+import { useEffect } from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router";
 import { Button } from "~/components/ui/button/Button";
 import { PageHeader } from "~/components/ui/layout/PageHeader";
@@ -29,13 +30,18 @@ export function TeachersPage({
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
-  const {
-    search: query,
-    sortBy,
-    sortOrder,
-  } = parseTeacherListUrl(searchParams);
+  const { search: query, sortBy, sortOrder } =
+    parseTeacherListUrl(searchParams);
   const currentPage = Math.floor(offset / limit) + 1;
   const pageCount = Math.max(1, Math.ceil(total / limit));
+
+  useEffect(() => {
+    if (currentPage <= pageCount) return;
+    setSearchParams(
+      updateTeacherListUrl(searchParams, { page: pageCount }),
+      { replace: true }
+    );
+  }, [currentPage, pageCount, searchParams, setSearchParams]);
 
   function updateSearchParams(
     updates: Parameters<typeof updateTeacherListUrl>[1]

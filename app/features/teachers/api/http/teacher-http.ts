@@ -31,6 +31,8 @@ export const teacherHttpApi = {
     apiClient.get<TeacherPageDTO>(
       `/api/v1/teachers?limit=100&offset=${offset}`
     ),
+  deleteTeacher: (teacherId: number) =>
+    apiClient.delete(`/api/v1/teachers/${teacherId}`),
   getTeacherById: (teacherId: number) =>
     apiClient.get<TeacherDTO>(`/api/v1/teachers/${teacherId}`),
   updateTeacher: (teacherId: number, body: TeacherUpdateRequest) =>
