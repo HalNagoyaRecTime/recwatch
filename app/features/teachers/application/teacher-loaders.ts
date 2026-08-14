@@ -1,9 +1,23 @@
-import { ClassRoomApi, TeacherApi } from "~/features/teachers/api";
+import {
+  ClassRoomApi,
+  TeacherApi,
+  type TeacherListQuery,
+} from "~/features/teachers/api";
 import { toTeacherRow } from "~/features/teachers/api/mappers/teacher-mappers";
 
 export async function loadTeacherList() {
   const page = await TeacherApi.getTeachers();
   return { teachers: page.items.map(toTeacherRow) };
+}
+
+export async function loadTeacherListPage(query: TeacherListQuery) {
+  const page = await TeacherApi.getTeacherList(query);
+  return {
+    limit: page.limit,
+    offset: page.offset,
+    teachers: page.items.map(toTeacherRow),
+    total: page.total,
+  };
 }
 
 export async function loadTeacherAssignment(teacherId: number) {
