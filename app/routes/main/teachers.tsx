@@ -1,4 +1,4 @@
-import { useLoaderData } from "react-router";
+import { Outlet, useLoaderData } from "react-router";
 import { parseTeacherListUrl } from "~/features/teachers/application/teacher-list-url";
 import { loadTeacherListPage } from "~/features/teachers/application/teacher-loaders";
 import { TeachersPage } from "~/features/teachers/pages/TeachersPage";
@@ -27,15 +27,18 @@ export default function TeachersRoute() {
   const { limit, offset, teachers, total } =
     useLoaderData<typeof clientLoader>();
   return (
-    <PageLayout>
-      <PagePadding>
-        <TeachersPage
-          limit={limit}
-          offset={offset}
-          teachers={teachers}
-          total={total}
-        />
-      </PagePadding>
-    </PageLayout>
+    <>
+      <PageLayout>
+        <PagePadding>
+          <TeachersPage
+            limit={limit}
+            offset={offset}
+            teachers={teachers}
+            total={total}
+          />
+        </PagePadding>
+      </PageLayout>
+      <Outlet />
+    </>
   );
 }
