@@ -1,5 +1,4 @@
-import { Outlet, useLoaderData } from "react-router";
-import { parseTeacherListUrl } from "~/features/teachers/application/teacher-list-url";
+import { useLoaderData } from "react-router";
 import { loadTeacherListPage } from "~/features/teachers/application/teacher-loaders";
 import { TeachersPage } from "~/features/teachers/pages/TeachersPage";
 import { PagePadding } from "~/features/frame/page-layout/PagePadding";
@@ -12,14 +11,17 @@ export function meta() {
 export async function clientLoader({ request }: { request: Request }) {
   const searchParams = new URL(request.url).searchParams;
   const limit = 50;
-  const { page, search, sortBy, sortOrder } = parseTeacherListUrl(searchParams);
+  const page = Math.max(1, Number(searchParams.get("page") ?? "1"));
 
   return loadTeacherListPage({
     limit,
     offset: (page - 1) * limit,
-    search: search || undefined,
-    sortBy: sortBy ?? undefined,
-    sortOrder: sortOrder ?? undefined,
+    search: searchParams.get("search") || undefined,
+    sortBy:
+      (searchParams.get("sortBy") as "teacherId" | "displayName" | null) ??
+      undefined,
+    sortOrder:
+      (searchParams.get("sortOrder") as "asc" | "desc" | null) ?? undefined,
   });
 }
 
@@ -27,18 +29,15 @@ export default function TeachersRoute() {
   const { limit, offset, teachers, total } =
     useLoaderData<typeof clientLoader>();
   return (
-    <>
-      <PageLayout>
-        <PagePadding>
-          <TeachersPage
-            limit={limit}
-            offset={offset}
-            teachers={teachers}
-            total={total}
-          />
-        </PagePadding>
-      </PageLayout>
-      <Outlet />
-    </>
+    <PageLayout>
+      <PagePadding>
+        <TeachersPage
+          limit={limit}
+          offset={offset}
+          teachers={teachers}
+          total={total}
+        />
+      </PagePadding>
+    </PageLayout>
   );
 }

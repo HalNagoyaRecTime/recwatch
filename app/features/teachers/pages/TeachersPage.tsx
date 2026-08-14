@@ -1,5 +1,5 @@
 import { Plus } from "lucide-react";
-import { useLocation, useNavigate, useSearchParams } from "react-router";
+import { useNavigate, useSearchParams } from "react-router";
 import { Button } from "~/components/ui/button/Button";
 import { PageHeader } from "~/components/ui/layout/PageHeader";
 import { SearchField } from "~/components/ui/form/SearchField";
@@ -7,11 +7,6 @@ import { Pagination } from "~/components/ui/navigation/Pagination";
 import { TeacherTable } from "~/features/teachers/components/TeacherTable";
 import type { TeacherRow } from "~/features/teachers/model/teacher";
 import { ImportUploadTrigger } from "~/features/master-import/components/ImportUploadTrigger";
-import {
-  parseTeacherListUrl,
-  updateTeacherListUrl,
-} from "~/features/teachers/application/teacher-list-url";
-import { teacherCreateTarget } from "~/features/teachers/application/teacher-navigation";
 
 type TeachersPageProps = {
   limit: number;
@@ -27,28 +22,31 @@ export function TeachersPage({
   total,
 }: TeachersPageProps) {
   const navigate = useNavigate();
-  const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
-  const {
-    search: query,
-    sortBy,
-    sortOrder,
-  } = parseTeacherListUrl(searchParams);
+  const query = searchParams.get("search") ?? "";
+  const sortBy = searchParams.get("sortBy") as
+    | "teacherId"
+    | "displayName"
+    | null;
+  const sortOrder = searchParams.get("sortOrder") as "asc" | "desc" | null;
   const currentPage = Math.floor(offset / limit) + 1;
   const pageCount = Math.max(1, Math.ceil(total / limit));
 
-  function updateSearchParams(
-    updates: Parameters<typeof updateTeacherListUrl>[1]
-  ) {
-    setSearchParams(updateTeacherListUrl(searchParams, updates));
+  function updateSearchParams(updates: Record<string, string | null>) {
+    const next = new URLSearchParams(searchParams);
+    Object.entries(updates).forEach(([key, value]) => {
+      if (value === null || value === "") next.delete(key);
+      else next.set(key, value);
+    });
+    setSearchParams(next);
   }
 
   function handleQueryChange(nextQuery: string) {
-    updateSearchParams({ page: 1, search: nextQuery });
+    updateSearchParams({ page: "1", search: nextQuery.trim() || null });
   }
 
   function handlePageChange(nextPage: number) {
-    updateSearchParams({ page: nextPage });
+    updateSearchParams({ page: String(nextPage) });
   }
 
   function handleSortChange(columnId: string) {
@@ -56,7 +54,7 @@ export function TeachersPage({
     const nextSortOrder =
       sortBy === nextSortBy && sortOrder === "asc" ? "desc" : "asc";
     updateSearchParams({
-      page: 1,
+      page: "1",
       sortBy: nextSortBy,
       sortOrder: nextSortOrder,
     });
@@ -68,7 +66,7 @@ export function TeachersPage({
         actions={
           <Button
             icon={Plus}
-            onClick={() => navigate(teacherCreateTarget(location.search))}
+            onClick={() => navigate("/teachers/new")}
             size="lg"
             variant="primary"
           >
