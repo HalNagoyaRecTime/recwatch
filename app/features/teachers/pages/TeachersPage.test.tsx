@@ -48,4 +48,44 @@ describe("TeachersPage", () => {
       );
     });
   });
+
+  it("検索変更時に1ページ目へ戻る", async () => {
+    const user = userEvent.setup();
+
+    render(
+      <MemoryRouter
+        initialEntries={["/teachers?page=3&sortBy=teacherId&sortOrder=desc"]}
+      >
+        <TeachersPage limit={50} offset={100} teachers={teachers} total={200} />
+        <LocationProbe />
+      </MemoryRouter>
+    );
+
+    await user.type(
+      screen.getByRole("searchbox", { name: "教官を検索" }),
+      "佐橋"
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId("location-search")).toHaveTextContent(
+        "sortBy=teacherId&sortOrder=desc&search=%E4%BD%90%E6%A9%8B"
+      );
+      expect(screen.getByTestId("location-search")).not.toHaveTextContent(
+        "page=3"
+      );
+    });
+  });
+
+  it("最終行削除後に存在する最終ページへ補正する", async () => {
+    render(
+      <MemoryRouter initialEntries={["/teachers?page=3"]}>
+        <TeachersPage limit={50} offset={100} teachers={teachers} total={60} />
+        <LocationProbe />
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId("location-search")).toHaveTextContent("page=2");
+    });
+  });
 });
