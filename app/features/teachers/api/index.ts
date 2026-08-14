@@ -7,6 +7,7 @@ import type {
 } from "./dto/teacher-dto";
 import type {
   TeacherCreateRequest,
+  TeacherAssignmentUpdateRequest,
   TeacherListQuery,
   TeacherUpdateRequest,
 } from "./contracts/teacher-api";
@@ -42,6 +43,10 @@ export const TeacherApi = {
     teacherHttpApi.getTeacherById(teacherId),
   updateTeacher: (teacherId: number, body: TeacherUpdateRequest) =>
     teacherHttpApi.updateTeacher(teacherId, body),
+  updateTeacherAssignment: (
+    teacherId: number,
+    body: TeacherAssignmentUpdateRequest
+  ) => teacherHttpApi.updateTeacherAssignment(teacherId, body),
 };
 
 export const ClassRoomApi = {
@@ -71,6 +76,7 @@ export type {
   TeacherPageDTO,
 } from "./dto/teacher-dto";
 export type {
+  TeacherAssignmentUpdateRequest,
   TeacherCreateRequest,
   TeacherListQuery,
   TeacherListSortBy,

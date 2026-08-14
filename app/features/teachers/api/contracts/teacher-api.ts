@@ -16,6 +16,9 @@ export type TeacherListQuery = {
 
 export type TeacherUpdateRequest = {
   userName: string;
-  isLiveActive: boolean;
   classRoomIds: number[];
+};
+
+export type TeacherAssignmentUpdateRequest = TeacherUpdateRequest & {
+  isLiveActive: boolean;
 };

@@ -1,5 +1,6 @@
 import { apiClient } from "~/lib/api-client";
 import type {
+  TeacherAssignmentUpdateRequest,
   TeacherCreateRequest,
   TeacherListQuery,
   TeacherUpdateRequest,
@@ -34,6 +35,10 @@ export const teacherHttpApi = {
     apiClient.get<TeacherDTO>(`/api/v1/teachers/${teacherId}`),
   updateTeacher: (teacherId: number, body: TeacherUpdateRequest) =>
     apiClient.put<TeacherDTO>(`/api/v1/teachers/${teacherId}`, body),
+  updateTeacherAssignment: (
+    teacherId: number,
+    body: TeacherAssignmentUpdateRequest
+  ) => apiClient.put<TeacherDTO>(`/api/v1/teachers/${teacherId}`, body),
 };
 
 export const classRoomHttpApi = {

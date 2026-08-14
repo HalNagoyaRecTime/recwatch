@@ -1,4 +1,4 @@
-import { Ellipsis, ExternalLink } from "lucide-react";
+import { Ellipsis, ExternalLink, Pencil } from "lucide-react";
 import { useNavigate } from "react-router";
 
 import { Button } from "~/components/ui/button/Button";
@@ -28,6 +28,13 @@ export function TeacherActionMenu({ teacher }: TeacherActionMenuProps) {
       content={
         <Menu
           items={[
+            {
+              icon: Pencil,
+              id: "edit",
+              label: "教官情報を編集",
+              onClick: () => navigate(`/teachers/${teacher.teacherId}/edit`),
+              type: "action",
+            },
             {
               icon: ExternalLink,
               id: "details",
