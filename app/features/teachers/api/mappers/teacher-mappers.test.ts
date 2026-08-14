@@ -16,7 +16,6 @@ describe("toTeacherRow", () => {
       })
     ).toEqual({
       teacherId: 7,
-      teacherCode: "NH-STAFF07",
       displayName: "佐橋 晴斗",
       isLiveActive: true,
       classRooms: [{ classRoomId: 3, className: "1年A組" }],
