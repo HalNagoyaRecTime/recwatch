@@ -1,10 +1,14 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, useLocation } from "react-router";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import type { TeacherRow } from "~/features/teachers/model/teacher";
 import { TeachersPage } from "~/features/teachers/pages/TeachersPage";
+
+vi.mock("~/features/teachers/components/TeacherActionMenu", () => ({
+  TeacherActionMenu: () => <button type="button">操作</button>,
+}));
 
 const teachers: TeacherRow[] = [
   {
