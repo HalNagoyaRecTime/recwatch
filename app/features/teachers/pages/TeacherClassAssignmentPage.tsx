@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router";
-import { TeacherApi } from "~/features/instructors/api";
-import type { TeacherRow } from "~/features/instructors/model/teacher";
+import { TeacherApi } from "~/features/teachers/api";
+import type { TeacherRow } from "~/features/teachers/model/teacher";
 
 export type ClassRoomOption = {
   classRoomId: number;
@@ -57,7 +57,7 @@ export function TeacherClassAssignmentPage({
         isLiveActive: selectedTeacher.isLiveActive,
         classRoomIds: checkedClassRoomIds,
       });
-      navigate("/instructors");
+      navigate("/teachers");
     } catch {
       setErrorMessage(
         "割り当ての登録に失敗しました。時間をおいてもう一度お試しください。"
@@ -126,7 +126,7 @@ export function TeacherClassAssignmentPage({
           <div className="flex gap-3 pt-2">
             <button
               type="button"
-              onClick={() => navigate("/instructors")}
+              onClick={() => navigate("/teachers")}
               className="rounded-[10px] border border-[#d2d2d2] bg-white px-4 py-2 text-sm font-bold"
             >
               キャンセル

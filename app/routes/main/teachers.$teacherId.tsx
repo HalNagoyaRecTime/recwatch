@@ -1,7 +1,7 @@
 import { useLoaderData } from "react-router";
-import { ClassRoomApi, TeacherApi } from "~/features/instructors/api";
-import { toTeacherRow } from "~/features/instructors/model/teacher";
-import { TeacherClassAssignmentPage } from "~/features/instructors/pages/TeacherClassAssignmentPage";
+import { ClassRoomApi, TeacherApi } from "~/features/teachers/api";
+import { toTeacherRow } from "~/features/teachers/api/mappers/teacher-mappers";
+import { TeacherClassAssignmentPage } from "~/features/teachers/pages/TeacherClassAssignmentPage";
 import { PagePadding } from "~/features/frame/page-layout/PagePadding";
 import { PageLayout } from "~/features/frame/page-layout/PageLayout";
 
