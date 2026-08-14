@@ -30,17 +30,19 @@ export function TeachersPage({
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { search: query, sortBy, sortOrder } =
-    parseTeacherListUrl(searchParams);
+  const {
+    search: query,
+    sortBy,
+    sortOrder,
+  } = parseTeacherListUrl(searchParams);
   const currentPage = Math.floor(offset / limit) + 1;
   const pageCount = Math.max(1, Math.ceil(total / limit));
 
   useEffect(() => {
     if (currentPage <= pageCount) return;
-    setSearchParams(
-      updateTeacherListUrl(searchParams, { page: pageCount }),
-      { replace: true }
-    );
+    setSearchParams(updateTeacherListUrl(searchParams, { page: pageCount }), {
+      replace: true,
+    });
   }, [currentPage, pageCount, searchParams, setSearchParams]);
 
   function updateSearchParams(
