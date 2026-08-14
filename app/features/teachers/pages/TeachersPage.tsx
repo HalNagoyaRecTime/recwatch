@@ -1,5 +1,5 @@
 import { Plus } from "lucide-react";
-import { useNavigate } from "react-router";
+import { useLocation, useNavigate } from "react-router";
 import { Button } from "~/components/ui/button/Button";
 import { PageHeader } from "~/components/ui/layout/PageHeader";
 import { SearchField } from "~/components/ui/form/SearchField";
@@ -7,9 +7,11 @@ import { useTeacherSearch } from "~/features/teachers/application/useTeacherSear
 import { TeacherTable } from "~/features/teachers/components/TeacherTable";
 import type { TeacherRow } from "~/features/teachers/model/teacher";
 import { ImportUploadTrigger } from "~/features/master-import/components/ImportUploadTrigger";
+import { teacherCreateTarget } from "~/features/teachers/application/teacher-navigation";
 
 export function TeachersPage({ teachers }: { teachers: TeacherRow[] }) {
   const navigate = useNavigate();
+  const location = useLocation();
   const { filteredTeachers, query, setQuery } = useTeacherSearch(teachers);
 
   return (
@@ -18,7 +20,7 @@ export function TeachersPage({ teachers }: { teachers: TeacherRow[] }) {
         actions={
           <Button
             icon={Plus}
-            onClick={() => navigate("/teachers/new")}
+            onClick={() => navigate(teacherCreateTarget(location.search))}
             size="lg"
             variant="primary"
           >

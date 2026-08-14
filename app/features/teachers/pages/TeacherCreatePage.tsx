@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useLocation, useNavigate } from "react-router";
 
 import { TeacherApi } from "~/features/teachers/api";
+import { teacherListTarget } from "~/features/teachers/application/teacher-navigation";
 import {
   TeacherForm,
   type TeacherFormInput,
@@ -25,7 +26,7 @@ export function TeacherCreatePage({
 
     try {
       await TeacherApi.createTeacher(input);
-      navigate({ pathname: "/teachers", search: location.search });
+      navigate(teacherListTarget(location.search));
     } catch (error) {
       setSubmitError(
         error instanceof Error ? error.message : "教官の登録に失敗しました。"
@@ -34,8 +35,7 @@ export function TeacherCreatePage({
     }
   }
 
-  const close = () =>
-    navigate({ pathname: "/teachers", search: location.search });
+  const close = () => navigate(teacherListTarget(location.search));
 
   return (
     <TeacherFormModal
