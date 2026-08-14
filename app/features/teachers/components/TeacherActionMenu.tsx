@@ -1,4 +1,4 @@
-import { Ellipsis, Pencil, UserRoundX } from "lucide-react";
+import { Ellipsis } from "lucide-react";
 import { useLocation, useNavigate, useRevalidator } from "react-router";
 
 import { Button } from "~/components/ui/button/Button";
@@ -52,9 +52,8 @@ export function TeacherActionMenu({ teacher }: TeacherActionMenuProps) {
         <Menu
           items={[
             {
-              icon: Pencil,
               id: "edit",
-              label: "教官情報を編集",
+              label: "編集",
               onClick: () =>
                 navigate(teacherEditTarget(teacher.teacherId, location.search)),
               type: "action",
@@ -62,7 +61,6 @@ export function TeacherActionMenu({ teacher }: TeacherActionMenuProps) {
             { id: "divider", type: "divider" },
             {
               danger: true,
-              icon: UserRoundX,
               id: "deactivate",
               label: "無効化",
               onClick: () => void handleDeactivate(),

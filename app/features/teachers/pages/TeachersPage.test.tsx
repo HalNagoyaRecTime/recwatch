@@ -13,7 +13,6 @@ vi.mock("~/features/teachers/components/TeacherActionMenu", () => ({
 const teachers: TeacherRow[] = [
   {
     teacherId: 2,
-    teacherCode: "NH-STAFF02",
     displayName: "山田 花子",
     isLiveActive: true,
     classRooms: [],
