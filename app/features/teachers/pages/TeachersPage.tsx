@@ -1,26 +1,11 @@
 import { MoreHorizontal, Search } from "lucide-react";
-import { useMemo, useState } from "react";
 import { Link } from "react-router";
+import { useTeacherSearch } from "~/features/teachers/application/useTeacherSearch";
 import type { TeacherRow } from "~/features/teachers/model/teacher";
 import { ImportUploadTrigger } from "~/features/master-import/components/ImportUploadTrigger";
 
 export function TeachersPage({ teachers }: { teachers: TeacherRow[] }) {
-  const [query, setQuery] = useState("");
-
-  const filteredTeachers = useMemo(() => {
-    const normalizedQuery = query.trim().toLowerCase();
-    if (!normalizedQuery) return teachers;
-
-    return teachers.filter((teacher) => {
-      const haystack = [
-        teacher.displayName,
-        ...teacher.classRooms.map((c) => c.className),
-      ]
-        .join(" ")
-        .toLowerCase();
-      return haystack.includes(normalizedQuery);
-    });
-  }, [teachers, query]);
+  const { filteredTeachers, query, setQuery } = useTeacherSearch(teachers);
 
   return (
     <div className="min-h-full bg-[#f7faff] p-1 text-[#0a0a0a]">

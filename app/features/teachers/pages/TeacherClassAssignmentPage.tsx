@@ -1,6 +1,4 @@
-import { useMemo, useState } from "react";
-import { useNavigate } from "react-router";
-import { TeacherApi } from "~/features/teachers/api";
+import { useTeacherClassAssignment } from "~/features/teachers/application/useTeacherClassAssignment";
 import type { TeacherRow } from "~/features/teachers/model/teacher";
 
 export type ClassRoomOption = {
@@ -17,54 +15,18 @@ export function TeacherClassAssignmentPage({
   classRooms: ClassRoomOption[];
   selectedTeacherId: number;
 }) {
-  const navigate = useNavigate();
-  const [teacherId, setTeacherId] = useState(selectedTeacherId);
-  const [checkedClassRoomIds, setCheckedClassRoomIds] = useState<number[]>(() =>
-    findAssignedClassRoomIds(teachers, selectedTeacherId)
-  );
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [errorMessage, setErrorMessage] = useState("");
-
-  const selectedTeacher = teachers.find((t) => t.teacherId === teacherId);
-
-  const previewClassRoomNames = useMemo(() => {
-    return classRooms
-      .filter((c) => checkedClassRoomIds.includes(c.classRoomId))
-      .map((c) => c.className);
-  }, [classRooms, checkedClassRoomIds]);
-
-  function handleTeacherChange(nextTeacherId: number) {
-    setTeacherId(nextTeacherId);
-    setCheckedClassRoomIds(findAssignedClassRoomIds(teachers, nextTeacherId));
-  }
-
-  function toggleClassRoom(classRoomId: number) {
-    setCheckedClassRoomIds((current) =>
-      current.includes(classRoomId)
-        ? current.filter((id) => id !== classRoomId)
-        : [...current, classRoomId]
-    );
-  }
-
-  async function handleSubmit() {
-    if (!selectedTeacher) return;
-
-    setIsSubmitting(true);
-    setErrorMessage("");
-    try {
-      await TeacherApi.updateTeacher(teacherId, {
-        userName: selectedTeacher.displayName,
-        isLiveActive: selectedTeacher.isLiveActive,
-        classRoomIds: checkedClassRoomIds,
-      });
-      navigate("/teachers");
-    } catch {
-      setErrorMessage(
-        "割り当ての登録に失敗しました。時間をおいてもう一度お試しください。"
-      );
-      setIsSubmitting(false);
-    }
-  }
+  const {
+    cancel,
+    checkedClassRoomIds,
+    errorMessage,
+    handleSubmit,
+    handleTeacherChange,
+    isSubmitting,
+    previewClassRoomNames,
+    selectedTeacher,
+    teacherId,
+    toggleClassRoom,
+  } = useTeacherClassAssignment({ classRooms, selectedTeacherId, teachers });
 
   return (
     <div className="min-h-full bg-[#f7faff] p-1 text-[#0a0a0a]">
@@ -126,7 +88,7 @@ export function TeacherClassAssignmentPage({
           <div className="flex gap-3 pt-2">
             <button
               type="button"
-              onClick={() => navigate("/teachers")}
+              onClick={cancel}
               className="rounded-[10px] border border-[#d2d2d2] bg-white px-4 py-2 text-sm font-bold"
             >
               キャンセル
@@ -171,16 +133,5 @@ export function TeacherClassAssignmentPage({
         </div>
       </div>
     </div>
-  );
-}
-
-function findAssignedClassRoomIds(
-  teachers: TeacherRow[],
-  teacherId: number
-): number[] {
-  return (
-    teachers
-      .find((t) => t.teacherId === teacherId)
-      ?.classRooms.map((c) => c.classRoomId) ?? []
   );
 }
