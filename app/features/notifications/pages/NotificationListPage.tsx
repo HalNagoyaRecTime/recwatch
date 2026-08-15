@@ -39,9 +39,8 @@ type NotificationViewMode = (typeof notificationViewOptions)[number]["value"];
 
 const notificationDisplayOptions = [
   { label: "すべて表示", value: "all" },
-  { label: "自動", value: "automatic" },
-  { label: "手動", value: "manual" },
-  { label: "未実装", value: "unimplemented" },
+  { label: "自動（未実装）", value: "automatic" },
+  { label: "手動（未実装）", value: "manual" },
 ] as const;
 
 type NotificationDisplayMode =
@@ -102,7 +101,7 @@ export function NotificationListPage({ api }: NotificationListPageProps) {
             query={searchQuery}
           />
           <Select
-            ariaLabel="通知の表示範囲"
+            ariaLabel="通知の表示範囲（自動・手動は未実装）"
             onValueChange={setDisplayMode}
             options={notificationDisplayOptions}
             value={displayMode}

@@ -73,6 +73,31 @@ async function openDeleteMenu(user: ReturnType<typeof userEvent.setup>) {
 }
 
 describe("NotificationListPage", () => {
+  it("未実装の表示範囲には選択肢のラベルで明示する", async () => {
+    const user = userEvent.setup();
+
+    renderPage(<NotificationListPage api={createGateway()} />);
+
+    await user.click(
+      await screen.findByRole("combobox", {
+        name: /通知の表示範囲（自動・手動は未実装）/,
+      })
+    );
+
+    expect(
+      screen.getByRole("option", { name: "すべて表示" })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("option", { name: "自動（未実装）" })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("option", { name: "手動（未実装）" })
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("option", { name: /^未実装$/ })
+    ).not.toBeInTheDocument();
+  });
+
   it("カレンダー・グリッド表示では一覧を隠して未実装を表示する", async () => {
     const user = userEvent.setup();
 
