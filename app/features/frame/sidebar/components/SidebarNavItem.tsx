@@ -69,7 +69,7 @@ function NavFolder({ item, pathname, depth }: NavFolderProps) {
           "transition-all",
           SIDEBAR_DURATION,
           !isExpanded && "gap-0 pr-0 pl-3",
-          isActive && "hover:bg-transparent",
+          isActive && "hover:bg-transparent"
         )}
         onClick={handleToggle}
         aria-haspopup={!isExpanded ? "menu" : undefined}
@@ -123,7 +123,7 @@ function NavLinkItem({ item, pathname, depth }: NavLinkItemProps) {
             "w-full",
             "transition-all",
             SIDEBAR_DURATION,
-            !isExpanded && "gap-0 pr-0 pl-3",
+            !isExpanded && "gap-0 pr-0 pl-3"
           )
         }
         onClick={closeForMobile}
@@ -166,7 +166,7 @@ function NavTriggerContent({
           "transition-all",
           SIDEBAR_DURATION,
           isExpanded ? "max-w-40 opacity-100" : "max-w-0 opacity-0",
-          !item.icon && depth === 0 && "pl-2", // アイコンなし・第1子階層のみ左余白
+          !item.icon && depth === 0 && "pl-2" // アイコンなし・第1子階層のみ左余白
         )}
       >
         {item.label}
@@ -180,7 +180,7 @@ function NavTriggerContent({
             "transition-all",
             SIDEBAR_DURATION,
             isExpanded ? "opacity-100" : "hidden",
-            isAccordionOpen ? "rotate-90" : "",
+            isAccordionOpen ? "rotate-90" : ""
           )}
         />
       )}
@@ -203,7 +203,7 @@ function NavPopup({ item, pathname, closeMenu }: NavPopupProps) {
         "shadow-soft pointer-events-none absolute top-0 left-16.5 z-100 min-w-45 -translate-x-1 opacity-0",
         "transition-all",
         SIDEBAR_DURATION,
-        "group-hover/nav:pointer-events-auto group-hover/nav:translate-x-0 group-hover/nav:opacity-100",
+        "group-hover/nav:pointer-events-auto group-hover/nav:translate-x-0 group-hover/nav:opacity-100"
       )}
     >
       <div className="border-border-base bg-surface-base rounded-lg border p-1">
@@ -313,7 +313,7 @@ function NavAccordion({ item, isOpen, pathname, depth }: NavAccordionProps) {
         "grid",
         "transition-all",
         SIDEBAR_DURATION,
-        isOpen ? "visible grid-rows-[1fr]" : "invisible grid-rows-[0fr]",
+        isOpen ? "visible grid-rows-[1fr]" : "invisible grid-rows-[0fr]"
       )}
     >
       <div className="border-border-subtle ml-[17.5px] min-h-0 overflow-hidden border-l pl-[7.5px]">

@@ -22,7 +22,7 @@ export type SidebarState = {
 
 // eslint-disable-next-line react-refresh/only-export-components
 export const SidebarStateContext = createContext<SidebarState | undefined>(
-  undefined,
+  undefined
 );
 
 export function SidebarStateProvider({ children }: { children: ReactNode }) {
@@ -79,7 +79,7 @@ export function SidebarStateProvider({ children }: { children: ReactNode }) {
       } catch (e) {
         console.error(
           "セッションストレージからのナビゲーション状態の復元に失敗しました",
-          e,
+          e
         );
       }
     }
@@ -90,7 +90,7 @@ export function SidebarStateProvider({ children }: { children: ReactNode }) {
     if (!isLoaded || isMobile) return;
     sessionStorage.setItem(
       "rectime-nav-state",
-      JSON.stringify({ state: { isOpen, openAccordions }, version: 0 }),
+      JSON.stringify({ state: { isOpen, openAccordions }, version: 0 })
     );
   }, [isOpen, openAccordions, isLoaded, isMobile]);
 
@@ -100,7 +100,7 @@ export function SidebarStateProvider({ children }: { children: ReactNode }) {
 
   const toggleAccordion = useCallback((id: string) => {
     setOpenAccordions((prev) =>
-      prev.includes(id) ? prev.filter((v) => v !== id) : [...prev, id],
+      prev.includes(id) ? prev.filter((v) => v !== id) : [...prev, id]
     );
   }, []);
 
