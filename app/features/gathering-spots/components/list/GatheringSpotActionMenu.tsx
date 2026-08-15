@@ -7,12 +7,14 @@ import { FloatingPanel } from "~/components/ui/panel/FloatingPanel";
 import type { GatheringSpot } from "~/features/gathering-spots/model/gathering-spot";
 
 type GatheringSpotActionMenuProps = {
+  disabled?: boolean;
   onDelete: (spot: GatheringSpot) => void;
   onEdit: (spot: GatheringSpot) => void;
   spot: GatheringSpot;
 };
 
 export function GatheringSpotActionMenu({
+  disabled = false,
   onDelete,
   onEdit,
   spot,
@@ -52,6 +54,7 @@ export function GatheringSpotActionMenu({
       trigger={
         <Button
           aria-label={`${spot.name}のその他の操作`}
+          disabled={disabled}
           icon={Ellipsis}
           iconOnly
           size="sm"

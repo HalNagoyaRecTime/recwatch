@@ -10,6 +10,7 @@ import type {
 
 type GatheringSpotTableProps = {
   currentPage: number;
+  isMutating: boolean;
   isLoading: boolean;
   items: readonly GatheringSpot[];
   onDelete: (spot: GatheringSpot) => void;
@@ -26,6 +27,7 @@ type GatheringSpotTableProps = {
 
 export function GatheringSpotTable({
   currentPage,
+  isMutating,
   isLoading,
   items,
   onDelete,
@@ -80,6 +82,7 @@ export function GatheringSpotTable({
       width: { type: "fixed", value: 64 },
       renderCell: (spot) => (
         <GatheringSpotActionMenu
+          disabled={isMutating}
           onDelete={onDelete}
           onEdit={onEdit}
           spot={spot}

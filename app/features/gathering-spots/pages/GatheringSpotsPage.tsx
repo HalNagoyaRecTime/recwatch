@@ -42,6 +42,7 @@ export function GatheringSpotsPage({ gateway }: GatheringSpotsPageProps) {
           <PageHeader
             actions={
               <Button
+                disabled={state.isDeleting || state.isSubmitting}
                 icon={Plus}
                 onClick={state.openCreateForm}
                 size="lg"
@@ -78,6 +79,7 @@ export function GatheringSpotsPage({ gateway }: GatheringSpotsPageProps) {
 
           <GatheringSpotTable
             currentPage={state.currentPage}
+            isMutating={state.isDeleting || state.isSubmitting}
             isLoading={state.isLoading}
             items={state.sortedSpots}
             onDelete={state.handleDelete}

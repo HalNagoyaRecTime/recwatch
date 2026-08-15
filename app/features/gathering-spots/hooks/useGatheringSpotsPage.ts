@@ -35,12 +35,14 @@ export function useGatheringSpotsPage({
     createSpot,
     updateSpot,
     deleteSpot,
+    reload,
   } = useGatheringSpots({ gateway, listOptions });
   const [sort, setSort] = useState<GatheringSpotSort>();
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingSpot, setEditingSpot] = useState<GatheringSpot | null>(null);
   const [spotNameInput, setSpotNameInput] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
 
@@ -87,21 +89,30 @@ export function useGatheringSpotsPage({
   }
 
   function handleQueryChange(nextQuery: string) {
+    if (isDeleting || isSubmitting) return;
     setQuery(nextQuery);
     setCurrentPage(1);
   }
 
   function handlePageChange(nextPage: number) {
+    if (isDeleting || isSubmitting) return;
     setCurrentPage(Math.min(Math.max(1, nextPage), pageCount));
   }
 
   async function handleDelete(spot: GatheringSpot) {
+    if (isDeleting || isSubmitting) return;
     if (!window.confirm(`「${spot.name}」を削除しますか？`)) return;
 
+    setIsDeleting(true);
     setActionError(null);
     try {
       await deleteSpot(spot.id);
-      if (spots.length === 1 && currentPage > 1) {
+      const nextPage = await reload();
+      if (
+        nextPage?.items.length === 0 &&
+        nextPage.total > 0 &&
+        currentPage > 1
+      ) {
         setCurrentPage((page) => page - 1);
       }
     } catch (error) {
@@ -110,6 +121,8 @@ export function useGatheringSpotsPage({
           ? error.message
           : "集合場所の削除に失敗しました。"
       );
+    } finally {
+      setIsDeleting(false);
     }
   }
 
@@ -118,11 +131,14 @@ export function useGatheringSpotsPage({
   }
 
   function handleSortChange(columnId: string) {
+    if (isDeleting || isSubmitting) return;
     if (!isGatheringSpotSortableColumnId(columnId)) return;
     setSort((current) => getNextGatheringSpotSort(current, columnId));
   }
 
   async function submitForm() {
+    if (isSubmitting || isDeleting) return;
+
     const name = spotNameInput.trim();
     if (!name) {
       setSubmitError("集合場所名を入力してください。");
@@ -138,6 +154,7 @@ export function useGatheringSpotsPage({
       } else {
         await createSpot(name);
       }
+      await reload();
       closeForm();
     } catch (error) {
       setSubmitError(
@@ -163,6 +180,7 @@ export function useGatheringSpotsPage({
     handleSortChange,
     handleSpotNameChange,
     isFormOpen,
+    isDeleting,
     isLoading,
     isSubmitting,
     loadError,

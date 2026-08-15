@@ -1,7 +1,8 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import type {
   GatheringSpotGateway,
+  GatheringSpotPage,
   GatheringSpotListOptions,
 } from "~/features/gathering-spots/api/contracts/gathering-spot-gateway";
 import type { GatheringSpot } from "~/features/gathering-spots/model/gathering-spot";
@@ -19,55 +20,52 @@ export function useGatheringSpots({
   const [total, setTotal] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const requestVersion = useRef(0);
+
+  const reload = useCallback(async (): Promise<GatheringSpotPage | null> => {
+    const nextRequestVersion = requestVersion.current + 1;
+    requestVersion.current = nextRequestVersion;
+    setIsLoading(true);
+    setLoadError(null);
+
+    try {
+      const nextPage = await gateway.list(listOptions);
+      if (nextRequestVersion !== requestVersion.current) return null;
+
+      setSpots(nextPage.items);
+      setTotal(nextPage.total);
+      return nextPage;
+    } catch (error) {
+      if (nextRequestVersion !== requestVersion.current) return null;
+
+      setLoadError(
+        error instanceof Error
+          ? error.message
+          : "集合場所の取得に失敗しました。"
+      );
+      return null;
+    } finally {
+      if (nextRequestVersion === requestVersion.current) setIsLoading(false);
+    }
+  }, [gateway, listOptions]);
 
   useEffect(() => {
-    let isCurrent = true;
-
-    async function load() {
-      setIsLoading(true);
-      setLoadError(null);
-      try {
-        const nextPage = await gateway.list(listOptions);
-        if (!isCurrent) return;
-
-        setSpots(nextPage.items);
-        setTotal(nextPage.total);
-      } catch (error) {
-        if (isCurrent) {
-          setLoadError(
-            error instanceof Error
-              ? error.message
-              : "集合場所の取得に失敗しました。"
-          );
-        }
-      } finally {
-        if (isCurrent) setIsLoading(false);
-      }
-    }
-
-    void load();
+    void reload();
     return () => {
-      isCurrent = false;
+      requestVersion.current += 1;
     };
-  }, [gateway, listOptions]);
+  }, [reload]);
 
   const createSpot = useCallback(
     async (name: string) => {
-      const created = await gateway.create(name);
-      setSpots((current) => [...current, created]);
-      setTotal((current) => current + 1);
-      return created;
+      return gateway.create(name);
     },
     [gateway]
   );
 
   const updateSpot = useCallback(
     async (id: number, name: string) => {
-      const updated = await gateway.update(id, name);
-      setSpots((current) =>
-        current.map((spot) => (spot.id === updated.id ? updated : spot))
-      );
-      return updated;
+      return gateway.update(id, name);
     },
     [gateway]
   );
@@ -75,8 +73,6 @@ export function useGatheringSpots({
   const deleteSpot = useCallback(
     async (id: number) => {
       await gateway.delete(id);
-      setSpots((current) => current.filter((spot) => spot.id !== id));
-      setTotal((current) => Math.max(0, current - 1));
     },
     [gateway]
   );
@@ -89,5 +85,6 @@ export function useGatheringSpots({
     createSpot,
     updateSpot,
     deleteSpot,
+    reload,
   };
 }
