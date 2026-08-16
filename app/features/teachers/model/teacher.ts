@@ -5,6 +5,7 @@ export type TeacherClassRoomRow = {
 
 export type TeacherRow = {
   teacherId: number;
+  teacherCode: string;
   displayName: string;
   isLiveActive: boolean;
   classRooms: TeacherClassRoomRow[];

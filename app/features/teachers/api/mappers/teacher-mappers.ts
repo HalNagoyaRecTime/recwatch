@@ -4,6 +4,7 @@ import type { TeacherDTO } from "../dto/teacher-dto";
 export function toTeacherRow(dto: TeacherDTO): TeacherRow {
   return {
     teacherId: dto.teacher_id,
+    teacherCode: `NH-STAFF${String(dto.teacher_id).padStart(2, "0")}`,
     displayName: dto.display_name,
     isLiveActive: dto.is_live_active,
     classRooms: dto.class_rooms.map((classRoom) => ({
