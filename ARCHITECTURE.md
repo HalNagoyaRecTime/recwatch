@@ -12,6 +12,15 @@ Infrastructure → Applicationのcontracts
 Infrastructure → Domain
 ```
 
+```mermaid
+flowchart LR
+  Presentation --> Application
+  Presentation --> Domain
+  Application --> Domain
+  Infrastructure --> Contracts["Application contracts"]
+  Infrastructure --> Domain
+```
+
 - Domainは他の層に依存しない。
 - PresentationはApplicationとDomainを利用できる。
 - ApplicationはDomainとcontracts（交換可能な境界）に依存する。
@@ -52,6 +61,18 @@ pages/components → hooks → api/contracts
      model         model   api/http または mock
                               ↓
                          api/dto/mappers → model
+```
+
+```mermaid
+flowchart LR
+  PagesComponents["pages / components"] --> Hooks[hooks]
+  PagesComponents --> Model[model]
+  Hooks --> Contracts["api/contracts"]
+  Hooks --> Model
+  Http["api/http"] --> Contracts
+  Mock[mock] --> Contracts
+  Http --> Mappers["api/dto / mappers"]
+  Mappers --> Model
 ```
 
 - `pages`と`components`は原則として`api/http`、`api/dto`を直接参照せず、境界には`api/contracts`を使う。
