@@ -94,7 +94,7 @@ export function TeacherClassAssignmentPage({
             >
               {teachers.map((teacher) => (
                 <option key={teacher.teacherId} value={teacher.teacherId}>
-                  {teacher.teacherCode}
+                  {teacher.teacherId}
                 </option>
               ))}
             </select>
@@ -156,7 +156,7 @@ export function TeacherClassAssignmentPage({
             <div className="flex border-b border-[#d2d2d2] px-4 py-3 text-sm">
               <span className="w-24 text-black/40">教官ID</span>
               <span className="font-bold">
-                {selectedTeacher?.teacherCode ?? "-"}
+                {selectedTeacher?.teacherId ?? "-"}
               </span>
             </div>
             <div className="flex px-4 py-3 text-sm">

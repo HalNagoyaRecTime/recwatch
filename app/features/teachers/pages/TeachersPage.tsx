@@ -77,7 +77,7 @@ export function TeachersPage({ teachers }: { teachers: TeacherRow[] }) {
                 key={teacher.teacherId}
                 className="border-b border-[#d2d2d2] last:border-b-0"
               >
-                <td className="px-4 py-3">{teacher.teacherCode}</td>
+                <td className="px-4 py-3">{teacher.teacherId}</td>
                 <td className="px-4 py-3">{teacher.displayName}</td>
                 <td className="px-4 py-3 whitespace-pre-line">
                   {teacher.classRooms.length > 0
