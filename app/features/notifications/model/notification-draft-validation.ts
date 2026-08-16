@@ -5,7 +5,8 @@ export type NotificationDraftErrors = Partial<
 >;
 
 export function validateNotificationDraft(
-  draft: NotificationDraft
+  draft: NotificationDraft,
+  now = new Date()
 ): NotificationDraftErrors {
   const errors: NotificationDraftErrors = {};
 
@@ -24,8 +25,14 @@ export function validateNotificationDraft(
   if (draft.deliveryTiming === "scheduled") {
     if (!draft.scheduledAt) {
       errors.scheduledAt = "予約配信日時を指定してください";
-    } else if (Number.isNaN(new Date(draft.scheduledAt).getTime())) {
-      errors.scheduledAt = "予約配信日時が正しくありません";
+    } else {
+      const scheduledAt = new Date(draft.scheduledAt);
+
+      if (Number.isNaN(scheduledAt.getTime())) {
+        errors.scheduledAt = "予約配信日時が正しくありません";
+      } else if (scheduledAt <= now) {
+        errors.scheduledAt = "現在より後の日時を指定してください";
+      }
     }
   }
 
