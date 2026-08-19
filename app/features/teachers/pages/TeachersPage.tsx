@@ -1,10 +1,10 @@
 import { MoreHorizontal, Search } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Link } from "react-router";
-import type { TeacherRow } from "~/features/instructors/model/teacher";
+import type { TeacherRow } from "~/features/teachers/model/teacher";
 import { ImportUploadTrigger } from "~/features/master-import/components/ImportUploadTrigger";
 
-export function InstructorsPage({ teachers }: { teachers: TeacherRow[] }) {
+export function TeachersPage({ teachers }: { teachers: TeacherRow[] }) {
   const [query, setQuery] = useState("");
 
   const filteredTeachers = useMemo(() => {
@@ -77,7 +77,7 @@ export function InstructorsPage({ teachers }: { teachers: TeacherRow[] }) {
                 key={teacher.teacherId}
                 className="border-b border-[#d2d2d2] last:border-b-0"
               >
-                <td className="px-4 py-3">{teacher.teacherCode}</td>
+                <td className="px-4 py-3">{teacher.teacherId}</td>
                 <td className="px-4 py-3">{teacher.displayName}</td>
                 <td className="px-4 py-3 whitespace-pre-line">
                   {teacher.classRooms.length > 0
@@ -86,7 +86,7 @@ export function InstructorsPage({ teachers }: { teachers: TeacherRow[] }) {
                 </td>
                 <td className="px-4 py-3">
                   <Link
-                    to={`/instructors/${teacher.teacherId}`}
+                    to={`/teachers/${teacher.teacherId}`}
                     aria-label={`${teacher.displayName}の詳細・操作`}
                     className="text-black/45"
                   >
