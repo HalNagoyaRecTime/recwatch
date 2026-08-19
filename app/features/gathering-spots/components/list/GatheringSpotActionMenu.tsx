@@ -1,4 +1,4 @@
-import { Ellipsis, Pencil } from "lucide-react";
+import { Ellipsis, Pencil, Trash2 } from "lucide-react";
 import { useState } from "react";
 
 import { Button } from "~/components/ui/button/Button";
@@ -7,11 +7,15 @@ import { FloatingPanel } from "~/components/ui/panel/FloatingPanel";
 import type { GatheringSpot } from "~/features/gathering-spots/model/gathering-spot";
 
 type GatheringSpotActionMenuProps = {
+  disabled?: boolean;
+  onDelete: (spot: GatheringSpot) => void;
   onEdit: (spot: GatheringSpot) => void;
   spot: GatheringSpot;
 };
 
 export function GatheringSpotActionMenu({
+  disabled = false,
+  onDelete,
   onEdit,
   spot,
 }: GatheringSpotActionMenuProps) {
@@ -28,6 +32,17 @@ export function GatheringSpotActionMenu({
       },
       type: "action",
     },
+    {
+      icon: Trash2,
+      id: "delete",
+      label: "削除",
+      danger: true,
+      onClick: () => {
+        setIsOpen(false);
+        onDelete(spot);
+      },
+      type: "action",
+    },
   ];
 
   return (
@@ -39,6 +54,7 @@ export function GatheringSpotActionMenu({
       trigger={
         <Button
           aria-label={`${spot.name}のその他の操作`}
+          disabled={disabled}
           icon={Ellipsis}
           iconOnly
           size="sm"
