@@ -1,4 +1,7 @@
-import type { GatheringSpotGateway } from "~/features/gathering-spots/api/contracts/gathering-spot-gateway";
+import type {
+  GatheringSpotGateway,
+  GatheringSpotListOptions,
+} from "~/features/gathering-spots/api/contracts/gathering-spot-gateway";
 import type { GatheringSpot } from "~/features/gathering-spots/model/gathering-spot";
 
 export function createMockGatheringSpotGateway(
@@ -8,8 +11,25 @@ export function createMockGatheringSpotGateway(
   let nextId = spots.reduce((maxId, spot) => Math.max(maxId, spot.id), 0) + 1;
 
   return {
-    async list() {
-      return [...spots];
+    async list(options?: GatheringSpotListOptions) {
+      const query = options?.name?.trim().toLowerCase();
+      const filtered = query
+        ? spots.filter((spot) => spot.name.toLowerCase().includes(query))
+        : spots;
+      const limit = options?.limit ?? filtered.length;
+      const offset = options?.offset ?? 0;
+      return {
+        items: filtered.slice(offset, offset + limit),
+        total: filtered.length,
+        limit,
+        offset,
+      };
+    },
+
+    async getById(id) {
+      const spot = spots.find((current) => current.id === id);
+      if (!spot) throw new Error("集合場所が見つかりません。");
+      return spot;
     },
 
     async create(name) {
@@ -35,6 +55,13 @@ export function createMockGatheringSpotGateway(
       } satisfies GatheringSpot;
       spots = spots.map((spot) => (spot.id === id ? updated : spot));
       return updated;
+    },
+
+    async delete(id) {
+      if (!spots.some((spot) => spot.id === id)) {
+        throw new Error("集合場所が見つかりません。");
+      }
+      spots = spots.filter((spot) => spot.id !== id);
     },
   };
 }
