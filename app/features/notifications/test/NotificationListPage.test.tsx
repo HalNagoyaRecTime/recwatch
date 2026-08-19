@@ -191,6 +191,36 @@ describe("NotificationListPage", () => {
     expect(list).toHaveBeenNthCalledWith(2, { limit: 20, offset: 0 });
   });
 
+  it("idを表示し、id列を昇順・降順で並べ替える", async () => {
+    const list = vi.fn().mockResolvedValue({
+      notifications: [
+        { ...draftNotification, id: 20, title: "通知20" },
+        { ...draftNotification, id: 3, title: "通知3" },
+      ],
+      total: 2,
+      limit: 20,
+      offset: 0,
+    });
+    const user = userEvent.setup();
+
+    renderPage(<NotificationListPage api={createGateway({ list })} />);
+
+    expect(await screen.findByText("20")).toBeInTheDocument();
+    expect(screen.getByText("3")).toBeInTheDocument();
+
+    const idSortButton = screen.getByRole("button", { name: "id" });
+    await user.click(idSortButton);
+
+    const rows = screen.getAllByRole("row");
+    expect(rows[1]).toHaveTextContent("3");
+    expect(rows[2]).toHaveTextContent("20");
+
+    await user.click(idSortButton);
+    const descendingRows = screen.getAllByRole("row");
+    expect(descendingRows[1]).toHaveTextContent("20");
+    expect(descendingRows[2]).toHaveTextContent("3");
+  });
+
   it("配信中の通知では編集・削除を表示しない", async () => {
     const user = userEvent.setup();
     const sendingNotification: ManagedNotification = {
