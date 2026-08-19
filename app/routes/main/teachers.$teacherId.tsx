@@ -1,6 +1,8 @@
 import { useLoaderData } from "react-router";
-import { ClassRoomApi, TeacherApi } from "~/features/teachers/api";
-import { toTeacherRow } from "~/features/teachers/api/mappers/teacher-mappers";
+import {
+  loadTeacherAssignment,
+  parseTeacherId,
+} from "~/features/teachers/application/teacher-loaders";
 import { TeacherClassAssignmentPage } from "~/features/teachers/pages/TeacherClassAssignmentPage";
 import { PagePadding } from "~/features/frame/page-layout/PagePadding";
 import { PageLayout } from "~/features/frame/page-layout/PageLayout";
@@ -14,21 +16,7 @@ export async function clientLoader({
 }: {
   params: { teacherId: string };
 }) {
-  const teacherId = Number(params.teacherId);
-
-  const [teacherPage, classRoomPage] = await Promise.all([
-    TeacherApi.getTeachers(),
-    ClassRoomApi.getClassRooms(),
-  ]);
-
-  return {
-    teachers: teacherPage.items.map(toTeacherRow),
-    classRooms: classRoomPage.classrooms.map((c) => ({
-      classRoomId: c.class_room_id,
-      className: c.class_name,
-    })),
-    selectedTeacherId: teacherId,
-  };
+  return loadTeacherAssignment(parseTeacherId(params.teacherId));
 }
 
 export default function InstructorClassAssignmentRoute() {

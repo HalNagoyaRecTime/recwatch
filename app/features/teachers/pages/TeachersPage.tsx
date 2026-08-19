@@ -1,113 +1,125 @@
-import { MoreHorizontal, Search } from "lucide-react";
-import { useMemo, useState } from "react";
-import { Link } from "react-router";
+import { Plus } from "lucide-react";
+import { useEffect } from "react";
+import { useLocation, useNavigate, useSearchParams } from "react-router";
+import { Button } from "~/components/ui/button/Button";
+import { PageHeader } from "~/components/ui/layout/PageHeader";
+import { SearchField } from "~/components/ui/form/SearchField";
+import { Pagination } from "~/components/ui/navigation/Pagination";
+import { TeacherTable } from "~/features/teachers/components/TeacherTable";
 import type { TeacherRow } from "~/features/teachers/model/teacher";
 import { ImportUploadTrigger } from "~/features/master-import/components/ImportUploadTrigger";
+import {
+  parseTeacherListUrl,
+  updateTeacherListUrl,
+} from "~/features/teachers/application/teacher-list-url";
+import { teacherCreateTarget } from "~/features/teachers/application/teacher-navigation";
 
-export function TeachersPage({ teachers }: { teachers: TeacherRow[] }) {
-  const [query, setQuery] = useState("");
+type TeachersPageProps = {
+  limit: number;
+  offset: number;
+  teachers: TeacherRow[];
+  total: number;
+};
 
-  const filteredTeachers = useMemo(() => {
-    const normalizedQuery = query.trim().toLowerCase();
-    if (!normalizedQuery) return teachers;
+export function TeachersPage({
+  limit,
+  offset,
+  teachers,
+  total,
+}: TeachersPageProps) {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const {
+    search: query,
+    sortBy,
+    sortOrder,
+  } = parseTeacherListUrl(searchParams);
+  const currentPage = Math.floor(offset / limit) + 1;
+  const pageCount = Math.max(1, Math.ceil(total / limit));
 
-    return teachers.filter((teacher) => {
-      const haystack = [
-        teacher.displayName,
-        ...teacher.classRooms.map((c) => c.className),
-      ]
-        .join(" ")
-        .toLowerCase();
-      return haystack.includes(normalizedQuery);
+  useEffect(() => {
+    if (currentPage <= pageCount) return;
+    setSearchParams(updateTeacherListUrl(searchParams, { page: pageCount }), {
+      replace: true,
     });
-  }, [teachers, query]);
+  }, [currentPage, pageCount, searchParams, setSearchParams]);
+
+  function updateSearchParams(
+    updates: Parameters<typeof updateTeacherListUrl>[1]
+  ) {
+    setSearchParams(updateTeacherListUrl(searchParams, updates));
+  }
+
+  function handleQueryChange(nextQuery: string) {
+    updateSearchParams({ page: 1, search: nextQuery });
+  }
+
+  function handlePageChange(nextPage: number) {
+    updateSearchParams({ page: nextPage });
+  }
+
+  function handleSortChange(columnId: string) {
+    const nextSortBy = columnId === "teacher-id" ? "teacherId" : "displayName";
+    const nextSortOrder =
+      sortBy === nextSortBy && sortOrder === "asc" ? "desc" : "asc";
+    updateSearchParams({
+      page: 1,
+      sortBy: nextSortBy,
+      sortOrder: nextSortOrder,
+    });
+  }
 
   return (
-    <div className="min-h-full bg-[#f7faff] p-1 text-[#0a0a0a]">
-      <h1 className="text-[17px] font-bold">ユーザー管理（教官）</h1>
-      <p className="mt-1 text-xs text-black/40">
-        学生・クラス・教官の基本情報を管理します
-      </p>
-      <div className="mt-5">
+    <div className="min-h-full space-y-5">
+      <PageHeader
+        actions={
+          <Button
+            icon={Plus}
+            onClick={() => navigate(teacherCreateTarget(location.search))}
+            size="lg"
+            variant="primary"
+          >
+            新規登録
+          </Button>
+        }
+        description="教官の基本情報を管理します"
+        title="教官管理"
+      />
+      <div>
         <ImportUploadTrigger
           type="teachers"
           helperText="取り込み前にプレビューで内容・データ種別を確認できます"
         />
       </div>
-      <div className="mt-4 flex gap-2">
-        <Link
-          to="/members"
-          className="rounded-[10px] border border-[#d2d2d2] bg-white px-4 py-2 text-sm font-bold"
-        >
-          学生
-        </Link>
-        <Link
-          to="/classroom"
-          className="rounded-[10px] border border-[#d2d2d2] bg-white px-4 py-2 text-sm font-bold"
-        >
-          クラス
-        </Link>
-        <span className="rounded-[10px] border border-[#0070bb] bg-[#0070bb] px-4 py-2 text-sm font-bold text-white">
-          教官
-        </span>
-      </div>
-      <label className="mt-4 flex h-[38px] w-full max-w-[260px] items-center gap-2 rounded-[10px] border border-[#d2d2d2] bg-white px-3 text-sm">
-        <Search className="size-4 text-black/35" />
-        <input
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          className="min-w-0 flex-1 outline-none"
-          placeholder="氏名・クラス名で検索..."
-        />
-      </label>
-      <div className="mt-4 overflow-x-auto rounded-[14px] border border-[#d2d2d2] bg-white">
-        <table className="w-full min-w-[620px] text-left text-sm">
-          <thead className="bg-[#f9fafb] text-[11px] text-black/50">
-            <tr>
-              {["教官ID", "教官名", "担当クラス", "操作"].map((h) => (
-                <th key={h} className="border-b border-[#d2d2d2] px-4 py-2">
-                  {h}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {filteredTeachers.map((teacher) => (
-              <tr
-                key={teacher.teacherId}
-                className="border-b border-[#d2d2d2] last:border-b-0"
-              >
-                <td className="px-4 py-3">{teacher.teacherId}</td>
-                <td className="px-4 py-3">{teacher.displayName}</td>
-                <td className="px-4 py-3 whitespace-pre-line">
-                  {teacher.classRooms.length > 0
-                    ? teacher.classRooms.map((c) => c.className).join("\n")
-                    : "-"}
-                </td>
-                <td className="px-4 py-3">
-                  <Link
-                    to={`/teachers/${teacher.teacherId}`}
-                    aria-label={`${teacher.displayName}の詳細・操作`}
-                    className="text-black/45"
-                  >
-                    <MoreHorizontal className="size-4" />
-                  </Link>
-                </td>
-              </tr>
-            ))}
-            {filteredTeachers.length === 0 ? (
-              <tr>
-                <td
-                  colSpan={4}
-                  className="px-4 py-6 text-center text-xs text-black/40"
-                >
-                  該当する教官が見つかりません。
-                </td>
-              </tr>
-            ) : null}
-          </tbody>
-        </table>
-      </div>
+      <SearchField
+        ariaLabel="教官を検索"
+        onValueChange={handleQueryChange}
+        placeholder="氏名・クラス名で検索..."
+        value={query}
+      />
+      <TeacherTable
+        items={teachers}
+        onSortChange={handleSortChange}
+        sort={
+          sortBy
+            ? {
+                columnId:
+                  sortBy === "teacherId" ? "teacher-id" : "display-name",
+                direction: sortOrder ?? "asc",
+              }
+            : undefined
+        }
+        footer={
+          <Pagination
+            currentPage={currentPage}
+            onPageChange={handlePageChange}
+            pageCount={pageCount}
+            pageSize={limit}
+            totalItems={total}
+          />
+        }
+      />
     </div>
   );
 }

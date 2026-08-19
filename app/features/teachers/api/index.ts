@@ -5,9 +5,19 @@ import type {
   TeacherDTO,
   TeacherPageDTO,
 } from "./dto/teacher-dto";
-import type { TeacherUpdateRequest } from "./contracts/teacher-api";
+import type {
+  TeacherCreateRequest,
+  TeacherAssignmentUpdateRequest,
+  TeacherListQuery,
+  TeacherUpdateRequest,
+} from "./contracts/teacher-api";
 
 export const TeacherApi = {
+  createTeacher: (body: TeacherCreateRequest) =>
+    teacherHttpApi.createTeacher(body),
+  getTeacherList: (query: TeacherListQuery) =>
+    teacherHttpApi.getTeacherList(query),
+  deleteTeacher: (teacherId: number) => teacherHttpApi.deleteTeacher(teacherId),
   async getTeachers(): Promise<TeacherPageDTO> {
     const items: TeacherDTO[] = [];
     let offset = 0;
@@ -34,6 +44,10 @@ export const TeacherApi = {
     teacherHttpApi.getTeacherById(teacherId),
   updateTeacher: (teacherId: number, body: TeacherUpdateRequest) =>
     teacherHttpApi.updateTeacher(teacherId, body),
+  updateTeacherAssignment: (
+    teacherId: number,
+    body: TeacherAssignmentUpdateRequest
+  ) => teacherHttpApi.updateTeacherAssignment(teacherId, body),
 };
 
 export const ClassRoomApi = {
@@ -59,6 +73,14 @@ export type {
   ClassRoomDTO,
   ClassRoomPageDTO,
   TeacherDTO,
+  TeacherListPageDTO,
   TeacherPageDTO,
 } from "./dto/teacher-dto";
-export type { TeacherUpdateRequest } from "./contracts/teacher-api";
+export type {
+  TeacherAssignmentUpdateRequest,
+  TeacherCreateRequest,
+  TeacherListQuery,
+  TeacherListSortBy,
+  TeacherListSortOrder,
+  TeacherUpdateRequest,
+} from "./contracts/teacher-api";

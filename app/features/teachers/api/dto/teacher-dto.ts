@@ -19,6 +19,13 @@ export type TeacherPageDTO = {
   offset: number;
 };
 
+export type TeacherListPageDTO = {
+  items: TeacherDTO[];
+  total: number;
+  limit: number;
+  offset: number;
+};
+
 export type ClassRoomDTO = {
   class_room_id: number;
   class_code: string;
