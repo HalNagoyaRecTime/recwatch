@@ -20,10 +20,45 @@ const teachers: TeacherRow[] = [
 ];
 
 function LocationProbe() {
-  return <output data-testid="location-search">{useLocation().search}</output>;
+  const location = useLocation();
+
+  return (
+    <>
+      <output data-testid="location-pathname">{location.pathname}</output>
+      <output data-testid="location-search">{location.search}</output>
+    </>
+  );
 }
 
 describe("TeachersPage", () => {
+  it("CSV取り込みの横に同じUIの個別登録ボタンを表示して登録画面へ遷移する", async () => {
+    const user = userEvent.setup();
+
+    render(
+      <MemoryRouter initialEntries={["/teachers?search=佐橋&page=2"]}>
+        <TeachersPage limit={50} offset={50} teachers={teachers} total={100} />
+        <LocationProbe />
+      </MemoryRouter>
+    );
+
+    const importButton = screen.getByRole("button", {
+      name: "CSV / Excel を取り込む",
+    });
+    const individualButton = screen.getByRole("button", { name: "個別登録" });
+
+    expect(importButton.parentElement).toBe(individualButton.parentElement);
+    expect(importButton.className).toBe(individualButton.className);
+
+    await user.click(individualButton);
+
+    expect(screen.getByTestId("location-pathname")).toHaveTextContent(
+      "/teachers/new"
+    );
+    expect(screen.getByTestId("location-search")).toHaveTextContent(
+      "?search=佐橋&page=2"
+    );
+  });
+
   it("IDソートのクリックを一覧URLへ反映する", async () => {
     const user = userEvent.setup();
 

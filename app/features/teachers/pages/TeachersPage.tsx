@@ -72,26 +72,20 @@ export function TeachersPage({
 
   return (
     <div className="min-h-full space-y-5">
-      <PageHeader
-        actions={
+      <PageHeader description="教官の基本情報を管理します" title="教官管理" />
+      <ImportUploadTrigger
+        adjacentAction={
           <Button
             icon={Plus}
             onClick={() => navigate(teacherCreateTarget(location.search))}
-            size="lg"
-            variant="primary"
+            variant="secondary"
           >
-            新規登録
+            個別登録
           </Button>
         }
-        description="教官の基本情報を管理します"
-        title="教官管理"
+        type="teachers"
+        helperText="取り込み前にプレビューで内容・データ種別を確認できます"
       />
-      <div>
-        <ImportUploadTrigger
-          type="teachers"
-          helperText="取り込み前にプレビューで内容・データ種別を確認できます"
-        />
-      </div>
       <SearchField
         ariaLabel="教官を検索"
         onValueChange={handleQueryChange}
