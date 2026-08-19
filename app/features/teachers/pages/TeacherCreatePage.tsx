@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useLocation, useNavigate } from "react-router";
+import { useLocation, useNavigate, useRevalidator } from "react-router";
 
 import { TeacherApi } from "~/features/teachers/api";
 import { teacherListTarget } from "~/features/teachers/application/teacher-navigation";
@@ -17,6 +17,7 @@ export function TeacherCreatePage({
 }) {
   const navigate = useNavigate();
   const location = useLocation();
+  const revalidator = useRevalidator();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
@@ -26,6 +27,7 @@ export function TeacherCreatePage({
 
     try {
       await TeacherApi.createTeacher(input);
+      await revalidator.revalidate();
       navigate(teacherListTarget(location.search));
     } catch (error) {
       setSubmitError(

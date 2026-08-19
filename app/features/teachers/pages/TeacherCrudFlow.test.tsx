@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import {
   createMemoryRouter,
   MemoryRouter,
+  Outlet,
   RouterProvider,
   useLoaderData,
 } from "react-router";
@@ -54,6 +55,33 @@ function TeacherListDestination() {
   return <p>教官一覧</p>;
 }
 
+function TeacherListRoute() {
+  return (
+    <>
+      <TeacherListDestination />
+      <Outlet />
+    </>
+  );
+}
+
+function renderNestedCreateRouter(element: React.ReactElement) {
+  const listLoader = vi.fn().mockResolvedValue(null);
+  const router = createMemoryRouter(
+    [
+      {
+        path: "/teachers",
+        loader: listLoader,
+        element: <TeacherListRoute />,
+        children: [{ path: "new", element }],
+      },
+    ],
+    { initialEntries: ["/teachers/new?search=佐橋&page=2"] }
+  );
+
+  render(<RouterProvider router={router} />);
+  return listLoader;
+}
+
 function renderCrudRouter(initialEntry: string, element: React.ReactElement) {
   const listLoader = vi.fn().mockResolvedValue(null);
   const router = createMemoryRouter(
@@ -78,17 +106,16 @@ describe("teacher create and edit flows", () => {
     mocks.createTeacher.mockResolvedValueOnce({});
     const user = userEvent.setup();
 
-    const listLoader = renderCrudRouter(
-      "/teachers/new?search=佐橋&page=2",
+    const listLoader = renderNestedCreateRouter(
       <TeacherCreatePage classRooms={classRooms} />
     );
 
-    await user.type(screen.getByLabelText("先生名"), "新任");
+    await user.type(await screen.findByLabelText("先生名"), "新任");
     await user.click(screen.getByRole("button", { name: "保存する" }));
 
     expect(await screen.findByText("教官一覧")).toBeInTheDocument();
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
-    expect(listLoader).toHaveBeenCalledTimes(1);
+    await waitFor(() => expect(listLoader).toHaveBeenCalledTimes(2));
     expect(mocks.createTeacher).toHaveBeenCalledWith({
       classRoomIds: [],
       userName: "新任",
@@ -101,11 +128,7 @@ describe("teacher create and edit flows", () => {
     );
     const user = userEvent.setup();
 
-    render(
-      <MemoryRouter initialEntries={["/teachers/new"]}>
-        <TeacherCreatePage classRooms={[]} />
-      </MemoryRouter>
-    );
+    renderCrudRouter("/teachers/new", <TeacherCreatePage classRooms={[]} />);
 
     await user.type(screen.getByLabelText("先生名"), "新任");
     await user.click(screen.getByRole("button", { name: "保存する" }));
