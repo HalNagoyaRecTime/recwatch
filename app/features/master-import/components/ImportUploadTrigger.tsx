@@ -1,14 +1,21 @@
 import { Loader2, Upload } from "lucide-react";
-import { type ChangeEvent, useRef, useState } from "react";
+import { type ChangeEvent, type ReactNode, useRef, useState } from "react";
 import { useNavigate } from "react-router";
+
+import {
+  buttonIconStyle,
+  buttonStyle,
+} from "~/components/ui/button/styles/button-styles";
 import { masterImportApi, type MasterImportType } from "../api";
 
 interface ImportUploadTriggerProps {
+  adjacentAction?: ReactNode;
   type: MasterImportType;
   helperText?: string;
 }
 
 export function ImportUploadTrigger({
+  adjacentAction,
   type,
   helperText = "取り込み前にプレビューで内容を確認できます",
 }: ImportUploadTriggerProps) {
@@ -47,16 +54,27 @@ export function ImportUploadTrigger({
           type="button"
           disabled={isUploading}
           onClick={() => inputRef.current?.click()}
-          className="flex items-center gap-2 rounded-[10px] border border-[#d2d2d2] bg-white px-4 py-2 text-sm disabled:opacity-50"
+          className={buttonStyle({
+            layout: "content",
+            size: "md",
+            variant: "secondary",
+          })}
         >
           {isUploading ? (
-            <Loader2 className="size-4 animate-spin" />
+            <Loader2
+              aria-hidden="true"
+              className={`${buttonIconStyle({ variant: "secondary" })} animate-spin`}
+            />
           ) : (
-            <Upload className="size-4" />
+            <Upload
+              aria-hidden="true"
+              className={buttonIconStyle({ variant: "secondary" })}
+            />
           )}
-          CSV / Excel を取り込む
+          <span className="truncate">CSV / Excel を取り込む</span>
         </button>
-        <span className="text-xs text-black/40">{helperText}</span>
+        {adjacentAction}
+        <span className="text-text-subtle text-xs">{helperText}</span>
         <input
           ref={inputRef}
           type="file"
@@ -65,7 +83,7 @@ export function ImportUploadTrigger({
           onChange={(event) => void handleFileChange(event)}
         />
       </div>
-      {error && <p className="text-xs text-red-600">{error}</p>}
+      {error && <p className="text-tone-danger-text text-xs">{error}</p>}
     </div>
   );
 }
