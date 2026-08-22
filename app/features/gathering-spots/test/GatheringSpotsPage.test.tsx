@@ -107,13 +107,19 @@ describe("GatheringSpotsPage", () => {
   });
 
   it("更新後に現在の検索条件で一覧を再取得する", async () => {
-    const list = vi.fn().mockResolvedValue({
-      items: [createSpot(1, "体育館前")],
-      total: 1,
-      limit: 20,
-      offset: 0,
+    let isUpdated = false;
+    const list = vi.fn().mockImplementation(() =>
+      Promise.resolve({
+        items: isUpdated ? [] : [createSpot(1, "体育館前")],
+        total: isUpdated ? 0 : 1,
+        limit: 20,
+        offset: 0,
+      })
+    );
+    const update = vi.fn().mockImplementation(async () => {
+      isUpdated = true;
+      return createSpot(1, "正門前");
     });
-    const update = vi.fn().mockResolvedValue(createSpot(1, "正門前"));
     const user = userEvent.setup();
 
     render(<GatheringSpotsPage gateway={createGateway({ list, update })} />);
@@ -146,6 +152,9 @@ describe("GatheringSpotsPage", () => {
         name: "体育館",
         offset: 0,
       })
+    );
+    await waitFor(() =>
+      expect(screen.queryByText("体育館前")).not.toBeInTheDocument()
     );
   });
 
