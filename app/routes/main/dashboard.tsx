@@ -7,7 +7,7 @@ import { PagePadding } from "~/features/frame/page-layout/PagePadding";
 import { PageLayout } from "~/features/frame/page-layout/PageLayout";
 
 export function meta() {
-  return [{ title: "Dashboard | recwatch" }];
+  return [{ title: "ダッシュボード | recwatch" }];
 }
 
 type DashboardLoaderData =
