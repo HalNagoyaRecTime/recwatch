@@ -8,6 +8,7 @@ import {
   clearAccountPhotoRefreshMarkers,
   clearCachedAccountPhotos,
 } from "~/features/frame/main-header/account-menu/lib/accountPhotoCache";
+import { clearAccountPhotoRequestState } from "~/features/frame/main-header/account-menu/lib/accountPhotoRequest";
 import {
   getRefreshTokenId,
   setRefreshTokenId,
@@ -20,6 +21,7 @@ export type LogoutResult =
 
 export async function logout(): Promise<LogoutResult> {
   clearAccountPhotoRefreshMarkers();
+  clearAccountPhotoRequestState();
   await clearCachedAccountPhotos().catch(() => undefined);
 
   try {
