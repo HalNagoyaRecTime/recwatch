@@ -7,7 +7,17 @@ import type { TeacherRow } from "~/features/teachers/model/teacher";
 import { TeachersPage } from "~/features/teachers/pages/TeachersPage";
 
 vi.mock("~/features/teachers/components/TeacherActionMenu", () => ({
-  TeacherActionMenu: () => <button type="button">操作</button>,
+  TeacherActionMenu: ({
+    onDelete,
+    teacher,
+  }: {
+    onDelete: (teacher: TeacherRow) => void;
+    teacher: TeacherRow;
+  }) => (
+    <button type="button" onClick={() => onDelete(teacher)}>
+      {teacher.displayName}を削除
+    </button>
+  ),
 }));
 
 const teachers: TeacherRow[] = [
@@ -122,5 +132,29 @@ describe("TeachersPage", () => {
     await waitFor(() => {
       expect(screen.getByTestId("location-search")).toHaveTextContent("page=2");
     });
+  });
+
+  it("3点メニューの削除操作をAPIへ反映する", async () => {
+    const deleteTeacher = vi.fn().mockResolvedValue(undefined);
+    const confirm = vi.spyOn(window, "confirm").mockReturnValue(true);
+    const user = userEvent.setup();
+
+    render(
+      <MemoryRouter initialEntries={["/teachers"]}>
+        <TeachersPage
+          api={{ deleteTeacher }}
+          limit={50}
+          offset={0}
+          teachers={teachers}
+          total={1}
+        />
+      </MemoryRouter>
+    );
+
+    await user.click(screen.getByRole("button", { name: "山田 花子を削除" }));
+
+    await waitFor(() => expect(deleteTeacher).toHaveBeenCalledWith(2));
+    expect(screen.queryByText("山田 花子")).not.toBeInTheDocument();
+    confirm.mockRestore();
   });
 });
