@@ -53,6 +53,22 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return res.json() as Promise<T>;
 }
 
+const inFlightGetRequests = new Map<string, Promise<unknown>>();
+
+function getRequest<T>(path: string): Promise<T> {
+  const key = `${getAccessToken() ?? "anonymous"}:${path}`;
+  const current = inFlightGetRequests.get(key);
+  if (current) return current as Promise<T>;
+
+  const pending = request<T>(path).finally(() => {
+    if (inFlightGetRequests.get(key) === pending) {
+      inFlightGetRequests.delete(key);
+    }
+  });
+  inFlightGetRequests.set(key, pending);
+  return pending;
+}
+
 function getApiErrorMessage(body: unknown, status: number): string {
   if (typeof body !== "object" || body === null || !("error" in body)) {
     return `API request failed (${status})`;
@@ -74,7 +90,7 @@ function getApiErrorMessage(body: unknown, status: number): string {
 }
 
 export const apiClient = {
-  get: <T>(path: string) => request<T>(path),
+  get: <T>(path: string) => getRequest<T>(path),
   post: <T>(path: string, body: unknown) =>
     request<T>(path, {
       method: "POST",
