@@ -1,5 +1,3 @@
-import accountButtonMock from "~/mock/frame/account-button.json";
-
 export type AccountUser = {
   id: string;
   email: string;
@@ -53,7 +51,7 @@ function getDisplayName(user?: AccountUser | null) {
   }
 
   const emailName = user?.email?.split("@")[0]?.trim();
-  return emailName || accountButtonMock.name;
+  return emailName || "ユーザー";
 }
 
 function getInitials(name: string) {
@@ -69,9 +67,12 @@ export function getAccountBtnData(user?: AccountUser | null): AccountBtnData {
   const name = getDisplayName(user);
 
   return {
-    ...accountButtonMock,
     name,
-    role: "Admin",
+    role: "",
+    imageUrl: undefined,
     abbr_label: getInitials(name),
+    borderColor: "var(--border-strong)",
+    bgColor: "var(--surface-brand-soft)",
+    textColor: "var(--brand-primary)",
   };
 }

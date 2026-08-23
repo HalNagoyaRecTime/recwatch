@@ -4,6 +4,7 @@ import { buildBackendUrl } from "~/config/env";
 import { getAccessToken } from "~/features/auth/lib/accessTokenStore";
 import { WEB_CLIENT_HEADERS } from "~/features/auth/lib/webClientHeaders";
 import type { AccountUser } from "~/features/frame/main-header/account-menu/model/account-btn-data";
+import { requestAccountPhoto } from "~/features/frame/main-header/account-menu/lib/accountPhotoRequest";
 import {
   buildAccountPhotoApiUrl,
   hasAccountPhotoBeenRefreshedThisSession,
@@ -94,24 +95,18 @@ export function useAccountPhoto(user?: AccountUser | null) {
           }
         : {};
 
-      const res = await fetch(photoUrl, init).catch(() => null);
-
-      if (!res?.ok) {
+      const response = await requestAccountPhoto(userId, photoUrl, init);
+      if (!response) {
         return;
       }
-
-      const blob = await res.blob();
-      if (blob.size === 0) {
-        return;
-      }
+      const { blob, contentType } = response;
 
       const photo = {
         userId,
         avatarUrl,
         avatarUpdatedAt,
         blob,
-        contentType:
-          blob.type || res.headers.get("Content-Type") || "image/jpeg",
+        contentType,
         updatedAt: Date.now(),
       };
 
