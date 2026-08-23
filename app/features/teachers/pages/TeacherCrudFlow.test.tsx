@@ -151,12 +151,12 @@ describe("teacher create and edit flows", () => {
   });
 });
 
-function renderActionRouter() {
+function renderActionRouter(onDelete = vi.fn()) {
   const router = createMemoryRouter(
     [
       {
         path: "/teachers",
-        element: <TeacherActionMenu teacher={teacher} />,
+        element: <TeacherActionMenu onDelete={onDelete} teacher={teacher} />,
       },
       { path: "/teachers/7/edit", element: <p>編集ページ</p> },
     ],
@@ -167,21 +167,24 @@ function renderActionRouter() {
 }
 
 describe("TeacherActionMenu", () => {
-  it("編集を選ぶと編集ページへ遷移する", async () => {
+  it("編集と削除を3点メニューから選べる", async () => {
+    const onDelete = vi.fn();
     const user = userEvent.setup();
 
-    renderActionRouter();
+    renderActionRouter(onDelete);
     await user.click(
       await screen.findByRole("button", { name: "佐橋 晴斗の操作" })
     );
 
     const editButton = screen.getByRole("button", { name: "編集" });
     expect(editButton.querySelector("svg")).toBeNull();
-    expect(
-      screen.queryByRole("button", { name: "無効化" })
-    ).not.toBeInTheDocument();
+    const deleteButton = screen.getByRole("button", { name: "削除" });
+    expect(deleteButton).toBeInTheDocument();
 
-    await user.click(editButton);
+    await user.click(deleteButton);
+    expect(onDelete).toHaveBeenCalledWith(teacher);
+
+    await user.click(screen.getByRole("button", { name: "編集" }));
     expect(await screen.findByText("編集ページ")).toBeInTheDocument();
   });
 });
