@@ -31,6 +31,11 @@ describe("ScheduleEditorPage", () => {
       />
     );
 
+    expect(
+      screen.getByRole("table", { name: "イベント一覧表示プレビュー" })
+    ).toBeInTheDocument();
+    expect(screen.queryByLabelText("削除イメージ")).not.toBeInTheDocument();
+
     const submitButton = screen.getByRole("button", { name: "登録する" });
     await user.click(submitButton);
 

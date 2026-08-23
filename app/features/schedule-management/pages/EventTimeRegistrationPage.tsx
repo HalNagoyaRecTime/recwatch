@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 
+import { PageHeader } from "~/components/ui/layout/PageHeader";
 import type { EventNotificationGateway } from "~/features/event-notification/application/event-notification-gateway";
 import { ScheduleEditorPage } from "~/features/schedule-editor/pages/ScheduleEditorPage";
 
@@ -52,36 +53,45 @@ export function EventTimeRegistrationPage({
 
   const selectedEvent = events.find((event) => event.id === selectedId);
 
-  if (isLoading) {
-    return <p role="status">イベントを読み込んでいます...</p>;
-  }
-
-  if (errorMessage) {
-    return <p className="text-sm text-red-600">{errorMessage}</p>;
-  }
-
   return (
-    <div>
-      <div className="mx-auto mb-5 w-full max-w-[1440px]">
-        <label htmlFor="registration-event" className="text-sm font-semibold">
-          対象イベント<span className="ml-0.5 text-red-500">*</span>
-        </label>
-        <select
-          id="registration-event"
-          value={selectedId}
-          className="mt-2 h-10 w-full max-w-[420px] rounded-lg border border-[color:var(--border-2)] bg-[color:var(--surface-overlay-strong)] px-3 text-sm"
-          onChange={(event) => setSelectedId(event.currentTarget.value)}
-        >
-          <option value="">イベントを選択</option>
-          {events.map((event) => (
-            <option key={event.id} value={event.id}>
-              {event.relatedEventName}
-            </option>
-          ))}
-        </select>
-      </div>
+    <div className="mx-auto w-full max-w-[1440px]">
+      <PageHeader
+        title="スケジュールの新規登録"
+        description="既存イベントに開催時間・開催場所・通知設定を追加します"
+      />
 
-      {selectedEvent ? (
+      {isLoading ? (
+        <p role="status" className="text-text-muted mt-6 text-sm">
+          イベントを読み込んでいます...
+        </p>
+      ) : errorMessage ? (
+        <p className="text-tone-danger-text mt-6 text-sm">{errorMessage}</p>
+      ) : (
+        <div className="mt-6">
+          <label
+            htmlFor="registration-event"
+            className="text-text-base text-sm font-semibold"
+          >
+            対象イベント
+            <span className="text-tone-danger-text ml-0.5">*</span>
+          </label>
+          <select
+            id="registration-event"
+            value={selectedId}
+            className="app-rounded border-border-base bg-surface-base text-text-base mt-2 h-10 w-full max-w-[420px] border px-3 text-sm"
+            onChange={(event) => setSelectedId(event.currentTarget.value)}
+          >
+            <option value="">イベントを選択</option>
+            {events.map((event) => (
+              <option key={event.id} value={event.id}>
+                {event.relatedEventName}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+
+      {!isLoading && !errorMessage && selectedEvent ? (
         <ScheduleEditorPage
           key={selectedEvent.id}
           submitter={createEventScheduleUpdater(
@@ -90,9 +100,10 @@ export function EventTimeRegistrationPage({
           )}
           initialDraft={mapScheduleToDraft(selectedEvent)}
           mode="edit"
-          title="イベント時間登録"
-          description="既存イベントの開催時間・開催場所・通知設定を登録します"
+          title="スケジュールの新規登録"
+          description="既存イベントに開催時間・開催場所・通知設定を追加します"
           submitLabel="登録する"
+          showHeader={false}
           onCancel={() => navigate("/schedule")}
           onSubmitted={() =>
             navigate("/schedule", {
@@ -100,11 +111,11 @@ export function EventTimeRegistrationPage({
             })
           }
         />
-      ) : (
-        <div className="mx-auto w-full max-w-[1440px] rounded-lg border border-dashed border-[color:var(--border-2)] p-10 text-center text-sm text-[color:var(--text-3)]">
-          登録するイベントを選択してください
+      ) : !isLoading && !errorMessage ? (
+        <div className="app-rounded border-border-base text-text-muted mt-6 border border-dashed p-10 text-center text-sm">
+          対象イベントを選択してください
         </div>
-      )}
+      ) : null}
     </div>
   );
 }

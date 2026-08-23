@@ -65,6 +65,19 @@ function renderPage(
 }
 
 describe("ScheduleManagementPage", () => {
+  it("スケジュール一覧として表示する", async () => {
+    renderPage(createGateway());
+
+    expect(
+      screen.getByRole("heading", { name: "スケジュール一覧" })
+    ).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "新規登録" })).toHaveAttribute(
+      "href",
+      "/schedule/new"
+    );
+    expect(await screen.findByText("走れ！〇人〇脚！")).toBeInTheDocument();
+  });
+
   it("編集完了後のフィードバックを表示する", async () => {
     renderPage(createGateway(), {
       feedbackMessage: "イベントを更新しました。",
@@ -79,6 +92,9 @@ describe("ScheduleManagementPage", () => {
     renderPage(createGateway());
 
     expect(await screen.findByText("走れ！〇人〇脚！")).toBeInTheDocument();
+    expect(
+      screen.getByRole("table", { name: "イベント日程一覧" })
+    ).toBeInTheDocument();
 
     await user.type(
       screen.getByRole("searchbox", { name: "イベントを検索" }),
@@ -113,12 +129,11 @@ describe("ScheduleManagementPage", () => {
     const user = userEvent.setup();
     renderPage(createGateway({ cancelNotification }));
 
-    const actionButton = await screen.findByRole("button", {
-      name: "走れ！〇人〇脚！のイベント操作",
+    const deleteButton = await screen.findByRole("button", {
+      name: "走れ！〇人〇脚！の通知予定を削除",
     });
 
-    await user.click(actionButton);
-    await user.click(screen.getByRole("menuitem", { name: "通知を削除" }));
+    await user.click(deleteButton);
     await user.click(screen.getByRole("button", { name: "削除する" }));
 
     await waitFor(() =>
@@ -138,11 +153,10 @@ describe("ScheduleManagementPage", () => {
     const user = userEvent.setup();
     renderPage(createGateway({ cancelNotification }));
 
-    const actionButton = await screen.findByRole("button", {
-      name: "走れ！〇人〇脚！のイベント操作",
+    const deleteButton = await screen.findByRole("button", {
+      name: "走れ！〇人〇脚！の通知予定を削除",
     });
-    await user.click(actionButton);
-    await user.click(screen.getByRole("menuitem", { name: "通知を削除" }));
+    await user.click(deleteButton);
     await user.click(screen.getByRole("button", { name: "削除する" }));
 
     expect(
