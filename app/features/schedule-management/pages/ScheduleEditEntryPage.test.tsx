@@ -60,10 +60,10 @@ describe("ScheduleEditEntryPage", () => {
     });
 
     expect(
-      await screen.findByRole("heading", { name: "イベント編集" })
+      await screen.findByRole("button", { name: "変更を保存" })
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: "変更を保存" })
+      screen.getByRole("heading", { name: "イベント編集" })
     ).toBeInTheDocument();
     expect(screen.getByLabelText("開始時間")).toHaveValue("09:10");
   });
