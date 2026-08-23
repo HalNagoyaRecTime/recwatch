@@ -176,4 +176,28 @@ describe("TeachersPage", () => {
     expect(screen.queryByText(/全23件/)).not.toBeInTheDocument();
     confirm.mockRestore();
   });
+
+  it("3点メニューの削除操作をAPIへ反映する", async () => {
+    const deleteTeacher = vi.fn().mockResolvedValue(undefined);
+    const confirm = vi.spyOn(window, "confirm").mockReturnValue(true);
+    const user = userEvent.setup();
+
+    render(
+      <MemoryRouter initialEntries={["/teachers"]}>
+        <TeachersPage
+          api={{ deleteTeacher }}
+          limit={50}
+          offset={0}
+          teachers={teachers}
+          total={1}
+        />
+      </MemoryRouter>
+    );
+
+    await user.click(screen.getByRole("button", { name: "山田 花子を削除" }));
+
+    await waitFor(() => expect(deleteTeacher).toHaveBeenCalledWith(2));
+    expect(screen.queryByText("山田 花子")).not.toBeInTheDocument();
+    confirm.mockRestore();
+  });
 });
