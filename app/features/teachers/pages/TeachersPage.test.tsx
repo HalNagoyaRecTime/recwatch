@@ -31,7 +31,7 @@ function LocationProbe() {
 }
 
 describe("TeachersPage", () => {
-  it("CSV取り込みの横に同じUIの個別登録ボタンを表示して登録画面へ遷移する", async () => {
+  it("CSV取り込みの横に同じUIの新規登録ボタンを表示して登録画面へ遷移する", async () => {
     const user = userEvent.setup();
 
     render(
@@ -44,7 +44,7 @@ describe("TeachersPage", () => {
     const importButton = screen.getByRole("button", {
       name: "CSV / Excel を取り込む",
     });
-    const individualButton = screen.getByRole("button", { name: "個別登録" });
+    const individualButton = screen.getByRole("button", { name: "新規登録" });
 
     expect(importButton.parentElement).toBe(individualButton.parentElement);
     expect(importButton.className).toBe(individualButton.className);
