@@ -16,21 +16,26 @@ export function createMockGatheringSpotGateway(
       const filtered = query
         ? spots.filter((spot) => spot.name.toLowerCase().includes(query))
         : spots;
+      const sorted = options?.sort
+        ? [...filtered].sort((left, right) => {
+            const { columnId, direction } = options.sort!;
+            const collator = new Intl.Collator("ja", {
+              numeric: true,
+              sensitivity: "base",
+            });
+            const result =
+              columnId === "id"
+                ? left.id - right.id
+                : columnId === "name"
+                  ? collator.compare(left.name, right.name)
+                  : columnId === "created-at"
+                    ? collator.compare(left.createdAt, right.createdAt)
+                    : collator.compare(left.updatedAt, right.updatedAt);
+            return direction === "asc" ? result : -result;
+          })
+        : filtered;
       const limit = options?.limit ?? filtered.length;
       const offset = options?.offset ?? 0;
-      const sorted = [...filtered].sort((left, right) => {
-        const column = options?.sortBy ?? "id";
-        const leftValue = left[columnToModelKey(column)];
-        const rightValue = right[columnToModelKey(column)];
-        const result =
-          typeof leftValue === "number" && typeof rightValue === "number"
-            ? leftValue - rightValue
-            : String(leftValue).localeCompare(String(rightValue), "ja", {
-                numeric: true,
-                sensitivity: "base",
-              });
-        return options?.sortOrder === "desc" ? -result : result;
-      });
       return {
         items: sorted.slice(offset, offset + limit),
         total: filtered.length,
@@ -77,10 +82,4 @@ export function createMockGatheringSpotGateway(
       spots = spots.filter((spot) => spot.id !== id);
     },
   };
-}
-
-function columnToModelKey(
-  column: NonNullable<GatheringSpotListOptions["sortBy"]>
-): "id" | "name" | "createdAt" | "updatedAt" {
-  return column;
 }
