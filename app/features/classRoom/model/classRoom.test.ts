@@ -21,6 +21,7 @@ describe("toClassRoomData", () => {
       classRoomCode: "IH12A203",
       classRoomName: "情報処理学科1年A組",
       studentCount: 32,
+      teacherId: 2,
       teacherName: "佐橋 晴斗",
     });
   });
