@@ -13,7 +13,7 @@ describe("http notification audience loader", () => {
     }));
     const firstEvents = Array.from({ length: 100 }, (_, index) => ({
       event_id: index + 1,
-      event_name: `競技${index + 1}`,
+      event_name: `イベント${index + 1}`,
     }));
     const get = vi.fn(async (path: string) => {
       switch (path) {
@@ -44,7 +44,7 @@ describe("http notification audience loader", () => {
           };
         case "/api/v1/events?limit=100&offset=100":
           return {
-            events: [{ event_id: 101, event_name: "競技101" }],
+            events: [{ event_id: 101, event_name: "イベント101" }],
             total: 101,
             limit: 100,
             offset: 100,
@@ -64,7 +64,7 @@ describe("http notification audience loader", () => {
     });
     expect(options).toContainEqual({
       id: "101",
-      name: "競技101",
+      name: "イベント101",
       type: "event_participants",
     });
   });
@@ -108,7 +108,7 @@ describe("http notification audience loader", () => {
                 offset: 0,
               }
             : {
-                events: [{ event_id: 1, event_name: "競技1" }],
+                events: [{ event_id: 1, event_name: "イベント1" }],
                 total: 10_000,
                 limit: 100,
                 offset: 0,

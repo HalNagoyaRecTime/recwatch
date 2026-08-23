@@ -11,9 +11,9 @@ import {
 let notifications: ManagedNotification[] = [
   createNotification({
     id: 101,
-    title: "競技開始時間の変更",
+    title: "イベント開始時間の変更",
     body: "走れ！〇人〇脚！の開始時間が09:00から09:10に変更になりました。",
-    audienceName: "競技参加者 30名",
+    audienceName: "イベント参加者 30名",
     audience: { type: "event_participants", eventId: 1 },
     scheduledAt: "2026-11-07T09:05:00+09:00",
     relatedEventId: 1,
@@ -47,7 +47,7 @@ let notifications: ManagedNotification[] = [
     id: 104,
     title: "紙飛行機飛ばし",
     body: "紙飛行機飛ばしの集合場所は集合場所Cです。",
-    audienceName: "競技参加者 24名",
+    audienceName: "イベント参加者 24名",
     scheduledAt: "2026-11-07T13:20:00+09:00",
     relatedEventId: 4,
     relatedEventName: "紙飛行機飛ばし",

@@ -29,7 +29,7 @@ export function NotificationCreatePage({
       <PagePadding>
         <div className="mx-auto flex w-full min-w-0 flex-col gap-6">
           <PageHeader
-            title="通知を作成"
+            title="通知の新規登録"
             description="アプリを利用するメンバーへプッシュ通知を配信します"
           />
           <NotificationForm

@@ -73,61 +73,22 @@ async function openDeleteMenu(user: ReturnType<typeof userEvent.setup>) {
 }
 
 describe("NotificationListPage", () => {
-  it("未実装の表示範囲には選択肢のラベルで明示する", async () => {
-    const user = userEvent.setup();
-
+  it("新しい通知の登録ボタンを共通表記で表示する", async () => {
     renderPage(<NotificationListPage api={createGateway()} />);
 
-    await user.click(
-      await screen.findByRole("combobox", {
-        name: /通知の表示範囲（自動・手動は未実装）/,
-      })
-    );
-
     expect(
-      screen.getByRole("option", { name: "すべて表示" })
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("option", { name: "自動（未実装）" })
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("option", { name: "手動（未実装）" })
-    ).toBeInTheDocument();
-    expect(
-      screen.queryByRole("option", { name: /^未実装$/ })
-    ).not.toBeInTheDocument();
+      await screen.findByRole("link", { name: "新規登録" })
+    ).toHaveAttribute("href", "/notifications/new");
   });
 
-  it("カレンダー・グリッド表示では一覧を隠して未実装を表示する", async () => {
-    const user = userEvent.setup();
-
+  it("未提供の検索・表示切替を操作として見せない", async () => {
     renderPage(<NotificationListPage api={createGateway()} />);
 
-    await user.click(
-      await screen.findByRole("button", { name: "カレンダー表示" })
-    );
-
+    expect(await screen.findByText("集合場所変更")).toBeInTheDocument();
+    expect(screen.queryByText("未実装")).not.toBeInTheDocument();
+    expect(screen.queryByRole("searchbox")).not.toBeInTheDocument();
     expect(
-      screen.getByRole("status", { name: "通知の表示形式（未実装）" })
-    ).toHaveTextContent("未実装");
-    expect(
-      screen.queryByRole("table", { name: "通知一覧" })
-    ).not.toBeInTheDocument();
-
-    await user.click(screen.getByRole("button", { name: "グリッド表示" }));
-
-    expect(
-      screen.getByRole("status", { name: "通知の表示形式（未実装）" })
-    ).toHaveTextContent("未実装");
-    expect(
-      screen.queryByRole("table", { name: "通知一覧" })
-    ).not.toBeInTheDocument();
-
-    await user.click(screen.getByRole("button", { name: "リスト表示" }));
-
-    expect(screen.getByRole("table", { name: "通知一覧" })).toBeInTheDocument();
-    expect(
-      screen.queryByRole("status", { name: "通知の表示形式（未実装）" })
+      screen.queryByRole("button", { name: "カレンダー表示" })
     ).not.toBeInTheDocument();
   });
 

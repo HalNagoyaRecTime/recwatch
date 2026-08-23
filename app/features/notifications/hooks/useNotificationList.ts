@@ -64,7 +64,7 @@ export function useNotificationList({ api }: UseNotificationListOptions) {
   );
 
   useEffect(() => {
-    void loadPage(currentPage);
+    void Promise.resolve().then(() => loadPage(currentPage));
   }, [currentPage, loadPage]);
 
   const reload = useCallback(

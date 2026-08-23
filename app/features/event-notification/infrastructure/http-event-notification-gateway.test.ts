@@ -38,7 +38,7 @@ describe("createHttpEventNotificationGateway", () => {
     });
   });
 
-  it("競技単位の自動通知集約を取得する", async () => {
+  it("イベント単位の自動通知集約を取得する", async () => {
     const get = vi.fn().mockResolvedValue(createNotificationSummaryResponse());
     const gateway = createHttpEventNotificationGateway(createClient({ get }));
 

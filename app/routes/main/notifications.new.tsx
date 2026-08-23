@@ -3,7 +3,7 @@ import { httpNotificationAudienceApi } from "~/features/notifications/api/http/n
 import { httpNotificationSubmissionApi } from "~/features/notifications/api/http/notification-submission-api";
 
 export function meta() {
-  return [{ title: "通知作成 | REC TIME" }];
+  return [{ title: "通知の新規登録 | REC TIME" }];
 }
 
 export default function NotificationsNewRoute() {

@@ -57,36 +57,30 @@ export function useNotificationEdit({
 
   useEffect(() => {
     let active = true;
-    setIsLoading(true);
-    setLoadError(null);
+    void Promise.resolve().then(async () => {
+      if (!active) return;
+      setIsLoading(true);
+      setLoadError(null);
 
-    if (!Number.isSafeInteger(notificationId) || notificationId <= 0) {
-      setLoadError("通知IDが不正です。");
-      setIsLoading(false);
-      return () => {
-        active = false;
-      };
-    }
+      if (!Number.isSafeInteger(notificationId) || notificationId <= 0) {
+        setLoadError("通知IDが不正です。");
+        setIsLoading(false);
+        return;
+      }
 
-    api
-      .getById(notificationId)
-      .then((loadedNotification) => {
+      try {
+        const loadedNotification = await api.getById(notificationId);
         if (!active) return;
-
         setNotification(loadedNotification);
         setDraft(toNotificationDraft(loadedNotification));
-      })
-      .catch((error: unknown) => {
+      } catch (error) {
         if (!active) return;
-
         setNotification(null);
         setLoadError(toManagementErrorMessage(error));
-      })
-      .finally(() => {
-        if (active) {
-          setIsLoading(false);
-        }
-      });
+      } finally {
+        if (active) setIsLoading(false);
+      }
+    });
 
     return () => {
       active = false;
@@ -95,27 +89,23 @@ export function useNotificationEdit({
 
   useEffect(() => {
     let active = true;
-    setIsAudienceLoading(true);
-    setAudienceError(null);
+    void Promise.resolve().then(async () => {
+      if (!active) return;
+      setIsAudienceLoading(true);
+      setAudienceError(null);
 
-    audienceApi
-      .load()
-      .then((options) => {
-        if (active) {
-          setAudienceOptions(options);
-        }
-      })
-      .catch((error: unknown) => {
+      try {
+        const options = await audienceApi.load();
+        if (active) setAudienceOptions(options);
+      } catch (error) {
         if (active) {
           setAudienceOptions([]);
           setAudienceError(toAudienceErrorMessage(error));
         }
-      })
-      .finally(() => {
-        if (active) {
-          setIsAudienceLoading(false);
-        }
-      });
+      } finally {
+        if (active) setIsAudienceLoading(false);
+      }
+    });
 
     return () => {
       active = false;
@@ -132,6 +122,12 @@ export function useNotificationEdit({
       audienceId: nextDraft.audienceId ? undefined : current.audienceId,
       scheduledAt: nextDraft.scheduledAt ? undefined : current.scheduledAt,
     }));
+  }
+
+  function reloadAudience() {
+    setIsAudienceLoading(true);
+    setAudienceError(null);
+    setAudienceReloadKey((current) => current + 1);
   }
 
   async function submit() {
@@ -183,7 +179,7 @@ export function useNotificationEdit({
     isSubmitting,
     loadError,
     notification,
-    onAudienceReload: () => setAudienceReloadKey((current) => current + 1),
+    onAudienceReload: reloadAudience,
     onChange: handleChange,
     submissionError,
     submit,

@@ -36,7 +36,7 @@ const notificationAudienceLabels: Record<NotificationAudienceType, string> = {
   all: "全体",
   class_room: "クラス",
   gathering: "集合",
-  event_participants: "競技参加者",
+  event_participants: "イベント参加者",
 };
 
 const audienceTypeOptions = Object.entries(notificationAudienceLabels).map(
@@ -106,7 +106,7 @@ export function NotificationForm({
               onChange={(event) =>
                 onChange({ ...draft, title: event.currentTarget.value })
               }
-              placeholder="例：競技開始時間の変更"
+              placeholder="例：イベント開始時間の変更"
               required
               value={draft.title}
             />
@@ -169,7 +169,7 @@ export function NotificationForm({
               value={draft.audienceType}
             />
             <p className="text-text-subtle mt-1.5 text-xs">
-              全体 / クラス / 集合 / 競技参加者
+              全体 / クラス / 集合 / イベント参加者
             </p>
           </div>
 

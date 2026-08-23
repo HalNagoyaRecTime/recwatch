@@ -45,27 +45,23 @@ export function useNotificationCreate({
 
   useEffect(() => {
     let active = true;
-    setIsAudienceLoading(true);
-    setAudienceError(null);
+    void Promise.resolve().then(async () => {
+      if (!active) return;
+      setIsAudienceLoading(true);
+      setAudienceError(null);
 
-    audienceApi
-      .load()
-      .then((options) => {
-        if (active) {
-          setAudienceOptions(options);
-        }
-      })
-      .catch((error: unknown) => {
+      try {
+        const options = await audienceApi.load();
+        if (active) setAudienceOptions(options);
+      } catch (error) {
         if (active) {
           setAudienceOptions([]);
           setAudienceError(toAudienceErrorMessage(error));
         }
-      })
-      .finally(() => {
-        if (active) {
-          setIsAudienceLoading(false);
-        }
-      });
+      } finally {
+        if (active) setIsAudienceLoading(false);
+      }
+    });
 
     return () => {
       active = false;
@@ -83,6 +79,12 @@ export function useNotificationCreate({
       audienceId: nextDraft.audienceId ? undefined : current.audienceId,
       scheduledAt: nextDraft.scheduledAt ? undefined : current.scheduledAt,
     }));
+  }
+
+  function reloadAudience() {
+    setIsAudienceLoading(true);
+    setAudienceError(null);
+    setAudienceReloadKey((current) => current + 1);
   }
 
   async function submit() {
@@ -124,7 +126,7 @@ export function useNotificationCreate({
     errors,
     isAudienceLoading,
     isSubmitting,
-    onAudienceReload: () => setAudienceReloadKey((current) => current + 1),
+    onAudienceReload: reloadAudience,
     onChange: handleChange,
     submitted,
     submissionError,

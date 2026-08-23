@@ -61,7 +61,7 @@ function deriveStatus(
 
 function toAudienceName(audience: AdminNotificationAudienceResponse) {
   return audience.type === "event_participants"
-    ? `競技参加者（${audience.recipient_count}名）`
+    ? `イベント参加者（${audience.recipient_count}名）`
     : `配信対象者（${audience.recipient_count}名）`;
 }
 

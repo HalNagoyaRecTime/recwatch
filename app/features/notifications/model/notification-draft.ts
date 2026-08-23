@@ -30,5 +30,5 @@ export const notificationAudienceLabels: Record<
   all: "全体",
   class_room: "クラス",
   gathering: "集合",
-  event_participants: "競技参加者",
+  event_participants: "イベント参加者",
 };

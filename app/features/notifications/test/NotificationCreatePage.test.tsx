@@ -47,6 +47,22 @@ async function selectAudience(
 }
 
 describe("NotificationCreatePage", () => {
+  it("新規登録画面と通知プレビューを明確に表示する", () => {
+    renderPage(
+      <NotificationCreatePage
+        api={{ submit: vi.fn() }}
+        audienceApi={createAudienceLoader()}
+      />
+    );
+
+    expect(
+      screen.getByRole("heading", { name: "通知の新規登録" })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("region", { name: "通知プレビュー" })
+    ).toBeInTheDocument();
+  });
+
   it("過去の予約日時では通知を送信しない", async () => {
     const submit = vi.fn();
     const user = userEvent.setup();
@@ -73,9 +89,7 @@ describe("NotificationCreatePage", () => {
     expect(submit).not.toHaveBeenCalled();
   });
 
-  it("未実装のモバイルプレビュー形式では未実装と表示する", async () => {
-    const user = userEvent.setup();
-
+  it("実装済みのロック画面プレビューだけを表示する", () => {
     renderPage(
       <NotificationCreatePage
         api={{ submit: vi.fn() }}
@@ -84,16 +98,13 @@ describe("NotificationCreatePage", () => {
     );
 
     expect(screen.getByText("プレビュー")).toBeInTheDocument();
-
-    await user.click(screen.getByRole("button", { name: "通知詳細" }));
     expect(
-      screen.getByRole("status", { name: "プレビュー（未実装）" })
-    ).toHaveTextContent("未実装");
-
-    await user.click(screen.getByRole("button", { name: "ロック画面" }));
-    expect(
-      screen.queryByRole("status", { name: "プレビュー（未実装）" })
+      screen.queryByRole("button", { name: "通知詳細" })
     ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "データ表示" })
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText("未実装")).not.toBeInTheDocument();
   });
 
   it("API未接続時は送信操作と成功表示を無効にする", async () => {
@@ -214,7 +225,7 @@ describe("NotificationCreatePage", () => {
       />
     );
 
-    await selectAudience(user, "競技参加者");
+    await selectAudience(user, "イベント参加者");
 
     expect(
       await screen.findByText("選択できる対象がありません。")

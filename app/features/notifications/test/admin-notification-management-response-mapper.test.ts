@@ -49,7 +49,7 @@ describe("notification management response mapper", () => {
 
     expect(page.notifications[0]).toMatchObject({
       id: 10,
-      audienceName: "競技参加者（30名）",
+      audienceName: "イベント参加者（30名）",
       relatedEventId: 3,
       relatedEventName: "リレー",
       status: "draft",
