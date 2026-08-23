@@ -6,16 +6,16 @@ import {
   Scripts,
   ScrollRestoration,
 } from "react-router";
+import type { ReactNode } from "react";
 
 import type { Route } from "./+types/root";
 import { THEME_STORAGE_KEY } from "./lib/theme";
 import { ThemeProvider } from "~/components/providers/ThemeProvider";
 import "./app.css";
-import React from "react";
 
 export const links: Route.LinksFunction = () => [];
 
-export function Layout({ children }: { children: React.ReactNode }) {
+export function Layout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
