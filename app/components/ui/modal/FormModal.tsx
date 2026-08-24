@@ -17,6 +17,15 @@ type FormModalProps = {
   title: ReactNode;
 };
 
+const focusableSelector = [
+  "a[href]",
+  "button:not([disabled])",
+  "input:not([disabled])",
+  "select:not([disabled])",
+  "textarea:not([disabled])",
+  '[tabindex]:not([tabindex="-1"])',
+].join(",");
+
 function getTransitionDuration(): number {
   return typeof window.matchMedia === "function" &&
     window.matchMedia("(prefers-reduced-motion: reduce)").matches
@@ -42,6 +51,7 @@ export function FormModal({
   title,
 }: FormModalProps) {
   const titleId = useId();
+  const descriptionId = useId();
   const [isClosing, setIsClosing] = useState(false);
   const backdropRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLElement>(null);
@@ -106,12 +116,55 @@ export function FormModal({
   }, [isClosing, onClose]);
 
   useEffect(() => {
-    function handleEscape(event: KeyboardEvent) {
-      if (event.key === "Escape") requestClose();
+    const previouslyFocused =
+      document.activeElement instanceof HTMLElement
+        ? document.activeElement
+        : null;
+    const panel = panelRef.current;
+    const initialFocusTarget =
+      panel?.querySelector<HTMLElement>(focusableSelector) ?? panel;
+    initialFocusTarget?.focus();
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        requestClose();
+        return;
+      }
+      if (event.key !== "Tab" || !panel) return;
+
+      const focusableElements = Array.from(
+        panel.querySelectorAll<HTMLElement>(focusableSelector)
+      );
+      if (focusableElements.length === 0) {
+        event.preventDefault();
+        panel.focus();
+        return;
+      }
+
+      const first = focusableElements[0];
+      const last = focusableElements.at(-1)!;
+      const activeElement = document.activeElement;
+
+      if (
+        event.shiftKey &&
+        (activeElement === first || !panel.contains(activeElement))
+      ) {
+        event.preventDefault();
+        last.focus();
+      } else if (
+        !event.shiftKey &&
+        (activeElement === last || !panel.contains(activeElement))
+      ) {
+        event.preventDefault();
+        first.focus();
+      }
     }
 
-    document.addEventListener("keydown", handleEscape);
-    return () => document.removeEventListener("keydown", handleEscape);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+      if (previouslyFocused?.isConnected) previouslyFocused.focus();
+    };
   }, [requestClose]);
 
   const content =
@@ -127,6 +180,7 @@ export function FormModal({
       role="presentation"
     >
       <section
+        aria-describedby={description ? descriptionId : undefined}
         aria-labelledby={titleId}
         aria-modal="true"
         className={cn(
@@ -135,6 +189,7 @@ export function FormModal({
         )}
         ref={panelRef}
         role="dialog"
+        tabIndex={-1}
       >
         <header className="border-border-subtle flex shrink-0 items-start justify-between border-b px-5 py-4">
           <div className="min-w-0">
@@ -142,7 +197,9 @@ export function FormModal({
               {title}
             </h2>
             {description ? (
-              <p className="text-text-muted mt-1 text-sm">{description}</p>
+              <p className="text-text-muted mt-1 text-sm" id={descriptionId}>
+                {description}
+              </p>
             ) : null}
           </div>
           <button
