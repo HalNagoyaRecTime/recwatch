@@ -304,7 +304,7 @@
 }
 
 @media (max-width: 767px) {
-  .sidebar-mobile-open-width {
+  .sidebar-mobile-placeholder {
     width: 0;
   }
 

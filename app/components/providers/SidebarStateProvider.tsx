@@ -17,7 +17,7 @@ export const SidebarStateContext = createContext<SidebarState | undefined>(
 );
 
 export function SidebarStateProvider({ children }: { children: ReactNode }) {
-  const [mobileOpen, setMobileOpen] = useState(true);
+  const [mobileOpen, setMobileOpen] = useState(false);
   const [sidebarPinnedOpen, setSidebarPinnedOpen] = useState(true);
   const [openAccordions, setOpenAccordions] = useState<string[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
