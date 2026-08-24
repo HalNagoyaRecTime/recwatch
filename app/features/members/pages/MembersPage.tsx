@@ -115,6 +115,12 @@ export function MembersPage({
     setIsFormOpen(true);
   }
 
+  function closeForm() {
+    setIsFormOpen(false);
+    setEditingStudent(null);
+    setSubmitError(null);
+  }
+
   async function saveStudent(input: StudentWriteInput) {
     if (isMutating) return;
 
@@ -131,8 +137,7 @@ export function MembersPage({
             )
           : [...current, saved]
       );
-      setIsFormOpen(false);
-      setEditingStudent(null);
+      closeForm();
     } catch (error) {
       setSubmitError(
         error instanceof Error ? error.message : "学生を保存できませんでした。"
@@ -232,14 +237,14 @@ export function MembersPage({
       {isFormOpen ? (
         <FormModal
           description="氏名、学籍番号、出席番号、所属クラスを入力します"
-          onClose={() => setIsFormOpen(false)}
+          onClose={closeForm}
           title={editingStudent ? "学生を編集" : "学生の新規登録"}
         >
           <StudentForm
             classRooms={classRooms}
             initialStudent={editingStudent ?? undefined}
             isSubmitting={isMutating}
-            onCancel={() => setIsFormOpen(false)}
+            onCancel={closeForm}
             onSubmit={saveStudent}
             submitError={submitError}
           />
