@@ -31,7 +31,12 @@ export function StudentForm({
     initialStudent ? String(initialStudent.attendance_number) : ""
   );
   const [classRoomId, setClassRoomId] = useState(
-    initialStudent ? String(initialStudent.class_room_id) : ""
+    initialStudent &&
+      classRooms.some(
+        (classRoom) => classRoom.classRoomId === initialStudent.class_room_id
+      )
+      ? String(initialStudent.class_room_id)
+      : ""
   );
   const [validationError, setValidationError] = useState<string | null>(null);
 
