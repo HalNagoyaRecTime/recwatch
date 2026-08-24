@@ -38,4 +38,32 @@ describe("requestAccountPhoto", () => {
 
     expect(fetcher).toHaveBeenCalledTimes(1);
   });
+
+  it("状態クリア前に開始したリクエスト結果を無効化する", async () => {
+    let resolveResponse: ((response: Response) => void) | undefined;
+    const fetcher = vi.fn(
+      () =>
+        new Promise<Response>((resolve) => {
+          resolveResponse = resolve;
+        })
+    );
+
+    const staleRequest = requestAccountPhoto("user-1", "/photo", {}, fetcher);
+    clearAccountPhotoRequestState();
+    const stalePhoto = new Blob(["old-photo"], { type: "image/jpeg" });
+    resolveResponse?.({
+      ok: true,
+      status: 200,
+      headers: new Headers({ "Content-Type": "image/jpeg" }),
+      blob: vi.fn().mockResolvedValue(stalePhoto),
+    } as Partial<Response> as Response);
+
+    await expect(staleRequest).resolves.toBeNull();
+
+    fetcher.mockResolvedValueOnce(new Response(null, { status: 404 }));
+    await expect(
+      requestAccountPhoto("user-1", "/photo", {}, fetcher)
+    ).resolves.toBeNull();
+    expect(fetcher).toHaveBeenCalledTimes(2);
+  });
 });
