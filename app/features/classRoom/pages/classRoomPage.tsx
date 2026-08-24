@@ -99,13 +99,22 @@ export function ClassRoomPage({
     setIsFormOpen(true);
   }
 
+  function closeForm() {
+    setIsFormOpen(false);
+    setEditing(null);
+    setForm(emptyForm);
+    setActionError(null);
+  }
+
   async function saveClassRoom() {
     const input = {
       classCode: form.classCode.trim(),
       className: form.className.trim(),
       teacherId: form.teacherId,
     };
-    if (!input.classCode || !input.className || isMutating) {
+    if (isMutating) return;
+
+    if (!input.classCode || !input.className) {
       setActionError("クラス記号とクラス名を入力してください。");
       return;
     }
@@ -124,9 +133,7 @@ export function ClassRoomPage({
             )
           : [...current, saved]
       );
-      setIsFormOpen(false);
-      setEditing(null);
-      setForm(emptyForm);
+      closeForm();
     } catch (error) {
       setActionError(
         error instanceof Error
@@ -193,7 +200,7 @@ export function ClassRoomPage({
       {isFormOpen ? (
         <FormModal
           description="クラス記号、クラス名、担当教官を入力します"
-          onClose={() => setIsFormOpen(false)}
+          onClose={closeForm}
           title={editing ? "クラスを編集" : "クラスの新規登録"}
         >
           <form
@@ -264,7 +271,7 @@ export function ClassRoomPage({
             <div className="flex justify-end gap-3">
               <Button
                 disabled={isMutating}
-                onClick={() => setIsFormOpen(false)}
+                onClick={closeForm}
                 type="button"
                 variant="secondary"
               >

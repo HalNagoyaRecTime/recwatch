@@ -126,4 +126,97 @@ describe("ClassRoomPage", () => {
     expect(screen.queryByText("Bクラス")).not.toBeInTheDocument();
     confirm.mockRestore();
   });
+
+  it("既存クラスを編集して更新結果を一覧へ反映する", async () => {
+    const updateClassRoom = vi.fn().mockResolvedValue({
+      class_room_id: 1,
+      class_code: "2A",
+      class_name: "2年A組",
+      student_count: 12,
+      teacher: { teacher_id: 8, display_name: "鈴木教官" },
+    });
+    const user = userEvent.setup();
+
+    render(
+      <MemoryRouter>
+        <ClassRoomPage
+          api={{
+            createClassRoom: vi.fn(),
+            deleteClassRoom: vi.fn(),
+            updateClassRoom,
+          }}
+          classRooms={[
+            {
+              classRoomId: 1,
+              classRoomCode: "1A",
+              classRoomName: "1年A組",
+              studentCount: 12,
+              teacherId: null,
+              teacherName: null,
+            },
+          ]}
+          teacherOptions={[{ teacherId: 8, displayName: "鈴木教官" }]}
+        />
+      </MemoryRouter>
+    );
+
+    await user.click(screen.getByRole("button", { name: "1年A組の操作" }));
+    await user.click(screen.getByRole("button", { name: "編集" }));
+    expect(screen.getByRole("textbox", { name: "クラス記号*" })).toHaveValue(
+      "1A"
+    );
+    expect(screen.getByRole("textbox", { name: "クラス名*" })).toHaveValue(
+      "1年A組"
+    );
+
+    await user.clear(screen.getByRole("textbox", { name: "クラス記号*" }));
+    await user.type(screen.getByRole("textbox", { name: "クラス記号*" }), "2A");
+    await user.clear(screen.getByRole("textbox", { name: "クラス名*" }));
+    await user.type(
+      screen.getByRole("textbox", { name: "クラス名*" }),
+      "2年A組"
+    );
+    await user.selectOptions(screen.getByLabelText("担当教官"), "8");
+    await user.click(screen.getByRole("button", { name: "保存する" }));
+
+    await waitFor(() =>
+      expect(updateClassRoom).toHaveBeenCalledWith(1, {
+        classCode: "2A",
+        className: "2年A組",
+        teacherId: 8,
+      })
+    );
+    expect(await screen.findByText("2年A組")).toBeInTheDocument();
+    expect(screen.queryByText("1年A組")).not.toBeInTheDocument();
+  });
+
+  it("保存エラーはフォームを閉じたときに消去する", async () => {
+    const user = userEvent.setup();
+
+    render(
+      <MemoryRouter>
+        <ClassRoomPage
+          api={{
+            createClassRoom: vi.fn().mockRejectedValue(new Error("保存失敗")),
+            deleteClassRoom: vi.fn(),
+            updateClassRoom: vi.fn(),
+          }}
+          classRooms={[]}
+          teacherOptions={[]}
+        />
+      </MemoryRouter>
+    );
+
+    await user.click(screen.getByRole("button", { name: "新規登録" }));
+    await user.type(screen.getByRole("textbox", { name: "クラス記号*" }), "1A");
+    await user.type(
+      screen.getByRole("textbox", { name: "クラス名*" }),
+      "1年A組"
+    );
+    await user.click(screen.getByRole("button", { name: "保存する" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("保存失敗");
+
+    await user.click(screen.getByRole("button", { name: "キャンセル" }));
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
 });
