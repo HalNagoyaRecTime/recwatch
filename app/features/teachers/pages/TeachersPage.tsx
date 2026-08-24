@@ -57,6 +57,7 @@ export function TeachersPage({
 
   useEffect(() => {
     if (currentPage <= pageCount) return;
+    setRemovedTeacherIds(new Set());
     setSearchParams(updateTeacherListUrl(searchParams, { page: pageCount }), {
       replace: true,
     });
@@ -65,6 +66,7 @@ export function TeachersPage({
   function updateSearchParams(
     updates: Parameters<typeof updateTeacherListUrl>[1]
   ) {
+    setRemovedTeacherIds(new Set());
     setSearchParams(updateTeacherListUrl(searchParams, updates));
   }
 
