@@ -134,4 +134,26 @@ describe("createHttpCompetitionAssignmentGateway", () => {
       "/api/v1/gatherings/6/members/12"
     );
   });
+
+  it("新規集合のメンバー登録に失敗したら作成済み集合を削除する", async () => {
+    const client = createClient();
+    client.post.mockImplementation(async (path: string) => {
+      if (path === "/api/v1/gatherings") {
+        return { gathering_id: 9 };
+      }
+      throw new Error("メンバー登録失敗");
+    });
+    const gateway = createHttpCompetitionAssignmentGateway(client);
+
+    await expect(
+      gateway.save({
+        eventId: 4,
+        gatheringId: null,
+        spotId: 5,
+        time: "08:50",
+        userIds: [12, 13],
+      })
+    ).rejects.toThrow("メンバー登録失敗");
+    expect(client.delete).toHaveBeenCalledWith("/api/v1/gatherings/9");
+  });
 });

@@ -67,13 +67,27 @@ export function createHttpCompetitionAssignmentGateway(
         });
         gatheringId = parseCreatedGatheringId(response);
 
-        await Promise.all(
+        const memberResults = await Promise.allSettled(
           uniqueIds(input.userIds).map((userId) =>
             client.post(`/api/v1/gatherings/${gatheringId}/members`, {
               userId,
             })
           )
         );
+        const failedMember = memberResults.find(
+          (result): result is PromiseRejectedResult =>
+            result.status === "rejected"
+        );
+        if (failedMember) {
+          try {
+            await client.delete(`/api/v1/gatherings/${gatheringId}`);
+          } catch {
+            throw new Error(
+              "参加者の登録に失敗し、作成済みの集合予定も削除できませんでした。"
+            );
+          }
+          throw failedMember.reason;
+        }
       } else {
         const currentUserIds = await loadMemberUserIds(gatheringId);
         const nextUserIds = uniqueIds(input.userIds);

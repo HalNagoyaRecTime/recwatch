@@ -191,12 +191,13 @@ export function CompetitionAssignmentPage({
   }
 
   async function saveAssignment() {
+    if (isSubmitting) return;
+
     if (
       !selectedEvent ||
       !selectedSpot ||
       !gatheringTime ||
-      selectedUserIds.length === 0 ||
-      isSubmitting
+      selectedUserIds.length === 0
     ) {
       setSubmitError(
         "イベント、集合場所、集合時間、参加者を選択してください。"
