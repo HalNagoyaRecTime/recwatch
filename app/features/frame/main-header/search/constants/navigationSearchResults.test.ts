@@ -16,6 +16,12 @@ describe("navigation search results", () => {
     expect(NAVIGATION_SEARCH_RESULTS).toContainEqual(
       expect.objectContaining({ title: "イベント登録一覧", to: "/events" })
     );
+    expect(NAVIGATION_SEARCH_RESULTS).toContainEqual(
+      expect.objectContaining({ title: "通知一覧", to: "/notifications" })
+    );
+    expect(NAVIGATION_SEARCH_RESULTS).not.toContainEqual(
+      expect.objectContaining({ title: "通知管理", to: "/notifications" })
+    );
     expect(NAVIGATION_SEARCH_RESULTS).not.toEqual(
       expect.arrayContaining([
         expect.objectContaining({ title: "Weekly product sync notes" }),
