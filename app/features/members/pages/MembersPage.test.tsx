@@ -140,4 +140,67 @@ describe("MembersPage", () => {
     expect(screen.queryByText("山田太郎")).not.toBeInTheDocument();
     confirm.mockRestore();
   });
+
+  it("削除した学生を同じ学籍番号で再登録して一覧へ戻す", async () => {
+    const student = {
+      student_id: 1,
+      display_name: "佐藤花子",
+      class_room_id: 1,
+      class_room_name: "1年Aクラス",
+      attendance_number: 1,
+      student_id_number: "S001",
+      is_live_active: true,
+    };
+    const deleteStudent = vi.fn().mockResolvedValue(undefined);
+    const createStudent = vi.fn().mockResolvedValue(student);
+    const confirm = vi.spyOn(window, "confirm").mockReturnValue(true);
+    const user = userEvent.setup();
+
+    render(
+      <MemoryRouter>
+        <MembersPage
+          api={{
+            createStudent,
+            deleteStudent,
+            getAllStudents: vi.fn().mockResolvedValue([student]),
+            updateStudent: vi.fn(),
+          }}
+          loadClassRooms={vi.fn().mockResolvedValue([
+            {
+              classRoomId: 1,
+              classRoomCode: "1A",
+              classRoomName: "1年Aクラス",
+              studentCount: 1,
+              teacherId: null,
+              teacherName: null,
+            },
+          ])}
+        />
+      </MemoryRouter>
+    );
+
+    await screen.findByText("佐藤花子");
+    await user.click(screen.getByRole("button", { name: "佐藤花子の操作" }));
+    await user.click(screen.getByRole("button", { name: "削除" }));
+    await waitFor(() => expect(deleteStudent).toHaveBeenCalledWith(1));
+    expect(screen.queryByText("佐藤花子")).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "新規登録" }));
+    await user.type(screen.getByLabelText("氏名*"), "佐藤花子");
+    await user.type(screen.getByLabelText("学籍番号*"), "S001");
+    await user.type(screen.getByLabelText("出席番号*"), "1");
+    await user.selectOptions(screen.getByLabelText("クラス*"), "1");
+    await user.click(screen.getByRole("button", { name: "保存する" }));
+
+    await waitFor(() =>
+      expect(createStudent).toHaveBeenCalledWith({
+        attendanceNumber: 1,
+        classRoomId: 1,
+        displayName: "佐藤花子",
+        studentIdNumber: "S001",
+      })
+    );
+    expect(await screen.findByText("佐藤花子")).toBeInTheDocument();
+    confirm.mockRestore();
+  });
 });
