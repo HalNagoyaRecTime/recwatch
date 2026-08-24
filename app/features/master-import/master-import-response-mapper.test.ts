@@ -34,4 +34,48 @@ describe("toMasterImportSession", () => {
       toMasterImportSession({ ...validResponse, validated_file_id: undefined })
     ).toThrow("取り込み結果の形式が不正です。");
   });
+
+  it.each([
+    "type",
+    "status",
+    "file_name",
+    "total",
+    "success_count",
+    "error_count",
+    "errors",
+    "rows",
+    "rows_total",
+    "rows_limit",
+    "rows_offset",
+    "created_at",
+    "expires_at",
+  ] as const)("必須項目%sが無いレスポンスを拒否する", (field) => {
+    expect(() =>
+      toMasterImportSession({ ...validResponse, [field]: undefined })
+    ).toThrow("取り込み結果の形式が不正です。");
+  });
+
+  it("エラー行を画面モデルへ変換しreason欠落時はunknownを使う", () => {
+    const result = toMasterImportSession({
+      ...validResponse,
+      error_count: 2,
+      errors: [
+        { row_index: 3, reason: "学籍番号が重複しています", field: "id" },
+        { row_index: 4, field: "name" },
+      ],
+    });
+
+    expect(result.errors).toEqual([
+      expect.objectContaining({
+        rowIndex: 3,
+        reason: "学籍番号が重複しています",
+        field: "id",
+      }),
+      expect.objectContaining({
+        rowIndex: 4,
+        reason: "unknown",
+        field: "name",
+      }),
+    ]);
+  });
 });
