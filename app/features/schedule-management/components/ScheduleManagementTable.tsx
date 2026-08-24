@@ -1,10 +1,8 @@
-import { Eye, Trash2 } from "lucide-react";
-
-import { Button } from "~/components/ui/button/Button";
 import { DataTable } from "~/components/ui/data-table/DataTable";
 import type { DataTableColumn } from "~/components/ui/data-table/data-table-types";
 
 import type { ManagedSchedule } from "../model/schedule";
+import { ScheduleManagementActionMenu } from "./ScheduleManagementActionMenu";
 import { SchedulePublicationLabel } from "./SchedulePublicationLabel";
 
 type ScheduleManagementTableProps = {
@@ -73,28 +71,13 @@ export function ScheduleManagementTable({
       edge: "end",
       header: "",
       id: "actions",
-      width: { type: "fixed", value: 104 },
+      width: { type: "fixed", value: 64 },
       renderCell: (schedule) => (
-        <div className="flex items-center justify-center gap-1">
-          <Button
-            aria-label={`${schedule.relatedEventName || schedule.startTime}の詳細を表示`}
-            icon={Eye}
-            iconOnly
-            onClick={() => onShowDetail(schedule)}
-            size="sm"
-            variant="ghost"
-          />
-          {schedule.notificationEnabled ? (
-            <Button
-              aria-label={`${schedule.relatedEventName || schedule.startTime}の通知予定を削除`}
-              icon={Trash2}
-              iconOnly
-              onClick={() => onCancelNotification(schedule)}
-              size="sm"
-              variant="danger"
-            />
-          ) : null}
-        </div>
+        <ScheduleManagementActionMenu
+          onCancelNotification={onCancelNotification}
+          onShowDetail={onShowDetail}
+          schedule={schedule}
+        />
       ),
     },
   ];

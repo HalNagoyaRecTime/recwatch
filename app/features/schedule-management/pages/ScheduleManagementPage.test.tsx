@@ -109,8 +109,9 @@ describe("ScheduleManagementPage", () => {
     const user = userEvent.setup();
     renderPage(createGateway());
 
-    const eventButton = await screen.findByRole("button", { name: "開会式" });
-    await user.click(eventButton);
+    await screen.findByRole("button", { name: "開会式" });
+    await user.click(screen.getByRole("button", { name: "開会式の操作" }));
+    await user.click(screen.getByRole("button", { name: "詳細" }));
 
     const dialog = screen.getByRole("dialog", { name: "イベント詳細" });
     expect(within(dialog).getByText("08:30〜09:00")).toBeInTheDocument();
@@ -129,11 +130,10 @@ describe("ScheduleManagementPage", () => {
     const user = userEvent.setup();
     renderPage(createGateway({ cancelNotification }));
 
-    const deleteButton = await screen.findByRole("button", {
-      name: "走れ！〇人〇脚！の通知予定を削除",
-    });
-
-    await user.click(deleteButton);
+    await user.click(
+      await screen.findByRole("button", { name: "走れ！〇人〇脚！の操作" })
+    );
+    await user.click(screen.getByRole("button", { name: "通知を削除" }));
     await user.click(screen.getByRole("button", { name: "削除する" }));
 
     await waitFor(() =>
@@ -153,10 +153,10 @@ describe("ScheduleManagementPage", () => {
     const user = userEvent.setup();
     renderPage(createGateway({ cancelNotification }));
 
-    const deleteButton = await screen.findByRole("button", {
-      name: "走れ！〇人〇脚！の通知予定を削除",
-    });
-    await user.click(deleteButton);
+    await user.click(
+      await screen.findByRole("button", { name: "走れ！〇人〇脚！の操作" })
+    );
+    await user.click(screen.getByRole("button", { name: "通知を削除" }));
     await user.click(screen.getByRole("button", { name: "削除する" }));
 
     expect(
