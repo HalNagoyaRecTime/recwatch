@@ -1,6 +1,7 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 import { useSidebarState } from "~/hooks/useSidebarState";
+import { cn } from "~/lib/cn";
 
 import { SidebarFooter } from "~/features/frame/sidebar/components/SidebarFooter";
 import { AppSidebar } from "~/features/frame/sidebar/components/AppSidebar";
@@ -13,8 +14,21 @@ import {
 } from "~/features/frame/sidebar/styles/sidebar-styles";
 
 function SidebarContent() {
-  const { isOpen } = useSidebarState();
+  const { mobileOpen, sidebarPinnedOpen, closeForMobile, pinOpen } =
+    useSidebarState();
   const { isExpanded, setHovering } = useSidebarUI();
+  const lastPointerTypeRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!mobileOpen) return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") closeForMobile();
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [mobileOpen, closeForMobile]);
 
   useEffect(() => {
     return () => {
@@ -23,19 +37,61 @@ function SidebarContent() {
   }, [setHovering]);
 
   return (
-    <div className={sidebarPlaceholderStyle({ isOpen })}>
-      <div className={sidebarContainerStyle({ isExpanded })}>
+    <>
+      <button
+        type="button"
+        aria-label="サイドメニューを閉じる"
+        onClick={closeForMobile}
+        className={cn(
+          "fixed inset-0 z-90 bg-black/30 transition-opacity md:hidden",
+          mobileOpen
+            ? "pointer-events-auto opacity-100"
+            : "pointer-events-none opacity-0"
+        )}
+      />
+
+      <div
+        className={cn(
+          sidebarPlaceholderStyle({ isOpen: sidebarPinnedOpen }),
+          "sidebar-mobile-placeholder"
+        )}
+      >
         <div
-          className="sidebar-hover-area flex flex-1 flex-col overflow-hidden"
-          onMouseEnter={() => setHovering(true)}
-          onMouseLeave={() => setHovering(false)}
+          id="app-sidebar"
+          className={cn(
+            sidebarContainerStyle({ isExpanded }),
+            "sidebar-mobile-container",
+            mobileOpen ? "max-md:translate-x-0" : "max-md:-translate-x-full"
+          )}
         >
-          <SidebarHeader />
-          <AppSidebar />
+          <div
+            className="sidebar-hover-area flex flex-1 flex-col overflow-hidden"
+            onPointerEnter={(event) => {
+              if (event.pointerType === "mouse") setHovering(true);
+            }}
+            onPointerLeave={(event) => {
+              if (event.pointerType === "mouse") setHovering(false);
+            }}
+            onPointerDownCapture={(event) => {
+              lastPointerTypeRef.current = event.pointerType;
+            }}
+            onClickCapture={(event) => {
+              const pointerType = lastPointerTypeRef.current;
+              lastPointerTypeRef.current = null;
+
+              if (!isExpanded && pointerType && pointerType !== "mouse") {
+                event.preventDefault();
+                pinOpen();
+              }
+            }}
+          >
+            <SidebarHeader />
+            <AppSidebar />
+          </div>
+          <SidebarFooter />
         </div>
-        <SidebarFooter />
       </div>
-    </div>
+    </>
   );
 }
 

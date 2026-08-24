@@ -14,9 +14,9 @@ export const SidebarUIContext = createContext<SidebarUIState | undefined>(
 
 export function SidebarUIProvider({ children }: { children: ReactNode }) {
   const [isHovering, setHovering] = useState(false);
-  const { isOpen } = useSidebarState();
+  const { mobileOpen, sidebarPinnedOpen } = useSidebarState();
 
-  const isExpanded = isOpen || isHovering;
+  const isExpanded = mobileOpen || sidebarPinnedOpen || isHovering;
 
   return (
     <SidebarUIContext.Provider value={{ isHovering, setHovering, isExpanded }}>

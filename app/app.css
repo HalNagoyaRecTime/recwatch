@@ -303,6 +303,16 @@
   }
 }
 
+@media (max-width: 767px) {
+  .sidebar-mobile-open-width {
+    width: 0;
+  }
+
+  .sidebar-mobile-container {
+    width: 18rem;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   ::before,

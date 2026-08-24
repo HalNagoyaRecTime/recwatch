@@ -1,11 +1,14 @@
 import { createContext, useEffect, useState, type ReactNode } from "react";
 
 export type SidebarState = {
-  isOpen: boolean;
+  mobileOpen: boolean;
+  sidebarPinnedOpen: boolean;
   openAccordions: string[];
-  toggle: () => void;
-  toggleAccordion: (id: string) => void;
+  toggleMobileDrawer: () => void;
   closeForMobile: () => void;
+  togglePinned: () => void;
+  pinOpen: () => void;
+  toggleAccordion: (id: string) => void;
 };
 
 // eslint-disable-next-line react-refresh/only-export-components
@@ -14,7 +17,8 @@ export const SidebarStateContext = createContext<SidebarState | undefined>(
 );
 
 export function SidebarStateProvider({ children }: { children: ReactNode }) {
-  const [isOpen, setIsOpen] = useState(true);
+  const [mobileOpen, setMobileOpen] = useState(true);
+  const [sidebarPinnedOpen, setSidebarPinnedOpen] = useState(true);
   const [openAccordions, setOpenAccordions] = useState<string[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
 
@@ -24,9 +28,9 @@ export function SidebarStateProvider({ children }: { children: ReactNode }) {
       try {
         const parsed = JSON.parse(saved);
         const stateData = parsed.state ? parsed.state : parsed;
-        if (stateData.isOpen !== undefined) {
+        if (stateData.sidebarPinnedOpen !== undefined) {
           // eslint-disable-next-line react-hooks/set-state-in-effect
-          setIsOpen(stateData.isOpen);
+          setSidebarPinnedOpen(stateData.sidebarPinnedOpen);
         }
         if (stateData.openAccordions !== undefined) {
           setOpenAccordions(stateData.openAccordions);
@@ -45,12 +49,27 @@ export function SidebarStateProvider({ children }: { children: ReactNode }) {
     if (!isLoaded) return;
     sessionStorage.setItem(
       "rectime-nav-state",
-      JSON.stringify({ state: { isOpen, openAccordions }, version: 0 })
+      JSON.stringify({
+        state: { sidebarPinnedOpen, openAccordions },
+        version: 1,
+      })
     );
-  }, [isOpen, openAccordions, isLoaded]);
+  }, [sidebarPinnedOpen, openAccordions, isLoaded]);
 
-  const toggle = () => {
-    setIsOpen((prevIsOpen) => !prevIsOpen);
+  const toggleMobileDrawer = () => {
+    setMobileOpen((prev) => !prev);
+  };
+
+  const closeForMobile = () => {
+    setMobileOpen(false);
+  };
+
+  const togglePinned = () => {
+    setSidebarPinnedOpen((prev) => !prev);
+  };
+
+  const pinOpen = () => {
+    setSidebarPinnedOpen(true);
   };
 
   const toggleAccordion = (id: string) => {
@@ -59,21 +78,17 @@ export function SidebarStateProvider({ children }: { children: ReactNode }) {
     );
   };
 
-  const closeForMobile = () => {
-    if (typeof window !== "undefined" && window.innerWidth <= 720) {
-      setIsOpen(false);
-      setOpenAccordions([]);
-    }
-  };
-
   return (
     <SidebarStateContext.Provider
       value={{
-        isOpen,
+        mobileOpen,
+        sidebarPinnedOpen,
         openAccordions,
-        toggle,
-        toggleAccordion,
+        toggleMobileDrawer,
         closeForMobile,
+        togglePinned,
+        pinOpen,
+        toggleAccordion,
       }}
     >
       {children}
