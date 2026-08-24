@@ -59,7 +59,15 @@ export function CompetitionEditPage({
   }, [api, eventId]);
 
   async function handleSubmit() {
-    if (!Number.isInteger(eventId) || eventId <= 0) return;
+    if (
+      isLoading ||
+      isSubmitting ||
+      loadError ||
+      !Number.isInteger(eventId) ||
+      eventId <= 0
+    ) {
+      return;
+    }
 
     const result = validateCompetitionForm(form);
     if ("error" in result) {
