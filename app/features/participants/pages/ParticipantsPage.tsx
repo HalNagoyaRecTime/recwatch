@@ -68,6 +68,8 @@ export function ParticipantsPage({
             return assignment.classNames.join("、");
           case "time":
             return assignment.eventTime;
+          case "gathering":
+            return `${assignment.gatheringSpotName} ${assignment.gatheringTime}`;
           case "members":
             return assignment.memberNames.join("、");
           default:
@@ -81,7 +83,7 @@ export function ParticipantsPage({
     if (
       isDeleting ||
       !window.confirm(
-        `「${assignment.eventName}」の集合予定と参加者設定を削除します。よろしいですか？`
+        `「${assignment.eventName}」（${assignment.gatheringSpotName} / ${assignment.gatheringTime}）の集合予定と参加者設定を削除します。よろしいですか？`
       )
     ) {
       return;

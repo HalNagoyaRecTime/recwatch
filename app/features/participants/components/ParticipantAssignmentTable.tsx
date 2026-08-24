@@ -61,6 +61,17 @@ export function ParticipantAssignmentTable({
       renderCell: (assignment) => assignment.eventTime,
     },
     {
+      header: "集合",
+      id: "gathering",
+      sortable: true,
+      width: { type: "fluid", min: 180, grow: 1 },
+      renderCell: (assignment) => (
+        <span>
+          {assignment.gatheringSpotName} / {assignment.gatheringTime}
+        </span>
+      ),
+    },
+    {
       edge: "right",
       header: "参加者",
       id: "members",
@@ -80,7 +91,7 @@ export function ParticipantAssignmentTable({
       width: { type: "fixed", value: 64 },
       renderCell: (assignment) => (
         <ManagementRowActionMenu
-          ariaLabel={`${assignment.eventName}の操作`}
+          ariaLabel={`${assignment.eventName} ${assignment.gatheringSpotName} ${assignment.gatheringTime}の操作`}
           disabled={isMutating}
           onDelete={() => onDelete(assignment)}
           onEdit={() => onEdit(assignment)}

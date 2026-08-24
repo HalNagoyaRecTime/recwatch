@@ -28,6 +28,9 @@ describe("ParticipantsPage", () => {
       load: vi.fn().mockResolvedValue([
         {
           gatheringId: 30,
+          gatheringSpotId: 1,
+          gatheringSpotName: "正門前",
+          gatheringTime: "08:50",
           eventId: 20,
           eventName: "リレー",
           eventTime: "09:10〜10:10",
@@ -45,6 +48,7 @@ describe("ParticipantsPage", () => {
 
     expect(await screen.findByText("リレー")).toBeInTheDocument();
     expect(screen.getByText("山田 花子")).toBeInTheDocument();
+    expect(screen.getByText("正門前 / 08:50")).toBeInTheDocument();
     expect(
       screen.getByRole("table", { name: "出場メンバー一覧" })
     ).toBeInTheDocument();
@@ -61,6 +65,9 @@ describe("ParticipantsPage", () => {
     const assignments = [
       {
         gatheringId: 31,
+        gatheringSpotId: 2,
+        gatheringSpotName: "体育館入口",
+        gatheringTime: "10:40",
         eventId: 21,
         eventName: "綱引き",
         eventTime: "11:00〜12:00",
@@ -69,6 +76,9 @@ describe("ParticipantsPage", () => {
       },
       {
         gatheringId: 30,
+        gatheringSpotId: 1,
+        gatheringSpotName: "正門前",
+        gatheringTime: "08:50",
         eventId: 20,
         eventName: "リレー",
         eventTime: "09:10〜10:10",
@@ -95,16 +105,25 @@ describe("ParticipantsPage", () => {
     await user.click(screen.getByRole("button", { name: "イベント" }));
     expect(within(table).getAllByRole("row")[1]).toHaveTextContent("リレー");
 
-    await user.click(screen.getByRole("button", { name: "リレーの操作" }));
+    await user.click(
+      screen.getByRole("button", { name: "リレー 正門前 08:50の操作" })
+    );
     await user.click(screen.getByRole("button", { name: "編集" }));
     expect(screen.getByTestId("location")).toHaveTextContent(
       "/events/assignments?eventId=20&gatheringId=30"
     );
 
-    await user.click(screen.getByRole("button", { name: "綱引きの操作" }));
+    await user.click(
+      screen.getByRole("button", {
+        name: "綱引き 体育館入口 10:40の操作",
+      })
+    );
     await user.click(screen.getByRole("button", { name: "削除" }));
 
     await waitFor(() => expect(deleteAssignment).toHaveBeenCalledWith(31));
+    expect(confirm).toHaveBeenCalledWith(
+      "「綱引き」（体育館入口 / 10:40）の集合予定と参加者設定を削除します。よろしいですか？"
+    );
     expect(screen.queryByText("綱引き")).not.toBeInTheDocument();
     confirm.mockRestore();
   });

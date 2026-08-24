@@ -2,6 +2,10 @@ import type { ParticipantAssignment } from "../model/participant-assignment";
 
 export type ParticipantAssignmentSource = {
   classrooms: Array<{ class_room_id: number; class_name: string }>;
+  gatheringSpots: Array<{
+    gathering_spot_id: number;
+    gathering_spot_name: string;
+  }>;
   students: Array<{
     user_id: number;
     display_name: string;
@@ -35,6 +39,12 @@ export function toParticipantAssignments(
     source.students.map((student) => [student.user_id, student])
   );
   const events = new Map(source.events.map((event) => [event.event_id, event]));
+  const gatheringSpots = new Map(
+    source.gatheringSpots.map((spot) => [
+      spot.gathering_spot_id,
+      spot.gathering_spot_name,
+    ])
+  );
 
   return source.gatherings.map((gathering) => {
     const event = events.get(gathering.event_id);
@@ -55,6 +65,10 @@ export function toParticipantAssignments(
 
     return {
       gatheringId: gathering.gathering_id,
+      gatheringSpotId: gathering.gathering_spot_id,
+      gatheringSpotName:
+        gatheringSpots.get(gathering.gathering_spot_id) ?? "集合場所未設定",
+      gatheringTime: formatTime(gathering.gathering_time),
       eventId: gathering.event_id,
       eventName: event?.event_name ?? "イベント未設定",
       eventTime: event

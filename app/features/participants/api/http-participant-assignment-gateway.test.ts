@@ -46,6 +46,9 @@ describe("createHttpParticipantAssignmentGateway", () => {
             gathering_time: "0850",
           },
         ],
+        "/api/v1/gathering-spots": [
+          { gathering_spot_id: 1, gathering_spot_name: "正門前" },
+        ],
         "/api/v1/gatherings/30/members": [{ user_id: 10 }],
       };
       return responses[path];
@@ -59,6 +62,9 @@ describe("createHttpParticipantAssignmentGateway", () => {
     await expect(gateway.load()).resolves.toEqual([
       expect.objectContaining({
         gatheringId: 30,
+        gatheringSpotId: 1,
+        gatheringSpotName: "正門前",
+        gatheringTime: "08:50",
         eventName: "リレー",
         memberNames: ["山田 花子"],
       }),
