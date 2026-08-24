@@ -59,6 +59,33 @@ describe("apiClient", () => {
     });
   });
 
+  it("同じURLへの同時GETを1回の通信に束ねる", async () => {
+    let resolveResponse: ((response: Response) => void) | undefined;
+    const fetchMock = vi.fn(
+      () =>
+        new Promise<Response>((resolve) => {
+          resolveResponse = resolve;
+        })
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    const first = apiClient.get("/resource");
+    const second = apiClient.get("/resource");
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+
+    resolveResponse?.(
+      new Response(JSON.stringify({ id: 1 }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      })
+    );
+
+    await expect(Promise.all([first, second])).resolves.toEqual([
+      { id: 1 },
+      { id: 1 },
+    ]);
+  });
+
   it("401の場合はアクセストークンを更新してから1回だけ再試行する", async () => {
     setAccessToken("expired-token");
     setRefreshTokenId("refresh-id");
