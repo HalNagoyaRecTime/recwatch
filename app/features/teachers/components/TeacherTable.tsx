@@ -7,14 +7,18 @@ import type { TeacherRow } from "~/features/teachers/model/teacher";
 
 type TeacherTableProps = {
   footer?: ReactNode;
+  isMutating?: boolean;
   items: readonly TeacherRow[];
+  onDelete: (teacher: TeacherRow) => void;
   onSortChange?: (columnId: string) => void;
   sort?: DataTableSort;
 };
 
 export function TeacherTable({
   footer,
+  isMutating = false,
   items,
+  onDelete,
   onSortChange,
   sort,
 }: TeacherTableProps) {
@@ -50,7 +54,13 @@ export function TeacherTable({
       header: "",
       id: "actions",
       width: { type: "fixed", value: 64 },
-      renderCell: (teacher) => <TeacherActionMenu teacher={teacher} />,
+      renderCell: (teacher) => (
+        <TeacherActionMenu
+          disabled={isMutating}
+          onDelete={onDelete}
+          teacher={teacher}
+        />
+      ),
     },
   ];
 

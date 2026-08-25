@@ -22,13 +22,13 @@ export async function clientLoader({
     getClassRoomData(),
   ]);
 
+  const classRoomOptions: ClassRoomOption[] = classRooms.map((classRoom) => ({
+    classRoomId: classRoom.classRoomId,
+    className: classRoom.classRoomName,
+  }));
+
   return {
-    classRooms: classRooms.map(
-      (classRoom): ClassRoomOption => ({
-        classRoomId: classRoom.classRoomId,
-        className: classRoom.classRoomName,
-      })
-    ),
+    classRooms: classRoomOptions,
     teacher: toTeacherRow(teacherDto),
   };
 }

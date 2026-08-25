@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from "react";
 
+import { PageHeader } from "~/components/ui/layout/PageHeader";
 import type { ScheduleSubmitter } from "../application/schedule-submitter";
 import { ScheduleForm } from "../components/ScheduleForm";
 import { ScheduleNotificationPreview } from "../components/ScheduleNotificationPreview";
@@ -20,6 +21,7 @@ type ScheduleEditorPageProps = {
   title?: string;
   description?: string;
   submitLabel?: string;
+  showHeader?: boolean;
   onCancel?: () => void;
   onSubmitted?: () => void;
 };
@@ -31,6 +33,7 @@ export function ScheduleEditorPage({
   title,
   description,
   submitLabel,
+  showHeader = true,
   onCancel,
   onSubmitted,
 }: ScheduleEditorPageProps) {
@@ -102,17 +105,17 @@ export function ScheduleEditorPage({
 
   return (
     <div className="mx-auto w-full max-w-[1440px]">
-      <header>
-        <h1 className="text-xl font-semibold">
-          {title ?? (isEditMode ? "イベント編集" : "イベント新規登録")}
-        </h1>
-        <p className="mt-2 text-sm text-[color:var(--text-3)]">
-          {description ??
+      {showHeader ? (
+        <PageHeader
+          description={
+            description ??
             (isEditMode
               ? "変更内容はイベント情報と通知予定に反映されます"
-              : "登録内容はイベント情報に反映されます")}
-        </p>
-      </header>
+              : "登録内容はイベント情報に反映されます")
+          }
+          title={title ?? (isEditMode ? "イベント編集" : "イベント新規登録")}
+        />
+      ) : null}
 
       <div className="mt-5 grid gap-8 xl:grid-cols-[minmax(380px,0.9fr)_minmax(560px,1.5fr)]">
         <section className="min-w-0">
@@ -131,8 +134,8 @@ export function ScheduleEditorPage({
             aria-live="polite"
             className={`mt-4 min-h-5 text-sm ${
               submissionError
-                ? "text-red-600"
-                : "text-[color:var(--tone-green-text)]"
+                ? "text-tone-danger-text"
+                : "text-tone-success-text"
             }`}
           >
             {submissionError ??

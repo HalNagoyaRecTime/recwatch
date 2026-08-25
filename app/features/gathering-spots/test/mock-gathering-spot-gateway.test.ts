@@ -50,13 +50,23 @@ describe("createMockGatheringSpotGateway", () => {
       gateway.list({
         limit: 20,
         offset: 0,
-        sortBy: "name",
-        sortOrder: "asc",
+        sort: { columnId: "name", direction: "asc" },
       })
     ).resolves.toMatchObject({
       items: [
         expect.objectContaining({ name: "A会場" }),
         expect.objectContaining({ name: "B会場" }),
+      ],
+    });
+  });
+
+  it("ソート未指定時は実APIと同じID昇順にする", async () => {
+    const gateway = createMockGatheringSpotGateway([spots[1], spots[0]]);
+
+    await expect(gateway.list()).resolves.toMatchObject({
+      items: [
+        expect.objectContaining({ id: 1 }),
+        expect.objectContaining({ id: 2 }),
       ],
     });
   });

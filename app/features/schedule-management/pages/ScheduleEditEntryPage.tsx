@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router";
+import { useNavigate } from "react-router";
 
+import { ButtonLink } from "~/components/ui/button/ButtonLink";
+import { PageHeader } from "~/components/ui/layout/PageHeader";
 import type { ScheduleSubmitter } from "~/features/schedule-editor/application/schedule-submitter";
 import { ScheduleEditorPage } from "~/features/schedule-editor/pages/ScheduleEditorPage";
 
@@ -46,28 +48,32 @@ export function ScheduleEditEntryPage({
 
   if (errorMessage) {
     return (
-      <div className="mx-auto w-full max-w-[720px]">
-        <h1 className="text-xl font-semibold">イベント編集</h1>
-        <p className="mt-5 text-sm text-[color:var(--tone-red-text)]">
-          {errorMessage}
-        </p>
-        <Link
-          to="/schedule"
-          className="mt-4 inline-flex h-9 items-center rounded-lg border border-[color:var(--border-2)] px-4 text-sm font-medium"
-        >
+      <div className="min-h-full space-y-5">
+        <PageHeader
+          description="イベント情報を読み込めませんでした"
+          title="イベント編集"
+        />
+        <p className="text-tone-danger-text text-sm">{errorMessage}</p>
+        <ButtonLink to="/schedule" variant="secondary">
           一覧へ戻る
-        </Link>
+        </ButtonLink>
       </div>
     );
   }
 
   if (!schedule) {
     return (
-      <div
-        role="status"
-        className="rounded-lg border border-[color:var(--border-2)] bg-[color:var(--surface-overlay-strong)] p-10 text-center text-sm text-[color:var(--text-3)]"
-      >
-        イベントを読み込んでいます...
+      <div className="min-h-full space-y-5">
+        <PageHeader
+          description="イベント情報を読み込んでいます"
+          title="イベント編集"
+        />
+        <div
+          role="status"
+          className="app-rounded border-border-base bg-surface-base text-text-muted border p-10 text-center text-sm"
+        >
+          イベントを読み込んでいます...
+        </div>
       </div>
     );
   }
