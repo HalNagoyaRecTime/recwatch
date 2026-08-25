@@ -14,18 +14,18 @@ function item(overrides: Partial<SidebarItemDef>): SidebarItemDef {
 }
 
 describe("isSidebarItemActive", () => {
-  it("通常リンクは親パスの前方一致で選択しない", () => {
+  it("通常リンクは未指定の親パスを前方一致で選択しない", () => {
     expect(isSidebarItemActive(item({}), "/notifications/new")).toBe(false);
   });
 
-  it("明示した動的パターンはID付きURLでも選択する", () => {
+  it("通知一覧は詳細・編集・新規登録画面でも選択する", () => {
     const notificationManagement = item({
       activePatterns: [
         "/notifications",
+        "/notifications/new",
         "/notifications/:notificationId",
         "/notifications/:notificationId/edit",
       ],
-      activeExclusions: ["/notifications/new"],
     });
 
     expect(
@@ -36,21 +36,21 @@ describe("isSidebarItemActive", () => {
     ).toBe(true);
     expect(
       isSidebarItemActive(notificationManagement, "/notifications/new")
-    ).toBe(false);
+    ).toBe(true);
   });
 
-  it("競技一覧の派生ページを明示パターンで選択する", () => {
+  it("イベント登録一覧の派生ページだけを明示パターンで選択する", () => {
     const eventsList = item({
       id: "events-list",
-      label: "競技一覧",
+      label: "イベント登録一覧",
       to: "/events",
       activePatterns: [
         "/events",
+        "/events/new",
         "/events/active",
         "/events/past",
         "/events/tournament",
         "/events/scoring",
-        "/events/assignments",
         "/events/:competitionId/edit",
       ],
     });
@@ -60,13 +60,13 @@ describe("isSidebarItemActive", () => {
       "/events/past",
       "/events/tournament",
       "/events/scoring",
-      "/events/assignments",
       "/events/competition-1/edit",
     ]) {
       expect(isSidebarItemActive(eventsList, pathname)).toBe(true);
     }
 
-    expect(isSidebarItemActive(eventsList, "/events/new")).toBe(false);
+    expect(isSidebarItemActive(eventsList, "/events/new")).toBe(true);
+    expect(isSidebarItemActive(eventsList, "/events/assignments")).toBe(false);
   });
 
   it("スケジュールの派生ページを親フォルダーで選択する", () => {
@@ -92,16 +92,16 @@ describe("isSidebarItemActive", () => {
     expect(isSidebarItemActive(schedule, "/schedule/123/edit")).toBe(true);
   });
 
-  it("表示されないインポート画面はメンバー親をフォールバック選択する", () => {
+  it("表示されないインポート画面はユーザー親をフォールバック選択する", () => {
     const members = item({
       id: "members",
-      label: "メンバー",
+      label: "ユーザー",
       to: undefined,
       activePatterns: ["/members/import"],
       children: [
         item({
           id: "members-list",
-          label: "ユーザー管理",
+          label: "学生管理",
           to: "/members",
         }),
       ],
@@ -120,9 +120,10 @@ describe("isSidebarItemActive", () => {
       to: undefined,
       children: [
         item({
-          id: "notification-create",
-          label: "通知作成",
-          to: "/notifications/new",
+          activePatterns: ["/notifications", "/notifications/new"],
+          id: "notification-management",
+          label: "通知一覧",
+          to: "/notifications",
         }),
       ],
     });
