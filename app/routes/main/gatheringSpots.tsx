@@ -1,4 +1,4 @@
-import { createPageTitle } from "~/config/app";
+import { createPageTitle } from "~/lib/page-title";
 import { httpGatheringSpotGateway } from "~/features/gathering-spots/api/http/gathering-spot-dependencies";
 import { GatheringSpotsPage } from "~/features/gathering-spots/pages/GatheringSpotsPage";
 

@@ -1,4 +1,4 @@
-import { createPageTitle } from "~/config/app";
+import { createPageTitle } from "~/lib/page-title";
 import { AdminPlaceholderPage } from "~/features/admin-pages/components/AdminPlaceholderPage";
 import { pageContent } from "~/features/admin-pages/model/page-content";
 import { PagePadding } from "~/features/frame/page-layout/PagePadding";

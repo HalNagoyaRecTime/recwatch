@@ -1,5 +1,5 @@
 import { Outlet, useLoaderData } from "react-router";
-import { createPageTitle } from "~/config/app";
+import { createPageTitle } from "~/lib/page-title";
 import { parseTeacherListUrl } from "~/features/teachers/application/teacher-list-url";
 import { loadTeacherListPage } from "~/features/teachers/application/teacher-loaders";
 import { TeachersPage } from "~/features/teachers/pages/TeachersPage";

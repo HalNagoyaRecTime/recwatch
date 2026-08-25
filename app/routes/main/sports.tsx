@@ -1,4 +1,4 @@
-import { createPageTitle } from "~/config/app";
+import { createPageTitle } from "~/lib/page-title";
 import { CompetitionListPage } from "~/features/sports/pages/CompetitionListPage";
 import { PagePadding } from "~/features/frame/page-layout/PagePadding";
 import { PageLayout } from "~/features/frame/page-layout/PageLayout";

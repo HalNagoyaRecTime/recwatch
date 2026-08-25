@@ -3,7 +3,7 @@ import {
   useRouteError,
   isRouteErrorResponse,
 } from "react-router";
-import { createPageTitle } from "~/config/app";
+import { createPageTitle } from "~/lib/page-title";
 import { ClassRoomPage } from "~/features/classRoom/pages/classRoomPage";
 import { PagePadding } from "~/features/frame/page-layout/PagePadding";
 import { PageLayout } from "~/features/frame/page-layout/PageLayout";

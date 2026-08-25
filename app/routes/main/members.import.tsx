@@ -1,4 +1,4 @@
-import { createPageTitle } from "~/config/app";
+import { createPageTitle } from "~/lib/page-title";
 import { MembersImportConfirmationPage } from "~/features/members/pages/MembersImportConfirmationPage";
 import { MembersPage } from "~/features/members/pages/MembersPage";
 import { PagePadding } from "~/features/frame/page-layout/PagePadding";

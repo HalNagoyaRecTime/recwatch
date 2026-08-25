@@ -1,4 +1,4 @@
-import { createPageTitle } from "~/config/app";
+import { createPageTitle } from "~/lib/page-title";
 import {
   httpEventNotificationGateway,
   httpScheduleManagementGateway,

@@ -1,4 +1,4 @@
-import { createPageTitle } from "~/config/app";
+import { createPageTitle } from "~/lib/page-title";
 import { NotificationCreatePage } from "~/features/notifications/pages/NotificationCreatePage";
 import { httpNotificationAudienceApi } from "~/features/notifications/api/http/notification-audience-api";
 import { httpNotificationSubmissionApi } from "~/features/notifications/api/http/notification-submission-api";

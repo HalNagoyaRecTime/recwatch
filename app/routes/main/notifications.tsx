@@ -1,4 +1,4 @@
-import { createPageTitle } from "~/config/app";
+import { createPageTitle } from "~/lib/page-title";
 import { httpNotificationManagementApi } from "~/features/notifications/api/http/notification-management-api";
 import { NotificationListPage } from "~/features/notifications/pages/NotificationListPage";
 import { PagePadding } from "~/features/frame/page-layout/PagePadding";

@@ -1,6 +1,6 @@
 import { useLoaderData } from "react-router";
 
-import { createPageTitle } from "~/config/app";
+import { createPageTitle } from "~/lib/page-title";
 import { buildBackendUrl } from "~/config/env";
 import { WEB_CLIENT_HEADERS } from "~/features/auth/lib/webClientHeaders";
 import { DashboardPage } from "~/features/dashboard/pages/DashboardPage";

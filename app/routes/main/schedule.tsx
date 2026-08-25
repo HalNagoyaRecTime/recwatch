@@ -1,4 +1,4 @@
-import { createPageTitle } from "~/config/app";
+import { createPageTitle } from "~/lib/page-title";
 import { httpScheduleManagementGateway } from "~/features/schedule-management/infrastructure/http-event-management-dependencies";
 import { ScheduleManagementPage } from "~/features/schedule-management/pages/ScheduleManagementPage";
 import { PagePadding } from "~/features/frame/page-layout/PagePadding";

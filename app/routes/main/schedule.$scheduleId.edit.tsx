@@ -1,6 +1,6 @@
 import { useParams } from "react-router";
 
-import { createPageTitle } from "~/config/app";
+import { createPageTitle } from "~/lib/page-title";
 import { createEventScheduleUpdater } from "~/features/schedule-management/application/create-event-schedule-updater";
 import {
   httpEventNotificationGateway,

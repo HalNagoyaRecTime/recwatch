@@ -1,6 +1,6 @@
 import { useLoaderData } from "react-router";
 
-import { createPageTitle } from "~/config/app";
+import { createPageTitle } from "~/lib/page-title";
 import { getClassRoomData } from "~/features/classRoom/model/classRoom-data";
 import { TeacherApi } from "~/features/teachers/api";
 import { toTeacherRow } from "~/features/teachers/api/mappers/teacher-mappers";

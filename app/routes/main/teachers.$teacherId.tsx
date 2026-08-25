@@ -1,5 +1,5 @@
 import { useLoaderData } from "react-router";
-import { createPageTitle } from "~/config/app";
+import { createPageTitle } from "~/lib/page-title";
 import {
   loadTeacherAssignment,
   parseTeacherId,
