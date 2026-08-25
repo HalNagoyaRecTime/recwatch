@@ -4,10 +4,8 @@ import {
   LogOutIcon,
   MonitorIcon,
   MoonStarIcon,
-  SettingsIcon,
   SunMediumIcon,
 } from "lucide-react";
-import { useNavigate } from "react-router";
 
 import {
   Menu,
@@ -34,7 +32,6 @@ export function AccountMenuPanel({
   onLogout,
 }: AccountMenuPanelProps) {
   const { theme, setTheme } = useThemeMode();
-  const navigate = useNavigate();
 
   const ThemeIcon =
     theme === "dark"
@@ -120,16 +117,6 @@ export function AccountMenuPanel({
           content={<Menu items={themeMenuItems} />}
         />
       ),
-    },
-    {
-      type: "action",
-      id: "settings",
-      label: "設定",
-      icon: SettingsIcon,
-      onClick: () => {
-        onClose();
-        navigate("/user/settings");
-      },
     },
     { type: "divider", id: "div-2" },
     {
