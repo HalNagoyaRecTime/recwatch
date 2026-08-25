@@ -1,9 +1,10 @@
+import { createPageTitle } from "~/config/app";
 import { SettingsPage } from "~/features/settings/pages/SettingsPage";
 import { PagePadding } from "~/features/frame/page-layout/PagePadding";
 import { PageLayout } from "~/features/frame/page-layout/PageLayout";
 
 export function meta() {
-  return [{ title: "設定 | recwatch" }];
+  return [{ title: createPageTitle("設定") }];
 }
 
 export default function SettingsRoute() {

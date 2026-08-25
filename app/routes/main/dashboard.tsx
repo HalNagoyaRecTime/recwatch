@@ -1,5 +1,6 @@
 import { useLoaderData } from "react-router";
 
+import { createPageTitle } from "~/config/app";
 import { buildBackendUrl } from "~/config/env";
 import { WEB_CLIENT_HEADERS } from "~/features/auth/lib/webClientHeaders";
 import { DashboardPage } from "~/features/dashboard/pages/DashboardPage";
@@ -7,7 +8,7 @@ import { PagePadding } from "~/features/frame/page-layout/PagePadding";
 import { PageLayout } from "~/features/frame/page-layout/PageLayout";
 
 export function meta() {
-  return [{ title: "ダッシュボード | recwatch" }];
+  return [{ title: createPageTitle("ダッシュボード") }];
 }
 
 type DashboardLoaderData =

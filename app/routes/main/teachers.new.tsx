@@ -1,11 +1,12 @@
 import { useLoaderData } from "react-router";
 
+import { createPageTitle } from "~/config/app";
 import { getClassRoomData } from "~/features/classRoom/model/classRoom-data";
 import type { ClassRoomOption } from "~/features/teachers/model/teacher";
 import { TeacherCreatePage } from "~/features/teachers/pages/TeacherCreatePage";
 
 export function meta() {
-  return [{ title: "教官の新規登録 | recwatch" }];
+  return [{ title: createPageTitle("教官の新規登録") }];
 }
 
 export async function clientLoader() {

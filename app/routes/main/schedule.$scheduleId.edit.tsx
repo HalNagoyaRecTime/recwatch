@@ -1,5 +1,6 @@
 import { useParams } from "react-router";
 
+import { createPageTitle } from "~/config/app";
 import { createEventScheduleUpdater } from "~/features/schedule-management/application/create-event-schedule-updater";
 import {
   httpEventNotificationGateway,
@@ -10,7 +11,7 @@ import { PagePadding } from "~/features/frame/page-layout/PagePadding";
 import { PageLayout } from "~/features/frame/page-layout/PageLayout";
 
 export function meta() {
-  return [{ title: "イベント編集 | REC TIME" }];
+  return [{ title: createPageTitle("イベント編集") }];
 }
 
 export default function ScheduleEditRoute() {

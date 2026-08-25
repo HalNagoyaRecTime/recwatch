@@ -1,4 +1,5 @@
 import { Outlet, useLoaderData } from "react-router";
+import { createPageTitle } from "~/config/app";
 import { parseTeacherListUrl } from "~/features/teachers/application/teacher-list-url";
 import { loadTeacherListPage } from "~/features/teachers/application/teacher-loaders";
 import { TeachersPage } from "~/features/teachers/pages/TeachersPage";
@@ -6,7 +7,7 @@ import { PagePadding } from "~/features/frame/page-layout/PagePadding";
 import { PageLayout } from "~/features/frame/page-layout/PageLayout";
 
 export function meta() {
-  return [{ title: "教官管理 | recwatch" }];
+  return [{ title: createPageTitle("教官管理") }];
 }
 
 export async function clientLoader({ request }: { request: Request }) {

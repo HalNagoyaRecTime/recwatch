@@ -1,3 +1,4 @@
+import { createPageTitle } from "~/config/app";
 import {
   httpEventNotificationGateway,
   httpScheduleManagementGateway,
@@ -7,7 +8,7 @@ import { PagePadding } from "~/features/frame/page-layout/PagePadding";
 import { PageLayout } from "~/features/frame/page-layout/PageLayout";
 
 export function meta() {
-  return [{ title: "スケジュールの新規登録 | REC TIME" }];
+  return [{ title: createPageTitle("スケジュールの新規登録") }];
 }
 
 export default function ScheduleCreateRoute() {
