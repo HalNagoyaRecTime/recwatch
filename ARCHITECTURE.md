@@ -150,8 +150,7 @@ Feature外にはRouteの境界、複数Featureで使うコード、技術的な�
 - Path、search params、`clientLoader`のデータはRouteが持つ。
 - Pageとcomponentには画面の表示と入力処理を書く。
 - Component内だけの状態はComponentが持つ。
-- ボーダー色は`--color-border-base`に対応するTailwind utilityを使い、新規実装と変更対象から順次移行する。
-- **old:** `border-[color:var(--border-1)]` / `border-border-1` → **new:** `border-border-base`
+- ボーダー色は`--color-border-base`に対応する`border-border-base`などのTailwind utilityを使う。
 - 業務ルールと外部I/Oは書かない。
 
 ### Application

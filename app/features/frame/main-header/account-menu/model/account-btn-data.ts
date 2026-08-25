@@ -72,7 +72,7 @@ export function getAccountBtnData(user?: AccountUser | null): AccountBtnData {
     imageUrl: undefined,
     abbr_label: getInitials(name),
     borderColor: "var(--border-strong)",
-    bgColor: "var(--surface-brand-soft)",
+    bgColor: "var(--surface-hover)",
     textColor: "var(--brand-primary)",
   };
 }
