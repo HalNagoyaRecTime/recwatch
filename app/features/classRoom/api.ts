@@ -21,6 +21,21 @@ export type ClassRoomPageDTO = {
   offset: number;
 };
 
+export type ClassRoomWriteInput = {
+  classCode: string;
+  className: string;
+  teacherId: number | null;
+};
+
+export type ClassRoomMutationApi = {
+  createClassRoom(input: ClassRoomWriteInput): Promise<ClassRoomDTO>;
+  updateClassRoom(
+    classRoomId: number,
+    input: ClassRoomWriteInput
+  ): Promise<ClassRoomDTO>;
+  deleteClassRoom(classRoomId: number): Promise<void>;
+};
+
 const CLASSROOM_LIST_LIMIT = 100;
 
 export const ClassRoomApi = {
@@ -28,4 +43,10 @@ export const ClassRoomApi = {
     apiClient.get<ClassRoomPageDTO>(
       `/api/v1/classrooms?limit=${CLASSROOM_LIST_LIMIT}&offset=${offset}`
     ),
+  createClassRoom: (body: ClassRoomWriteInput) =>
+    apiClient.post<ClassRoomDTO>("/api/v1/classrooms", body),
+  updateClassRoom: (classRoomId: number, body: ClassRoomWriteInput) =>
+    apiClient.put<ClassRoomDTO>(`/api/v1/classrooms/${classRoomId}`, body),
+  deleteClassRoom: (classRoomId: number) =>
+    apiClient.delete(`/api/v1/classrooms/${classRoomId}`),
 };
