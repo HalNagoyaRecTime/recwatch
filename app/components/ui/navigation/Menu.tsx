@@ -30,6 +30,7 @@ export type MenuItemType =
       icon?: ElementType;
       endIcon?: MenuIconComponent | ReactNode;
       danger?: boolean;
+      disabled?: boolean;
       onClick?: () => void;
     }
   | {
@@ -76,6 +77,7 @@ export function Menu({ items }: MenuProps) {
             icon={item.icon}
             endIcon={item.endIcon}
             danger={item.danger}
+            disabled={item.disabled}
             onClick={item.onClick}
           />
         );
