@@ -43,7 +43,13 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 
   if (!res.ok) {
     const body: unknown = await res.json().catch(() => null);
-    throw new ApiClientError(res.status, getApiErrorMessage(body, res.status));
+    const error = parseApiError(body, res.status);
+    throw new ApiClientError(
+      res.status,
+      error.message,
+      error.code,
+      error.details
+    );
   }
 
   if (res.status === 204) {
@@ -69,24 +75,42 @@ function getRequest<T>(path: string): Promise<T> {
   return pending;
 }
 
-function getApiErrorMessage(body: unknown, status: number): string {
+type ApiErrorBody = {
+  error: {
+    code: string;
+    message: string;
+    details?: unknown;
+  };
+};
+
+function parseApiError(
+  body: unknown,
+  status: number
+): { code: string; message: string; details?: unknown } {
+  if (!isApiErrorBody(body)) {
+    return {
+      code: "UNKNOWN_API_ERROR",
+      message: `API request failed (${status})`,
+    };
+  }
+
+  return body.error;
+}
+
+function isApiErrorBody(body: unknown): body is ApiErrorBody {
   if (typeof body !== "object" || body === null || !("error" in body)) {
-    return `API request failed (${status})`;
+    return false;
   }
 
-  let message = String(body.error);
-  if (
-    "details" in body &&
-    typeof body.details === "object" &&
-    body.details !== null &&
-    "formErrors" in body.details &&
-    Array.isArray(body.details.formErrors) &&
-    body.details.formErrors.length > 0
-  ) {
-    message += `: ${body.details.formErrors.map(String).join(", ")}`;
-  }
-
-  return message;
+  const error = body.error;
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    typeof error.code === "string" &&
+    "message" in error &&
+    typeof error.message === "string"
+  );
 }
 
 export const apiClient = {
