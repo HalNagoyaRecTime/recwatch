@@ -33,32 +33,33 @@ export function NotificationActionMenu({
     type: "action",
   };
 
-  const items: MenuItemType[] = [
-    detailsItem,
-    ...(notification.canModify
-      ? [
-          {
-            icon: Pencil,
-            id: "edit",
-            label: "通知を編集",
-            onClick: () =>
-              closeAnd(() =>
-                navigate(`/notifications/${notification.id}/edit`)
-              ),
-            type: "action" as const,
-          },
-          { id: "actions-divider", type: "divider" as const },
-          {
-            danger: true,
-            icon: Trash2,
-            id: "delete",
-            label: "通知を削除",
-            onClick: () => closeAnd(() => onDelete?.(notification)),
-            type: "action" as const,
-          },
-        ]
-      : []),
-  ];
+  const modificationItems: MenuItemType[] = notification.canModify
+    ? [
+        {
+          icon: Pencil,
+          id: "edit",
+          label: "通知を編集",
+          onClick: () =>
+            closeAnd(() => navigate(`/notifications/${notification.id}/edit`)),
+          type: "action",
+        },
+        ...(onDelete
+          ? [
+              { id: "actions-divider", type: "divider" as const },
+              {
+                danger: true,
+                icon: Trash2,
+                id: "delete",
+                label: "通知を削除",
+                onClick: () => closeAnd(() => onDelete(notification)),
+                type: "action" as const,
+              },
+            ]
+          : []),
+      ]
+    : [];
+
+  const items: MenuItemType[] = [detailsItem, ...modificationItems];
 
   return (
     <FloatingPanel

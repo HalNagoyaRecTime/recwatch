@@ -20,7 +20,7 @@ function createClient(
 }
 
 describe("createHttpNotificationManagementApi", () => {
-  it("通知一覧を取得する", async () => {
+  it("通知管理を取得する", async () => {
     const get = vi.fn().mockResolvedValue({
       notifications: [createNotificationResponse()],
       total: 1,

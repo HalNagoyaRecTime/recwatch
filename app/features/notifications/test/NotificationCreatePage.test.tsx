@@ -1,223 +1,130 @@
-import {
-  cleanup,
-  fireEvent,
-  render,
-  screen,
-  waitFor,
-} from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
-import type { ReactElement } from "react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 
-import type { NotificationSubmissionApi } from "~/features/notifications/api/contracts/notification-submission-api";
-import type { NotificationAudienceApi } from "~/features/notifications/api/contracts/notification-audience-api";
-import { NotificationAudienceLoadingError } from "~/features/notifications/api/contracts/errors/notification-audience-loading-error";
-import { NotificationSubmissionError } from "~/features/notifications/api/contracts/errors/notification-submission-error";
-import { mockNotificationAudienceOptions } from "~/features/notifications/mock/notification-audience-api";
 import { NotificationCreatePage } from "~/features/notifications/pages/NotificationCreatePage";
 
 afterEach(cleanup);
 
-vi.stubGlobal(
-  "ResizeObserver",
-  class ResizeObserverStub {
-    observe() {}
-    unobserve() {}
-    disconnect() {}
-  }
-);
-
-function createAudienceLoader(
-  load = vi.fn().mockResolvedValue(mockNotificationAudienceOptions)
-): NotificationAudienceApi {
-  return { load };
-}
-
-function renderPage(ui: ReactElement) {
-  return render(<MemoryRouter>{ui}</MemoryRouter>);
-}
-
-async function selectAudience(
-  user: ReturnType<typeof userEvent.setup>,
-  label: string
-) {
-  await user.click(screen.getByRole("combobox", { name: "通知対象" }));
-  await user.click(screen.getByRole("option", { name: label }));
-}
-
 describe("NotificationCreatePage", () => {
-  it("過去の予約日時では通知を送信しない", async () => {
-    const submit = vi.fn();
-    const user = userEvent.setup();
-
-    renderPage(
-      <NotificationCreatePage
-        api={{ submit }}
-        audienceApi={createAudienceLoader()}
-      />
+  it("通知入力とモバイルプレビューを表示する", () => {
+    render(
+      <MemoryRouter>
+        <NotificationCreatePage />
+      </MemoryRouter>
     );
 
-    await user.type(screen.getByLabelText("タイトル*"), "お知らせ");
-    await user.type(screen.getByLabelText("本文*"), "本文です");
-    await user.click(screen.getByRole("button", { name: "予約配信" }));
-    fireEvent.change(screen.getByLabelText("予約配信日時"), {
-      target: { value: "2020-01-01T00:00" },
-    });
-
-    await user.click(screen.getByRole("button", { name: "配信を予約" }));
-
+    expect(screen.getByText("通知内容")).toBeInTheDocument();
+    expect(screen.getByText("モバイルプレビュー")).toBeInTheDocument();
+    expect(screen.getByText("タイトル", { selector: "p" })).toBeInTheDocument();
+    expect(screen.getByText("本文", { selector: "p" })).toBeInTheDocument();
     expect(
-      screen.getByText("現在より後の日時を指定してください")
+      screen.getByRole("group", { name: "通知の重要度" })
     ).toBeInTheDocument();
-    expect(submit).not.toHaveBeenCalled();
+    expect(
+      screen.getByText("通常：通常の通知として配信します。")
+    ).toBeInTheDocument();
+    expect(screen.getByRole("img", { name: "recwatch" })).toHaveAttribute(
+      "src",
+      "/recwatch-logo.svg"
+    );
+    const submitButton = screen.getByRole("button", { name: "通知を作成" });
+    expect(submitButton).toBeDisabled();
+    expect(submitButton.querySelector("svg")).not.toBeInTheDocument();
   });
 
-  it("未実装のモバイルプレビュー形式では未実装と表示する", async () => {
+  it("入力内容をプレビューへ反映する", async () => {
     const user = userEvent.setup();
 
-    renderPage(
-      <NotificationCreatePage
-        api={{ submit: vi.fn() }}
-        audienceApi={createAudienceLoader()}
-      />
+    render(
+      <MemoryRouter>
+        <NotificationCreatePage />
+      </MemoryRouter>
     );
 
-    expect(screen.getByText("プレビュー")).toBeInTheDocument();
+    await user.type(screen.getByLabelText("プッシュ通知タイトル*"), "お知らせ");
+    await user.type(screen.getByLabelText("プッシュ通知本文*"), "本文です");
 
-    await user.click(screen.getByRole("button", { name: "通知詳細" }));
+    const title = screen.getByText("お知らせ", { selector: "p" });
+    expect(title).toHaveClass("truncate");
+    expect(screen.getAllByText("本文です").length).toBeGreaterThanOrEqual(2);
     expect(
-      screen.getByRole("status", { name: "プレビュー（未実装）" })
-    ).toHaveTextContent("未実装");
+      screen
+        .getAllByText("本文です")
+        .some((element) => element.classList.contains("line-clamp-4"))
+    ).toBe(true);
+  });
 
-    await user.click(screen.getByRole("button", { name: "ロック画面" }));
+  it("通知対象を検索して複数選択できる", async () => {
+    const user = userEvent.setup();
+
+    render(
+      <MemoryRouter>
+        <NotificationCreatePage />
+      </MemoryRouter>
+    );
+
+    await user.click(screen.getByRole("button", { name: "対象を指定" }));
+
+    expect(
+      screen.getByRole("searchbox", { name: "名前・クラス・チームを検索" })
+    ).toBeInTheDocument();
+    expect(screen.getByText("個人")).toBeInTheDocument();
+    expect(screen.getByText("クラス")).toBeInTheDocument();
+    expect(screen.getByText("チーム")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "山田 太郎 2年1組" }));
+    await user.click(screen.getByRole("button", { name: "2年1組 32人" }));
+    await user.click(screen.getByRole("button", { name: "赤チーム 124人" }));
+
+    expect(
+      screen.getByRole("button", { name: "山田 太郎を選択から外す" })
+    ).toBeInTheDocument();
+    expect(screen.getByText("配信対象：156人")).toBeInTheDocument();
+
+    await user.click(
+      screen.getByRole("button", { name: "山田 太郎を選択から外す" })
+    );
+    expect(
+      screen.queryByRole("button", { name: "山田 太郎を選択から外す" })
+    ).not.toBeInTheDocument();
+  });
+
+  it("通知詳細でタイトルと本文を全文表示する", async () => {
+    const user = userEvent.setup();
+
+    render(
+      <MemoryRouter>
+        <NotificationCreatePage />
+      </MemoryRouter>
+    );
+
+    await user.type(screen.getByLabelText("タイトル*"), "詳細画面のお知らせ");
+    await user.type(
+      screen.getByLabelText("Markdown説明*"),
+      "# 通知詳細\n\n通知詳細で表示される本文です。\n\n**改行もプレビューできます。**"
+    );
+    await user.click(screen.getByRole("button", { name: "予約配信" }));
+    fireEvent.change(screen.getByLabelText("予約配信日時"), {
+      target: { value: "2030-11-07T15:35" },
+    });
+    await user.click(screen.getByRole("button", { name: "通知詳細" }));
+
+    expect(
+      screen.getByRole("region", { name: "通知詳細プレビュー" })
+    ).toHaveTextContent("詳細画面のお知らせ");
+    expect(
+      screen.getByRole("region", { name: "通知詳細プレビュー" })
+    ).toHaveTextContent("改行もプレビューできます。");
+    expect(
+      screen.getByRole("region", { name: "通知詳細プレビュー" })
+    ).toHaveTextContent("2030/11/07 15:35");
+    expect(
+      screen.getByText("通知詳細", { selector: "h4" })
+    ).toBeInTheDocument();
     expect(
       screen.queryByRole("status", { name: "プレビュー（未実装）" })
     ).not.toBeInTheDocument();
-  });
-
-  it("API未接続時は送信操作と成功表示を無効にする", async () => {
-    const submit = vi.fn();
-
-    renderPage(
-      <NotificationCreatePage
-        api={{ submit }}
-        audienceApi={createAudienceLoader()}
-        isSubmissionEnabled={false}
-      />
-    );
-
-    expect(
-      screen.getByText("API接続後に通知を配信できます。")
-    ).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "通知を配信" })).toBeDisabled();
-    expect(
-      screen.queryByText("通知を配信予定に登録しました。")
-    ).not.toBeInTheDocument();
-    expect(submit).not.toHaveBeenCalled();
-  });
-
-  it("送信中の二重登録を防止して成功メッセージを表示する", async () => {
-    let resolveSubmission: (() => void) | undefined;
-    const submit = vi.fn(
-      () =>
-        new Promise<{
-          notificationId: number;
-          scheduleCount: number;
-          status: "draft";
-        }>((resolve) => {
-          resolveSubmission = () =>
-            resolve({
-              notificationId: 1,
-              scheduleCount: 10,
-              status: "draft",
-            });
-        })
-    );
-    const user = userEvent.setup();
-
-    renderPage(
-      <NotificationCreatePage
-        api={{ submit }}
-        audienceApi={createAudienceLoader()}
-      />
-    );
-
-    await user.type(screen.getByLabelText("タイトル*"), "お知らせ");
-    await user.type(screen.getByLabelText("本文*"), "本文です");
-    const button = screen.getByRole("button", { name: "通知を配信" });
-    await user.click(button);
-    await user.click(button);
-
-    expect(submit).toHaveBeenCalledTimes(1);
-    resolveSubmission?.();
-    expect(
-      await screen.findByText("通知を配信予定に登録しました。")
-    ).toBeInTheDocument();
-  });
-
-  it("APIエラーに対応したメッセージを表示する", async () => {
-    const api: NotificationSubmissionApi = {
-      async submit() {
-        throw new NotificationSubmissionError("no_active_devices");
-      },
-    };
-    const user = userEvent.setup();
-
-    renderPage(
-      <NotificationCreatePage api={api} audienceApi={createAudienceLoader()} />
-    );
-
-    await user.type(screen.getByLabelText("タイトル*"), "お知らせ");
-    await user.type(screen.getByLabelText("本文*"), "本文です");
-    await user.click(screen.getByRole("button", { name: "通知を配信" }));
-
-    expect(
-      await screen.findByText("通知対象に有効な端末がありません。")
-    ).toBeInTheDocument();
-  });
-
-  it("通知対象の取得失敗を表示して再試行する", async () => {
-    const load = vi
-      .fn()
-      .mockRejectedValueOnce(
-        new NotificationAudienceLoadingError("authentication_required")
-      )
-      .mockResolvedValueOnce(mockNotificationAudienceOptions);
-    const user = userEvent.setup();
-
-    renderPage(
-      <NotificationCreatePage
-        api={{ submit: vi.fn() }}
-        audienceApi={createAudienceLoader(load)}
-      />
-    );
-
-    await selectAudience(user, "クラス");
-    expect(await screen.findByText("ログインが必要です。")).toBeInTheDocument();
-
-    await user.click(screen.getByRole("button", { name: "再試行" }));
-
-    await waitFor(() => expect(load).toHaveBeenCalledTimes(2));
-    expect(
-      await screen.findByRole("option", { name: "1年A組" })
-    ).toBeInTheDocument();
-  });
-
-  it("選択した通知対象に候補がない場合は空状態を表示する", async () => {
-    const user = userEvent.setup();
-
-    renderPage(
-      <NotificationCreatePage
-        api={{ submit: vi.fn() }}
-        audienceApi={createAudienceLoader(vi.fn().mockResolvedValue([]))}
-      />
-    );
-
-    await selectAudience(user, "競技参加者");
-
-    expect(
-      await screen.findByText("選択できる対象がありません。")
-    ).toBeInTheDocument();
   });
 });

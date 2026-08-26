@@ -1,7 +1,6 @@
-import { CalendarDays, Grid2X2, List, Plus, RefreshCw } from "lucide-react";
+import { CalendarDays, Grid2X2, List, Plus } from "lucide-react";
 import { useState } from "react";
 
-import { Button } from "~/components/ui/button/Button";
 import { ButtonLink } from "~/components/ui/button/ButtonLink";
 import {
   SearchCombobox,
@@ -10,12 +9,14 @@ import {
 import { SegmentedControl } from "~/components/ui/form/SegmentedControl";
 import { Select } from "~/components/ui/form/Select";
 import { PageHeader } from "~/components/ui/layout/PageHeader";
-import { Pagination } from "~/components/ui/navigation/Pagination";
-import type { NotificationManagementApi } from "~/features/notifications/api/contracts/notification-management-api";
-import { DeleteNotificationDialog } from "~/features/notifications/components/list/DeleteNotificationDialog";
 import { NotificationsTable } from "~/features/notifications/components/list/NotificationsTable";
-import { useNotificationList } from "~/features/notifications/hooks/useNotificationList";
-import { notificationListPageSize } from "~/features/notifications/model/notification-list";
+import type { NotificationListItem } from "~/features/notifications/model/notification-list";
+import {
+  getNextNotificationListSort,
+  isNotificationSortableColumnId,
+  type NotificationListSort,
+} from "~/features/notifications/model/notification-list";
+import { notificationDesignListItems } from "~/features/notifications/model/notification-design-data";
 
 const notificationViewOptions = [
   {
@@ -48,35 +49,25 @@ type NotificationDisplayMode =
 
 const notificationSearchOptions: readonly SearchOption[] = [];
 
-type NotificationListPageProps = {
-  api: NotificationManagementApi;
-};
-
-export function NotificationListPage({ api }: NotificationListPageProps) {
-  const state = useNotificationList({ api });
+export function NotificationListPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [displayMode, setDisplayMode] =
     useState<NotificationDisplayMode>("all");
   const [viewMode, setViewMode] = useState<NotificationViewMode>("list");
+  const [sort, setSort] = useState<NotificationListSort>();
+  const items = sortItems(notificationDesignListItems, sort);
+
+  function handleSortChange(columnId: string) {
+    if (isNotificationSortableColumnId(columnId)) {
+      setSort((current) => getNextNotificationListSort(current, columnId));
+    }
+  }
 
   return (
     <>
-      {state.errorMessage ? (
-        <div
-          aria-live="polite"
-          className="text-tone-danger-text mx-auto mb-3 w-full text-sm"
-          role="alert"
-        >
-          {state.errorMessage}
-        </div>
-      ) : state.isLoading ? (
-        <div aria-live="polite" className="sr-only">
-          通知を読み込み中
-        </div>
-      ) : null}
       <section className="mx-auto flex w-full flex-col gap-4">
         <PageHeader
-          title="通知一覧"
+          title="通知管理"
           description="配信済み通知の一覧と配信状況を確認できます"
           actions={
             <ButtonLink
@@ -113,34 +104,13 @@ export function NotificationListPage({ api }: NotificationListPageProps) {
             options={notificationViewOptions}
             value={viewMode}
           />
-          <Button
-            aria-label="通知一覧を再読み込み"
-            disabled={state.isLoading || state.isDeleting}
-            iconOnly
-            icon={RefreshCw}
-            onClick={() => void state.reload()}
-            size="md"
-            variant="secondary"
-          />
         </div>
 
         {viewMode === "list" ? (
           <NotificationsTable
-            footer={
-              state.pageCount > 1 ? (
-                <Pagination
-                  currentPage={state.currentPage}
-                  onPageChange={state.onPageChange}
-                  pageCount={state.pageCount}
-                  pageSize={notificationListPageSize}
-                  totalItems={state.totalItems}
-                />
-              ) : undefined
-            }
-            items={state.items}
-            onDelete={state.onDeleteRequest}
-            onSortChange={state.onSortChange}
-            sort={state.sort}
+            items={items}
+            onSortChange={handleSortChange}
+            sort={sort}
           />
         ) : (
           <div
@@ -152,14 +122,25 @@ export function NotificationListPage({ api }: NotificationListPageProps) {
           </div>
         )}
       </section>
-      {state.selectedNotification ? (
-        <DeleteNotificationDialog
-          notification={state.selectedNotification}
-          isSubmitting={state.isDeleting}
-          onClose={state.closeDeleteDialog}
-          onConfirm={state.confirmDelete}
-        />
-      ) : null}
     </>
   );
+}
+
+function sortItems(
+  items: readonly NotificationListItem[],
+  sort: NotificationListSort | undefined
+) {
+  if (!sort) {
+    return items;
+  }
+
+  const collator = new Intl.Collator("ja", {
+    numeric: true,
+    sensitivity: "base",
+  });
+
+  return [...items].sort((left, right) => {
+    const result = collator.compare(left[sort.columnId], right[sort.columnId]);
+    return sort.direction === "asc" ? result : -result;
+  });
 }

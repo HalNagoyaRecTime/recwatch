@@ -320,3 +320,31 @@
     display: none;
   }
 }
+
+.notification-markdown-editor {
+  --color-accent-fg: var(--brand-primary);
+  --color-canvas-default: var(--surface-base);
+  --color-danger-fg: var(--tone-danger-text);
+  --color-fg-default: var(--text-base);
+  --color-neutral-muted: var(--surface-muted);
+  --color-border-default: var(--border-base);
+  --color-prettylights-syntax-comment: var(--text-subtle);
+  --color-prettylights-syntax-constant: var(--brand-primary);
+  --color-prettylights-syntax-entity: var(--brand-primary);
+  --color-prettylights-syntax-markup-bold: var(--text-base);
+  --color-prettylights-syntax-markup-deleted-text: var(--tone-danger-text);
+}
+
+.notification-markdown-editor .w-md-editor {
+  border-radius: 0.375rem;
+  font-family: inherit;
+}
+
+.notification-markdown-editor .w-md-editor-text-input::placeholder {
+  color: var(--text-subtle);
+  opacity: 1;
+}
+
+.notification-markdown-editor-error .w-md-editor {
+  box-shadow: 0 0 0 1px var(--tone-danger-border);
+}

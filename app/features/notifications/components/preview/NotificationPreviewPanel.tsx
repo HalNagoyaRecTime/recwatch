@@ -11,7 +11,6 @@ import type { NotificationDraft } from "~/features/notifications/model/notificat
 const notificationPreviewOptions = [
   { label: "ロック画面", value: "lock-screen" },
   { label: "通知詳細", value: "notification-detail" },
-  { label: "データ表示", value: "data-display" },
 ] as const;
 
 type NotificationPreviewPanelProps = {
@@ -25,8 +24,8 @@ export function NotificationPreviewPanel({
     useState<NotificationPreviewMode>("lock-screen");
 
   return (
-    <div className="bg-surface-layout flex h-full w-fit flex-col">
-      <header className="main-header-height border-border-base flex shrink-0 items-center justify-center border-b px-4">
+    <div className="bg-surface-layout flex h-full w-fit min-w-0 flex-col">
+      <header className="main-header-height border-border-base flex min-w-0 shrink-0 items-center justify-center border-b pr-30 pl-4">
         <SegmentedControl
           ariaLabel="プレビューの表示形式"
           behavior="selection"
@@ -36,14 +35,14 @@ export function NotificationPreviewPanel({
         />
       </header>
 
-      <ScrollbarArea className="@container-[size]">
-        <div className="flex min-h-full justify-center p-4.5">
+      <ScrollbarArea className="@container-[size] min-w-0">
+        <div className="flex min-h-full min-w-0 justify-center px-4 py-4.5">
           <NotificationMobilePreview draft={draft} mode={previewMode} />
         </div>
       </ScrollbarArea>
 
       <footer className="main-footer-height border-border-base flex shrink-0 items-center justify-center border-t px-4">
-        <span className="text-text-muted text-sm">プレビュー</span>
+        <span className="text-text-muted text-sm">モバイルプレビュー</span>
       </footer>
     </div>
   );

@@ -1,16 +1,15 @@
 import { Check, Clock3, X } from "lucide-react";
 import type { ReactNode } from "react";
 
-import { TextLink } from "~/components/ui/button/TextLink";
 import {
   DataTable,
   type DataTableColumn,
 } from "~/components/ui/data-table/DataTable";
+import { NotificationActionMenu } from "~/features/notifications/components/list/NotificationActionMenu";
 import type {
   NotificationListItem,
   NotificationListSort,
 } from "~/features/notifications/model/notification-list";
-import { NotificationActionMenu } from "~/features/notifications/components/list/NotificationActionMenu";
 
 const notificationTableColumns: readonly DataTableColumn<NotificationListItem>[] =
   [
@@ -34,14 +33,7 @@ const notificationTableColumns: readonly DataTableColumn<NotificationListItem>[]
         min: 90,
         type: "fluid",
       },
-      renderCell: (item) => (
-        <TextLink
-          aria-label={`${item.title}の詳細を表示`}
-          to={`/notifications/${item.id}`}
-        >
-          {item.title}
-        </TextLink>
-      ),
+      renderCell: (item) => item.title,
     },
     {
       header: "配信対象",
@@ -112,21 +104,20 @@ const notificationTableColumns: readonly DataTableColumn<NotificationListItem>[]
     },
     {
       align: "center",
+      edge: "end",
       header: "",
       id: "actions",
-      edge: "end",
+      renderCell: (item) => <NotificationActionMenu notification={item} />,
       width: {
         type: "fixed",
         value: 64,
       },
-      renderCell: (item) => <NotificationActionMenu notification={item} />,
     },
   ];
 
 type NotificationsTableProps = {
   footer?: ReactNode;
   items: readonly NotificationListItem[];
-  onDelete?: (item: NotificationListItem) => void;
   onSortChange: (columnId: string) => void;
   sort?: NotificationListSort;
 };
@@ -134,25 +125,13 @@ type NotificationsTableProps = {
 export function NotificationsTable({
   footer,
   items,
-  onDelete,
   onSortChange,
   sort,
 }: NotificationsTableProps) {
-  const columns = notificationTableColumns.map((column) =>
-    column.id === "actions"
-      ? {
-          ...column,
-          renderCell: (item: NotificationListItem) => (
-            <NotificationActionMenu notification={item} onDelete={onDelete} />
-          ),
-        }
-      : column
-  );
-
   return (
     <DataTable
-      ariaLabel="通知一覧"
-      columns={columns}
+      ariaLabel="通知管理"
+      columns={notificationTableColumns}
       footer={footer}
       getRowKey={(item) => item.id}
       items={items}

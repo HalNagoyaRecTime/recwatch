@@ -86,7 +86,7 @@ export const NAVIGATION_SEARCH_RESULTS: readonly NavigationSearchResult[] = [
   },
   {
     id: "notifications",
-    title: "通知一覧",
+    title: "通知管理",
     category: "通知",
     to: "/notifications",
     keywords: ["お知らせ", "履歴"],

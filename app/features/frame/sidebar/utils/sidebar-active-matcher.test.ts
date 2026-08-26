@@ -18,7 +18,7 @@ describe("isSidebarItemActive", () => {
     expect(isSidebarItemActive(item({}), "/notifications/new")).toBe(false);
   });
 
-  it("通知一覧は詳細・編集・新規登録画面でも選択する", () => {
+  it("通知管理は詳細・編集・新規登録画面でも選択する", () => {
     const notificationManagement = item({
       activePatterns: [
         "/notifications",
@@ -122,7 +122,7 @@ describe("isSidebarItemActive", () => {
         item({
           activePatterns: ["/notifications", "/notifications/new"],
           id: "notification-management",
-          label: "通知一覧",
+          label: "通知管理",
           to: "/notifications",
         }),
       ],

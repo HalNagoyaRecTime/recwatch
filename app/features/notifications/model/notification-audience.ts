@@ -4,6 +4,19 @@ export type NotificationAudienceType =
   | "gathering"
   | "event_participants";
 
+export type NotificationAudienceScope = "all" | "specified";
+
+export type NotificationTargetType = "person" | "class" | "team" | "gathering";
+
+export type NotificationTargetOption = {
+  coveredByIds?: string[];
+  detail: string;
+  id: string;
+  name: string;
+  recipientCount: number;
+  type: NotificationTargetType;
+};
+
 export type NotificationAudience =
   | { type: "all" }
   | { type: "class_room"; classRoomId: number }

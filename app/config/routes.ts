@@ -143,7 +143,7 @@ export const sidebarSections = [
           },
           {
             id: "notification-management",
-            label: "通知一覧",
+            label: "通知管理",
             icon: "notificationHistory",
             to: "/notifications",
             activePatterns: [
