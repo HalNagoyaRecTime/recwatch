@@ -1,4 +1,10 @@
-import { createContext, useEffect, useState, type ReactNode } from "react";
+import {
+  createContext,
+  useCallback,
+  useEffect,
+  useState,
+  type ReactNode,
+} from "react";
 
 export type SidebarState = {
   mobileOpen: boolean;
@@ -31,6 +37,10 @@ export function SidebarStateProvider({ children }: { children: ReactNode }) {
         if (stateData.sidebarPinnedOpen !== undefined) {
           // eslint-disable-next-line react-hooks/set-state-in-effect
           setSidebarPinnedOpen(stateData.sidebarPinnedOpen);
+        } else if (stateData.isOpen !== undefined) {
+          // `isOpen` was the persisted field before mobile and desktop state
+          // were separated. Keep existing users' pinned state when upgrading.
+          setSidebarPinnedOpen(stateData.isOpen);
         }
         if (stateData.openAccordions !== undefined) {
           setOpenAccordions(stateData.openAccordions);
@@ -56,27 +66,27 @@ export function SidebarStateProvider({ children }: { children: ReactNode }) {
     );
   }, [sidebarPinnedOpen, openAccordions, isLoaded]);
 
-  const toggleMobileDrawer = () => {
+  const toggleMobileDrawer = useCallback(() => {
     setMobileOpen((prev) => !prev);
-  };
+  }, []);
 
-  const closeForMobile = () => {
+  const closeForMobile = useCallback(() => {
     setMobileOpen(false);
-  };
+  }, []);
 
-  const togglePinned = () => {
+  const togglePinned = useCallback(() => {
     setSidebarPinnedOpen((prev) => !prev);
-  };
+  }, []);
 
-  const pinOpen = () => {
+  const pinOpen = useCallback(() => {
     setSidebarPinnedOpen(true);
-  };
+  }, []);
 
-  const toggleAccordion = (id: string) => {
+  const toggleAccordion = useCallback((id: string) => {
     setOpenAccordions((prev) =>
       prev.includes(id) ? prev.filter((v) => v !== id) : [...prev, id]
     );
-  };
+  }, []);
 
   return (
     <SidebarStateContext.Provider

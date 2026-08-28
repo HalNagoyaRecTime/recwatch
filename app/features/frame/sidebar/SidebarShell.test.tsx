@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { MemoryRouter, useLocation } from "react-router";
 import { beforeEach, describe, expect, it } from "vitest";
 
@@ -23,22 +23,30 @@ function renderShell() {
   );
 }
 
-function getSidebarContainer() {
-  const el = document.getElementById("app-sidebar");
-  if (!el) throw new Error("app-sidebar が見つかりません");
-  return el;
+function getMobileDrawer() {
+  const drawer = document.getElementById("app-sidebar-mobile");
+  if (!drawer) throw new Error("モバイル Sidebar が見つかりません");
+  return drawer;
+}
+
+function getDesktopSidebar() {
+  const sidebar = document.getElementById("app-sidebar-desktop");
+  if (!sidebar) throw new Error("Desktop Sidebar が見つかりません");
+  return sidebar;
 }
 
 function getHamburger() {
   return screen.getByRole("button", { name: "Toggle navigation" });
 }
 
-function getOverlay() {
-  return screen.getByRole("button", { name: "サイドメニューを閉じる" });
+function getMobileOverlay() {
+  const overlay = document.getElementById("mobile-nav-overlay");
+  if (!overlay) throw new Error("モバイル Overlay が見つかりません");
+  return overlay;
 }
 
-function getFooterToggle() {
-  return screen.getByRole("button", {
+function getDesktopFooterToggle() {
+  return within(getDesktopSidebar()).getByRole("button", {
     name: "サイドバーの固定表示を切り替える",
   });
 }
@@ -52,170 +60,137 @@ beforeEach(() => {
   sessionStorage.clear();
 });
 
-describe("SidebarShell / モバイル", () => {
-  it("初期状態でSidebarが閉じている", () => {
+describe("モバイル Drawer", () => {
+  it("初期状態では閉じており、閉じた中身が操作対象にならない", () => {
     renderShell();
 
     expect(getHamburger()).toHaveAttribute("aria-expanded", "false");
-    expect(getSidebarContainer().className).toContain(
-      "max-md:-translate-x-full"
-    );
+    expect(getMobileDrawer()).toHaveAttribute("aria-hidden", "true");
+    expect(getMobileDrawer()).toHaveAttribute("inert", "");
+    expect(getMobileOverlay()).toBeDisabled();
+    expect(getMobileOverlay()).toHaveAttribute("tabindex", "-1");
   });
 
-  it("Hamburgerから開ける", () => {
+  it("Hamburgerで開き、Drawerへフォーカスを移す", () => {
     renderShell();
 
     fireEvent.click(getHamburger());
 
     expect(getHamburger()).toHaveAttribute("aria-expanded", "true");
-    expect(getSidebarContainer().className).toContain("max-md:translate-x-0");
+    expect(getMobileDrawer()).toHaveAttribute("aria-hidden", "false");
+    expect(getMobileDrawer()).not.toHaveAttribute("inert");
+    expect(getMobileDrawer()).toHaveAttribute("aria-modal", "true");
+    expect(getMobileDrawer().className).toContain("translate-x-0");
+    expect(document.activeElement).toBe(getMobileDrawer());
   });
 
-  it("Overlayから閉じられる", () => {
+  it("Overlay、Escape、Footerで閉じ、閉じた後はHamburgerへ戻る", () => {
     renderShell();
 
     fireEvent.click(getHamburger());
-    fireEvent.click(getOverlay());
-
+    fireEvent.click(getMobileOverlay());
     expect(getHamburger()).toHaveAttribute("aria-expanded", "false");
-    expect(getSidebarContainer().className).toContain(
-      "max-md:-translate-x-full"
-    );
-  });
-
-  it("Escapeから閉じられる", () => {
-    renderShell();
+    expect(document.activeElement).toBe(getHamburger());
 
     fireEvent.click(getHamburger());
     fireEvent.keyDown(document, { key: "Escape" });
+    expect(getHamburger()).toHaveAttribute("aria-expanded", "false");
 
+    fireEvent.click(getHamburger());
+    const mobileFooter = within(getMobileDrawer()).getByRole("button", {
+      name: "サイドメニューを閉じる",
+    });
+    fireEvent.click(mobileFooter);
     expect(getHamburger()).toHaveAttribute("aria-expanded", "false");
   });
 
-  it("Navigation選択後に閉じる", () => {
+  it("開いた Drawer 内でNavigation選択後に閉じる", () => {
     renderShell();
 
     fireEvent.click(getHamburger());
-    fireEvent.click(screen.getByRole("link", { name: "ダッシュボード" }));
+    fireEvent.click(
+      within(getMobileDrawer()).getByRole("link", { name: "ダッシュボード" })
+    );
 
     expect(getHamburger()).toHaveAttribute("aria-expanded", "false");
+    expect(screen.getByTestId("location")).toHaveTextContent("/dashboard");
   });
 
-  it("Sidebar Headerが表示される", () => {
+  it("Drawer内のTab移動をループさせる", () => {
     renderShell();
+    fireEvent.click(getHamburger());
 
-    const logo = screen.getByAltText("recwatch");
-    const header = logo.closest("div.border-b");
-    expect(header?.className).not.toMatch(/(^|\s)hidden(\s|$)/);
-  });
-});
+    const drawer = getMobileDrawer();
+    const focusables = drawer.querySelectorAll<HTMLElement>(
+      'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])'
+    );
+    const firstFocusable = focusables[0];
+    const lastFocusable = focusables[focusables.length - 1];
 
-describe("SidebarShell / タブレット・タッチ", () => {
-  it("閉じたSidebarをタップすると展開する", () => {
-    renderShell();
-    const sidebar = getSidebarContainer();
+    lastFocusable.focus();
+    fireEvent.keyDown(document, { key: "Tab" });
+    expect(document.activeElement).toBe(firstFocusable);
 
-    fireEvent.click(getFooterToggle());
-    expect(sidebar.className).toContain("sidebar-close-width");
-
-    tap(sidebar.querySelector(".sidebar-hover-area")!, "touch");
-    expect(sidebar.className).toContain("sidebar-open-width");
-  });
-
-  it("最初のタップで意図しないページ遷移が発生しない", () => {
-    renderShell();
-    const sidebar = getSidebarContainer();
-    fireEvent.click(getFooterToggle());
-
-    const dashboardLink = screen.getByRole("link", { name: "ダッシュボード" });
-    tap(dashboardLink, "touch");
-
-    expect(sidebar.className).toContain("sidebar-open-width");
-    expect(screen.getByTestId("location").textContent).toBe("/");
-  });
-
-  it("展開後にNavigationを選択できる", () => {
-    renderShell();
-    fireEvent.click(getFooterToggle());
-
-    const dashboardLink = screen.getByRole("link", { name: "ダッシュボード" });
-    tap(dashboardLink, "touch");
-    tap(dashboardLink, "touch");
-
-    expect(screen.getByTestId("location").textContent).toBe("/dashboard");
-  });
-
-  it("Footerから閉じられる", () => {
-    renderShell();
-    const sidebar = getSidebarContainer();
-
-    fireEvent.click(getFooterToggle());
-
-    expect(sidebar.className).toContain("sidebar-close-width");
+    firstFocusable.focus();
+    fireEvent.keyDown(document, { key: "Tab", shiftKey: true });
+    expect(document.activeElement).toBe(lastFocusable);
   });
 });
 
-describe("SidebarShell / PC・マウス", () => {
-  it("閉じたSidebarへhoverすると一時展開する", () => {
+describe("Desktop / Tablet Sidebar", () => {
+  it("Mouse hoverで一時展開し、leaveで戻る", () => {
     renderShell();
-    const sidebar = getSidebarContainer();
-    fireEvent.click(getFooterToggle());
+    const sidebar = getDesktopSidebar();
+    const hoverArea = sidebar.querySelector(".sidebar-hover-area");
+    if (!hoverArea) throw new Error("hover area が見つかりません");
 
-    fireEvent.pointerEnter(sidebar.querySelector(".sidebar-hover-area")!, {
-      pointerType: "mouse",
+    fireEvent.click(getDesktopFooterToggle());
+    fireEvent.pointerEnter(hoverArea, { pointerType: "mouse" });
+    expect(sidebar.className).toContain("sidebar-open-width");
+    fireEvent.pointerLeave(hoverArea, { pointerType: "mouse" });
+    expect(sidebar.className).toContain("sidebar-close-width");
+  });
+
+  it("Touch / Pen の hover では展開しない", () => {
+    renderShell();
+    const sidebar = getDesktopSidebar();
+    const hoverArea = sidebar.querySelector(".sidebar-hover-area");
+    if (!hoverArea) throw new Error("hover area が見つかりません");
+
+    fireEvent.click(getDesktopFooterToggle());
+    fireEvent.pointerEnter(hoverArea, { pointerType: "touch" });
+    fireEvent.pointerEnter(hoverArea, { pointerType: "pen" });
+
+    expect(sidebar.className).toContain("sidebar-close-width");
+  });
+
+  it("Touch / Pen の最初のタップでは遷移せず展開する", () => {
+    renderShell();
+    const sidebar = getDesktopSidebar();
+    const dashboardLink = within(sidebar).getByRole("link", {
+      name: "ダッシュボード",
     });
 
+    fireEvent.click(getDesktopFooterToggle());
+    tap(dashboardLink, "touch");
+
     expect(sidebar.className).toContain("sidebar-open-width");
+    expect(screen.getByTestId("location")).toHaveTextContent("/");
+
+    tap(dashboardLink, "pen");
+    expect(screen.getByTestId("location")).toHaveTextContent("/dashboard");
   });
 
-  it("mouse leaveで元の幅へ戻る", () => {
+  it("Mobile Drawer の開閉で Desktop の固定状態を変更しない", () => {
     renderShell();
-    const sidebar = getSidebarContainer();
-    fireEvent.click(getFooterToggle());
-    const hoverArea = sidebar.querySelector(".sidebar-hover-area")!;
+    const desktopSidebar = getDesktopSidebar();
 
-    fireEvent.pointerEnter(hoverArea, { pointerType: "mouse" });
-    fireEvent.pointerLeave(hoverArea, { pointerType: "mouse" });
+    fireEvent.click(getDesktopFooterToggle());
+    expect(desktopSidebar.className).toContain("sidebar-close-width");
 
-    expect(sidebar.className).toContain("sidebar-close-width");
-  });
-
-  it("固定展開中はmouse leaveしても閉じない", () => {
-    renderShell();
-    const sidebar = getSidebarContainer();
-    const hoverArea = sidebar.querySelector(".sidebar-hover-area")!;
-
-    fireEvent.pointerEnter(hoverArea, { pointerType: "mouse" });
-    fireEvent.pointerLeave(hoverArea, { pointerType: "mouse" });
-
-    expect(sidebar.className).toContain("sidebar-open-width");
-  });
-
-  it("Footerから固定展開・解除できる", () => {
-    renderShell();
-    const sidebar = getSidebarContainer();
-
-    fireEvent.click(getFooterToggle());
-    expect(sidebar.className).toContain("sidebar-close-width");
-
-    fireEvent.click(getFooterToggle());
-    expect(sidebar.className).toContain("sidebar-open-width");
-  });
-});
-
-describe("SidebarShell / ハイブリッド端末", () => {
-  it("入力方法を切り替えてもSidebar状態が不整合にならない", () => {
-    renderShell();
-    const sidebar = getSidebarContainer();
-    const hoverArea = sidebar.querySelector(".sidebar-hover-area")!;
-    fireEvent.click(getFooterToggle());
-
-    fireEvent.pointerEnter(hoverArea, { pointerType: "mouse" });
-    expect(sidebar.className).toContain("sidebar-open-width");
-    fireEvent.pointerLeave(hoverArea, { pointerType: "mouse" });
-    expect(sidebar.className).toContain("sidebar-close-width");
-
-    tap(hoverArea, "touch");
-    expect(sidebar.className).toContain("sidebar-open-width");
+    fireEvent.click(getHamburger());
+    expect(desktopSidebar.className).toContain("sidebar-close-width");
+    fireEvent.click(getHamburger());
+    expect(desktopSidebar.className).toContain("sidebar-close-width");
   });
 });

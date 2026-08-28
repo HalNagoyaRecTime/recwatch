@@ -10,59 +10,28 @@ import { useSidebarUI } from "~/features/frame/sidebar/hooks/useSidebarUI";
 import { SidebarHeader } from "~/features/frame/sidebar/components/SidebarHeader";
 import {
   sidebarContainerStyle,
+  sidebarMobileContainerStyle,
   sidebarPlaceholderStyle,
 } from "~/features/frame/sidebar/styles/sidebar-styles";
 
-function SidebarContent() {
-  const { mobileOpen, sidebarPinnedOpen, closeForMobile, pinOpen } =
-    useSidebarState();
+const MOBILE_SIDEBAR_ID = "app-sidebar-mobile";
+const MOBILE_DRAWER_FOCUSABLE_SELECTOR =
+  'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
+function DesktopSidebarContent() {
+  const { sidebarPinnedOpen, pinOpen } = useSidebarState();
   const { isExpanded, setHovering } = useSidebarUI();
-  const lastPointerTypeRef = useRef<string | null>(null);
-
-  useEffect(() => {
-    if (!mobileOpen) return;
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") closeForMobile();
-    };
-
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [mobileOpen, closeForMobile]);
-
-  useEffect(() => {
-    return () => {
-      setHovering(false);
-    };
-  }, [setHovering]);
+  const lastPointerTypeRef = useRef<{
+    type: string;
+    timestamp: number;
+  } | null>(null);
 
   return (
-    <>
-      <button
-        type="button"
-        aria-label="サイドメニューを閉じる"
-        onClick={closeForMobile}
-        className={cn(
-          "fixed inset-0 z-90 bg-black/30 transition-opacity md:hidden",
-          mobileOpen
-            ? "pointer-events-auto opacity-100"
-            : "pointer-events-none opacity-0"
-        )}
-      />
-
-      <div
-        className={cn(
-          sidebarPlaceholderStyle({ isOpen: sidebarPinnedOpen }),
-          "sidebar-mobile-placeholder"
-        )}
-      >
+    <div className="hidden h-full shrink-0 md:block">
+      <div className={sidebarPlaceholderStyle({ isOpen: sidebarPinnedOpen })}>
         <div
-          id="app-sidebar"
-          className={cn(
-            sidebarContainerStyle({ isExpanded }),
-            "sidebar-mobile-container",
-            mobileOpen ? "max-md:translate-x-0" : "max-md:-translate-x-full"
-          )}
+          id="app-sidebar-desktop"
+          className={sidebarContainerStyle({ isExpanded })}
         >
           <div
             className="sidebar-hover-area flex flex-1 flex-col overflow-hidden"
@@ -73,13 +42,24 @@ function SidebarContent() {
               if (event.pointerType === "mouse") setHovering(false);
             }}
             onPointerDownCapture={(event) => {
-              lastPointerTypeRef.current = event.pointerType;
+              lastPointerTypeRef.current = {
+                type: event.pointerType,
+                timestamp: Date.now(),
+              };
+            }}
+            onPointerCancelCapture={() => {
+              lastPointerTypeRef.current = null;
             }}
             onClickCapture={(event) => {
-              const pointerType = lastPointerTypeRef.current;
+              const pointer = lastPointerTypeRef.current;
               lastPointerTypeRef.current = null;
 
-              if (!isExpanded && pointerType && pointerType !== "mouse") {
+              if (
+                !isExpanded &&
+                pointer &&
+                Date.now() - pointer.timestamp < 1000 &&
+                pointer.type !== "mouse"
+              ) {
                 event.preventDefault();
                 pinOpen();
               }
@@ -88,17 +68,132 @@ function SidebarContent() {
             <SidebarHeader />
             <AppSidebar />
           </div>
-          <SidebarFooter />
+          <SidebarFooter mode="desktop" />
         </div>
       </div>
-    </>
+    </div>
+  );
+}
+
+function MobileSidebarContent() {
+  const { mobileOpen, closeForMobile } = useSidebarState();
+  const drawerRef = useRef<HTMLDivElement>(null);
+  const wasOpenRef = useRef(false);
+
+  useEffect(() => {
+    if (!mobileOpen) {
+      if (wasOpenRef.current) {
+        wasOpenRef.current = false;
+        document.getElementById("mobile-nav-trigger")?.focus();
+      }
+      return;
+    }
+
+    wasOpenRef.current = true;
+    drawerRef.current?.focus();
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        closeForMobile();
+        return;
+      }
+
+      if (event.key !== "Tab" || !drawerRef.current) return;
+
+      const focusableElements = Array.from(
+        drawerRef.current.querySelectorAll<HTMLElement>(
+          MOBILE_DRAWER_FOCUSABLE_SELECTOR
+        )
+      ).filter((element) => {
+        const style = window.getComputedStyle(element);
+        return style.display !== "none" && style.visibility !== "hidden";
+      });
+
+      if (focusableElements.length === 0) {
+        event.preventDefault();
+        drawerRef.current.focus();
+        return;
+      }
+
+      const activeElement = document.activeElement as HTMLElement | null;
+      const activeIndex = activeElement
+        ? focusableElements.indexOf(activeElement)
+        : -1;
+
+      if (activeIndex === -1) {
+        event.preventDefault();
+        (event.shiftKey
+          ? focusableElements[focusableElements.length - 1]
+          : focusableElements[0]
+        ).focus();
+      } else if (event.shiftKey && activeIndex === 0) {
+        event.preventDefault();
+        focusableElements[focusableElements.length - 1].focus();
+      } else if (
+        !event.shiftKey &&
+        activeIndex === focusableElements.length - 1
+      ) {
+        event.preventDefault();
+        focusableElements[0].focus();
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [mobileOpen, closeForMobile]);
+
+  return (
+    <div className="md:hidden">
+      <button
+        type="button"
+        id="mobile-nav-overlay"
+        aria-label="サイドメニューを閉じる"
+        aria-hidden={!mobileOpen}
+        tabIndex={mobileOpen ? 0 : -1}
+        disabled={!mobileOpen}
+        onClick={closeForMobile}
+        className={cn(
+          "fixed inset-0 z-90 bg-black/30 transition-opacity duration-300",
+          mobileOpen
+            ? "pointer-events-auto opacity-100"
+            : "pointer-events-none opacity-0"
+        )}
+      />
+
+      <div
+        ref={drawerRef}
+        id={MOBILE_SIDEBAR_ID}
+        role="dialog"
+        aria-label="サイドメニュー"
+        aria-modal="true"
+        aria-hidden={!mobileOpen}
+        inert={!mobileOpen}
+        tabIndex={-1}
+        className={cn(
+          sidebarMobileContainerStyle,
+          mobileOpen ? "translate-x-0" : "-translate-x-full"
+        )}
+      >
+        <SidebarHeader />
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+          <AppSidebar />
+        </div>
+        <SidebarFooter mode="mobile" />
+      </div>
+    </div>
   );
 }
 
 export function SidebarShell() {
   return (
-    <SidebarUIProvider>
-      <SidebarContent />
-    </SidebarUIProvider>
+    <>
+      <SidebarUIProvider>
+        <DesktopSidebarContent />
+      </SidebarUIProvider>
+      <SidebarUIProvider forceExpanded>
+        <MobileSidebarContent />
+      </SidebarUIProvider>
+    </>
   );
 }
