@@ -4,7 +4,7 @@ import { PagePadding } from "~/features/frame/page-layout/PagePadding";
 import { PageLayout } from "~/features/frame/page-layout/PageLayout";
 
 export function meta() {
-  return [{ title: "スケジュール一覧 | recwatch" }];
+  return [{ title: "スケジュール管理 | recwatch" }];
 }
 
 export default function ScheduleRoute() {
