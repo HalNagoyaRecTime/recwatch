@@ -2,10 +2,16 @@ import { Bell, Check } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router";
 
-const scheduleTypes = ["開会式", "競技", "集合", "昼休み", "閉会式"] as const;
+const scheduleTypes = [
+  "開会式",
+  "イベント",
+  "集合",
+  "昼休み",
+  "閉会式",
+] as const;
 
 export function ScheduleCreatePage() {
-  const [type, setType] = useState<(typeof scheduleTypes)[number]>("競技");
+  const [type, setType] = useState<(typeof scheduleTypes)[number]>("イベント");
   const [notify, setNotify] = useState(true);
 
   return (
@@ -87,7 +93,7 @@ export function ScheduleCreatePage() {
           </label>
 
           <label className="block text-sm font-bold">
-            関連競技
+            関連イベント
             <select
               defaultValue=""
               className="mt-1 h-[38px] w-full rounded-[10px] border border-[#d2d2d2] bg-white px-3 font-normal text-black/50"
@@ -168,7 +174,7 @@ export function ScheduleCreatePage() {
                     "開催時間",
                     "開催場所",
                     "集合場所",
-                    "関連競技",
+                    "関連イベント",
                     "備考",
                     "予約投稿",
                     "操作",

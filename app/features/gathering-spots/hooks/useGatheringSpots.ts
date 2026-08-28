@@ -50,8 +50,13 @@ export function useGatheringSpots({
   }, [gateway, listOptions]);
 
   useEffect(() => {
-    void reload();
+    let active = true;
+    void Promise.resolve().then(() => {
+      if (active) void reload();
+    });
+
     return () => {
+      active = false;
       requestVersion.current += 1;
     };
   }, [reload]);

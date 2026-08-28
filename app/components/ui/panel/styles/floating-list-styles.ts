@@ -5,7 +5,7 @@ export const floatingListSurfaceStyle = cva(
 );
 
 export const floatingListActionItemStyle = cva(
-  "flex h-8.5 w-full cursor-pointer items-center gap-2.5 rounded-md px-2.5 text-left text-sm transition-colors",
+  "flex h-8.5 w-full cursor-pointer items-center gap-2.5 rounded-md px-2.5 text-left text-sm transition-colors disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50",
   {
     variants: {
       intent: {

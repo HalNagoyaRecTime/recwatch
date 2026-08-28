@@ -18,14 +18,16 @@ export function useGatheringSpotsPage({
 }: UseGatheringSpotsPageOptions) {
   const [query, setQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [sort, setSort] = useState<GatheringSpotSort>();
   const pageSize = 20;
   const listOptions = useMemo(
     () => ({
       limit: pageSize,
       name: query.trim() || undefined,
       offset: (currentPage - 1) * pageSize,
+      ...(sort ? { sort } : {}),
     }),
-    [currentPage, query]
+    [currentPage, query, sort]
   );
   const {
     spots,
@@ -37,7 +39,6 @@ export function useGatheringSpotsPage({
     deleteSpot,
     reload,
   } = useGatheringSpots({ gateway, listOptions });
-  const [sort, setSort] = useState<GatheringSpotSort>();
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingSpot, setEditingSpot] = useState<GatheringSpot | null>(null);
   const [spotNameInput, setSpotNameInput] = useState("");
@@ -45,27 +46,6 @@ export function useGatheringSpotsPage({
   const [isDeleting, setIsDeleting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
-
-  const sortedSpots = useMemo(() => {
-    if (!sort) return spots;
-
-    const collator = new Intl.Collator("ja", {
-      numeric: true,
-      sensitivity: "base",
-    });
-
-    return [...spots].sort((left, right) => {
-      const result =
-        sort.columnId === "id"
-          ? left.id - right.id
-          : sort.columnId === "name"
-            ? collator.compare(left.name, right.name)
-            : sort.columnId === "created-at"
-              ? collator.compare(left.createdAt, right.createdAt)
-              : collator.compare(left.updatedAt, right.updatedAt);
-      return sort.direction === "asc" ? result : -result;
-    });
-  }, [sort, spots]);
 
   function openCreateForm() {
     setEditingSpot(null);
@@ -193,7 +173,7 @@ export function useGatheringSpotsPage({
     submitError,
     submitForm,
     sort,
-    sortedSpots,
+    spots,
     total,
   };
 }

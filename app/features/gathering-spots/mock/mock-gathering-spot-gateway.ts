@@ -16,10 +16,29 @@ export function createMockGatheringSpotGateway(
       const filtered = query
         ? spots.filter((spot) => spot.name.toLowerCase().includes(query))
         : spots;
+      const { columnId, direction } = options?.sort ?? {
+        columnId: "id",
+        direction: "asc",
+      };
+      const collator = new Intl.Collator("ja", {
+        numeric: true,
+        sensitivity: "base",
+      });
+      const sorted = [...filtered].sort((left, right) => {
+        const result =
+          columnId === "id"
+            ? left.id - right.id
+            : columnId === "name"
+              ? collator.compare(left.name, right.name)
+              : columnId === "created-at"
+                ? collator.compare(left.createdAt, right.createdAt)
+                : collator.compare(left.updatedAt, right.updatedAt);
+        return direction === "asc" ? result : -result;
+      });
       const limit = options?.limit ?? filtered.length;
       const offset = options?.offset ?? 0;
       return {
-        items: filtered.slice(offset, offset + limit),
+        items: sorted.slice(offset, offset + limit),
         total: filtered.length,
         limit,
         offset,

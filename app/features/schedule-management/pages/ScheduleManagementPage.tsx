@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router";
 
+import { PageHeader } from "~/components/ui/layout/PageHeader";
 import type { ScheduleManagementGateway } from "../application/schedule-management-gateway";
 import { CancelNotificationDialog } from "../components/CancelNotificationDialog";
 import { ScheduleDetailDialog } from "../components/ScheduleDetailDialog";
@@ -52,7 +53,7 @@ export function ScheduleManagementPage({
   }, [gateway]);
 
   useEffect(() => {
-    void loadSchedules();
+    void Promise.resolve().then(loadSchedules);
   }, [loadSchedules]);
 
   const filteredSchedules = useMemo(
@@ -92,15 +93,13 @@ export function ScheduleManagementPage({
   }
 
   return (
-    <div className="mx-auto w-full max-w-[1440px]">
-      <header>
-        <h1 className="text-xl font-semibold">イベント管理</h1>
-        <p className="mt-2 text-sm text-[color:var(--text-3)]">
-          イベントの開催時間・開催場所・通知設定を管理します
-        </p>
-      </header>
+    <div className="flex min-h-full flex-col gap-5">
+      <PageHeader
+        description="イベントの開催時間・開催場所・通知設定を管理します"
+        title="スケジュール一覧"
+      />
 
-      <div aria-live="polite" className="mt-4 min-h-5">
+      <div aria-live="polite" className="min-h-5">
         {errorMessage ? (
           <div className="flex flex-wrap items-center gap-3 text-sm text-[color:var(--tone-red-text)]">
             <p>{errorMessage}</p>
@@ -121,7 +120,7 @@ export function ScheduleManagementPage({
         ) : null}
       </div>
 
-      <section className="mt-2" aria-label="イベント一覧">
+      <section aria-label="イベント一覧">
         <ScheduleSearchToolbar
           query={query}
           resultCount={filteredSchedules.length}

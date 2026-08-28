@@ -1,219 +1,198 @@
-import { Check } from "lucide-react";
+import {
+  Check,
+  Clock3,
+  Flag,
+  ListFilter,
+  Loader2,
+  MapPin,
+  UsersRound,
+  type LucideIcon,
+} from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router";
+import { useSearchParams } from "react-router";
 
-import { apiClient } from "~/lib/api-client";
+import { Button } from "~/components/ui/button/Button";
+import { ButtonLink } from "~/components/ui/button/ButtonLink";
+import { PageHeader } from "~/components/ui/layout/PageHeader";
+import type { CompetitionAssignmentGateway } from "../api/competition-assignment-gateway";
+import { httpCompetitionAssignmentGateway } from "../api/http-competition-assignment-gateway";
+import { AssignmentSection } from "../components/AssignmentSection";
+import { AssignmentStudentTable } from "../components/AssignmentStudentTable";
+import type { CompetitionAssignmentData } from "../model/competition-assignment";
 
-type ClassRoom = {
-  class_room_id: number;
-  class_name: string;
+type CompetitionAssignmentPageProps = {
+  gateway?: CompetitionAssignmentGateway;
 };
 
-type Student = {
-  student_id: number;
-  user_id: number;
-  display_name: string;
-  class_room_id: number;
-  attendance_number: number;
-  student_id_number: string;
+const emptyData: CompetitionAssignmentData = {
+  classrooms: [],
+  students: [],
+  events: [],
+  spots: [],
+  gatherings: [],
 };
 
-type Event = {
-  event_id: number;
-  event_name: string;
-  venue: string;
-  start_time: string;
-};
-
-type GatheringSpot = {
-  gathering_spot_id: number;
-  gathering_spot_name: string;
-};
-
-type Gathering = {
-  gathering_id: number;
-  event_id: number;
-  gathering_spot_id: number;
-  gathering_time: string;
-};
-
-type GatheringMember = {
-  user_id: number;
-};
-
-type ClassRoomPage = { classrooms: ClassRoom[] };
-type StudentPage = { students: Student[] };
-type EventPage = { events: Event[] };
-
-function formatTime(value: string) {
-  return /^\d{4}$/.test(value)
-    ? `${value.slice(0, 2)}:${value.slice(2)}`
-    : value;
-}
-
-export function CompetitionAssignmentPage() {
-  const [classrooms, setClassrooms] = useState<ClassRoom[]>([]);
-  const [students, setStudents] = useState<Student[]>([]);
-  const [events, setEvents] = useState<Event[]>([]);
-  const [gatheringSpots, setGatheringSpots] = useState<GatheringSpot[]>([]);
-  const [gatherings, setGatherings] = useState<Gathering[]>([]);
-  const [selectedClassId, setSelectedClassId] = useState<number | null>(null);
-  const [selectedEventId, setSelectedEventId] = useState<number | null>(null);
-  const [selectedGatheringId, setSelectedGatheringId] = useState("new");
-  const [newGatheringSpotId, setNewGatheringSpotId] = useState<number | null>(
+export function CompetitionAssignmentPage({
+  gateway = httpCompetitionAssignmentGateway,
+}: CompetitionAssignmentPageProps) {
+  const [searchParams] = useSearchParams();
+  const requestedEventId = parsePositiveInteger(searchParams.get("eventId"));
+  const requestedGatheringId = parsePositiveInteger(
+    searchParams.get("gatheringId")
+  );
+  const [data, setData] = useState(emptyData);
+  const [selectedClassroomId, setSelectedClassroomId] = useState<number | null>(
     null
   );
+  const [selectedEventId, setSelectedEventId] = useState<number | null>(null);
+  const [selectedGatheringId, setSelectedGatheringId] = useState<number | null>(
+    null
+  );
+  const [newSpotId, setNewSpotId] = useState<number | null>(null);
   const [newGatheringTime, setNewGatheringTime] = useState("");
   const [selectedUserIds, setSelectedUserIds] = useState<number[]>([]);
-  const [loadError, setLoadError] = useState<string | null>(null);
-  const [submitError, setSubmitError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isComplete, setIsComplete] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   useEffect(() => {
-    let isCurrent = true;
+    let active = true;
 
-    async function load() {
-      try {
-        const [classRoomPage, studentPage, eventPage, spots, gatheringList] =
-          await Promise.all([
-            apiClient.get<ClassRoomPage>(
-              "/api/v1/classrooms?limit=100&offset=0"
-            ),
-            apiClient.get<StudentPage>("/api/v1/students?limit=100&offset=0"),
-            apiClient.get<EventPage>("/api/v1/events?limit=100&offset=0"),
-            apiClient.get<GatheringSpot[]>("/api/v1/gathering-spots"),
-            apiClient.get<Gathering[]>("/api/v1/gatherings"),
-          ]);
+    gateway
+      .load()
+      .then((loaded) => {
+        if (!active) return;
+        setData(loaded);
+        setSelectedClassroomId(loaded.classrooms[0]?.id ?? null);
+        setNewSpotId(loaded.spots[0]?.id ?? null);
 
-        if (!isCurrent) return;
-
-        setClassrooms(classRoomPage.classrooms);
-        setStudents(studentPage.students);
-        setEvents(eventPage.events);
-        setGatheringSpots(spots);
-        setGatherings(gatheringList);
-        setNewGatheringSpotId(spots[0]?.gathering_spot_id ?? null);
-        setSelectedClassId(classRoomPage.classrooms[0]?.class_room_id ?? null);
-        setSelectedEventId(
-          eventPage.events.find((event) =>
-            gatheringList.some(
-              (gathering) => gathering.event_id === event.event_id
-            )
-          )?.event_id ??
-            eventPage.events[0]?.event_id ??
-            null
+        const requestedEventExists = loaded.events.some(
+          (event) => event.id === requestedEventId
         );
-      } catch (error) {
-        if (isCurrent) {
-          setLoadError(
-            error instanceof Error
-              ? error.message
-              : "初期データを取得できませんでした。"
-          );
-        }
-      } finally {
-        if (isCurrent) setIsLoading(false);
-      }
+        const initialEventId = requestedEventExists
+          ? requestedEventId
+          : (loaded.events.find((event) =>
+              loaded.gatherings.some(
+                (gathering) => gathering.eventId === event.id
+              )
+            )?.id ??
+            loaded.events[0]?.id ??
+            null);
+        const initialGatherings = loaded.gatherings.filter(
+          (gathering) => gathering.eventId === initialEventId
+        );
+        setSelectedEventId(initialEventId);
+        setSelectedGatheringId(
+          initialGatherings.some(
+            (gathering) => gathering.id === requestedGatheringId
+          )
+            ? requestedGatheringId
+            : (initialGatherings[0]?.id ?? null)
+        );
+      })
+      .catch((error: unknown) => {
+        if (!active) return;
+        setLoadError(
+          error instanceof Error
+            ? error.message
+            : "参加者設定に必要なデータを取得できませんでした。"
+        );
+      })
+      .finally(() => {
+        if (active) setIsLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [gateway, requestedEventId, requestedGatheringId]);
+
+  const eventGatherings = useMemo(
+    () =>
+      data.gatherings.filter(
+        (gathering) => gathering.eventId === selectedEventId
+      ),
+    [data.gatherings, selectedEventId]
+  );
+
+  useEffect(() => {
+    let active = true;
+
+    if (selectedGatheringId === null) {
+      return () => {
+        active = false;
+      };
     }
 
-    void load();
-    return () => {
-      isCurrent = false;
-    };
-  }, []);
-
-  useEffect(() => {
-    const eventGatherings = gatherings.filter(
-      (gathering) => gathering.event_id === selectedEventId
-    );
-    setSelectedGatheringId((current) => {
-      const currentGatheringStillExists = eventGatherings.some(
-        (gathering) => gathering.gathering_id === Number.parseInt(current, 10)
-      );
-
-      if (currentGatheringStillExists) {
-        return current;
-      }
-
-      const firstGathering = eventGatherings[0];
-      return firstGathering ? String(firstGathering.gathering_id) : "new";
-    });
-  }, [gatherings, selectedEventId]);
-
-  useEffect(() => {
-    let isCurrent = true;
-
-    async function loadMembers() {
-      if (!selectedGatheringId || selectedGatheringId === "new") {
-        setSelectedUserIds([]);
-        return;
-      }
-
-      try {
-        const members = await apiClient.get<GatheringMember[]>(
-          `/api/v1/gatherings/${selectedGatheringId}/members`
+    gateway
+      .loadMemberUserIds(selectedGatheringId)
+      .then((userIds) => {
+        if (active) setSelectedUserIds(userIds);
+      })
+      .catch((error: unknown) => {
+        if (!active) return;
+        setSubmitError(
+          error instanceof Error
+            ? error.message
+            : "集合予定のメンバーを取得できませんでした。"
         );
-        if (isCurrent) {
-          setSelectedUserIds(members.map((member) => member.user_id));
-        }
-      } catch (error) {
-        if (isCurrent) {
-          setSubmitError(
-            error instanceof Error
-              ? error.message
-              : "集合予定のメンバーを取得できませんでした。"
-          );
-        }
-      }
-    }
+      });
 
-    void loadMembers();
     return () => {
-      isCurrent = false;
+      active = false;
     };
-  }, [selectedGatheringId]);
+  }, [gateway, selectedGatheringId]);
 
-  const selectedClass = classrooms.find(
-    (classroom) => classroom.class_room_id === selectedClassId
+  const selectedEvent = data.events.find(
+    (event) => event.id === selectedEventId
   );
-  const selectedEvent = events.find(
-    (event) => event.event_id === selectedEventId
-  );
-  const eventGatherings = gatherings.filter(
-    (gathering) => gathering.event_id === selectedEventId
-  );
-  const isCreatingGathering = selectedGatheringId === "new";
   const selectedGathering = eventGatherings.find(
-    (gathering) => gathering.gathering_id === Number(selectedGatheringId)
+    (gathering) => gathering.id === selectedGatheringId
   );
-  const selectedSpot = gatheringSpots.find(
-    (spot) =>
-      spot.gathering_spot_id ===
-      (isCreatingGathering
-        ? newGatheringSpotId
-        : selectedGathering?.gathering_spot_id)
-  );
-  const gatheringTime = isCreatingGathering
-    ? newGatheringTime
-    : (selectedGathering?.gathering_time ?? "");
+  const selectedSpotId = selectedGathering?.spotId ?? newSpotId;
+  const selectedSpot = data.spots.find((spot) => spot.id === selectedSpotId);
+  const gatheringTime = selectedGathering?.time ?? newGatheringTime;
   const visibleStudents = useMemo(
     () =>
-      selectedClassId === null
-        ? students
-        : students.filter(
-            (student) => student.class_room_id === selectedClassId
+      selectedClassroomId === null
+        ? data.students
+        : data.students.filter(
+            (student) => student.classroomId === selectedClassroomId
           ),
-    [selectedClassId, students]
+    [data.students, selectedClassroomId]
   );
-  const assignedStudents = useMemo(
-    () =>
-      students.filter((student) => selectedUserIds.includes(student.user_id)),
-    [selectedUserIds, students]
-  );
+  function selectGathering(value: string) {
+    setSelectedGatheringId(value === "new" ? null : Number(value));
+    setSelectedUserIds([]);
+    setSubmitError(null);
+    setSuccessMessage(null);
+  }
 
-  async function handleSubmit() {
+  function selectEvent(eventId: number) {
+    const firstGathering = data.gatherings.find(
+      (gathering) => gathering.eventId === eventId
+    );
+    setSelectedEventId(eventId);
+    setSelectedGatheringId(firstGathering?.id ?? null);
+    setSelectedUserIds([]);
+    setSubmitError(null);
+    setSuccessMessage(null);
+  }
+
+  function toggleStudent(userId: number) {
+    setSelectedUserIds((current) =>
+      current.includes(userId)
+        ? current.filter((id) => id !== userId)
+        : [...current, userId]
+    );
+    setSuccessMessage(null);
+  }
+
+  async function saveAssignment() {
+    if (isSubmitting) return;
+
     if (
       !selectedEvent ||
       !selectedSpot ||
@@ -221,78 +200,38 @@ export function CompetitionAssignmentPage() {
       selectedUserIds.length === 0
     ) {
       setSubmitError(
-        "イベント、集合場所、集合時間、割り当てメンバーを選択してください。"
+        "イベント、集合場所、集合時間、参加者を選択してください。"
       );
       return;
     }
 
     setIsSubmitting(true);
     setSubmitError(null);
-    setIsComplete(false);
+    setSuccessMessage(null);
 
     try {
-      let gatheringId: number;
-      let createdGathering: Gathering | null = null;
-
-      if (selectedGatheringId === "new") {
-        createdGathering = await apiClient.post<Gathering>(
-          "/api/v1/gatherings",
-          {
-            eventId: selectedEvent.event_id,
-            gatheringSpotId: selectedSpot.gathering_spot_id,
-            gatheringTime,
-            round: 1,
-          }
-        );
-        gatheringId = createdGathering.gathering_id;
-
-        await Promise.all(
-          selectedUserIds.map((userId) =>
-            apiClient.post<GatheringMember>(
-              `/api/v1/gatherings/${gatheringId}/members`,
-              { userId }
-            )
-          )
-        );
-      } else {
-        gatheringId = Number(selectedGatheringId);
-        const currentMembers = await apiClient.get<GatheringMember[]>(
-          `/api/v1/gatherings/${gatheringId}/members`
-        );
-        const currentMemberUserIds = currentMembers.map((m) => m.user_id);
-
-        const toAdd = selectedUserIds.filter(
-          (id) => !currentMemberUserIds.includes(id)
-        );
-        const toRemove = currentMemberUserIds.filter(
-          (id) => !selectedUserIds.includes(id)
-        );
-
-        await Promise.all([
-          ...toAdd.map((userId) =>
-            apiClient.post<GatheringMember>(
-              `/api/v1/gatherings/${gatheringId}/members`,
-              { userId }
-            )
-          ),
-          ...toRemove.map((userId) =>
-            apiClient.delete(
-              `/api/v1/gatherings/${gatheringId}/members/${userId}`
-            )
-          ),
-        ]);
-      }
-
-      setIsComplete(true);
-      if (createdGathering) {
-        setGatherings((current) => [...current, createdGathering]);
-      }
-      setSelectedGatheringId(String(gatheringId));
+      const result = await gateway.save({
+        eventId: selectedEvent.id,
+        gatheringId: selectedGatheringId,
+        spotId: selectedSpot.id,
+        time: gatheringTime,
+        userIds: selectedUserIds,
+      });
+      setData((current) => ({
+        ...current,
+        gatherings: current.gatherings.some(
+          (gathering) => gathering.id === result.gathering.id
+        )
+          ? current.gatherings
+          : [...current.gatherings, result.gathering],
+      }));
+      setSelectedGatheringId(result.gathering.id);
+      setSuccessMessage("参加者設定を保存しました。");
     } catch (error) {
       setSubmitError(
         error instanceof Error
           ? error.message
-          : "割り当てを登録できませんでした。"
+          : "参加者設定を保存できませんでした。"
       );
     } finally {
       setIsSubmitting(false);
@@ -300,285 +239,270 @@ export function CompetitionAssignmentPage() {
   }
 
   return (
-    <div className="min-h-full bg-[#f7faff] p-1 text-[#0a0a0a]">
-      <h1 className="text-[17px] font-bold">イベント割り当て 追加</h1>
+    <div className="min-h-full space-y-6">
+      <PageHeader title="参加者設定" />
 
       {loadError ? (
-        <p className="mt-4 rounded-[10px] border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-          初期データの取得に失敗しました: {loadError}
+        <p
+          className="app-rounded border-tone-danger-border bg-tone-danger-bg text-tone-danger-text border px-4 py-3 text-sm"
+          role="alert"
+        >
+          {loadError}
         </p>
       ) : null}
 
-      <div className="mt-5 grid items-start gap-6 xl:grid-cols-[480px_minmax(560px,1fr)]">
-        <div className="space-y-4">
-          <fieldset disabled={isLoading}>
-            <legend className="text-sm font-bold">
-              クラス <span className="text-red-500">*</span>
-            </legend>
-            <div className="mt-1 flex flex-wrap gap-2">
-              {classrooms.map((classroom) => (
-                <button
-                  key={classroom.class_room_id}
-                  type="button"
-                  onClick={() => setSelectedClassId(classroom.class_room_id)}
-                  className={`rounded-full border px-3 py-1.5 text-sm ${
-                    selectedClassId === classroom.class_room_id
-                      ? "border-[#0070bb] bg-[#0070bb]/10 font-bold text-[#0070bb]"
-                      : "border-[#d2d2d2] bg-white text-black/50"
-                  }`}
-                >
-                  {classroom.class_name}
-                </button>
-              ))}
-            </div>
-          </fieldset>
-
-          <label className="block text-sm font-bold">
-            イベント <span className="text-red-500">*</span>
-            <select
-              disabled={isLoading}
-              value={selectedEventId ?? ""}
-              onChange={(event) =>
-                setSelectedEventId(Number(event.target.value))
-              }
-              className="mt-1 h-[38px] w-full rounded-[10px] border border-[#0070bb] bg-white px-3 font-normal disabled:opacity-50"
-            >
-              {events.map((event) => (
-                <option key={event.event_id} value={event.event_id}>
-                  {event.event_name}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <label className="block text-sm font-bold">
-            集合予定 <span className="text-red-500">*</span>
-            <select
-              disabled={isLoading}
-              value={selectedGatheringId}
-              onChange={(event) => setSelectedGatheringId(event.target.value)}
-              className="mt-1 h-[38px] w-full rounded-[10px] border border-[#0070bb] bg-white px-3 font-normal disabled:opacity-50"
-            >
-              <option value="new">新しい集合予定を作成</option>
-              {eventGatherings.map((gathering) => (
-                <option
-                  key={gathering.gathering_id}
-                  value={gathering.gathering_id}
-                >
-                  集合予定 #{gathering.gathering_id}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <div className="grid grid-cols-3 gap-2">
-            {isCreatingGathering ? (
-              <>
-                <label className="rounded-[10px] border border-[#d2d2d2] bg-white px-3 py-2">
-                  <span className="text-[10px] text-black/35">集合場所</span>
+      {isLoading ? (
+        <div
+          className="text-text-muted flex min-h-48 items-center justify-center gap-2 text-sm"
+          role="status"
+        >
+          <Loader2 aria-hidden="true" className="size-4 animate-spin" />
+          読み込み中...
+        </div>
+      ) : (
+        <div className="mx-auto w-full max-w-5xl">
+          <form
+            className="min-w-0 space-y-7"
+            onSubmit={(event) => {
+              event.preventDefault();
+              void saveAssignment();
+            }}
+          >
+            <AssignmentSection icon={ListFilter} title="対象を選択">
+              <div className="grid gap-4 md:grid-cols-3">
+                <label className={labelClassName}>
+                  クラス <RequiredMark />
                   <select
-                    disabled={isLoading || gatheringSpots.length === 0}
-                    value={newGatheringSpotId ?? ""}
-                    onChange={(event) =>
-                      setNewGatheringSpotId(Number(event.target.value))
-                    }
-                    className="mt-0.5 block w-full bg-transparent text-xs text-black/70 outline-none disabled:opacity-50"
+                    aria-label="クラス"
+                    className={inputClassName}
+                    disabled={isSubmitting || data.classrooms.length === 0}
+                    onChange={(event) => {
+                      setSelectedClassroomId(Number(event.currentTarget.value));
+                      setSuccessMessage(null);
+                    }}
+                    value={selectedClassroomId ?? ""}
                   >
-                    {gatheringSpots.length === 0 ? (
-                      <option value="">未登録</option>
-                    ) : (
-                      gatheringSpots.map((spot) => (
-                        <option
-                          key={spot.gathering_spot_id}
-                          value={spot.gathering_spot_id}
-                        >
-                          {spot.gathering_spot_name}
-                        </option>
-                      ))
-                    )}
+                    {data.classrooms.map((classroom) => (
+                      <option key={classroom.id} value={classroom.id}>
+                        {classroom.name}
+                      </option>
+                    ))}
                   </select>
                 </label>
-                <label className="rounded-[10px] border border-[#d2d2d2] bg-white px-3 py-2">
-                  <span className="text-[10px] text-black/35">集合時間</span>
-                  <input
-                    type="time"
-                    disabled={isLoading}
-                    value={newGatheringTime}
-                    onChange={(event) =>
-                      setNewGatheringTime(event.target.value)
-                    }
-                    className="mt-0.5 block w-full bg-transparent text-xs text-black/70 outline-none disabled:opacity-50"
-                  />
-                </label>
-              </>
-            ) : (
-              [
-                ["集合場所", selectedSpot?.gathering_spot_name ?? "未設定"],
-                [
-                  "集合時間",
-                  gatheringTime ? formatTime(gatheringTime) : "未設定",
-                ],
-              ].map(([label, value]) => (
-                <div
-                  key={label}
-                  className="rounded-[10px] border border-[#d2d2d2] bg-white px-3 py-2"
-                >
-                  <p className="text-[10px] text-black/35">{label}</p>
-                  <p className="mt-0.5 text-xs text-black/45">{value}</p>
-                </div>
-              ))
-            )}
-            <div className="rounded-[10px] border border-[#d2d2d2] bg-white px-3 py-2">
-              <p className="text-[10px] text-black/35">開始時間</p>
-              <p className="mt-0.5 text-xs text-black/45">
-                {selectedEvent
-                  ? formatTime(selectedEvent.start_time)
-                  : "取得中"}
-              </p>
-            </div>
-          </div>
 
-          <div>
-            <h2 className="text-sm font-bold">
-              割り当てメンバー <span className="text-red-500">*</span>
-            </h2>
-            <p className="mt-1 text-xs text-black/40">
-              学生一覧。チェックで出場メンバーに追加されます。
-            </p>
-            <div className="mt-2 overflow-hidden rounded-[14px] border border-[#d2d2d2] bg-white">
-              <table className="w-full text-left text-sm">
-                <thead className="bg-[#f9fafb] text-[11px] text-black/50">
-                  <tr>
-                    <th className="w-10 border-b border-[#d2d2d2] px-3 py-2" />
-                    {["学籍番号", "出席番号", "氏名"].map((heading) => (
-                      <th
-                        key={heading}
-                        className="border-b border-[#d2d2d2] px-3 py-2"
-                      >
-                        {heading}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {visibleStudents.map((student) => {
-                    const checked = selectedUserIds.includes(student.user_id);
-
-                    return (
-                      <tr
-                        key={student.student_id}
-                        className={`border-b border-[#d2d2d2] last:border-b-0 ${
-                          checked ? "bg-[#eff6ff]" : ""
-                        }`}
-                      >
-                        <td className="px-3 py-2.5">
-                          <input
-                            type="checkbox"
-                            disabled={isLoading || isSubmitting}
-                            checked={checked}
-                            aria-label={`${student.display_name}を割り当てる`}
-                            onChange={() =>
-                              setSelectedUserIds((current) =>
-                                checked
-                                  ? current.filter(
-                                      (id) => id !== student.user_id
-                                    )
-                                  : [...current, student.user_id]
-                              )
-                            }
-                            className="size-4 accent-[#0070bb]"
-                          />
-                        </td>
-                        <td className="px-3 py-2.5">
-                          {student.student_id_number}
-                        </td>
-                        <td className="px-3 py-2.5">
-                          {student.attendance_number}
-                        </td>
-                        <td className="px-3 py-2.5">{student.display_name}</td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          {submitError ? (
-            <p className="text-sm text-red-600">{submitError}</p>
-          ) : null}
-          {isComplete ? (
-            <p className="text-sm text-emerald-700">割り当てを登録しました。</p>
-          ) : null}
-
-          <div className="flex gap-3 pt-1">
-            <Link
-              to="/participants"
-              className="rounded-[10px] border border-[#d2d2d2] bg-white px-4 py-2 text-sm"
-            >
-              キャンセル
-            </Link>
-            <button
-              type="button"
-              disabled={isLoading || isSubmitting}
-              onClick={() => void handleSubmit()}
-              className="flex items-center gap-2 rounded-[10px] bg-[#0070bb] px-4 py-2 text-sm text-white disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              <Check className="size-4" />
-              {isSubmitting ? "登録中..." : "割り当てを登録する"}
-            </button>
-          </div>
-        </div>
-
-        <aside className="min-w-0">
-          <p className="text-xs text-black/40">割り当て内容プレビュー</p>
-          <dl className="mt-2 overflow-hidden rounded-[14px] border border-[#d2d2d2] bg-white">
-            {[
-              ["クラス", selectedClass?.class_name ?? "未選択"],
-              ["イベント", selectedEvent?.event_name ?? "未選択"],
-              ["集合場所", selectedSpot?.gathering_spot_name ?? "未選択"],
-            ].map(([label, value]) => (
-              <div
-                key={label}
-                className="flex items-center gap-4 border-b border-[#d2d2d2] px-4 py-2.5 last:border-b-0"
-              >
-                <dt className="w-20 text-xs text-black/40">{label}</dt>
-                <dd className="text-sm">{value}</dd>
-              </div>
-            ))}
-          </dl>
-
-          <p className="mt-3 text-xs text-black/40">割り当てメンバー</p>
-          <div className="mt-2 overflow-hidden rounded-[14px] border border-[#d2d2d2] bg-white">
-            <table className="w-full text-left text-sm">
-              <thead className="bg-[#f9fafb] text-[11px] text-black/50">
-                <tr>
-                  {["通し番号", "学籍番号", "氏名"].map((heading) => (
-                    <th
-                      key={heading}
-                      className="border-b border-[#d2d2d2] px-4 py-2"
-                    >
-                      {heading}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {assignedStudents.map((student, index) => (
-                  <tr
-                    key={student.student_id}
-                    className="border-b border-[#d2d2d2] last:border-b-0"
+                <label className={labelClassName}>
+                  イベント <RequiredMark />
+                  <select
+                    aria-label="イベント"
+                    className={inputClassName}
+                    disabled={isSubmitting || data.events.length === 0}
+                    onChange={(event) => {
+                      selectEvent(Number(event.currentTarget.value));
+                    }}
+                    value={selectedEventId ?? ""}
                   >
-                    <td className="px-4 py-2.5">{index + 1}</td>
-                    <td className="px-4 py-2.5">{student.student_id_number}</td>
-                    <td className="px-4 py-2.5">{student.display_name}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </aside>
+                    {data.events.map((event) => (
+                      <option key={event.id} value={event.id}>
+                        {event.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
+                <label className={labelClassName}>
+                  集合予定 <RequiredMark />
+                  <select
+                    aria-label="集合予定"
+                    className={inputClassName}
+                    disabled={isSubmitting || !selectedEvent}
+                    onChange={(event) =>
+                      selectGathering(event.currentTarget.value)
+                    }
+                    value={selectedGatheringId ?? "new"}
+                  >
+                    <option value="new">新しい集合予定</option>
+                    {eventGatherings.map((gathering) => (
+                      <option key={gathering.id} value={gathering.id}>
+                        {formatTime(gathering.time)} / 集合予定 #{gathering.id}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+            </AssignmentSection>
+
+            <AssignmentSection
+              aside={
+                selectedGathering ? (
+                  <span className="text-text-muted text-xs font-medium">
+                    登録済み
+                  </span>
+                ) : (
+                  <span className="text-brand-primary text-xs font-medium">
+                    新規
+                  </span>
+                )
+              }
+              icon={MapPin}
+              title="集合情報"
+            >
+              {selectedGathering ? (
+                <div className="grid gap-4 sm:grid-cols-3">
+                  <ReadOnlyValue
+                    icon={MapPin}
+                    label="集合場所"
+                    value={selectedSpot?.name}
+                  />
+                  <ReadOnlyValue
+                    icon={Clock3}
+                    label="集合時間"
+                    value={formatTime(selectedGathering.time)}
+                  />
+                  <ReadOnlyValue
+                    icon={Flag}
+                    label="開始時刻"
+                    value={selectedEvent?.startTime}
+                  />
+                </div>
+              ) : (
+                <div className="grid gap-4 sm:grid-cols-3">
+                  <label className={labelClassName}>
+                    集合場所 <RequiredMark />
+                    <select
+                      aria-label="集合場所"
+                      className={inputClassName}
+                      disabled={isSubmitting || data.spots.length === 0}
+                      onChange={(event) =>
+                        setNewSpotId(Number(event.currentTarget.value))
+                      }
+                      value={newSpotId ?? ""}
+                    >
+                      {data.spots.map((spot) => (
+                        <option key={spot.id} value={spot.id}>
+                          {spot.name}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className={labelClassName}>
+                    集合時間 <RequiredMark />
+                    <input
+                      aria-label="集合時間"
+                      className={inputClassName}
+                      disabled={isSubmitting}
+                      onChange={(event) =>
+                        setNewGatheringTime(event.currentTarget.value)
+                      }
+                      type="time"
+                      value={newGatheringTime}
+                    />
+                  </label>
+                  <ReadOnlyValue
+                    icon={Flag}
+                    label="開始時刻"
+                    value={selectedEvent?.startTime}
+                  />
+                </div>
+              )}
+            </AssignmentSection>
+
+            <AssignmentSection
+              aside={
+                <span className="text-text-muted text-xs font-medium">
+                  {selectedUserIds.length}名選択中
+                </span>
+              }
+              footer={
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="min-h-5">
+                    {submitError ? (
+                      <p className="text-tone-danger-text text-sm" role="alert">
+                        {submitError}
+                      </p>
+                    ) : null}
+                    {successMessage ? (
+                      <p
+                        className="text-tone-success-text text-sm"
+                        role="status"
+                      >
+                        {successMessage}
+                      </p>
+                    ) : null}
+                  </div>
+                  <div className="flex shrink-0 justify-end gap-3">
+                    <ButtonLink to="/events" variant="secondary">
+                      キャンセル
+                    </ButtonLink>
+                    <Button
+                      disabled={isSubmitting || Boolean(loadError)}
+                      icon={Check}
+                      type="submit"
+                      variant="primary"
+                    >
+                      {isSubmitting ? "保存中..." : "設定を保存"}
+                    </Button>
+                  </div>
+                </div>
+              }
+              icon={UsersRound}
+              title="参加者"
+            >
+              <AssignmentStudentTable
+                disabled={isSubmitting}
+                onToggle={toggleStudent}
+                selectedUserIds={selectedUserIds}
+                students={visibleStudents}
+              />
+            </AssignmentSection>
+          </form>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ReadOnlyValue({
+  icon: Icon,
+  label,
+  value,
+}: {
+  icon: LucideIcon;
+  label: string;
+  value: string | null | undefined;
+}) {
+  return (
+    <div className="flex min-h-16 items-center gap-3">
+      <Icon aria-hidden="true" className="text-text-subtle size-4 shrink-0" />
+      <div className="min-w-0">
+        <p className="text-text-subtle text-xs">{label}</p>
+        <p className="text-text-base mt-0.5 truncate text-sm font-semibold">
+          {value || "—"}
+        </p>
       </div>
     </div>
   );
 }
+
+function RequiredMark() {
+  return (
+    <span aria-hidden="true" className="text-tone-danger-text">
+      *
+    </span>
+  );
+}
+
+function formatTime(value: string) {
+  return /^\d{4}$/.test(value)
+    ? `${value.slice(0, 2)}:${value.slice(2)}`
+    : value;
+}
+
+function parsePositiveInteger(value: string | null) {
+  if (!value || !/^\d+$/.test(value)) return null;
+  const parsed = Number(value);
+  return Number.isSafeInteger(parsed) && parsed > 0 ? parsed : null;
+}
+
+const labelClassName = "text-text-base block text-sm font-medium";
+const inputClassName =
+  "app-rounded border-border-base bg-surface-base text-text-base focus:border-border-strong mt-1.5 h-10 w-full border px-3 text-sm outline-none disabled:opacity-50";

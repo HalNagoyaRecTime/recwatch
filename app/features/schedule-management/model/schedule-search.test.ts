@@ -22,7 +22,7 @@ const schedules: ManagedSchedule[] = [
     venueName: "コートB",
     gatheringSpotName: null,
     relatedEventName: "走れ！〇人〇脚！",
-    notes: "午前の競技",
+    notes: "午前のイベント",
     publication: { mode: "sent" },
     notificationEnabled: true,
   },

@@ -5,7 +5,6 @@ import {
   MemoryRouter,
   Outlet,
   RouterProvider,
-  useLoaderData,
 } from "react-router";
 import { describe, expect, it, vi } from "vitest";
 
@@ -16,7 +15,6 @@ import type { TeacherRow } from "~/features/teachers/model/teacher";
 
 const mocks = vi.hoisted(() => ({
   createTeacher: vi.fn(),
-  deleteTeacher: vi.fn(),
   updateTeacher: vi.fn(),
 }));
 
@@ -180,15 +178,13 @@ describe("teacher create and edit flows", () => {
   });
 });
 
-function ActionRoute() {
-  const { active } = useLoaderData() as { active: boolean };
-  return active ? <TeacherActionMenu teacher={teacher} /> : <p>一覧から除外</p>;
-}
-
-function renderActionRouter(loader: () => { active: boolean }) {
+function renderActionRouter(onDelete = vi.fn()) {
   const router = createMemoryRouter(
     [
-      { path: "/teachers", loader, element: <ActionRoute /> },
+      {
+        path: "/teachers",
+        element: <TeacherActionMenu onDelete={onDelete} teacher={teacher} />,
+      },
       { path: "/teachers/7/edit", element: <p>編集ページ</p> },
     ],
     { initialEntries: ["/teachers"] }
@@ -198,41 +194,24 @@ function renderActionRouter(loader: () => { active: boolean }) {
 }
 
 describe("TeacherActionMenu", () => {
-  it("編集を選ぶと編集ページへ遷移する", async () => {
+  it("編集と削除を3点メニューから選べる", async () => {
+    const onDelete = vi.fn();
     const user = userEvent.setup();
 
-    renderActionRouter(() => ({ active: true }));
+    renderActionRouter(onDelete);
     await user.click(
       await screen.findByRole("button", { name: "佐橋 晴斗の操作" })
     );
 
     const editButton = screen.getByRole("button", { name: "編集" });
     expect(editButton.querySelector("svg")).toBeNull();
-    expect(
-      screen.getByRole("button", { name: "無効化" }).querySelector("svg")
-    ).toBeNull();
+    const deleteButton = screen.getByRole("button", { name: "削除" });
+    expect(deleteButton).toBeInTheDocument();
 
-    await user.click(editButton);
+    await user.click(deleteButton);
+    expect(onDelete).toHaveBeenCalledWith(teacher);
+
+    await user.click(screen.getByRole("button", { name: "編集" }));
     expect(await screen.findByText("編集ページ")).toBeInTheDocument();
-  });
-
-  it("無効化成功後に一覧から対象を除外する", async () => {
-    vi.spyOn(window, "confirm").mockReturnValueOnce(true);
-    const user = userEvent.setup();
-    let active = true;
-    mocks.deleteTeacher.mockImplementationOnce(async () => {
-      active = false;
-    });
-
-    renderActionRouter(() => ({ active }));
-    await user.click(
-      await screen.findByRole("button", { name: "佐橋 晴斗の操作" })
-    );
-    await user.click(screen.getByRole("button", { name: "無効化" }));
-
-    expect(mocks.deleteTeacher).toHaveBeenCalledWith(7);
-    await waitFor(() => {
-      expect(screen.getByText("一覧から除外")).toBeInTheDocument();
-    });
   });
 });

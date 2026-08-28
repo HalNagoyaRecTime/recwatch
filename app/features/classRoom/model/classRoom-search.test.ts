@@ -9,6 +9,7 @@ const classRooms: ClassRoomData[] = [
     classRoomCode: "IH12A203",
     classRoomName: "情報処理学科1年A組",
     studentCount: 32,
+    teacherId: 10,
     teacherName: "佐橋 晴斗",
   },
   {
@@ -16,6 +17,7 @@ const classRooms: ClassRoomData[] = [
     classRoomCode: "PI12A203",
     classRoomName: "高度情報学科1年A組",
     studentCount: 25,
+    teacherId: null,
     teacherName: null,
   },
 ];
