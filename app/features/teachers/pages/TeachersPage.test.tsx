@@ -7,7 +7,17 @@ import type { TeacherRow } from "~/features/teachers/model/teacher";
 import { TeachersPage } from "~/features/teachers/pages/TeachersPage";
 
 vi.mock("~/features/teachers/components/TeacherActionMenu", () => ({
-  TeacherActionMenu: () => <button type="button">操作</button>,
+  TeacherActionMenu: ({
+    onDelete,
+    teacher,
+  }: {
+    onDelete: (teacher: TeacherRow) => void;
+    teacher: TeacherRow;
+  }) => (
+    <button type="button" onClick={() => onDelete(teacher)}>
+      {teacher.displayName}を削除
+    </button>
+  ),
 }));
 
 const teachers: TeacherRow[] = [
@@ -31,7 +41,7 @@ function LocationProbe() {
 }
 
 describe("TeachersPage", () => {
-  it("CSV取り込みの横に同じUIの個別登録ボタンを表示して登録画面へ遷移する", async () => {
+  it("CSV取り込みの横に同じUIの新規登録ボタンを表示して登録画面へ遷移する", async () => {
     const user = userEvent.setup();
 
     render(
@@ -44,7 +54,7 @@ describe("TeachersPage", () => {
     const importButton = screen.getByRole("button", {
       name: "CSV / Excel を取り込む",
     });
-    const individualButton = screen.getByRole("button", { name: "個別登録" });
+    const individualButton = screen.getByRole("button", { name: "新規登録" });
 
     expect(importButton.parentElement).toBe(individualButton.parentElement);
     expect(importButton.className).toBe(individualButton.className);
@@ -122,5 +132,72 @@ describe("TeachersPage", () => {
     await waitFor(() => {
       expect(screen.getByTestId("location-search")).toHaveTextContent("page=2");
     });
+  });
+
+  it("削除後のページ移動では再取得済み件数を二重に減算しない", async () => {
+    const deleteTeacher = vi.fn().mockResolvedValue(undefined);
+    const confirm = vi.spyOn(window, "confirm").mockReturnValue(true);
+    const user = userEvent.setup();
+    const view = render(
+      <MemoryRouter initialEntries={["/teachers"]}>
+        <TeachersPage
+          api={{ deleteTeacher }}
+          limit={10}
+          offset={0}
+          teachers={teachers}
+          total={25}
+        />
+        <LocationProbe />
+      </MemoryRouter>
+    );
+
+    await user.click(screen.getByRole("button", { name: "山田 花子を削除" }));
+    expect(screen.getByText(/全24件/)).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "次のページ" }));
+    await waitFor(() =>
+      expect(screen.getByTestId("location-search")).toHaveTextContent("page=2")
+    );
+
+    view.rerender(
+      <MemoryRouter>
+        <TeachersPage
+          api={{ deleteTeacher }}
+          limit={10}
+          offset={10}
+          teachers={[]}
+          total={24}
+        />
+        <LocationProbe />
+      </MemoryRouter>
+    );
+
+    expect(screen.getByText(/全24件/)).toBeInTheDocument();
+    expect(screen.queryByText(/全23件/)).not.toBeInTheDocument();
+    confirm.mockRestore();
+  });
+
+  it("3点メニューの削除操作をAPIへ反映する", async () => {
+    const deleteTeacher = vi.fn().mockResolvedValue(undefined);
+    const confirm = vi.spyOn(window, "confirm").mockReturnValue(true);
+    const user = userEvent.setup();
+
+    render(
+      <MemoryRouter initialEntries={["/teachers"]}>
+        <TeachersPage
+          api={{ deleteTeacher }}
+          limit={50}
+          offset={0}
+          teachers={teachers}
+          total={1}
+        />
+      </MemoryRouter>
+    );
+
+    await user.click(screen.getByRole("button", { name: "山田 花子を削除" }));
+
+    await waitFor(() => expect(deleteTeacher).toHaveBeenCalledWith(2));
+    expect(screen.queryByText("山田 花子")).not.toBeInTheDocument();
+    confirm.mockRestore();
   });
 });

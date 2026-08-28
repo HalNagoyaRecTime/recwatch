@@ -29,8 +29,10 @@ export function createHttpGatheringSpotGateway(
       if (options?.offset !== undefined)
         params.set("offset", String(options.offset));
       if (options?.name) params.set("name", options.name);
-      if (options?.sortBy) params.set("sortBy", options.sortBy);
-      if (options?.sortOrder) params.set("sortOrder", options.sortOrder);
+      if (options?.sort) {
+        params.set("sortBy", toApiSortBy(options.sort.columnId));
+        params.set("sortOrder", options.sort.direction);
+      }
 
       const query = params.toString();
       const response = await client.get<
@@ -82,4 +84,12 @@ export function createHttpGatheringSpotGateway(
       await client.delete(`/api/v1/gathering-spots/${id}`);
     },
   };
+}
+
+function toApiSortBy(
+  columnId: NonNullable<GatheringSpotListOptions["sort"]>["columnId"]
+): "id" | "name" | "createdAt" | "updatedAt" {
+  if (columnId === "created-at") return "createdAt";
+  if (columnId === "updated-at") return "updatedAt";
+  return columnId;
 }

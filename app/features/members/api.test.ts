@@ -1,8 +1,16 @@
 import { describe, expect, it, vi } from "vitest";
 
 const getMock = vi.fn();
+const postMock = vi.fn();
+const putMock = vi.fn();
+const deleteMock = vi.fn();
 vi.mock("~/lib/api-client", () => ({
-  apiClient: { get: (...args: unknown[]) => getMock(...args) },
+  apiClient: {
+    get: (...args: unknown[]) => getMock(...args),
+    post: (...args: unknown[]) => postMock(...args),
+    put: (...args: unknown[]) => putMock(...args),
+    delete: (...args: unknown[]) => deleteMock(...args),
+  },
 }));
 
 import { StudentApi, type StudentDTO, type StudentPageDTO } from "./api";
@@ -78,5 +86,55 @@ describe("StudentApi.getAllStudents", () => {
 
     expect(result).toEqual([]);
     expect(getMock).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("StudentApi mutations", () => {
+  it("maps the individual-registration input to the backend contract", async () => {
+    const created = makeStudent(3);
+    postMock.mockResolvedValueOnce(created);
+
+    await expect(
+      StudentApi.createStudent({
+        attendanceNumber: 3,
+        classRoomId: 1,
+        displayName: "学生3",
+        studentIdNumber: "S003",
+      })
+    ).resolves.toEqual(created);
+
+    expect(postMock).toHaveBeenCalledWith("/api/v1/students", {
+      attendance_number: 3,
+      class_room_id: 1,
+      display_name: "学生3",
+      student_id_number: "S003",
+    });
+  });
+
+  it("updates an existing student through the supported API", async () => {
+    const updated = makeStudent(3);
+    putMock.mockResolvedValueOnce(updated);
+
+    await StudentApi.updateStudent(3, {
+      attendanceNumber: 4,
+      classRoomId: 1,
+      displayName: "更新後",
+      studentIdNumber: "S003",
+    });
+
+    expect(putMock).toHaveBeenCalledWith("/api/v1/students/3", {
+      attendance_number: 4,
+      class_room_id: 1,
+      display_name: "更新後",
+      student_id_number: "S003",
+    });
+  });
+
+  it("deletes a student through the supported API", async () => {
+    deleteMock.mockResolvedValueOnce(undefined);
+
+    await StudentApi.deleteStudent(3);
+
+    expect(deleteMock).toHaveBeenCalledWith("/api/v1/students/3");
   });
 });

@@ -1,63 +1,92 @@
-import { MoreHorizontal } from "lucide-react";
+import { DataTable } from "~/components/ui/data-table/DataTable";
+import type {
+  DataTableColumn,
+  DataTableSort,
+} from "~/components/ui/data-table/data-table-types";
 import type { ClassRoomData } from "~/features/classRoom/model/classRoom";
+import { ManagementRowActionMenu } from "~/features/user-management/components/ManagementRowActionMenu";
+
+type ClassRoomTableProps = {
+  classRooms: readonly ClassRoomData[];
+  isMutating?: boolean;
+  onDelete?: (classRoom: ClassRoomData) => void;
+  onEdit?: (classRoom: ClassRoomData) => void;
+  onSortChange?: (columnId: string) => void;
+  sort?: DataTableSort;
+};
 
 export function ClassRoomTable({
   classRooms,
-}: {
-  classRooms: ClassRoomData[];
-}) {
+  isMutating = false,
+  onDelete,
+  onEdit,
+  onSortChange,
+  sort,
+}: ClassRoomTableProps) {
+  const columns: readonly DataTableColumn<ClassRoomData>[] = [
+    {
+      header: "クラスID",
+      id: "class-room-id",
+      sortable: true,
+      width: { type: "fixed", value: 110 },
+      renderCell: (classRoom) => classRoom.classRoomId,
+    },
+    {
+      header: "クラス記号",
+      id: "class-room-code",
+      sortable: true,
+      width: { type: "fluid", min: 140, grow: 1 },
+      renderCell: (classRoom) => classRoom.classRoomCode,
+    },
+    {
+      header: "クラス名",
+      id: "class-room-name",
+      sortable: true,
+      width: { type: "fluid", min: 180, grow: 2 },
+      renderCell: (classRoom) => classRoom.classRoomName,
+    },
+    {
+      header: "担当教官",
+      id: "teacher-name",
+      sortable: true,
+      width: { type: "fluid", min: 160, grow: 1 },
+      renderCell: (classRoom) => classRoom.teacherName ?? "未設定",
+    },
+    {
+      align: "end",
+      edge: "right",
+      header: "学生数",
+      id: "student-count",
+      sortable: true,
+      width: { type: "fixed", value: 100 },
+      renderCell: (classRoom) => `${classRoom.studentCount}名`,
+    },
+    {
+      align: "center",
+      edge: "end",
+      header: "",
+      id: "actions",
+      width: { type: "fixed", value: 64 },
+      renderCell: (classRoom) => (
+        <ManagementRowActionMenu
+          ariaLabel={`${classRoom.classRoomName}の操作`}
+          disabled={isMutating}
+          onDelete={() => onDelete?.(classRoom)}
+          onEdit={() => onEdit?.(classRoom)}
+        />
+      ),
+    },
+  ];
+
   return (
-    <div className="mt-4 overflow-x-auto rounded-[14px] border border-[#d2d2d2] bg-white">
-      <table className="w-full min-w-[640px] text-left text-sm">
-        <thead className="bg-[#f9fafb] text-[11px] text-black/50">
-          <tr>
-            <th className="border-b border-[#d2d2d2] px-4 py-2">
-              <span className="sr-only">番号</span>
-            </th>
-            <th className="border-b border-[#d2d2d2] px-4 py-2">クラス記号</th>
-            <th className="border-b border-[#d2d2d2] px-4 py-2">教官名</th>
-            <th className="border-b border-[#d2d2d2] px-4 py-2">学生数</th>
-            <th className="border-b border-[#d2d2d2] px-4 py-2">操作</th>
-          </tr>
-        </thead>
-        <tbody>
-          {classRooms.length === 0 ? (
-            <tr>
-              <td
-                colSpan={5}
-                className="px-4 py-8 text-center text-xs text-black/40"
-              >
-                該当するクラスが見つかりません。
-              </td>
-            </tr>
-          ) : (
-            classRooms.map((classRoom, index) => (
-              <tr
-                key={classRoom.classRoomId}
-                className="border-b border-[#d2d2d2] last:border-b-0"
-              >
-                <td className="px-4 py-3">{index + 1}</td>
-                <td className="px-4 py-3">{classRoom.classRoomCode}</td>
-                <td className="px-4 py-3">
-                  {classRoom.teacherName ?? "未設定"}
-                </td>
-                <td className="px-4 py-3">{classRoom.studentCount}名</td>
-                <td className="px-4 py-3">
-                  <button
-                    type="button"
-                    aria-label={`${classRoom.classRoomName}の詳細・操作`}
-                    title="編集・削除は未実装"
-                    disabled
-                    className="text-black/45 disabled:cursor-not-allowed"
-                  >
-                    <MoreHorizontal className="size-4" />
-                  </button>
-                </td>
-              </tr>
-            ))
-          )}
-        </tbody>
-      </table>
-    </div>
+    <DataTable
+      ariaLabel="クラス一覧"
+      columns={columns}
+      emptyMessage="該当するクラスが見つかりません。"
+      getRowKey={(classRoom) => classRoom.classRoomId}
+      items={classRooms}
+      onSortChange={onSortChange}
+      sort={sort}
+    />
   );
 }

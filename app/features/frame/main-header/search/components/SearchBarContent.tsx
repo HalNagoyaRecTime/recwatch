@@ -56,7 +56,7 @@ export function SearchBarContent({
             value={query}
             onChange={(event) => onChange(event.target.value)}
             onFocus={onOpen}
-            placeholder="Search..."
+            placeholder="画面を検索..."
             className={cn(
               "app-text-small text-text-subtle placeholder:text-text-subtle min-w-0 flex-1 bg-transparent outline-none",
               isOpen ? "cursor-text" : "cursor-pointer"

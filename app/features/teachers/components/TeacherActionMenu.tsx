@@ -1,44 +1,30 @@
-import { Ellipsis } from "lucide-react";
 import { useLocation, useNavigate } from "react-router";
 
-import { Button } from "~/components/ui/button/Button";
-import { Menu } from "~/components/ui/navigation/Menu";
-import { FloatingPanel } from "~/components/ui/panel/FloatingPanel";
 import { teacherEditTarget } from "~/features/teachers/application/teacher-navigation";
 import type { TeacherRow } from "~/features/teachers/model/teacher";
+import { ManagementRowActionMenu } from "~/features/user-management/components/ManagementRowActionMenu";
 
 type TeacherActionMenuProps = {
+  disabled?: boolean;
+  onDelete: (teacher: TeacherRow) => void;
   teacher: TeacherRow;
 };
 
-export function TeacherActionMenu({ teacher }: TeacherActionMenuProps) {
+export function TeacherActionMenu({
+  disabled,
+  onDelete,
+  teacher,
+}: TeacherActionMenuProps) {
   const navigate = useNavigate();
   const location = useLocation();
 
   return (
-    <FloatingPanel
-      placement="bottom-end"
-      trigger={
-        <Button
-          aria-label={`${teacher.displayName}の操作`}
-          icon={Ellipsis}
-          iconOnly
-          size="sm"
-          variant="ghost"
-        />
-      }
-      content={
-        <Menu
-          items={[
-            {
-              id: "edit",
-              label: "編集",
-              onClick: () =>
-                navigate(teacherEditTarget(teacher.teacherId, location.search)),
-              type: "action",
-            },
-          ]}
-        />
+    <ManagementRowActionMenu
+      ariaLabel={`${teacher.displayName}の操作`}
+      disabled={disabled}
+      onDelete={() => onDelete(teacher)}
+      onEdit={() =>
+        navigate(teacherEditTarget(teacher.teacherId, location.search))
       }
     />
   );

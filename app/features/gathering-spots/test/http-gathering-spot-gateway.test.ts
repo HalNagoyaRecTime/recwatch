@@ -49,29 +49,23 @@ describe("createHttpGatheringSpotGateway", () => {
     );
   });
 
-  it("ソート条件を一覧APIへ渡す", async () => {
+  it("内部の並び替え条件をAPIのクエリ形式へ変換する", async () => {
     const get = vi.fn().mockResolvedValue({
       gathering_spots: [],
       total: 0,
       limit: 20,
       offset: 0,
     });
-    const gateway = createHttpGatheringSpotGateway({
-      get,
-      post: vi.fn(),
-      put: vi.fn(),
-      delete: vi.fn(),
-    });
+    const gateway = createHttpGatheringSpotGateway(createClient({ get }));
 
     await gateway.list({
       limit: 20,
-      offset: 0,
-      sortBy: "name",
-      sortOrder: "desc",
+      offset: 40,
+      sort: { columnId: "created-at", direction: "desc" },
     });
 
     expect(get).toHaveBeenCalledWith(
-      "/api/v1/gathering-spots?limit=20&offset=0&sortBy=name&sortOrder=desc"
+      "/api/v1/gathering-spots?limit=20&offset=40&sortBy=createdAt&sortOrder=desc"
     );
   });
 
@@ -102,5 +96,26 @@ describe("createHttpGatheringSpotGateway", () => {
     await expect(gateway.delete(10)).resolves.toBeUndefined();
     expect(get).toHaveBeenCalledWith("/api/v1/gathering-spots/10");
     expect(deleteRequest).toHaveBeenCalledWith("/api/v1/gathering-spots/10");
+  });
+
+  it("作成と更新をAPI契約へ委譲して画面モデルへ変換する", async () => {
+    const post = vi.fn().mockResolvedValue(createResponse(11, "正門前"));
+    const put = vi.fn().mockResolvedValue(createResponse(11, "体育館入口"));
+    const gateway = createHttpGatheringSpotGateway(createClient({ post, put }));
+
+    await expect(gateway.create("正門前")).resolves.toMatchObject({
+      id: 11,
+      name: "正門前",
+    });
+    await expect(gateway.update(11, "体育館入口")).resolves.toMatchObject({
+      id: 11,
+      name: "体育館入口",
+    });
+    expect(post).toHaveBeenCalledWith("/api/v1/gathering-spots", {
+      gatheringSpotName: "正門前",
+    });
+    expect(put).toHaveBeenCalledWith("/api/v1/gathering-spots/11", {
+      gatheringSpotName: "体育館入口",
+    });
   });
 });

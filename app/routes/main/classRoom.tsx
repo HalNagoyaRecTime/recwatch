@@ -7,13 +7,24 @@ import { ClassRoomPage } from "~/features/classRoom/pages/classRoomPage";
 import { PagePadding } from "~/features/frame/page-layout/PagePadding";
 import { PageLayout } from "~/features/frame/page-layout/PageLayout";
 import { getClassRoomData } from "~/features/classRoom/model/classRoom-data";
+import { TeacherApi } from "~/features/teachers/api";
 
 export async function clientLoader() {
-  return { classRooms: await getClassRoomData() };
+  const [classRooms, teachers] = await Promise.all([
+    getClassRoomData(),
+    TeacherApi.getTeachers(),
+  ]);
+  return {
+    classRooms,
+    teacherOptions: teachers.items.map((teacher) => ({
+      teacherId: teacher.teacher_id,
+      displayName: teacher.display_name,
+    })),
+  };
 }
 
 export function meta() {
-  return [{ title: "ユーザー管理（クラス） | recwatch" }];
+  return [{ title: "クラス管理 | recwatch" }];
 }
 
 export function ErrorBoundary() {
@@ -36,11 +47,14 @@ export function ErrorBoundary() {
 }
 
 export default function ClassRoomRoute() {
-  const { classRooms } = useLoaderData<typeof clientLoader>();
+  const { classRooms, teacherOptions } = useLoaderData<typeof clientLoader>();
   return (
     <PageLayout>
       <PagePadding>
-        <ClassRoomPage classRooms={classRooms} />
+        <ClassRoomPage
+          classRooms={classRooms}
+          teacherOptions={teacherOptions}
+        />
       </PagePadding>
     </PageLayout>
   );

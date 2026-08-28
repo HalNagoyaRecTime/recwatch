@@ -1,6 +1,5 @@
 import { useMemo, useState } from "react";
 
-import type { GatheringSpotSortBy } from "~/features/gathering-spots/api/contracts/gathering-spot-gateway";
 import type { GatheringSpotGateway } from "~/features/gathering-spots/api/contracts/gathering-spot-gateway";
 import { useGatheringSpots } from "~/features/gathering-spots/hooks/useGatheringSpots";
 import {
@@ -26,12 +25,7 @@ export function useGatheringSpotsPage({
       limit: pageSize,
       name: query.trim() || undefined,
       offset: (currentPage - 1) * pageSize,
-      ...(sort
-        ? {
-            sortBy: toApiSortBy(sort.columnId),
-            sortOrder: sort.direction,
-          }
-        : {}),
+      ...(sort ? { sort } : {}),
     }),
     [currentPage, query, sort]
   );
@@ -182,17 +176,4 @@ export function useGatheringSpotsPage({
     spots,
     total,
   };
-}
-
-function toApiSortBy(
-  columnId: GatheringSpotSort["columnId"]
-): GatheringSpotSortBy {
-  switch (columnId) {
-    case "created-at":
-      return "createdAt";
-    case "updated-at":
-      return "updatedAt";
-    default:
-      return columnId;
-  }
 }

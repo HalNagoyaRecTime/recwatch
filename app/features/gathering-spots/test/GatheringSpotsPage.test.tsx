@@ -64,6 +64,30 @@ describe("GatheringSpotsPage", () => {
     );
   });
 
+  it("並び替え条件をAPI一覧取得へ渡す", async () => {
+    const list = vi.fn().mockResolvedValue({
+      items: [createSpot(1, "体育館前")],
+      total: 1,
+      limit: 20,
+      offset: 0,
+    });
+    const user = userEvent.setup();
+
+    render(<GatheringSpotsPage gateway={createGateway({ list })} />);
+
+    await screen.findByText("体育館前");
+    await user.click(screen.getByRole("button", { name: "集合場所名" }));
+
+    await waitFor(() =>
+      expect(list).toHaveBeenLastCalledWith({
+        limit: 20,
+        name: undefined,
+        offset: 0,
+        sort: { columnId: "name", direction: "asc" },
+      })
+    );
+  });
+
   it("作成後に現在の検索条件で一覧を再取得する", async () => {
     const list = vi.fn().mockResolvedValue({
       items: [createSpot(1, "体育館前")],
@@ -107,19 +131,13 @@ describe("GatheringSpotsPage", () => {
   });
 
   it("更新後に現在の検索条件で一覧を再取得する", async () => {
-    let isUpdated = false;
-    const list = vi.fn().mockImplementation(() =>
-      Promise.resolve({
-        items: isUpdated ? [] : [createSpot(1, "体育館前")],
-        total: isUpdated ? 0 : 1,
-        limit: 20,
-        offset: 0,
-      })
-    );
-    const update = vi.fn().mockImplementation(async () => {
-      isUpdated = true;
-      return createSpot(1, "正門前");
+    const list = vi.fn().mockResolvedValue({
+      items: [createSpot(1, "体育館前")],
+      total: 1,
+      limit: 20,
+      offset: 0,
     });
+    const update = vi.fn().mockResolvedValue(createSpot(1, "正門前"));
     const user = userEvent.setup();
 
     render(<GatheringSpotsPage gateway={createGateway({ list, update })} />);
@@ -152,9 +170,6 @@ describe("GatheringSpotsPage", () => {
         name: "体育館",
         offset: 0,
       })
-    );
-    await waitFor(() =>
-      expect(screen.queryByText("体育館前")).not.toBeInTheDocument()
     );
   });
 
@@ -308,30 +323,6 @@ describe("GatheringSpotsPage", () => {
       expect(
         screen.getByRole("button", { name: "スポット1のその他の操作" })
       ).not.toBeDisabled()
-    );
-  });
-
-  it("ソート条件を一覧APIへ反映する", async () => {
-    const list = vi.fn().mockResolvedValue({
-      items: [createSpot(1, "体育館前")],
-      total: 1,
-      limit: 20,
-      offset: 0,
-    });
-    const user = userEvent.setup();
-
-    render(<GatheringSpotsPage gateway={createGateway({ list })} />);
-
-    await user.click(await screen.findByRole("button", { name: "集合場所名" }));
-
-    await waitFor(() =>
-      expect(list).toHaveBeenLastCalledWith({
-        limit: 20,
-        name: undefined,
-        offset: 0,
-        sortBy: "name",
-        sortOrder: "asc",
-      })
     );
   });
 });

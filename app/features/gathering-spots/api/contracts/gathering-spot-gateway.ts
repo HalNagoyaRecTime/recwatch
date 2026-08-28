@@ -1,15 +1,14 @@
-import type { GatheringSpot } from "~/features/gathering-spots/model/gathering-spot";
+import type {
+  GatheringSpot,
+  GatheringSpotSort,
+} from "~/features/gathering-spots/model/gathering-spot";
 
 export type GatheringSpotListOptions = {
   limit?: number;
   offset?: number;
   name?: string;
-  sortBy?: GatheringSpotSortBy;
-  sortOrder?: GatheringSpotSortOrder;
+  sort?: GatheringSpotSort;
 };
-
-export type GatheringSpotSortBy = "id" | "name" | "createdAt" | "updatedAt";
-export type GatheringSpotSortOrder = "asc" | "desc";
 
 export type GatheringSpotPage = {
   items: GatheringSpot[];

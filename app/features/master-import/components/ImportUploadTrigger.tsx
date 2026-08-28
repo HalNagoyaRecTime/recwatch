@@ -34,7 +34,7 @@ export function ImportUploadTrigger({
     try {
       const session = await masterImportApi.create(type, file);
       navigate(
-        `/members/import?importId=${encodeURIComponent(session.import_id)}`
+        `/members/import?importId=${encodeURIComponent(session.importId)}`
       );
     } catch (err) {
       setError(

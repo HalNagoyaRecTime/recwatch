@@ -1,9 +1,9 @@
-import type { SearchResultItem } from "~/features/frame/main-header/search/constants/mockSearchResults";
+import type { NavigationSearchResult } from "~/features/frame/main-header/search/constants/navigationSearchResults";
 import { useSearchResultScroll } from "~/features/frame/main-header/search/hooks/useSearchResultScroll";
 import { cn } from "~/lib/cn";
 
 type SearchResultsPanelProps = {
-  results: SearchResultItem[];
+  results: readonly NavigationSearchResult[];
   selectedIndex: number;
   onSelectIndex: (index: number) => void;
   onConfirmIndex: (index: number) => void;
@@ -21,9 +21,14 @@ export function SearchResultsPanel({
     <section className="app-rounded border-border-subtle bg-surface-base flex min-h-0 flex-1 flex-col overflow-hidden border">
       <div className="flex min-h-0 flex-1 flex-col gap-3 px-3 py-4">
         <div className="text-text-subtle text-[11px] font-semibold tracking-[0.08em] uppercase">
-          Search Area
+          画面を検索
         </div>
         <ul className="app-rounded border-border-subtle min-h-0 flex-1 space-y-2 overflow-y-auto border p-2">
+          {results.length === 0 ? (
+            <li className="app-text-small text-text-subtle px-3 py-8 text-center">
+              該当する画面はありません
+            </li>
+          ) : null}
           {results.map((result, index) => (
             <li key={result.id}>
               <button
