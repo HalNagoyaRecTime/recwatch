@@ -45,6 +45,12 @@ function getMobileOverlay() {
   return overlay;
 }
 
+function getMobileBackplate() {
+  const backplate = document.getElementById("mobile-nav-backplate");
+  if (!backplate) throw new Error("モバイル Backplate が見つかりません");
+  return backplate;
+}
+
 function getDesktopFooterToggle() {
   return within(getDesktopSidebar()).getByRole("button", {
     name: "サイドバーの固定表示を切り替える",
@@ -85,10 +91,27 @@ describe("モバイル Drawer", () => {
     expect(getMobileDrawer()).not.toHaveAttribute("inert");
     expect(getMobileDrawer()).toHaveAttribute("aria-modal", "true");
     expect(getMobileDrawer().className).toContain("translate-x-0");
+    expect(getMobileBackplate().className).toContain("translate-x-0");
     expect(document.activeElement).toBe(getMobileDrawer());
   });
 
-  it("Overlay、Escape、Footerで閉じ、閉じた後はHamburgerへ戻る", () => {
+  it("開いている間だけDrawerの直後ろにテーマ背景を表示する", () => {
+    renderShell();
+
+    expect(getMobileBackplate()).toHaveAttribute("aria-hidden", "true");
+    expect(getMobileBackplate()).toHaveClass(
+      "bg-surface-base",
+      "z-98",
+      "-translate-x-full"
+    );
+
+    fireEvent.click(getHamburger());
+
+    expect(getMobileBackplate()).toHaveClass("translate-x-0");
+    expect(getMobileDrawer()).toHaveClass("z-99", "translate-x-0");
+  });
+
+  it("Overlay、Escape、Headerで閉じ、閉じた後はHamburgerへ戻る", () => {
     renderShell();
 
     fireEvent.click(getHamburger());
@@ -101,11 +124,22 @@ describe("モバイル Drawer", () => {
     expect(getHamburger()).toHaveAttribute("aria-expanded", "false");
 
     fireEvent.click(getHamburger());
-    const mobileFooter = within(getMobileDrawer()).getByRole("button", {
+    const mobileCloseButton = within(getMobileDrawer()).getByRole("button", {
       name: "サイドメニューを閉じる",
     });
-    fireEvent.click(mobileFooter);
+    fireEvent.click(mobileCloseButton);
     expect(getHamburger()).toHaveAttribute("aria-expanded", "false");
+  });
+
+  it("Footerを表示せず、Headerに閉じるボタンを表示する", () => {
+    renderShell();
+    fireEvent.click(getHamburger());
+    const drawer = getMobileDrawer();
+
+    expect(drawer.querySelector(".main-footer-height")).not.toBeInTheDocument();
+    expect(
+      within(drawer).getByRole("button", { name: "サイドメニューを閉じる" })
+    ).toBeInTheDocument();
   });
 
   it("開いた Drawer 内でNavigation選択後に閉じる", () => {

@@ -10,12 +10,14 @@ import { useSidebarUI } from "~/features/frame/sidebar/hooks/useSidebarUI";
 import { SidebarHeader } from "~/features/frame/sidebar/components/SidebarHeader";
 import {
   sidebarContainerStyle,
+  sidebarMobileBackplateStyle,
   sidebarMobileContainerStyle,
   sidebarPlaceholderStyle,
 } from "~/features/frame/sidebar/styles/sidebar-styles";
 
 const MOBILE_SIDEBAR_ID = "app-sidebar-mobile";
 const DESKTOP_SIDEBAR_MEDIA_QUERY = "(min-width: 48rem)";
+const NON_MOUSE_CLICK_MAX_DELAY_MS = 1000;
 const MOBILE_DRAWER_FOCUSABLE_SELECTOR =
   'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
@@ -55,10 +57,12 @@ function DesktopSidebarContent() {
               const pointer = lastPointerTypeRef.current;
               lastPointerTypeRef.current = null;
 
+              // Touch / Pen cannot hover to reveal a collapsed sidebar.
+              // Use the first tap only to expand it; the next tap activates the target.
               if (
                 !isExpanded &&
                 pointer &&
-                Date.now() - pointer.timestamp < 1000 &&
+                Date.now() - pointer.timestamp < NON_MOUSE_CLICK_MAX_DELAY_MS &&
                 pointer.type !== "mouse"
               ) {
                 event.preventDefault();
@@ -69,7 +73,7 @@ function DesktopSidebarContent() {
             <SidebarHeader />
             <AppSidebar />
           </div>
-          <SidebarFooter mode="desktop" />
+          <SidebarFooter />
         </div>
       </div>
     </div>
@@ -179,6 +183,15 @@ function MobileSidebarContent() {
       />
 
       <div
+        id="mobile-nav-backplate"
+        aria-hidden="true"
+        className={cn(
+          sidebarMobileBackplateStyle,
+          mobileOpen ? "translate-x-0" : "-translate-x-full"
+        )}
+      />
+
+      <div
         ref={drawerRef}
         id={MOBILE_SIDEBAR_ID}
         role="dialog"
@@ -192,11 +205,10 @@ function MobileSidebarContent() {
           mobileOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
-        <SidebarHeader />
+        <SidebarHeader onClose={closeForMobile} />
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
           <AppSidebar />
         </div>
-        <SidebarFooter mode="mobile" />
       </div>
     </div>
   );
