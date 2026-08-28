@@ -1,6 +1,6 @@
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import { MemoryRouter, useLocation } from "react-router";
-import { beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { SidebarStateProvider } from "~/components/providers/SidebarStateProvider";
 import { MobileHamburgerMenuBtn } from "~/features/frame/main-header/components/MobileHamburgerMenuBtn";
@@ -58,6 +58,10 @@ function tap(element: Element, pointerType: "touch" | "pen" | "mouse") {
 
 beforeEach(() => {
   sessionStorage.clear();
+});
+
+afterEach(() => {
+  vi.unstubAllGlobals();
 });
 
 describe("モバイル Drawer", () => {
@@ -135,9 +139,49 @@ describe("モバイル Drawer", () => {
     fireEvent.keyDown(document, { key: "Tab", shiftKey: true });
     expect(document.activeElement).toBe(lastFocusable);
   });
+
+  it("PC幅へ切り替わった場合は閉じる", () => {
+    let handleChange: ((event: MediaQueryListEvent) => void) | undefined;
+    vi.stubGlobal(
+      "matchMedia",
+      vi.fn(
+        () =>
+          ({
+            matches: false,
+            media: "(min-width: 48rem)",
+            onchange: null,
+            addEventListener: (
+              type: string,
+              listener: (event: MediaQueryListEvent) => void
+            ) => {
+              if (type === "change") handleChange = listener;
+            },
+            removeEventListener: vi.fn(),
+            addListener: vi.fn(),
+            removeListener: vi.fn(),
+            dispatchEvent: vi.fn(),
+          }) as MediaQueryList
+      )
+    );
+    renderShell();
+    fireEvent.click(getHamburger());
+
+    act(() => {
+      handleChange?.({ matches: true } as MediaQueryListEvent);
+    });
+
+    expect(getHamburger()).toHaveAttribute("aria-expanded", "false");
+    expect(getMobileDrawer()).toHaveAttribute("aria-hidden", "true");
+  });
 });
 
 describe("Desktop / Tablet Sidebar", () => {
+  it("通常幅の高さいっぱいに表示される", () => {
+    renderShell();
+
+    expect(getDesktopSidebar().parentElement).toHaveClass("h-full");
+  });
+
   it("Mouse hoverで一時展開し、leaveで戻る", () => {
     renderShell();
     const sidebar = getDesktopSidebar();

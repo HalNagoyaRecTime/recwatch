@@ -15,6 +15,7 @@ import {
 } from "~/features/frame/sidebar/styles/sidebar-styles";
 
 const MOBILE_SIDEBAR_ID = "app-sidebar-mobile";
+const DESKTOP_SIDEBAR_MEDIA_QUERY = "(min-width: 48rem)";
 const MOBILE_DRAWER_FOCUSABLE_SELECTOR =
   'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
@@ -79,6 +80,22 @@ function MobileSidebarContent() {
   const { mobileOpen, closeForMobile } = useSidebarState();
   const drawerRef = useRef<HTMLDivElement>(null);
   const wasOpenRef = useRef(false);
+
+  useEffect(() => {
+    if (typeof window.matchMedia !== "function") return;
+
+    const desktopMediaQuery = window.matchMedia(DESKTOP_SIDEBAR_MEDIA_QUERY);
+    const handleBreakpointChange = (event: MediaQueryListEvent) => {
+      if (event.matches) closeForMobile();
+    };
+
+    if (desktopMediaQuery.matches) closeForMobile();
+    desktopMediaQuery.addEventListener("change", handleBreakpointChange);
+
+    return () => {
+      desktopMediaQuery.removeEventListener("change", handleBreakpointChange);
+    };
+  }, [closeForMobile]);
 
   useEffect(() => {
     if (!mobileOpen) {
