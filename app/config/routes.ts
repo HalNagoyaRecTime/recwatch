@@ -8,7 +8,6 @@ export type SidebarIconKey =
   | "file"
   | "home"
   | "settings"
-  | "notificationHistory"
   | "classRoom"
   | "timing"
   | "trophy"
@@ -144,7 +143,6 @@ export const sidebarSections = [
           {
             id: "notification-management",
             label: "通知一覧",
-            icon: "notificationHistory",
             to: "/notifications",
             activePatterns: [
               "/notifications",
