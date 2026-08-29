@@ -6,14 +6,16 @@ import {
   Scripts,
   ScrollRestoration,
 } from "react-router";
+import type { ReactNode } from "react";
 
 import type { Route } from "./+types/root";
 import { THEME_STORAGE_KEY } from "./lib/theme";
+import { ThemeProvider } from "~/components/providers/ThemeProvider";
 import "./app.css";
 
 export const links: Route.LinksFunction = () => [];
 
-export function Layout({ children }: { children: React.ReactNode }) {
+export function Layout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
@@ -27,16 +29,22 @@ export function Layout({ children }: { children: React.ReactNode }) {
               (function() {
                 var storageKey = ${JSON.stringify(THEME_STORAGE_KEY)};
                 var storedTheme = window.localStorage.getItem(storageKey);
-                var theme = storedTheme === "light" ? "light" : "dark";
+                var theme = ["light", "dark", "system"].includes(storedTheme)
+                  ? storedTheme
+                  : "system";
                 var root = document.documentElement;
-                root.classList.toggle("dark", theme === "dark");
+                var isDark =
+                  theme === "dark" ||
+                  (theme === "system" &&
+                    window.matchMedia("(prefers-color-scheme: dark)").matches);
+                root.classList.toggle("dark", isDark);
                 root.dataset.theme = theme;
               })();
             `,
           }}
         />
       </head>
-      <body className="min-h-dvh bg-[radial-gradient(circle_at_top_right,var(--bg-glow),transparent_32%),linear-gradient(180deg,var(--bg-top)_0%,var(--bg-bottom)_100%)] text-[color:var(--text-1)] antialiased transition-colors duration-200">
+      <body className="min-h-dvh bg-[radial-gradient(circle_at_top_right,var(--bg-gradient-glow),transparent_32%),linear-gradient(180deg,var(--bg-gradient-start)_0%,var(--bg-gradient-end)_100%)] text-(--text-base) antialiased transition-colors duration-200">
         {children}
         <ScrollRestoration />
         <Scripts />
@@ -46,7 +54,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
-  return <Outlet />;
+  return (
+    <ThemeProvider>
+      <Outlet />
+    </ThemeProvider>
+  );
 }
 
 export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
@@ -67,22 +79,26 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
 
   return (
     <main className="min-h-dvh p-6 md:p-8">
-      <div className="mx-auto max-w-5xl rounded-[1.5rem] border border-[color:var(--border-1)] bg-[color:var(--surface-1)] p-6 shadow-[var(--shadow-soft)] md:p-8">
-        <div className="font-['DM_Mono'] text-xs tracking-[0.18em] text-[color:var(--brand-2)] uppercase">
+      <div className="shadow-soft mx-auto max-w-5xl rounded-3xl border border-(--border-subtle) bg-(--surface-base) p-6 md:p-8">
+        <div className="font-['DM_Mono'] text-xs tracking-[0.18em] text-(--brand-primary) uppercase">
           Failure Boundary
         </div>
         <h1 className="mt-3 text-[clamp(28px,4vw,40px)] leading-[1.04] font-semibold">
           {message}
         </h1>
-        <p className="mt-3 max-w-[50ch] text-sm leading-7 text-[color:var(--text-2)]">
+        <p className="mt-3 max-w-[50ch] text-sm leading-7 text-(--text-muted)">
           {details}
         </p>
         {stack ? (
-          <pre className="mt-5 overflow-x-auto rounded-2xl border border-[color:var(--border-1)] bg-[color:var(--surface-2)] p-4 text-xs text-[color:var(--text-2)]">
+          <pre className="mt-5 overflow-x-auto rounded-2xl border border-(--border-subtle) bg-(--surface-hover) p-4 text-xs text-(--text-muted)">
             <code>{stack}</code>
           </pre>
         ) : null}
       </div>
     </main>
   );
+}
+
+export function HydrateFallback() {
+  return <div className="bg-(--surface-hover) p-6">読み込み中...</div>;
 }

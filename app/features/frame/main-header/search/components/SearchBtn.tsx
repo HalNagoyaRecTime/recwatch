@@ -1,5 +1,6 @@
 import { createPortal } from "react-dom";
-import { useCallback, useRef, useSyncExternalStore } from "react";
+import { useCallback, useMemo, useRef, useSyncExternalStore } from "react";
+import { useNavigate } from "react-router";
 
 import { SearchAnchor } from "~/features/frame/main-header/search/components/SearchAnchor";
 import { SearchBackdrop } from "~/features/frame/main-header/search/components/SearchBackdrop";
@@ -10,32 +11,34 @@ import { SearchResultsPanel } from "~/features/frame/main-header/search/componen
 import { SearchShell } from "~/features/frame/main-header/search/components/SearchShell";
 import { useSearchTransition } from "~/features/frame/main-header/search/hooks/useSearchTransition";
 import { SearchFooter } from "~/features/frame/main-header/search/components/SearchFooter";
-import { MOCK_SEARCH_RESULTS } from "~/features/frame/main-header/search/constants/mockSearchResults";
+import { filterNavigationSearchResults } from "~/features/frame/main-header/search/constants/navigationSearchResults";
 import { useSearchResultNavigation } from "~/features/frame/main-header/search/hooks/useSearchResultNavigation";
 
 export function SearchBtn() {
+  const navigate = useNavigate();
   const { anchorRef, close, frame, inputRef, isOpen, open, query, setQuery } =
     useSearchTransition();
   const shellRef = useRef<HTMLDivElement>(null);
+  const results = useMemo(() => filterNavigationSearchResults(query), [query]);
 
   const handleConfirmIndex = useCallback(
     (index: number) => {
-      const selectedResult = MOCK_SEARCH_RESULTS[index];
+      const selectedResult = results[index];
 
       if (!selectedResult) {
         return;
       }
 
-      console.info(`[Search] selected: ${selectedResult.title}`);
       close();
+      void navigate(selectedResult.to);
     },
-    [close]
+    [close, navigate, results]
   );
 
   const { resetSelection, selectedIndex, setSelectedIndex } =
     useSearchResultNavigation({
       isOpen,
-      resultCount: MOCK_SEARCH_RESULTS.length,
+      resultCount: results.length,
       onConfirmIndex: handleConfirmIndex,
       scopeRef: shellRef,
     });
@@ -49,6 +52,14 @@ export function SearchBtn() {
     resetSelection();
     close();
   }, [close, resetSelection]);
+
+  const handleQueryChange = useCallback(
+    (value: string) => {
+      resetSelection();
+      setQuery(value);
+    },
+    [resetSelection, setQuery]
+  );
 
   const isMounted = useSyncExternalStore(
     () => () => {},
@@ -78,12 +89,12 @@ export function SearchBtn() {
                     inputRef={inputRef}
                     isOpen={isOpen}
                     query={query}
-                    onChange={setQuery}
+                    onChange={handleQueryChange}
                     onOpen={handleOpen}
                   />
                   <SearchExpandedBody isOpen={isOpen}>
                     <SearchResultsPanel
-                      results={MOCK_SEARCH_RESULTS}
+                      results={results}
                       selectedIndex={selectedIndex}
                       onSelectIndex={setSelectedIndex}
                       onConfirmIndex={handleConfirmIndex}

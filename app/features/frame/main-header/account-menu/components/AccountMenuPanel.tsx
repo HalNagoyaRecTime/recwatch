@@ -1,118 +1,136 @@
 import {
+  CheckIcon,
+  ChevronRightIcon,
   LogOutIcon,
+  MonitorIcon,
   MoonStarIcon,
-  SettingsIcon,
   SunMediumIcon,
-  User2Icon,
 } from "lucide-react";
 
-import { MenuActionButton } from "~/components/ui/MenuActionButton";
+import {
+  Menu,
+  MenuActionItem,
+  type MenuItemType,
+} from "~/components/ui/navigation/Menu";
+import { FloatingPanel } from "~/components/ui/panel/FloatingPanel";
+import { cn } from "~/lib/cn";
 import { useThemeMode } from "~/hooks/useThemeMode";
+import { AccountProfileHeader } from "~/features/frame/main-header/account-menu/components/AccountProfileHeader";
 import type { AccountBtnData } from "~/features/frame/main-header/account-menu/model/account-btn-data";
 
 type AccountMenuPanelProps = {
   account: AccountBtnData;
+  photoUrl?: string | null;
   onClose: () => void;
   onLogout?: () => void;
 };
 
-const accountMenuItems = [
-  { icon: User2Icon, label: "Profile" },
-  { icon: SettingsIcon, label: "Settings" },
-];
-
 export function AccountMenuPanel({
   account,
+  photoUrl,
   onClose,
   onLogout,
 }: AccountMenuPanelProps) {
-  const { theme, toggleTheme } = useThemeMode();
-  const isDark = theme === "dark";
+  const { theme, setTheme } = useThemeMode();
 
-  return (
-    <div className="absolute top-[calc(100%+6px)] right-0 z-140 rounded-xl border border-(--border-2) bg-(--surface-overlay-strong) p-2 shadow-(--shadow-soft) backdrop-blur-xl">
-      <div className="px-2 py-2">
-        <div className="flex h-10 items-center gap-3">
-          {/* アカウントの画像 */}
-          <div
-            className="flex aspect-square h-full shrink-0 items-center justify-center rounded-full border-2 p-0.5"
-            style={{ borderColor: account.borderColor }}
-          >
-            <div className="h-full w-full overflow-hidden rounded-full bg-amber-200">
-              <img
-                className="aspect-square h-full object-cover"
-                src={account.imageUrl}
-                alt={account.name}
-              />
-            </div>
-          </div>
-          {/* 右側名前とロール */}
-          <div className="flex h-full flex-col justify-between pr-4">
-            <span className="app-text-small relative -top-1 block h-2 font-semibold whitespace-nowrap">
-              {account.name}
-            </span>
-            <span
-              className="flex items-center justify-center rounded-full border px-0.5 py-px text-[10px] font-bold tracking-[0.04em]"
-              style={{
-                color: account.textColor,
-                background: account.bgColor,
-                borderColor: account.borderColor,
-              }}
-            >
-              {account.role}
-            </span>
-          </div>
-        </div>
-      </div>
+  const ThemeIcon =
+    theme === "dark"
+      ? MoonStarIcon
+      : theme === "light"
+        ? SunMediumIcon
+        : MonitorIcon;
 
-      {/* 棒 */}
-      <div className="mx-1 my-1.5 h-px bg-(--border-1)" />
+  const themeMenuItems: MenuItemType[] = [
+    {
+      type: "action",
+      id: "theme-light",
+      label: "ライト",
+      icon: SunMediumIcon,
+      endIcon: (
+        <CheckIcon
+          size={14}
+          strokeWidth={1.8}
+          className={cn(theme !== "light" && "opacity-0")}
+        />
+      ),
+      onClick: () => setTheme("light"),
+    },
+    {
+      type: "action",
+      id: "theme-dark",
+      label: "ダーク",
+      icon: MoonStarIcon,
+      endIcon: (
+        <CheckIcon
+          size={14}
+          strokeWidth={1.8}
+          className={cn(theme !== "dark" && "opacity-0")}
+        />
+      ),
+      onClick: () => setTheme("dark"),
+    },
+    {
+      type: "action",
+      id: "theme-system",
+      label: "システム",
+      icon: MonitorIcon,
+      endIcon: (
+        <CheckIcon
+          size={14}
+          strokeWidth={1.8}
+          className={cn(theme !== "system" && "opacity-0")}
+        />
+      ),
+      onClick: () => setTheme("system"),
+    },
+  ];
 
-      {/* ここにライトモードダークモード切り替えボタン */}
-      <MenuActionButton
-        content={
-          <>
-            {isDark ? (
-              <MoonStarIcon size={14} strokeWidth={1.8} />
-            ) : (
-              <SunMediumIcon size={14} strokeWidth={1.8} />
-            )}
-            <span className="app-text-small">
-              {isDark ? "Light mode" : "Dark mode"}
-            </span>
-          </>
-        }
-        onClick={toggleTheme}
-      />
+  const mainMenuItems: MenuItemType[] = [
+    {
+      type: "custom",
+      id: "account-header",
+      content: <AccountProfileHeader account={account} photoUrl={photoUrl} />,
+    },
+    { type: "divider", id: "div-1" },
+    {
+      type: "custom",
+      id: "theme-switcher",
+      content: (
+        <FloatingPanel
+          placement="right-start"
+          interaction="hover"
+          offsetValue={6}
+          triggerClassName="block w-full"
+          trigger={
+            <MenuActionItem
+              label="テーマ設定"
+              icon={ThemeIcon}
+              endIcon={
+                <ChevronRightIcon
+                  size={14}
+                  strokeWidth={1.8}
+                  className="text-text-subtle"
+                />
+              }
+            />
+          }
+          content={<Menu items={themeMenuItems} />}
+        />
+      ),
+    },
+    { type: "divider", id: "div-2" },
+    {
+      type: "action",
+      id: "logout",
+      label: "ログアウト",
+      icon: LogOutIcon,
+      danger: true,
+      onClick: () => {
+        onClose();
+        onLogout?.();
+      },
+    },
+  ];
 
-      <div className="">
-        {accountMenuItems.map(({ icon: Icon, label }) => (
-          <MenuActionButton
-            key={label}
-            content={
-              <>
-                <Icon size={14} strokeWidth={1.8} />
-                <span className="app-text-small">{label}</span>
-              </>
-            }
-            onClick={onClose}
-          />
-        ))}
-        {/* 棒 */}
-        <div className="mx-1 my-1.5 h-px bg-(--border-1)" />
-        {/* ログアウト */}
-        <button
-          type="button"
-          className="flex h-8.5 w-full cursor-pointer items-center gap-2.5 rounded-md bg-transparent px-2.5 text-left text-sm transition hover:bg-red-500/5"
-          onClick={() => {
-            onClose();
-            onLogout?.();
-          }}
-        >
-          <LogOutIcon className="text-red-400" size={14} strokeWidth={1.8} />
-          <span className="app-text-small text-red-400">Log out</span>
-        </button>
-      </div>
-    </div>
-  );
+  return <Menu items={mainMenuItems} />;
 }

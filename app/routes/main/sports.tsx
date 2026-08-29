@@ -1,10 +1,17 @@
-import { AdminPlaceholderPage } from "~/features/admin-pages/components/AdminPlaceholderPage";
-import { pageContent } from "~/features/admin-pages/model/page-content";
+import { CompetitionListPage } from "~/features/sports/pages/CompetitionListPage";
+import { PagePadding } from "~/features/frame/page-layout/PagePadding";
+import { PageLayout } from "~/features/frame/page-layout/PageLayout";
 
 export function meta() {
-  return [{ title: "Sports List | recwatch" }];
+  return [{ title: "イベント登録一覧 | recwatch" }];
 }
 
 export default function SportsRoute() {
-  return <AdminPlaceholderPage {...pageContent.sports} />;
+  return (
+    <PageLayout>
+      <PagePadding>
+        <CompetitionListPage />
+      </PagePadding>
+    </PageLayout>
+  );
 }

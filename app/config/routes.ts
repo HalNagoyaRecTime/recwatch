@@ -1,185 +1,161 @@
 import type { AppRole } from "./permissions";
 
-export type NavIconKey =
+export type SidebarIconKey =
   | "calendar"
   | "clock"
   | "dashboard"
+  | "notification"
   | "file"
+  | "home"
   | "settings"
+  | "notificationHistory"
+  | "classRoom"
   | "timing"
   | "trophy"
   | "users";
 
-type NavRoleConfig = {
+type SidebarRoleConfig = {
   roles: AppRole[];
 };
 
-export type NavChildConfig = NavRoleConfig & {
+export type SidebarItemConfig = SidebarRoleConfig & {
   id: string;
   label: string;
-  to: string;
-  badge?: number | string;
-};
-
-export type NavItemConfig = NavRoleConfig & {
-  id: string;
-  label: string;
-  icon: NavIconKey;
+  icon?: SidebarIconKey;
   to?: string;
-  badge?: number | string;
-  children?: NavChildConfig[];
+  activePatterns?: readonly string[];
+  activeExclusions?: readonly string[];
+  children?: SidebarItemConfig[];
 };
 
-export type NavSectionConfig = {
-  label: string;
-  items: NavItemConfig[];
+export type SidebarSectionConfig = {
+  label?: string;
+  hasDivider?: boolean;
+  items: SidebarItemConfig[];
 };
 
-export const navSections = [
+export const sidebarSections = [
   {
-    label: "Main",
     items: [
       {
         id: "dashboard",
-        label: "Dashboard",
-        icon: "dashboard",
+        label: "ダッシュボード",
+        icon: "home",
         to: "/dashboard",
         roles: ["admin", "manager", "member"],
       },
-      {
-        id: "events",
-        label: "Events",
-        icon: "calendar",
-        badge: 3,
-        roles: ["admin", "manager", "member"],
-        children: [
-          {
-            id: "events-active",
-            label: "Active Events",
-            to: "/events/active",
-            roles: ["admin", "manager", "member"],
-          },
-          {
-            id: "events-past",
-            label: "Past Events",
-            to: "/events/past",
-            roles: ["admin", "manager"],
-          },
-          {
-            id: "events-new",
-            label: "Create Event",
-            to: "/events/new",
-            badge: "Beta",
-            roles: ["admin", "manager"],
-          },
-        ],
-      },
+    ],
+  },
+  {
+    items: [
       {
         id: "members",
-        label: "Members",
+        label: "ユーザー管理",
         icon: "users",
-        badge: 128,
         roles: ["admin", "manager"],
         children: [
           {
             id: "members-list",
-            label: "Member List",
+            label: "学生管理",
             to: "/members",
+            activePatterns: ["/members", "/members/teams"],
             roles: ["admin", "manager"],
           },
           {
-            id: "members-teams",
-            label: "Teams",
-            to: "/members/teams",
+            id: "classRoom",
+            label: "クラス管理",
+            to: "/classroom",
             roles: ["admin", "manager"],
           },
           {
-            id: "members-import",
-            label: "Import",
-            to: "/members/import",
-            roles: ["admin"],
+            id: "teachers",
+            label: "教官管理",
+            to: "/teachers",
+            roles: ["admin", "manager"],
           },
         ],
-      },
-      {
-        id: "timing",
-        label: "Timing Control",
-        icon: "timing",
-        to: "/timing",
-        roles: ["admin", "manager"],
       },
     ],
   },
   {
-    label: "Operations",
     items: [
       {
-        id: "sports",
-        label: "Sports Setup",
+        id: "events",
+        label: "イベント管理",
         icon: "trophy",
         roles: ["admin", "manager"],
         children: [
           {
-            id: "sports-list",
-            label: "Sports List",
-            to: "/sports",
+            id: "events-list",
+            label: "イベント登録一覧",
+            to: "/events",
+            activePatterns: [
+              "/events",
+              "/events/new",
+              "/events/active",
+              "/events/past",
+              "/events/tournament",
+              "/events/scoring",
+              "/events/:competitionId/edit",
+            ],
             roles: ["admin", "manager"],
           },
           {
-            id: "sports-tournament",
-            label: "Tournament",
-            to: "/sports/tournament",
-            roles: ["admin"],
+            id: "events-assignments",
+            label: "参加者設定",
+            to: "/events/assignments",
+            roles: ["admin", "manager"],
           },
           {
-            id: "sports-scoring",
-            label: "Scoring Rules",
-            to: "/sports/scoring",
+            id: "gathering-spots",
+            label: "集合場所管理",
+            to: "/gathering-spots",
             roles: ["admin", "manager"],
           },
         ],
-      },
-      {
-        id: "reports",
-        label: "Reports",
-        icon: "file",
-        roles: ["admin", "manager"],
-        children: [
-          {
-            id: "reports-summary",
-            label: "Summary",
-            to: "/reports/summary",
-            roles: ["admin", "manager"],
-          },
-          {
-            id: "reports-detail",
-            label: "Detail",
-            to: "/reports/detail",
-            roles: ["admin"],
-          },
-          {
-            id: "reports-export",
-            label: "Export",
-            to: "/reports/export",
-            roles: ["admin"],
-          },
-        ],
-      },
-      {
-        id: "schedule",
-        label: "Schedule",
-        icon: "clock",
-        to: "/schedule",
-        roles: ["admin", "manager", "member"],
       },
     ],
   },
-] satisfies NavSectionConfig[];
-
-export const settingsItem = {
-  id: "settings",
-  label: "Settings",
-  icon: "settings",
-  to: "/settings",
-  roles: ["admin", "manager"],
-} satisfies NavItemConfig;
+  {
+    items: [
+      {
+        id: "operations",
+        label: "運用管理",
+        icon: "calendar",
+        roles: ["admin", "manager", "member"],
+        children: [
+          {
+            id: "schedule",
+            label: "スケジュール管理",
+            to: "/schedule",
+            activePatterns: [
+              "/schedule",
+              "/schedule/new",
+              "/schedule/:scheduleId/edit",
+            ],
+            roles: ["admin", "manager", "member"],
+          },
+          {
+            id: "participants",
+            label: "出場メンバー管理",
+            to: "/participants",
+            roles: ["admin", "manager"],
+          },
+          {
+            id: "notification-management",
+            label: "通知一覧",
+            icon: "notificationHistory",
+            to: "/notifications",
+            activePatterns: [
+              "/notifications",
+              "/notifications/new",
+              "/notifications/:notificationId",
+              "/notifications/:notificationId/edit",
+            ],
+            roles: ["admin", "manager"],
+          },
+        ],
+      },
+    ],
+  },
+] satisfies SidebarSectionConfig[];

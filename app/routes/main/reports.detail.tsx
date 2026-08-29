@@ -1,10 +1,18 @@
 import { AdminPlaceholderPage } from "~/features/admin-pages/components/AdminPlaceholderPage";
 import { pageContent } from "~/features/admin-pages/model/page-content";
+import { PagePadding } from "~/features/frame/page-layout/PagePadding";
+import { PageLayout } from "~/features/frame/page-layout/PageLayout";
 
 export function meta() {
-  return [{ title: "Detail | recwatch" }];
+  return [{ title: "Detail Report | recwatch" }];
 }
 
 export default function ReportsDetailRoute() {
-  return <AdminPlaceholderPage {...pageContent.reportsDetail} />;
+  return (
+    <PageLayout>
+      <PagePadding>
+        <AdminPlaceholderPage {...pageContent.reportsDetail} />
+      </PagePadding>
+    </PageLayout>
+  );
 }

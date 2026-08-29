@@ -8,13 +8,16 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "lint": "eslint .",
+    "check": "npm run format:check && npm run lint && npm run typecheck",
     "prepare": "husky",
-    "start": "react-router-serve ./build/server/index.js",
-    "typecheck": "react-router typegen && tsc"
+    "preview": "vite preview --host 0.0.0.0",
+    "test": "vitest run",
+    "typecheck": "react-router typegen && tsc",
+    "typecheck:quick": "tsc --noEmit --pretty false"
   },
   "dependencies": {
+    "@floating-ui/react": "^0.27.19",
     "@react-router/node": "7.13.1",
-    "@react-router/serve": "7.13.1",
     "isbot": "^5.1.31",
     "lucide-react": "^0.577.0",
     "react": "^19.2.4",
@@ -26,6 +29,9 @@
     "@eslint/js": "^9.39.4",
     "@react-router/dev": "7.13.1",
     "@tailwindcss/vite": "^4.1.13",
+    "@testing-library/jest-dom": "^7.0.0",
+    "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^14.6.1",
     "@types/node": "^22",
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",
@@ -35,6 +41,7 @@
     "eslint-plugin-react-refresh": "^0.5.2",
     "globals": "^17.4.0",
     "husky": "^9.1.7",
+    "jsdom": "^29.1.1",
     "lint-staged": "^16.3.3",
     "prettier": "^3.8.1",
     "prettier-plugin-tailwindcss": "^0.7.2",
@@ -42,6 +49,7 @@
     "typescript": "^5.9.2",
     "typescript-eslint": "^8.57.0",
     "vite": "^7.1.7",
-    "vite-tsconfig-paths": "^5.1.4"
+    "vite-tsconfig-paths": "^5.1.4",
+    "vitest": "^4.1.10"
   }
 }

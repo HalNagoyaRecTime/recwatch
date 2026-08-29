@@ -2,28 +2,28 @@
   {
     "id": "1",
     "displayName": "Taro Yamada",
-    "attendanceNumber": "01",
+    "attendanceNumber": 1,
     "studentIdNumber": "24001",
     "uid": "0000-0000-0000"
   },
   {
     "id": "2",
     "displayName": "Jiro Yamada",
-    "attendanceNumber": "02",
+    "attendanceNumber": 2,
     "studentIdNumber": "24002",
     "uid": "0000-0000-0001"
   },
   {
     "id": "3",
     "displayName": "Saburo Yamada",
-    "attendanceNumber": "03",
+    "attendanceNumber": 3,
     "studentIdNumber": "24003",
     "uid": "0000-0000-0002"
   },
   {
     "id": "4",
     "displayName": "Shiro Yamada",
-    "attendanceNumber": "04",
+    "attendanceNumber": 4,
     "studentIdNumber": "24004",
     "uid": "0000-0000-0003"
   }
