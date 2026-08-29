@@ -96,7 +96,7 @@ export function ScheduleManagementPage({
     <div className="flex min-h-full flex-col gap-5">
       <PageHeader
         description="イベントの開催時間・開催場所・通知設定を管理します"
-        title="スケジュール一覧"
+        title="スケジュール管理"
       />
 
       <div aria-live="polite" className="min-h-5">
