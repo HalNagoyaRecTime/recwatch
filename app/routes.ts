@@ -5,6 +5,8 @@ export default [
   route("auth/callback", "routes/auth/auth.callback.tsx"),
   // 未実装・emailログイン
   // route("login/email", "routes/auth/auth.email.tsx"),
+  route("account-deletion", "routes/account-deletion.tsx"),
+  route("account-deletion/callback", "routes/account-deletion.callback.tsx"),
   route("/", "routes/main/frame.tsx", [
     index("routes/main/index.tsx"),
     route("dashboard", "routes/main/dashboard.tsx"),
