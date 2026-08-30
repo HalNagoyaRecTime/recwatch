@@ -38,7 +38,10 @@ describe("AccountDeletionPage", () => {
     renderPage();
 
     expect(
-      screen.getByRole("heading", { level: 1, name: "RecTimeアカウントの削除" })
+      screen.getByRole("heading", {
+        level: 1,
+        name: "RE:CREATIONアカウントの削除",
+      })
     ).toBeInTheDocument();
     expect(
       screen.getByRole("button", {
@@ -52,7 +55,10 @@ describe("AccountDeletionPage", () => {
 
     expect(startAccountDeletionAuth).not.toHaveBeenCalled();
     expect(
-      screen.getByRole("heading", { level: 1, name: "RecTimeアカウントの削除" })
+      screen.getByRole("heading", {
+        level: 1,
+        name: "RE:CREATIONアカウントの削除",
+      })
     ).toBeInTheDocument();
   });
 

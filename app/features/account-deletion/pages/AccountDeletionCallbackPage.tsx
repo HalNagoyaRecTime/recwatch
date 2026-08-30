@@ -22,7 +22,7 @@ export function AccountDeletionCallbackPage({
               削除を受け付けました
             </h1>
             <p className="text-text-muted text-sm leading-6">
-              RecTimeアカウントの削除処理を開始しました。以後、このアカウントでログインすることはできません。
+              RE:CREATIONアカウントの削除処理を開始しました。以後、このアカウントでログインすることはできません。
             </p>
           </>
         ) : null}
