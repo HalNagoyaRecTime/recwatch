@@ -57,8 +57,8 @@ function DesktopSidebarContent() {
               const pointer = lastPointerTypeRef.current;
               lastPointerTypeRef.current = null;
 
-              // Touch / Pen cannot hover to reveal a collapsed sidebar.
-              // Use the first tap only to expand it; the next tap activates the target.
+              // タッチ/ペンはhoverで展開できないため、
+              // 閉じている間の最初のタップは展開だけに使い、次のタップで対象を操作する。
               if (
                 !isExpanded &&
                 pointer &&

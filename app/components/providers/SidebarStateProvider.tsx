@@ -38,8 +38,8 @@ export function SidebarStateProvider({ children }: { children: ReactNode }) {
           // eslint-disable-next-line react-hooks/set-state-in-effect
           setSidebarPinnedOpen(stateData.sidebarPinnedOpen);
         } else if (stateData.isOpen !== undefined) {
-          // `isOpen` was the persisted field before mobile and desktop state
-          // were separated. Keep existing users' pinned state when upgrading.
+          // `isOpen`は、モバイルとデスクトップの状態を分離する前に保存されていたフィールド。
+          // アップグレード時も既存ユーザーの固定表示状態を引き継ぐ。
           setSidebarPinnedOpen(stateData.isOpen);
         }
         if (stateData.openAccordions !== undefined) {
