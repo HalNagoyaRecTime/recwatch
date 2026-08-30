@@ -13,6 +13,8 @@ const initialErrorMessages: Record<string, string> = {
   auth_failed: "ログインに失敗しました。もう一度お試しください。",
   logout_failed:
     "ログアウトに失敗しました。お手数ですが、もう一度ログアウトをお試しください。",
+  account_deletion_pending:
+    "このアカウントは削除処理中または削除済みのため、ログインできません。",
 };
 
 export function AuthLoginPage({

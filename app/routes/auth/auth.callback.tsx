@@ -20,6 +20,21 @@ function isTokenExchangeResponse(
   );
 }
 
+type BackendErrorResponse = { error: { code: string; message: string } };
+
+function isBackendErrorResponse(value: unknown): value is BackendErrorResponse {
+  if (typeof value !== "object" || value === null || !("error" in value)) {
+    return false;
+  }
+
+  const error = (value as Record<string, unknown>).error;
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    typeof (error as Record<string, unknown>).code === "string"
+  );
+}
+
 export async function clientLoader({ request }: { request: Request }) {
   const url = new URL(request.url);
   const code = url.searchParams.get("code");
@@ -47,6 +62,14 @@ export async function clientLoader({ request }: { request: Request }) {
   const payload: unknown = res ? await res.json().catch(() => null) : null;
 
   if (!res?.ok || !isTokenExchangeResponse(payload)) {
+    if (
+      res &&
+      !res.ok &&
+      isBackendErrorResponse(payload) &&
+      payload.error.code === "ACCOUNT_DELETION_PENDING"
+    ) {
+      throw redirect("/login?error=account_deletion_pending");
+    }
     throw redirect("/login?error=auth_failed");
   }
 
