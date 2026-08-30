@@ -24,6 +24,8 @@ type CompetitionAssignmentPageProps = {
   gateway?: CompetitionAssignmentGateway;
 };
 
+type SaveStatus = "idle" | "submitting" | "completed";
+
 const emptyData: CompetitionAssignmentData = {
   classrooms: [],
   students: [],
@@ -52,10 +54,11 @@ export function CompetitionAssignmentPage({
   const [newGatheringTime, setNewGatheringTime] = useState("");
   const [selectedUserIds, setSelectedUserIds] = useState<number[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
   const [loadError, setLoadError] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const isSubmitting = saveStatus === "submitting";
 
   useEffect(() => {
     let active = true;
@@ -167,7 +170,7 @@ export function CompetitionAssignmentPage({
     setSelectedGatheringId(value === "new" ? null : Number(value));
     setSelectedUserIds([]);
     setSubmitError(null);
-    setSuccessMessage(null);
+    clearSaveResult();
   }
 
   function selectEvent(eventId: number) {
@@ -178,7 +181,7 @@ export function CompetitionAssignmentPage({
     setSelectedGatheringId(firstGathering?.id ?? null);
     setSelectedUserIds([]);
     setSubmitError(null);
-    setSuccessMessage(null);
+    clearSaveResult();
   }
 
   function toggleStudent(userId: number) {
@@ -187,7 +190,24 @@ export function CompetitionAssignmentPage({
         ? current.filter((id) => id !== userId)
         : [...current, userId]
     );
+    clearSaveResult();
+  }
+
+  function clearSaveResult() {
     setSuccessMessage(null);
+    setSaveStatus((current) => (current === "completed" ? "idle" : current));
+  }
+
+  function resetAssignmentForm() {
+    setSelectedClassroomId(data.classrooms[0]?.id ?? null);
+    setSelectedEventId(data.events[0]?.id ?? null);
+    setSelectedGatheringId(null);
+    setNewSpotId(data.spots[0]?.id ?? null);
+    setNewGatheringTime("");
+    setSelectedUserIds([]);
+    setSubmitError(null);
+    setSuccessMessage(null);
+    setSaveStatus("idle");
   }
 
   async function saveAssignment() {
@@ -205,7 +225,7 @@ export function CompetitionAssignmentPage({
       return;
     }
 
-    setIsSubmitting(true);
+    setSaveStatus("submitting");
     setSubmitError(null);
     setSuccessMessage(null);
 
@@ -227,14 +247,14 @@ export function CompetitionAssignmentPage({
       }));
       setSelectedGatheringId(result.gathering.id);
       setSuccessMessage("参加者設定を保存しました。");
+      setSaveStatus("completed");
     } catch (error) {
       setSubmitError(
         error instanceof Error
           ? error.message
           : "参加者設定を保存できませんでした。"
       );
-    } finally {
-      setIsSubmitting(false);
+      setSaveStatus("idle");
     }
   }
 
@@ -278,7 +298,7 @@ export function CompetitionAssignmentPage({
                     disabled={isSubmitting || data.classrooms.length === 0}
                     onChange={(event) => {
                       setSelectedClassroomId(Number(event.currentTarget.value));
-                      setSuccessMessage(null);
+                      clearSaveResult();
                     }}
                     value={selectedClassroomId ?? ""}
                   >
@@ -372,9 +392,10 @@ export function CompetitionAssignmentPage({
                       aria-label="集合場所"
                       className={inputClassName}
                       disabled={isSubmitting || data.spots.length === 0}
-                      onChange={(event) =>
-                        setNewSpotId(Number(event.currentTarget.value))
-                      }
+                      onChange={(event) => {
+                        setNewSpotId(Number(event.currentTarget.value));
+                        clearSaveResult();
+                      }}
                       value={newSpotId ?? ""}
                     >
                       {data.spots.map((spot) => (
@@ -390,9 +411,10 @@ export function CompetitionAssignmentPage({
                       aria-label="集合時間"
                       className={inputClassName}
                       disabled={isSubmitting}
-                      onChange={(event) =>
-                        setNewGatheringTime(event.currentTarget.value)
-                      }
+                      onChange={(event) => {
+                        setNewGatheringTime(event.currentTarget.value);
+                        clearSaveResult();
+                      }}
                       type="time"
                       value={newGatheringTime}
                     />
@@ -436,10 +458,24 @@ export function CompetitionAssignmentPage({
                     <Button
                       disabled={isSubmitting || Boolean(loadError)}
                       icon={Check}
-                      type="submit"
-                      variant="primary"
+                      onClick={
+                        saveStatus === "completed"
+                          ? (event) => {
+                              event.preventDefault();
+                              resetAssignmentForm();
+                            }
+                          : undefined
+                      }
+                      type={saveStatus === "completed" ? "button" : "submit"}
+                      variant={
+                        saveStatus === "completed" ? "success" : "primary"
+                      }
                     >
-                      {isSubmitting ? "保存中..." : "設定を保存"}
+                      {saveStatus === "submitting"
+                        ? "保存中..."
+                        : saveStatus === "completed"
+                          ? "完了"
+                          : "設定を保存"}
                     </Button>
                   </div>
                 </div>
