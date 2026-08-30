@@ -3,6 +3,7 @@ import {
   useRouteError,
   isRouteErrorResponse,
 } from "react-router";
+import { createPageTitle } from "~/lib/page-title";
 import { ClassRoomPage } from "~/features/classRoom/pages/classRoomPage";
 import { PagePadding } from "~/features/frame/page-layout/PagePadding";
 import { PageLayout } from "~/features/frame/page-layout/PageLayout";
@@ -24,7 +25,7 @@ export async function clientLoader() {
 }
 
 export function meta() {
-  return [{ title: "クラス管理 | recwatch" }];
+  return [{ title: createPageTitle("クラス管理") }];
 }
 
 export function ErrorBoundary() {

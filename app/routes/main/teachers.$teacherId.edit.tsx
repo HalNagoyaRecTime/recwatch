@@ -1,5 +1,6 @@
 import { useLoaderData } from "react-router";
 
+import { createPageTitle } from "~/lib/page-title";
 import { getClassRoomData } from "~/features/classRoom/model/classRoom-data";
 import { TeacherApi } from "~/features/teachers/api";
 import { toTeacherRow } from "~/features/teachers/api/mappers/teacher-mappers";
@@ -8,7 +9,7 @@ import { TeacherEditPage } from "~/features/teachers/pages/TeacherEditPage";
 import type { ClassRoomOption } from "~/features/teachers/model/teacher";
 
 export function meta() {
-  return [{ title: "教官情報の編集 | recwatch" }];
+  return [{ title: createPageTitle("教官情報の編集") }];
 }
 
 export async function clientLoader({
