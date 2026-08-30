@@ -1,11 +1,8 @@
-// recwatch#224の表示文言。
-// rectime-api#263/rectime-2026-docs#207待ちの仮テキスト
-// 確定後は、このファイルの値だけを差し替え
 export const accountDeletionContent = {
-  title: "RecTimeアカウントの削除",
-  lead: "Microsoft 365の職場アカウントで本人確認のうえ、RecTimeアカウントの削除を行います。Microsoft 365アカウント自体は削除されません。",
+  title: "RE:CREATIONアカウントの削除",
+  lead: "Microsoft 365の職場または学校アカウントで本人確認のうえ、RE:CREATIONアカウントの削除を行います。Microsoft 365アカウント自体は削除されません。",
   targets: [
-    "（仮）RecTime上のプロフィール情報",
+    "（仮）RE:CREATION上のプロフィール情報",
     "（仮）参加履歴・通知設定などRecTime内のデータ",
   ],
   nonTargets: [

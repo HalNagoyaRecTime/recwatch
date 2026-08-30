@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { startAccountDeletionAuth } from "~/features/account-deletion/api/account-deletion-client";
+import { AccountDeletionLayout } from "~/features/account-deletion/components/AccountDeletionLayout";
 import { accountDeletionContent } from "~/features/account-deletion/content/account-deletion-content";
 import { AuthErrorMessage } from "~/features/auth/components/AuthErrorMessage";
-import { AuthLayout } from "~/features/auth/components/AuthLayout";
 import { AuthPrimaryButton } from "~/features/auth/components/AuthPrimaryButton";
 import { MicrosoftLogo } from "~/features/auth/components/MicrosoftLogo";
 
@@ -35,7 +35,7 @@ export function AccountDeletionPage() {
   }
 
   return (
-    <AuthLayout contentClassName="flex w-full max-w-md flex-1 flex-col justify-center gap-4">
+    <AccountDeletionLayout contentClassName="flex w-full max-w-md flex-1 flex-col justify-center gap-4">
       <div className="space-y-2 text-center">
         <h1 className="text-text-base text-xl font-semibold">
           {accountDeletionContent.title}
@@ -77,7 +77,7 @@ export function AccountDeletionPage() {
           ? "確認しています..."
           : "Microsoftアカウントで本人確認して削除を進める"}
       </AuthPrimaryButton>
-    </AuthLayout>
+    </AccountDeletionLayout>
   );
 }
 

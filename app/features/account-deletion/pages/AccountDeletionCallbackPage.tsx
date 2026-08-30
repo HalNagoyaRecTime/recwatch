@@ -1,7 +1,7 @@
 import { Link } from "react-router";
 
+import { AccountDeletionLayout } from "~/features/account-deletion/components/AccountDeletionLayout";
 import { AuthErrorMessage } from "~/features/auth/components/AuthErrorMessage";
-import { AuthLayout } from "~/features/auth/components/AuthLayout";
 
 export type AccountDeletionCallbackData =
   | { status: "done" }
@@ -14,7 +14,7 @@ export function AccountDeletionCallbackPage({
   data: AccountDeletionCallbackData;
 }) {
   return (
-    <AuthLayout>
+    <AccountDeletionLayout>
       <div className="space-y-4 text-center">
         {data.status === "done" ? (
           <>
@@ -54,6 +54,6 @@ export function AccountDeletionCallbackPage({
           削除受付ページに戻る
         </Link>
       </div>
-    </AuthLayout>
+    </AccountDeletionLayout>
   );
 }
