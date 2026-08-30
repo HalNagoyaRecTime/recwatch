@@ -13,6 +13,8 @@ export const buttonStyle = cva(
           "app-rounded bg-transparent text-text-muted font-medium hover:bg-surface-hover hover:text-text-base",
         danger:
           "app-rounded bg-tone-danger-surface text-tone-danger-text font-medium hover:brightness-95",
+        success:
+          "app-rounded bg-[linear-gradient(135deg,var(--button-success-gradient-start),var(--button-success-gradient-end))] text-[color:var(--button-success-text)] font-semibold shadow-sm hover:brightness-105",
       },
       size: {
         sm: "text-sm",
@@ -71,6 +73,7 @@ export const buttonIconStyle = cva("shrink-0", {
       secondary: "size-4",
       ghost: "size-4",
       danger: "size-4",
+      success: "size-5 stroke-[2.5]",
     },
   },
   defaultVariants: {
