@@ -4,7 +4,6 @@ import type {
   NotificationSubmissionApi,
 } from "~/features/notifications/api/contracts/notification-submission-api";
 import type { NotificationDraft } from "~/features/notifications/model/notification-draft";
-import { toNotificationSubmissionError } from "~/features/notifications/api/mappers/admin-notification-error-mapper";
 import { toCreateAdminNotificationRequest } from "~/features/notifications/api/mappers/admin-notification-request-mapper";
 import { toNotificationSubmission } from "~/features/notifications/api/mappers/admin-notification-response-mapper";
 
@@ -18,16 +17,12 @@ export function createHttpNotificationSubmissionApi(
 ): NotificationSubmissionApi {
   return {
     async submit(draft: NotificationDraft): Promise<NotificationSubmission> {
-      try {
-        const response = await client.post(
-          "/api/v1/admin/notifications",
-          toCreateAdminNotificationRequest(draft, now())
-        );
+      const response = await client.post(
+        "/api/v1/admin/notifications",
+        toCreateAdminNotificationRequest(draft, now())
+      );
 
-        return toNotificationSubmission(response);
-      } catch (error) {
-        throw toNotificationSubmissionError(error);
-      }
+      return toNotificationSubmission(response);
     },
   };
 }
