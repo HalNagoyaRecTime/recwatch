@@ -1,33 +1,38 @@
 import { buildBackendUrl } from "~/config/env";
-import { ApiClientError } from "./api-client-error";
 import { getAccessToken } from "~/features/auth/lib/accessTokenStore";
 import { refreshAccessToken } from "~/features/auth/lib/refreshAccessToken";
 import { WEB_CLIENT_HEADERS } from "~/features/auth/lib/webClientHeaders";
+import { ApiClientError } from "./api-client-error";
+import { ClientError, ClientErrors } from "./client-error";
 
 function requireBackendUrl(path: string) {
   const url = buildBackendUrl(path);
 
   if (!url) {
-    throw new Error("VITE_BACKEND_BASE_URL is not configured.");
+    throw new ClientError(ClientErrors.CONFIG_ERROR);
   }
 
   return url;
 }
 
-function fetchWithToken(
+async function fetchWithToken(
   url: string,
   init: RequestInit | undefined,
   token: string | null
 ) {
-  return fetch(url, {
-    ...init,
-    headers: {
-      Accept: "application/json",
-      ...WEB_CLIENT_HEADERS,
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...init?.headers,
-    },
-  });
+  try {
+    return await fetch(url, {
+      ...init,
+      headers: {
+        Accept: "application/json",
+        ...WEB_CLIENT_HEADERS,
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...init?.headers,
+      },
+    });
+  } catch (error) {
+    throw new ClientError(ClientErrors.NETWORK_ERROR, { cause: error });
+  }
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
@@ -56,7 +61,11 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     return undefined as T;
   }
 
-  return res.json() as Promise<T>;
+  try {
+    return (await res.json()) as T;
+  } catch (error) {
+    throw new ClientError(ClientErrors.RESPONSE_PARSE_ERROR, { cause: error });
+  }
 }
 
 const inFlightGetRequests = new Map<string, Promise<unknown>>();
@@ -90,7 +99,7 @@ function parseApiError(
   if (!isApiErrorBody(body)) {
     return {
       code: "UNKNOWN_API_ERROR",
-      message: `API request failed (${status})`,
+      message: `APIエラーの内容を読み取れませんでした。（${status}）`,
     };
   }
 
