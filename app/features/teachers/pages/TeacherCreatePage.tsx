@@ -9,6 +9,7 @@ import {
 } from "~/features/teachers/components/TeacherForm";
 import { TeacherFormModal } from "~/features/teachers/components/TeacherFormModal";
 import type { ClassRoomOption } from "~/features/teachers/model/teacher";
+import { getErrorMessage } from "~/lib/client-error";
 
 export function TeacherCreatePage({
   classRooms,
@@ -28,9 +29,7 @@ export function TeacherCreatePage({
       await TeacherApi.createTeacher(input);
       navigate(teacherListTarget(location.search));
     } catch (error) {
-      setSubmitError(
-        error instanceof Error ? error.message : "教官の登録に失敗しました。"
-      );
+      setSubmitError(getErrorMessage(error, "教官の登録に失敗しました。"));
       setIsSubmitting(false);
     }
   }

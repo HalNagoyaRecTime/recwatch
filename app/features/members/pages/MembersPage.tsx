@@ -2,6 +2,7 @@ import { Plus } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 import { Button } from "~/components/ui/button/Button";
+import { getErrorMessage } from "~/lib/client-error";
 import { SearchField } from "~/components/ui/form/SearchField";
 import { PageHeader } from "~/components/ui/layout/PageHeader";
 import { FormModal } from "~/components/ui/modal/FormModal";
@@ -54,11 +55,7 @@ export function MembersPage({
       })
       .catch((error: unknown) => {
         if (!isCurrent) return;
-        setLoadError(
-          error instanceof Error
-            ? error.message
-            : "学生一覧の取得に失敗しました。"
-        );
+        setLoadError(getErrorMessage(error, "学生一覧の取得に失敗しました。"));
       })
       .finally(() => {
         if (isCurrent) setIsLoading(false);
@@ -139,9 +136,7 @@ export function MembersPage({
       );
       closeForm();
     } catch (error) {
-      setSubmitError(
-        error instanceof Error ? error.message : "学生を保存できませんでした。"
-      );
+      setSubmitError(getErrorMessage(error, "学生を保存できませんでした。"));
     } finally {
       setIsMutating(false);
     }
@@ -165,9 +160,7 @@ export function MembersPage({
         current.filter((item) => item.student_id !== student.student_id)
       );
     } catch (error) {
-      setSubmitError(
-        error instanceof Error ? error.message : "学生を削除できませんでした。"
-      );
+      setSubmitError(getErrorMessage(error, "学生を削除できませんでした。"));
     } finally {
       setIsMutating(false);
     }

@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router";
 
 import { ButtonLink } from "~/components/ui/button/ButtonLink";
+import { getErrorMessage } from "~/lib/client-error";
 import type { DataTableSort } from "~/components/ui/data-table/data-table-types";
 import { SearchField } from "~/components/ui/form/SearchField";
 import { PageHeader } from "~/components/ui/layout/PageHeader";
@@ -43,9 +44,7 @@ export function CompetitionListPage({
       .catch((error: unknown) => {
         if (!isCurrent) return;
         setLoadError(
-          error instanceof Error
-            ? error.message
-            : "イベント一覧を取得できませんでした。"
+          getErrorMessage(error, "イベント一覧を取得できませんでした。")
         );
       })
       .finally(() => {
@@ -110,9 +109,7 @@ export function CompetitionListPage({
       );
     } catch (error) {
       setActionError(
-        error instanceof Error
-          ? error.message
-          : "イベントを削除できませんでした。"
+        getErrorMessage(error, "イベントを削除できませんでした。")
       );
     } finally {
       setIsDeleting(false);

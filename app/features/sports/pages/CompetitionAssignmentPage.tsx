@@ -12,6 +12,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router";
 
 import { Button } from "~/components/ui/button/Button";
+import { getErrorMessage } from "~/lib/client-error";
 import { ButtonLink } from "~/components/ui/button/ButtonLink";
 import { PageHeader } from "~/components/ui/layout/PageHeader";
 import type { CompetitionAssignmentGateway } from "../api/competition-assignment-gateway";
@@ -95,9 +96,10 @@ export function CompetitionAssignmentPage({
       .catch((error: unknown) => {
         if (!active) return;
         setLoadError(
-          error instanceof Error
-            ? error.message
-            : "参加者設定に必要なデータを取得できませんでした。"
+          getErrorMessage(
+            error,
+            "参加者設定に必要なデータを取得できませんでした。"
+          )
         );
       })
       .finally(() => {
@@ -134,9 +136,7 @@ export function CompetitionAssignmentPage({
       .catch((error: unknown) => {
         if (!active) return;
         setSubmitError(
-          error instanceof Error
-            ? error.message
-            : "集合予定のメンバーを取得できませんでした。"
+          getErrorMessage(error, "集合予定のメンバーを取得できませんでした。")
         );
       });
 
@@ -229,9 +229,7 @@ export function CompetitionAssignmentPage({
       setSuccessMessage("参加者設定を保存しました。");
     } catch (error) {
       setSubmitError(
-        error instanceof Error
-          ? error.message
-          : "参加者設定を保存できませんでした。"
+        getErrorMessage(error, "参加者設定を保存できませんでした。")
       );
     } finally {
       setIsSubmitting(false);

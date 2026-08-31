@@ -38,7 +38,10 @@ export class ClientError extends Error {
   }
 }
 
-export function getErrorMessage(error: unknown): string {
+export function getErrorMessage(
+  error: unknown,
+  fallbackMessage?: string
+): string {
   if (error instanceof ApiClientError) {
     return formatApiErrorMessage(error);
   }
@@ -46,7 +49,13 @@ export function getErrorMessage(error: unknown): string {
     return error.message;
   }
 
-  return ClientErrors.UNEXPECTED_ERROR.message;
+  if (error instanceof Error) {
+    return fallbackMessage === undefined
+      ? ClientErrors.UNEXPECTED_ERROR.message
+      : error.message;
+  }
+
+  return fallbackMessage ?? ClientErrors.UNEXPECTED_ERROR.message;
 }
 
 function formatApiErrorMessage(error: ApiClientError): string {
