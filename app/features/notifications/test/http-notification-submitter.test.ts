@@ -1,7 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { ApiClientError } from "~/lib/api-client-error";
-import { NotificationSubmissionError } from "~/features/notifications/api/contracts/errors/notification-submission-error";
 import type { NotificationDraft } from "~/features/notifications/model/notification-draft";
 import { createHttpNotificationSubmissionApi } from "~/features/notifications/api/http/notification-submission-api";
 
@@ -44,13 +43,14 @@ describe("createHttpNotificationSubmissionApi", () => {
     [404, "audience_not_found"],
     [409, "no_active_devices"],
     [500, "unexpected"],
-  ] as const)("HTTP %sを%sエラーへ変換する", async (status, kind) => {
+  ] as const)("HTTP %sのApiClientErrorをそのまま伝播する", async (...args) => {
+    const [status] = args;
     const submitter = createHttpNotificationSubmissionApi({
       post: vi.fn().mockRejectedValue(new ApiClientError(status, "error")),
     });
 
     await expect(submitter.submit(draft)).rejects.toEqual(
-      new NotificationSubmissionError(kind)
+      new ApiClientError(status, "error")
     );
   });
 });

@@ -1,4 +1,4 @@
-import { NotificationManagementError } from "~/features/notifications/api/contracts/errors/notification-management-error";
+import { ClientError, ClientErrors } from "~/lib/client-error";
 import type { ManagedNotificationPage } from "~/features/notifications/api/contracts/notification-management-api";
 import type {
   ManagedNotification,
@@ -15,7 +15,7 @@ export function toManagedNotificationPage(
   response: unknown
 ): ManagedNotificationPage {
   if (!isAdminNotificationListResponse(response)) {
-    throw new NotificationManagementError("unexpected");
+    throw new ClientError(ClientErrors.RESPONSE_PARSE_ERROR);
   }
 
   return {
@@ -28,7 +28,7 @@ export function toManagedNotificationPage(
 
 export function toManagedNotification(response: unknown): ManagedNotification {
   if (!isAdminNotificationResponse(response)) {
-    throw new NotificationManagementError("unexpected");
+    throw new ClientError(ClientErrors.RESPONSE_PARSE_ERROR);
   }
 
   return {

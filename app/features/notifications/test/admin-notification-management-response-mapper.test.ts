@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { NotificationManagementError } from "~/features/notifications/api/contracts/errors/notification-management-error";
+import { ClientError, ClientErrors } from "~/lib/client-error";
 import {
   toManagedNotification,
   toManagedNotificationPage,
@@ -83,6 +83,6 @@ describe("notification management response mapper", () => {
           },
         })
       )
-    ).toThrow(new NotificationManagementError("unexpected"));
+    ).toThrow(new ClientError(ClientErrors.RESPONSE_PARSE_ERROR));
   });
 });

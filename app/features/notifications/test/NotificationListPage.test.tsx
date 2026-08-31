@@ -5,7 +5,7 @@ import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { NotificationManagementApi } from "~/features/notifications/api/contracts/notification-management-api";
-import { NotificationManagementError } from "~/features/notifications/api/contracts/errors/notification-management-error";
+import { ApiClientError } from "~/lib/api-client-error";
 import type { ManagedNotification } from "~/features/notifications/model/notification";
 import { NotificationListPage } from "~/features/notifications/pages/NotificationListPage";
 
@@ -272,12 +272,13 @@ describe("NotificationListPage", () => {
   ] as const)(
     "一覧取得時の%sエラーはアクセシブルに通知する",
     async (kind, message) => {
+      const status = kind === "authentication_required" ? 401 : 403;
       renderPage(
         <NotificationListPage
           api={createGateway({
             list: vi
               .fn()
-              .mockRejectedValue(new NotificationManagementError(kind)),
+              .mockRejectedValue(new ApiClientError(status, message)),
           })}
         />
       );
@@ -354,7 +355,12 @@ describe("NotificationListPage", () => {
           list,
           delete: vi
             .fn()
-            .mockRejectedValue(new NotificationManagementError("conflict")),
+            .mockRejectedValue(
+              new ApiClientError(
+                409,
+                "通知の配信状態が変更されました。一覧を再読み込みして確認してください。"
+              )
+            ),
         })}
       />
     );

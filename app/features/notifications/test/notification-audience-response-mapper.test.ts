@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { NotificationAudienceLoadingError } from "~/features/notifications/api/contracts/errors/notification-audience-loading-error";
+import { ClientError, ClientErrors } from "~/lib/client-error";
 import {
   toClassRoomAudiencePage,
   toEventAudiencePage,
@@ -68,10 +68,6 @@ describe("notification audience response mapper", () => {
         limit: 100,
         offset: 0,
       })
-    ).toThrowError(
-      expect.objectContaining<Partial<NotificationAudienceLoadingError>>({
-        kind: "unexpected",
-      })
-    );
+    ).toThrowError(new ClientError(ClientErrors.RESPONSE_PARSE_ERROR));
   });
 });

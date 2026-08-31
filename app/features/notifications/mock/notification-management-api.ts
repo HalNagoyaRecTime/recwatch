@@ -2,7 +2,7 @@ import type {
   NotificationManagementApi,
   NotificationUpdate,
 } from "~/features/notifications/api/contracts/notification-management-api";
-import { NotificationManagementError } from "~/features/notifications/api/contracts/errors/notification-management-error";
+import { ApiClientError } from "~/lib/api-client-error";
 import {
   canModifyNotification,
   type ManagedNotification,
@@ -136,7 +136,11 @@ export const mockNotificationManagementApi: NotificationManagementApi = {
       (item) => item.id === notificationId
     );
     if (!notification) {
-      throw new NotificationManagementError("not_found");
+      throw new ApiClientError(
+        404,
+        "通知が見つかりません。",
+        "NOTIFICATION_NOT_FOUND"
+      );
     }
     return cloneNotification(notification);
   },
@@ -146,10 +150,18 @@ export const mockNotificationManagementApi: NotificationManagementApi = {
       (item) => item.id === notificationId
     );
     if (!notification) {
-      throw new NotificationManagementError("not_found");
+      throw new ApiClientError(
+        404,
+        "通知が見つかりません。",
+        "NOTIFICATION_NOT_FOUND"
+      );
     }
     if (!canModifyNotification(notification)) {
-      throw new NotificationManagementError("conflict");
+      throw new ApiClientError(
+        409,
+        "通知は現在の状態では変更できません。",
+        "NOTIFICATION_CONFLICT"
+      );
     }
 
     const updated = applyUpdate(notification, update);
@@ -165,10 +177,18 @@ export const mockNotificationManagementApi: NotificationManagementApi = {
       (item) => item.id === notificationId
     );
     if (!notification) {
-      throw new NotificationManagementError("not_found");
+      throw new ApiClientError(
+        404,
+        "通知が見つかりません。",
+        "NOTIFICATION_NOT_FOUND"
+      );
     }
     if (!canModifyNotification(notification)) {
-      throw new NotificationManagementError("conflict");
+      throw new ApiClientError(
+        409,
+        "通知は現在の状態では変更できません。",
+        "NOTIFICATION_CONFLICT"
+      );
     }
     notifications = notifications.filter((item) => item.id !== notificationId);
   },

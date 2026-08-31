@@ -1,4 +1,4 @@
-import { NotificationSubmissionError } from "~/features/notifications/api/contracts/errors/notification-submission-error";
+import { ClientError, ClientErrors } from "~/lib/client-error";
 import type { NotificationDraft } from "~/features/notifications/model/notification-draft";
 import type {
   AdminNotificationAudienceRequest,
@@ -31,7 +31,7 @@ function toAudienceRequest(
 
   const audienceId = Number(draft.audienceId);
   if (!Number.isSafeInteger(audienceId) || audienceId <= 0) {
-    throw new NotificationSubmissionError("invalid_request");
+    throw new ClientError(ClientErrors.INVALID_REQUEST);
   }
 
   switch (draft.audienceType) {

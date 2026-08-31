@@ -1,4 +1,4 @@
-import { NotificationManagementError } from "~/features/notifications/api/contracts/errors/notification-management-error";
+import { ClientError, ClientErrors } from "~/lib/client-error";
 import type { NotificationUpdate } from "~/features/notifications/api/contracts/notification-management-api";
 import type { AdminNotificationUpdateRequest } from "~/features/notifications/api/dto/admin-notification-management-api-dto";
 
@@ -11,13 +11,13 @@ export function toAdminNotificationUpdateRequest(
     update.scheduledAt === undefined &&
     update.audience === undefined
   ) {
-    throw new NotificationManagementError("invalid_request");
+    throw new ClientError(ClientErrors.INVALID_REQUEST);
   }
   if (
     (update.title !== undefined && !update.title.trim()) ||
     (update.body !== undefined && !update.body.trim())
   ) {
-    throw new NotificationManagementError("invalid_request");
+    throw new ClientError(ClientErrors.INVALID_REQUEST);
   }
 
   return {

@@ -205,7 +205,11 @@ describe("apiClient", () => {
     );
 
     await expect(apiClient.get("/resource")).rejects.toEqual(
-      new ApiClientError(403, "API request failed (403)", "UNKNOWN_API_ERROR")
+      new ApiClientError(
+        403,
+        "APIエラーの内容を読み取れませんでした。（403）",
+        "UNKNOWN_API_ERROR"
+      )
     );
   });
 
