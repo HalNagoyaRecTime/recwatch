@@ -1,28 +1,27 @@
 import { useLoaderData } from "react-router";
 
 import { confirmAccountDeletion } from "~/features/account-deletion/api/account-deletion-client";
+import { consumeDeletionAuthResult } from "~/features/account-deletion/lib/deletionAuthFlow";
 import {
   AccountDeletionCallbackPage,
   type AccountDeletionCallbackData,
 } from "~/features/account-deletion/pages/AccountDeletionCallbackPage";
 
-const missingStateMessage =
+const missingResultMessage =
   "確認情報が見つかりませんでした。お手数ですが、削除受付ページからやり直してください。";
 
-export async function clientLoader({
-  request,
-}: {
-  request: Request;
-}): Promise<AccountDeletionCallbackData> {
-  const url = new URL(request.url);
-  const state = url.searchParams.get("state");
-  const code = url.searchParams.get("code");
+export async function clientLoader(): Promise<AccountDeletionCallbackData> {
+  const result = consumeDeletionAuthResult();
 
-  if (!state) {
-    return { status: "error", message: missingStateMessage };
+  if (!result) {
+    return { status: "error", message: missingResultMessage };
   }
 
-  return confirmAccountDeletion({ state, code });
+  if (result.status === "error") {
+    return { status: "error", message: result.message };
+  }
+
+  return confirmAccountDeletion(result.token);
 }
 
 export default function AccountDeletionCallbackRoute() {

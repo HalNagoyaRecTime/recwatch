@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { buildBackendUrl, hasBackendBaseUrl } from "~/config/env";
 
+import { clearDeletionAuthPending } from "~/features/account-deletion/lib/deletionAuthFlow";
 import { AuthErrorMessage } from "~/features/auth/components/AuthErrorMessage";
 import { AuthLayout } from "~/features/auth/components/AuthLayout";
 import { AuthPrimaryButton } from "~/features/auth/components/AuthPrimaryButton";
@@ -33,6 +34,7 @@ export function AuthLoginPage({
     try {
       setErrorMessage("");
       setIsOAuthSubmitting(true);
+      clearDeletionAuthPending();
       if (!hasBackendBaseUrl()) {
         setErrorMessage(backendUnavailableMessage);
         setIsOAuthSubmitting(false);
