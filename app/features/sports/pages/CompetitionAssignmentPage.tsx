@@ -26,6 +26,8 @@ type CompetitionAssignmentPageProps = {
 
 type SaveStatus = "idle" | "submitting" | "completed";
 
+const SAVE_COMPLETE_DISPLAY_MS = 5000;
+
 const emptyData: CompetitionAssignmentData = {
   classrooms: [],
   students: [],
@@ -147,6 +149,16 @@ export function CompetitionAssignmentPage({
       active = false;
     };
   }, [gateway, selectedGatheringId]);
+
+  useEffect(() => {
+    if (saveStatus !== "completed") return;
+
+    const timeoutId = window.setTimeout(() => {
+      setSaveStatus((current) => (current === "completed" ? "idle" : current));
+    }, SAVE_COMPLETE_DISPLAY_MS);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [saveStatus]);
 
   const selectedEvent = data.events.find(
     (event) => event.id === selectedEventId
