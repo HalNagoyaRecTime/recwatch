@@ -4,7 +4,6 @@ import type {
   NotificationListQuery,
   NotificationUpdate,
 } from "~/features/notifications/api/contracts/notification-management-api";
-import { toNotificationManagementError } from "~/features/notifications/api/mappers/admin-notification-management-error-mapper";
 import {
   toManagedNotification,
   toManagedNotificationPage,
@@ -23,43 +22,27 @@ export function createHttpNotificationManagementApi(
 ): NotificationManagementApi {
   return {
     async list(query: NotificationListQuery = {}) {
-      try {
-        const response = await client.get(toAdminNotificationListPath(query));
-        return toManagedNotificationPage(response);
-      } catch (error) {
-        throw toNotificationManagementError(error);
-      }
+      const response = await client.get(toAdminNotificationListPath(query));
+      return toManagedNotificationPage(response);
     },
 
     async getById(notificationId) {
-      try {
-        return toManagedNotification(
-          await client.get(`/api/v1/admin/notifications/${notificationId}`)
-        );
-      } catch (error) {
-        throw toNotificationManagementError(error);
-      }
+      return toManagedNotification(
+        await client.get(`/api/v1/admin/notifications/${notificationId}`)
+      );
     },
 
     async update(notificationId, update: NotificationUpdate) {
-      try {
-        return toManagedNotification(
-          await client.put(
-            `/api/v1/admin/notifications/${notificationId}`,
-            toAdminNotificationUpdateRequest(update)
-          )
-        );
-      } catch (error) {
-        throw toNotificationManagementError(error);
-      }
+      return toManagedNotification(
+        await client.put(
+          `/api/v1/admin/notifications/${notificationId}`,
+          toAdminNotificationUpdateRequest(update)
+        )
+      );
     },
 
     async delete(notificationId) {
-      try {
-        await client.delete(`/api/v1/admin/notifications/${notificationId}`);
-      } catch (error) {
-        throw toNotificationManagementError(error);
-      }
+      await client.delete(`/api/v1/admin/notifications/${notificationId}`);
     },
   };
 }
