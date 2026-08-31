@@ -50,9 +50,7 @@ export function getErrorMessage(
   }
 
   if (error instanceof Error) {
-    return fallbackMessage === undefined
-      ? ClientErrors.UNEXPECTED_ERROR.message
-      : error.message;
+    return fallbackMessage ?? ClientErrors.UNEXPECTED_ERROR.message;
   }
 
   return fallbackMessage ?? ClientErrors.UNEXPECTED_ERROR.message;

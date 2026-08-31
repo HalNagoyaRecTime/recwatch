@@ -77,7 +77,7 @@ describe("CompetitionEditPage", () => {
     renderPage(api);
 
     expect(await screen.findByRole("alert")).toHaveTextContent(
-      "イベントが見つかりません"
+      "イベントデータの取得に失敗しました。"
     );
     expect(screen.getByLabelText("イベント名*")).toBeDisabled();
     expect(

@@ -26,6 +26,12 @@ describe("getErrorMessage", () => {
     );
   });
 
+  it("未知の例外は指定されたfallbackMessageへフォールバックする", () => {
+    expect(getErrorMessage(new Error("internal"), "保存に失敗しました")).toBe(
+      "保存に失敗しました"
+    );
+  });
+
   it("クライアントエラーは定義済みメッセージを返す", () => {
     expect(getErrorMessage(new ClientError(ClientErrors.NETWORK_ERROR))).toBe(
       ClientErrors.NETWORK_ERROR.message
