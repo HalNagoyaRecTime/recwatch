@@ -126,3 +126,6 @@ npm run format
 - リモートブランチ削除だけの push では `pre-push` の検査をスキップする
 
 フックを手動で再設定する場合は `npm run prepare` を実行する。
+
+
+<!-- Work経由のGitHub操作確認用 -->
