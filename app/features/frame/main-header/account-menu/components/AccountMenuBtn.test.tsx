@@ -20,7 +20,13 @@ describe("AccountMenuBtn", () => {
     const button = screen.getByRole("button");
     const name = screen.getByText("とても長いユーザー名");
 
-    expect(button).toHaveClass("w-8", "md:w-auto", "md:max-w-40");
+    expect(button).toHaveClass(
+      "w-8",
+      "md:w-auto",
+      "md:max-w-40",
+      "md:rounded-l-[20px]!",
+      "md:rounded-r-[8px]!"
+    );
     expect(name).toHaveClass("hidden", "truncate", "md:block");
   });
 });
