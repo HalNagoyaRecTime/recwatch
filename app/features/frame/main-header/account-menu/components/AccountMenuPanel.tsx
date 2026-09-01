@@ -6,7 +6,8 @@ import {
   MoonStarIcon,
   SunMediumIcon,
 } from "lucide-react";
-import { useRef, useState, type PointerEvent } from "react";
+import { useRef, useState, type KeyboardEvent, type PointerEvent } from "react";
+import type { Placement } from "@floating-ui/react";
 
 import {
   Menu,
@@ -34,7 +35,13 @@ export function AccountMenuPanel({
 }: AccountMenuPanelProps) {
   const { theme, setTheme } = useThemeMode();
   const lastPointerType = useRef<string | null>(null);
+  const themeTriggerRef = useRef<HTMLButtonElement | null>(null);
+  const suppressNextThemeFocusOpen = useRef(false);
   const [isThemeOpen, setIsThemeOpen] = useState(false);
+  const [themeInitialFocus, setThemeInitialFocus] = useState(-1);
+  const [themeFocusIndex, setThemeFocusIndex] = useState<number | undefined>();
+  const [themePlacement, setThemePlacement] =
+    useState<Placement>("right-start");
   const [themeInteraction, setThemeInteraction] = useState<"hover" | "click">(
     "hover"
   );
@@ -45,6 +52,20 @@ export function AccountMenuPanel({
       : theme === "light"
         ? SunMediumIcon
         : MonitorIcon;
+
+  const selectedThemeIndex = theme === "dark" ? 1 : theme === "system" ? 2 : 0;
+  const themeClosesWithKey = themePlacement.startsWith("left")
+    ? "ArrowRight"
+    : "ArrowLeft";
+
+  const focusThemeTrigger = () => {
+    const trigger =
+      themeTriggerRef.current ??
+      document.querySelector<HTMLButtonElement>(
+        '[data-menu-item-id="theme-switcher"]'
+      );
+    trigger?.focus();
+  };
 
   const themeMenuItems: MenuItemType[] = [
     {
@@ -104,13 +125,23 @@ export function AccountMenuPanel({
       content: (
         <FloatingPanel
           isOpen={isThemeOpen}
-          onOpenChange={setIsThemeOpen}
+          onOpenChange={(open) => {
+            setIsThemeOpen(open);
+            if (!open) {
+              setThemeInitialFocus(-1);
+              setThemeFocusIndex(undefined);
+            }
+          }}
+          avoidParentOverlap
+          initialFocus={themeInitialFocus}
+          onPlacementChange={setThemePlacement}
           placement="right-start"
           interaction={themeInteraction}
-          offsetValue={6}
+          offsetValue={2}
           triggerClassName="block w-full"
           trigger={
             <MenuActionItem
+              data-menu-item-id="theme-switcher"
               label="テーマ設定"
               icon={ThemeIcon}
               endIcon={
@@ -126,16 +157,80 @@ export function AccountMenuPanel({
                   event.pointerType === "mouse" ? "hover" : "click"
                 );
               }}
-              onFocusCapture={() => {
+              onFocusCapture={(event) => {
+                themeTriggerRef.current = event.currentTarget;
+                if (suppressNextThemeFocusOpen.current) {
+                  suppressNextThemeFocusOpen.current = false;
+                  lastPointerType.current = null;
+                  return;
+                }
+
                 if (lastPointerType.current !== "mouse") {
                   setThemeInteraction("click");
+                  setThemeInitialFocus(-1);
+                  setThemeFocusIndex(undefined);
                   setIsThemeOpen(true);
                 }
                 lastPointerType.current = null;
               }}
+              onKeyDownCapture={(event: KeyboardEvent<HTMLButtonElement>) => {
+                if (event.key === "ArrowUp") {
+                  event.preventDefault();
+                  setIsThemeOpen(false);
+                  onClose();
+                  return;
+                }
+
+                if (event.key === "ArrowDown") {
+                  event.preventDefault();
+                  event.currentTarget
+                    .closest<HTMLElement>("[data-floating-panel]")
+                    ?.querySelector<HTMLButtonElement>(
+                      '[data-menu-item-id="logout"]'
+                    )
+                    ?.focus();
+                  return;
+                }
+
+                if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") {
+                  return;
+                }
+
+                event.preventDefault();
+                setThemeInteraction("click");
+                setThemeInitialFocus(selectedThemeIndex);
+                setThemeFocusIndex(selectedThemeIndex);
+                setIsThemeOpen(true);
+              }}
             />
           }
-          content={<Menu items={themeMenuItems} keyboardNavigation />}
+          content={
+            <Menu
+              items={themeMenuItems}
+              keyboardNavigation
+              focusActionIndex={themeFocusIndex}
+              onKeyDown={(event) => {
+                if (event.key === themeClosesWithKey) {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  suppressNextThemeFocusOpen.current = true;
+                  themeTriggerRef.current?.focus();
+                  return;
+                }
+
+                if (event.key !== "Escape") {
+                  return;
+                }
+
+                event.preventDefault();
+                event.stopPropagation();
+                suppressNextThemeFocusOpen.current = true;
+                setThemeInteraction("hover");
+                setIsThemeOpen(false);
+                themeTriggerRef.current?.focus();
+              }}
+            />
+          }
         />
       ),
     },
@@ -146,6 +241,14 @@ export function AccountMenuPanel({
       label: "ログアウト",
       icon: LogOutIcon,
       danger: true,
+      onKeyDown: (event) => {
+        if (event.key !== "ArrowUp") {
+          return;
+        }
+
+        event.preventDefault();
+        focusThemeTrigger();
+      },
       onClick: () => {
         onClose();
         onLogout?.();

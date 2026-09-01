@@ -27,7 +27,7 @@ export const AccountMenuBtn = forwardRef<
       type="button"
       {...buttonProps}
       className={cn(
-        "app-rounded text-text-base relative flex h-full w-8 shrink-0 cursor-pointer items-center justify-center gap-2 overflow-hidden rounded-full! bg-transparent transition md:w-auto md:max-w-40 md:justify-start md:rounded-l-[20px]! md:rounded-r-[8px]!",
+        "app-rounded text-text-base relative flex h-full w-8 shrink-0 cursor-pointer items-center justify-center gap-2 overflow-hidden rounded-full! bg-transparent transition-colors md:w-fit md:min-w-0 md:shrink md:justify-start md:rounded-l-[20px]! md:rounded-r-[8px]!",
         "hover:border-border-strong hover:bg-surface-hover",
         isOpen ? "bg-surface-hover" : "",
         className
@@ -35,7 +35,7 @@ export const AccountMenuBtn = forwardRef<
     >
       <div
         className={cn(
-          "absolute z-10 h-full w-full rounded-full! border md:rounded-[8px]!",
+          "absolute z-10 h-full w-full rounded-full! border md:rounded-l-[20px]! md:rounded-r-[8px]!",
           "border-border-base",
           isOpen ? "border-border-strong" : ""
         )}
@@ -47,13 +47,13 @@ export const AccountMenuBtn = forwardRef<
         className="absolute z-20"
       />
 
-      <span className="text-text-base z-15 hidden max-w-32 min-w-0 truncate pl-9 text-xs font-semibold md:block">
+      <span className="text-text-base z-15 max-w-0 min-w-0 shrink truncate overflow-hidden p-0 text-xs font-semibold opacity-0 transition-opacity duration-200 ease-out md:max-w-none md:pl-9 md:opacity-100">
         {account.name}
       </span>
       <ChevronDownIcon
         size={14}
         strokeWidth={1.8}
-        className="text-text-subtle z-15 mr-2 hidden shrink-0 md:block"
+        className="text-text-subtle z-15 mr-0 max-w-0 overflow-hidden opacity-0 transition-opacity duration-200 ease-out md:mr-2 md:max-w-[14px] md:shrink-0 md:opacity-100"
       />
     </button>
   );

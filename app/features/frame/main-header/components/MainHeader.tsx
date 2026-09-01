@@ -37,7 +37,7 @@ export function MainHeader({ user }: MainHeaderProps) {
         <MobileHamburgerMenuBtn />
       </div>
 
-      <div className="flex h-full shrink-0 gap-1">
+      <div className="flex h-full shrink-0 gap-1 md:min-w-0 md:shrink">
         <SearchBtn />
         <NoticeBtn />
         <AccountBtn user={user} onLogout={() => void handleLogout()} />
