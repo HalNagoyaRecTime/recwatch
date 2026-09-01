@@ -14,7 +14,7 @@ export const buttonStyle = cva(
         danger:
           "app-rounded bg-tone-danger-surface text-tone-danger-text font-medium hover:brightness-95",
         success:
-          "app-rounded bg-[linear-gradient(135deg,var(--button-success-gradient-start),var(--button-success-gradient-end))] text-[color:var(--button-success-text)] font-semibold shadow-sm hover:brightness-105",
+          "app-rounded border border-tone-success-border bg-tone-success-bg text-tone-success-text font-semibold shadow-sm hover:bg-tone-success-bg-hover",
       },
       size: {
         sm: "text-sm",
