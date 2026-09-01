@@ -38,11 +38,29 @@ describe("AccountBtn", () => {
 
     await user.tab();
     expect(screen.getByRole("button", { name: "テーマ設定" })).toHaveFocus();
+    expect(screen.getAllByRole("dialog")).toHaveLength(2);
 
     await user.tab();
-    expect(screen.getByRole("button", { name: "ログアウト" })).toHaveFocus();
+    expect(screen.getByRole("button", { name: "ライト" })).toHaveFocus();
 
+    await user.keyboard("{ArrowDown}");
+    expect(screen.getByRole("button", { name: "ダーク" })).toHaveFocus();
+
+    await user.keyboard("{ArrowDown}");
+    expect(screen.getByRole("button", { name: "システム" })).toHaveFocus();
+
+    await user.keyboard("{ArrowUp}");
+    expect(screen.getByRole("button", { name: "ダーク" })).toHaveFocus();
+  }, 10000);
+
+  it("Escapeでアカウントメニューを閉じてトリガーへfocusを戻す", async () => {
+    const user = userEvent.setup();
+    renderAccountButton();
+
+    const trigger = screen.getByRole("button", { name: "ユーザー" });
+    await user.click(trigger);
     await user.keyboard("{Escape}");
+
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     expect(trigger).toHaveFocus();
     expect(trigger).toHaveAttribute("aria-expanded", "false");

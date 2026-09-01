@@ -6,7 +6,7 @@ import {
   MoonStarIcon,
   SunMediumIcon,
 } from "lucide-react";
-import { useState, type PointerEvent } from "react";
+import { useRef, useState, type PointerEvent } from "react";
 
 import {
   Menu,
@@ -33,6 +33,8 @@ export function AccountMenuPanel({
   onLogout,
 }: AccountMenuPanelProps) {
   const { theme, setTheme } = useThemeMode();
+  const lastPointerType = useRef<string | null>(null);
+  const [isThemeOpen, setIsThemeOpen] = useState(false);
   const [themeInteraction, setThemeInteraction] = useState<"hover" | "click">(
     "hover"
   );
@@ -101,6 +103,8 @@ export function AccountMenuPanel({
       id: "theme-switcher",
       content: (
         <FloatingPanel
+          isOpen={isThemeOpen}
+          onOpenChange={setIsThemeOpen}
           placement="right-start"
           interaction={themeInteraction}
           offsetValue={6}
@@ -117,13 +121,21 @@ export function AccountMenuPanel({
                 />
               }
               onPointerDown={(event: PointerEvent<HTMLButtonElement>) => {
+                lastPointerType.current = event.pointerType;
                 setThemeInteraction(
                   event.pointerType === "mouse" ? "hover" : "click"
                 );
               }}
+              onFocusCapture={() => {
+                if (lastPointerType.current !== "mouse") {
+                  setThemeInteraction("click");
+                  setIsThemeOpen(true);
+                }
+                lastPointerType.current = null;
+              }}
             />
           }
-          content={<Menu items={themeMenuItems} />}
+          content={<Menu items={themeMenuItems} keyboardNavigation />}
         />
       ),
     },
