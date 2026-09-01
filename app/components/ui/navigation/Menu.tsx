@@ -1,10 +1,12 @@
 import {
   createElement,
   forwardRef,
+  useEffect,
   useRef,
   type ComponentType,
   type ComponentPropsWithoutRef,
   type KeyboardEvent,
+  type KeyboardEventHandler,
   type ReactNode,
   type ElementType,
 } from "react";
@@ -34,6 +36,7 @@ export type MenuItemType =
       danger?: boolean;
       disabled?: boolean;
       onClick?: () => void;
+      onKeyDown?: KeyboardEventHandler<HTMLButtonElement>;
     }
   | {
       /** 区切り線 */
@@ -54,13 +57,21 @@ type MenuProps = {
   items: MenuItemType[];
   /** 矢印キーでaction項目を移動するメニューです。 */
   keyboardNavigation?: boolean;
+  /** 表示時または切り替え時に指定したaction項目へフォーカスします。 */
+  focusActionIndex?: number;
+  onKeyDown?: KeyboardEventHandler<HTMLDivElement>;
 };
 
 /**
  * 1階層のシンプルなリスト（メニュー）を描画する汎用コンポーネントです。
  * 項目は配列（items）として渡し、データ駆動で描画します。
  */
-export function Menu({ items, keyboardNavigation = false }: MenuProps) {
+export function Menu({
+  items,
+  keyboardNavigation = false,
+  focusActionIndex,
+  onKeyDown,
+}: MenuProps) {
   const actionRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const actionItems = items.filter(
     (item) => item.type === "action" && !item.disabled
@@ -68,6 +79,12 @@ export function Menu({ items, keyboardNavigation = false }: MenuProps) {
   const actionIndexById = new Map(
     actionItems.map((item, index) => [item.id, index])
   );
+
+  useEffect(() => {
+    if (focusActionIndex !== undefined) {
+      actionRefs.current[focusActionIndex]?.focus();
+    }
+  }, [focusActionIndex]);
 
   const moveAction = (nextIndex: number) => {
     actionRefs.current[nextIndex]?.focus();
@@ -96,7 +113,10 @@ export function Menu({ items, keyboardNavigation = false }: MenuProps) {
   };
 
   return (
-    <FloatingListSurface role={keyboardNavigation ? "menu" : undefined}>
+    <FloatingListSurface
+      role={keyboardNavigation ? "menu" : undefined}
+      onKeyDown={onKeyDown}
+    >
       {items.map((item) => {
         if (item.type === "custom") {
           return <div key={item.id}>{item.content}</div>;
@@ -109,6 +129,10 @@ export function Menu({ items, keyboardNavigation = false }: MenuProps) {
         }
 
         const currentActionIndex = actionIndexById.get(item.id);
+        const generatedKeyDown =
+          currentActionIndex === undefined
+            ? undefined
+            : getActionKeyDown(currentActionIndex);
         return (
           <MenuActionItem
             key={item.id}
@@ -117,11 +141,13 @@ export function Menu({ items, keyboardNavigation = false }: MenuProps) {
             endIcon={item.endIcon}
             danger={item.danger}
             disabled={item.disabled}
-            onKeyDown={
-              currentActionIndex === undefined
-                ? undefined
-                : getActionKeyDown(currentActionIndex)
-            }
+            data-menu-item-id={item.id}
+            onKeyDown={(event) => {
+              item.onKeyDown?.(event);
+              if (!event.defaultPrevented) {
+                generatedKeyDown?.(event);
+              }
+            }}
             onClick={item.onClick}
             ref={(element) => {
               if (currentActionIndex !== undefined) {
