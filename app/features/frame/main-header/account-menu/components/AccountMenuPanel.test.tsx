@@ -16,6 +16,20 @@ const themeContext: ThemeContextType = {
 };
 
 describe("AccountMenuPanel", () => {
+  it("mouse操作ではテーマ設定をhoverで開ける", async () => {
+    const user = userEvent.setup();
+
+    render(
+      <ThemeContext.Provider value={themeContext}>
+        <AccountMenuPanel account={getAccountBtnData()} onClose={vi.fn()} />
+      </ThemeContext.Provider>
+    );
+
+    await user.hover(screen.getByRole("button", { name: "テーマ設定" }));
+
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+  });
+
   it("touch操作ではテーマ設定をtapで開ける", async () => {
     const user = userEvent.setup();
 
