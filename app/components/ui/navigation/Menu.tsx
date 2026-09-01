@@ -2,7 +2,6 @@ import {
   createElement,
   forwardRef,
   useRef,
-  useState,
   type ComponentType,
   type ComponentPropsWithoutRef,
   type KeyboardEvent,
@@ -63,7 +62,6 @@ type MenuProps = {
  */
 export function Menu({ items, keyboardNavigation = false }: MenuProps) {
   const actionRefs = useRef<Array<HTMLButtonElement | null>>([]);
-  const [activeActionIndex, setActiveActionIndex] = useState(0);
   const actionItems = items.filter(
     (item) => item.type === "action" && !item.disabled
   );
@@ -72,7 +70,6 @@ export function Menu({ items, keyboardNavigation = false }: MenuProps) {
   );
 
   const moveAction = (nextIndex: number) => {
-    setActiveActionIndex(nextIndex);
     actionRefs.current[nextIndex]?.focus();
   };
 
@@ -131,12 +128,8 @@ export function Menu({ items, keyboardNavigation = false }: MenuProps) {
                 actionRefs.current[currentActionIndex] = element;
               }
             }}
-            tabIndex={
-              keyboardNavigation
-                ? currentActionIndex === activeActionIndex
-                  ? 0
-                  : -1
-                : undefined
+            className={
+              keyboardNavigation ? "focus-visible:bg-surface-hover" : undefined
             }
           />
         );
