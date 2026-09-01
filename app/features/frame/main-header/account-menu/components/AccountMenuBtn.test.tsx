@@ -27,6 +27,7 @@ describe("AccountMenuBtn", () => {
       "md:rounded-l-[20px]!",
       "md:rounded-r-[8px]!"
     );
+    expect(button.querySelector("div")).toHaveClass("border");
     expect(name).toHaveClass("hidden", "truncate", "md:block");
   });
 });

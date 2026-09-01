@@ -35,7 +35,7 @@ export const AccountMenuBtn = forwardRef<
     >
       <div
         className={cn(
-          "absolute z-10 h-full w-full rounded-full! md:rounded-[8px]!",
+          "absolute z-10 h-full w-full rounded-full! border md:rounded-[8px]!",
           "border-border-base",
           isOpen ? "border-border-strong" : ""
         )}
