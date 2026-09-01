@@ -22,6 +22,7 @@ import {
 import {
   cloneElement,
   isValidElement,
+  useEffect,
   useState,
   type ReactElement,
   type ReactNode,
@@ -37,6 +38,12 @@ export type FloatingPanelProps = {
   offsetValue?: number;
   /** クリックで開くパネルのフォーカス管理。ホバー時は常に無効です。 */
   focusManagement?: "none" | "non-modal";
+  /** 親パネルの外周との重なりを可能な範囲で防ぎます。 */
+  avoidParentOverlap?: boolean;
+  /** フォーカス管理時に最初にフォーカスする位置です。 */
+  initialFocus?: number;
+  /** flip後を含む実際の配置を通知します。 */
+  onPlacementChange?: (placement: Placement) => void;
   isOpen?: boolean;
   onOpenChange?: (open: boolean) => void;
   className?: string;
@@ -50,6 +57,9 @@ export function FloatingPanel({
   interaction = "click",
   offsetValue = 6,
   focusManagement = "non-modal",
+  avoidParentOverlap = false,
+  initialFocus = -1,
+  onPlacementChange,
   isOpen: controlledIsOpen,
   onOpenChange: setControlledIsOpen,
   className,
@@ -61,7 +71,12 @@ export function FloatingPanel({
   const tree = useFloatingTree();
   const nodeId = useFloatingNodeId();
 
-  const { refs, floatingStyles, context } = useFloating({
+  const {
+    refs,
+    floatingStyles,
+    context,
+    placement: resolvedPlacement,
+  } = useFloating({
     nodeId,
     open: isOpen,
     onOpenChange: setIsOpen,
@@ -70,7 +85,42 @@ export function FloatingPanel({
     middleware: [
       offset(offsetValue),
       flip({ fallbackAxisSideDirection: "end" }),
-      shift({ padding: 8 }),
+      shift({
+        padding: 8,
+      }),
+      avoidParentOverlap
+        ? {
+            name: "avoidParentOverlap",
+            fn({ x, placement, rects, elements }) {
+              const parentPanel =
+                elements.reference instanceof HTMLElement
+                  ? elements.reference.closest<HTMLElement>(
+                      "[data-floating-panel]"
+                    )
+                  : null;
+              if (parentPanel === null) {
+                return {};
+              }
+
+              const parentRect = parentPanel.getBoundingClientRect();
+              const side = placement.split("-")[0];
+
+              if (side === "left") {
+                const maximumRight = parentRect.left - offsetValue;
+                return x + rects.floating.width > maximumRight
+                  ? { x: maximumRight - rects.floating.width }
+                  : {};
+              }
+
+              if (side === "right") {
+                const minimumLeft = parentRect.right + offsetValue;
+                return x < minimumLeft ? { x: minimumLeft } : {};
+              }
+
+              return {};
+            },
+          }
+        : null,
       size({
         padding: 8,
         apply({ availableHeight, availableWidth, elements }) {
@@ -83,6 +133,10 @@ export function FloatingPanel({
       }),
     ],
   });
+
+  useEffect(() => {
+    onPlacementChange?.(resolvedPlacement);
+  }, [onPlacementChange, resolvedPlacement]);
 
   const hover = useHover(context, {
     enabled: interaction === "hover",
@@ -129,6 +183,7 @@ export function FloatingPanel({
       ref={refs.setFloating}
       style={floatingStyles}
       {...getFloatingProps()}
+      data-floating-panel
       className={cn("z-140", className)}
     >
       {content}
@@ -143,7 +198,7 @@ export function FloatingPanel({
           {shouldManageFocus ? (
             <FloatingFocusManager
               context={context}
-              initialFocus={-1}
+              initialFocus={initialFocus}
               modal={false}
               returnFocus
             >
