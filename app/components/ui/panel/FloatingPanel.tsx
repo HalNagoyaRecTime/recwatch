@@ -15,6 +15,8 @@ import {
   FloatingNode,
   useFloatingNodeId,
   useFloatingTree,
+  FloatingFocusManager,
+  size,
   type Placement,
 } from "@floating-ui/react";
 import {
@@ -27,12 +29,14 @@ import {
 import { cn } from "~/lib/cn";
 
 export type FloatingPanelProps = {
-  /** A single element that can receive refs and interaction props. */
+  /** refとインタラクション属性を受け取れる単一の要素です。 */
   trigger: ReactElement;
   content: ReactNode;
   placement?: Placement;
   interaction?: "click" | "hover";
   offsetValue?: number;
+  /** クリックで開くパネルのフォーカス管理。ホバー時は常に無効です。 */
+  focusManagement?: "none" | "non-modal";
   isOpen?: boolean;
   onOpenChange?: (open: boolean) => void;
   className?: string;
@@ -45,6 +49,7 @@ export function FloatingPanel({
   placement = "bottom",
   interaction = "click",
   offsetValue = 6,
+  focusManagement = "non-modal",
   isOpen: controlledIsOpen,
   onOpenChange: setControlledIsOpen,
   className,
@@ -66,6 +71,16 @@ export function FloatingPanel({
       offset(offsetValue),
       flip({ fallbackAxisSideDirection: "end" }),
       shift({ padding: 8 }),
+      size({
+        padding: 8,
+        apply({ availableHeight, availableWidth, elements }) {
+          Object.assign(elements.floating.style, {
+            maxHeight: `${Math.max(0, availableHeight)}px`,
+            maxWidth: `${Math.max(0, availableWidth)}px`,
+            overflow: "auto",
+          });
+        },
+      }),
     ],
   });
 
@@ -74,11 +89,11 @@ export function FloatingPanel({
     handleClose: safePolygon(),
   });
   const click = useClick(context, { enabled: interaction === "click" });
-  // Click menus must not close when focus moves into a nested portal. Hover
-  // panels keep focus support so they remain accessible by keyboard.
+  // クリックメニューはネストしたPortalへフォーカスが移っても閉じません。
+  // ホバーパネルはキーボード操作のためフォーカス対応を維持します。
   const focus = useFocus(context, { enabled: interaction === "hover" });
-  // Prevent dismiss events from bubbling through a nested floating tree.
-  // This is important when a child panel is rendered in a portal.
+  // ネストしたFloatingTreeへdismissイベントが伝播するのを防ぎます。
+  // 子パネルをPortalへ描画する場合に必要です。
   const dismiss = useDismiss(context, { bubbles: false });
   const role = useRole(context);
 
@@ -105,26 +120,44 @@ export function FloatingPanel({
       )
     : trigger;
 
+  const shouldManageFocus =
+    interaction === "click" && focusManagement === "non-modal";
+
+  const floatingElement = (
+    <div
+      // eslint-disable-next-line react-hooks/refs
+      ref={refs.setFloating}
+      style={floatingStyles}
+      {...getFloatingProps()}
+      className={cn("z-140", className)}
+    >
+      {content}
+    </div>
+  );
+
   const panel = (
     <>
       {triggerElement}
       {isOpen && (
         <FloatingPortal>
-          <div
-            // eslint-disable-next-line react-hooks/refs
-            ref={refs.setFloating}
-            style={floatingStyles}
-            {...getFloatingProps()}
-            className={cn("z-140", className)}
-          >
-            {content}
-          </div>
+          {shouldManageFocus ? (
+            <FloatingFocusManager
+              context={context}
+              initialFocus={-1}
+              modal={false}
+              returnFocus
+            >
+              {floatingElement}
+            </FloatingFocusManager>
+          ) : (
+            floatingElement
+          )}
         </FloatingPortal>
       )}
     </>
   );
 
-  // FloatingTree is opt-in so standalone panels keep their existing behavior.
-  // Account menus opt in because they contain a nested theme panel.
+  // FloatingTreeはオプトインで、単独パネルは従来の挙動を維持します。
+  // アカウントメニューはテーマパネルをネストするためオプトインします。
   return tree ? <FloatingNode id={nodeId}>{panel}</FloatingNode> : panel;
 }
