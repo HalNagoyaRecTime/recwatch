@@ -1,4 +1,10 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
 import { describe, expect, it, vi } from "vitest";
@@ -113,5 +119,95 @@ describe("CompetitionAssignmentPage", () => {
       })
     );
     expect(screen.getByText("参加者設定を保存しました。")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "完了" })).toBeInTheDocument();
+  });
+
+  it("保存中から完了へ切り替え、完了ボタンで入力内容を初期化する", async () => {
+    const gateway = createGateway();
+    let resolveSave!: (value: {
+      gathering: { eventId: number; id: number; spotId: number; time: string };
+    }) => void;
+    vi.mocked(gateway.save).mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveSave = resolve;
+        })
+    );
+
+    render(
+      <MemoryRouter>
+        <CompetitionAssignmentPage gateway={gateway} />
+      </MemoryRouter>
+    );
+
+    fireEvent.change(await screen.findByLabelText("集合時間"), {
+      target: { value: "08:50" },
+    });
+    fireEvent.click(screen.getByRole("checkbox", { name: "山田 花子を選択" }));
+    fireEvent.click(screen.getByRole("button", { name: "設定を保存" }));
+
+    expect(screen.getByRole("button", { name: "保存中..." })).toBeDisabled();
+
+    await act(async () => {
+      resolveSave({
+        gathering: { eventId: 4, id: 9, spotId: 5, time: "08:50" },
+      });
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "完了" }));
+
+    expect(screen.getByLabelText("クラス")).toHaveValue("1");
+    expect(screen.getByLabelText("イベント")).toHaveValue("4");
+    expect(screen.getByLabelText("集合予定")).toHaveValue("new");
+    expect(screen.getByLabelText("集合場所")).toHaveValue("5");
+    expect(screen.getByLabelText("集合時間")).toHaveValue("");
+    expect(
+      screen.getByRole("checkbox", { name: "山田 花子を選択" })
+    ).not.toBeChecked();
+    expect(screen.getByText("0名選択中")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "設定を保存" })
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText("参加者設定を保存しました。")
+    ).not.toBeInTheDocument();
+  });
+
+  it("完了表示を5秒後に通常表示へ戻す", async () => {
+    const gateway = createGateway();
+
+    render(
+      <MemoryRouter>
+        <CompetitionAssignmentPage gateway={gateway} />
+      </MemoryRouter>
+    );
+
+    fireEvent.change(await screen.findByLabelText("集合時間"), {
+      target: { value: "08:50" },
+    });
+    fireEvent.click(screen.getByRole("checkbox", { name: "山田 花子を選択" }));
+
+    vi.useFakeTimers();
+    try {
+      await act(async () => {
+        fireEvent.click(screen.getByRole("button", { name: "設定を保存" }));
+      });
+
+      expect(screen.getByRole("button", { name: "完了" })).toBeInTheDocument();
+
+      act(() => {
+        vi.advanceTimersByTime(4999);
+      });
+      expect(screen.getByRole("button", { name: "完了" })).toBeInTheDocument();
+
+      act(() => {
+        vi.advanceTimersByTime(1);
+      });
+      expect(
+        screen.getByRole("button", { name: "設定を保存" })
+      ).toBeInTheDocument();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });
