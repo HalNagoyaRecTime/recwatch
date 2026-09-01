@@ -65,11 +65,11 @@ function renderPage(
 }
 
 describe("ScheduleManagementPage", () => {
-  it("スケジュール一覧として表示する", async () => {
+  it("スケジュール管理として表示する", async () => {
     renderPage(createGateway());
 
     expect(
-      screen.getByRole("heading", { name: "スケジュール一覧" })
+      screen.getByRole("heading", { name: "スケジュール管理" })
     ).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "新規登録" })).toHaveAttribute(
       "href",

@@ -1,9 +1,10 @@
+import { createPageTitle } from "~/lib/page-title";
 import { MembersPage } from "~/features/members/pages/MembersPage";
 import { PagePadding } from "~/features/frame/page-layout/PagePadding";
 import { PageLayout } from "~/features/frame/page-layout/PageLayout";
 
 export function meta() {
-  return [{ title: "学生管理 | recwatch" }];
+  return [{ title: createPageTitle("学生管理") }];
 }
 
 export default function MembersRoute() {

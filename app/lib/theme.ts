@@ -33,4 +33,5 @@ export function applyTheme(theme: ThemeMode) {
 
   root.classList.toggle("dark", isDark);
   root.dataset.theme = theme;
+  root.style.colorScheme = isDark ? "dark" : "light";
 }

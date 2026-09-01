@@ -39,6 +39,7 @@ export function Layout({ children }: { children: ReactNode }) {
                     window.matchMedia("(prefers-color-scheme: dark)").matches);
                 root.classList.toggle("dark", isDark);
                 root.dataset.theme = theme;
+                root.style.colorScheme = isDark ? "dark" : "light";
               })();
             `,
           }}
