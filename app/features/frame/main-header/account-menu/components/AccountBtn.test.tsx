@@ -41,15 +41,23 @@ describe("AccountBtn", () => {
     expect(screen.getAllByRole("dialog")).toHaveLength(2);
 
     await user.tab();
-    expect(screen.getByRole("button", { name: "ライト" })).toHaveFocus();
+    const lightTheme = screen.getByRole("button", { name: "ライト" });
+    expect(lightTheme).toHaveFocus();
+    expect(lightTheme).toHaveClass("focus-visible:bg-surface-hover");
 
-    await user.keyboard("{ArrowDown}");
+    await user.tab();
     expect(screen.getByRole("button", { name: "ダーク" })).toHaveFocus();
 
-    await user.keyboard("{ArrowDown}");
+    await user.tab();
     expect(screen.getByRole("button", { name: "システム" })).toHaveFocus();
 
     await user.keyboard("{ArrowUp}");
+    expect(screen.getByRole("button", { name: "ダーク" })).toHaveFocus();
+
+    await user.keyboard("{ArrowUp}");
+    expect(screen.getByRole("button", { name: "ライト" })).toHaveFocus();
+
+    await user.keyboard("{ArrowDown}");
     expect(screen.getByRole("button", { name: "ダーク" })).toHaveFocus();
   }, 10000);
 
