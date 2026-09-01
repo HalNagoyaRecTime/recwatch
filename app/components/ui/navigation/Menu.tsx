@@ -1,8 +1,11 @@
 import {
   createElement,
   forwardRef,
+  useRef,
+  useState,
   type ComponentType,
   type ComponentPropsWithoutRef,
+  type KeyboardEvent,
   type ReactNode,
   type ElementType,
 } from "react";
@@ -50,15 +53,53 @@ export type MenuItemType =
 
 type MenuProps = {
   items: MenuItemType[];
+  /** 矢印キーでaction項目を移動するメニューです。 */
+  keyboardNavigation?: boolean;
 };
 
 /**
  * 1階層のシンプルなリスト（メニュー）を描画する汎用コンポーネントです。
  * 項目は配列（items）として渡し、データ駆動で描画します。
  */
-export function Menu({ items }: MenuProps) {
+export function Menu({ items, keyboardNavigation = false }: MenuProps) {
+  const actionRefs = useRef<Array<HTMLButtonElement | null>>([]);
+  const [activeActionIndex, setActiveActionIndex] = useState(0);
+  const actionItems = items.filter(
+    (item) => item.type === "action" && !item.disabled
+  );
+  const actionIndexById = new Map(
+    actionItems.map((item, index) => [item.id, index])
+  );
+
+  const moveAction = (nextIndex: number) => {
+    setActiveActionIndex(nextIndex);
+    actionRefs.current[nextIndex]?.focus();
+  };
+
+  const getActionKeyDown = (index: number) => {
+    if (!keyboardNavigation) {
+      return undefined;
+    }
+
+    return (event: KeyboardEvent<HTMLButtonElement>) => {
+      const actionCount = actionItems.length;
+      if (actionCount === 0) {
+        return;
+      }
+
+      if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+        event.preventDefault();
+        const direction = event.key === "ArrowDown" ? 1 : -1;
+        moveAction((index + direction + actionCount) % actionCount);
+      } else if (event.key === "Home" || event.key === "End") {
+        event.preventDefault();
+        moveAction(event.key === "Home" ? 0 : actionCount - 1);
+      }
+    };
+  };
+
   return (
-    <FloatingListSurface>
+    <FloatingListSurface role={keyboardNavigation ? "menu" : undefined}>
       {items.map((item) => {
         if (item.type === "custom") {
           return <div key={item.id}>{item.content}</div>;
@@ -70,6 +111,7 @@ export function Menu({ items }: MenuProps) {
           );
         }
 
+        const currentActionIndex = actionIndexById.get(item.id);
         return (
           <MenuActionItem
             key={item.id}
@@ -78,7 +120,24 @@ export function Menu({ items }: MenuProps) {
             endIcon={item.endIcon}
             danger={item.danger}
             disabled={item.disabled}
+            onKeyDown={
+              currentActionIndex === undefined
+                ? undefined
+                : getActionKeyDown(currentActionIndex)
+            }
             onClick={item.onClick}
+            ref={(element) => {
+              if (currentActionIndex !== undefined) {
+                actionRefs.current[currentActionIndex] = element;
+              }
+            }}
+            tabIndex={
+              keyboardNavigation
+                ? currentActionIndex === activeActionIndex
+                  ? 0
+                  : -1
+                : undefined
+            }
           />
         );
       })}
