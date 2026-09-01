@@ -210,4 +210,126 @@ describe("CompetitionAssignmentPage", () => {
       vi.useRealTimers();
     }
   });
+
+  describe("saveAssignment のバリデーション（未入力項目ごと）", () => {
+    it("集合時間だけ未入力の場合、集合時間のみのエラーを表示する", async () => {
+      const gateway = createGateway();
+      const user = userEvent.setup();
+      render(
+        <MemoryRouter>
+          <CompetitionAssignmentPage gateway={gateway} />
+        </MemoryRouter>
+      );
+      await screen.findByRole("heading", { name: "参加者設定" });
+      await user.click(
+        screen.getByRole("checkbox", { name: "山田 花子を選択" })
+      );
+
+      await user.click(screen.getByRole("button", { name: "設定を保存" }));
+      expect(
+        screen.getByText("集合時間を選択してください。")
+      ).toBeInTheDocument();
+      expect(gateway.save).not.toHaveBeenCalled();
+    });
+
+    it("参加者だけ未入力の場合、参加者のみのエラーを表示する", async () => {
+      const gateway = createGateway();
+      const user = userEvent.setup();
+      render(
+        <MemoryRouter>
+          <CompetitionAssignmentPage gateway={gateway} />
+        </MemoryRouter>
+      );
+      await screen.findByRole("heading", { name: "参加者設定" });
+      fireEvent.change(screen.getByLabelText("集合時間"), {
+        target: { value: "08:50" },
+      });
+
+      await user.click(screen.getByRole("button", { name: "設定を保存" }));
+      expect(
+        screen.getByText("参加者を選択してください。")
+      ).toBeInTheDocument();
+      expect(gateway.save).not.toHaveBeenCalled();
+    });
+
+    it("イベントだけ未入力の場合、イベントのみのエラーを表示する", async () => {
+      const gateway = createGateway();
+      vi.mocked(gateway.load).mockResolvedValue({
+        classrooms: [{ id: 1, name: "1年A組" }],
+        students: [
+          {
+            attendanceNumber: 3,
+            classroomId: 1,
+            id: 2,
+            name: "山田 花子",
+            studentNumber: "S001",
+            userId: 12,
+          },
+        ],
+        events: [],
+        spots: [{ id: 5, name: "正門前" }],
+        gatherings: [],
+      });
+      const user = userEvent.setup();
+      render(
+        <MemoryRouter>
+          <CompetitionAssignmentPage gateway={gateway} />
+        </MemoryRouter>
+      );
+      await screen.findByRole("heading", { name: "参加者設定" });
+      fireEvent.change(screen.getByLabelText("集合時間"), {
+        target: { value: "08:50" },
+      });
+      await user.click(
+        screen.getByRole("checkbox", { name: "山田 花子を選択" })
+      );
+
+      await user.click(screen.getByRole("button", { name: "設定を保存" }));
+      expect(
+        screen.getByText("イベントを選択してください。")
+      ).toBeInTheDocument();
+      expect(gateway.save).not.toHaveBeenCalled();
+    });
+
+    it("集合場所だけ未入力の場合、集合場所のみのエラーを表示する", async () => {
+      const gateway = createGateway();
+      vi.mocked(gateway.load).mockResolvedValue({
+        classrooms: [{ id: 1, name: "1年A組" }],
+        students: [
+          {
+            attendanceNumber: 3,
+            classroomId: 1,
+            id: 2,
+            name: "山田 花子",
+            studentNumber: "S001",
+            userId: 12,
+          },
+        ],
+        events: [
+          { id: 4, name: "リレー", startTime: "09:10", venue: "グラウンド" },
+        ],
+        spots: [],
+        gatherings: [],
+      });
+      const user = userEvent.setup();
+      render(
+        <MemoryRouter>
+          <CompetitionAssignmentPage gateway={gateway} />
+        </MemoryRouter>
+      );
+      await screen.findByRole("heading", { name: "参加者設定" });
+      fireEvent.change(screen.getByLabelText("集合時間"), {
+        target: { value: "08:50" },
+      });
+      await user.click(
+        screen.getByRole("checkbox", { name: "山田 花子を選択" })
+      );
+      // 集合場所は選択肢が無いため未入力のまま保存する
+      await user.click(screen.getByRole("button", { name: "設定を保存" }));
+      expect(
+        screen.getByText("集合場所を選択してください。")
+      ).toBeInTheDocument();
+      expect(gateway.save).not.toHaveBeenCalled();
+    });
+  });
 });
