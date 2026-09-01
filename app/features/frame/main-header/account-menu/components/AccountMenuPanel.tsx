@@ -6,6 +6,7 @@ import {
   MoonStarIcon,
   SunMediumIcon,
 } from "lucide-react";
+import { useState, type PointerEvent } from "react";
 
 import {
   Menu,
@@ -32,6 +33,9 @@ export function AccountMenuPanel({
   onLogout,
 }: AccountMenuPanelProps) {
   const { theme, setTheme } = useThemeMode();
+  const [themeInteraction, setThemeInteraction] = useState<"hover" | "click">(
+    "hover"
+  );
 
   const ThemeIcon =
     theme === "dark"
@@ -98,7 +102,7 @@ export function AccountMenuPanel({
       content: (
         <FloatingPanel
           placement="right-start"
-          interaction="hover"
+          interaction={themeInteraction}
           offsetValue={6}
           triggerClassName="block w-full"
           trigger={
@@ -112,6 +116,11 @@ export function AccountMenuPanel({
                   className="text-text-subtle"
                 />
               }
+              onPointerDown={(event: PointerEvent<HTMLButtonElement>) => {
+                setThemeInteraction(
+                  event.pointerType === "mouse" ? "hover" : "click"
+                );
+              }}
             />
           }
           content={<Menu items={themeMenuItems} />}
