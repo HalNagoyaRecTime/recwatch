@@ -12,10 +12,10 @@ export function AccountProfileHeader({
 }: AccountProfileHeaderProps) {
   return (
     <div className="px-2 py-2">
-      <div className="flex h-10 items-center gap-3">
+      <div className="flex h-10 min-w-0 items-center gap-3">
         <AccountAvatar account={account} photoUrl={photoUrl} />
-        <div className="flex h-full flex-col justify-between pr-4">
-          <span className="app-text-small text-text-base relative -top-1 block h-2 font-semibold whitespace-nowrap">
+        <div className="flex h-full min-w-0 flex-1 flex-col justify-between pr-4">
+          <span className="app-text-small text-text-base relative -top-1 block max-w-full min-w-0 truncate font-semibold whitespace-nowrap">
             {account.name}
           </span>
           {/* 未実装ロール機能のためコメントアウト */}
