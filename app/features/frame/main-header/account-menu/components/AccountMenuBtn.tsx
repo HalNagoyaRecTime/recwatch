@@ -27,7 +27,7 @@ export const AccountMenuBtn = forwardRef<
       type="button"
       {...buttonProps}
       className={cn(
-        "app-rounded text-text-base relative flex h-full cursor-pointer items-center gap-2 overflow-hidden rounded-l-[20px]! bg-transparent transition",
+        "app-rounded text-text-base relative flex h-full w-8 shrink-0 cursor-pointer items-center justify-center gap-2 overflow-hidden rounded-full! bg-transparent transition md:w-auto md:max-w-52 md:justify-start md:rounded-l-[20px]!",
         "hover:border-border-strong hover:bg-surface-hover",
         isOpen ? "bg-surface-hover" : "",
         className
@@ -47,13 +47,13 @@ export const AccountMenuBtn = forwardRef<
         className="absolute z-20"
       />
 
-      <span className="text-text-base z-15 pl-9 text-xs font-semibold whitespace-nowrap">
+      <span className="text-text-base z-15 hidden max-w-40 min-w-0 truncate pl-9 text-xs font-semibold md:block">
         {account.name}
       </span>
       <ChevronDownIcon
         size={14}
         strokeWidth={1.8}
-        className="text-text-subtle z-15 mr-2 shrink-0"
+        className="text-text-subtle z-15 mr-2 hidden shrink-0 md:block"
       />
     </button>
   );
