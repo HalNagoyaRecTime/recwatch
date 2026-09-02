@@ -19,7 +19,9 @@ describe("AccountMenuBtn", () => {
 
     const button = screen.getByRole("button");
     const name = screen.getByText("とても長いユーザー名");
+    const chevron = button.querySelector("svg");
 
+    expect(button).toHaveAccessibleName("アカウントメニュー");
     expect(button).toHaveClass(
       "w-8",
       "md:w-fit",
@@ -30,7 +32,20 @@ describe("AccountMenuBtn", () => {
     );
     expect(button).not.toHaveClass("app-rounded");
     expect(name).toHaveClass("hidden", "min-w-0", "truncate", "md:block");
-    expect(button.querySelector("svg")).toHaveClass("hidden", "md:block");
+    expect(chevron).toHaveClass("hidden", "md:block");
+    expect(chevron).toHaveAttribute("aria-hidden", "true");
+  });
+
+  it("既存のaria-labelを指定した場合は上書きしない", () => {
+    render(
+      <AccountMenuBtn
+        account={getAccountBtnData()}
+        isOpen={false}
+        aria-label="ユーザーメニュー"
+      />
+    );
+
+    expect(screen.getByRole("button")).toHaveAccessibleName("ユーザーメニュー");
   });
 
   it("開いた状態では外周ボーダーを強調する", () => {

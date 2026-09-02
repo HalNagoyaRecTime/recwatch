@@ -29,7 +29,7 @@ describe("AccountMenu", () => {
     const user = userEvent.setup();
     renderAccountButton();
 
-    const trigger = screen.getByRole("button", { name: "ユーザー" });
+    const trigger = screen.getByRole("button", { name: "アカウントメニュー" });
     await user.click(trigger);
 
     expect(trigger).toHaveFocus();
@@ -65,7 +65,7 @@ describe("AccountMenu", () => {
     const user = userEvent.setup();
     renderAccountButton();
 
-    const trigger = screen.getByRole("button", { name: "ユーザー" });
+    const trigger = screen.getByRole("button", { name: "アカウントメニュー" });
     await user.click(trigger);
     await user.keyboard("{Escape}");
 
@@ -78,7 +78,7 @@ describe("AccountMenu", () => {
     const user = userEvent.setup();
     renderAccountButton();
 
-    const trigger = screen.getByRole("button", { name: "ユーザー" });
+    const trigger = screen.getByRole("button", { name: "アカウントメニュー" });
     await user.click(trigger);
     await user.tab();
     const themeTrigger = screen.getByRole("button", { name: "テーマ設定" });
@@ -97,7 +97,9 @@ describe("AccountMenu", () => {
     const user = userEvent.setup();
     renderAccountButton();
 
-    await user.click(screen.getByRole("button", { name: "ユーザー" }));
+    await user.click(
+      screen.getByRole("button", { name: "アカウントメニュー" })
+    );
     await user.tab();
     const themeTrigger = screen.getByRole("button", { name: "テーマ設定" });
 
@@ -113,7 +115,9 @@ describe("AccountMenu", () => {
     const user = userEvent.setup();
     renderAccountButton();
 
-    await user.click(screen.getByRole("button", { name: "ユーザー" }));
+    await user.click(
+      screen.getByRole("button", { name: "アカウントメニュー" })
+    );
     await user.tab();
     const themeTrigger = screen.getByRole("button", { name: "テーマ設定" });
 
@@ -133,7 +137,9 @@ describe("AccountMenu", () => {
     const user = userEvent.setup();
     renderAccountButton();
 
-    const accountTrigger = screen.getByRole("button", { name: "ユーザー" });
+    const accountTrigger = screen.getByRole("button", {
+      name: "アカウントメニュー",
+    });
     await user.click(accountTrigger);
     await user.tab();
 
@@ -147,7 +153,9 @@ describe("AccountMenu", () => {
     const user = userEvent.setup();
     renderAccountButton();
 
-    await user.click(screen.getByRole("button", { name: "ユーザー" }));
+    await user.click(
+      screen.getByRole("button", { name: "アカウントメニュー" })
+    );
     await user.tab();
     await user.keyboard("{ArrowLeft}");
 
@@ -158,7 +166,9 @@ describe("AccountMenu", () => {
     const user = userEvent.setup();
     renderAccountButton();
 
-    await user.click(screen.getByRole("button", { name: "ユーザー" }));
+    await user.click(
+      screen.getByRole("button", { name: "アカウントメニュー" })
+    );
     await user.tab();
     const themeTrigger = screen.getByRole("button", { name: "テーマ設定" });
     await user.keyboard("{ArrowDown}");
@@ -174,7 +184,9 @@ describe("AccountMenu", () => {
     const user = userEvent.setup();
     renderAccountButton();
 
-    const accountTrigger = screen.getByRole("button", { name: "ユーザー" });
+    const accountTrigger = screen.getByRole("button", {
+      name: "アカウントメニュー",
+    });
     accountTrigger.focus();
     await user.keyboard("{ArrowDown}");
 
@@ -189,7 +201,9 @@ describe("AccountMenu", () => {
       </ThemeContext.Provider>
     );
 
-    await user.click(screen.getByRole("button", { name: "ユーザー" }));
+    await user.click(
+      screen.getByRole("button", { name: "アカウントメニュー" })
+    );
     await user.tab();
     await user.keyboard("{ArrowRight}");
 
@@ -200,7 +214,7 @@ describe("AccountMenu", () => {
     const user = userEvent.setup();
     renderAccountButton();
 
-    const trigger = screen.getByRole("button", { name: "ユーザー" });
+    const trigger = screen.getByRole("button", { name: "アカウントメニュー" });
     await user.click(trigger);
     await user.tab();
 
