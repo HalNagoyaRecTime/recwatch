@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { FloatingTree } from "@floating-ui/react";
 
 import { FloatingPanel } from "~/components/ui/panel/FloatingPanel";
@@ -19,27 +19,8 @@ export function AccountBtn({ user, onLogout }: AccountBtnProps) {
   const account = getAccountBtnData(user);
   const photoUrl = useAccountPhoto(user);
   const [isOpen, setIsOpen] = useState(false);
-  const [initialFocus, setInitialFocus] = useState(-1);
-  const focusThemeOnOpen = useRef(false);
-
-  const focusThemeTrigger = () => {
-    document
-      .querySelector<HTMLButtonElement>('[data-menu-item-id="theme-switcher"]')
-      ?.focus();
-  };
-
-  useEffect(() => {
-    if (!isOpen || !focusThemeOnOpen.current) {
-      return;
-    }
-
-    const frame = requestAnimationFrame(() => {
-      focusThemeOnOpen.current = false;
-      focusThemeTrigger();
-    });
-
-    return () => cancelAnimationFrame(frame);
-  }, [isOpen]);
+  const themeTriggerRef = useRef<HTMLButtonElement | null>(null);
+  const [focusThemeOnOpen, setFocusThemeOnOpen] = useState(false);
 
   return (
     <FloatingTree>
@@ -48,11 +29,10 @@ export function AccountBtn({ user, onLogout }: AccountBtnProps) {
         onOpenChange={(open) => {
           setIsOpen(open);
           if (!open) {
-            setInitialFocus(-1);
-            focusThemeOnOpen.current = false;
+            setFocusThemeOnOpen(false);
           }
         }}
-        initialFocus={initialFocus}
+        initialFocus={-1}
         scrollable
         placement="bottom-end"
         interaction="click"
@@ -68,10 +48,9 @@ export function AccountBtn({ user, onLogout }: AccountBtnProps) {
 
               event.preventDefault();
               if (isOpen) {
-                focusThemeTrigger();
+                themeTriggerRef.current?.focus();
               } else {
-                focusThemeOnOpen.current = true;
-                setInitialFocus(0);
+                setFocusThemeOnOpen(true);
                 setIsOpen(true);
               }
             }}
@@ -81,6 +60,8 @@ export function AccountBtn({ user, onLogout }: AccountBtnProps) {
           <AccountMenuPanel
             account={account}
             photoUrl={photoUrl}
+            focusThemeOnOpen={focusThemeOnOpen}
+            themeTriggerRef={themeTriggerRef}
             onClose={() => setIsOpen(false)}
             onLogout={onLogout}
           />
