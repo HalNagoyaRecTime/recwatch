@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { FloatingPanel } from "./FloatingPanel";
 
@@ -37,6 +37,7 @@ describe("FloatingPanel", () => {
       <FloatingPanel
         content={<div>内容</div>}
         trigger={<button type="button">開く</button>}
+        scrollable
       />
     );
 
@@ -48,5 +49,26 @@ describe("FloatingPanel", () => {
       maxWidth: expect.stringMatching(/px$/),
       overflow: "auto",
     });
+  });
+
+  it("trigger独自のpointerイベントをFloating UIのpropsと合成する", async () => {
+    const user = userEvent.setup();
+    const onPointerDown = vi.fn();
+
+    render(
+      <FloatingPanel
+        content={<div>内容</div>}
+        interaction="both"
+        trigger={
+          <button onPointerDown={onPointerDown} type="button">
+            開く
+          </button>
+        }
+      />
+    );
+
+    await user.click(screen.getByRole("button", { name: "開く" }));
+
+    expect(onPointerDown).toHaveBeenCalled();
   });
 });

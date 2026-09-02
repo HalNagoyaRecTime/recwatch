@@ -25,25 +25,27 @@ import {
   useEffect,
   useState,
   type ReactElement,
+  type HTMLProps,
   type ReactNode,
 } from "react";
 import { cn } from "~/lib/cn";
+import { FloatingPanelContext } from "~/components/ui/panel/FloatingPanelContext";
 
 export type FloatingPanelProps = {
   /** refとインタラクション属性を受け取れる単一の要素です。 */
   trigger: ReactElement;
   content: ReactNode;
   placement?: Placement;
-  interaction?: "click" | "hover";
+  interaction?: "click" | "hover" | "both";
   offsetValue?: number;
-  /** クリックで開くパネルのフォーカス管理。ホバー時は常に無効です。 */
-  focusManagement?: "none" | "non-modal";
   /** 親パネルの外周との重なりを可能な範囲で防ぎます。 */
   avoidParentOverlap?: boolean;
   /** フォーカス管理時に最初にフォーカスする位置です。 */
   initialFocus?: number;
   /** flip後を含む実際の配置を通知します。 */
   onPlacementChange?: (placement: Placement) => void;
+  /** ビューポートを超える内容をパネル内でスクロールさせます。 */
+  scrollable?: boolean;
   isOpen?: boolean;
   onOpenChange?: (open: boolean) => void;
   className?: string;
@@ -56,10 +58,10 @@ export function FloatingPanel({
   placement = "bottom",
   interaction = "click",
   offsetValue = 6,
-  focusManagement = "non-modal",
   avoidParentOverlap = false,
   initialFocus = -1,
   onPlacementChange,
+  scrollable = false,
   isOpen: controlledIsOpen,
   onOpenChange: setControlledIsOpen,
   className,
@@ -127,7 +129,7 @@ export function FloatingPanel({
           Object.assign(elements.floating.style, {
             maxHeight: `${Math.max(0, availableHeight)}px`,
             maxWidth: `${Math.max(0, availableWidth)}px`,
-            overflow: "auto",
+            overflow: scrollable ? "auto" : "visible",
           });
         },
       }),
@@ -138,14 +140,19 @@ export function FloatingPanel({
     onPlacementChange?.(resolvedPlacement);
   }, [onPlacementChange, resolvedPlacement]);
 
+  const hoverEnabled = interaction !== "click";
+  const clickEnabled = interaction !== "hover";
   const hover = useHover(context, {
-    enabled: interaction === "hover",
+    enabled: hoverEnabled,
+    mouseOnly: interaction === "both",
     handleClose: safePolygon(),
   });
-  const click = useClick(context, { enabled: interaction === "click" });
-  // クリックメニューはネストしたPortalへフォーカスが移っても閉じません。
-  // ホバーパネルはキーボード操作のためフォーカス対応を維持します。
-  const focus = useFocus(context, { enabled: interaction === "hover" });
+  const click = useClick(context, {
+    enabled: clickEnabled,
+    ignoreMouse: hoverEnabled,
+  });
+  // クリック・タッチ・キーボードを組み合わせるパネルではフォーカスを管理します。
+  const focus = useFocus(context, { enabled: hoverEnabled });
   // ネストしたFloatingTreeへdismissイベントが伝播するのを防ぎます。
   // 子パネルをPortalへ描画する場合に必要です。
   const dismiss = useDismiss(context, { bubbles: false });
@@ -164,6 +171,7 @@ export function FloatingPanel({
         trigger,
         // eslint-disable-next-line react-hooks/refs
         getReferenceProps({
+          ...(trigger.props as HTMLProps<HTMLElement>),
           // eslint-disable-next-line react-hooks/refs
           ref: refs.setReference,
           className: cn(
@@ -174,8 +182,7 @@ export function FloatingPanel({
       )
     : trigger;
 
-  const shouldManageFocus =
-    interaction === "click" && focusManagement === "non-modal";
+  const shouldManageFocus = interaction !== "hover";
 
   const floatingElement = (
     <div
@@ -186,7 +193,9 @@ export function FloatingPanel({
       data-floating-panel
       className={cn("z-140", className)}
     >
-      {content}
+      <FloatingPanelContext.Provider value={context}>
+        {content}
+      </FloatingPanelContext.Provider>
     </div>
   );
 
