@@ -19,6 +19,7 @@ export function AccountBtn({ user, onLogout }: AccountBtnProps) {
   const account = getAccountBtnData(user);
   const photoUrl = useAccountPhoto(user);
   const [isOpen, setIsOpen] = useState(false);
+  const [initialFocus, setInitialFocus] = useState(-1);
   const focusThemeOnOpen = useRef(false);
 
   const focusThemeTrigger = () => {
@@ -44,7 +45,15 @@ export function AccountBtn({ user, onLogout }: AccountBtnProps) {
     <FloatingTree>
       <FloatingPanel
         isOpen={isOpen}
-        onOpenChange={setIsOpen}
+        onOpenChange={(open) => {
+          setIsOpen(open);
+          if (!open) {
+            setInitialFocus(-1);
+            focusThemeOnOpen.current = false;
+          }
+        }}
+        initialFocus={initialFocus}
+        scrollable
         placement="bottom-end"
         interaction="click"
         trigger={
@@ -58,10 +67,11 @@ export function AccountBtn({ user, onLogout }: AccountBtnProps) {
               }
 
               event.preventDefault();
-              focusThemeOnOpen.current = true;
               if (isOpen) {
                 focusThemeTrigger();
               } else {
+                focusThemeOnOpen.current = true;
+                setInitialFocus(0);
                 setIsOpen(true);
               }
             }}
