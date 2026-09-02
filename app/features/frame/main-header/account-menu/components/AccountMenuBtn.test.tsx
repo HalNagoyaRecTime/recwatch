@@ -12,6 +12,7 @@ describe("AccountMenuBtn", () => {
           display_name: "とても長いユーザー名",
           email: "user@example.com",
           id: "user-1",
+          is_staff: false,
         })}
         isOpen={false}
       />

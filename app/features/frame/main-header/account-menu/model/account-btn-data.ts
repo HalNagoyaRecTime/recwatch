@@ -2,6 +2,7 @@ export type AccountUser = {
   id: string;
   email: string;
   display_name: string;
+  is_staff: boolean;
   avatar_url?: string | null;
   avatar_updated_at?: string | null;
 };
@@ -68,10 +69,10 @@ export function getAccountBtnData(user?: AccountUser | null): AccountBtnData {
 
   return {
     name,
-    role: "",
+    role: user?.is_staff ? "staff" : "",
     imageUrl: undefined,
     abbr_label: getInitials(name),
-    borderColor: "var(--border-strong)",
+    borderColor: "var(--brand-primary)",
     bgColor: "var(--surface-brand-soft)",
     textColor: "var(--brand-primary)",
   };
