@@ -17,7 +17,9 @@ import {
   useFloatingTree,
   FloatingFocusManager,
   size,
+  useMergeRefs,
   type Placement,
+  type OpenChangeReason,
 } from "@floating-ui/react";
 import {
   cloneElement,
@@ -26,6 +28,7 @@ import {
   useState,
   type ReactElement,
   type HTMLProps,
+  type Ref,
   type ReactNode,
 } from "react";
 import { cn } from "~/lib/cn";
@@ -47,7 +50,11 @@ export type FloatingPanelProps = {
   /** ビューポートを超える内容をパネル内でスクロールさせます。 */
   scrollable?: boolean;
   isOpen?: boolean;
-  onOpenChange?: (open: boolean) => void;
+  onOpenChange?: (
+    open: boolean,
+    event?: Event,
+    reason?: OpenChangeReason
+  ) => void;
   className?: string;
   triggerClassName?: string;
 };
@@ -69,7 +76,17 @@ export function FloatingPanel({
 }: FloatingPanelProps) {
   const [uncontrolledIsOpen, setUncontrolledIsOpen] = useState(false);
   const isOpen = controlledIsOpen ?? uncontrolledIsOpen;
-  const setIsOpen = setControlledIsOpen ?? setUncontrolledIsOpen;
+  const handleOpenChange = (
+    open: boolean,
+    event?: Event,
+    reason?: OpenChangeReason
+  ) => {
+    if (setControlledIsOpen) {
+      setControlledIsOpen(open, event, reason);
+    } else {
+      setUncontrolledIsOpen(open);
+    }
+  };
   const tree = useFloatingTree();
   const nodeId = useFloatingNodeId();
 
@@ -81,7 +98,7 @@ export function FloatingPanel({
   } = useFloating({
     nodeId,
     open: isOpen,
-    onOpenChange: setIsOpen,
+    onOpenChange: handleOpenChange,
     placement,
     whileElementsMounted: autoUpdate,
     middleware: [
@@ -149,7 +166,9 @@ export function FloatingPanel({
   });
   const click = useClick(context, {
     enabled: clickEnabled,
-    ignoreMouse: hoverEnabled,
+    // bothではhover中のmouse clickで閉じず、touch/pen tapをclickへ通します。
+    ignoreMouse: false,
+    toggle: interaction !== "both",
   });
   // クリック・タッチ・キーボードを組み合わせるパネルではフォーカスを管理します。
   const focus = useFocus(context, { enabled: hoverEnabled });
@@ -166,14 +185,19 @@ export function FloatingPanel({
     role,
   ]);
 
+  /* eslint-disable react-hooks/refs */
+  const mergedTriggerRef = useMergeRefs([
+    refs.setReference,
+    (trigger.props as { ref?: Ref<HTMLElement> }).ref,
+  ]);
+  /* eslint-enable react-hooks/refs */
+
   const triggerElement = isValidElement(trigger)
     ? cloneElement(
         trigger,
-        // eslint-disable-next-line react-hooks/refs
         getReferenceProps({
           ...(trigger.props as HTMLProps<HTMLElement>),
-          // eslint-disable-next-line react-hooks/refs
-          ref: refs.setReference,
+          ref: mergedTriggerRef,
           className: cn(
             (trigger.props as { className?: string }).className,
             triggerClassName

@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
@@ -28,6 +28,21 @@ describe("AccountMenuPanel", () => {
     const themeTrigger = screen.getByRole("button", { name: "テーマ設定" });
     await user.pointer({ keys: "[TouchA>]", target: themeTrigger });
     await user.pointer({ keys: "[/TouchA]", target: themeTrigger });
+
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+  });
+
+  it("pen操作でもテーマ設定をtapで開ける", () => {
+    render(
+      <ThemeContext.Provider value={themeContext}>
+        <AccountMenuPanel account={getAccountBtnData()} onClose={vi.fn()} />
+      </ThemeContext.Provider>
+    );
+
+    const themeTrigger = screen.getByRole("button", { name: "テーマ設定" });
+    fireEvent.pointerDown(themeTrigger, { pointerType: "pen" });
+    fireEvent.pointerUp(themeTrigger, { pointerType: "pen" });
+    fireEvent.click(themeTrigger);
 
     expect(screen.getByRole("dialog")).toBeInTheDocument();
   });

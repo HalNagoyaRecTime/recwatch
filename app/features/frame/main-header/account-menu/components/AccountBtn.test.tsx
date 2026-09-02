@@ -108,6 +108,26 @@ describe("AccountBtn", () => {
     expect(screen.getByRole("button", { name: "ライト" })).toHaveFocus();
   }, 10000);
 
+  it("サブメニューのEscapeでテーマ設定へ戻り、親メニューは維持する", async () => {
+    const user = userEvent.setup();
+    renderAccountButton();
+
+    await user.click(screen.getByRole("button", { name: "ユーザー" }));
+    await user.tab();
+    const themeTrigger = screen.getByRole("button", { name: "テーマ設定" });
+
+    await user.keyboard("{ArrowRight}");
+    await user.keyboard("{Escape}");
+
+    expect(themeTrigger).toHaveFocus();
+    expect(
+      screen.queryByRole("button", { name: "ライト" })
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "ログアウト" })
+    ).toBeInTheDocument();
+  }, 10000);
+
   it("テーマ設定で上キーを押すと全体を閉じてアカウントボタンへ戻る", async () => {
     const user = userEvent.setup();
     renderAccountButton();
