@@ -5,7 +5,7 @@ import { AccountMenuBtn } from "./AccountMenuBtn";
 import { getAccountBtnData } from "../model/account-btn-data";
 
 describe("AccountMenuBtn", () => {
-  it("モバイルではアバターのみ、デスクトップでは名前と矢印を表示するクラスを持つ", () => {
+  it("アバター・長い名前・Chevronを同じボタン内で保持する", () => {
     render(
       <AccountMenuBtn
         account={getAccountBtnData({
@@ -23,14 +23,21 @@ describe("AccountMenuBtn", () => {
     expect(button).toHaveClass(
       "w-8",
       "md:w-fit",
-      "md:rounded-l-[20px]!",
-      "md:rounded-r-[8px]!"
+      "md:rounded-l-[20px]",
+      "md:rounded-r-[8px]",
+      "before:border",
+      "before:border-border-base"
     );
-    expect(button.querySelector("div.border")).toHaveClass(
-      "border-border-base",
-      "md:rounded-l-[20px]!",
-      "md:rounded-r-[8px]!"
+    expect(button).not.toHaveClass("app-rounded");
+    expect(name).toHaveClass("hidden", "min-w-0", "truncate", "md:block");
+    expect(button.querySelector("svg")).toHaveClass("hidden", "md:block");
+  });
+
+  it("開いた状態では外周ボーダーを強調する", () => {
+    render(<AccountMenuBtn account={getAccountBtnData()} isOpen />);
+
+    expect(screen.getByRole("button")).toHaveClass(
+      "before:border-border-strong"
     );
-    expect(name).toHaveClass("min-w-0", "max-w-0", "shrink", "truncate");
   });
 });

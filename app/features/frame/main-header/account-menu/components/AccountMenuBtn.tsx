@@ -27,33 +27,27 @@ export const AccountMenuBtn = forwardRef<
       type="button"
       {...buttonProps}
       className={cn(
-        "app-rounded text-text-base relative flex h-full w-8 shrink-0 cursor-pointer items-center justify-center gap-2 overflow-hidden rounded-full! bg-transparent transition-colors md:w-fit md:min-w-0 md:shrink md:justify-start md:rounded-l-[20px]! md:rounded-r-[8px]!",
-        "hover:border-border-strong hover:bg-surface-hover",
+        "text-text-base relative flex h-full w-8 shrink-0 cursor-pointer items-center justify-center gap-2 overflow-hidden rounded-full bg-transparent transition-colors md:w-fit md:min-w-0 md:shrink md:justify-start md:rounded-l-[20px] md:rounded-r-[8px]",
+        "before:border-border-base before:pointer-events-none before:absolute before:inset-0 before:z-10 before:rounded-full before:border md:before:rounded-l-[20px] md:before:rounded-r-[8px]",
+        "hover:bg-surface-hover hover:before:border-border-strong",
         isOpen ? "bg-surface-hover" : "",
+        isOpen ? "before:border-border-strong" : "",
         className
       )}
     >
-      <div
-        className={cn(
-          "absolute z-10 h-full w-full rounded-full! border md:rounded-l-[20px]! md:rounded-r-[8px]!",
-          "border-border-base",
-          isOpen ? "border-border-strong" : ""
-        )}
-      />
-
       <AccountAvatar
         account={account}
         photoUrl={photoUrl}
         className="absolute z-20"
       />
 
-      <span className="text-text-base z-15 max-w-0 min-w-0 shrink truncate overflow-hidden p-0 text-xs font-semibold opacity-0 transition-opacity duration-200 ease-out md:max-w-none md:pl-9 md:opacity-100">
+      <span className="text-text-base z-15 hidden min-w-0 truncate text-xs font-semibold md:block md:pl-9">
         {account.name}
       </span>
       <ChevronDownIcon
         size={14}
         strokeWidth={1.8}
-        className="text-text-subtle z-15 mr-0 max-w-0 overflow-hidden opacity-0 transition-opacity duration-200 ease-out md:mr-2 md:max-w-[14px] md:shrink-0 md:opacity-100"
+        className="text-text-subtle z-15 mr-0 hidden shrink-0 md:mr-2 md:block"
       />
     </button>
   );
