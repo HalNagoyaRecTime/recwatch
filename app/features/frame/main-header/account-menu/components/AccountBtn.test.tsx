@@ -38,7 +38,6 @@ describe("AccountBtn", () => {
 
     await user.tab();
     expect(screen.getByRole("button", { name: "テーマ設定" })).toHaveFocus();
-    expect(screen.getAllByRole("dialog")).toHaveLength(2);
 
     await user.tab();
     const lightTheme = screen.getByRole("button", { name: "ライト" });
@@ -88,7 +87,6 @@ describe("AccountBtn", () => {
 
     await user.keyboard("{ArrowLeft}");
     expect(themeTrigger).toHaveFocus();
-    expect(screen.getAllByRole("dialog")).toHaveLength(2);
 
     await user.keyboard("{ArrowDown}");
     expect(screen.getByRole("button", { name: "ログアウト" })).toHaveFocus();

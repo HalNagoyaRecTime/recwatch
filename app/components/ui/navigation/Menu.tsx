@@ -1,16 +1,23 @@
 import {
   createElement,
   forwardRef,
+  useContext,
   useEffect,
   useRef,
+  useState,
   type ComponentType,
   type ComponentPropsWithoutRef,
-  type KeyboardEvent,
   type KeyboardEventHandler,
   type ReactNode,
   type ElementType,
 } from "react";
+import {
+  useListNavigation,
+  type ElementProps,
+  type FloatingRootContext,
+} from "@floating-ui/react";
 import { FloatingListSurface } from "~/components/ui/panel/FloatingListSurface";
+import { FloatingPanelContext } from "~/components/ui/panel/FloatingPanelContext";
 import { cn } from "~/lib/cn";
 import { floatingListActionItemStyle } from "~/components/ui/panel/styles/floating-list-styles";
 
@@ -55,8 +62,8 @@ export type MenuItemType =
 
 type MenuProps = {
   items: MenuItemType[];
-  /** 矢印キーでaction項目を移動するメニューです。 */
-  keyboardNavigation?: boolean;
+  /** Floating UIのリストナビゲーションを有効にします。 */
+  listNavigation?: boolean;
   /** 表示時または切り替え時に指定したaction項目へフォーカスします。 */
   focusActionIndex?: number;
   onKeyDown?: KeyboardEventHandler<HTMLDivElement>;
@@ -68,54 +75,94 @@ type MenuProps = {
  */
 export function Menu({
   items,
-  keyboardNavigation = false,
+  listNavigation = false,
   focusActionIndex,
   onKeyDown,
 }: MenuProps) {
-  const actionRefs = useRef<Array<HTMLButtonElement | null>>([]);
+  const context = useContext(FloatingPanelContext);
+
+  if (listNavigation && context) {
+    return (
+      <NavigatedMenu
+        context={context}
+        focusActionIndex={focusActionIndex}
+        items={items}
+        onKeyDown={onKeyDown}
+      />
+    );
+  }
+
+  return <MenuContent items={items} onKeyDown={onKeyDown} />;
+}
+
+type NavigatedMenuProps = MenuProps & {
+  context: FloatingRootContext;
+};
+
+function NavigatedMenu({
+  context,
+  focusActionIndex,
+  items,
+  onKeyDown,
+}: NavigatedMenuProps) {
+  const listRef = useRef<Array<HTMLElement | null>>([]);
+  const [activeIndex, setActiveIndex] = useState<number | null>(null);
+  const navigation = useListNavigation(context, {
+    activeIndex,
+    focusItemOnOpen: focusActionIndex !== undefined ? true : "auto",
+    listRef,
+    loop: true,
+    nested: false,
+    onNavigate: setActiveIndex,
+    selectedIndex: focusActionIndex ?? null,
+  });
+
+  useEffect(() => {
+    if (focusActionIndex === undefined) {
+      return;
+    }
+
+    listRef.current[focusActionIndex]?.focus();
+  }, [focusActionIndex]);
+
+  return (
+    <MenuContent
+      items={items}
+      listRef={listRef}
+      navigation={navigation}
+      onKeyDown={onKeyDown}
+    />
+  );
+}
+
+type MenuContentProps = Pick<MenuProps, "items" | "onKeyDown"> & {
+  listRef?: import("react").MutableRefObject<Array<HTMLElement | null>>;
+  navigation?: ElementProps;
+};
+
+function MenuContent({
+  items,
+  listRef,
+  navigation,
+  onKeyDown,
+}: MenuContentProps) {
   const actionItems = items.filter(
     (item) => item.type === "action" && !item.disabled
   );
-  const actionIndexById = new Map(
-    actionItems.map((item, index) => [item.id, index])
-  );
 
-  useEffect(() => {
-    if (focusActionIndex !== undefined) {
-      actionRefs.current[focusActionIndex]?.focus();
-    }
-  }, [focusActionIndex]);
-
-  const moveAction = (nextIndex: number) => {
-    actionRefs.current[nextIndex]?.focus();
-  };
-
-  const getActionKeyDown = (index: number) => {
-    if (!keyboardNavigation) {
-      return undefined;
-    }
-
-    return (event: KeyboardEvent<HTMLButtonElement>) => {
-      const actionCount = actionItems.length;
-      if (actionCount === 0) {
-        return;
-      }
-
-      if (event.key === "ArrowDown" || event.key === "ArrowUp") {
-        event.preventDefault();
-        const direction = event.key === "ArrowDown" ? 1 : -1;
-        moveAction((index + direction + actionCount) % actionCount);
-      } else if (event.key === "Home" || event.key === "End") {
-        event.preventDefault();
-        moveAction(event.key === "Home" ? 0 : actionCount - 1);
-      }
-    };
-  };
+  const navigationOnKeyDown = navigation?.floating?.onKeyDown as
+    | KeyboardEventHandler<HTMLDivElement>
+    | undefined;
 
   return (
     <FloatingListSurface
-      role={keyboardNavigation ? "menu" : undefined}
-      onKeyDown={onKeyDown}
+      {...navigation?.floating}
+      onKeyDown={(event) => {
+        navigationOnKeyDown?.(event);
+        if (!event.defaultPrevented) {
+          onKeyDown?.(event);
+        }
+      }}
     >
       {items.map((item) => {
         if (item.type === "custom") {
@@ -128,13 +175,17 @@ export function Menu({
           );
         }
 
-        const currentActionIndex = actionIndexById.get(item.id);
-        const generatedKeyDown =
-          currentActionIndex === undefined
-            ? undefined
-            : getActionKeyDown(currentActionIndex);
+        const currentActionIndex = listRef
+          ? actionItems.indexOf(item)
+          : undefined;
+        const navigationItemProps =
+          typeof navigation?.item === "function" ? undefined : navigation?.item;
+        const navigationItemOnClick = navigationItemProps?.onClick as
+          | ComponentPropsWithoutRef<"button">["onClick"]
+          | undefined;
         return (
           <MenuActionItem
+            {...navigationItemProps}
             key={item.id}
             label={item.label}
             icon={item.icon}
@@ -142,20 +193,18 @@ export function Menu({
             danger={item.danger}
             disabled={item.disabled}
             data-menu-item-id={item.id}
-            onKeyDown={(event) => {
-              item.onKeyDown?.(event);
-              if (!event.defaultPrevented) {
-                generatedKeyDown?.(event);
-              }
+            onKeyDown={item.onKeyDown}
+            onClick={(event) => {
+              navigationItemOnClick?.(event);
+              item.onClick?.();
             }}
-            onClick={item.onClick}
             ref={(element) => {
-              if (currentActionIndex !== undefined) {
-                actionRefs.current[currentActionIndex] = element;
+              if (listRef && currentActionIndex !== undefined) {
+                listRef.current[currentActionIndex] = element;
               }
             }}
             className={
-              keyboardNavigation ? "focus-visible:bg-surface-hover" : undefined
+              navigation ? "focus-visible:bg-surface-hover" : undefined
             }
           />
         );
@@ -172,7 +221,7 @@ type MenuActionItemProps = Omit<
   icon?: ElementType;
   endIcon?: MenuIconComponent | ReactNode;
   danger?: boolean;
-  onClick?: () => void;
+  onClick?: ComponentPropsWithoutRef<"button">["onClick"];
 };
 
 /**
