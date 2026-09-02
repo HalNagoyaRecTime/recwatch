@@ -1,7 +1,7 @@
 import { cva } from "~/lib/cva";
 
 export const floatingListSurfaceStyle = cva(
-  "border-border-base bg-surface-base app-rounded border p-2 shadow-soft"
+  "border-border-base bg-surface-base app-rounded max-h-[var(--floating-panel-available-height)] max-w-[var(--floating-panel-available-width)] overflow-x-hidden overflow-y-auto border p-2 shadow-soft"
 );
 
 export const floatingListActionItemStyle = cva(
