@@ -30,4 +30,16 @@ describe("getAccountBtnData", () => {
     expect(account.role).toBe("staff");
     expect(account.borderColor).toBe("var(--brand-primary)");
   });
+
+  it("auth/meのis_staffがfalseの場合はstaff表示を無効にする", () => {
+    const account = getAccountBtnData({
+      id: "1",
+      email: "user@example.com",
+      display_name: "一般ユーザー",
+      is_staff: false,
+    });
+
+    expect(account.role).toBe("");
+    expect(account.borderColor).toBe("var(--border-strong)");
+  });
 });
