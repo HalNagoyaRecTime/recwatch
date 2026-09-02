@@ -27,8 +27,8 @@ export const AccountMenuBtn = forwardRef<
       type="button"
       {...buttonProps}
       className={cn(
-        "text-text-base relative flex h-full w-8 shrink-0 cursor-pointer items-center justify-center gap-2 overflow-hidden rounded-full bg-transparent transition-colors md:w-fit md:min-w-0 md:shrink md:justify-start md:rounded-l-[20px] md:rounded-r-[8px]",
-        "before:border-border-base before:pointer-events-none before:absolute before:inset-0 before:z-10 before:rounded-full before:border md:before:rounded-l-[20px] md:before:rounded-r-[8px]",
+        "text-text-base relative flex h-full w-8 shrink-0 cursor-pointer items-center justify-center gap-1 overflow-hidden rounded-full bg-transparent transition-colors md:w-fit md:min-w-0 md:shrink md:justify-start md:rounded-l-[20px] md:rounded-r-[8px]",
+        "before:border-border-base before:pointer-events-none before:absolute before:inset-0 before:z-10 before:rounded-full before:border before:transition-colors before:duration-150 md:before:rounded-l-[20px] md:before:rounded-r-[8px]",
         "hover:bg-surface-hover hover:before:border-border-strong",
         isOpen ? "bg-surface-hover" : "",
         isOpen ? "before:border-border-strong" : "",
