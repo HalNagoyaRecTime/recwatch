@@ -83,6 +83,7 @@ export function FloatingPanel({
       </div>
       {isOpen && (
         <div
+          // Floating UIが提供するfloating callback refをpositioning elementへ接続するため、この行のみrefs ruleを抑制する
           // eslint-disable-next-line react-hooks/refs
           ref={refs.setFloating}
           style={floatingStyles}
