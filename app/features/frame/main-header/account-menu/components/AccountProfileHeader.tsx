@@ -11,10 +11,10 @@ export function AccountProfileHeader({
   photoUrl,
 }: AccountProfileHeaderProps) {
   return (
-    <div className="px-2 py-2">
+    <div className="p-2">
       <div className="flex h-10 min-w-0 items-center gap-3">
         <AccountAvatar account={account} photoUrl={photoUrl} />
-        <div className="flex h-full min-w-0 flex-1 flex-col justify-between pr-4">
+        <div className="flex h-full min-w-0 flex-1 flex-col justify-between pr-1">
           <span className="app-text-small text-text-base relative -top-1 block max-w-full min-w-0 truncate font-semibold whitespace-nowrap">
             {account.name}
           </span>
