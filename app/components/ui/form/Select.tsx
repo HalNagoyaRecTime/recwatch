@@ -187,6 +187,7 @@ export function Select<T extends string>({
       {isOpen && (
         <FloatingPortal>
           <div
+            // Floating UIが提供するfloating callback refをSelectのpositioning elementへ接続するため、この行のみrefs ruleを抑制する
             // eslint-disable-next-line react-hooks/refs
             ref={refs.setFloating}
             style={selectPanelStyle}
