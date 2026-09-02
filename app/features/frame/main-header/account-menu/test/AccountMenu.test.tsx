@@ -88,6 +88,9 @@ describe("AccountMenu", () => {
 
     await user.keyboard("{ArrowLeft}");
     expect(themeTrigger).toHaveFocus();
+    expect(
+      screen.queryByRole("button", { name: "ライト" })
+    ).not.toBeInTheDocument();
 
     await user.keyboard("{ArrowDown}");
     expect(screen.getByRole("button", { name: "ログアウト" })).toHaveFocus();
