@@ -8,13 +8,15 @@ import {
   type ComponentType,
   type ComponentPropsWithoutRef,
   type KeyboardEventHandler,
+  type Ref,
   type ReactNode,
   type ElementType,
 } from "react";
 import {
   useListNavigation,
-  type ElementProps,
+  useInteractions,
   type FloatingRootContext,
+  type UseInteractionsReturn,
 } from "@floating-ui/react";
 import { FloatingListSurface } from "~/components/ui/panel/FloatingListSurface";
 import { FloatingPanelContext } from "~/components/ui/panel/FloatingPanelContext";
@@ -42,6 +44,7 @@ export type MenuItemType =
       endIcon?: MenuIconComponent | ReactNode;
       danger?: boolean;
       disabled?: boolean;
+      ref?: Ref<HTMLButtonElement>;
       onClick?: () => void;
       onKeyDown?: KeyboardEventHandler<HTMLButtonElement>;
     }
@@ -68,7 +71,11 @@ type MenuProps = {
   focusActionIndex?: number;
   /** 同じ項目へ再度フォーカスするための要求番号です。 */
   focusActionRequest?: number;
-  onKeyDown?: KeyboardEventHandler<HTMLDivElement>;
+  /** 親のリストと接続したネストナビゲーションを有効にします。 */
+  nested?: boolean;
+  /** 配置方向が左向きのときはRTLとして左右キーを反転します。 */
+  rtl?: boolean;
+  onKeyDown?: KeyboardEventHandler<HTMLElement>;
 };
 
 /**
@@ -80,6 +87,8 @@ export function Menu({
   listNavigation = false,
   focusActionIndex,
   focusActionRequest,
+  nested = false,
+  rtl = false,
   onKeyDown,
 }: MenuProps) {
   const context = useContext(FloatingPanelContext);
@@ -90,6 +99,8 @@ export function Menu({
         context={context}
         focusActionIndex={focusActionIndex}
         focusActionRequest={focusActionRequest}
+        nested={nested}
+        rtl={rtl}
         items={items}
         onKeyDown={onKeyDown}
       />
@@ -107,6 +118,8 @@ function NavigatedMenu({
   context,
   focusActionIndex,
   focusActionRequest,
+  nested,
+  rtl,
   items,
   onKeyDown,
 }: NavigatedMenuProps) {
@@ -117,10 +130,13 @@ function NavigatedMenu({
     focusItemOnOpen: focusActionIndex !== undefined ? true : "auto",
     listRef,
     loop: true,
-    nested: false,
+    nested,
     onNavigate: setActiveIndex,
+    rtl,
     selectedIndex: focusActionIndex ?? null,
   });
+
+  const interactions = useInteractions([navigation]);
 
   useEffect(() => {
     if (focusActionIndex === undefined) {
@@ -134,7 +150,7 @@ function NavigatedMenu({
     <MenuContent
       items={items}
       listRef={listRef}
-      navigation={navigation}
+      interactions={interactions}
       onKeyDown={onKeyDown}
     />
   );
@@ -142,32 +158,34 @@ function NavigatedMenu({
 
 type MenuContentProps = Pick<MenuProps, "items" | "onKeyDown"> & {
   listRef?: import("react").MutableRefObject<Array<HTMLElement | null>>;
-  navigation?: ElementProps;
+  interactions?: Pick<
+    UseInteractionsReturn,
+    "getFloatingProps" | "getItemProps"
+  >;
 };
 
 function MenuContent({
   items,
   listRef,
-  navigation,
+  interactions,
   onKeyDown,
 }: MenuContentProps) {
   const actionItems = items.filter(
     (item) => item.type === "action" && !item.disabled
   );
 
-  const navigationOnKeyDown = navigation?.floating?.onKeyDown as
-    | KeyboardEventHandler<HTMLDivElement>
-    | undefined;
+  const floatingProps = interactions?.getFloatingProps({
+    onKeyDown: (event) => {
+      if (!event.defaultPrevented) {
+        onKeyDown?.(event);
+      }
+    },
+  });
 
   return (
     <FloatingListSurface
-      {...navigation?.floating}
-      onKeyDown={(event) => {
-        navigationOnKeyDown?.(event);
-        if (!event.defaultPrevented) {
-          onKeyDown?.(event);
-        }
-      }}
+      {...floatingProps}
+      {...(!floatingProps && { onKeyDown })}
     >
       {items.map((item) => {
         if (item.type === "custom") {
@@ -183,14 +201,18 @@ function MenuContent({
         const currentActionIndex = listRef
           ? actionItems.indexOf(item)
           : undefined;
-        const navigationItemProps =
-          typeof navigation?.item === "function" ? undefined : navigation?.item;
-        const navigationItemOnClick = navigationItemProps?.onClick as
-          | ComponentPropsWithoutRef<"button">["onClick"]
-          | undefined;
+        const itemProps = interactions
+          ? interactions.getItemProps({
+              onClick: () => item.onClick?.(),
+              onKeyDown: item.onKeyDown,
+            })
+          : {
+              onClick: () => item.onClick?.(),
+              onKeyDown: item.onKeyDown,
+            };
         return (
           <MenuActionItem
-            {...navigationItemProps}
+            {...itemProps}
             key={item.id}
             label={item.label}
             icon={item.icon}
@@ -198,24 +220,28 @@ function MenuContent({
             danger={item.danger}
             disabled={item.disabled}
             data-menu-item-id={item.id}
-            onKeyDown={item.onKeyDown}
-            onClick={(event) => {
-              navigationItemOnClick?.(event);
-              item.onClick?.();
-            }}
             ref={(element) => {
               if (listRef && currentActionIndex !== undefined) {
                 listRef.current[currentActionIndex] = element;
               }
+              assignRef(item.ref, element);
             }}
             className={
-              navigation ? "focus-visible:bg-surface-hover" : undefined
+              interactions ? "focus-visible:bg-surface-hover" : undefined
             }
           />
         );
       })}
     </FloatingListSurface>
   );
+}
+
+function assignRef<T>(ref: Ref<T> | undefined, value: T | null) {
+  if (typeof ref === "function") {
+    ref(value);
+  } else if (ref) {
+    ref.current = value;
+  }
 }
 
 type MenuActionItemProps = Omit<
