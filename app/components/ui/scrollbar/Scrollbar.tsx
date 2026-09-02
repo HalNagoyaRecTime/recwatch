@@ -15,10 +15,16 @@ type ScrollbarProps = {
   isDragging: boolean;
   /** 縦スクロールバーのトラック下端に空ける余白（px） */
   verticalTrackInsetBottom?: number;
-  /** サムのmousedownハンドラー */
-  onThumbMouseDown: (e: React.MouseEvent) => void;
-  /** トラックのmousedownハンドラー */
-  onTrackMouseDown: (e: React.MouseEvent) => void;
+  /** サムのpointerdownハンドラー */
+  onThumbPointerDown: (e: React.PointerEvent) => void;
+  /** サムのpointermoveハンドラー */
+  onThumbPointerMove: (e: React.PointerEvent) => void;
+  /** サムのpointerupハンドラー */
+  onThumbPointerUp: (e: React.PointerEvent) => void;
+  /** サムのpointercancelハンドラー */
+  onThumbPointerCancel: (e: React.PointerEvent) => void;
+  /** トラックのpointerdownハンドラー */
+  onTrackPointerDown: (e: React.PointerEvent) => void;
 };
 
 /**
@@ -33,8 +39,11 @@ export function Scrollbar({
   isVisible,
   isDragging,
   verticalTrackInsetBottom = 0,
-  onThumbMouseDown,
-  onTrackMouseDown,
+  onThumbPointerDown,
+  onThumbPointerMove,
+  onThumbPointerUp,
+  onThumbPointerCancel,
+  onTrackPointerDown,
 }: ScrollbarProps) {
   const isVertical = orientation === "vertical";
   const needsScrollbar = thumbSize > 0;
@@ -44,8 +53,11 @@ export function Scrollbar({
     <div
       ref={trackRef}
       className={cn(
-        "pointer-events-auto absolute cursor-default transition-opacity duration-200",
+        "absolute cursor-default transition-opacity duration-200",
         isVertical ? "top-1 right-0.5 w-1.5" : "inset-x-1 bottom-0.5 h-1.5",
+        needsScrollbar && isVisible
+          ? "pointer-events-auto"
+          : "pointer-events-none",
         isVisible ? "opacity-100" : "opacity-0"
       )}
       style={
@@ -53,13 +65,13 @@ export function Scrollbar({
           ? { bottom: `calc(${verticalTrackInsetBottom}px + 0.25rem)` }
           : undefined
       }
-      onMouseDown={onTrackMouseDown}
+      onPointerDown={onTrackPointerDown}
     >
       {/* サム：スクロール不要なら描画しない */}
       {needsScrollbar && (
         <div
           className={cn(
-            "pointer-events-auto absolute rounded-full transition-colors duration-150",
+            "pointer-events-auto absolute touch-none rounded-full transition-colors duration-150",
             isVertical ? "inset-x-0" : "inset-y-0",
             isDragging ? "bg-text-3/70" : "bg-text-3/40 hover:bg-text-3/60"
           )}
@@ -74,7 +86,10 @@ export function Scrollbar({
                   left: thumbOffset,
                 }
           }
-          onMouseDown={onThumbMouseDown}
+          onPointerDown={onThumbPointerDown}
+          onPointerMove={onThumbPointerMove}
+          onPointerUp={onThumbPointerUp}
+          onPointerCancel={onThumbPointerCancel}
         />
       )}
     </div>
