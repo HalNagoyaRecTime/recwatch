@@ -6,7 +6,7 @@ import {
   MoonStarIcon,
   SunMediumIcon,
 } from "lucide-react";
-import { useRef, useState, type KeyboardEvent, type PointerEvent } from "react";
+import { useRef, useState, type KeyboardEvent } from "react";
 import type { Placement } from "@floating-ui/react";
 
 import {
@@ -34,17 +34,11 @@ export function AccountMenuPanel({
   onLogout,
 }: AccountMenuPanelProps) {
   const { theme, setTheme } = useThemeMode();
-  const lastPointerType = useRef<string | null>(null);
   const themeTriggerRef = useRef<HTMLButtonElement | null>(null);
-  const suppressNextThemeFocusOpen = useRef(false);
   const [isThemeOpen, setIsThemeOpen] = useState(false);
-  const [themeInitialFocus, setThemeInitialFocus] = useState(-1);
   const [themeFocusIndex, setThemeFocusIndex] = useState<number | undefined>();
   const [themePlacement, setThemePlacement] =
     useState<Placement>("right-start");
-  const [themeInteraction, setThemeInteraction] = useState<"hover" | "click">(
-    "hover"
-  );
 
   const ThemeIcon =
     theme === "dark"
@@ -128,15 +122,14 @@ export function AccountMenuPanel({
           onOpenChange={(open) => {
             setIsThemeOpen(open);
             if (!open) {
-              setThemeInitialFocus(-1);
               setThemeFocusIndex(undefined);
             }
           }}
           avoidParentOverlap
-          initialFocus={themeInitialFocus}
           onPlacementChange={setThemePlacement}
           placement="right-start"
-          interaction={themeInteraction}
+          scrollable
+          interaction="both"
           offsetValue={2}
           triggerClassName="block w-full"
           trigger={
@@ -151,27 +144,8 @@ export function AccountMenuPanel({
                   className="text-text-subtle"
                 />
               }
-              onPointerDown={(event: PointerEvent<HTMLButtonElement>) => {
-                lastPointerType.current = event.pointerType;
-                setThemeInteraction(
-                  event.pointerType === "mouse" ? "hover" : "click"
-                );
-              }}
               onFocusCapture={(event) => {
                 themeTriggerRef.current = event.currentTarget;
-                if (suppressNextThemeFocusOpen.current) {
-                  suppressNextThemeFocusOpen.current = false;
-                  lastPointerType.current = null;
-                  return;
-                }
-
-                if (lastPointerType.current !== "mouse") {
-                  setThemeInteraction("click");
-                  setThemeInitialFocus(-1);
-                  setThemeFocusIndex(undefined);
-                  setIsThemeOpen(true);
-                }
-                lastPointerType.current = null;
               }}
               onKeyDownCapture={(event: KeyboardEvent<HTMLButtonElement>) => {
                 if (event.key === "ArrowUp") {
@@ -197,8 +171,6 @@ export function AccountMenuPanel({
                 }
 
                 event.preventDefault();
-                setThemeInteraction("click");
-                setThemeInitialFocus(selectedThemeIndex);
                 setThemeFocusIndex(selectedThemeIndex);
                 setIsThemeOpen(true);
               }}
@@ -207,13 +179,12 @@ export function AccountMenuPanel({
           content={
             <Menu
               items={themeMenuItems}
-              keyboardNavigation
+              listNavigation
               focusActionIndex={themeFocusIndex}
               onKeyDown={(event) => {
                 if (event.key === themeClosesWithKey) {
                   event.preventDefault();
                   event.stopPropagation();
-                  suppressNextThemeFocusOpen.current = true;
                   themeTriggerRef.current?.focus();
                   return;
                 }
@@ -224,8 +195,6 @@ export function AccountMenuPanel({
 
                 event.preventDefault();
                 event.stopPropagation();
-                suppressNextThemeFocusOpen.current = true;
-                setThemeInteraction("hover");
                 setIsThemeOpen(false);
                 themeTriggerRef.current?.focus();
               }}
