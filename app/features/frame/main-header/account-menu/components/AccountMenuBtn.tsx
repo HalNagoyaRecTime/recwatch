@@ -27,12 +27,20 @@ export const AccountMenuBtn = forwardRef<
       type="button"
       {...buttonProps}
       className={cn(
-        "border-border-base text-text-base relative flex h-full w-8 shrink-0 cursor-pointer items-center justify-center gap-2 overflow-hidden rounded-full border bg-transparent transition-colors md:w-fit md:min-w-0 md:shrink md:justify-start md:rounded-l-[20px] md:rounded-r-[8px]",
+        "app-rounded text-text-base relative flex h-full w-8 shrink-0 cursor-pointer items-center justify-center gap-2 overflow-hidden rounded-full! bg-transparent transition-colors md:w-fit md:min-w-0 md:shrink md:justify-start md:rounded-l-[20px]! md:rounded-r-[8px]!",
         "hover:border-border-strong hover:bg-surface-hover",
-        isOpen ? "border-border-strong bg-surface-hover" : "",
+        isOpen ? "bg-surface-hover" : "",
         className
       )}
     >
+      <div
+        className={cn(
+          "absolute z-10 h-full w-full rounded-full! border md:rounded-l-[20px]! md:rounded-r-[8px]!",
+          "border-border-base",
+          isOpen ? "border-border-strong" : ""
+        )}
+      />
+
       <AccountAvatar
         account={account}
         photoUrl={photoUrl}

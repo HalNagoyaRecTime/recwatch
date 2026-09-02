@@ -23,12 +23,14 @@ describe("AccountMenuBtn", () => {
     expect(button).toHaveClass(
       "w-8",
       "md:w-fit",
-      "border",
-      "border-border-base",
-      "md:rounded-l-[20px]",
-      "md:rounded-r-[8px]"
+      "md:rounded-l-[20px]!",
+      "md:rounded-r-[8px]!"
     );
-    expect(button.querySelector("div.border")).not.toBeInTheDocument();
+    expect(button.querySelector("div.border")).toHaveClass(
+      "border-border-base",
+      "md:rounded-l-[20px]!",
+      "md:rounded-r-[8px]!"
+    );
     expect(name).toHaveClass("min-w-0", "max-w-0", "shrink", "truncate");
   });
 });

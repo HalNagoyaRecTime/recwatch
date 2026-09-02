@@ -92,6 +92,22 @@ describe("AccountBtn", () => {
     expect(screen.getByRole("button", { name: "ログアウト" })).toHaveFocus();
   }, 10000);
 
+  it("サブメニューから戻った後も反対方向キーで選択テーマへ戻れる", async () => {
+    const user = userEvent.setup();
+    renderAccountButton();
+
+    await user.click(screen.getByRole("button", { name: "ユーザー" }));
+    await user.tab();
+    const themeTrigger = screen.getByRole("button", { name: "テーマ設定" });
+
+    await user.keyboard("{ArrowRight}");
+    await user.keyboard("{ArrowLeft}");
+    expect(themeTrigger).toHaveFocus();
+
+    await user.keyboard("{ArrowLeft}");
+    expect(screen.getByRole("button", { name: "ライト" })).toHaveFocus();
+  }, 10000);
+
   it("テーマ設定で上キーを押すと全体を閉じてアカウントボタンへ戻る", async () => {
     const user = userEvent.setup();
     renderAccountButton();
