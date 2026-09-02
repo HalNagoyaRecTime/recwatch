@@ -7,6 +7,7 @@ import {
   SunMediumIcon,
 } from "lucide-react";
 import {
+  useEffect,
   useRef,
   useState,
   type KeyboardEvent,
@@ -46,11 +47,18 @@ export function AccountMenuPanel({
   const localThemeTriggerRef = useRef<HTMLButtonElement | null>(null);
   const themeTriggerRef = externalThemeTriggerRef ?? localThemeTriggerRef;
   const logoutRef = useRef<HTMLButtonElement | null>(null);
+  const suppressThemeFocusRef = useRef(false);
   const [isThemeOpen, setIsThemeOpen] = useState(false);
   const [themeFocusIndex, setThemeFocusIndex] = useState<number | undefined>();
   const [themeFocusRequest, setThemeFocusRequest] = useState(0);
   const [themePlacement, setThemePlacement] =
     useState<Placement>("right-start");
+
+  useEffect(() => {
+    if (!isThemeOpen) {
+      suppressThemeFocusRef.current = false;
+    }
+  }, [isThemeOpen]);
 
   const ThemeIcon =
     theme === "dark"
@@ -119,14 +127,20 @@ export function AccountMenuPanel({
         <FloatingPanel
           isOpen={isThemeOpen}
           onOpenChange={(open, _event, reason) => {
-            if (!open && reason === "list-navigation") {
-              themeTriggerRef.current?.focus();
-              return;
-            }
+            const suppressFocusReopen =
+              open && reason === "focus" && suppressThemeFocusRef.current;
 
             setIsThemeOpen(open);
             if (!open) {
               setThemeFocusIndex(undefined);
+            }
+            if (!open && reason === "list-navigation") {
+              suppressThemeFocusRef.current = true;
+              themeTriggerRef.current?.focus();
+            }
+            if (suppressFocusReopen) {
+              suppressThemeFocusRef.current = false;
+              setIsThemeOpen(false);
             }
           }}
           avoidParentOverlap
