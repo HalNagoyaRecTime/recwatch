@@ -30,7 +30,7 @@ describe("FloatingPanel", () => {
     expect(trigger).toHaveFocus();
   });
 
-  it("パネルをviewport内のサイズに制限し、超過時にスクロールできる", async () => {
+  it("パネルの利用可能サイズをsurfaceへ渡し、wrapperをscrollportにしない", async () => {
     const user = userEvent.setup();
 
     render(
@@ -44,11 +44,13 @@ describe("FloatingPanel", () => {
     await user.click(screen.getByRole("button", { name: "開く" }));
 
     const panel = screen.getByRole("dialog");
-    expect(panel).toHaveStyle({
-      maxHeight: expect.stringMatching(/px$/),
-      maxWidth: expect.stringMatching(/px$/),
-      overflow: "auto",
-    });
+    expect(
+      panel.style.getPropertyValue("--floating-panel-available-height")
+    ).toMatch(/px$/);
+    expect(
+      panel.style.getPropertyValue("--floating-panel-available-width")
+    ).toMatch(/px$/);
+    expect(panel).not.toHaveStyle({ overflow: "auto" });
   });
 
   it("trigger独自のpointerイベントをFloating UIのpropsと合成する", async () => {

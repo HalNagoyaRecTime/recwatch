@@ -154,11 +154,24 @@ export function FloatingPanel({
       size({
         padding: 8,
         apply({ availableHeight, availableWidth, elements }) {
-          Object.assign(elements.floating.style, {
-            maxHeight: `${Math.max(0, availableHeight)}px`,
-            maxWidth: `${Math.max(0, availableWidth)}px`,
-            overflow: scrollable ? "auto" : "visible",
-          });
+          // 位置決めwrapperはscrollportにせず、surfaceへ利用可能サイズを渡します。
+          if (scrollable) {
+            elements.floating.style.setProperty(
+              "--floating-panel-available-height",
+              `${Math.max(0, availableHeight)}px`
+            );
+            elements.floating.style.setProperty(
+              "--floating-panel-available-width",
+              `${Math.max(0, availableWidth)}px`
+            );
+          } else {
+            elements.floating.style.removeProperty(
+              "--floating-panel-available-height"
+            );
+            elements.floating.style.removeProperty(
+              "--floating-panel-available-width"
+            );
+          }
         },
       }),
     ],
