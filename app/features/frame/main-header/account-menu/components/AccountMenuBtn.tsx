@@ -18,7 +18,14 @@ export const AccountMenuBtn = forwardRef<
   HTMLButtonElement,
   AccountMenuBtnProps
 >(function AccountMenuBtn(
-  { account, photoUrl, isOpen, className, ...buttonProps },
+  {
+    account,
+    photoUrl,
+    isOpen,
+    className,
+    "aria-label": ariaLabel,
+    ...buttonProps
+  },
   ref
 ) {
   return (
@@ -26,6 +33,7 @@ export const AccountMenuBtn = forwardRef<
       ref={ref}
       type="button"
       {...buttonProps}
+      aria-label={ariaLabel ?? "アカウントメニュー"}
       className={cn(
         "text-text-base relative flex h-full w-8 shrink-0 cursor-pointer items-center justify-center gap-1 overflow-hidden rounded-full bg-transparent transition-colors md:w-fit md:min-w-0 md:shrink md:justify-start md:rounded-l-[20px] md:rounded-r-[8px]",
         "before:border-border-base before:pointer-events-none before:absolute before:inset-0 before:z-10 before:rounded-full before:border before:transition-colors before:duration-150 md:before:rounded-l-[20px] md:before:rounded-r-[8px]",
@@ -47,6 +55,7 @@ export const AccountMenuBtn = forwardRef<
       <ChevronDownIcon
         size={14}
         strokeWidth={1.8}
+        aria-hidden="true"
         className="text-text-subtle z-15 mr-0 hidden shrink-0 md:mr-2 md:block"
       />
     </button>
