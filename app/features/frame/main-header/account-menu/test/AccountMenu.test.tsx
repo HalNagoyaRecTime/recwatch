@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
@@ -6,8 +6,9 @@ import {
   ThemeContext,
   type ThemeContextType,
 } from "~/components/providers/ThemeProvider";
-
-import { AccountBtn } from "./AccountBtn";
+import { AccountBtn } from "../components/AccountBtn";
+import { AccountMenuPanel } from "../components/AccountMenuPanel";
+import { getAccountBtnData } from "../model/account-btn-data";
 
 const themeContext: ThemeContextType = {
   theme: "light",
@@ -23,7 +24,7 @@ function renderAccountButton() {
   );
 }
 
-describe("AccountBtn", () => {
+describe("AccountMenu", () => {
   it("開いた直後はトリガーにfocusを残し、Tabでメニューへ移動する", async () => {
     const user = userEvent.setup();
     renderAccountButton();
@@ -206,4 +207,35 @@ describe("AccountBtn", () => {
     await user.keyboard("{Shift>}{Tab}{/Shift}");
     expect(trigger).toHaveFocus();
   }, 10000);
+
+  it("touch操作ではテーマ設定をtapで開ける", async () => {
+    const user = userEvent.setup();
+
+    render(
+      <ThemeContext.Provider value={themeContext}>
+        <AccountMenuPanel account={getAccountBtnData()} onClose={vi.fn()} />
+      </ThemeContext.Provider>
+    );
+
+    const themeTrigger = screen.getByRole("button", { name: "テーマ設定" });
+    await user.pointer({ keys: "[TouchA>]", target: themeTrigger });
+    await user.pointer({ keys: "[/TouchA]", target: themeTrigger });
+
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+  });
+
+  it("pen操作でもテーマ設定をtapで開ける", () => {
+    render(
+      <ThemeContext.Provider value={themeContext}>
+        <AccountMenuPanel account={getAccountBtnData()} onClose={vi.fn()} />
+      </ThemeContext.Provider>
+    );
+
+    const themeTrigger = screen.getByRole("button", { name: "テーマ設定" });
+    fireEvent.pointerDown(themeTrigger, { pointerType: "pen" });
+    fireEvent.pointerUp(themeTrigger, { pointerType: "pen" });
+    fireEvent.click(themeTrigger);
+
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+  });
 });

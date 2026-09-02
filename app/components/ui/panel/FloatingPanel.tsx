@@ -19,6 +19,7 @@ import {
   size,
   useMergeRefs,
   type Placement,
+  type Middleware,
   type OpenChangeReason,
 } from "@floating-ui/react";
 import {
@@ -58,6 +59,46 @@ export type FloatingPanelProps = {
   className?: string;
   triggerClassName?: string;
 };
+
+/**
+ * 親パネルの外周と子パネルが重ならないように補正します。
+ *
+ * offset() の function form でも親パネルの実測値は取得できますが、
+ * reference の祖先を参照する独自処理が必要です。また、offset() は
+ * shift() より前に実行されるため、viewport補正後の再重なりを防げません。
+ * そのため標準 middleware の後段で実測値を補正します。
+ */
+function createAvoidParentOverlapMiddleware(offsetValue: number): Middleware {
+  return {
+    name: "avoidParentOverlap",
+    fn({ x, placement, rects, elements }) {
+      const parentPanel =
+        elements.reference instanceof HTMLElement
+          ? elements.reference.closest<HTMLElement>("[data-floating-panel]")
+          : null;
+      if (parentPanel === null) {
+        return {};
+      }
+
+      const parentRect = parentPanel.getBoundingClientRect();
+      const side = placement.split("-")[0];
+
+      if (side === "left") {
+        const maximumRight = parentRect.left - offsetValue;
+        return x + rects.floating.width > maximumRight
+          ? { x: maximumRight - rects.floating.width }
+          : {};
+      }
+
+      if (side === "right") {
+        const minimumLeft = parentRect.right + offsetValue;
+        return x < minimumLeft ? { x: minimumLeft } : {};
+      }
+
+      return {};
+    },
+  };
+}
 
 export function FloatingPanel({
   trigger,
@@ -108,37 +149,7 @@ export function FloatingPanel({
         padding: 8,
       }),
       avoidParentOverlap
-        ? {
-            name: "avoidParentOverlap",
-            fn({ x, placement, rects, elements }) {
-              const parentPanel =
-                elements.reference instanceof HTMLElement
-                  ? elements.reference.closest<HTMLElement>(
-                      "[data-floating-panel]"
-                    )
-                  : null;
-              if (parentPanel === null) {
-                return {};
-              }
-
-              const parentRect = parentPanel.getBoundingClientRect();
-              const side = placement.split("-")[0];
-
-              if (side === "left") {
-                const maximumRight = parentRect.left - offsetValue;
-                return x + rects.floating.width > maximumRight
-                  ? { x: maximumRight - rects.floating.width }
-                  : {};
-              }
-
-              if (side === "right") {
-                const minimumLeft = parentRect.right + offsetValue;
-                return x < minimumLeft ? { x: minimumLeft } : {};
-              }
-
-              return {};
-            },
-          }
+        ? createAvoidParentOverlapMiddleware(offsetValue)
         : null,
       size({
         padding: 8,
