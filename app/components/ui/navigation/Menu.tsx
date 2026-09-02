@@ -66,6 +66,8 @@ type MenuProps = {
   listNavigation?: boolean;
   /** 表示時または切り替え時に指定したaction項目へフォーカスします。 */
   focusActionIndex?: number;
+  /** 同じ項目へ再度フォーカスするための要求番号です。 */
+  focusActionRequest?: number;
   onKeyDown?: KeyboardEventHandler<HTMLDivElement>;
 };
 
@@ -77,6 +79,7 @@ export function Menu({
   items,
   listNavigation = false,
   focusActionIndex,
+  focusActionRequest,
   onKeyDown,
 }: MenuProps) {
   const context = useContext(FloatingPanelContext);
@@ -86,6 +89,7 @@ export function Menu({
       <NavigatedMenu
         context={context}
         focusActionIndex={focusActionIndex}
+        focusActionRequest={focusActionRequest}
         items={items}
         onKeyDown={onKeyDown}
       />
@@ -102,6 +106,7 @@ type NavigatedMenuProps = MenuProps & {
 function NavigatedMenu({
   context,
   focusActionIndex,
+  focusActionRequest,
   items,
   onKeyDown,
 }: NavigatedMenuProps) {
@@ -123,7 +128,7 @@ function NavigatedMenu({
     }
 
     listRef.current[focusActionIndex]?.focus();
-  }, [focusActionIndex]);
+  }, [focusActionIndex, focusActionRequest]);
 
   return (
     <MenuContent
