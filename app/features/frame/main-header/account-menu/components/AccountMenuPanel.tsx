@@ -37,6 +37,7 @@ export function AccountMenuPanel({
   const themeTriggerRef = useRef<HTMLButtonElement | null>(null);
   const [isThemeOpen, setIsThemeOpen] = useState(false);
   const [themeFocusIndex, setThemeFocusIndex] = useState<number | undefined>();
+  const [themeFocusRequest, setThemeFocusRequest] = useState(0);
   const [themePlacement, setThemePlacement] =
     useState<Placement>("right-start");
 
@@ -172,6 +173,7 @@ export function AccountMenuPanel({
 
                 event.preventDefault();
                 setThemeFocusIndex(selectedThemeIndex);
+                setThemeFocusRequest((request) => request + 1);
                 setIsThemeOpen(true);
               }}
             />
@@ -181,6 +183,7 @@ export function AccountMenuPanel({
               items={themeMenuItems}
               listNavigation
               focusActionIndex={themeFocusIndex}
+              focusActionRequest={themeFocusRequest}
               onKeyDown={(event) => {
                 if (event.key === themeClosesWithKey) {
                   event.preventDefault();
