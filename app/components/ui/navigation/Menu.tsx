@@ -91,12 +91,15 @@ export function Menu({
   rtl = false,
   onKeyDown,
 }: MenuProps) {
-  const context = useContext(FloatingPanelContext);
+  const panelContext = useContext(FloatingPanelContext);
+  const context = panelContext?.context ?? null;
+  const scrollable = panelContext?.scrollable ?? false;
 
   if (listNavigation && context) {
     return (
       <NavigatedMenu
         context={context}
+        scrollable={scrollable}
         focusActionIndex={focusActionIndex}
         focusActionRequest={focusActionRequest}
         nested={nested}
@@ -107,15 +110,19 @@ export function Menu({
     );
   }
 
-  return <MenuContent items={items} onKeyDown={onKeyDown} />;
+  return (
+    <MenuContent items={items} onKeyDown={onKeyDown} scrollable={scrollable} />
+  );
 }
 
 type NavigatedMenuProps = MenuProps & {
   context: FloatingRootContext;
+  scrollable: boolean;
 };
 
 function NavigatedMenu({
   context,
+  scrollable,
   focusActionIndex,
   focusActionRequest,
   nested,
@@ -151,12 +158,14 @@ function NavigatedMenu({
       items={items}
       listRef={listRef}
       interactions={interactions}
+      scrollable={scrollable}
       onKeyDown={onKeyDown}
     />
   );
 }
 
 type MenuContentProps = Pick<MenuProps, "items" | "onKeyDown"> & {
+  scrollable?: boolean;
   listRef?: import("react").MutableRefObject<Array<HTMLElement | null>>;
   interactions?: Pick<
     UseInteractionsReturn,
@@ -168,6 +177,7 @@ function MenuContent({
   items,
   listRef,
   interactions,
+  scrollable = false,
   onKeyDown,
 }: MenuContentProps) {
   const actionItems = items.filter(
@@ -186,6 +196,7 @@ function MenuContent({
     <FloatingListSurface
       {...floatingProps}
       {...(!floatingProps && { onKeyDown })}
+      scrollable={scrollable}
     >
       {items.map((item) => {
         if (item.type === "custom") {

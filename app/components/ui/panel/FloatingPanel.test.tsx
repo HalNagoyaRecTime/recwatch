@@ -44,6 +44,7 @@ describe("FloatingPanel", () => {
     await user.click(screen.getByRole("button", { name: "開く" }));
 
     const panel = screen.getByRole("dialog");
+    expect(panel).toHaveClass("app-rounded");
     expect(
       panel.style.getPropertyValue("--floating-panel-available-height")
     ).toMatch(/px$/);

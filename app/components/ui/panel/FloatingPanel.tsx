@@ -239,9 +239,9 @@ export function FloatingPanel({
       style={floatingStyles}
       {...getFloatingProps()}
       data-floating-panel
-      className={cn("z-140", className)}
+      className={cn("app-rounded z-140", className)}
     >
-      <FloatingPanelContext.Provider value={context}>
+      <FloatingPanelContext.Provider value={{ context, scrollable }}>
         {content}
       </FloatingPanelContext.Provider>
     </div>
