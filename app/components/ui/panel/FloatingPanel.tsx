@@ -209,15 +209,15 @@ export function FloatingPanel({
     role,
   ]);
 
-  // Floating UIのreference callback refとtrigger既存refをuseMergeRefsで合成するため、このブロックのみrefs ruleを抑制する
-  /* eslint-disable react-hooks/refs */
+  // useMergeRefsの配列評価でreact-hooks/refsが報告されるため、この行のみ抑制する
+  // eslint-disable-next-line react-hooks/refs
   const mergedTriggerRef = useMergeRefs([
     // Floating UIのreference callback refをtriggerへ接続・合成するため
+    // eslint-disable-next-line react-hooks/refs
     refs.setReference,
     // triggerが元から保持しているrefを失わずFloating UIのrefと合成するため
     (trigger.props as { ref?: Ref<HTMLElement> }).ref,
   ]);
-  /* eslint-enable react-hooks/refs */
 
   const triggerElement = isValidElement(trigger)
     ? cloneElement(
