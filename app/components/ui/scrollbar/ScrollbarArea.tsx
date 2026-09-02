@@ -33,13 +33,19 @@ export function ScrollbarArea({
     verticalThumbHeight,
     verticalThumbTop,
     verticalIsDragging,
-    onVerticalThumbMouseDown,
-    onVerticalTrackMouseDown,
+    onVerticalThumbPointerDown,
+    onVerticalThumbPointerMove,
+    onVerticalThumbPointerUp,
+    onVerticalThumbPointerCancel,
+    onVerticalTrackPointerDown,
     horizontalThumbWidth,
     horizontalThumbLeft,
     horizontalIsDragging,
-    onHorizontalThumbMouseDown,
-    onHorizontalTrackMouseDown,
+    onHorizontalThumbPointerDown,
+    onHorizontalThumbPointerMove,
+    onHorizontalThumbPointerUp,
+    onHorizontalThumbPointerCancel,
+    onHorizontalTrackPointerDown,
     isVisible,
     onScroll,
     onMouseEnter,
@@ -51,7 +57,7 @@ export function ScrollbarArea({
 
   return (
     <div
-      className="relative flex min-h-0 flex-1 flex-col"
+      className="relative flex min-h-0 min-w-0 flex-1 flex-col"
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
     >
@@ -60,7 +66,7 @@ export function ScrollbarArea({
         ref={scrollRef}
         onScroll={onScroll}
         className={cn(
-          "scrollbar-none flex-1",
+          "scrollbar-none min-w-0 flex-1",
           orientation === "vertical" && "overflow-x-hidden overflow-y-auto",
           orientation === "horizontal" && "overflow-x-auto overflow-y-hidden",
           orientation === "both" && "overflow-auto",
@@ -81,8 +87,11 @@ export function ScrollbarArea({
           isVisible={isVisible}
           isDragging={verticalIsDragging}
           verticalTrackInsetBottom={verticalTrackInsetBottom}
-          onThumbMouseDown={onVerticalThumbMouseDown}
-          onTrackMouseDown={onVerticalTrackMouseDown}
+          onThumbPointerDown={onVerticalThumbPointerDown}
+          onThumbPointerMove={onVerticalThumbPointerMove}
+          onThumbPointerUp={onVerticalThumbPointerUp}
+          onThumbPointerCancel={onVerticalThumbPointerCancel}
+          onTrackPointerDown={onVerticalTrackPointerDown}
         />
       )}
 
@@ -95,8 +104,11 @@ export function ScrollbarArea({
           thumbOffset={horizontalThumbLeft}
           isVisible={isVisible}
           isDragging={horizontalIsDragging}
-          onThumbMouseDown={onHorizontalThumbMouseDown}
-          onTrackMouseDown={onHorizontalTrackMouseDown}
+          onThumbPointerDown={onHorizontalThumbPointerDown}
+          onThumbPointerMove={onHorizontalThumbPointerMove}
+          onThumbPointerUp={onHorizontalThumbPointerUp}
+          onThumbPointerCancel={onHorizontalThumbPointerCancel}
+          onTrackPointerDown={onHorizontalTrackPointerDown}
         />
       )}
     </div>

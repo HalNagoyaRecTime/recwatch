@@ -1,7 +1,18 @@
 import { cva } from "~/lib/cva";
 
 export const floatingListSurfaceStyle = cva(
-  "border-border-base bg-surface-base app-rounded max-h-[var(--floating-panel-available-height)] max-w-[var(--floating-panel-available-width)] overflow-x-hidden overflow-y-auto border p-2 shadow-soft"
+  "border-border-base bg-surface-base app-rounded border shadow-soft",
+  {
+    variants: {
+      scrollable: {
+        true: "flex max-h-[var(--floating-panel-available-height)] max-w-[var(--floating-panel-available-width)] flex-col",
+        false: "p-2",
+      },
+    },
+    defaultVariants: {
+      scrollable: "false",
+    },
+  }
 );
 
 export const floatingListActionItemStyle = cva(
