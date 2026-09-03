@@ -5,7 +5,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import {
   APP_NOTIFICATION_MAX_COUNT,
   APP_NOTIFICATION_RETENTION_MS,
-  APP_NOTIFICATION_STORAGE_KEY,
+  getAppNotificationStorageKey,
   type AppNotification,
 } from "../model/app-notification";
 import { useFeedback } from "../hooks/useFeedback";
@@ -63,7 +63,7 @@ function FeedbackProbe() {
 
 function renderProbe() {
   return render(
-    <FeedbackProvider>
+    <FeedbackProvider userId="test-user">
       <FeedbackToastHost />
       <FeedbackProbe />
     </FeedbackProvider>
@@ -73,6 +73,49 @@ function renderProbe() {
 describe("FeedbackProvider", () => {
   beforeEach(() => {
     window.localStorage.clear();
+  });
+
+  it("Provider外でuseFeedbackを呼ぶと明確なエラーになる", () => {
+    function OutsideProbe() {
+      useFeedback();
+      return null;
+    }
+    expect(() => render(<OutsideProbe />)).toThrow(
+      "useFeedback must be used within FeedbackProvider"
+    );
+  });
+
+  it("ユーザーごとに履歴とToastを分離し、旧global keyを引き継がない", async () => {
+    const user = userEvent.setup();
+    const { rerender } = render(
+      <FeedbackProvider key="user-a" userId="user-a">
+        <FeedbackProbe />
+      </FeedbackProvider>
+    );
+    await user.click(screen.getByRole("button", { name: "error" }));
+    expect(screen.getByTestId("history-count")).toHaveTextContent("1");
+    expect(
+      window.localStorage.getItem(getAppNotificationStorageKey("user-a"))
+    ).toContain("保存失敗");
+
+    rerender(
+      <FeedbackProvider key="user-b" userId="user-b">
+        <FeedbackProbe />
+      </FeedbackProvider>
+    );
+    await waitFor(() => {
+      expect(screen.getByTestId("history-count")).toHaveTextContent("0");
+      expect(screen.getByTestId("toast-count")).toHaveTextContent("0");
+    });
+
+    window.localStorage.setItem("recwatch.app-notifications", "legacy");
+    rerender(
+      <FeedbackProvider key="user-b" userId="user-b">
+        <FeedbackProbe />
+      </FeedbackProvider>
+    );
+    expect(screen.getByTestId("history-count")).toHaveTextContent("0");
+    expect(screen.queryByText("保存失敗")).not.toBeInTheDocument();
   });
 
   it("action-errorをToast一回と履歴一件へ同じイベントとして追加する", async () => {
@@ -98,7 +141,9 @@ describe("FeedbackProvider", () => {
     expect(screen.getByRole("alert")).toHaveClass("feedback-toast-enter");
     expect(
       JSON.parse(
-        window.localStorage.getItem(APP_NOTIFICATION_STORAGE_KEY) ?? "[]"
+        window.localStorage.getItem(
+          getAppNotificationStorageKey("test-user")
+        ) ?? "[]"
       )
     ).toHaveLength(1);
     await user.click(screen.getByRole("button", { name: "通知を閉じる" }));
@@ -156,7 +201,7 @@ describe("FeedbackProvider", () => {
       read: false,
     });
     window.localStorage.setItem(
-      APP_NOTIFICATION_STORAGE_KEY,
+      getAppNotificationStorageKey("test-user"),
       JSON.stringify(notifications)
     );
 
@@ -170,48 +215,50 @@ describe("FeedbackProvider", () => {
     expect(screen.queryByText("古い通知")).not.toBeInTheDocument();
     expect(
       JSON.parse(
-        window.localStorage.getItem(APP_NOTIFICATION_STORAGE_KEY) ?? "[]"
+        window.localStorage.getItem(
+          getAppNotificationStorageKey("test-user")
+        ) ?? "[]"
       )
     ).toHaveLength(APP_NOTIFICATION_MAX_COUNT);
   });
 
-  it("不正なdiagnostic値を保存しない", async () => {
-    function UnsafeProbe() {
-      const { report } = useFeedback();
-      return (
-        <button
-          type="button"
-          onClick={() =>
-            report({
-              kind: "action-error",
-              title: "エラー",
-              message: "失敗",
-              diagnostic: {
-                endpoint: "/api/items",
-                status: 500,
-              },
-            })
-          }
-        >
-          unsafe
-        </button>
-      );
-    }
-
-    const user = userEvent.setup();
-    render(
-      <FeedbackProvider>
-        <UnsafeProbe />
-      </FeedbackProvider>
+  it("localStorageから復元するdiagnosticを許可項目だけに制限する", async () => {
+    const storedNotification: AppNotification & {
+      diagnostic: AppNotification["diagnostic"] & Record<string, unknown>;
+    } = {
+      id: "unsafe-notification",
+      kind: "action-error",
+      severity: "error",
+      title: "エラー",
+      message: "失敗",
+      createdAt: new Date().toISOString(),
+      read: false,
+      diagnostic: {
+        endpoint: "/api/items",
+        status: 500,
+        requestId: "req-1",
+        password: "secret",
+        responseBody: { token: "secret" },
+      },
+    };
+    window.localStorage.setItem(
+      getAppNotificationStorageKey("test-user"),
+      JSON.stringify([storedNotification])
     );
-    await user.click(screen.getByRole("button", { name: "unsafe" }));
+
+    renderProbe();
+    await waitFor(() =>
+      expect(screen.getByTestId("history-count")).toHaveTextContent("1")
+    );
 
     const [notification] = JSON.parse(
-      window.localStorage.getItem(APP_NOTIFICATION_STORAGE_KEY) ?? "[]"
+      window.localStorage.getItem(getAppNotificationStorageKey("test-user")) ??
+        "[]"
     ) as AppNotification[];
     expect(notification.diagnostic).toEqual({
       endpoint: "/api/items",
       status: 500,
+      requestId: "req-1",
     });
   });
 });

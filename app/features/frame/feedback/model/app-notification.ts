@@ -50,34 +50,23 @@ export type FeedbackContextValue = {
 };
 
 export const APP_NOTIFICATION_STORAGE_KEY = "recwatch.app-notifications";
+export function getAppNotificationStorageKey(userId: string) {
+  return `${APP_NOTIFICATION_STORAGE_KEY}:${encodeURIComponent(userId)}`;
+}
 export const APP_NOTIFICATION_MAX_COUNT = 100;
 export const APP_NOTIFICATION_RETENTION_DAYS = 30;
 export const APP_NOTIFICATION_RETENTION_MS =
   APP_NOTIFICATION_RETENTION_DAYS * 24 * 60 * 60 * 1000;
 
-export function clearStoredAppNotifications() {
+export function clearStoredAppNotifications(userId?: string | null) {
   if (typeof window === "undefined") return;
 
   try {
+    if (userId) {
+      window.localStorage.removeItem(getAppNotificationStorageKey(userId));
+    }
     window.localStorage.removeItem(APP_NOTIFICATION_STORAGE_KEY);
   } catch {
     // localStorageが利用できない環境では何もしません。
-  }
-}
-
-export function severityForFeedbackKind(kind: FeedbackKind): FeedbackSeverity {
-  switch (kind) {
-    case "action-success":
-    case "background-success":
-      return "success";
-    case "system-warning":
-      return "warning";
-    case "action-error":
-    case "background-error":
-    case "system-error":
-      return "error";
-    case "validation":
-    case "info":
-      return "info";
   }
 }

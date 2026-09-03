@@ -11,8 +11,6 @@ import type { ReactNode } from "react";
 import type { Route } from "./+types/root";
 import { THEME_STORAGE_KEY } from "./lib/theme";
 import { ThemeProvider } from "~/components/providers/ThemeProvider";
-import { FeedbackProvider } from "~/features/frame/feedback/components/FeedbackProvider";
-import { FeedbackToastHost } from "~/features/frame/feedback/components/FeedbackToastHost";
 import "./app.css";
 
 export const links: Route.LinksFunction = () => [];
@@ -59,10 +57,7 @@ export function Layout({ children }: { children: ReactNode }) {
 export default function App() {
   return (
     <ThemeProvider>
-      <FeedbackProvider>
-        <FeedbackToastHost />
-        <Outlet />
-      </FeedbackProvider>
+      <Outlet />
     </ThemeProvider>
   );
 }

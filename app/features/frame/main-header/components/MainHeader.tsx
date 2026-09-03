@@ -17,7 +17,9 @@ export function MainHeader({ user }: MainHeaderProps) {
   const navigate = useNavigate();
 
   async function handleLogout() {
-    const result = await logout().catch(() => ({ status: "error" }) as const);
+    const result = await logout(user?.id).catch(
+      () => ({ status: "error" }) as const
+    );
 
     if (result.status === "error") {
       navigate("/login?error=logout_failed", { replace: true });

@@ -11,7 +11,7 @@ import { getFeedbackPolicy } from "../application/feedback-policy";
 import {
   APP_NOTIFICATION_MAX_COUNT,
   APP_NOTIFICATION_RETENTION_MS,
-  APP_NOTIFICATION_STORAGE_KEY,
+  getAppNotificationStorageKey,
   type AppNotification,
   type FeedbackContextValue,
   type FeedbackDiagnostic,
@@ -63,11 +63,14 @@ function isFeedbackNotification(value: unknown): value is AppNotification {
   );
 }
 
-function readNotifications(): AppNotification[] {
+function readNotifications(userId: string | null): AppNotification[] {
   if (typeof window === "undefined") return [];
+  if (!userId) return [];
 
   try {
-    const raw = window.localStorage.getItem(APP_NOTIFICATION_STORAGE_KEY);
+    const raw = window.localStorage.getItem(
+      getAppNotificationStorageKey(userId)
+    );
     if (!raw) return [];
     const parsed: unknown = JSON.parse(raw);
     if (!Array.isArray(parsed)) return [];
@@ -82,11 +85,14 @@ function readNotifications(): AppNotification[] {
   }
 }
 
-function writeNotifications(notifications: AppNotification[]) {
-  if (typeof window === "undefined") return;
+function writeNotifications(
+  userId: string | null,
+  notifications: AppNotification[]
+) {
+  if (typeof window === "undefined" || !userId) return;
   try {
     window.localStorage.setItem(
-      APP_NOTIFICATION_STORAGE_KEY,
+      getAppNotificationStorageKey(userId),
       JSON.stringify(notifications)
     );
   } catch {
@@ -122,14 +128,21 @@ function safeDiagnostic(diagnostic?: FeedbackDiagnostic) {
   return Object.keys(safe).length > 0 ? safe : undefined;
 }
 
-export function FeedbackProvider({ children }: { children: ReactNode }) {
-  const [notifications, setNotifications] =
-    useState<AppNotification[]>(readNotifications);
+export function FeedbackProvider({
+  children,
+  userId,
+}: {
+  children: ReactNode;
+  userId: string | null;
+}) {
+  const [notifications, setNotifications] = useState<AppNotification[]>(() =>
+    readNotifications(userId)
+  );
   const [toasts, setToasts] = useState<AppNotification[]>([]);
 
   useEffect(() => {
-    writeNotifications(notifications);
-  }, [notifications]);
+    writeNotifications(userId, notifications);
+  }, [notifications, userId]);
 
   const report = useCallback((input: FeedbackInput) => {
     const policy = getFeedbackPolicy(input.kind);
