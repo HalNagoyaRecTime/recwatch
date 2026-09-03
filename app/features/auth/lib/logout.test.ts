@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { getAccessToken, setAccessToken } from "./accessTokenStore";
 import { getRefreshTokenId, setRefreshTokenId } from "./refreshTokenStore";
 import { logout } from "./logout";
-import { APP_NOTIFICATION_STORAGE_KEY } from "~/features/frame/feedback/model/app-notification";
+import { getAppNotificationStorageKey } from "~/features/frame/feedback/model/app-notification";
 
 function mockLogoutResponse(ok: boolean, status: number): Response {
   return {
@@ -22,33 +22,39 @@ describe("logout", () => {
   });
 
   it("正常にログアウトしたときFrontend通知履歴を削除する", async () => {
-    window.localStorage.setItem(APP_NOTIFICATION_STORAGE_KEY, "history");
+    window.localStorage.setItem(
+      getAppNotificationStorageKey("user-a"),
+      "history"
+    );
     vi.stubGlobal(
       "fetch",
       vi.fn().mockResolvedValue(mockLogoutResponse(true, 200))
     );
 
-    const result = await logout();
+    const result = await logout("user-a");
 
     expect(result.status).toBe("ok");
     expect(
-      window.localStorage.getItem(APP_NOTIFICATION_STORAGE_KEY)
+      window.localStorage.getItem(getAppNotificationStorageKey("user-a"))
     ).toBeNull();
   });
 
-  it("ログアウトに失敗したときFrontend通知履歴を保持する", async () => {
-    window.localStorage.setItem(APP_NOTIFICATION_STORAGE_KEY, "history");
+  it("ログアウトに失敗してもFrontend通知履歴を削除する", async () => {
+    window.localStorage.setItem(
+      getAppNotificationStorageKey("user-a"),
+      "history"
+    );
     vi.stubGlobal(
       "fetch",
       vi.fn().mockResolvedValue(mockLogoutResponse(false, 500))
     );
 
-    const result = await logout();
+    const result = await logout("user-a");
 
     expect(result.status).toBe("error");
-    expect(window.localStorage.getItem(APP_NOTIFICATION_STORAGE_KEY)).toBe(
-      "history"
-    );
+    expect(
+      window.localStorage.getItem(getAppNotificationStorageKey("user-a"))
+    ).toBeNull();
     expect(getAccessToken()).toBeNull();
     expect(getRefreshTokenId()).toBeNull();
   });

@@ -20,6 +20,7 @@ const toastIcon = {
 } as const;
 
 const TOAST_EXIT_DURATION_MS = 220;
+const TOAST_DURATION_MS = 4000;
 
 export function FeedbackToastHost() {
   const { toasts, dismissToast } = useFeedback();
@@ -52,11 +53,7 @@ export function FeedbackToastHost() {
   );
 
   return (
-    <div
-      className="pointer-events-none fixed top-4 right-4 z-200 flex w-[min(24rem,calc(100vw-2rem))] flex-col gap-2"
-      aria-live="polite"
-      aria-atomic="false"
-    >
+    <div className="pointer-events-none fixed top-4 right-4 z-200 flex w-[min(24rem,calc(100vw-2rem))] flex-col gap-2">
       {toasts.map((toast) => (
         <FeedbackToast
           key={toast.id}
@@ -80,16 +77,75 @@ function FeedbackToast({
 }) {
   const Icon = toastIcon[toast.severity];
   const [isExpanded, setIsExpanded] = useState(true);
+  const timerRef = useRef<number | null>(null);
+  const startedAtRef = useRef<number | null>(null);
+  const remainingMsRef = useRef(TOAST_DURATION_MS);
+  const pauseReasonsRef = useRef({ hover: false, focus: false });
+
+  const clearTimer = useCallback(() => {
+    if (timerRef.current === null) return;
+    window.clearTimeout(timerRef.current);
+    timerRef.current = null;
+    startedAtRef.current = null;
+  }, []);
+
+  const resumeTimer = useCallback(() => {
+    if (
+      timerRef.current !== null ||
+      remainingMsRef.current <= 0 ||
+      pauseReasonsRef.current.hover ||
+      pauseReasonsRef.current.focus
+    ) {
+      return;
+    }
+
+    startedAtRef.current = Date.now();
+    timerRef.current = window.setTimeout(() => {
+      timerRef.current = null;
+      startedAtRef.current = null;
+      remainingMsRef.current = 0;
+      onDismiss(toast.id);
+    }, remainingMsRef.current);
+  }, [onDismiss, toast.id]);
+
+  const pauseTimer = useCallback(() => {
+    if (timerRef.current === null || startedAtRef.current === null) return;
+    remainingMsRef.current = Math.max(
+      0,
+      remainingMsRef.current - (Date.now() - startedAtRef.current)
+    );
+    clearTimer();
+  }, [clearTimer]);
+
+  const setPauseReason = useCallback(
+    (reason: "hover" | "focus", paused: boolean) => {
+      pauseReasonsRef.current[reason] = paused;
+      if (paused) {
+        pauseTimer();
+      } else {
+        resumeTimer();
+      }
+    },
+    [pauseTimer, resumeTimer]
+  );
 
   useEffect(() => {
-    const timeout = window.setTimeout(() => onDismiss(toast.id), 4000);
-    return () => window.clearTimeout(timeout);
-  }, [onDismiss, toast.id]);
+    resumeTimer();
+    return clearTimer;
+  }, [clearTimer, resumeTimer]);
 
   return (
     <div
       className={`shadow-soft border-border-subtle bg-surface-base group/toast pointer-events-auto flex items-start gap-2 rounded-xl border px-3 py-2.5 text-sm ${isExiting ? "feedback-toast-exit" : "feedback-toast-enter"}`}
       role={toast.severity === "error" ? "alert" : "status"}
+      onPointerEnter={() => setPauseReason("hover", true)}
+      onPointerLeave={() => setPauseReason("hover", false)}
+      onFocus={() => setPauseReason("focus", true)}
+      onBlur={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
+          setPauseReason("focus", false);
+        }
+      }}
     >
       <Icon
         aria-hidden="true"

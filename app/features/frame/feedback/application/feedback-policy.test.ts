@@ -11,6 +11,7 @@ describe("Feedback policy", () => {
     ["background-error", true, true, "error"],
     ["system-warning", true, true, "warning"],
     ["system-error", true, true, "error"],
+    ["info", true, false, "info"],
   ] as const)(
     "%s の表示・保存ポリシーを返す",
     (kind, showToast, saveToCenter, severity) => {

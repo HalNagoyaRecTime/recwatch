@@ -13,7 +13,7 @@ import { useFeedback } from "../hooks/useFeedback";
 import { FeedbackProvider } from "./FeedbackProvider";
 import { AppNotificationCenter } from "./AppNotificationCenter";
 import {
-  APP_NOTIFICATION_STORAGE_KEY,
+  getAppNotificationStorageKey,
   type AppNotification,
 } from "../model/app-notification";
 
@@ -72,7 +72,7 @@ function SeedNotification() {
 
 function renderCenter() {
   return render(
-    <FeedbackProvider>
+    <FeedbackProvider userId="test-user">
       <SeedNotification />
       <AppNotificationCenter />
     </FeedbackProvider>
@@ -104,9 +104,7 @@ describe("AppNotificationCenter", () => {
     renderCenter();
     await user.click(screen.getByRole("button", { name: "seed" }));
 
-    const row = await screen.findByRole("button", {
-      name: "更新失敗、エラー",
-    });
+    const row = await screen.findByText("更新失敗", { exact: true });
     expect(screen.getByLabelText("未読")).toBeInTheDocument();
     expect(row).toBeInTheDocument();
   });
@@ -116,7 +114,7 @@ describe("AppNotificationCenter", () => {
     renderCenter();
     fireEvent.click(screen.getByRole("button", { name: "seed" }));
 
-    const row = screen.getByRole("button", { name: "更新失敗、エラー" });
+    const row = screen.getByText("更新失敗", { exact: true });
     const observer = MockIntersectionObserver.instances.at(-1);
     expect(observer).toBeDefined();
     observer?.emit(row.closest("li") as HTMLElement, 0.5);
@@ -137,7 +135,7 @@ describe("AppNotificationCenter", () => {
     renderCenter();
     fireEvent.click(screen.getByRole("button", { name: "seed" }));
 
-    const row = screen.getByRole("button", { name: "更新失敗、エラー" });
+    const row = screen.getByText("更新失敗", { exact: true });
     const observer = MockIntersectionObserver.instances.at(-1);
     expect(observer).toBeDefined();
     const target = row.closest("li") as HTMLElement;
@@ -162,13 +160,13 @@ describe("AppNotificationCenter", () => {
       read: false,
     }));
     window.localStorage.setItem(
-      APP_NOTIFICATION_STORAGE_KEY,
+      getAppNotificationStorageKey("test-user"),
       JSON.stringify(notifications)
     );
     renderCenter();
 
-    const first = screen.getByRole("button", { name: "通知0、エラー" });
-    const second = screen.getByRole("button", { name: "通知1、エラー" });
+    const first = screen.getByText("通知0", { exact: true });
+    const second = screen.getByText("通知1", { exact: true });
     const observer = MockIntersectionObserver.instances.at(-1);
     expect(observer).toBeDefined();
     observer?.emit(first.closest("li") as HTMLElement, 0.5);
@@ -195,9 +193,7 @@ describe("AppNotificationCenter", () => {
     renderCenter();
     await user.click(screen.getByRole("button", { name: "seed" }));
 
-    const row = await screen.findByRole("button", {
-      name: "更新失敗、エラー",
-    });
+    const row = await screen.findByText("更新失敗", { exact: true });
     expect(screen.getAllByText("更新できませんでした").length).toBeGreaterThan(
       0
     );
@@ -205,13 +201,14 @@ describe("AppNotificationCenter", () => {
     await user.click(row);
     expect(screen.queryByLabelText("未読")).not.toBeInTheDocument();
 
-    await user.click(screen.getByLabelText("エラー内容を表示"));
     expect(screen.getByText("SERVER_ERROR")).toBeInTheDocument();
     expect(screen.getByText("req-123")).toBeInTheDocument();
     expect(screen.getByText("/api/teachers/1")).toBeInTheDocument();
-    expect(screen.queryByText("発生時刻")).not.toBeInTheDocument();
+    expect(screen.getByText("発生時刻")).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: "詳細を閉じる" })
+      within(row.closest("li")!).getByRole("button", {
+        name: "通知を小さくする",
+      })
     ).toBeInTheDocument();
   });
 
@@ -219,7 +216,7 @@ describe("AppNotificationCenter", () => {
     renderCenter();
     fireEvent.click(screen.getByRole("button", { name: "seed" }));
 
-    const row = screen.getByRole("button", { name: "更新失敗、エラー" });
+    const row = screen.getByRole("button", { name: "通知内容を表示" });
     fireEvent.focus(row);
     expect(screen.queryByLabelText("未読")).not.toBeInTheDocument();
   });
@@ -228,9 +225,7 @@ describe("AppNotificationCenter", () => {
     const user = userEvent.setup();
     renderCenter();
     await user.click(screen.getByRole("button", { name: "seed" }));
-    const row = screen
-      .getByRole("button", { name: "更新失敗、エラー" })
-      .closest("li");
+    const row = screen.getByText("更新失敗", { exact: true }).closest("li");
     expect(row).not.toBeNull();
     await user.click(row!);
     expect(screen.getByText("/api/teachers/1")).toBeInTheDocument();
@@ -269,14 +264,16 @@ describe("AppNotificationCenter", () => {
     await user.click(screen.getByRole("button", { name: "seed" }));
     const row = screen.getAllByRole("listitem")[0];
     const message = within(row).getByRole("button", {
-      name: "エラー内容を表示",
+      name: "通知内容を表示",
     });
 
     await user.hover(row);
     await user.click(message);
     expect(message).toHaveAttribute("aria-expanded", "true");
     expect(within(row).getByText("req-123")).toBeInTheDocument();
-    await user.click(within(row).getByRole("button", { name: "詳細を閉じる" }));
+    await user.click(
+      within(row).getByRole("button", { name: "通知を小さくする" })
+    );
     expect(message).toHaveAttribute("aria-expanded", "false");
     expect(within(row).queryByText("req-123")).not.toBeInTheDocument();
     expect(within(row).getByText("更新できませんでした")).toBeInTheDocument();
@@ -293,12 +290,12 @@ describe("AppNotificationCenter", () => {
     const user = userEvent.setup();
     renderCenter();
     await user.click(screen.getByRole("button", { name: "seed" }));
-    const message = screen.getByRole("button", { name: "エラー内容を表示" });
+    const message = screen.getByRole("button", { name: "通知内容を表示" });
     act(() => message.focus());
     await user.keyboard("{Enter}");
     expect(screen.getByText("req-123")).toBeInTheDocument();
-    const minimize = screen.getByRole("button", {
-      name: "詳細を閉じる",
+    const minimize = within(message.closest("li")!).getByRole("button", {
+      name: "通知を小さくする",
     });
     act(() => minimize.focus());
     await user.keyboard(" ");
@@ -321,9 +318,9 @@ describe("AppNotificationCenter", () => {
     const user = userEvent.setup();
     renderCenter();
     await user.click(screen.getByRole("button", { name: "seed" }));
-    await user.click(screen.getByRole("button", { name: "エラー内容を表示" }));
+    await user.click(screen.getByRole("button", { name: "通知内容を表示" }));
     const copyButton = screen.getByRole("button", {
-      name: "エラー内容をコピー",
+      name: "通知内容をコピー",
     });
     fireEvent.click(copyButton);
 

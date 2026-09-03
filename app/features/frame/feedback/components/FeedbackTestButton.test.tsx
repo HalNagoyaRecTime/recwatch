@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { useFeedback } from "../hooks/useFeedback";
 import { FeedbackProvider } from "./FeedbackProvider";
 import { FeedbackTestButton } from "./FeedbackTestButton";
+import { getAppNotificationStorageKey } from "../model/app-notification";
 
 function NotificationProbe() {
   const { notifications } = useFeedback();
@@ -21,7 +22,7 @@ describe("FeedbackTestButton", () => {
   it("開発用ボタンから表示確認用イベントを1件発生させる", async () => {
     const user = userEvent.setup();
     render(
-      <FeedbackProvider>
+      <FeedbackProvider userId="test-user">
         <FeedbackTestButton />
         <NotificationProbe />
       </FeedbackProvider>
@@ -32,15 +33,15 @@ describe("FeedbackTestButton", () => {
     expect(
       screen.getByText("テスト通知", { exact: false })
     ).toBeInTheDocument();
-    expect(window.localStorage.getItem("recwatch.app-notifications")).toContain(
-      "テスト通知"
-    );
+    expect(
+      window.localStorage.getItem(getAppNotificationStorageKey("test-user"))
+    ).toContain("テスト通知");
   });
 
   it("クリックごとに複数の通知バリエーションを発生させる", async () => {
     const user = userEvent.setup();
     render(
-      <FeedbackProvider>
+      <FeedbackProvider userId="test-user">
         <FeedbackTestButton />
         <NotificationProbe />
       </FeedbackProvider>

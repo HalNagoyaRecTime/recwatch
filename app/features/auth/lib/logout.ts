@@ -20,18 +20,16 @@ export type LogoutResult =
   | { status: "ok"; msLogoutUrl: string | null }
   | { status: "error" };
 
-export async function logout(): Promise<LogoutResult> {
+export async function logout(userId?: string | null): Promise<LogoutResult> {
   clearAccountPhotoRefreshMarkers();
   clearAccountPhotoRequestState();
   await clearCachedAccountPhotos().catch(() => undefined);
 
   try {
     const result = await performLogout();
-    if (result.status === "ok") {
-      clearStoredAppNotifications();
-    }
     return result;
   } finally {
+    clearStoredAppNotifications(userId);
     setAccessToken(null);
     setRefreshTokenId(null);
   }

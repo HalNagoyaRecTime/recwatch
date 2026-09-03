@@ -5,7 +5,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { useFeedback } from "~/features/frame/feedback/hooks/useFeedback";
 import { FeedbackProvider } from "~/features/frame/feedback/components/FeedbackProvider";
 import {
-  APP_NOTIFICATION_STORAGE_KEY,
+  getAppNotificationStorageKey,
   type AppNotification,
 } from "~/features/frame/feedback/model/app-notification";
 import { NoticeBtn } from "./NoticeBtn";
@@ -36,7 +36,7 @@ describe("NoticeBtn", () => {
   it("未読通知があるとき既存の通知ボタンからNotification Centerを開閉できる", async () => {
     const user = userEvent.setup();
     render(
-      <FeedbackProvider>
+      <FeedbackProvider userId="test-user">
         <SeedFeedback />
         <NoticeBtn />
       </FeedbackProvider>
@@ -76,12 +76,12 @@ describe("NoticeBtn", () => {
       })
     );
     window.localStorage.setItem(
-      APP_NOTIFICATION_STORAGE_KEY,
+      getAppNotificationStorageKey("test-user"),
       JSON.stringify(notifications)
     );
 
     render(
-      <FeedbackProvider>
+      <FeedbackProvider userId="test-user">
         <NoticeBtn />
       </FeedbackProvider>
     );

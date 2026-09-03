@@ -12,10 +12,7 @@ import {
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { useFeedback } from "../hooks/useFeedback";
-import type {
-  AppNotification,
-  FeedbackSeverity,
-} from "../model/app-notification";
+import type { AppNotification } from "../model/app-notification";
 import { FloatingListSurface } from "~/components/ui/panel/FloatingListSurface";
 
 const severityIcon = {
@@ -24,13 +21,6 @@ const severityIcon = {
   warning: TriangleAlertIcon,
   error: AlertCircleIcon,
 } as const;
-
-const severityLabel: Record<FeedbackSeverity, string> = {
-  info: "情報",
-  success: "成功",
-  warning: "警告",
-  error: "エラー",
-};
 
 const NOTIFICATION_VISIBILITY_THRESHOLD = 0.5;
 const NOTIFICATION_VISIBILITY_DELAY_MS = 400;
@@ -158,7 +148,7 @@ function NotificationRow({
   const Icon = severityIcon[notification.severity];
   const [isMessageExpanded, setIsMessageExpanded] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
-  const contentId = `notification-content-${notification.id}`;
+  const diagnosticId = `notification-diagnostic-${notification.id}`;
   const diagnostic = notification.diagnostic;
 
   return (
@@ -183,11 +173,7 @@ function NotificationRow({
           />
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">
-              <button
-                type="button"
-                className="text-text-base flex min-w-0 flex-1 items-center gap-1.5 text-left"
-                aria-label={`${notification.title}、${severityLabel[notification.severity]}`}
-              >
+              <div className="text-text-base flex min-w-0 flex-1 items-center gap-1.5 text-left">
                 <span className="truncate text-sm font-medium">
                   {notification.title}
                 </span>
@@ -197,7 +183,7 @@ function NotificationRow({
                     aria-label="未読"
                   />
                 )}
-              </button>
+              </div>
               <div className="text-text-muted grid shrink-0 items-center">
                 <time
                   className="pointer-events-none col-start-1 row-start-1 justify-self-end text-[11px] transition-opacity group-focus-within/notification:opacity-0 group-hover/notification:opacity-0 [@media(hover:none)]:opacity-0"
@@ -210,9 +196,9 @@ function NotificationRow({
                     <button
                       type="button"
                       className="hover:text-text-base flex size-6 items-center justify-center rounded-md transition-colors"
-                      aria-label="詳細を閉じる"
+                      aria-label="通知を小さくする"
                       aria-expanded={isMessageExpanded}
-                      aria-controls={contentId}
+                      aria-controls={diagnosticId}
                       onClick={(event) => {
                         event.stopPropagation();
                         setIsMessageExpanded(false);
@@ -226,7 +212,7 @@ function NotificationRow({
                       type="button"
                       className="hover:text-text-base flex size-6 items-center justify-center rounded-md transition-colors"
                       aria-label={
-                        isCopied ? "コピーしました" : "エラー内容をコピー"
+                        isCopied ? "コピーしました" : "通知内容をコピー"
                       }
                       onClick={(event) => {
                         event.stopPropagation();
@@ -257,7 +243,7 @@ function NotificationRow({
                 </div>
               </div>
             </div>
-            <div id={contentId} className="text-text-muted mt-0.5 text-xs">
+            <div className="text-text-muted mt-0.5 text-xs">
               <button
                 type="button"
                 className="block w-full rounded-md text-left break-words whitespace-pre-wrap select-text"
@@ -265,38 +251,46 @@ function NotificationRow({
                   event.stopPropagation();
                   setIsMessageExpanded(true);
                 }}
-                aria-label="エラー内容を表示"
+                aria-label={
+                  isMessageExpanded ? "通知内容を小さくする" : "通知内容を表示"
+                }
                 aria-expanded={isMessageExpanded}
-                aria-controls={contentId}
+                aria-controls={diagnostic ? diagnosticId : undefined}
               >
                 <span className={isMessageExpanded ? "" : "line-clamp-3"}>
                   {notification.message}
                 </span>
               </button>
               {diagnostic && isMessageExpanded && (
-                <dl
-                  className="mt-1 grid grid-cols-[auto_minmax(0,1fr)] gap-x-2 gap-y-1"
+                <div
+                  id={diagnosticId}
                   onClick={(event) => event.stopPropagation()}
                 >
-                  <DiagnosticValue label="画面" value={diagnostic?.route} />
-                  <DiagnosticValue label="操作" value={diagnostic?.action} />
-                  <DiagnosticValue
-                    label="HTTP Status"
-                    value={diagnostic?.status?.toString()}
-                  />
-                  <DiagnosticValue
-                    label="Error Code"
-                    value={diagnostic?.errorCode}
-                  />
-                  <DiagnosticValue
-                    label="Request ID"
-                    value={diagnostic?.requestId}
-                  />
-                  <DiagnosticValue
-                    label="Endpoint"
-                    value={diagnostic?.endpoint}
-                  />
-                </dl>
+                  <dl className="mt-1 grid grid-cols-[auto_minmax(0,1fr)] gap-x-2 gap-y-1">
+                    <DiagnosticValue
+                      label="時刻"
+                      value={diagnostic.occurredAt ?? notification.createdAt}
+                    />
+                    <DiagnosticValue label="画面" value={diagnostic?.route} />
+                    <DiagnosticValue label="操作" value={diagnostic?.action} />
+                    <DiagnosticValue
+                      label="HTTP Status"
+                      value={diagnostic?.status?.toString()}
+                    />
+                    <DiagnosticValue
+                      label="Error Code"
+                      value={diagnostic?.errorCode}
+                    />
+                    <DiagnosticValue
+                      label="Request ID"
+                      value={diagnostic?.requestId}
+                    />
+                    <DiagnosticValue
+                      label="Endpoint"
+                      value={diagnostic?.endpoint}
+                    />
+                  </dl>
+                </div>
               )}
             </div>
           </div>
