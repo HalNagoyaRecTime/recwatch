@@ -2,9 +2,11 @@ import {
   AlertCircleIcon,
   CheckCircle2Icon,
   InfoIcon,
+  XIcon,
   Trash2Icon,
   TriangleAlertIcon,
 } from "lucide-react";
+import { useCallback, useEffect, useRef } from "react";
 
 import { useFeedback } from "../hooks/useFeedback";
 import type {
@@ -27,13 +29,81 @@ const severityLabel: Record<FeedbackSeverity, string> = {
   error: "エラー",
 };
 
+const NOTIFICATION_VISIBILITY_THRESHOLD = 0.5;
+const NOTIFICATION_VISIBILITY_DELAY_MS = 400;
+
 export function AppNotificationCenter() {
-  const { notifications, markRead, clearNotifications } = useFeedback();
+  const { notifications, markRead, removeNotification, clearNotifications } =
+    useFeedback();
+  const rowRefs = useRef(new Map<string, HTMLLIElement>());
+  const visibilityTimersRef = useRef(new Map<string, number>());
+
+  const registerRow = useCallback((id: string, node: HTMLLIElement | null) => {
+    if (node) {
+      rowRefs.current.set(id, node);
+    } else {
+      rowRefs.current.delete(id);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (typeof IntersectionObserver === "undefined") return;
+
+    const unreadIds = new Set(
+      notifications
+        .filter((notification) => !notification.read)
+        .map((notification) => notification.id)
+    );
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          const id = (entry.target as HTMLElement).dataset.notificationId;
+          if (!id || !unreadIds.has(id)) {
+            observer.unobserve(entry.target);
+            continue;
+          }
+
+          const timer = visibilityTimersRef.current.get(id);
+          const isVisible =
+            entry.isIntersecting &&
+            entry.intersectionRatio >= NOTIFICATION_VISIBILITY_THRESHOLD;
+
+          if (isVisible && timer === undefined) {
+            visibilityTimersRef.current.set(
+              id,
+              window.setTimeout(() => {
+                markRead(id);
+                visibilityTimersRef.current.delete(id);
+                observer.unobserve(entry.target);
+              }, NOTIFICATION_VISIBILITY_DELAY_MS)
+            );
+          } else if (!isVisible && timer !== undefined) {
+            window.clearTimeout(timer);
+            visibilityTimersRef.current.delete(id);
+          }
+        }
+      },
+      { threshold: NOTIFICATION_VISIBILITY_THRESHOLD }
+    );
+    rowRefs.current.forEach((node, id) => {
+      if (unreadIds.has(id)) observer.observe(node);
+    });
+
+    const visibilityTimers = visibilityTimersRef.current;
+    return () => {
+      observer.disconnect();
+      visibilityTimers.forEach((timer) => window.clearTimeout(timer));
+      visibilityTimers.clear();
+    };
+  }, [markRead, notifications]);
 
   return (
     <div className="w-[min(20rem,calc(100vw-1rem))]">
       <FloatingListSurface
         scrollable
+        style={{
+          maxHeight: "min(60vh, var(--floating-panel-available-height))",
+        }}
         fixedHeader={
           <div className="border-border-subtle bg-surface-base mx-2 flex items-center justify-between gap-3 border-b px-2.5 py-2">
             <h2 className="text-text-base text-base font-semibold">通知</h2>
@@ -54,12 +124,14 @@ export function AppNotificationCenter() {
             通知はありません
           </p>
         ) : (
-          <ul className="mt-2 flex flex-col gap-1" aria-label="通知一覧">
+          <ul className="flex flex-col gap-1" aria-label="通知一覧">
             {notifications.map((notification) => (
               <NotificationRow
                 key={notification.id}
                 notification={notification}
                 onRead={() => markRead(notification.id)}
+                onRemove={() => removeNotification(notification.id)}
+                registerRow={registerRow}
               />
             ))}
           </ul>
@@ -72,18 +144,27 @@ export function AppNotificationCenter() {
 function NotificationRow({
   notification,
   onRead,
+  onRemove,
+  registerRow,
 }: {
   notification: AppNotification;
   onRead: () => void;
+  onRemove: () => void;
+  registerRow: (id: string, node: HTMLLIElement | null) => void;
 }) {
   const Icon = severityIcon[notification.severity];
 
   return (
-    <li className="rounded-lg">
+    <li
+      ref={(node) => registerRow(notification.id, node)}
+      className="group relative rounded-lg"
+      data-notification-id={notification.id}
+    >
       <button
         type="button"
-        className={`hover:bg-surface-hover flex w-full items-start gap-2 rounded-lg px-2.5 py-2 text-left ${notification.read ? "" : "bg-surface-muted"}`}
+        className={`hover:bg-surface-hover flex w-full items-start gap-2 rounded-lg px-2.5 py-2 pr-8 text-left ${notification.read ? "" : "bg-surface-muted"}`}
         onClick={onRead}
+        onFocus={onRead}
         aria-label={`${notification.title}、${severityLabel[notification.severity]}`}
       >
         <Icon
@@ -105,24 +186,37 @@ function NotificationRow({
                 aria-label="未読"
               />
             )}
+            <time
+              className="text-text-subtle ml-auto shrink-0 text-[11px] transition-opacity group-focus-within:opacity-0 group-hover:opacity-0"
+              dateTime={notification.createdAt}
+            >
+              {formatNotificationClock(notification.createdAt)}
+            </time>
           </span>
           <span className="text-text-muted mt-0.5 block text-xs">
             {notification.message}
           </span>
-          <time
-            className="text-text-subtle mt-1 block text-[11px]"
-            dateTime={notification.createdAt}
-          >
-            {formatNotificationTime(notification.createdAt)}
-          </time>
         </span>
+      </button>
+      <button
+        type="button"
+        className="text-text-muted hover:bg-surface-hover hover:text-text-base absolute top-1.5 right-1.5 rounded-md p-1 opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100"
+        onClick={onRemove}
+        aria-label={`${notification.title}を削除`}
+      >
+        <XIcon aria-hidden="true" size={15} />
       </button>
       {notification.diagnostic && (
         <details className="text-text-muted px-2.5 pb-2 text-xs">
           <summary className="cursor-pointer">詳細</summary>
           <dl className="mt-1 grid grid-cols-[auto_1fr] gap-x-2 gap-y-1">
             <DiagnosticValue label="エラー内容" value={notification.message} />
-            <DiagnosticValue label="時刻" value={notification.createdAt} />
+            <DiagnosticValue
+              label="時刻"
+              value={formatNotificationDateTime(
+                notification.diagnostic.occurredAt ?? notification.createdAt
+              )}
+            />
             <DiagnosticValue
               label="画面"
               value={notification.diagnostic.route}
@@ -158,7 +252,7 @@ function DiagnosticValue({ label, value }: { label: string; value?: string }) {
   return value ? (
     <>
       <dt>{label}</dt>
-      <dd className="truncate">{value}</dd>
+      <dd className="break-all select-text">{value}</dd>
     </>
   ) : null;
 }
@@ -171,4 +265,18 @@ function formatNotificationTime(createdAt: string) {
         dateStyle: "short",
         timeStyle: "short",
       });
+}
+
+function formatNotificationClock(createdAt: string) {
+  const date = new Date(createdAt);
+  return Number.isNaN(date.getTime())
+    ? createdAt
+    : date.toLocaleTimeString("ja-JP", {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+}
+
+function formatNotificationDateTime(createdAt: string) {
+  return formatNotificationTime(createdAt);
 }

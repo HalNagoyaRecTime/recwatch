@@ -14,6 +14,7 @@ import {
   setRefreshTokenId,
 } from "~/features/auth/lib/refreshTokenStore";
 import { WEB_CLIENT_HEADERS } from "~/features/auth/lib/webClientHeaders";
+import { clearStoredAppNotifications } from "~/features/frame/feedback/model/app-notification";
 
 export type LogoutResult =
   | { status: "ok"; msLogoutUrl: string | null }
@@ -25,7 +26,11 @@ export async function logout(): Promise<LogoutResult> {
   await clearCachedAccountPhotos().catch(() => undefined);
 
   try {
-    return await performLogout();
+    const result = await performLogout();
+    if (result.status === "ok") {
+      clearStoredAppNotifications();
+    }
+    return result;
   } finally {
     setAccessToken(null);
     setRefreshTokenId(null);

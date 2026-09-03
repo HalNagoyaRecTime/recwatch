@@ -1,10 +1,46 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { useFeedback } from "../hooks/useFeedback";
 import { FeedbackProvider } from "./FeedbackProvider";
 import { AppNotificationCenter } from "./AppNotificationCenter";
+import {
+  APP_NOTIFICATION_STORAGE_KEY,
+  type AppNotification,
+} from "../model/app-notification";
+
+class MockIntersectionObserver {
+  static instances: MockIntersectionObserver[] = [];
+  private readonly callback: IntersectionObserverCallback;
+  observe = vi.fn();
+  unobserve = vi.fn();
+  disconnect = vi.fn();
+
+  constructor(callback: IntersectionObserverCallback) {
+    this.callback = callback;
+    MockIntersectionObserver.instances.push(this);
+  }
+
+  emit(target: Element, intersectionRatio: number) {
+    this.callback(
+      [
+        {
+          target,
+          isIntersecting: intersectionRatio > 0,
+          intersectionRatio,
+        } as IntersectionObserverEntry,
+      ],
+      this as unknown as IntersectionObserver
+    );
+  }
+}
 
 function SeedNotification() {
   const { report } = useFeedback();
@@ -23,6 +59,7 @@ function SeedNotification() {
             status: 500,
             errorCode: "SERVER_ERROR",
             requestId: "req-123",
+            occurredAt: "発生時刻",
           },
         })
       }
@@ -44,6 +81,13 @@ function renderCenter() {
 describe("AppNotificationCenter", () => {
   beforeEach(() => {
     window.localStorage.clear();
+    MockIntersectionObserver.instances = [];
+    vi.stubGlobal("IntersectionObserver", MockIntersectionObserver);
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.unstubAllGlobals();
   });
 
   it("空状態を表示する", () => {
@@ -52,6 +96,93 @@ describe("AppNotificationCenter", () => {
     expect(
       screen.getByRole("heading", { name: "通知" }).closest(".scrollbar-none")
     ).not.toBeInTheDocument();
+  });
+
+  it("開いただけでは通知を既読にしない", async () => {
+    const user = userEvent.setup();
+    renderCenter();
+    await user.click(screen.getByRole("button", { name: "seed" }));
+
+    const row = await screen.findByRole("button", {
+      name: "更新失敗、エラー",
+    });
+    expect(row).toHaveClass("bg-surface-muted");
+    expect(screen.getByLabelText("未読")).toBeInTheDocument();
+  });
+
+  it("表示割合が閾値を超えた状態が続くと既読にする", async () => {
+    vi.useFakeTimers();
+    renderCenter();
+    fireEvent.click(screen.getByRole("button", { name: "seed" }));
+
+    const row = screen.getByRole("button", { name: "更新失敗、エラー" });
+    const observer = MockIntersectionObserver.instances.at(-1);
+    expect(observer).toBeDefined();
+    observer?.emit(row.closest("li") as HTMLElement, 0.5);
+
+    await act(async () => {
+      vi.advanceTimersByTime(399);
+    });
+    expect(row).toHaveClass("bg-surface-muted");
+
+    await act(async () => {
+      vi.advanceTimersByTime(1);
+    });
+    expect(row).not.toHaveClass("bg-surface-muted");
+  });
+
+  it("表示領域から離れると遅延中の既読化を取り消す", async () => {
+    vi.useFakeTimers();
+    renderCenter();
+    fireEvent.click(screen.getByRole("button", { name: "seed" }));
+
+    const row = screen.getByRole("button", { name: "更新失敗、エラー" });
+    const observer = MockIntersectionObserver.instances.at(-1);
+    expect(observer).toBeDefined();
+    const target = row.closest("li") as HTMLElement;
+    observer?.emit(target, 0.5);
+    observer?.emit(target, 0);
+
+    await act(async () => {
+      vi.advanceTimersByTime(500);
+    });
+    expect(row).toHaveClass("bg-surface-muted");
+  });
+
+  it("スクロールで新たに表示された通知だけを既読にする", async () => {
+    vi.useFakeTimers();
+    const notifications: AppNotification[] = [0, 1].map((index) => ({
+      id: `notification-${index}`,
+      kind: "background-error",
+      severity: "error",
+      title: `通知${index}`,
+      message: "失敗しました",
+      createdAt: new Date().toISOString(),
+      read: false,
+    }));
+    window.localStorage.setItem(
+      APP_NOTIFICATION_STORAGE_KEY,
+      JSON.stringify(notifications)
+    );
+    renderCenter();
+
+    const first = screen.getByRole("button", { name: "通知0、エラー" });
+    const second = screen.getByRole("button", { name: "通知1、エラー" });
+    const observer = MockIntersectionObserver.instances.at(-1);
+    expect(observer).toBeDefined();
+    observer?.emit(first.closest("li") as HTMLElement, 0.5);
+    await act(async () => {
+      vi.advanceTimersByTime(400);
+    });
+    expect(first).not.toHaveClass("bg-surface-muted");
+    expect(second).toHaveClass("bg-surface-muted");
+
+    const updatedObserver = MockIntersectionObserver.instances.at(-1);
+    updatedObserver?.emit(second.closest("li") as HTMLElement, 0.5);
+    await act(async () => {
+      vi.advanceTimersByTime(400);
+    });
+    expect(second).not.toHaveClass("bg-surface-muted");
   });
 
   it("通知を表示し、行の確認で既読化とdiagnostic詳細を行う", async () => {
@@ -73,6 +204,16 @@ describe("AppNotificationCenter", () => {
     expect(screen.getByText("SERVER_ERROR")).toBeInTheDocument();
     expect(screen.getByText("req-123")).toBeInTheDocument();
     expect(screen.getByText("/api/teachers/1")).toBeInTheDocument();
+    expect(screen.getByText("発生時刻")).toBeInTheDocument();
+  });
+
+  it("通知行へfocusすると即座に既読にする", async () => {
+    renderCenter();
+    fireEvent.click(screen.getByRole("button", { name: "seed" }));
+
+    const row = screen.getByRole("button", { name: "更新失敗、エラー" });
+    fireEvent.focus(row);
+    expect(row).not.toHaveClass("bg-surface-muted");
   });
 
   it("ゴミ箱アイコンから履歴を削除できる", async () => {
@@ -84,6 +225,18 @@ describe("AppNotificationCenter", () => {
       expect(screen.getByRole("button", { name: "すべて削除" })).toBeEnabled()
     );
     await user.click(screen.getByRole("button", { name: "すべて削除" }));
+    expect(screen.getByText("通知はありません")).toBeInTheDocument();
+  });
+
+  it("通知行の削除ボタンから個別に履歴を削除できる", async () => {
+    const user = userEvent.setup();
+    renderCenter();
+    await user.click(screen.getByRole("button", { name: "seed" }));
+
+    await user.click(
+      await screen.findByRole("button", { name: "更新失敗を削除" })
+    );
+
     expect(screen.getByText("通知はありません")).toBeInTheDocument();
   });
 });
