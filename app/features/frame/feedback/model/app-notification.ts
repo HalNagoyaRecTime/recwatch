@@ -44,7 +44,7 @@ export type FeedbackContextValue = {
   unreadCount: number;
   report: (input: FeedbackInput) => AppNotification;
   markRead: (id: string) => void;
-  markAllRead: () => void;
+  removeNotification: (id: string) => void;
   clearNotifications: () => void;
   dismissToast: (id: string) => void;
 };
@@ -54,6 +54,16 @@ export const APP_NOTIFICATION_MAX_COUNT = 100;
 export const APP_NOTIFICATION_RETENTION_DAYS = 30;
 export const APP_NOTIFICATION_RETENTION_MS =
   APP_NOTIFICATION_RETENTION_DAYS * 24 * 60 * 60 * 1000;
+
+export function clearStoredAppNotifications() {
+  if (typeof window === "undefined") return;
+
+  try {
+    window.localStorage.removeItem(APP_NOTIFICATION_STORAGE_KEY);
+  } catch {
+    // localStorageが利用できない環境では何もしません。
+  }
+}
 
 export function severityForFeedbackKind(kind: FeedbackKind): FeedbackSeverity {
   switch (kind) {

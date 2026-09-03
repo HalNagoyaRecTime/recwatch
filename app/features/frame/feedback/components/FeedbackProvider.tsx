@@ -161,9 +161,9 @@ export function FeedbackProvider({ children }: { children: ReactNode }) {
     );
   }, []);
 
-  const markAllRead = useCallback(() => {
+  const removeNotification = useCallback((id: string) => {
     setNotifications((current) =>
-      current.map((notification) => ({ ...notification, read: true }))
+      current.filter((notification) => notification.id !== id)
     );
   }, []);
 
@@ -183,7 +183,7 @@ export function FeedbackProvider({ children }: { children: ReactNode }) {
         .length,
       report,
       markRead,
-      markAllRead,
+      removeNotification,
       clearNotifications,
       dismissToast,
     }),
@@ -192,7 +192,7 @@ export function FeedbackProvider({ children }: { children: ReactNode }) {
       toasts,
       report,
       markRead,
-      markAllRead,
+      removeNotification,
       clearNotifications,
       dismissToast,
     ]

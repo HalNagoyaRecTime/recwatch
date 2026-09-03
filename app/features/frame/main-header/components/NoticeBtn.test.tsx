@@ -42,10 +42,15 @@ describe("NoticeBtn", () => {
       </FeedbackProvider>
     );
 
-    await user.click(screen.getByRole("button", { name: "report" }));
     expect(screen.getByRole("button", { name: "通知" })).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "report" }));
+    expect(
+      screen.getByRole("button", { name: "通知、1件の未読通知" })
+    ).toBeInTheDocument();
 
-    const noticeButton = screen.getByRole("button", { name: "通知" });
+    const noticeButton = screen.getByRole("button", {
+      name: "通知、1件の未読通知",
+    });
     expect(noticeButton).toHaveAttribute("aria-expanded", "false");
     await user.click(noticeButton);
     expect(screen.getByRole("heading", { name: "通知" })).toBeInTheDocument();

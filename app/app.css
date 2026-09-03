@@ -294,7 +294,7 @@
 
   @keyframes feedback-toast-enter {
     from {
-      opacity: 0;
+      opacity: 1;
       transform: translate3d(110%, 0, 0);
     }
 
@@ -311,8 +311,8 @@
     }
 
     to {
-      opacity: 0;
-      transform: translate3d(-110%, 0, 0);
+      opacity: 1;
+      transform: translate3d(110%, 0, 0);
     }
   }
 

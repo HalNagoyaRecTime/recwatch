@@ -20,7 +20,7 @@ const emptyContext: FeedbackContextValue = {
     diagnostic: input.diagnostic,
   }),
   markRead: () => undefined,
-  markAllRead: () => undefined,
+  removeNotification: () => undefined,
   clearNotifications: () => undefined,
   dismissToast: () => undefined,
 };
