@@ -1,7 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { ApiClientError } from "~/lib/api-client-error";
-import { NotificationManagementError } from "~/features/notifications/api/contracts/errors/notification-management-error";
 import {
   createHttpNotificationManagementApi,
   type AdminNotificationManagementHttpClient,
@@ -88,7 +87,7 @@ describe("createHttpNotificationManagementApi", () => {
     );
 
     await expect(gateway.delete(10)).rejects.toEqual(
-      new NotificationManagementError("conflict")
+      new ApiClientError(409, "Notification is in use")
     );
   });
 });

@@ -214,7 +214,9 @@ describe("ClassRoomPage", () => {
       "1年A組"
     );
     await user.click(screen.getByRole("button", { name: "保存する" }));
-    expect(await screen.findByRole("alert")).toHaveTextContent("保存失敗");
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "クラスを保存できませんでした。"
+    );
 
     await user.click(screen.getByRole("button", { name: "キャンセル" }));
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();

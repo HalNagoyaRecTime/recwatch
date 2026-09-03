@@ -4,7 +4,6 @@ import {
   toGatheringAudienceDtos,
   toNotificationAudienceOptions,
 } from "~/features/notifications/api/mappers/notification-audience-response-mapper";
-import { toNotificationAudienceLoadingError } from "~/features/notifications/api/mappers/notification-audience-error-mapper";
 import {
   loadAllClassrooms,
   loadAllEvents,
@@ -16,21 +15,17 @@ export function createHttpNotificationAudienceApi(
 ): NotificationAudienceApi {
   return {
     async load() {
-      try {
-        const [classrooms, gatheringsResponse, events] = await Promise.all([
-          loadAllClassrooms(client),
-          client.get("/api/v1/gatherings"),
-          loadAllEvents(client),
-        ]);
+      const [classrooms, gatheringsResponse, events] = await Promise.all([
+        loadAllClassrooms(client),
+        client.get("/api/v1/gatherings"),
+        loadAllEvents(client),
+      ]);
 
-        return toNotificationAudienceOptions({
-          classrooms,
-          gatherings: toGatheringAudienceDtos(gatheringsResponse),
-          events,
-        });
-      } catch (error) {
-        throw toNotificationAudienceLoadingError(error);
-      }
+      return toNotificationAudienceOptions({
+        classrooms,
+        gatherings: toGatheringAudienceDtos(gatheringsResponse),
+        events,
+      });
     },
   };
 }

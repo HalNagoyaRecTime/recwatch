@@ -2,6 +2,7 @@ import { Plus } from "lucide-react";
 import { useMemo, useState } from "react";
 
 import { Button } from "~/components/ui/button/Button";
+import { getErrorMessage } from "~/lib/client-error";
 import { SearchField } from "~/components/ui/form/SearchField";
 import { PageHeader } from "~/components/ui/layout/PageHeader";
 import { FormModal } from "~/components/ui/modal/FormModal";
@@ -135,11 +136,7 @@ export function ClassRoomPage({
       );
       closeForm();
     } catch (error) {
-      setActionError(
-        error instanceof Error
-          ? error.message
-          : "クラスを保存できませんでした。"
-      );
+      setActionError(getErrorMessage(error, "クラスを保存できませんでした。"));
     } finally {
       setIsMutating(false);
     }
@@ -163,11 +160,7 @@ export function ClassRoomPage({
         current.filter((item) => item.classRoomId !== classRoom.classRoomId)
       );
     } catch (error) {
-      setActionError(
-        error instanceof Error
-          ? error.message
-          : "クラスを削除できませんでした。"
-      );
+      setActionError(getErrorMessage(error, "クラスを削除できませんでした。"));
     } finally {
       setIsMutating(false);
     }

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { NotificationSubmissionError } from "~/features/notifications/api/contracts/errors/notification-submission-error";
+import { ClientError, ClientErrors } from "~/lib/client-error";
 import { toNotificationSubmission } from "~/features/notifications/api/mappers/admin-notification-response-mapper";
 
 describe("toNotificationSubmission", () => {
@@ -26,6 +26,6 @@ describe("toNotificationSubmission", () => {
         schedule_count: 120,
         send_status: "draft",
       })
-    ).toThrow(new NotificationSubmissionError("unexpected"));
+    ).toThrow(new ClientError(ClientErrors.RESPONSE_PARSE_ERROR));
   });
 });
