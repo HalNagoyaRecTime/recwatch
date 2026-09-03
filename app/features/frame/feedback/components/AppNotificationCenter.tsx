@@ -14,12 +14,20 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useFeedback } from "../hooks/useFeedback";
 import type { AppNotification } from "../model/app-notification";
 import { FloatingListSurface } from "~/components/ui/panel/FloatingListSurface";
+import { Button } from "~/components/ui/button/Button";
 
 const severityIcon = {
   info: InfoIcon,
   success: CheckCircle2Icon,
   warning: TriangleAlertIcon,
   error: AlertCircleIcon,
+} as const;
+
+const severityIconClass = {
+  info: "text-brand-primary",
+  success: "text-tone-success-text",
+  warning: "text-tone-warning-text",
+  error: "text-tone-danger-text",
 } as const;
 
 const NOTIFICATION_VISIBILITY_THRESHOLD = 0.5;
@@ -100,15 +108,15 @@ export function AppNotificationCenter() {
         fixedHeader={
           <div className="border-border-subtle bg-surface-base mx-2 flex items-center justify-between gap-3 border-b px-2.5 py-2">
             <h2 className="text-text-base text-base font-semibold">通知</h2>
-            <button
-              type="button"
-              className="text-text-muted hover:text-text-base rounded-md p-1.5 transition-colors"
+            <Button
+              icon={Trash2Icon}
+              iconOnly
+              size="sm"
+              variant="ghost"
               onClick={clearNotifications}
               disabled={notifications.length === 0}
               aria-label="すべて削除"
-            >
-              <Trash2Icon aria-hidden="true" size={16} />
-            </button>
+            />
           </div>
         }
       >
@@ -168,7 +176,7 @@ function NotificationRow({
         <div className="flex items-start gap-2">
           <Icon
             aria-hidden="true"
-            className="text-brand-primary mt-0.5 shrink-0"
+            className={`${severityIconClass[notification.severity]} mt-0.5 shrink-0`}
             size={16}
           />
           <div className="min-w-0 flex-1">

@@ -19,6 +19,13 @@ const toastIcon = {
   error: AlertCircleIcon,
 } as const;
 
+const toastIconClass = {
+  info: "text-brand-primary",
+  success: "text-tone-success-text",
+  warning: "text-tone-warning-text",
+  error: "text-tone-danger-text",
+} as const;
+
 const TOAST_EXIT_DURATION_MS = 220;
 const TOAST_DURATION_MS = 4000;
 
@@ -149,7 +156,7 @@ function FeedbackToast({
     >
       <Icon
         aria-hidden="true"
-        className="text-brand-primary mt-0.5 shrink-0"
+        className={`${toastIconClass[toast.severity]} mt-0.5 shrink-0`}
         size={16}
       />
       <div className="min-w-0 flex-1">
