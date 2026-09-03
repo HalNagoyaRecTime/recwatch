@@ -29,9 +29,33 @@ describe("FeedbackTestButton", () => {
 
     await user.click(screen.getByRole("button", { name: "通知テスト" }));
 
-    expect(screen.getByText("テスト通知")).toBeInTheDocument();
+    expect(
+      screen.getByText("テスト通知", { exact: false })
+    ).toBeInTheDocument();
     expect(window.localStorage.getItem("recwatch.app-notifications")).toContain(
       "テスト通知"
     );
+  });
+
+  it("クリックごとに複数の通知バリエーションを発生させる", async () => {
+    const user = userEvent.setup();
+    render(
+      <FeedbackProvider>
+        <FeedbackTestButton />
+        <NotificationProbe />
+      </FeedbackProvider>
+    );
+    const button = screen.getByRole("button", { name: "通知テスト" });
+
+    await user.click(button);
+    await user.click(button);
+    await user.click(button);
+    await user.click(button);
+
+    expect(
+      screen.getByText("テスト通知", { exact: false })
+    ).toBeInTheDocument();
+    expect(screen.getByText(/テスト通知（警告）/)).toBeInTheDocument();
+    expect(screen.getByText(/テスト通知（完了）/)).toBeInTheDocument();
   });
 });

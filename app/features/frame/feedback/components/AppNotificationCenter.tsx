@@ -1,6 +1,8 @@
 import {
   AlertCircleIcon,
+  CheckIcon,
   CheckCircle2Icon,
+  CopyIcon,
   InfoIcon,
   Minimize2Icon,
   XIcon,
@@ -103,7 +105,7 @@ export function AppNotificationCenter() {
       <FloatingListSurface
         scrollable
         style={{
-          maxHeight: "min(60vh, var(--floating-panel-available-height))",
+          maxHeight: "min(35vh, var(--floating-panel-available-height))",
         }}
         fixedHeader={
           <div className="border-border-subtle bg-surface-base mx-2 flex items-center justify-between gap-3 border-b px-2.5 py-2">
@@ -155,6 +157,7 @@ function NotificationRow({
 }) {
   const Icon = severityIcon[notification.severity];
   const [isMessageExpanded, setIsMessageExpanded] = useState(false);
+  const [isCopied, setIsCopied] = useState(false);
   const contentId = `notification-content-${notification.id}`;
   const diagnostic = notification.diagnostic;
 
@@ -164,7 +167,10 @@ function NotificationRow({
       className="group/notification rounded-lg"
       data-notification-id={notification.id}
       onFocus={onRead}
-      onClick={onRead}
+      onClick={() => {
+        onRead();
+        setIsMessageExpanded((expanded) => !expanded);
+      }}
     >
       <div
         className={`hover:bg-surface-hover rounded-lg px-2.5 py-2 transition-colors ${notification.read ? "" : "bg-surface-muted"}`}
@@ -185,9 +191,6 @@ function NotificationRow({
                 <span className="truncate text-sm font-medium">
                   {notification.title}
                 </span>
-                <span className="text-text-subtle shrink-0 text-[10px]">
-                  {severityLabel[notification.severity]}
-                </span>
                 {!notification.read && (
                   <span
                     className="bg-brand-primary h-1.5 w-1.5 shrink-0 rounded-full"
@@ -207,18 +210,46 @@ function NotificationRow({
                     <button
                       type="button"
                       className="hover:text-text-base flex size-6 items-center justify-center rounded-md transition-colors"
-                      aria-label="エラー内容を小さくする"
+                      aria-label="詳細を閉じる"
                       aria-expanded={isMessageExpanded}
                       aria-controls={contentId}
-                      onClick={() => setIsMessageExpanded(false)}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        setIsMessageExpanded(false);
+                      }}
                     >
                       <Minimize2Icon aria-hidden="true" size={13} />
+                    </button>
+                  )}
+                  {isMessageExpanded && (
+                    <button
+                      type="button"
+                      className="hover:text-text-base flex size-6 items-center justify-center rounded-md transition-colors"
+                      aria-label={
+                        isCopied ? "コピーしました" : "エラー内容をコピー"
+                      }
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        void copyNotificationDetails(notification).then(() => {
+                          setIsCopied(true);
+                          window.setTimeout(() => setIsCopied(false), 1200);
+                        });
+                      }}
+                    >
+                      {isCopied ? (
+                        <CheckIcon aria-hidden="true" size={13} />
+                      ) : (
+                        <CopyIcon aria-hidden="true" size={13} />
+                      )}
                     </button>
                   )}
                   <button
                     type="button"
                     className="hover:text-text-base flex size-6 items-center justify-center rounded-md transition-colors"
-                    onClick={onRemove}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      onRemove();
+                    }}
                     aria-label={`${notification.title}を削除`}
                   >
                     <XIcon aria-hidden="true" size={13} />
@@ -230,7 +261,10 @@ function NotificationRow({
               <button
                 type="button"
                 className="block w-full rounded-md text-left break-words whitespace-pre-wrap select-text"
-                onClick={() => setIsMessageExpanded(true)}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  setIsMessageExpanded(true);
+                }}
                 aria-label="エラー内容を表示"
                 aria-expanded={isMessageExpanded}
                 aria-controls={contentId}
@@ -240,13 +274,10 @@ function NotificationRow({
                 </span>
               </button>
               {diagnostic && isMessageExpanded && (
-                <dl className="mt-1 grid grid-cols-[auto_minmax(0,1fr)] gap-x-2 gap-y-1">
-                  <DiagnosticValue
-                    label="時刻"
-                    value={formatNotificationDateTime(
-                      diagnostic?.occurredAt ?? notification.createdAt
-                    )}
-                  />
+                <dl
+                  className="mt-1 grid grid-cols-[auto_minmax(0,1fr)] gap-x-2 gap-y-1"
+                  onClick={(event) => event.stopPropagation()}
+                >
                   <DiagnosticValue label="画面" value={diagnostic?.route} />
                   <DiagnosticValue label="操作" value={diagnostic?.action} />
                   <DiagnosticValue
@@ -275,6 +306,28 @@ function NotificationRow({
   );
 }
 
+async function copyNotificationDetails(notification: AppNotification) {
+  const diagnostic = notification.diagnostic;
+  const lines = [notification.title, notification.message];
+  if (diagnostic) {
+    const details: Array<[string, string | undefined]> = [
+      ["時刻", diagnostic.occurredAt],
+      ["画面", diagnostic.route],
+      ["操作", diagnostic.action],
+      ["HTTP Status", diagnostic.status?.toString()],
+      ["Error Code", diagnostic.errorCode],
+      ["Request ID", diagnostic.requestId],
+      ["Endpoint", diagnostic.endpoint],
+    ];
+    lines.push(
+      ...details
+        .filter((entry): entry is [string, string] => Boolean(entry[1]))
+        .map(([label, value]) => `${label}: ${value}`)
+    );
+  }
+  await navigator.clipboard?.writeText(lines.join("\n"));
+}
+
 function DiagnosticValue({ label, value }: { label: string; value?: string }) {
   return value ? (
     <>
@@ -282,16 +335,6 @@ function DiagnosticValue({ label, value }: { label: string; value?: string }) {
       <dd className="break-all select-text">{value}</dd>
     </>
   ) : null;
-}
-
-function formatNotificationTime(createdAt: string) {
-  const date = new Date(createdAt);
-  return Number.isNaN(date.getTime())
-    ? createdAt
-    : date.toLocaleString("ja-JP", {
-        dateStyle: "short",
-        timeStyle: "short",
-      });
 }
 
 function formatNotificationClock(createdAt: string) {
@@ -302,8 +345,4 @@ function formatNotificationClock(createdAt: string) {
         hour: "2-digit",
         minute: "2-digit",
       });
-}
-
-function formatNotificationDateTime(createdAt: string) {
-  return formatNotificationTime(createdAt);
 }
