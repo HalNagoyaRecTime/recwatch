@@ -4,6 +4,7 @@ import {
   render,
   screen,
   waitFor,
+  within,
 } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -106,8 +107,8 @@ describe("AppNotificationCenter", () => {
     const row = await screen.findByRole("button", {
       name: "更新失敗、エラー",
     });
-    expect(row).toHaveClass("bg-surface-muted");
     expect(screen.getByLabelText("未読")).toBeInTheDocument();
+    expect(row).toBeInTheDocument();
   });
 
   it("表示割合が閾値を超えた状態が続くと既読にする", async () => {
@@ -123,12 +124,12 @@ describe("AppNotificationCenter", () => {
     await act(async () => {
       vi.advanceTimersByTime(399);
     });
-    expect(row).toHaveClass("bg-surface-muted");
+    expect(screen.getByLabelText("未読")).toBeInTheDocument();
 
     await act(async () => {
       vi.advanceTimersByTime(1);
     });
-    expect(row).not.toHaveClass("bg-surface-muted");
+    expect(screen.queryByLabelText("未読")).not.toBeInTheDocument();
   });
 
   it("表示領域から離れると遅延中の既読化を取り消す", async () => {
@@ -146,7 +147,7 @@ describe("AppNotificationCenter", () => {
     await act(async () => {
       vi.advanceTimersByTime(500);
     });
-    expect(row).toHaveClass("bg-surface-muted");
+    expect(screen.getByLabelText("未読")).toBeInTheDocument();
   });
 
   it("スクロールで新たに表示された通知だけを既読にする", async () => {
@@ -174,18 +175,22 @@ describe("AppNotificationCenter", () => {
     await act(async () => {
       vi.advanceTimersByTime(400);
     });
-    expect(first).not.toHaveClass("bg-surface-muted");
-    expect(second).toHaveClass("bg-surface-muted");
+    expect(
+      within(first.closest("li")!).queryByLabelText("未読")
+    ).not.toBeInTheDocument();
+    expect(
+      within(second.closest("li")!).getByLabelText("未読")
+    ).toBeInTheDocument();
 
     const updatedObserver = MockIntersectionObserver.instances.at(-1);
     updatedObserver?.emit(second.closest("li") as HTMLElement, 0.5);
     await act(async () => {
       vi.advanceTimersByTime(400);
     });
-    expect(second).not.toHaveClass("bg-surface-muted");
+    expect(screen.queryByLabelText("未読")).not.toBeInTheDocument();
   });
 
-  it("通知を表示し、行の確認で既読化とdiagnostic詳細を行う", async () => {
+  it("通知を表示し、エラー内容の展開とdiagnostic詳細を行う", async () => {
     const user = userEvent.setup();
     renderCenter();
     await user.click(screen.getByRole("button", { name: "seed" }));
@@ -198,9 +203,9 @@ describe("AppNotificationCenter", () => {
     );
 
     await user.click(row);
-    expect(row).not.toHaveClass("bg-surface-muted");
+    expect(screen.queryByLabelText("未読")).not.toBeInTheDocument();
 
-    await user.click(screen.getByText("詳細"));
+    await user.click(screen.getByLabelText("エラー内容を表示"));
     expect(screen.getByText("SERVER_ERROR")).toBeInTheDocument();
     expect(screen.getByText("req-123")).toBeInTheDocument();
     expect(screen.getByText("/api/teachers/1")).toBeInTheDocument();
@@ -213,7 +218,7 @@ describe("AppNotificationCenter", () => {
 
     const row = screen.getByRole("button", { name: "更新失敗、エラー" });
     fireEvent.focus(row);
-    expect(row).not.toHaveClass("bg-surface-muted");
+    expect(screen.queryByLabelText("未読")).not.toBeInTheDocument();
   });
 
   it("ゴミ箱アイコンから履歴を削除できる", async () => {
@@ -237,6 +242,54 @@ describe("AppNotificationCenter", () => {
       await screen.findByRole("button", { name: "更新失敗を削除" })
     );
 
+    expect(screen.getByText("通知はありません")).toBeInTheDocument();
+  });
+
+  it("本文で展開し、縮小ボタンで閉じて再展開後も個別に削除できる", async () => {
+    const user = userEvent.setup();
+    renderCenter();
+    await user.click(screen.getByRole("button", { name: "seed" }));
+    await user.click(screen.getByRole("button", { name: "seed" }));
+    const row = screen.getAllByRole("listitem")[0];
+    const message = within(row).getByRole("button", {
+      name: "エラー内容を表示",
+    });
+
+    await user.hover(row);
+    await user.click(message);
+    expect(message).toHaveAttribute("aria-expanded", "true");
+    expect(within(row).getByText("req-123")).toBeInTheDocument();
+    await user.click(
+      within(row).getByRole("button", { name: "エラー内容を小さくする" })
+    );
+    expect(message).toHaveAttribute("aria-expanded", "false");
+    expect(within(row).queryByText("req-123")).not.toBeInTheDocument();
+    expect(within(row).getByText("更新できませんでした")).toBeInTheDocument();
+
+    await user.click(message);
+    await user.click(
+      within(row).getByRole("button", { name: "更新失敗を削除" })
+    );
+    expect(row).not.toBeInTheDocument();
+    expect(screen.getAllByRole("listitem")).toHaveLength(1);
+  });
+
+  it("本文の展開・縮小・削除をキーボードでも操作できる", async () => {
+    const user = userEvent.setup();
+    renderCenter();
+    await user.click(screen.getByRole("button", { name: "seed" }));
+    const message = screen.getByRole("button", { name: "エラー内容を表示" });
+    act(() => message.focus());
+    await user.keyboard("{Enter}");
+    expect(screen.getByText("req-123")).toBeInTheDocument();
+    const minimize = screen.getByRole("button", {
+      name: "エラー内容を小さくする",
+    });
+    act(() => minimize.focus());
+    await user.keyboard(" ");
+    expect(screen.queryByText("req-123")).not.toBeInTheDocument();
+    act(() => screen.getByRole("button", { name: "更新失敗を削除" }).focus());
+    await user.keyboard("{Enter}");
     expect(screen.getByText("通知はありません")).toBeInTheDocument();
   });
 });

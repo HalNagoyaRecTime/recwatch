@@ -1,6 +1,8 @@
 import {
   AlertCircleIcon,
   CheckCircle2Icon,
+  Maximize2Icon,
+  Minimize2Icon,
   InfoIcon,
   TriangleAlertIcon,
   XIcon,
@@ -77,6 +79,7 @@ function FeedbackToast({
   onDismiss: (id: string) => void;
 }) {
   const Icon = toastIcon[toast.severity];
+  const [isExpanded, setIsExpanded] = useState(true);
 
   useEffect(() => {
     const timeout = window.setTimeout(() => onDismiss(toast.id), 4000);
@@ -85,7 +88,7 @@ function FeedbackToast({
 
   return (
     <div
-      className={`shadow-soft border-border-subtle bg-surface-base pointer-events-auto flex items-start gap-2 rounded-xl border px-3 py-2.5 text-sm ${isExiting ? "feedback-toast-exit" : "feedback-toast-enter"}`}
+      className={`shadow-soft border-border-subtle bg-surface-base group/toast pointer-events-auto flex items-start gap-2 rounded-xl border px-3 py-2.5 text-sm ${isExiting ? "feedback-toast-exit" : "feedback-toast-enter"}`}
       role={toast.severity === "error" ? "alert" : "status"}
     >
       <Icon
@@ -94,17 +97,57 @@ function FeedbackToast({
         size={16}
       />
       <div className="min-w-0 flex-1">
-        <p className="text-text-base font-medium">{toast.title}</p>
-        <p className="text-text-muted">{toast.message}</p>
+        <div className="flex items-start gap-2">
+          <p className="text-text-base min-w-0 flex-1 font-medium break-words">
+            {toast.title}
+          </p>
+          <div className="text-text-muted grid shrink-0 items-center">
+            <time
+              className="pointer-events-none col-start-1 row-start-1 justify-self-end text-[11px] transition-opacity group-focus-within/toast:opacity-0 group-hover/toast:opacity-0 [@media(hover:none)]:opacity-0"
+              dateTime={toast.createdAt}
+            >
+              {formatToastTime(toast.createdAt)}
+            </time>
+            <div className="relative col-start-1 row-start-1 flex justify-end gap-0.5 opacity-0 transition-opacity group-focus-within/toast:opacity-100 group-hover/toast:opacity-100 [@media(hover:none)]:opacity-100">
+              <button
+                type="button"
+                className="hover:text-text-base flex size-6 items-center justify-center rounded-md transition-colors"
+                aria-label={isExpanded ? "通知を小さくする" : "通知を元に戻す"}
+                onClick={() => setIsExpanded((expanded) => !expanded)}
+              >
+                {isExpanded ? (
+                  <Minimize2Icon aria-hidden="true" size={13} />
+                ) : (
+                  <Maximize2Icon aria-hidden="true" size={13} />
+                )}
+              </button>
+              <button
+                type="button"
+                className="hover:text-text-base flex size-6 items-center justify-center rounded-md transition-colors"
+                aria-label="通知を閉じる"
+                onClick={() => onDismiss(toast.id)}
+              >
+                <XIcon aria-hidden="true" size={13} />
+              </button>
+            </div>
+          </div>
+        </div>
+        {isExpanded ? (
+          <p className="text-text-muted break-words whitespace-pre-wrap">
+            {toast.message}
+          </p>
+        ) : null}
       </div>
-      <button
-        type="button"
-        className="text-text-muted hover:text-text-base"
-        aria-label="通知を閉じる"
-        onClick={() => onDismiss(toast.id)}
-      >
-        <XIcon aria-hidden="true" size={15} />
-      </button>
     </div>
   );
+}
+
+function formatToastTime(createdAt: string) {
+  const date = new Date(createdAt);
+  return Number.isNaN(date.getTime())
+    ? createdAt
+    : date.toLocaleTimeString("ja-JP", {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
 }

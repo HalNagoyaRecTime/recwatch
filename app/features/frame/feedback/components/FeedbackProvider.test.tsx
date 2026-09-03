@@ -85,12 +85,28 @@ describe("FeedbackProvider", () => {
     expect(screen.getByTestId("toast-count")).toHaveTextContent("1");
     expect(screen.getByTestId("unread-count")).toHaveTextContent("1");
     expect(screen.getByText("保存失敗")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "通知を小さくする" })
+    ).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "通知を小さくする" }));
+    expect(screen.queryByText("保存できませんでした")).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "通知を元に戻す" })
+    ).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "通知を元に戻す" }));
+    expect(screen.getByText("保存できませんでした")).toBeInTheDocument();
     expect(screen.getByRole("alert")).toHaveClass("feedback-toast-enter");
     expect(
       JSON.parse(
         window.localStorage.getItem(APP_NOTIFICATION_STORAGE_KEY) ?? "[]"
       )
     ).toHaveLength(1);
+    await user.click(screen.getByRole("button", { name: "通知を閉じる" }));
+    await waitFor(() =>
+      expect(screen.queryByRole("alert")).not.toBeInTheDocument()
+    );
+    expect(screen.getByTestId("toast-count")).toHaveTextContent("0");
+    expect(screen.getByTestId("history-count")).toHaveTextContent("1");
   });
 
   it("action-successはToastだけを表示し履歴へ保存しない", async () => {

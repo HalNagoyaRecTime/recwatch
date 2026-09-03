@@ -2,11 +2,12 @@ import {
   AlertCircleIcon,
   CheckCircle2Icon,
   InfoIcon,
+  Minimize2Icon,
   XIcon,
   Trash2Icon,
   TriangleAlertIcon,
 } from "lucide-react";
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { useFeedback } from "../hooks/useFeedback";
 import type {
@@ -109,7 +110,7 @@ export function AppNotificationCenter() {
             <h2 className="text-text-base text-base font-semibold">通知</h2>
             <button
               type="button"
-              className="text-text-muted hover:bg-surface-hover hover:text-text-base rounded-md p-1.5"
+              className="text-text-muted hover:text-text-base rounded-md p-1.5 transition-colors"
               onClick={clearNotifications}
               disabled={notifications.length === 0}
               aria-label="すべて削除"
@@ -153,97 +154,123 @@ function NotificationRow({
   registerRow: (id: string, node: HTMLLIElement | null) => void;
 }) {
   const Icon = severityIcon[notification.severity];
+  const [isMessageExpanded, setIsMessageExpanded] = useState(false);
+  const contentId = `notification-content-${notification.id}`;
+  const diagnostic = notification.diagnostic;
 
   return (
     <li
       ref={(node) => registerRow(notification.id, node)}
-      className="group relative rounded-lg"
+      className="group/notification rounded-lg"
       data-notification-id={notification.id}
+      onFocus={onRead}
+      onClick={onRead}
     >
-      <button
-        type="button"
-        className={`hover:bg-surface-hover flex w-full items-start gap-2 rounded-lg px-2.5 py-2 pr-8 text-left ${notification.read ? "" : "bg-surface-muted"}`}
-        onClick={onRead}
-        onFocus={onRead}
-        aria-label={`${notification.title}、${severityLabel[notification.severity]}`}
+      <div
+        className={`hover:bg-surface-hover rounded-lg px-2.5 py-2 transition-colors ${notification.read ? "" : "bg-surface-muted"}`}
       >
-        <Icon
-          aria-hidden="true"
-          className="text-brand-primary mt-0.5 shrink-0"
-          size={16}
-        />
-        <span className="min-w-0 flex-1">
-          <span className="flex items-center gap-1.5">
-            <span className="text-text-base truncate text-sm font-medium">
-              {notification.title}
-            </span>
-            <span className="text-text-subtle shrink-0 text-[10px]">
-              {severityLabel[notification.severity]}
-            </span>
-            {!notification.read && (
-              <span
-                className="bg-brand-primary h-1.5 w-1.5 shrink-0 rounded-full"
-                aria-label="未読"
-              />
-            )}
-            <time
-              className="text-text-subtle ml-auto shrink-0 text-[11px] transition-opacity group-focus-within:opacity-0 group-hover:opacity-0"
-              dateTime={notification.createdAt}
-            >
-              {formatNotificationClock(notification.createdAt)}
-            </time>
-          </span>
-          <span className="text-text-muted mt-0.5 block text-xs">
-            {notification.message}
-          </span>
-        </span>
-      </button>
-      <button
-        type="button"
-        className="text-text-muted hover:bg-surface-hover hover:text-text-base absolute top-1.5 right-1.5 rounded-md p-1 opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100"
-        onClick={onRemove}
-        aria-label={`${notification.title}を削除`}
-      >
-        <XIcon aria-hidden="true" size={15} />
-      </button>
-      {notification.diagnostic && (
-        <details className="text-text-muted px-2.5 pb-2 text-xs">
-          <summary className="cursor-pointer">詳細</summary>
-          <dl className="mt-1 grid grid-cols-[auto_1fr] gap-x-2 gap-y-1">
-            <DiagnosticValue label="エラー内容" value={notification.message} />
-            <DiagnosticValue
-              label="時刻"
-              value={formatNotificationDateTime(
-                notification.diagnostic.occurredAt ?? notification.createdAt
+        <div className="flex items-start gap-2">
+          <Icon
+            aria-hidden="true"
+            className="text-brand-primary mt-0.5 shrink-0"
+            size={16}
+          />
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                className="text-text-base flex min-w-0 flex-1 items-center gap-1.5 text-left"
+                aria-label={`${notification.title}、${severityLabel[notification.severity]}`}
+              >
+                <span className="truncate text-sm font-medium">
+                  {notification.title}
+                </span>
+                <span className="text-text-subtle shrink-0 text-[10px]">
+                  {severityLabel[notification.severity]}
+                </span>
+                {!notification.read && (
+                  <span
+                    className="bg-brand-primary h-1.5 w-1.5 shrink-0 rounded-full"
+                    aria-label="未読"
+                  />
+                )}
+              </button>
+              <div className="text-text-muted grid shrink-0 items-center">
+                <time
+                  className="pointer-events-none col-start-1 row-start-1 justify-self-end text-[11px] transition-opacity group-focus-within/notification:opacity-0 group-hover/notification:opacity-0 [@media(hover:none)]:opacity-0"
+                  dateTime={notification.createdAt}
+                >
+                  {formatNotificationClock(notification.createdAt)}
+                </time>
+                <div className="relative col-start-1 row-start-1 flex justify-end gap-0.5 opacity-0 transition-opacity group-focus-within/notification:opacity-100 group-hover/notification:opacity-100 [@media(hover:none)]:opacity-100">
+                  {isMessageExpanded && (
+                    <button
+                      type="button"
+                      className="hover:text-text-base flex size-6 items-center justify-center rounded-md transition-colors"
+                      aria-label="エラー内容を小さくする"
+                      aria-expanded={isMessageExpanded}
+                      aria-controls={contentId}
+                      onClick={() => setIsMessageExpanded(false)}
+                    >
+                      <Minimize2Icon aria-hidden="true" size={13} />
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    className="hover:text-text-base flex size-6 items-center justify-center rounded-md transition-colors"
+                    onClick={onRemove}
+                    aria-label={`${notification.title}を削除`}
+                  >
+                    <XIcon aria-hidden="true" size={13} />
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div id={contentId} className="text-text-muted mt-0.5 text-xs">
+              <button
+                type="button"
+                className="block w-full rounded-md text-left break-words whitespace-pre-wrap select-text"
+                onClick={() => setIsMessageExpanded(true)}
+                aria-label="エラー内容を表示"
+                aria-expanded={isMessageExpanded}
+                aria-controls={contentId}
+              >
+                <span className={isMessageExpanded ? "" : "line-clamp-3"}>
+                  {notification.message}
+                </span>
+              </button>
+              {diagnostic && isMessageExpanded && (
+                <dl className="mt-1 grid grid-cols-[auto_minmax(0,1fr)] gap-x-2 gap-y-1">
+                  <DiagnosticValue
+                    label="時刻"
+                    value={formatNotificationDateTime(
+                      diagnostic?.occurredAt ?? notification.createdAt
+                    )}
+                  />
+                  <DiagnosticValue label="画面" value={diagnostic?.route} />
+                  <DiagnosticValue label="操作" value={diagnostic?.action} />
+                  <DiagnosticValue
+                    label="HTTP Status"
+                    value={diagnostic?.status?.toString()}
+                  />
+                  <DiagnosticValue
+                    label="Error Code"
+                    value={diagnostic?.errorCode}
+                  />
+                  <DiagnosticValue
+                    label="Request ID"
+                    value={diagnostic?.requestId}
+                  />
+                  <DiagnosticValue
+                    label="Endpoint"
+                    value={diagnostic?.endpoint}
+                  />
+                </dl>
               )}
-            />
-            <DiagnosticValue
-              label="画面"
-              value={notification.diagnostic.route}
-            />
-            <DiagnosticValue
-              label="操作"
-              value={notification.diagnostic.action}
-            />
-            <DiagnosticValue
-              label="HTTP Status"
-              value={notification.diagnostic.status?.toString()}
-            />
-            <DiagnosticValue
-              label="Error Code"
-              value={notification.diagnostic.errorCode}
-            />
-            <DiagnosticValue
-              label="Request ID"
-              value={notification.diagnostic.requestId}
-            />
-            <DiagnosticValue
-              label="Endpoint"
-              value={notification.diagnostic.endpoint}
-            />
-          </dl>
-        </details>
-      )}
+            </div>
+          </div>
+        </div>
+      </div>
     </li>
   );
 }
