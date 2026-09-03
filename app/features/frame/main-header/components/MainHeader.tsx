@@ -4,6 +4,7 @@ import { logout } from "~/features/auth/lib/logout";
 import { SearchBtn } from "~/features/frame/main-header/search/components/SearchBtn";
 import { NoticeBtn } from "~/features/frame/main-header/components/NoticeBtn";
 import { AccountBtn } from "~/features/frame/main-header/account-menu/components/AccountBtn";
+import { FeedbackTestButton } from "~/features/frame/feedback/components/FeedbackTestButton";
 
 import { MobileHamburgerMenuBtn } from "~/features/frame/main-header/components/MobileHamburgerMenuBtn";
 import type { AccountUser } from "~/features/frame/main-header/account-menu/model/account-btn-data";
@@ -39,6 +40,7 @@ export function MainHeader({ user }: MainHeaderProps) {
 
       <div className="flex h-full shrink-0 gap-1 md:min-w-0 md:shrink">
         <SearchBtn />
+        <FeedbackTestButton />
         <NoticeBtn />
         <AccountBtn user={user} onLogout={() => void handleLogout()} />
       </div>
