@@ -8,21 +8,30 @@ type FloatingListSurfaceProps = Omit<
   "className"
 > & {
   children: ReactNode;
+  /** スクロール領域の外側に固定表示するヘッダーです。 */
+  fixedHeader?: ReactNode;
   /** 利用可能サイズ内で内容を縦スクロールさせます。 */
   scrollable?: boolean;
 };
 
 export function FloatingListSurface({
   children,
+  fixedHeader,
   scrollable = false,
   ...props
 }: FloatingListSurfaceProps) {
   return (
     <div {...props} className={floatingListSurfaceStyle({ scrollable })}>
       {scrollable ? (
-        <ScrollbarArea className="p-2">{children}</ScrollbarArea>
+        <>
+          {fixedHeader ? <div className="shrink-0">{fixedHeader}</div> : null}
+          <ScrollbarArea className="min-h-0 p-2">{children}</ScrollbarArea>
+        </>
       ) : (
-        children
+        <>
+          {fixedHeader}
+          {children}
+        </>
       )}
     </div>
   );
