@@ -96,6 +96,28 @@ describe("AccountMenu", () => {
     expect(screen.getByRole("button", { name: "ログアウト" })).toHaveFocus();
   }, 10000);
 
+  it("ArrowLeftで閉じたサブメニューがトリガーへのfocus復帰で再表示されない", async () => {
+    const user = userEvent.setup();
+    renderAccountButton();
+
+    await user.click(
+      screen.getByRole("button", { name: "アカウントメニュー" })
+    );
+    await user.tab();
+    const themeTrigger = screen.getByRole("button", { name: "テーマ設定" });
+
+    await user.keyboard("{ArrowRight}");
+    expect(screen.getByRole("button", { name: "ライト" })).toBeInTheDocument();
+
+    await user.keyboard("{ArrowLeft}");
+
+    expect(themeTrigger).toHaveFocus();
+    expect(themeTrigger).toHaveAttribute("aria-expanded", "false");
+    expect(
+      screen.queryByRole("button", { name: "ライト" })
+    ).not.toBeInTheDocument();
+  }, 10000);
+
   it("サブメニューから戻った後も反対方向キーで選択テーマへ戻れる", async () => {
     const user = userEvent.setup();
     renderAccountButton();
