@@ -57,7 +57,6 @@ export function useTeacherClassAssignment({
     try {
       await TeacherApi.updateTeacherAssignment(teacherId, {
         userName: selectedTeacher.displayName,
-        isLiveActive: selectedTeacher.isLiveActive,
         classRoomIds: checkedClassRoomIds,
       });
       navigate("/teachers");

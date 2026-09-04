@@ -13,7 +13,8 @@ export function meta() {
 export async function clientLoader({ request }: { request: Request }) {
   const searchParams = new URL(request.url).searchParams;
   const limit = 50;
-  const { page, search, sortBy, sortOrder } = parseTeacherListUrl(searchParams);
+  const { page, search, sortBy, sortOrder, isStaff, isLiveActive } =
+    parseTeacherListUrl(searchParams);
 
   return loadTeacherListPage({
     limit,
@@ -21,6 +22,8 @@ export async function clientLoader({ request }: { request: Request }) {
     search: search || undefined,
     sortBy: sortBy ?? undefined,
     sortOrder: sortOrder ?? undefined,
+    isStaff,
+    isLiveActive,
   });
 }
 
