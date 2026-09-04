@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { ApiClientError } from "~/lib/api-client-error";
-import { NotificationAudienceLoadingError } from "~/features/notifications/api/contracts/errors/notification-audience-loading-error";
+import { ClientError, ClientErrors } from "~/lib/client-error";
 import { createHttpNotificationAudienceApi } from "~/features/notifications/api/http/notification-audience-api";
 
 describe("http notification audience loader", () => {
@@ -73,15 +73,14 @@ describe("http notification audience loader", () => {
     [401, "authentication_required"],
     [403, "forbidden"],
     [500, "unexpected"],
-  ] as const)("HTTP %sを%sへ変換する", async (status, kind) => {
+  ] as const)("HTTP %sのApiClientErrorをそのまま伝播する", async (...args) => {
+    const [status] = args;
     const loader = createHttpNotificationAudienceApi({
       get: vi.fn().mockRejectedValue(new ApiClientError(status, "failed")),
     });
 
     await expect(loader.load()).rejects.toEqual(
-      expect.objectContaining<Partial<NotificationAudienceLoadingError>>({
-        kind,
-      })
+      new ApiClientError(status, "failed")
     );
   });
 
@@ -127,11 +126,7 @@ describe("http notification audience loader", () => {
 
       await expect(
         createHttpNotificationAudienceApi({ get }).load()
-      ).rejects.toEqual(
-        expect.objectContaining<Partial<NotificationAudienceLoadingError>>({
-          kind: "unexpected",
-        })
-      );
+      ).rejects.toEqual(new ClientError(ClientErrors.RESPONSE_PARSE_ERROR));
 
       expect(
         get.mock.calls.filter(([path]) => path.startsWith(loopingPath))

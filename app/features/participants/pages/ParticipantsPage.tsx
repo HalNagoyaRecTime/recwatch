@@ -6,6 +6,7 @@ import { Button } from "~/components/ui/button/Button";
 import { ButtonLink } from "~/components/ui/button/ButtonLink";
 import type { DataTableSort } from "~/components/ui/data-table/data-table-types";
 import { PageHeader } from "~/components/ui/layout/PageHeader";
+import { getErrorMessage } from "~/lib/client-error";
 import {
   getNextManagementTableSort,
   sortManagementTableItems,
@@ -44,9 +45,7 @@ export function ParticipantsPage({
         if (!active) return;
         setAssignments([]);
         setError(
-          loadError instanceof Error
-            ? loadError.message
-            : "出場メンバーを取得できませんでした。"
+          getErrorMessage(loadError, "出場メンバーを取得できませんでした。")
         );
       })
       .finally(() => {
@@ -98,9 +97,7 @@ export function ParticipantsPage({
       );
     } catch (deleteError) {
       setError(
-        deleteError instanceof Error
-          ? deleteError.message
-          : "参加者設定を削除できませんでした。"
+        getErrorMessage(deleteError, "参加者設定を削除できませんでした。")
       );
     } finally {
       setIsDeleting(false);

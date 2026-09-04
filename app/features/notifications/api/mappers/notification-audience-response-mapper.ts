@@ -1,4 +1,4 @@
-import { NotificationAudienceLoadingError } from "~/features/notifications/api/contracts/errors/notification-audience-loading-error";
+import { ClientError, ClientErrors } from "~/lib/client-error";
 import type { NotificationAudienceOption } from "~/features/notifications/model/notification-audience";
 import type {
   ClassRoomAudienceApiDto,
@@ -125,5 +125,5 @@ function formatGatheringName(gathering: GatheringAudienceApiDto) {
 }
 
 function unexpectedResponse() {
-  return new NotificationAudienceLoadingError("unexpected");
+  return new ClientError(ClientErrors.RESPONSE_PARSE_ERROR);
 }

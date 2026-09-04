@@ -10,6 +10,7 @@ import {
   masterImportApi,
   type MasterImportSession,
 } from "~/features/master-import/api";
+import { getErrorMessage } from "~/lib/client-error";
 import { ImportPreviewTable } from "~/features/master-import/components/ImportPreviewTable";
 import {
   MASTER_IMPORT_ERROR_REASON_LABEL,
@@ -44,9 +45,7 @@ export function MembersImportConfirmationPage() {
       .catch((error: unknown) => {
         if (!active) return;
         setLoadError(
-          error instanceof Error
-            ? error.message
-            : "取り込み内容の取得に失敗しました。"
+          getErrorMessage(error, "取り込み内容の取得に失敗しました。")
         );
       })
       .finally(() => {
@@ -79,9 +78,7 @@ export function MembersImportConfirmationPage() {
     try {
       setSession(await masterImportApi.commit(importId));
     } catch (error) {
-      setCommitError(
-        error instanceof Error ? error.message : "登録に失敗しました。"
-      );
+      setCommitError(getErrorMessage(error, "登録に失敗しました。"));
     } finally {
       setIsCommitting(false);
     }

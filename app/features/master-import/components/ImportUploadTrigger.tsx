@@ -6,6 +6,7 @@ import {
   buttonIconStyle,
   buttonStyle,
 } from "~/components/ui/button/styles/button-styles";
+import { getErrorMessage } from "~/lib/client-error";
 import { masterImportApi, type MasterImportType } from "../api";
 
 interface ImportUploadTriggerProps {
@@ -37,11 +38,7 @@ export function ImportUploadTrigger({
         `/members/import?importId=${encodeURIComponent(session.importId)}`
       );
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : "ファイルの取り込みに失敗しました。"
-      );
+      setError(getErrorMessage(err, "ファイルの取り込みに失敗しました。"));
     } finally {
       setIsUploading(false);
     }

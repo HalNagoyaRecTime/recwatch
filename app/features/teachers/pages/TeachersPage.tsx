@@ -15,6 +15,7 @@ import {
 import { teacherCreateTarget } from "~/features/teachers/application/teacher-navigation";
 import { UserManagementTabs } from "~/features/user-management/components/UserManagementTabs";
 import { TeacherApi } from "~/features/teachers/api";
+import { getErrorMessage } from "~/lib/client-error";
 
 type TeacherDeletionApi = {
   deleteTeacher(teacherId: number): Promise<unknown>;
@@ -109,9 +110,7 @@ export function TeachersPage({
         return next;
       });
     } catch (error) {
-      setActionError(
-        error instanceof Error ? error.message : "教官を削除できませんでした。"
-      );
+      setActionError(getErrorMessage(error, "教官を削除できませんでした。"));
     } finally {
       setIsMutating(false);
     }

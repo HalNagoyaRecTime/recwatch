@@ -12,8 +12,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { NotificationSubmissionApi } from "~/features/notifications/api/contracts/notification-submission-api";
 import type { NotificationAudienceApi } from "~/features/notifications/api/contracts/notification-audience-api";
-import { NotificationAudienceLoadingError } from "~/features/notifications/api/contracts/errors/notification-audience-loading-error";
-import { NotificationSubmissionError } from "~/features/notifications/api/contracts/errors/notification-submission-error";
+import { ApiClientError } from "~/lib/api-client-error";
 import { mockNotificationAudienceOptions } from "~/features/notifications/mock/notification-audience-api";
 import { NotificationCreatePage } from "~/features/notifications/pages/NotificationCreatePage";
 
@@ -159,7 +158,11 @@ describe("NotificationCreatePage", () => {
   it("APIエラーに対応したメッセージを表示する", async () => {
     const api: NotificationSubmissionApi = {
       async submit() {
-        throw new NotificationSubmissionError("no_active_devices");
+        throw new ApiClientError(
+          409,
+          "通知対象に有効な端末がありません。",
+          "NO_ACTIVE_DEVICES"
+        );
       },
     };
     const user = userEvent.setup();
@@ -181,7 +184,7 @@ describe("NotificationCreatePage", () => {
     const load = vi
       .fn()
       .mockRejectedValueOnce(
-        new NotificationAudienceLoadingError("authentication_required")
+        new ApiClientError(401, "ログインが必要です。", "UNAUTHORIZED")
       )
       .mockResolvedValueOnce(mockNotificationAudienceOptions);
     const user = userEvent.setup();

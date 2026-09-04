@@ -1,8 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import type { NotificationManagementApi } from "~/features/notifications/api/contracts/notification-management-api";
-import { NotificationManagementError } from "~/features/notifications/api/contracts/errors/notification-management-error";
-import { getNotificationManagementErrorMessage } from "~/features/notifications/hooks/notification-error-messages";
+import { getErrorMessage } from "~/lib/client-error";
 import {
   canModifyNotification,
   type ManagedNotification,
@@ -144,9 +143,7 @@ export function useNotificationList({ api }: UseNotificationListOptions) {
 }
 
 function toErrorMessage(error: unknown) {
-  return getNotificationManagementErrorMessage(
-    error instanceof NotificationManagementError ? error.kind : "unexpected"
-  );
+  return getErrorMessage(error);
 }
 
 function formatDate(value: string) {

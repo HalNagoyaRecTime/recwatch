@@ -1,11 +1,11 @@
-import { NotificationSubmissionError } from "~/features/notifications/api/contracts/errors/notification-submission-error";
+import { ClientError, ClientErrors } from "~/lib/client-error";
 import type { NotificationSubmission } from "~/features/notifications/api/contracts/notification-submission-api";
 
 export function toNotificationSubmission(
   response: unknown
 ): NotificationSubmission {
   if (!isRecord(response)) {
-    throw new NotificationSubmissionError("unexpected");
+    throw new ClientError(ClientErrors.RESPONSE_PARSE_ERROR);
   }
 
   const notificationId = response.notification_id;
@@ -17,7 +17,7 @@ export function toNotificationSubmission(
     !isNonNegativeInteger(scheduleCount) ||
     status !== "draft"
   ) {
-    throw new NotificationSubmissionError("unexpected");
+    throw new ClientError(ClientErrors.RESPONSE_PARSE_ERROR);
   }
 
   return {

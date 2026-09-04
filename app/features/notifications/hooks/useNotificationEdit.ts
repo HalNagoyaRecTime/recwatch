@@ -6,12 +6,7 @@ import type {
   NotificationUpdate,
   NotificationUpdateAudience,
 } from "~/features/notifications/api/contracts/notification-management-api";
-import { NotificationAudienceLoadingError } from "~/features/notifications/api/contracts/errors/notification-audience-loading-error";
-import { NotificationManagementError } from "~/features/notifications/api/contracts/errors/notification-management-error";
-import {
-  getNotificationAudienceLoadingErrorMessage,
-  getNotificationManagementErrorMessage,
-} from "~/features/notifications/hooks/notification-error-messages";
+import { ClientErrors, getErrorMessage } from "~/lib/client-error";
 import type { NotificationAudienceOption } from "~/features/notifications/model/notification-audience";
 import {
   canModifyNotification,
@@ -151,9 +146,7 @@ export function useNotificationEdit({
       isAudienceEditableFor(notification)
     );
     if (!update) {
-      setSubmissionError(
-        getNotificationManagementErrorMessage("invalid_request")
-      );
+      setSubmissionError(ClientErrors.INVALID_REQUEST.message);
       return false;
     }
 
@@ -191,17 +184,11 @@ export function useNotificationEdit({
 }
 
 function toManagementErrorMessage(error: unknown) {
-  return getNotificationManagementErrorMessage(
-    error instanceof NotificationManagementError ? error.kind : "unexpected"
-  );
+  return getErrorMessage(error);
 }
 
 function toAudienceErrorMessage(error: unknown) {
-  return getNotificationAudienceLoadingErrorMessage(
-    error instanceof NotificationAudienceLoadingError
-      ? error.kind
-      : "unexpected"
-  );
+  return getErrorMessage(error);
 }
 
 function toNotificationDraft(

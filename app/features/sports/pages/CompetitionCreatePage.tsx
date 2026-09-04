@@ -4,6 +4,7 @@ import { useNavigate } from "react-router";
 import type { CompetitionEditorApi } from "~/features/sports/api/competition-editor-api";
 import { httpCompetitionEditorApi } from "~/features/sports/api/http-competition-editor-api";
 import { CompetitionForm } from "~/features/sports/components/CompetitionForm";
+import { getErrorMessage } from "~/lib/client-error";
 import {
   emptyCompetitionForm,
   validateCompetitionForm,
@@ -35,9 +36,7 @@ export function CompetitionCreatePage({
       navigate("/events");
     } catch (error) {
       setSubmitError(
-        error instanceof Error
-          ? error.message
-          : "イベントデータの登録に失敗しました。"
+        getErrorMessage(error, "イベントデータの登録に失敗しました。")
       );
     } finally {
       setIsSubmitting(false);

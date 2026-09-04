@@ -4,6 +4,7 @@ import { useNavigate, useParams } from "react-router";
 import type { CompetitionEditorApi } from "~/features/sports/api/competition-editor-api";
 import { httpCompetitionEditorApi } from "~/features/sports/api/http-competition-editor-api";
 import { CompetitionForm } from "~/features/sports/components/CompetitionForm";
+import { getErrorMessage } from "~/lib/client-error";
 import {
   emptyCompetitionForm,
   validateCompetitionForm,
@@ -44,9 +45,7 @@ export function CompetitionEditPage({
       } catch (error) {
         if (!isCurrent) return;
         setLoadError(
-          error instanceof Error
-            ? error.message
-            : "イベントデータの取得に失敗しました。"
+          getErrorMessage(error, "イベントデータの取得に失敗しました。")
         );
       } finally {
         if (isCurrent) setIsLoading(false);
@@ -82,9 +81,7 @@ export function CompetitionEditPage({
       navigate("/events");
     } catch (error) {
       setSubmitError(
-        error instanceof Error
-          ? error.message
-          : "イベントデータの更新に失敗しました。"
+        getErrorMessage(error, "イベントデータの更新に失敗しました。")
       );
     } finally {
       setIsSubmitting(false);

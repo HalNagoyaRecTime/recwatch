@@ -12,6 +12,7 @@ import type {
   ClassRoomOption,
   TeacherRow,
 } from "~/features/teachers/model/teacher";
+import { getErrorMessage } from "~/lib/client-error";
 
 export function TeacherEditPage({
   classRooms,
@@ -32,11 +33,7 @@ export function TeacherEditPage({
       await TeacherApi.updateTeacher(teacher.teacherId, input);
       close();
     } catch (error) {
-      setSubmitError(
-        error instanceof Error
-          ? error.message
-          : "教官情報の更新に失敗しました。"
-      );
+      setSubmitError(getErrorMessage(error, "教官情報の更新に失敗しました。"));
       setIsSubmitting(false);
     }
   }

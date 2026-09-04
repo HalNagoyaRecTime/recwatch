@@ -2,12 +2,7 @@ import { useEffect, useState } from "react";
 
 import type { NotificationAudienceApi } from "~/features/notifications/api/contracts/notification-audience-api";
 import type { NotificationSubmissionApi } from "~/features/notifications/api/contracts/notification-submission-api";
-import { NotificationAudienceLoadingError } from "~/features/notifications/api/contracts/errors/notification-audience-loading-error";
-import { NotificationSubmissionError } from "~/features/notifications/api/contracts/errors/notification-submission-error";
-import {
-  getNotificationAudienceLoadingErrorMessage,
-  getNotificationSubmissionErrorMessage,
-} from "~/features/notifications/hooks/notification-error-messages";
+import { getErrorMessage } from "~/lib/client-error";
 import type { NotificationAudienceOption } from "~/features/notifications/model/notification-audience";
 import {
   initialNotificationDraft,
@@ -105,13 +100,7 @@ export function useNotificationCreate({
       await api.submit(draft);
       setSubmitted(true);
     } catch (error) {
-      setSubmissionError(
-        getNotificationSubmissionErrorMessage(
-          error instanceof NotificationSubmissionError
-            ? error.kind
-            : "unexpected"
-        )
-      );
+      setSubmissionError(getErrorMessage(error));
     } finally {
       setIsSubmitting(false);
     }
@@ -133,9 +122,5 @@ export function useNotificationCreate({
 }
 
 function toAudienceErrorMessage(error: unknown) {
-  return getNotificationAudienceLoadingErrorMessage(
-    error instanceof NotificationAudienceLoadingError
-      ? error.kind
-      : "unexpected"
-  );
+  return getErrorMessage(error);
 }

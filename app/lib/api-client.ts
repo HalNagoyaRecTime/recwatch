@@ -1,33 +1,38 @@
 import { buildBackendUrl } from "~/config/env";
-import { ApiClientError } from "./api-client-error";
 import { getAccessToken } from "~/features/auth/lib/accessTokenStore";
 import { refreshAccessToken } from "~/features/auth/lib/refreshAccessToken";
 import { WEB_CLIENT_HEADERS } from "~/features/auth/lib/webClientHeaders";
+import { ApiClientError } from "./api-client-error";
+import { ClientError, ClientErrors } from "./client-error";
 
 function requireBackendUrl(path: string) {
   const url = buildBackendUrl(path);
 
   if (!url) {
-    throw new Error("VITE_BACKEND_BASE_URL is not configured.");
+    throw new ClientError(ClientErrors.CONFIG_ERROR);
   }
 
   return url;
 }
 
-function fetchWithToken(
+async function fetchWithToken(
   url: string,
   init: RequestInit | undefined,
   token: string | null
 ) {
-  return fetch(url, {
-    ...init,
-    headers: {
-      Accept: "application/json",
-      ...WEB_CLIENT_HEADERS,
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...init?.headers,
-    },
-  });
+  try {
+    return await fetch(url, {
+      ...init,
+      headers: {
+        Accept: "application/json",
+        ...WEB_CLIENT_HEADERS,
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...init?.headers,
+      },
+    });
+  } catch (error) {
+    throw new ClientError(ClientErrors.NETWORK_ERROR, { cause: error });
+  }
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
@@ -43,14 +48,24 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 
   if (!res.ok) {
     const body: unknown = await res.json().catch(() => null);
-    throw new ApiClientError(res.status, getApiErrorMessage(body, res.status));
+    const error = parseApiError(body, res.status);
+    throw new ApiClientError(
+      res.status,
+      error.message,
+      error.code,
+      error.details
+    );
   }
 
   if (res.status === 204) {
     return undefined as T;
   }
 
-  return res.json() as Promise<T>;
+  try {
+    return (await res.json()) as T;
+  } catch (error) {
+    throw new ClientError(ClientErrors.RESPONSE_PARSE_ERROR, { cause: error });
+  }
 }
 
 const inFlightGetRequests = new Map<string, Promise<unknown>>();
@@ -69,24 +84,42 @@ function getRequest<T>(path: string): Promise<T> {
   return pending;
 }
 
-function getApiErrorMessage(body: unknown, status: number): string {
+type ApiErrorBody = {
+  error: {
+    code: string;
+    message: string;
+    details?: unknown;
+  };
+};
+
+function parseApiError(
+  body: unknown,
+  status: number
+): { code: string; message: string; details?: unknown } {
+  if (!isApiErrorBody(body)) {
+    return {
+      code: "UNKNOWN_API_ERROR",
+      message: `APIエラーの内容を読み取れませんでした。（${status}）`,
+    };
+  }
+
+  return body.error;
+}
+
+function isApiErrorBody(body: unknown): body is ApiErrorBody {
   if (typeof body !== "object" || body === null || !("error" in body)) {
-    return `API request failed (${status})`;
+    return false;
   }
 
-  let message = String(body.error);
-  if (
-    "details" in body &&
-    typeof body.details === "object" &&
-    body.details !== null &&
-    "formErrors" in body.details &&
-    Array.isArray(body.details.formErrors) &&
-    body.details.formErrors.length > 0
-  ) {
-    message += `: ${body.details.formErrors.map(String).join(", ")}`;
-  }
-
-  return message;
+  const error = body.error;
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    typeof error.code === "string" &&
+    "message" in error &&
+    typeof error.message === "string"
+  );
 }
 
 export const apiClient = {

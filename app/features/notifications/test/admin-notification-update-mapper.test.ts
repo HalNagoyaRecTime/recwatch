@@ -1,18 +1,18 @@
 import { describe, expect, it } from "vitest";
 
-import { NotificationManagementError } from "~/features/notifications/api/contracts/errors/notification-management-error";
+import { ClientError, ClientErrors } from "~/lib/client-error";
 import { toAdminNotificationUpdateRequest } from "~/features/notifications/api/mappers/admin-notification-update-mapper";
 
 describe("toAdminNotificationUpdateRequest", () => {
   it("空の更新を拒否する", () => {
     expect(() => toAdminNotificationUpdateRequest({})).toThrow(
-      new NotificationManagementError("invalid_request")
+      new ClientError(ClientErrors.INVALID_REQUEST)
     );
   });
 
   it("空白だけのタイトルを拒否する", () => {
     expect(() => toAdminNotificationUpdateRequest({ title: "  " })).toThrow(
-      new NotificationManagementError("invalid_request")
+      new ClientError(ClientErrors.INVALID_REQUEST)
     );
   });
 
