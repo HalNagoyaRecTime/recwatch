@@ -156,4 +156,28 @@ export const sidebarSections = [
       },
     ],
   },
+  {
+    items: [
+      {
+        id: "team-results",
+        label: "チーム・成績",
+        icon: "trophy",
+        roles: ["admin", "manager"],
+        children: [
+          {
+            id: "teams",
+            label: "チーム",
+            to: "/teams",
+            roles: ["admin", "manager"],
+          },
+          {
+            id: "ranking",
+            label: "ランキング",
+            to: "/ranking",
+            roles: ["admin", "manager"],
+          },
+        ],
+      },
+    ],
+  },
 ] satisfies SidebarSectionConfig[];

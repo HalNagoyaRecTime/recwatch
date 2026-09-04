@@ -1,0 +1,70 @@
+import type { DataTableSortDirection } from "~/components/ui/data-table/data-table-types";
+
+export type RankingListSortBy = "rank" | "teamName" | "score" | "updatedAt";
+
+export type RankingListUrlState = {
+  search: string;
+  page: number;
+  sortBy: RankingListSortBy | null;
+  sortOrder: DataTableSortDirection | null;
+};
+
+export function parseRankingListUrl(
+  input: string | URLSearchParams
+): RankingListUrlState {
+  const params = typeof input === "string" ? new URLSearchParams(input) : input;
+  const page = Number(params.get("page"));
+  const sortBy = params.get("sortBy");
+  const sortOrder = params.get("sortOrder");
+
+  return {
+    search: params.get("search")?.trim() ?? "",
+    page: Number.isInteger(page) && page > 0 ? page : 1,
+    sortBy: isSortBy(sortBy) ? sortBy : null,
+    sortOrder: isSortOrder(sortOrder) ? sortOrder : null,
+  };
+}
+
+export function updateRankingListUrl(
+  input: string | URLSearchParams,
+  updates: Partial<RankingListUrlState>
+) {
+  const params =
+    typeof input === "string"
+      ? new URLSearchParams(input)
+      : new URLSearchParams(input);
+
+  if (updates.search !== undefined) {
+    setOrDelete(params, "search", updates.search.trim());
+  }
+  if (updates.page !== undefined) {
+    if (updates.page <= 1) params.delete("page");
+    else params.set("page", String(updates.page));
+  }
+  if (updates.sortBy !== undefined) {
+    setOrDelete(params, "sortBy", updates.sortBy ?? "");
+  }
+  if (updates.sortOrder !== undefined) {
+    setOrDelete(params, "sortOrder", updates.sortOrder ?? "");
+  }
+
+  return params.toString();
+}
+
+function isSortBy(value: string | null): value is RankingListSortBy {
+  return (
+    value === "rank" ||
+    value === "teamName" ||
+    value === "score" ||
+    value === "updatedAt"
+  );
+}
+
+function isSortOrder(value: string | null): value is DataTableSortDirection {
+  return value === "asc" || value === "desc";
+}
+
+function setOrDelete(params: URLSearchParams, key: string, value: string) {
+  if (value) params.set(key, value);
+  else params.delete(key);
+}
