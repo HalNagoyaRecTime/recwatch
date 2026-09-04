@@ -60,7 +60,7 @@ export function FeedbackToastHost() {
   );
 
   return (
-    <div className="pointer-events-none fixed top-4 right-4 z-200 flex w-[min(24rem,calc(100vw-2rem))] flex-col gap-2">
+    <div className="pointer-events-none fixed top-15 right-4 z-200 flex w-[min(24rem,calc(100vw-2rem))] flex-col gap-2">
       {toasts.map((toast) => (
         <FeedbackToast
           key={toast.id}
