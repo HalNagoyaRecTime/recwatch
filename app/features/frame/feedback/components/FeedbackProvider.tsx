@@ -171,11 +171,14 @@ export function FeedbackProvider({
   }, []);
 
   const markRead = useCallback((id: string) => {
-    setNotifications((current) =>
-      current.map((notification) =>
-        notification.id === id ? { ...notification, read: true } : notification
-      )
-    );
+    setNotifications((current) => {
+      const notification = current.find((item) => item.id === id);
+      if (!notification || notification.read) return current;
+
+      return current.map((item) =>
+        item.id === id ? { ...item, read: true } : item
+      );
+    });
   }, []);
 
   const removeNotification = useCallback((id: string) => {
