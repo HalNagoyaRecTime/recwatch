@@ -33,22 +33,22 @@ export function SearchBarContent({
       className={cn(
         "flex h-full max-h-12 w-full min-w-0 shrink-0",
         isOpen
-          ? "cursor-text bg-(--surface-1) duration-500"
+          ? "bg-surface-base cursor-text duration-500"
           : "cursor-pointer bg-transparent duration-1200"
       )}
     >
       <div
         className={cn(
           "app-rounded flex h-full w-full items-center gap-2 border px-2.5 transition",
-          "border-(--border-2)",
+          "border-border-base",
           "transition-[border-color,background-color,color] ease-in-out",
-          "hover:border-(--border-strong) hover:bg-(--surface-2) hover:text-(--text-1)"
+          "hover:border-border-strong hover:bg-surface-hover hover:text-text-base"
         )}
       >
         <SearchIcon
           size={13}
           strokeWidth={1.8}
-          className="shrink-0 text-(--text-2)"
+          className="text-text-muted shrink-0"
         />
         <div className="relative flex min-w-0 flex-1 items-center gap-2">
           <input
@@ -56,13 +56,13 @@ export function SearchBarContent({
             value={query}
             onChange={(event) => onChange(event.target.value)}
             onFocus={onOpen}
-            placeholder="Search..."
+            placeholder="画面を検索..."
             className={cn(
-              "app-text-small min-w-0 flex-1 bg-transparent text-(--text-3) outline-none placeholder:text-(--text-3)",
+              "app-text-small text-text-subtle placeholder:text-text-subtle min-w-0 flex-1 bg-transparent outline-none",
               isOpen ? "cursor-text" : "cursor-pointer"
             )}
           />
-          <span className="ml-auto inline-flex shrink-0 items-center rounded-md border border-(--border-1) px-1.5 py-px font-['DM_Mono'] text-[11px] text-(--text-3)">
+          <span className="border-border-subtle text-text-subtle ml-auto inline-flex shrink-0 items-center rounded-md border px-1.5 py-px font-['DM_Mono'] text-[11px]">
             <span
               className="app-text-small relative inline-flex h-[1.2em] items-center justify-center overflow-hidden whitespace-nowrap transition-[width] duration-200 ease-[cubic-bezier(.22,1,.36,1)]"
               style={{ width: `${currentShortcutWidth}px` }}

@@ -1,14 +1,14 @@
 export const THEME_STORAGE_KEY = "recwatch-theme";
 
-export type ThemeMode = "dark" | "light";
+export type ThemeMode = "dark" | "light" | "system";
 
 export function isThemeMode(value: string | null): value is ThemeMode {
-  return value === "dark" || value === "light";
+  return value === "dark" || value === "light" || value === "system";
 }
 
 export function getPreferredTheme(): ThemeMode {
   if (typeof window === "undefined") {
-    return "dark";
+    return "system";
   }
 
   const storedTheme = window.localStorage.getItem(THEME_STORAGE_KEY);
@@ -17,7 +17,7 @@ export function getPreferredTheme(): ThemeMode {
     return storedTheme;
   }
 
-  return "dark";
+  return "system";
 }
 
 export function applyTheme(theme: ThemeMode) {
@@ -26,6 +26,12 @@ export function applyTheme(theme: ThemeMode) {
   }
 
   const root = document.documentElement;
-  root.classList.toggle("dark", theme === "dark");
+  const isDark =
+    theme === "dark" ||
+    (theme === "system" &&
+      window.matchMedia("(prefers-color-scheme: dark)").matches);
+
+  root.classList.toggle("dark", isDark);
   root.dataset.theme = theme;
+  root.style.colorScheme = isDark ? "dark" : "light";
 }

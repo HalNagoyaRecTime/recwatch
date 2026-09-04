@@ -1,125 +1,41 @@
-# AGENTS
+# AGENTS.md — recwatch
 
-## 1. Purpose
+## 基本ルール
 
-This repository defines architectural principles.
+- シークレット、資格情報、個人情報、実環境の値をリポジトリにコミット・プッシュしない。
+- ソースコード内のコメントやメッセージ、説明は、日本語で簡潔に書く。
 
-It does not define framework rules, language rules, or directory structures.  
-It defines how systems should be designed to remain evolvable, clear, and replaceable.
+## ブランチ
 
----
+- 以下を基本方針とし、作業内容に応じて調整する。
+- 通常は`develop`から作業ブランチを作り、`develop`へPRを出す。
+- stacked PRでは、依存元の作業ブランチをPR先にする。
+- `main`と`develop`へ直接pushしない。
+- ブランチ名には、変更内容が分かる`type`（`feature`、`fix`、`refactor`、`docs`、`chore`、`release`など）を付ける。
+- IssueまたはPRの番号を含める場合は、数字だけにせず`issue-xx`または`pr-xx`と明記する。
 
-## 2. Core Principles
+例:
 
-### 2.1 Separation of Responsibilities
+- `feature/issue-123-add-notification-filter`
+- `docs/pr-217-recwatch-agents-architecture`
 
-Each layer has a single purpose.
-Mixing concerns increases long-term cost.
+## コミット
 
----
+- 勝手にコミットしない。
 
-### 2.2 File Responsibility Principle
+## ドキュメント
 
-Each file must represent a single cohesive responsibility.
+| 文書              | 確認内容                       |
+| ----------------- | ------------------------------ |
+| `README.md`       | リポジトリの目的と責任範囲     |
+| `AGENTS.md`       | 作業ルールと検証方法           |
+| `ARCHITECTURE.md` | 配置、責務、依存方向、実装方法 |
 
-- A file must express one clear purpose.
-- If a file requires “and” to describe its role, it likely violates this rule.
-- Multiple helper functions are allowed if they support the same responsibility.
-- A file must not contain multiple unrelated use cases.
-- Increasing file count is acceptable if it preserves structural clarity.
+## 検証
 
-This rule enforces responsibility separation at a physical (file) level.
-It does not define directory structure or naming conventions.
+作業終了時に以下のコマンドが通ることを確認する。
 
----
-
-### 2.3 Layered Architecture
-
-Systems are organized into logical layers:
-
-- Presentation
-- Application
-- Domain
-- Infrastructure
-
-Dependencies must move inward.
-Inner layers must not depend on outer layers.
-
----
-
-### 2.4 Boundary Normalization
-
-All external data must be normalized at system boundaries.
-Internal domain models must not depend on external data shapes.
-
----
-
-### 2.5 Domain Isolation
-
-The domain model is the source of truth.
-It must not depend on frameworks, transport formats, or infrastructure details.
-
----
-
-### 2.6 Explicit Mapping
-
-All transformations between layers must be explicit.
-Structural similarity is not a reason to bypass mapping.
-
----
-
-### 2.7 Replaceable Contracts
-
-External systems must be accessed through explicit contracts.
-Implementations must be replaceable without affecting the domain.
-
----
-
-### 2.8 No Leakage
-
-External conventions must not leak into internal models.
-Transport formats must not define domain logic.
-
----
-
-### 2.9 Evolvability First
-
-Prefer structures that tolerate change.  
-Short-term convenience must not compromise long-term flexibility.
-
----
-
-## 3. Design Philosophy
-
-Constraints are intentional.  
-Constraints reduce ambiguity.  
-Simplicity is preferred over cleverness.  
-Clarity is preferred over compactness.
-
----
-
-## 4. Trade-offs
-
-This architecture increases:
-
-- File count
-- Explicit transformations
-- Initial implementation cost
-
-It reduces:
-
-- Long-term coupling
-- Hidden dependencies
-- Refactoring risk
-
----
-
-## 5. Non-Goals
-
-This repository does not define:
-
-- Framework-specific rules
-- Language-specific rules
-- Naming conventions
-- Directory structures
-- Formatting rules
+- `npm run format:check`
+- `npm run lint`
+- `npm run typecheck`
+- `npm run build`

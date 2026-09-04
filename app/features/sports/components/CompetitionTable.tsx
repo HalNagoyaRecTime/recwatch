@@ -1,46 +1,94 @@
-import type { CompetitionData } from "~/features/sports/model/competition";
+import { DataTable } from "~/components/ui/data-table/DataTable";
+import type {
+  DataTableColumn,
+  DataTableSort,
+} from "~/components/ui/data-table/data-table-types";
+import type { CompetitionListItem } from "~/features/sports/model/competition-list-item";
+import { ManagementRowActionMenu } from "~/features/user-management/components/ManagementRowActionMenu";
+
+type CompetitionTableProps = {
+  emptyMessage: string;
+  isMutating: boolean;
+  items: readonly CompetitionListItem[];
+  onDelete: (item: CompetitionListItem) => void;
+  onEdit: (item: CompetitionListItem) => void;
+  onSortChange?: (columnId: string) => void;
+  sort?: DataTableSort;
+};
 
 export function CompetitionTable({
-  competitions,
-}: {
-  competitions: CompetitionData[];
-}) {
+  emptyMessage,
+  isMutating,
+  items,
+  onDelete,
+  onEdit,
+  onSortChange,
+  sort,
+}: CompetitionTableProps) {
+  const columns: readonly DataTableColumn<CompetitionListItem>[] = [
+    {
+      header: "イベントID",
+      id: "event-id",
+      sortable: true,
+      width: { type: "fixed", value: 100 },
+      renderCell: (item) => item.code,
+    },
+    {
+      header: "イベント名",
+      id: "event-name",
+      sortable: true,
+      width: { type: "fluid", min: 200, grow: 2 },
+      renderCell: (item) => (
+        <span className="text-text-base font-semibold">{item.name}</span>
+      ),
+    },
+    {
+      header: "実施場所",
+      id: "venue",
+      sortable: true,
+      width: { type: "fluid", min: 160, grow: 1 },
+      renderCell: (item) => item.venue,
+    },
+    {
+      header: "開催時間",
+      id: "event-time",
+      sortable: true,
+      width: { type: "fluid", min: 150, grow: 1 },
+      renderCell: (item) => `${item.startTime}〜${item.endTime}`,
+    },
+    {
+      header: "集合情報",
+      id: "gathering",
+      sortable: true,
+      width: { type: "fluid", min: 190, grow: 1 },
+      renderCell: (item) => `${item.meetingTime} / ${item.meetingPlace}`,
+    },
+    {
+      align: "center",
+      edge: "end",
+      header: "",
+      id: "actions",
+      width: { type: "fixed", value: 64 },
+      renderCell: (item) => (
+        <ManagementRowActionMenu
+          ariaLabel={`${item.name}の操作`}
+          disabled={isMutating}
+          onDelete={() => onDelete(item)}
+          onEdit={() => onEdit(item)}
+        />
+      ),
+    },
+  ];
+
   return (
-    <div className="overflow-x-auto rounded-lg border border-[var(--border-1)]">
-      <table className="w-full text-sm text-[var(--text-1)]">
-        <thead className="border-b border-b-[var(--border-2)] bg-[var(--surface-2)] text-left text-xs">
-          <tr>
-            <th className="px-4 py-3">ID</th>
-            <th className="px-4 py-3">競技名</th>
-            <th className="px-4 py-3">場所</th>
-            <th className="px-4 py-3">開始時間</th>
-          </tr>
-        </thead>
-        <tbody className="bg-[var(--surface-1)]">
-          {competitions.length === 0 ? (
-            <tr>
-              <td
-                colSpan={4}
-                className="px-4 py-6 text-center text-[var(--text-2)]"
-              >
-                競技データがありません
-              </td>
-            </tr>
-          ) : (
-            competitions.map((competition) => (
-              <tr
-                key={competition.CompetitionId}
-                className="border-t border-t-[var(--border-1)] hover:bg-[var(--surface-2)]"
-              >
-                <td className="px-4 py-3">{competition.CompetitionId}</td>
-                <td className="px-4 py-3">{competition.CompetitionName}</td>
-                <td className="px-4 py-3">{competition.Venue}</td>
-                <td className="px-4 py-3">{competition.StartTime}</td>
-              </tr>
-            ))
-          )}
-        </tbody>
-      </table>
-    </div>
+    <DataTable
+      ariaLabel="イベント登録一覧"
+      columns={columns}
+      emptyMessage={emptyMessage}
+      getRowKey={(item) => item.id}
+      items={items}
+      onSortChange={onSortChange}
+      sort={sort}
+    />
   );
 }

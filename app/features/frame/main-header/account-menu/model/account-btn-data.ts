@@ -1,5 +1,3 @@
-import accountButtonMock from "~/mock/frame/account-button.json";
-
 export type AccountUser = {
   id: string;
   email: string;
@@ -11,6 +9,7 @@ export type AccountUser = {
 export type AccountBtnData = {
   name: string;
   role: string;
+  imageUrl?: string;
   abbr_label: string;
   borderColor: string;
   bgColor: string;
@@ -18,11 +17,11 @@ export type AccountBtnData = {
 };
 
 function isProbablyMojibake(value: string) {
-  return /[\u0080-\u009f\u00c0-\u00ff]|縺|繧|螟|驛|�/.test(value);
+  return /[\u0080-\u009f\u00c0-\u00ff]|縺|繧|螟|驛|\uFFFD/.test(value);
 }
 
 function isDefinitelyMojibake(value: string) {
-  return /縺|繧|螟|驛|�/.test(value);
+  return /縺|繧|螟|驛|\uFFFD/.test(value);
 }
 
 function repairMojibake(value: string) {
@@ -40,7 +39,7 @@ function repairMojibake(value: string) {
   }
 
   const decoded = new TextDecoder("utf-8").decode(new Uint8Array(bytes));
-  return decoded.includes("�") ? value : decoded;
+  return decoded.includes("\uFFFD") ? value : decoded;
 }
 
 function getDisplayName(user?: AccountUser | null) {
@@ -52,7 +51,7 @@ function getDisplayName(user?: AccountUser | null) {
   }
 
   const emailName = user?.email?.split("@")[0]?.trim();
-  return emailName || accountButtonMock.name;
+  return emailName || "ユーザー";
 }
 
 function getInitials(name: string) {
@@ -68,9 +67,12 @@ export function getAccountBtnData(user?: AccountUser | null): AccountBtnData {
   const name = getDisplayName(user);
 
   return {
-    ...accountButtonMock,
     name,
-    role: "Admin",
+    role: "",
+    imageUrl: undefined,
     abbr_label: getInitials(name),
+    borderColor: "var(--border-strong)",
+    bgColor: "var(--surface-brand-soft)",
+    textColor: "var(--brand-primary)",
   };
 }

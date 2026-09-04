@@ -7,8 +7,8 @@ export function AuthBrand() {
         aria-hidden="true"
         className="h-14 w-auto"
       />
-      <div className="text-[24px] font-semibold tracking-[0.02em] whitespace-nowrap text-[color:var(--text-1)]">
-        rec<em className="text-[color:var(--brand-1)] not-italic">watch</em>
+      <div className="text-text-base text-2xl font-semibold tracking-[0.02em] whitespace-nowrap">
+        rec<em className="text-brand-primary not-italic">watch</em>
       </div>
     </div>
   );

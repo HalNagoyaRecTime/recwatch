@@ -1,0 +1,31 @@
+import { describe, expect, it } from "vitest";
+
+import { ClientError, ClientErrors } from "~/lib/client-error";
+import { toNotificationSubmission } from "~/features/notifications/api/mappers/admin-notification-response-mapper";
+
+describe("toNotificationSubmission", () => {
+  it("API ResponseをApplicationの結果へ変換する", () => {
+    expect(
+      toNotificationSubmission({
+        notification_id: 10,
+        schedule_count: 120,
+        send_status: "draft",
+        ignored_external_field: "value",
+      })
+    ).toEqual({
+      notificationId: 10,
+      scheduleCount: 120,
+      status: "draft",
+    });
+  });
+
+  it("不正なAPI Responseを受け取るとunexpectedエラーに変換する", () => {
+    expect(() =>
+      toNotificationSubmission({
+        notification_id: "10",
+        schedule_count: 120,
+        send_status: "draft",
+      })
+    ).toThrow(new ClientError(ClientErrors.RESPONSE_PARSE_ERROR));
+  });
+});

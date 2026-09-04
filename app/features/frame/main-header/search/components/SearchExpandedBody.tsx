@@ -13,6 +13,8 @@ export function SearchExpandedBody({
 }: SearchExpandedBodyProps) {
   return (
     <div
+      aria-hidden={isOpen ? undefined : true}
+      inert={!isOpen}
       className={cn(
         "grid min-h-0 overflow-hidden transition-[grid-template-rows,opacity,margin-top] duration-400 ease-in-out",
         isOpen

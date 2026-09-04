@@ -1,12 +1,14 @@
 import { useLoaderData } from "react-router";
 
+import { createPageTitle } from "~/lib/page-title";
 import { buildBackendUrl } from "~/config/env";
-import { AdminScreenPage } from "~/features/admin-pages/components/AdminScreenPage";
-import { dashboardContent } from "~/features/admin-pages/model/dashboard-content";
-import { WEB_CLIENT_HEADERS } from "~/features/auth/lib/logout";
+import { WEB_CLIENT_HEADERS } from "~/features/auth/lib/webClientHeaders";
+import { DashboardPage } from "~/features/dashboard/pages/DashboardPage";
+import { PagePadding } from "~/features/frame/page-layout/PagePadding";
+import { PageLayout } from "~/features/frame/page-layout/PageLayout";
 
 export function meta() {
-  return [{ title: "Dashboard | recwatch" }];
+  return [{ title: createPageTitle("ダッシュボード") }];
 }
 
 type DashboardLoaderData =
@@ -32,6 +34,7 @@ export async function clientLoader(): Promise<DashboardLoaderData> {
   const res = await fetch(dashboardUrl, {
     credentials: "include",
     headers: WEB_CLIENT_HEADERS,
+    signal: AbortSignal.timeout(1000),
   }).catch(() => null);
 
   if (!res) {
@@ -62,11 +65,13 @@ export async function clientLoader(): Promise<DashboardLoaderData> {
 
 export default function DashboardRoute() {
   const result = useLoaderData<typeof clientLoader>();
-
   return (
-    <div className="flex flex-col gap-[18px]">
-      <pre className="text-sm">{JSON.stringify(result, null, 2)}</pre>
-      <AdminScreenPage {...dashboardContent} />
-    </div>
+    <PageLayout>
+      <PagePadding>
+        <DashboardPage
+          connectionError={result.status === "error" ? result.error : undefined}
+        />
+      </PagePadding>
+    </PageLayout>
   );
 }
