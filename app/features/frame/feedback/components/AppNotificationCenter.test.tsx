@@ -70,6 +70,24 @@ function SeedNotification() {
   );
 }
 
+function SeedSimpleNotification() {
+  const { report } = useFeedback();
+  return (
+    <button
+      type="button"
+      onClick={() =>
+        report({
+          kind: "background-success",
+          title: "完了",
+          message: "処理が完了しました",
+        })
+      }
+    >
+      simple-seed
+    </button>
+  );
+}
+
 function renderCenter() {
   return render(
     <FeedbackProvider userId="test-user">
@@ -216,9 +234,78 @@ describe("AppNotificationCenter", () => {
     renderCenter();
     fireEvent.click(screen.getByRole("button", { name: "seed" }));
 
-    const row = screen.getByRole("button", { name: "通知内容を表示" });
+    const row = screen.getByRole("button", { name: /通知内容を表示$/ });
     fireEvent.focus(row);
     expect(screen.queryByLabelText("未読")).not.toBeInTheDocument();
+  });
+
+  it("通知本体の矢印キー・Home・Endで一覧を移動する", async () => {
+    const user = userEvent.setup();
+    renderCenter();
+    await user.click(screen.getByRole("button", { name: "seed" }));
+    await user.click(screen.getByRole("button", { name: "seed" }));
+    const messages = screen.getAllByRole("button", {
+      name: /通知内容を表示$/,
+    });
+
+    messages[0].focus();
+    await user.keyboard("{ArrowDown}");
+    expect(document.activeElement).toBe(messages[1]);
+    await user.keyboard("{ArrowUp}");
+    expect(document.activeElement).toBe(messages[0]);
+    await user.keyboard("{End}");
+    expect(document.activeElement).toBe(messages[1]);
+    await user.keyboard("{ArrowDown}");
+    expect(document.activeElement).toBe(messages[1]);
+    await user.keyboard("{Home}");
+    expect(document.activeElement).toBe(messages[0]);
+  });
+
+  it("最初の通知からArrowUpでBellへfocusを戻す", async () => {
+    const user = userEvent.setup();
+    const onFocusTrigger = vi.fn();
+    render(
+      <FeedbackProvider userId="test-user">
+        <SeedNotification />
+        <AppNotificationCenter onFocusTrigger={onFocusTrigger} />
+      </FeedbackProvider>
+    );
+    await user.click(screen.getByRole("button", { name: "seed" }));
+    const message = screen.getByRole("button", { name: /通知内容を表示$/ });
+    message.focus();
+    await user.keyboard("{ArrowUp}");
+    expect(onFocusTrigger).toHaveBeenCalledTimes(1);
+  });
+
+  it("Diagnosticのない短い通知では詳細toggleを提供しない", async () => {
+    const user = userEvent.setup();
+    render(
+      <FeedbackProvider userId="test-user">
+        <SeedSimpleNotification />
+        <AppNotificationCenter />
+      </FeedbackProvider>
+    );
+    await user.click(screen.getByRole("button", { name: "simple-seed" }));
+    const message = screen.getByRole("button", {
+      name: /完了、成功、未読、通知内容$/,
+    });
+    expect(message).not.toHaveAttribute("aria-expanded");
+    message.focus();
+    await user.keyboard("{ArrowRight}");
+    expect(message).not.toHaveAttribute("aria-expanded");
+  });
+
+  it("ArrowRightとArrowLeftで通知詳細を開閉する", async () => {
+    const user = userEvent.setup();
+    renderCenter();
+    await user.click(screen.getByRole("button", { name: "seed" }));
+    const message = screen.getByRole("button", { name: /通知内容を表示$/ });
+
+    message.focus();
+    await user.keyboard("{ArrowRight}");
+    expect(screen.getByText("SERVER_ERROR")).toBeInTheDocument();
+    await user.keyboard("{ArrowLeft}");
+    expect(screen.queryByText("SERVER_ERROR")).not.toBeInTheDocument();
   });
 
   it("通知全体のクリックで詳細を開閉できる", async () => {
@@ -257,6 +344,21 @@ describe("AppNotificationCenter", () => {
     expect(screen.getByText("通知はありません")).toBeInTheDocument();
   });
 
+  it("個別削除後は次の通知本体へfocusを移す", async () => {
+    const user = userEvent.setup();
+    renderCenter();
+    await user.click(screen.getByRole("button", { name: "seed" }));
+    await user.click(screen.getByRole("button", { name: "seed" }));
+    const rows = screen.getAllByRole("listitem");
+    const secondMessage = within(rows[1]).getByRole("button", {
+      name: /通知内容を表示$/,
+    });
+    await user.click(
+      within(rows[0]).getByRole("button", { name: "更新失敗を削除" })
+    );
+    expect(document.activeElement).toBe(secondMessage);
+  });
+
   it("本文で展開し、縮小ボタンで閉じて再展開後も個別に削除できる", async () => {
     const user = userEvent.setup();
     renderCenter();
@@ -264,7 +366,7 @@ describe("AppNotificationCenter", () => {
     await user.click(screen.getByRole("button", { name: "seed" }));
     const row = screen.getAllByRole("listitem")[0];
     const message = within(row).getByRole("button", {
-      name: "通知内容を表示",
+      name: /通知内容を表示$/,
     });
 
     await user.hover(row);
@@ -290,7 +392,7 @@ describe("AppNotificationCenter", () => {
     const user = userEvent.setup();
     renderCenter();
     await user.click(screen.getByRole("button", { name: "seed" }));
-    const message = screen.getByRole("button", { name: "通知内容を表示" });
+    const message = screen.getByRole("button", { name: /通知内容を表示$/ });
     act(() => message.focus());
     await user.keyboard("{Enter}");
     expect(screen.getByText("req-123")).toBeInTheDocument();
@@ -318,7 +420,7 @@ describe("AppNotificationCenter", () => {
     const user = userEvent.setup();
     renderCenter();
     await user.click(screen.getByRole("button", { name: "seed" }));
-    await user.click(screen.getByRole("button", { name: "通知内容を表示" }));
+    await user.click(screen.getByRole("button", { name: /通知内容を表示$/ }));
     const copyButton = screen.getByRole("button", {
       name: "通知内容をコピー",
     });

@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it } from "vitest";
 
@@ -87,5 +87,28 @@ describe("NoticeBtn", () => {
     );
 
     expect(await screen.findByText("99+")).toBeInTheDocument();
+  });
+
+  it("開いたパネルでBellのArrowDownから最初の通知へ移動できる", async () => {
+    const user = userEvent.setup();
+    render(
+      <FeedbackProvider userId="test-user">
+        <SeedFeedback />
+        <NoticeBtn />
+      </FeedbackProvider>
+    );
+
+    await user.click(screen.getByRole("button", { name: "report" }));
+    const noticeButton = screen.getByRole("button", {
+      name: "通知、1件の未読通知",
+    });
+    await user.click(noticeButton);
+    noticeButton.focus();
+    fireEvent.keyDown(noticeButton, { key: "ArrowDown" });
+
+    expect(document.activeElement).toHaveAttribute(
+      "aria-label",
+      expect.stringContaining("通知内容")
+    );
   });
 });
