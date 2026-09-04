@@ -110,7 +110,7 @@ describe("NoticeBtn", () => {
 
     expect(document.activeElement).toHaveAttribute(
       "aria-label",
-      expect.stringContaining("通知内容")
+      expect.stringContaining("詳細")
     );
   });
 
@@ -133,7 +133,7 @@ describe("NoticeBtn", () => {
     const row = screen.getByRole("listitem");
     expect(row.firstElementChild).toHaveClass("bg-surface-muted");
     expect(
-      screen.getByRole("button", { name: /保存失敗.*通知内容を小さくする/ })
+      screen.getByRole("button", { name: /保存失敗.*詳細を閉じる/ })
     ).toHaveAttribute("aria-expanded", "true");
     await waitFor(() =>
       expect(screen.queryByRole("alert")).not.toBeInTheDocument()

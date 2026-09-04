@@ -40,13 +40,13 @@ export function NoticeBtn() {
       scrollable
       trigger={
         <button
-          ref={bellRef}
           type="button"
           className={cn(
             "app-rounded shadow-soft relative inline-flex aspect-square h-full cursor-pointer items-center justify-center border transition",
             "border-border-base text-text-muted bg-transparent",
             "hover:border-border-strong hover:bg-surface-hover hover:text-text-base"
           )}
+          ref={bellRef}
           aria-label={`通知${unreadCount > 0 ? `、${unreadCount > 99 ? "99+" : unreadCount}件の未読通知` : ""}`}
           onKeyDown={(event) => {
             if (event.key === "ArrowDown" && isOpen) {
@@ -58,7 +58,7 @@ export function NoticeBtn() {
           <BellIcon aria-hidden="true" size={15} strokeWidth={1.8} />
           {unreadCount > 0 ? (
             <span
-              className="border-surface-base bg-brand-primary text-text-base absolute -top-1 -right-1 flex size-3.5 items-center justify-center rounded-full border-[1.5px] p-0 text-[8px] leading-none font-semibold"
+              className="border-surface-base bg-brand-primary text-text-base absolute -top-[1px] right-[1px] flex size-3.5 items-center justify-center rounded-full border-[1.5px] p-0 text-[4px] leading-none font-semibold"
               aria-hidden="true"
             >
               {unreadCount > 99 ? "99+" : unreadCount}
@@ -68,6 +68,7 @@ export function NoticeBtn() {
       }
       content={
         <AppNotificationCenter
+          key={notificationCenterRequest?.requestId ?? "notification-center"}
           initialNotificationId={initialNotificationId}
           onFocusTrigger={() => bellRef.current?.focus()}
           onRegisterFocusFirst={(focusFirst) => {
