@@ -18,17 +18,18 @@ export function AccountProfileHeader({
           <span className="app-text-small text-text-base relative -top-1 block max-w-full min-w-0 truncate font-semibold whitespace-nowrap">
             {account.name}
           </span>
-          {/* 未実装ロール機能のためコメントアウト */}
-          {/*<span*/}
-          {/*  className="flex w-fit items-center justify-center rounded-full border px-2 py-px text-[10px] font-bold tracking-[0.04em]"*/}
-          {/*  style={{*/}
-          {/*    color: account.textColor,*/}
-          {/*    background: account.bgColor,*/}
-          {/*    borderColor: account.borderColor,*/}
-          {/*  }}*/}
-          {/*>*/}
-          {/*  {account.role}*/}
-          {/*</span>*/}
+          {account.role ? (
+            <span
+              className="flex w-fit items-center justify-center rounded-full border px-2 py-px text-[10px] font-bold tracking-[0.04em]"
+              style={{
+                color: account.textColor,
+                background: account.bgColor,
+                borderColor: account.borderColor,
+              }}
+            >
+              {account.role}
+            </span>
+          ) : null}
         </div>
       </div>
     </div>

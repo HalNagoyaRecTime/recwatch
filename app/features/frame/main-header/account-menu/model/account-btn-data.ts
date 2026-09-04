@@ -2,6 +2,7 @@ export type AccountUser = {
   id: string;
   email: string;
   display_name: string;
+  is_staff: boolean;
   avatar_url?: string | null;
   avatar_updated_at?: string | null;
 };
@@ -65,13 +66,14 @@ function getInitials(name: string) {
 
 export function getAccountBtnData(user?: AccountUser | null): AccountBtnData {
   const name = getDisplayName(user);
+  const isStaff = user?.is_staff === true;
 
   return {
     name,
-    role: "",
+    role: isStaff ? "staff" : "",
     imageUrl: undefined,
     abbr_label: getInitials(name),
-    borderColor: "var(--border-strong)",
+    borderColor: isStaff ? "var(--brand-primary)" : "var(--border-strong)",
     bgColor: "var(--surface-brand-soft)",
     textColor: "var(--brand-primary)",
   };

@@ -38,6 +38,7 @@ function isAccountUser(value: unknown): value is AccountUser {
     typeof value.id === "string" &&
     typeof value.email === "string" &&
     typeof value.display_name === "string" &&
+    (value.is_staff === undefined || typeof value.is_staff === "boolean") &&
     (value.avatar_url === undefined ||
       value.avatar_url === null ||
       typeof value.avatar_url === "string") &&
