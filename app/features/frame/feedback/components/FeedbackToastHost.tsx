@@ -28,7 +28,8 @@ const TOAST_EXIT_DURATION_MS = 220;
 const TOAST_DURATION_MS = 4000;
 
 export function FeedbackToastHost() {
-  const { toasts, dismissToast, openNotificationCenter } = useFeedback();
+  const { toasts, notifications, dismissToast, openNotificationCenter } =
+    useFeedback();
   const [exitingIds, setExitingIds] = useState<Set<string>>(() => new Set());
   const exitingIdsRef = useRef(new Set<string>());
   const exitTimersRef = useRef(new Map<string, number>());
@@ -57,6 +58,15 @@ export function FeedbackToastHost() {
     [dismissToast]
   );
 
+  const openSavedNotification = useCallback(
+    (id: string) => {
+      if (notifications.some((notification) => notification.id === id)) {
+        openNotificationCenter(id);
+      }
+    },
+    [notifications, openNotificationCenter]
+  );
+
   return (
     <div className="pointer-events-none fixed top-15 right-4 z-200 flex w-[min(24rem,calc(100vw-2rem))] flex-col gap-2">
       {toasts.map((toast) => (
@@ -65,7 +75,7 @@ export function FeedbackToastHost() {
           toast={toast}
           isExiting={exitingIds.has(toast.id)}
           onDismiss={requestDismiss}
-          onOpenNotificationCenter={openNotificationCenter}
+          onOpenNotificationCenter={openSavedNotification}
         />
       ))}
     </div>

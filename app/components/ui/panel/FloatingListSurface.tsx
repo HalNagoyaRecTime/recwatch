@@ -12,12 +12,15 @@ type FloatingListSurfaceProps = Omit<
   fixedHeader?: ReactNode;
   /** 利用可能サイズ内で内容を縦スクロールさせます。 */
   scrollable?: boolean;
+  /** スクロール領域のTab順を画面単位で調整します。 */
+  scrollTabIndex?: number;
 };
 
 export function FloatingListSurface({
   children,
   fixedHeader,
   scrollable = false,
+  scrollTabIndex,
   ...props
 }: FloatingListSurfaceProps) {
   return (
@@ -25,7 +28,12 @@ export function FloatingListSurface({
       {scrollable ? (
         <>
           {fixedHeader ? <div className="shrink-0">{fixedHeader}</div> : null}
-          <ScrollbarArea className="min-h-0 p-2">{children}</ScrollbarArea>
+          <ScrollbarArea
+            className="min-h-0 p-2"
+            scrollTabIndex={scrollTabIndex}
+          >
+            {children}
+          </ScrollbarArea>
         </>
       ) : (
         <>

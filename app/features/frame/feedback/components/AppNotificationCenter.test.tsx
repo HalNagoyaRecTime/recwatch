@@ -233,6 +233,43 @@ describe("AppNotificationCenter", () => {
     ).toBeInTheDocument();
   });
 
+  it("diagnosticの発生時刻を優先し、読みやすい形式で表示する", async () => {
+    const occurredAt = new Date(Date.now() - 60_000).toISOString();
+    const notification: AppNotification = {
+      id: "notification-with-occurred-at",
+      kind: "action-error",
+      severity: "error",
+      title: "日時付き通知",
+      message: "詳細を確認してください",
+      createdAt: new Date().toISOString(),
+      read: true,
+      diagnostic: { occurredAt },
+    };
+    window.localStorage.setItem(
+      getAppNotificationStorageKey("test-user"),
+      JSON.stringify([notification])
+    );
+    const user = userEvent.setup();
+    renderCenter();
+
+    const row = screen.getByText("日時付き通知", { exact: true });
+    await user.click(
+      within(row.closest("li")!).getByRole("button", { name: /詳細を表示$/ })
+    );
+
+    const formatted = new Date(occurredAt).toLocaleString("ja-JP", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: false,
+    });
+    expect(screen.getByText(formatted)).toBeInTheDocument();
+    expect(screen.queryByText(occurredAt)).not.toBeInTheDocument();
+  });
+
   it("通知行へfocusすると即座に既読にする", async () => {
     renderCenter();
     fireEvent.click(screen.getByRole("button", { name: "seed" }));
