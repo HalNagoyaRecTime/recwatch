@@ -30,6 +30,24 @@ function SeedFeedback() {
   );
 }
 
+function SeedSuccess() {
+  const { report } = useFeedback();
+  return (
+    <button
+      type="button"
+      onClick={() =>
+        report({
+          kind: "action-success",
+          title: "保存完了",
+          message: "保存しました",
+        })
+      }
+    >
+      success
+    </button>
+  );
+}
+
 describe("NoticeBtn", () => {
   beforeEach(() => {
     window.localStorage.clear();
@@ -112,6 +130,49 @@ describe("NoticeBtn", () => {
       "aria-label",
       expect.stringContaining("詳細")
     );
+  });
+
+  it("閉じたBellのArrowDownでパネルを開き最初の通知へ移動できる", async () => {
+    const user = userEvent.setup();
+    render(
+      <FeedbackProvider userId="test-user">
+        <SeedFeedback />
+        <NoticeBtn />
+      </FeedbackProvider>
+    );
+
+    await user.click(screen.getByRole("button", { name: "report" }));
+    const noticeButton = screen.getByRole("button", {
+      name: "通知、1件の未読通知",
+    });
+    noticeButton.focus();
+    fireEvent.keyDown(noticeButton, { key: "ArrowDown" });
+
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { name: "通知" })).toBeInTheDocument();
+      expect(document.activeElement).toHaveAttribute(
+        "aria-label",
+        expect.stringContaining("詳細")
+      );
+    });
+  });
+
+  it("通知センターに保存されないToastのクリックではパネルを開かない", async () => {
+    const user = userEvent.setup();
+    render(
+      <FeedbackProvider userId="test-user">
+        <FeedbackToastHost />
+        <SeedSuccess />
+        <NoticeBtn />
+      </FeedbackProvider>
+    );
+
+    await user.click(screen.getByRole("button", { name: "success" }));
+    await user.click(screen.getByRole("status"));
+
+    expect(
+      screen.queryByRole("heading", { name: "通知" })
+    ).not.toBeInTheDocument();
   });
 
   it("Toastをクリックすると該当通知の詳細を開いた状態で表示する", async () => {

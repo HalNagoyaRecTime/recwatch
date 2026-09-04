@@ -51,6 +51,7 @@ export function AppNotificationCenter({
     <div className="w-[min(20rem,calc(100vw-1rem))]">
       <FloatingListSurface
         scrollable
+        scrollTabIndex={-1}
         style={{
           maxHeight: "min(55vh, var(--floating-panel-available-height))",
         }}

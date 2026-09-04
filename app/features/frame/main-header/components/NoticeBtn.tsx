@@ -17,12 +17,14 @@ export function NoticeBtn() {
   const isOpen = manualOpen || notificationCenterRequest !== null;
   const bellRef = useRef<HTMLButtonElement>(null);
   const focusFirstNotificationRef = useRef<(() => void) | null>(null);
+  const focusFirstWhenReadyRef = useRef(false);
   const initialNotificationId =
     notificationCenterRequest?.notificationId ?? null;
 
   const handleOpenChange = (open: boolean) => {
     setManualOpen(open);
     if (!open) {
+      focusFirstWhenReadyRef.current = false;
       if (notificationCenterRequest) {
         markRead(notificationCenterRequest.notificationId);
       }
@@ -49,9 +51,13 @@ export function NoticeBtn() {
           ref={bellRef}
           aria-label={`通知${unreadCount > 0 ? `、${unreadCount > 99 ? "99+" : unreadCount}件の未読通知` : ""}`}
           onKeyDown={(event) => {
-            if (event.key === "ArrowDown" && isOpen) {
-              event.preventDefault();
+            if (event.key !== "ArrowDown") return;
+            event.preventDefault();
+            if (isOpen) {
               focusFirstNotificationRef.current?.();
+            } else {
+              focusFirstWhenReadyRef.current = true;
+              setManualOpen(true);
             }
           }}
         >
@@ -73,6 +79,10 @@ export function NoticeBtn() {
           onFocusTrigger={() => bellRef.current?.focus()}
           onRegisterFocusFirst={(focusFirst) => {
             focusFirstNotificationRef.current = focusFirst;
+            if (focusFirstWhenReadyRef.current) {
+              focusFirstWhenReadyRef.current = false;
+              focusFirst();
+            }
             return () => {
               focusFirstNotificationRef.current = null;
             };

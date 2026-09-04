@@ -44,4 +44,17 @@ describe("FloatingListSurface", () => {
       screen.getByText("内容")
     );
   });
+
+  it("必要な画面だけスクロール領域をTab順から外せる", () => {
+    const { container } = render(
+      <FloatingListSurface scrollable scrollTabIndex={-1}>
+        <div>内容</div>
+      </FloatingListSurface>
+    );
+
+    expect(container.querySelector(".scrollbar-none")).toHaveAttribute(
+      "tabindex",
+      "-1"
+    );
+  });
 });

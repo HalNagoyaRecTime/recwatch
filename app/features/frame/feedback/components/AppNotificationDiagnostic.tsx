@@ -12,11 +12,13 @@ export function AppNotificationDiagnostic({
   createdAt,
 }: AppNotificationDiagnosticProps) {
   return (
-    <div id={id} className="mt-1 mr-8 ml-6">
+    <div id={id} className="text-text-muted mt-1 mr-8 ml-6 text-xs leading-5">
       <dl className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-2 gap-y-1">
         <DiagnosticValue
           label="時刻"
-          value={diagnostic.occurredAt ?? createdAt}
+          value={formatAppNotificationDateTime(
+            diagnostic.occurredAt ?? createdAt
+          )}
         />
         <DiagnosticValue label="画面" value={diagnostic.route} />
         <DiagnosticValue label="操作" value={diagnostic.action} />
@@ -35,8 +37,23 @@ export function AppNotificationDiagnostic({
 function DiagnosticValue({ label, value }: { label: string; value?: string }) {
   return value ? (
     <>
-      <dt>{label}</dt>
-      <dd className="break-all select-text">{value}</dd>
+      <dt className="text-text-subtle">{label}</dt>
+      <dd className="text-text-muted break-all select-text">{value}</dd>
     </>
   ) : null;
+}
+
+function formatAppNotificationDateTime(value: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+
+  return date.toLocaleString("ja-JP", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  });
 }

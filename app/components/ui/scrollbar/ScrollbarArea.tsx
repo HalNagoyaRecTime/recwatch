@@ -11,6 +11,8 @@ type ScrollbarAreaProps = {
   orientation?: "vertical" | "horizontal" | "both";
   /** 縦スクロールバーのトラック下端に空ける余白（px） */
   verticalTrackInsetBottom?: number;
+  /** スクロール領域をTab順から外すなど、必要な画面だけ指定します。 */
+  scrollTabIndex?: number;
 };
 
 /**
@@ -25,6 +27,7 @@ export function ScrollbarArea({
   style,
   orientation = "vertical",
   verticalTrackInsetBottom = 0,
+  scrollTabIndex,
 }: ScrollbarAreaProps) {
   const {
     scrollRef,
@@ -72,6 +75,7 @@ export function ScrollbarArea({
           orientation === "both" && "overflow-auto",
           className
         )}
+        tabIndex={scrollTabIndex}
         style={style}
       >
         {children}
