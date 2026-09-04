@@ -19,7 +19,7 @@ type ScheduleFormProps = {
 };
 
 const fieldClassName =
-  "w-full rounded-lg border border-[color:var(--border-2)] bg-[color:var(--surface-overlay-strong)] px-3.5 text-sm text-[color:var(--text-1)] outline-none transition placeholder:text-[color:var(--text-3)] focus:border-[color:var(--brand-1)] focus:ring-2 focus:ring-[color:var(--surface-brand-soft)]";
+  "w-full rounded-lg border border-border-strong bg-surface-base px-3.5 text-sm text-text-base outline-none transition placeholder:text-text-subtle focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20";
 
 export function ScheduleForm({
   draft,
@@ -60,7 +60,7 @@ export function ScheduleForm({
               ))}
             </select>
           </div>
-          <span className="text-sm text-[color:var(--text-3)]">〜</span>
+          <span className="text-text-subtle text-sm">〜</span>
           <div>
             <label htmlFor="schedule-end-time" className="sr-only">
               終了時間
@@ -146,15 +146,15 @@ export function ScheduleForm({
 
       <fieldset>
         <legend className="text-sm font-semibold">投稿方法</legend>
-        <div className="mt-2 inline-flex overflow-hidden rounded-lg border border-[color:var(--border-2)]">
+        <div className="border-border-strong mt-2 inline-flex overflow-hidden rounded-lg border">
           <button
             type="button"
             aria-pressed={draft.notificationEnabled}
             className={cn(
               "inline-flex h-10 items-center gap-2 px-4 text-sm font-medium transition",
               draft.notificationEnabled
-                ? "bg-[color:var(--brand-button-1)] text-white"
-                : "text-[color:var(--text-2)] hover:bg-[color:var(--surface-2)]"
+                ? "bg-button-brand-gradient-start text-text-base-inverse"
+                : "text-text-muted hover:bg-surface-hover"
             )}
             onClick={() => onChange({ ...draft, notificationEnabled: true })}
           >
@@ -165,10 +165,10 @@ export function ScheduleForm({
             type="button"
             aria-pressed={!draft.notificationEnabled}
             className={cn(
-              "inline-flex h-10 items-center gap-2 border-l border-[color:var(--border-2)] px-4 text-sm font-medium transition",
+              "border-border-strong inline-flex h-10 items-center gap-2 border-l px-4 text-sm font-medium transition",
               !draft.notificationEnabled
-                ? "bg-[color:var(--surface-2)] text-[color:var(--text-1)]"
-                : "text-[color:var(--text-3)] hover:bg-[color:var(--surface-2)]"
+                ? "bg-surface-hover text-text-base"
+                : "text-text-subtle hover:bg-surface-hover"
             )}
             onClick={() => onChange({ ...draft, notificationEnabled: false })}
           >
@@ -176,7 +176,7 @@ export function ScheduleForm({
             通知なし
           </button>
         </div>
-        <p className="mt-2 text-xs leading-5 text-[color:var(--text-3)]">
+        <p className="text-text-subtle mt-2 text-xs leading-5">
           「通知あり」で登録すると、参加メンバーにプッシュ通知が送信されます
         </p>
       </fieldset>
@@ -185,7 +185,7 @@ export function ScheduleForm({
         <button
           type="button"
           disabled={isSubmitting}
-          className="h-10 rounded-lg border border-[color:var(--border-2)] px-4 text-sm font-medium transition hover:bg-[color:var(--surface-2)] disabled:opacity-50"
+          className="border-border-strong hover:bg-surface-hover h-10 rounded-lg border px-4 text-sm font-medium transition disabled:opacity-50"
           onClick={onReset}
         >
           キャンセル
@@ -193,7 +193,7 @@ export function ScheduleForm({
         <button
           type="submit"
           disabled={!canSubmit || isSubmitting}
-          className="h-10 rounded-lg bg-[color:var(--brand-button-1)] px-5 text-sm font-semibold text-white transition hover:bg-[color:var(--brand-button-2)] disabled:cursor-not-allowed disabled:opacity-45"
+          className="bg-button-brand-gradient-start text-text-base-inverse hover:bg-button-brand-gradient-end h-10 rounded-lg px-5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-45"
         >
           {isSubmitting ? "処理中..." : submitLabel}
         </button>

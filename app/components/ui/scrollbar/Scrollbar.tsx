@@ -61,7 +61,9 @@ export function Scrollbar({
           className={cn(
             "pointer-events-auto absolute rounded-full transition-colors duration-150",
             isVertical ? "inset-x-0" : "inset-y-0",
-            isDragging ? "bg-text-3/70" : "bg-text-3/40 hover:bg-text-3/60"
+            isDragging
+              ? "bg-text-subtle/70"
+              : "bg-text-subtle/40 hover:bg-text-subtle/60"
           )}
           style={
             isVertical

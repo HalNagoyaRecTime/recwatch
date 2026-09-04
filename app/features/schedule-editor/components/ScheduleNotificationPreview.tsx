@@ -9,7 +9,7 @@ export function ScheduleNotificationPreview({
 }: ScheduleNotificationPreviewProps) {
   if (!draft.notificationEnabled) {
     return (
-      <div className="rounded-lg border border-dashed border-[color:var(--border-2)] p-6 text-sm text-[color:var(--text-3)]">
+      <div className="text-text-subtle border-border-strong rounded-lg border border-dashed p-6 text-sm">
         通知なしが選択されています
       </div>
     );
@@ -20,10 +20,10 @@ export function ScheduleNotificationPreview({
 
   return (
     <div>
-      <h2 className="mb-3 text-sm font-semibold text-[color:var(--text-2)]">
+      <h2 className="text-text-muted mb-3 text-sm font-semibold">
         配信先イメージ（スマートフォン通知）
       </h2>
-      <div className="relative h-[396px] w-full max-w-[188px] overflow-hidden rounded-[27px] border border-[color:var(--border-strong)] bg-white text-slate-950 shadow-lg">
+      <div className="border-border-strong relative h-[396px] w-full max-w-[188px] overflow-hidden rounded-[27px] border bg-white text-slate-950 shadow-lg">
         <div className="flex items-center justify-between px-4 pt-3 text-[11px] font-semibold">
           <span>{previewTime}</span>
           <span aria-hidden="true">▮▮ ◒ ▰</span>
