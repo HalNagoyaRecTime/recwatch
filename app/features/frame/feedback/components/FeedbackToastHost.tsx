@@ -73,6 +73,9 @@ export function FeedbackToastHost() {
         <FeedbackToast
           key={toast.id}
           toast={toast}
+          isSaved={notifications.some(
+            (notification) => notification.id === toast.id
+          )}
           isExiting={exitingIds.has(toast.id)}
           onDismiss={requestDismiss}
           onOpenNotificationCenter={openSavedNotification}
@@ -84,11 +87,13 @@ export function FeedbackToastHost() {
 
 function FeedbackToast({
   toast,
+  isSaved,
   isExiting,
   onDismiss,
   onOpenNotificationCenter,
 }: {
   toast: AppNotification;
+  isSaved: boolean;
   isExiting: boolean;
   onDismiss: (id: string) => void;
   onOpenNotificationCenter: (notificationId: string) => void;
@@ -146,6 +151,11 @@ function FeedbackToast({
     [pauseTimer, resumeTimer]
   );
 
+  const handleToastActivate = () => {
+    if (isSaved) onOpenNotificationCenter(toast.id);
+    onDismiss(toast.id);
+  };
+
   useEffect(() => {
     resumeTimer();
     return clearTimer;
@@ -155,10 +165,7 @@ function FeedbackToast({
     <div
       className={`shadow-soft border-border-subtle bg-surface-base group/toast pointer-events-auto flex items-start gap-2 rounded-xl border px-3 py-2.5 text-sm ${isExiting ? "feedback-toast-exit" : "feedback-toast-enter"}`}
       role={toast.severity === "error" ? "alert" : "status"}
-      onClick={() => {
-        onOpenNotificationCenter(toast.id);
-        onDismiss(toast.id);
-      }}
+      onClick={handleToastActivate}
       onPointerEnter={() => setPauseReason("hover", true)}
       onPointerLeave={() => setPauseReason("hover", false)}
       onFocus={() => setPauseReason("focus", true)}
@@ -168,32 +175,59 @@ function FeedbackToast({
         }
       }}
     >
+      {isSaved ? (
+        <button
+          type="button"
+          className="text-text-base focus-visible:outline-brand-primary flex min-w-0 flex-1 items-start gap-2 rounded-md text-left focus-visible:outline-2 focus-visible:outline-offset-2"
+          onClick={(event) => {
+            event.stopPropagation();
+            handleToastActivate();
+          }}
+        >
+          <ToastBody Icon={Icon} toast={toast} />
+        </button>
+      ) : (
+        <div className="text-text-base flex min-w-0 flex-1 items-start gap-2">
+          <ToastBody Icon={Icon} toast={toast} />
+        </div>
+      )}
+      <button
+        type="button"
+        className="text-text-muted hover:text-text-base flex size-6 shrink-0 items-center justify-center rounded-md transition-colors"
+        aria-label="通知を閉じる"
+        onClick={(event) => {
+          event.stopPropagation();
+          onDismiss(toast.id);
+        }}
+      >
+        <XIcon aria-hidden="true" size={13} />
+      </button>
+    </div>
+  );
+}
+
+function ToastBody({
+  Icon,
+  toast,
+}: {
+  Icon: typeof InfoIcon;
+  toast: AppNotification;
+}) {
+  return (
+    <>
       <Icon
         aria-hidden="true"
         className={`${toastIconClass[toast.severity]} mt-0.5 shrink-0`}
         size={16}
       />
       <div className="min-w-0 flex-1">
-        <div className="flex items-start gap-2">
-          <p className="text-text-base min-w-0 flex-1 font-medium break-words">
-            {toast.title}
-          </p>
-          <button
-            type="button"
-            className="text-text-muted hover:text-text-base flex size-6 shrink-0 items-center justify-center rounded-md transition-colors"
-            aria-label="通知を閉じる"
-            onClick={(event) => {
-              event.stopPropagation();
-              onDismiss(toast.id);
-            }}
-          >
-            <XIcon aria-hidden="true" size={13} />
-          </button>
-        </div>
+        <p className="text-text-base min-w-0 font-medium break-words">
+          {toast.title}
+        </p>
         <p className="text-text-muted break-words whitespace-pre-wrap">
           {toast.message}
         </p>
       </div>
-    </div>
+    </>
   );
 }

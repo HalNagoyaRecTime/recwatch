@@ -64,12 +64,10 @@ describe("NoticeBtn", () => {
 
     expect(screen.getByRole("button", { name: "通知" })).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "report" }));
-    expect(
-      screen.getByRole("button", { name: "通知、1件の未読通知" })
-    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "通知" })).toBeInTheDocument();
 
     const noticeButton = screen.getByRole("button", {
-      name: "通知、1件の未読通知",
+      name: "通知",
     });
     expect(noticeButton).toHaveAttribute("aria-expanded", "false");
     await user.click(noticeButton);
@@ -82,7 +80,7 @@ describe("NoticeBtn", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("未読件数を99+まで表示する", async () => {
+  it("未読時は件数ではなくランプを表示する", async () => {
     const notifications: AppNotification[] = Array.from(
       { length: 100 },
       (_, index) => ({
@@ -106,7 +104,9 @@ describe("NoticeBtn", () => {
       </FeedbackProvider>
     );
 
-    expect(await screen.findByText("99+")).toBeInTheDocument();
+    const noticeButton = screen.getByRole("button", { name: "通知" });
+    expect(screen.queryByText("99+")).not.toBeInTheDocument();
+    expect(noticeButton.querySelector("span")).toHaveClass("rounded-full");
   });
 
   it("開いたパネルでBellのArrowDownから最初の通知へ移動できる", async () => {
@@ -120,7 +120,7 @@ describe("NoticeBtn", () => {
 
     await user.click(screen.getByRole("button", { name: "report" }));
     const noticeButton = screen.getByRole("button", {
-      name: "通知、1件の未読通知",
+      name: "通知",
     });
     await user.click(noticeButton);
     noticeButton.focus();
@@ -143,7 +143,7 @@ describe("NoticeBtn", () => {
 
     await user.click(screen.getByRole("button", { name: "report" }));
     const noticeButton = screen.getByRole("button", {
-      name: "通知、1件の未読通知",
+      name: "通知",
     });
     noticeButton.focus();
     fireEvent.keyDown(noticeButton, { key: "ArrowDown" });
@@ -175,6 +175,27 @@ describe("NoticeBtn", () => {
     ).not.toBeInTheDocument();
   });
 
+  it("保存済みToastの本文をキーボードで操作すると対象通知へfocusする", async () => {
+    const user = userEvent.setup();
+    render(
+      <FeedbackProvider userId="test-user">
+        <FeedbackToastHost />
+        <SeedFeedback />
+        <NoticeBtn />
+      </FeedbackProvider>
+    );
+
+    await user.click(screen.getByRole("button", { name: "report" }));
+    const toastButton = screen.getByRole("button", { name: /保存失敗/ });
+    toastButton.focus();
+    await user.keyboard("{Enter}");
+
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { name: "通知" })).toBeInTheDocument();
+      expect(document.activeElement).toHaveAttribute("aria-expanded", "true");
+    });
+  });
+
   it("Toastをクリックすると該当通知の詳細を開いた状態で表示する", async () => {
     const user = userEvent.setup();
     render(
@@ -193,6 +214,7 @@ describe("NoticeBtn", () => {
     ).toBeInTheDocument();
     const row = screen.getByRole("listitem");
     expect(row.firstElementChild).toHaveClass("bg-surface-muted");
+    expect(document.activeElement).toHaveAttribute("aria-expanded", "true");
     expect(
       screen.getByRole("button", { name: /保存失敗.*詳細を閉じる/ })
     ).toHaveAttribute("aria-expanded", "true");
