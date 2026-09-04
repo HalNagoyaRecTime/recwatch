@@ -79,6 +79,7 @@ export type {
 export type {
   TeacherAssignmentUpdateRequest,
   TeacherCreateRequest,
+  TeacherBooleanFilter,
   TeacherListQuery,
   TeacherListSortBy,
   TeacherListSortOrder,

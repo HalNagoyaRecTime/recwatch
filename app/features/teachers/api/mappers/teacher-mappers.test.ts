@@ -10,6 +10,7 @@ describe("toTeacherRow", () => {
         user_id: 11,
         display_name: "佐橋 晴斗",
         is_live_active: true,
+        is_staff: false,
         class_rooms: [
           { class_room_id: 3, class_code: "A-1", class_name: "1年A組" },
         ],
@@ -18,7 +19,8 @@ describe("toTeacherRow", () => {
       teacherId: 7,
       displayName: "佐橋 晴斗",
       isLiveActive: true,
-      classRooms: [{ classRoomId: 3, className: "1年A組" }],
+      isStaff: false,
+      classRooms: [{ classRoomId: 3, classCode: "A-1", className: "1年A組" }],
     });
   });
 });
