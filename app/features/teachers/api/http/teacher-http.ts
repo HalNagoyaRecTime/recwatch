@@ -21,6 +21,10 @@ export const teacherHttpApi = {
       offset: String(query.offset),
     });
     if (query.search) params.set("search", query.search);
+    if (query.classRoomId !== undefined)
+      params.set("classRoomId", String(query.classRoomId));
+    if (query.isStaff) params.set("isStaff", query.isStaff);
+    if (query.isLiveActive) params.set("isLiveActive", query.isLiveActive);
     if (query.sortBy) params.set("sortBy", query.sortBy);
     if (query.sortOrder) params.set("sortOrder", query.sortOrder);
     return apiClient.get<TeacherListPageDTO>(
