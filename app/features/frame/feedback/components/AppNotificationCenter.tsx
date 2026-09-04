@@ -30,14 +30,29 @@ const severityIconClass = {
   error: "text-tone-danger-text",
 } as const;
 
+const severityLabel = {
+  info: "情報",
+  success: "成功",
+  warning: "警告",
+  error: "エラー",
+} as const;
+
 const NOTIFICATION_VISIBILITY_THRESHOLD = 0.5;
 const NOTIFICATION_VISIBILITY_DELAY_MS = 400;
 
-export function AppNotificationCenter() {
+export function AppNotificationCenter({
+  onFocusTrigger,
+  onRegisterFocusFirst,
+}: {
+  onFocusTrigger?: () => void;
+  onRegisterFocusFirst?: (focusFirst: () => void) => () => void;
+}) {
   const { notifications, markRead, removeNotification, clearNotifications } =
     useFeedback();
   const rowRefs = useRef(new Map<string, HTMLLIElement>());
+  const focusRefs = useRef(new Map<string, HTMLButtonElement>());
   const visibilityTimersRef = useRef(new Map<string, number>());
+  const pendingFocusIdRef = useRef<string | null>(null);
 
   const registerRow = useCallback((id: string, node: HTMLLIElement | null) => {
     if (node) {
@@ -46,6 +61,51 @@ export function AppNotificationCenter() {
       rowRefs.current.delete(id);
     }
   }, []);
+
+  const registerFocus = useCallback(
+    (id: string, node: HTMLButtonElement | null) => {
+      if (node) {
+        focusRefs.current.set(id, node);
+      } else {
+        focusRefs.current.delete(id);
+      }
+    },
+    []
+  );
+
+  const focusNotification = useCallback((id: string) => {
+    const node = focusRefs.current.get(id);
+    if (!node) return;
+    node.focus({ preventScroll: true });
+    node.scrollIntoView?.({ block: "nearest" });
+  }, []);
+
+  const focusNotificationAt = useCallback(
+    (index: number) => {
+      const notification = notifications[index];
+      if (notification) focusNotification(notification.id);
+    },
+    [focusNotification, notifications]
+  );
+
+  useEffect(() => {
+    if (!onRegisterFocusFirst) return;
+    return onRegisterFocusFirst(() => {
+      const first = notifications[0];
+      if (first) focusNotification(first.id);
+    });
+  }, [focusNotification, notifications, onRegisterFocusFirst]);
+
+  useEffect(() => {
+    const pendingId = pendingFocusIdRef.current;
+    if (pendingId === null) return;
+    pendingFocusIdRef.current = null;
+    if (notifications.some((notification) => notification.id === pendingId)) {
+      focusNotification(pendingId);
+    } else {
+      onFocusTrigger?.();
+    }
+  }, [focusNotification, notifications, onFocusTrigger]);
 
   useEffect(() => {
     if (typeof IntersectionObserver === "undefined") return;
@@ -98,6 +158,18 @@ export function AppNotificationCenter() {
     };
   }, [markRead, notifications]);
 
+  const handleRemove = useCallback(
+    (id: string) => {
+      const index = notifications.findIndex(
+        (notification) => notification.id === id
+      );
+      pendingFocusIdRef.current =
+        notifications[index + 1]?.id ?? notifications[index - 1]?.id ?? "";
+      removeNotification(id);
+    },
+    [notifications, removeNotification]
+  );
+
   return (
     <div className="w-[min(20rem,calc(100vw-1rem))]">
       <FloatingListSurface
@@ -126,13 +198,18 @@ export function AppNotificationCenter() {
           </p>
         ) : (
           <ul className="flex flex-col gap-1" aria-label="通知一覧">
-            {notifications.map((notification) => (
+            {notifications.map((notification, index) => (
               <NotificationRow
                 key={notification.id}
                 notification={notification}
                 onRead={() => markRead(notification.id)}
-                onRemove={() => removeNotification(notification.id)}
+                onRemove={() => handleRemove(notification.id)}
                 registerRow={registerRow}
+                registerFocus={registerFocus}
+                focusNotificationAt={focusNotificationAt}
+                notificationIndex={index}
+                notificationCount={notifications.length}
+                onFocusTrigger={onFocusTrigger}
               />
             ))}
           </ul>
@@ -147,17 +224,29 @@ function NotificationRow({
   onRead,
   onRemove,
   registerRow,
+  registerFocus,
+  focusNotificationAt,
+  notificationIndex,
+  notificationCount,
+  onFocusTrigger,
 }: {
   notification: AppNotification;
   onRead: () => void;
   onRemove: () => void;
   registerRow: (id: string, node: HTMLLIElement | null) => void;
+  registerFocus: (id: string, node: HTMLButtonElement | null) => void;
+  focusNotificationAt: (index: number) => void;
+  notificationIndex: number;
+  notificationCount: number;
+  onFocusTrigger?: () => void;
 }) {
   const Icon = severityIcon[notification.severity];
   const [isMessageExpanded, setIsMessageExpanded] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
   const diagnosticId = `notification-diagnostic-${notification.id}`;
   const diagnostic = notification.diagnostic;
+  const canExpand = Boolean(diagnostic) || notification.message.length > 120;
+  const focusLabel = `${notification.title}、${severityLabel[notification.severity]}、${notification.read ? "既読" : "未読"}`;
 
   return (
     <li
@@ -167,7 +256,7 @@ function NotificationRow({
       onFocus={onRead}
       onClick={() => {
         onRead();
-        setIsMessageExpanded((expanded) => !expanded);
+        if (canExpand) setIsMessageExpanded((expanded) => !expanded);
       }}
     >
       <div
@@ -253,19 +342,63 @@ function NotificationRow({
             </div>
             <div className="text-text-muted mt-0.5 text-xs">
               <button
+                ref={(node) => registerFocus(notification.id, node)}
                 type="button"
                 className="block w-full rounded-md text-left break-words whitespace-pre-wrap select-text"
                 onClick={(event) => {
                   event.stopPropagation();
-                  setIsMessageExpanded(true);
+                  onRead();
+                  if (canExpand) setIsMessageExpanded((expanded) => !expanded);
                 }}
-                aria-label={
-                  isMessageExpanded ? "通知内容を小さくする" : "通知内容を表示"
+                onKeyDown={(event) => {
+                  if (event.key === "ArrowRight") {
+                    if (canExpand) {
+                      event.preventDefault();
+                      setIsMessageExpanded(true);
+                    }
+                  } else if (event.key === "ArrowLeft") {
+                    if (canExpand) {
+                      event.preventDefault();
+                      setIsMessageExpanded(false);
+                    }
+                  } else if (event.key === "ArrowDown") {
+                    event.preventDefault();
+                    if (notificationIndex + 1 < notificationCount) {
+                      focusNotificationAt(notificationIndex + 1);
+                    }
+                  } else if (event.key === "ArrowUp") {
+                    event.preventDefault();
+                    if (notificationIndex === 0) {
+                      onFocusTrigger?.();
+                    } else {
+                      focusNotificationAt(notificationIndex - 1);
+                    }
+                  } else if (event.key === "Home") {
+                    event.preventDefault();
+                    focusNotificationAt(0);
+                  } else if (event.key === "End") {
+                    event.preventDefault();
+                    focusNotificationAt(notificationCount - 1);
+                  }
+                }}
+                aria-label={`${focusLabel}、${
+                  canExpand
+                    ? isMessageExpanded
+                      ? "通知内容を小さくする"
+                      : "通知内容を表示"
+                    : "通知内容"
+                }`}
+                aria-expanded={canExpand ? isMessageExpanded : undefined}
+                aria-controls={
+                  canExpand && diagnostic ? diagnosticId : undefined
                 }
-                aria-expanded={isMessageExpanded}
-                aria-controls={diagnostic ? diagnosticId : undefined}
+                data-notification-id={notification.id}
               >
-                <span className={isMessageExpanded ? "" : "line-clamp-3"}>
+                <span
+                  className={
+                    canExpand && !isMessageExpanded ? "line-clamp-3" : ""
+                  }
+                >
                   {notification.message}
                 </span>
               </button>
