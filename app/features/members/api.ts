@@ -1,14 +1,41 @@
 import { apiClient } from "~/lib/api-client";
 
+export type StudentClassRoomDTO = {
+  class_room_id: number;
+  class_code: string;
+  class_name: string;
+};
+
 export type StudentDTO = {
   student_id: number;
-  user_id?: number;
+  user_id: number;
   display_name: string;
-  class_room_id: number;
-  class_room_name: string;
-  attendance_number: number;
   student_id_number: string;
+  attendance_number: number;
   is_live_active: boolean;
+  is_staff: boolean;
+  class_room: StudentClassRoomDTO | null;
+};
+
+export type StudentListSortBy =
+  | "studentId"
+  | "studentIdNumber"
+  | "displayName"
+  | "classCode"
+  | "className"
+  | "attendanceNumber";
+export type StudentListSortOrder = "asc" | "desc";
+export type StudentBooleanFilter = "true" | "false" | "all";
+
+export type StudentListQuery = {
+  limit: number;
+  offset: number;
+  search?: string;
+  classRoomId?: number;
+  isStaff?: StudentBooleanFilter;
+  isLiveActive?: StudentBooleanFilter;
+  sortBy?: StudentListSortBy;
+  sortOrder?: StudentListSortOrder;
 };
 
 export type StudentWriteInput = {
@@ -18,47 +45,47 @@ export type StudentWriteInput = {
   studentIdNumber: string;
 };
 
+export type StudentPageDTO = {
+  items: StudentDTO[];
+  total: number;
+  limit: number;
+  offset: number;
+};
+
 export type StudentManagementApi = {
   createStudent(input: StudentWriteInput): Promise<StudentDTO>;
   deleteStudent(studentId: number): Promise<void>;
-  getAllStudents(): Promise<StudentDTO[]>;
+  getStudents(query: StudentListQuery): Promise<StudentPageDTO>;
   updateStudent(
     studentId: number,
     input: StudentWriteInput
   ): Promise<StudentDTO>;
 };
 
-export type StudentPageDTO = {
-  students: StudentDTO[];
-  total: number;
-  limit: number;
-  offset: number;
-};
-
-const PAGE_LIMIT = 100;
-
-export const StudentApi = {
-  async getAllStudents(): Promise<StudentDTO[]> {
-    const students: StudentDTO[] = [];
-    let offset = 0;
-
-    while (true) {
-      const page = await apiClient.get<StudentPageDTO>(
-        `/api/v1/students?limit=${PAGE_LIMIT}&offset=${offset}`
-      );
-      students.push(...page.students);
-      offset += page.students.length;
-
-      if (page.students.length === 0 || offset >= page.total) break;
+export const StudentApi: StudentManagementApi = {
+  getStudents: (query) => {
+    const params = new URLSearchParams({
+      limit: String(query.limit),
+      offset: String(query.offset),
+    });
+    if (query.search) params.set("search", query.search);
+    if (query.classRoomId !== undefined) {
+      params.set("classRoomId", String(query.classRoomId));
     }
+    if (query.isStaff) params.set("isStaff", query.isStaff);
+    if (query.isLiveActive) params.set("isLiveActive", query.isLiveActive);
+    if (query.sortBy) params.set("sortBy", query.sortBy);
+    if (query.sortOrder) params.set("sortOrder", query.sortOrder);
 
-    return students;
+    return apiClient.get<StudentPageDTO>(
+      `/api/v1/students?${params.toString()}`
+    );
   },
-  createStudent: (input: StudentWriteInput) =>
+  createStudent: (input) =>
     apiClient.post<StudentDTO>("/api/v1/students", toStudentWriteDto(input)),
-  deleteStudent: (studentId: number) =>
+  deleteStudent: (studentId) =>
     apiClient.delete(`/api/v1/students/${studentId}`),
-  updateStudent: (studentId: number, input: StudentWriteInput) =>
+  updateStudent: (studentId, input) =>
     apiClient.put<StudentDTO>(
       `/api/v1/students/${studentId}`,
       toStudentWriteDto(input)
