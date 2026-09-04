@@ -8,6 +8,7 @@ import {
   type ComponentType,
   type ComponentPropsWithoutRef,
   type KeyboardEventHandler,
+  type MutableRefObject,
   type Ref,
   type ReactNode,
   type ElementType,
@@ -166,7 +167,7 @@ function NavigatedMenu({
 
 type MenuContentProps = Pick<MenuProps, "items" | "onKeyDown"> & {
   scrollable?: boolean;
-  listRef?: import("react").MutableRefObject<Array<HTMLElement | null>>;
+  listRef?: MutableRefObject<Array<HTMLElement | null>>;
   interactions?: Pick<
     UseInteractionsReturn,
     "getFloatingProps" | "getItemProps"
