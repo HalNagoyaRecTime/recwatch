@@ -46,7 +46,8 @@ const teacher: TeacherRow = {
   teacherId: 7,
   displayName: "佐橋 晴斗",
   isLiveActive: true,
-  classRooms: [{ classRoomId: 2, className: "2年A組" }],
+  isStaff: false,
+  classRooms: [{ classRoomId: 2, classCode: "2A", className: "2年A組" }],
 };
 
 function TeacherListDestination() {
