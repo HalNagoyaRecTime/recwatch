@@ -38,8 +38,21 @@ export function TeacherTable({
       renderCell: (teacher) => teacher.displayName,
     },
     {
-      header: "担当クラス",
-      id: "class-rooms",
+      header: "クラスコード",
+      id: "class-code",
+      sortable: true,
+      width: { type: "fluid", min: 220, grow: 2 },
+      renderCell: (teacher) =>
+        teacher.classRooms.length > 0
+          ? teacher.classRooms
+              .map((classRoom) => classRoom.classCode)
+              .join("、")
+          : "-",
+    },
+    {
+      header: "クラス名",
+      id: "class-name",
+      sortable: true,
       width: { type: "fluid", min: 220, grow: 2 },
       renderCell: (teacher) =>
         teacher.classRooms.length > 0

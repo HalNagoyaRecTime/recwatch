@@ -16,6 +16,8 @@ describe("teacher list URL state", () => {
       page: 3,
       sortBy: "displayName",
       sortOrder: "desc",
+      isStaff: "all",
+      isLiveActive: "all",
     });
   });
 
@@ -27,6 +29,8 @@ describe("teacher list URL state", () => {
       page: 1,
       sortBy: null,
       sortOrder: null,
+      isStaff: "all",
+      isLiveActive: "all",
     });
   });
 

@@ -25,6 +25,7 @@ const teachers: TeacherRow[] = [
     teacherId: 2,
     displayName: "山田 花子",
     isLiveActive: true,
+    isStaff: false,
     classRooms: [],
   },
 ];

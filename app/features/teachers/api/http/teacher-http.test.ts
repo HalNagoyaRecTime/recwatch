@@ -33,6 +33,9 @@ describe("teacherHttpApi", () => {
       search: "佐橋 晴斗",
       sortBy: "displayName",
       sortOrder: "desc",
+      classRoomId: 3,
+      isStaff: "false",
+      isLiveActive: "true",
     });
 
     expect(mocks.getMock).toHaveBeenCalledWith(
@@ -40,6 +43,9 @@ describe("teacherHttpApi", () => {
         limit: "50",
         offset: "50",
         search: "佐橋 晴斗",
+        classRoomId: "3",
+        isStaff: "false",
+        isLiveActive: "true",
         sortBy: "displayName",
         sortOrder: "desc",
       }).toString()}`

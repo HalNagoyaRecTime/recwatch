@@ -15,6 +15,8 @@ import {
 import { teacherCreateTarget } from "~/features/teachers/application/teacher-navigation";
 import { UserManagementTabs } from "~/features/user-management/components/UserManagementTabs";
 import { TeacherApi } from "~/features/teachers/api";
+import { Select } from "~/components/ui/form/Select";
+import type { TeacherBooleanFilter } from "~/features/teachers/api";
 import { getErrorMessage } from "~/lib/client-error";
 
 type TeacherDeletionApi = {
@@ -48,6 +50,8 @@ export function TeachersPage({
     search: query,
     sortBy,
     sortOrder,
+    isStaff,
+    isLiveActive,
   } = parseTeacherListUrl(searchParams);
   const currentPage = Math.floor(offset / limit) + 1;
   const items = teachers.filter(
@@ -80,7 +84,14 @@ export function TeachersPage({
   }
 
   function handleSortChange(columnId: string) {
-    const nextSortBy = columnId === "teacher-id" ? "teacherId" : "displayName";
+    const sortColumns = {
+      "teacher-id": "teacherId",
+      "display-name": "displayName",
+      "class-code": "classCode",
+      "class-name": "className",
+    } as const;
+    const nextSortBy = sortColumns[columnId as keyof typeof sortColumns];
+    if (!nextSortBy) return;
     const nextSortOrder =
       sortBy === nextSortBy && sortOrder === "asc" ? "desc" : "asc";
     updateSearchParams({
@@ -88,6 +99,13 @@ export function TeachersPage({
       sortBy: nextSortBy,
       sortOrder: nextSortOrder,
     });
+  }
+
+  function handleFilterChange(
+    key: "isStaff" | "isLiveActive",
+    value: TeacherBooleanFilter
+  ) {
+    updateSearchParams({ page: 1, [key]: value });
   }
 
   async function deleteTeacher(teacher: TeacherRow) {
@@ -139,6 +157,20 @@ export function TeachersPage({
         placeholder="氏名・クラス名で検索..."
         value={query}
       />
+      <div className="flex flex-wrap gap-3">
+        <Select
+          ariaLabel="職員兼務フィルター"
+          onValueChange={(value) => handleFilterChange("isStaff", value)}
+          options={booleanFilterOptions("職員")}
+          value={isStaff}
+        />
+        <Select
+          ariaLabel="有効状態フィルター"
+          onValueChange={(value) => handleFilterChange("isLiveActive", value)}
+          options={booleanFilterOptions("有効")}
+          value={isLiveActive}
+        />
+      </div>
       {actionError ? (
         <p className="text-tone-danger-text text-sm" role="alert">
           {actionError}
@@ -153,7 +185,13 @@ export function TeachersPage({
           sortBy
             ? {
                 columnId:
-                  sortBy === "teacherId" ? "teacher-id" : "display-name",
+                  sortBy === "teacherId"
+                    ? "teacher-id"
+                    : sortBy === "displayName"
+                      ? "display-name"
+                      : sortBy === "classCode"
+                        ? "class-code"
+                        : "class-name",
                 direction: sortOrder ?? "asc",
               }
             : undefined
@@ -170,4 +208,12 @@ export function TeachersPage({
       />
     </div>
   );
+}
+
+function booleanFilterOptions(label: string) {
+  return [
+    { label: `${label}:すべて`, value: "all" as const },
+    { label: `${label}:はい`, value: "true" as const },
+    { label: `${label}:いいえ`, value: "false" as const },
+  ];
 }
