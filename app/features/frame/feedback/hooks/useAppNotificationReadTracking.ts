@@ -27,13 +27,17 @@ export function useAppNotificationReadTracking({
     }
   }, []);
 
+  const unreadNotificationIdsKey = notifications
+    .filter((notification) => !notification.read)
+    .map((notification) => notification.id)
+    .sort()
+    .join("\u0000");
+
   useEffect(() => {
     if (typeof IntersectionObserver === "undefined") return;
 
     const unreadIds = new Set(
-      notifications
-        .filter((notification) => !notification.read)
-        .map((notification) => notification.id)
+      unreadNotificationIdsKey ? unreadNotificationIdsKey.split("\u0000") : []
     );
     const observer = new IntersectionObserver(
       (entries) => {
@@ -77,7 +81,7 @@ export function useAppNotificationReadTracking({
       visibilityTimers.forEach((timer) => window.clearTimeout(timer));
       visibilityTimers.clear();
     };
-  }, [initialNotificationId, notifications, onRead]);
+  }, [initialNotificationId, onRead, unreadNotificationIdsKey]);
 
   return { registerRow };
 }

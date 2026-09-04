@@ -167,6 +167,27 @@ describe("AppNotificationCenter", () => {
     expect(screen.getByLabelText("未読")).toBeInTheDocument();
   });
 
+  it("同じ通知を再操作してもObserverを余分に再生成しない", async () => {
+    const user = userEvent.setup();
+    renderCenter();
+    await user.click(screen.getByRole("button", { name: "seed" }));
+
+    const message = await screen.findByRole("button", {
+      name: /詳細を表示$/,
+    });
+    await user.click(message);
+    await waitFor(() =>
+      expect(screen.queryByLabelText("未読")).not.toBeInTheDocument()
+    );
+
+    const observerCountAfterRead = MockIntersectionObserver.instances.length;
+    await user.click(message);
+
+    expect(MockIntersectionObserver.instances).toHaveLength(
+      observerCountAfterRead
+    );
+  });
+
   it("スクロールで新たに表示された通知だけを既読にする", async () => {
     vi.useFakeTimers();
     const notifications: AppNotification[] = [0, 1].map((index) => ({

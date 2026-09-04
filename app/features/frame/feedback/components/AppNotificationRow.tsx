@@ -8,7 +8,7 @@ import {
   TriangleAlertIcon,
   XIcon,
 } from "lucide-react";
-import { useRef, useState, type KeyboardEvent } from "react";
+import { useRef, useState, type KeyboardEvent, type MouseEvent } from "react";
 
 import type { AppNotification } from "../model/app-notification";
 import { AppNotificationDiagnostic } from "./AppNotificationDiagnostic";
@@ -76,7 +76,8 @@ export function AppNotificationRow({
     if (canExpand) setIsMessageExpanded((expanded) => !expanded);
   };
 
-  const handleMessageClick = () => {
+  const handleMessageClick = (event: MouseEvent<HTMLButtonElement>) => {
+    event.stopPropagation();
     toggleMessage();
   };
 
@@ -155,26 +156,11 @@ export function AppNotificationRow({
                     <button
                       type="button"
                       className="hover:text-text-base flex size-6 items-center justify-center rounded-md transition-colors"
-                      aria-label="通知を小さくする"
-                      aria-expanded={isMessageExpanded}
-                      aria-controls={diagnostic ? diagnosticId : undefined}
-                      onClick={() => {
-                        onRead();
-                        setIsMessageExpanded(false);
-                        focusNotification(notification.id);
-                      }}
-                    >
-                      <Minimize2Icon aria-hidden="true" size={13} />
-                    </button>
-                  )}
-                  {isMessageExpanded && (
-                    <button
-                      type="button"
-                      className="hover:text-text-base flex size-6 items-center justify-center rounded-md transition-colors"
                       aria-label={
                         isCopied ? "コピーしました" : "通知内容をコピー"
                       }
-                      onClick={() => {
+                      onClick={(event) => {
+                        event.stopPropagation();
                         onRead();
                         void copyNotificationDetails(notification).then(() => {
                           setIsCopied(true);
@@ -189,10 +175,30 @@ export function AppNotificationRow({
                       )}
                     </button>
                   )}
+                  {isMessageExpanded && (
+                    <button
+                      type="button"
+                      className="hover:text-text-base flex size-6 items-center justify-center rounded-md transition-colors"
+                      aria-label="通知を小さくする"
+                      aria-expanded={isMessageExpanded}
+                      aria-controls={diagnostic ? diagnosticId : undefined}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        onRead();
+                        setIsMessageExpanded(false);
+                        focusNotification(notification.id);
+                      }}
+                    >
+                      <Minimize2Icon aria-hidden="true" size={13} />
+                    </button>
+                  )}
                   <button
                     type="button"
                     className="hover:text-text-base flex size-6 items-center justify-center rounded-md transition-colors"
-                    onClick={onRemove}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      onRemove();
+                    }}
                     aria-label={`${notification.title}を削除`}
                   >
                     <XIcon aria-hidden="true" size={13} />
