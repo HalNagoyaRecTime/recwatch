@@ -2,6 +2,7 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
@@ -139,6 +140,9 @@ export function FeedbackProvider({
     readNotifications(userId)
   );
   const [toasts, setToasts] = useState<AppNotification[]>([]);
+  const [notificationCenterRequest, setNotificationCenterRequest] =
+    useState<FeedbackContextValue["notificationCenterRequest"]>(null);
+  const notificationCenterRequestIdRef = useRef(0);
 
   useEffect(() => {
     writeNotifications(userId, notifications);
@@ -188,6 +192,17 @@ export function FeedbackProvider({
     setToasts((current) => current.filter((toast) => toast.id !== id));
   }, []);
 
+  const openNotificationCenter = useCallback((notificationId: string) => {
+    notificationCenterRequestIdRef.current += 1;
+    setNotificationCenterRequest({
+      notificationId,
+      requestId: notificationCenterRequestIdRef.current,
+    });
+  }, []);
+  const clearNotificationCenterRequest = useCallback(() => {
+    setNotificationCenterRequest(null);
+  }, []);
+
   const value = useMemo<FeedbackContextValue>(
     () => ({
       notifications,
@@ -199,6 +214,9 @@ export function FeedbackProvider({
       removeNotification,
       clearNotifications,
       dismissToast,
+      notificationCenterRequest,
+      openNotificationCenter,
+      clearNotificationCenterRequest,
     }),
     [
       notifications,
@@ -208,6 +226,9 @@ export function FeedbackProvider({
       removeNotification,
       clearNotifications,
       dismissToast,
+      notificationCenterRequest,
+      openNotificationCenter,
+      clearNotificationCenterRequest,
     ]
   );
 

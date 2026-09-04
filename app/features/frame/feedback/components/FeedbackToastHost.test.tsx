@@ -56,7 +56,7 @@ describe("FeedbackToastHost", () => {
     expect(screen.queryByRole("status")).not.toBeInTheDocument();
   });
 
-  it("Toast内部にfocusがある間もauto dismissを一時停止する", () => {
+  it("縮小操作を持たず、閉じるボタンを常に表示する", () => {
     render(
       <FeedbackProvider userId="test-user">
         <FeedbackToastHost />
@@ -66,16 +66,11 @@ describe("FeedbackToastHost", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "report" }));
     const toast = screen.getByRole("status");
-    const collapse = screen.getByRole("button", { name: "通知を小さくする" });
-
-    act(() => vi.advanceTimersByTime(2000));
-    fireEvent.focus(collapse);
-    act(() => vi.advanceTimersByTime(5000));
-    expect(toast).toBeInTheDocument();
-
-    fireEvent.blur(collapse, { relatedTarget: document.body });
-    act(() => vi.advanceTimersByTime(2000));
-    act(() => vi.advanceTimersByTime(220));
-    expect(screen.queryByRole("status")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "通知を閉じる" })).toBeVisible();
+    expect(
+      screen.queryByRole("button", { name: "通知を小さくする" })
+    ).not.toBeInTheDocument();
+    expect(screen.getByText("処理が完了しました")).toBeInTheDocument();
+    expect(toast.querySelector("time")).not.toBeInTheDocument();
   });
 });

@@ -38,6 +38,11 @@ export type AppNotification = {
   diagnostic?: FeedbackDiagnostic;
 };
 
+export type NotificationCenterRequest = {
+  notificationId: string;
+  requestId: number;
+};
+
 export type FeedbackContextValue = {
   notifications: AppNotification[];
   toasts: AppNotification[];
@@ -47,6 +52,9 @@ export type FeedbackContextValue = {
   removeNotification: (id: string) => void;
   clearNotifications: () => void;
   dismissToast: (id: string) => void;
+  notificationCenterRequest: NotificationCenterRequest | null;
+  openNotificationCenter: (notificationId: string) => void;
+  clearNotificationCenterRequest: () => void;
 };
 
 export const APP_NOTIFICATION_STORAGE_KEY = "recwatch.app-notifications";

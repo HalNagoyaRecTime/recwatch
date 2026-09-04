@@ -128,15 +128,6 @@ describe("FeedbackProvider", () => {
     expect(screen.getByTestId("toast-count")).toHaveTextContent("1");
     expect(screen.getByTestId("unread-count")).toHaveTextContent("1");
     expect(screen.getByText("保存失敗")).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: "通知を小さくする" })
-    ).toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: "通知を小さくする" }));
-    expect(screen.queryByText("保存できませんでした")).not.toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: "通知を元に戻す" })
-    ).toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: "通知を元に戻す" }));
     expect(screen.getByText("保存できませんでした")).toBeInTheDocument();
     expect(screen.getByRole("alert")).toHaveClass("feedback-toast-enter");
     expect(

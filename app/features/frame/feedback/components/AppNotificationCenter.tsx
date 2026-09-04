@@ -43,9 +43,11 @@ const NOTIFICATION_VISIBILITY_DELAY_MS = 400;
 export function AppNotificationCenter({
   onFocusTrigger,
   onRegisterFocusFirst,
+  initialNotificationId,
 }: {
   onFocusTrigger?: () => void;
   onRegisterFocusFirst?: (focusFirst: () => void) => () => void;
+  initialNotificationId?: string | null;
 }) {
   const { notifications, markRead, removeNotification, clearNotifications } =
     useFeedback();
@@ -119,7 +121,7 @@ export function AppNotificationCenter({
       (entries) => {
         for (const entry of entries) {
           const id = (entry.target as HTMLElement).dataset.notificationId;
-          if (!id || !unreadIds.has(id)) {
+          if (!id || !unreadIds.has(id) || id === initialNotificationId) {
             observer.unobserve(entry.target);
             continue;
           }
@@ -156,7 +158,7 @@ export function AppNotificationCenter({
       visibilityTimers.forEach((timer) => window.clearTimeout(timer));
       visibilityTimers.clear();
     };
-  }, [markRead, notifications]);
+  }, [initialNotificationId, markRead, notifications]);
 
   const handleRemove = useCallback(
     (id: string) => {
@@ -179,7 +181,7 @@ export function AppNotificationCenter({
         }}
         fixedHeader={
           <div className="border-border-subtle bg-surface-base mx-2 flex items-center justify-between gap-3 border-b px-2.5 py-2">
-            <h2 className="text-text-base text-base font-semibold">通知</h2>
+            <h2 className="text-text-base text-[15px] font-semibold">通知</h2>
             <Button
               icon={Trash2Icon}
               iconOnly
@@ -200,7 +202,7 @@ export function AppNotificationCenter({
           <ul className="flex flex-col gap-1" aria-label="通知一覧">
             {notifications.map((notification, index) => (
               <NotificationRow
-                key={notification.id}
+                key={`${notification.id}-${notification.id === initialNotificationId}`}
                 notification={notification}
                 onRead={() => markRead(notification.id)}
                 onRemove={() => handleRemove(notification.id)}
@@ -210,6 +212,7 @@ export function AppNotificationCenter({
                 notificationIndex={index}
                 notificationCount={notifications.length}
                 onFocusTrigger={onFocusTrigger}
+                initiallyExpanded={notification.id === initialNotificationId}
               />
             ))}
           </ul>
@@ -229,6 +232,7 @@ function NotificationRow({
   notificationIndex,
   notificationCount,
   onFocusTrigger,
+  initiallyExpanded,
 }: {
   notification: AppNotification;
   onRead: () => void;
@@ -239,9 +243,11 @@ function NotificationRow({
   notificationIndex: number;
   notificationCount: number;
   onFocusTrigger?: () => void;
+  initiallyExpanded: boolean;
 }) {
   const Icon = severityIcon[notification.severity];
-  const [isMessageExpanded, setIsMessageExpanded] = useState(false);
+  const [isMessageExpanded, setIsMessageExpanded] = useState(initiallyExpanded);
+
   const [isCopied, setIsCopied] = useState(false);
   const diagnosticId = `notification-diagnostic-${notification.id}`;
   const diagnostic = notification.diagnostic;
@@ -298,6 +304,7 @@ function NotificationRow({
                       aria-controls={diagnosticId}
                       onClick={(event) => {
                         event.stopPropagation();
+                        onRead();
                         setIsMessageExpanded(false);
                       }}
                     >
@@ -313,6 +320,7 @@ function NotificationRow({
                       }
                       onClick={(event) => {
                         event.stopPropagation();
+                        onRead();
                         void copyNotificationDetails(notification).then(() => {
                           setIsCopied(true);
                           window.setTimeout(() => setIsCopied(false), 1200);

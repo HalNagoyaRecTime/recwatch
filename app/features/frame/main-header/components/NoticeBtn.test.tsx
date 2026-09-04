@@ -1,9 +1,10 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it } from "vitest";
 
 import { useFeedback } from "~/features/frame/feedback/hooks/useFeedback";
 import { FeedbackProvider } from "~/features/frame/feedback/components/FeedbackProvider";
+import { FeedbackToastHost } from "~/features/frame/feedback/components/FeedbackToastHost";
 import {
   getAppNotificationStorageKey,
   type AppNotification,
@@ -20,6 +21,7 @@ function SeedFeedback() {
           kind: "action-error",
           title: "保存失敗",
           message: "もう一度お試しください",
+          diagnostic: { route: "/items", action: "save", status: 500 },
         })
       }
     >
@@ -110,5 +112,34 @@ describe("NoticeBtn", () => {
       "aria-label",
       expect.stringContaining("通知内容")
     );
+  });
+
+  it("Toastをクリックすると該当通知の詳細を開いた状態で表示する", async () => {
+    const user = userEvent.setup();
+    render(
+      <FeedbackProvider userId="test-user">
+        <FeedbackToastHost />
+        <SeedFeedback />
+        <NoticeBtn />
+      </FeedbackProvider>
+    );
+
+    await user.click(screen.getByRole("button", { name: "report" }));
+    await user.click(screen.getByRole("alert"));
+
+    expect(
+      await screen.findByRole("heading", { name: "通知" })
+    ).toBeInTheDocument();
+    const row = screen.getByRole("listitem");
+    expect(row.firstElementChild).toHaveClass("bg-surface-muted");
+    expect(
+      screen.getByRole("button", { name: /保存失敗.*通知内容を小さくする/ })
+    ).toHaveAttribute("aria-expanded", "true");
+    await waitFor(() =>
+      expect(screen.queryByRole("alert")).not.toBeInTheDocument()
+    );
+
+    await user.click(screen.getByRole("button", { name: "通知を小さくする" }));
+    expect(row.firstElementChild).not.toHaveClass("bg-surface-muted");
   });
 });

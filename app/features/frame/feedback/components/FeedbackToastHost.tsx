@@ -1,8 +1,6 @@
 import {
   AlertCircleIcon,
   CheckCircle2Icon,
-  Maximize2Icon,
-  Minimize2Icon,
   InfoIcon,
   TriangleAlertIcon,
   XIcon,
@@ -30,7 +28,7 @@ const TOAST_EXIT_DURATION_MS = 220;
 const TOAST_DURATION_MS = 4000;
 
 export function FeedbackToastHost() {
-  const { toasts, dismissToast } = useFeedback();
+  const { toasts, dismissToast, openNotificationCenter } = useFeedback();
   const [exitingIds, setExitingIds] = useState<Set<string>>(() => new Set());
   const exitingIdsRef = useRef(new Set<string>());
   const exitTimersRef = useRef(new Map<string, number>());
@@ -67,6 +65,7 @@ export function FeedbackToastHost() {
           toast={toast}
           isExiting={exitingIds.has(toast.id)}
           onDismiss={requestDismiss}
+          onOpenNotificationCenter={openNotificationCenter}
         />
       ))}
     </div>
@@ -77,13 +76,14 @@ function FeedbackToast({
   toast,
   isExiting,
   onDismiss,
+  onOpenNotificationCenter,
 }: {
   toast: AppNotification;
   isExiting: boolean;
   onDismiss: (id: string) => void;
+  onOpenNotificationCenter: (notificationId: string) => void;
 }) {
   const Icon = toastIcon[toast.severity];
-  const [isExpanded, setIsExpanded] = useState(true);
   const timerRef = useRef<number | null>(null);
   const startedAtRef = useRef<number | null>(null);
   const remainingMsRef = useRef(TOAST_DURATION_MS);
@@ -145,6 +145,10 @@ function FeedbackToast({
     <div
       className={`shadow-soft border-border-subtle bg-surface-base group/toast pointer-events-auto flex items-start gap-2 rounded-xl border px-3 py-2.5 text-sm ${isExiting ? "feedback-toast-exit" : "feedback-toast-enter"}`}
       role={toast.severity === "error" ? "alert" : "status"}
+      onClick={() => {
+        onOpenNotificationCenter(toast.id);
+        onDismiss(toast.id);
+      }}
       onPointerEnter={() => setPauseReason("hover", true)}
       onPointerLeave={() => setPauseReason("hover", false)}
       onFocus={() => setPauseReason("focus", true)}
@@ -164,53 +168,22 @@ function FeedbackToast({
           <p className="text-text-base min-w-0 flex-1 font-medium break-words">
             {toast.title}
           </p>
-          <div className="text-text-muted grid shrink-0 items-center">
-            <time
-              className="pointer-events-none col-start-1 row-start-1 justify-self-end text-[11px] transition-opacity group-focus-within/toast:opacity-0 group-hover/toast:opacity-0 [@media(hover:none)]:opacity-0"
-              dateTime={toast.createdAt}
-            >
-              {formatToastTime(toast.createdAt)}
-            </time>
-            <div className="relative col-start-1 row-start-1 flex justify-end gap-0.5 opacity-0 transition-opacity group-focus-within/toast:opacity-100 group-hover/toast:opacity-100 [@media(hover:none)]:opacity-100">
-              <button
-                type="button"
-                className="hover:text-text-base flex size-6 items-center justify-center rounded-md transition-colors"
-                aria-label={isExpanded ? "通知を小さくする" : "通知を元に戻す"}
-                onClick={() => setIsExpanded((expanded) => !expanded)}
-              >
-                {isExpanded ? (
-                  <Minimize2Icon aria-hidden="true" size={13} />
-                ) : (
-                  <Maximize2Icon aria-hidden="true" size={13} />
-                )}
-              </button>
-              <button
-                type="button"
-                className="hover:text-text-base flex size-6 items-center justify-center rounded-md transition-colors"
-                aria-label="通知を閉じる"
-                onClick={() => onDismiss(toast.id)}
-              >
-                <XIcon aria-hidden="true" size={13} />
-              </button>
-            </div>
-          </div>
+          <button
+            type="button"
+            className="text-text-muted hover:text-text-base flex size-6 shrink-0 items-center justify-center rounded-md transition-colors"
+            aria-label="通知を閉じる"
+            onClick={(event) => {
+              event.stopPropagation();
+              onDismiss(toast.id);
+            }}
+          >
+            <XIcon aria-hidden="true" size={13} />
+          </button>
         </div>
-        {isExpanded ? (
-          <p className="text-text-muted break-words whitespace-pre-wrap">
-            {toast.message}
-          </p>
-        ) : null}
+        <p className="text-text-muted break-words whitespace-pre-wrap">
+          {toast.message}
+        </p>
       </div>
     </div>
   );
-}
-
-function formatToastTime(createdAt: string) {
-  const date = new Date(createdAt);
-  return Number.isNaN(date.getTime())
-    ? createdAt
-    : date.toLocaleTimeString("ja-JP", {
-        hour: "2-digit",
-        minute: "2-digit",
-      });
 }
