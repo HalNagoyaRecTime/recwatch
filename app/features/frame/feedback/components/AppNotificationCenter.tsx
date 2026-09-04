@@ -4,6 +4,7 @@ import { useCallback, useEffect } from "react";
 import { useFeedback } from "../hooks/useFeedback";
 import { useAppNotificationListNavigation } from "../hooks/useAppNotificationListNavigation";
 import { useAppNotificationReadTracking } from "../hooks/useAppNotificationReadTracking";
+import { APP_NOTIFICATION_MAX_COUNT } from "../model/app-notification";
 import { FloatingListSurface } from "~/components/ui/panel/FloatingListSurface";
 import { Button } from "~/components/ui/button/Button";
 import { AppNotificationRow } from "./AppNotificationRow";
@@ -38,6 +39,11 @@ export function AppNotificationCenter({
     if (!onRegisterFocusFirst) return;
     return onRegisterFocusFirst(focusFirst);
   }, [focusFirst, onRegisterFocusFirst]);
+
+  useEffect(() => {
+    if (!initialNotificationId) return;
+    focusNotification(initialNotificationId);
+  }, [focusNotification, initialNotificationId]);
 
   const handleRemove = useCallback(
     (id: string) => {
@@ -76,22 +82,32 @@ export function AppNotificationCenter({
             通知はありません
           </p>
         ) : (
-          <ul className="flex flex-col gap-1" aria-label="通知一覧">
-            {notifications.map((notification) => (
-              <AppNotificationRow
-                key={notification.id}
-                notification={notification}
-                initiallyExpanded={notification.id === initialNotificationId}
-                registerRow={registerRow}
-                registerMessage={registerMessage}
-                onRead={() => markRead(notification.id)}
-                onRemove={() => handleRemove(notification.id)}
-                focusNotification={focusNotification}
-                handleMessageKeyDown={handleMessageKeyDown}
-                handleActionKeyDown={handleActionKeyDown}
-              />
-            ))}
-          </ul>
+          <>
+            <ul className="flex flex-col gap-1" aria-label="通知一覧">
+              {notifications.map((notification) => (
+                <AppNotificationRow
+                  key={notification.id}
+                  notification={notification}
+                  initiallyExpanded={notification.id === initialNotificationId}
+                  suppressInitialFocusRead={
+                    notification.id === initialNotificationId
+                  }
+                  registerRow={registerRow}
+                  registerMessage={registerMessage}
+                  onRead={() => markRead(notification.id)}
+                  onRemove={() => handleRemove(notification.id)}
+                  focusNotification={focusNotification}
+                  handleMessageKeyDown={handleMessageKeyDown}
+                  handleActionKeyDown={handleActionKeyDown}
+                />
+              ))}
+            </ul>
+            {notifications.length >= APP_NOTIFICATION_MAX_COUNT ? (
+              <p className="text-text-subtle px-2 py-2 text-center text-[11px]">
+                履歴は最大{APP_NOTIFICATION_MAX_COUNT}件まで表示されます
+              </p>
+            ) : null}
+          </>
         )}
       </FloatingListSurface>
     </div>

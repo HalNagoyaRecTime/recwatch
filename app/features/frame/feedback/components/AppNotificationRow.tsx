@@ -8,7 +8,7 @@ import {
   TriangleAlertIcon,
   XIcon,
 } from "lucide-react";
-import { useState, type KeyboardEvent } from "react";
+import { useRef, useState, type KeyboardEvent } from "react";
 
 import type { AppNotification } from "../model/app-notification";
 import { AppNotificationDiagnostic } from "./AppNotificationDiagnostic";
@@ -37,6 +37,7 @@ const severityLabel = {
 type AppNotificationRowProps = {
   notification: AppNotification;
   initiallyExpanded: boolean;
+  suppressInitialFocusRead: boolean;
   registerRow: (id: string, node: HTMLLIElement | null) => void;
   registerMessage: (id: string, node: HTMLButtonElement | null) => void;
   onRead: () => void;
@@ -52,6 +53,7 @@ type AppNotificationRowProps = {
 export function AppNotificationRow({
   notification,
   initiallyExpanded,
+  suppressInitialFocusRead,
   registerRow,
   registerMessage,
   onRead,
@@ -63,6 +65,7 @@ export function AppNotificationRow({
   const Icon = severityIcon[notification.severity];
   const [isMessageExpanded, setIsMessageExpanded] = useState(initiallyExpanded);
   const [isCopied, setIsCopied] = useState(false);
+  const suppressNextFocusReadRef = useRef(suppressInitialFocusRead);
   const diagnosticId = `notification-diagnostic-${notification.id}`;
   const diagnostic = notification.diagnostic;
   const canExpand = Boolean(diagnostic) || notification.message.length > 120;
@@ -75,6 +78,14 @@ export function AppNotificationRow({
 
   const handleMessageClick = () => {
     toggleMessage();
+  };
+
+  const handleFocus = () => {
+    if (suppressNextFocusReadRef.current) {
+      suppressNextFocusReadRef.current = false;
+      return;
+    }
+    onRead();
   };
 
   const handleMessageKeyDownWithToggle = (
@@ -102,7 +113,7 @@ export function AppNotificationRow({
       ref={(node) => registerRow(notification.id, node)}
       className="group/notification rounded-lg"
       data-notification-id={notification.id}
-      onFocus={onRead}
+      onFocus={handleFocus}
       onClick={onRead}
     >
       <div
@@ -194,7 +205,6 @@ export function AppNotificationRow({
               type="button"
               className="focus-visible:outline-brand-primary text-text-muted mt-0.5 block w-full rounded-md text-left text-xs focus-visible:outline-2 focus-visible:outline-offset-2"
               onClick={handleMessageClick}
-              onFocus={onRead}
               onKeyDown={handleMessageKeyDownWithToggle}
               aria-label={`${focusLabel}、${
                 canExpand

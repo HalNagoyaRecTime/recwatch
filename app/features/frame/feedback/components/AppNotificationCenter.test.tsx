@@ -13,6 +13,7 @@ import { useFeedback } from "../hooks/useFeedback";
 import { FeedbackProvider } from "./FeedbackProvider";
 import { AppNotificationCenter } from "./AppNotificationCenter";
 import {
+  APP_NOTIFICATION_MAX_COUNT,
   getAppNotificationStorageKey,
   type AppNotification,
 } from "../model/app-notification";
@@ -204,6 +205,32 @@ describe("AppNotificationCenter", () => {
       vi.advanceTimersByTime(400);
     });
     expect(screen.queryByLabelText("未読")).not.toBeInTheDocument();
+  });
+
+  it("履歴が100件に達したときスクロール末尾へ案内を表示する", () => {
+    const notifications: AppNotification[] = Array.from(
+      { length: APP_NOTIFICATION_MAX_COUNT },
+      (_, index) => ({
+        id: `notification-${index}`,
+        kind: "background-error",
+        severity: "error",
+        title: `通知${index}`,
+        message: "失敗しました",
+        createdAt: new Date(Date.now() - index * 1000).toISOString(),
+        read: true,
+      })
+    );
+    window.localStorage.setItem(
+      getAppNotificationStorageKey("test-user"),
+      JSON.stringify(notifications)
+    );
+    renderCenter();
+
+    expect(
+      screen.getByText(
+        `履歴は最大${APP_NOTIFICATION_MAX_COUNT}件まで表示されます`
+      )
+    ).toBeInTheDocument();
   });
 
   it("通知を表示し、エラー内容の展開とdiagnostic詳細を行う", async () => {
