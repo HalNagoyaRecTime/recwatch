@@ -18,74 +18,46 @@ import { StudentApi, type StudentDTO, type StudentPageDTO } from "./api";
 function makeStudent(id: number): StudentDTO {
   return {
     student_id: id,
+    user_id: id + 100,
     display_name: `学生${id}`,
-    class_room_id: 1,
-    class_room_name: "クラスA",
-    attendance_number: id,
     student_id_number: String(id),
+    attendance_number: id,
     is_live_active: true,
+    is_staff: false,
+    class_room: {
+      class_room_id: 1,
+      class_code: "1A",
+      class_name: "クラスA",
+    },
   };
 }
 
-describe("StudentApi.getAllStudents", () => {
-  it("1ページ目で全件取得できる場合は1回だけ呼び出す", async () => {
-    const students = [makeStudent(1), makeStudent(2)];
-    getMock.mockResolvedValueOnce({
-      students,
-      total: 2,
-      limit: 100,
-      offset: 0,
-    } satisfies StudentPageDTO);
+describe("StudentApi.getStudents", () => {
+  it("検索・絞り込み・ソート・ページングをAPI契約へ変換する", async () => {
+    const page = {
+      items: [makeStudent(1)],
+      total: 1,
+      limit: 50,
+      offset: 50,
+    } satisfies StudentPageDTO;
+    getMock.mockResolvedValueOnce(page);
 
-    const result = await StudentApi.getAllStudents();
+    await expect(
+      StudentApi.getStudents({
+        limit: 50,
+        offset: 50,
+        search: "山田",
+        classRoomId: 1,
+        isStaff: "false",
+        isLiveActive: "true",
+        sortBy: "className",
+        sortOrder: "desc",
+      })
+    ).resolves.toEqual(page);
 
-    expect(result).toEqual(students);
-    expect(getMock).toHaveBeenCalledTimes(1);
-    expect(getMock).toHaveBeenCalledWith("/api/v1/students?limit=100&offset=0");
-  });
-
-  it("101件目以降もoffsetを進めながら全ページ取得する", async () => {
-    const page1 = Array.from({ length: 100 }, (_, i) => makeStudent(i + 1));
-    const page2 = [makeStudent(101)];
-    getMock.mockReset();
-    getMock
-      .mockResolvedValueOnce({
-        students: page1,
-        total: 101,
-        limit: 100,
-        offset: 0,
-      } satisfies StudentPageDTO)
-      .mockResolvedValueOnce({
-        students: page2,
-        total: 101,
-        limit: 100,
-        offset: 100,
-      } satisfies StudentPageDTO);
-
-    const result = await StudentApi.getAllStudents();
-
-    expect(result).toHaveLength(101);
-    expect(result[100]).toEqual(makeStudent(101));
-    expect(getMock).toHaveBeenCalledTimes(2);
-    expect(getMock).toHaveBeenNthCalledWith(
-      2,
-      "/api/v1/students?limit=100&offset=100"
+    expect(getMock).toHaveBeenCalledWith(
+      "/api/v1/students?limit=50&offset=50&search=%E5%B1%B1%E7%94%B0&classRoomId=1&isStaff=false&isLiveActive=true&sortBy=className&sortOrder=desc"
     );
-  });
-
-  it("学生が0件のときは1回の呼び出しで空配列を返す", async () => {
-    getMock.mockReset();
-    getMock.mockResolvedValueOnce({
-      students: [],
-      total: 0,
-      limit: 100,
-      offset: 0,
-    } satisfies StudentPageDTO);
-
-    const result = await StudentApi.getAllStudents();
-
-    expect(result).toEqual([]);
-    expect(getMock).toHaveBeenCalledTimes(1);
   });
 });
 
@@ -111,9 +83,9 @@ describe("StudentApi mutations", () => {
     });
   });
 
-  it("updates an existing student through the supported API", async () => {
-    const updated = makeStudent(3);
-    putMock.mockResolvedValueOnce(updated);
+  it("updates and deletes a student through the supported API", async () => {
+    putMock.mockResolvedValueOnce(makeStudent(3));
+    deleteMock.mockResolvedValueOnce(undefined);
 
     await StudentApi.updateStudent(3, {
       attendanceNumber: 4,
@@ -121,6 +93,7 @@ describe("StudentApi mutations", () => {
       displayName: "更新後",
       studentIdNumber: "S003",
     });
+    await StudentApi.deleteStudent(3);
 
     expect(putMock).toHaveBeenCalledWith("/api/v1/students/3", {
       attendance_number: 4,
@@ -128,13 +101,6 @@ describe("StudentApi mutations", () => {
       display_name: "更新後",
       student_id_number: "S003",
     });
-  });
-
-  it("deletes a student through the supported API", async () => {
-    deleteMock.mockResolvedValueOnce(undefined);
-
-    await StudentApi.deleteStudent(3);
-
     expect(deleteMock).toHaveBeenCalledWith("/api/v1/students/3");
   });
 });

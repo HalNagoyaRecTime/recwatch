@@ -5,9 +5,11 @@ import type {
 } from "~/components/ui/data-table/data-table-types";
 import type { StudentDTO } from "~/features/members/api";
 import { ManagementRowActionMenu } from "~/features/user-management/components/ManagementRowActionMenu";
+import type { ReactNode } from "react";
 
 type StudentTableProps = {
   emptyMessage?: string;
+  footer?: ReactNode;
   isMutating?: boolean;
   items: readonly StudentDTO[];
   onDelete: (student: StudentDTO) => void;
@@ -18,6 +20,7 @@ type StudentTableProps = {
 
 export function StudentTable({
   emptyMessage,
+  footer,
   isMutating = false,
   items,
   onDelete,
@@ -48,11 +51,18 @@ export function StudentTable({
       renderCell: (student) => student.display_name,
     },
     {
-      header: "クラス",
-      id: "class-room",
+      header: "クラスコード",
+      id: "class-code",
       sortable: true,
       width: { type: "fluid", min: 180, grow: 1 },
-      renderCell: (student) => student.class_room_name,
+      renderCell: (student) => student.class_room?.class_code ?? "-",
+    },
+    {
+      header: "クラス名",
+      id: "class-name",
+      sortable: true,
+      width: { type: "fluid", min: 180, grow: 1 },
+      renderCell: (student) => student.class_room?.class_name ?? "-",
     },
     {
       align: "end",
@@ -85,6 +95,7 @@ export function StudentTable({
       ariaLabel="学生一覧"
       columns={columns}
       emptyMessage={emptyMessage ?? "該当する学生が見つかりません。"}
+      footer={footer}
       getRowKey={(student) => student.student_id}
       items={items}
       onSortChange={onSortChange}
