@@ -7,15 +7,33 @@ import { AppNotificationCenter } from "~/features/frame/feedback/components/AppN
 import { useFeedback } from "~/features/frame/feedback/hooks/useFeedback";
 
 export function NoticeBtn() {
-  const [isOpen, setIsOpen] = useState(false);
-  const { unreadCount } = useFeedback();
+  const [manualOpen, setManualOpen] = useState(false);
+  const {
+    unreadCount,
+    notificationCenterRequest,
+    clearNotificationCenterRequest,
+    markRead,
+  } = useFeedback();
+  const isOpen = manualOpen || notificationCenterRequest !== null;
   const bellRef = useRef<HTMLButtonElement>(null);
   const focusFirstNotificationRef = useRef<(() => void) | null>(null);
+  const initialNotificationId =
+    notificationCenterRequest?.notificationId ?? null;
+
+  const handleOpenChange = (open: boolean) => {
+    setManualOpen(open);
+    if (!open) {
+      if (notificationCenterRequest) {
+        markRead(notificationCenterRequest.notificationId);
+      }
+      clearNotificationCenterRequest();
+    }
+  };
 
   return (
     <FloatingPanel
       isOpen={isOpen}
-      onOpenChange={setIsOpen}
+      onOpenChange={handleOpenChange}
       placement="bottom-end"
       interaction="click"
       offsetValue={6}
@@ -50,6 +68,7 @@ export function NoticeBtn() {
       }
       content={
         <AppNotificationCenter
+          initialNotificationId={initialNotificationId}
           onFocusTrigger={() => bellRef.current?.focus()}
           onRegisterFocusFirst={(focusFirst) => {
             focusFirstNotificationRef.current = focusFirst;
