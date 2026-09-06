@@ -125,6 +125,7 @@ npm run format
 - `pre-push`: 全体Typecheckと、`origin/develop` との差分に影響するVitestのみ実行する
   - `package.json`、`package-lock.json`、`tsconfig*.json`、Vitest/Vite設定変更時は、pre-pushがGitの差分を判定して全テストを実行する
   - `origin/develop` が見つからない場合は全テストへフォールバックする
+  - Stacked PRでも`origin/develop`を基準にするため、実際のPR差分より検査範囲が広がる、または親PRの変更を打ち消すケースでは差分を正確に検出できない場合がある
   - 関連テストは現在チェックアウト中のHEADを基準に選択するため、別ref指定や複数refのpushでは実際のpush対象と完全一致しない場合がある
   - 別ref指定や複数refのpushを検出した場合は、pushを止めずにコンソールへ警告を表示する
 - リモートブランチ削除だけの push では `pre-push` の検査をスキップする
