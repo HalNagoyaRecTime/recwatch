@@ -3,7 +3,6 @@ import type {
   ClassRoomDTO,
   ClassRoomPageDTO,
   TeacherDTO,
-  TeacherPageDTO,
 } from "./dto/teacher-dto";
 import type {
   TeacherCreateRequest,
@@ -15,16 +14,22 @@ import type {
 export const TeacherApi = {
   createTeacher: (body: TeacherCreateRequest) =>
     teacherHttpApi.createTeacher(body),
-  getTeacherList: (query: TeacherListQuery) =>
+  getTeacherList: (query: TeacherListQuery = {}) =>
     teacherHttpApi.getTeacherList(query),
-  deleteTeacher: (teacherId: number) => teacherHttpApi.deleteTeacher(teacherId),
-  async getTeachers(): Promise<TeacherPageDTO> {
+  async getTeachers() {
     const items: TeacherDTO[] = [];
     let offset = 0;
     let total = 0;
 
     while (true) {
-      const result = await teacherHttpApi.getTeachersPage(offset);
+      const result = await teacherHttpApi.getTeacherList({
+        limit: 100,
+        offset,
+        isStaff: "all",
+        isLiveActive: "all",
+        sortBy: "teacherId",
+        sortOrder: "asc",
+      });
       items.push(...result.items);
       total = result.total;
 
@@ -74,7 +79,6 @@ export type {
   ClassRoomPageDTO,
   TeacherDTO,
   TeacherListPageDTO,
-  TeacherPageDTO,
 } from "./dto/teacher-dto";
 export type {
   TeacherAssignmentUpdateRequest,

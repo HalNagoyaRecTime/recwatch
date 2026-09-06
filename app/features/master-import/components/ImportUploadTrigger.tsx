@@ -13,12 +13,14 @@ interface ImportUploadTriggerProps {
   adjacentAction?: ReactNode;
   type: MasterImportType;
   helperText?: string;
+  showHelperText?: boolean;
 }
 
 export function ImportUploadTrigger({
   adjacentAction,
   type,
   helperText = "取り込み前にプレビューで内容を確認できます",
+  showHelperText = true,
 }: ImportUploadTriggerProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
@@ -71,7 +73,9 @@ export function ImportUploadTrigger({
           <span className="truncate">CSV / Excel を取り込む</span>
         </button>
         {adjacentAction}
-        <span className="text-text-subtle text-xs">{helperText}</span>
+        {showHelperText ? (
+          <span className="text-text-subtle text-xs">{helperText}</span>
+        ) : null}
         <input
           ref={inputRef}
           type="file"

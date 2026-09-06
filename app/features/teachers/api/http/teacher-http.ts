@@ -9,34 +9,27 @@ import type {
   ClassRoomPageDTO,
   TeacherDTO,
   TeacherListPageDTO,
-  TeacherPageDTO,
 } from "../dto/teacher-dto";
 
 export const teacherHttpApi = {
   createTeacher: (body: TeacherCreateRequest) =>
     apiClient.post<TeacherDTO>("/api/v1/teachers", body),
-  getTeacherList: (query: TeacherListQuery) => {
+  getTeacherList: (query: TeacherListQuery = {}) => {
     const params = new URLSearchParams({
-      limit: String(query.limit),
-      offset: String(query.offset),
+      limit: String(query.limit ?? 50),
+      offset: String(query.offset ?? 0),
     });
     if (query.search) params.set("search", query.search);
     if (query.classRoomId !== undefined)
       params.set("classRoomId", String(query.classRoomId));
-    if (query.isStaff) params.set("isStaff", query.isStaff);
-    if (query.isLiveActive) params.set("isLiveActive", query.isLiveActive);
-    if (query.sortBy) params.set("sortBy", query.sortBy);
-    if (query.sortOrder) params.set("sortOrder", query.sortOrder);
+    params.set("isStaff", query.isStaff ?? "all");
+    params.set("isLiveActive", query.isLiveActive ?? "true");
+    params.set("sortBy", query.sortBy ?? "teacherId");
+    params.set("sortOrder", query.sortOrder ?? "asc");
     return apiClient.get<TeacherListPageDTO>(
       `/api/v1/teachers?${params.toString()}`
     );
   },
-  getTeachersPage: (offset: number) =>
-    apiClient.get<TeacherPageDTO>(
-      `/api/v1/teachers?limit=100&offset=${offset}`
-    ),
-  deleteTeacher: (teacherId: number) =>
-    apiClient.delete(`/api/v1/teachers/${teacherId}`),
   getTeacherById: (teacherId: number) =>
     apiClient.get<TeacherDTO>(`/api/v1/teachers/${teacherId}`),
   updateTeacher: (teacherId: number, body: TeacherUpdateRequest) =>

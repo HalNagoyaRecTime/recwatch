@@ -13,13 +13,6 @@ export type TeacherDTO = {
   class_rooms: TeacherClassRoomDTO[];
 };
 
-export type TeacherPageDTO = {
-  items: TeacherDTO[];
-  total: number;
-  limit: number;
-  offset: number;
-};
-
 export type TeacherListPageDTO = {
   items: TeacherDTO[];
   total: number;

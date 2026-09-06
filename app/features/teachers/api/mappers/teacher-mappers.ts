@@ -4,6 +4,7 @@ import type { TeacherDTO } from "../dto/teacher-dto";
 export function toTeacherRow(dto: TeacherDTO): TeacherRow {
   return {
     teacherId: dto.teacher_id,
+    userId: dto.user_id,
     displayName: dto.display_name,
     isLiveActive: dto.is_live_active,
     isStaff: dto.is_staff,

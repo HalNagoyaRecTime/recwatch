@@ -12,8 +12,8 @@ export type TeacherListSortOrder = "asc" | "desc";
 export type TeacherBooleanFilter = "true" | "false" | "all";
 
 export type TeacherListQuery = {
-  limit: number;
-  offset: number;
+  limit?: number;
+  offset?: number;
   search?: string;
   classRoomId?: number;
   isStaff?: TeacherBooleanFilter;
