@@ -2,7 +2,7 @@ export type AccountUser = {
   id: string;
   email: string;
   display_name: string;
-  is_staff: boolean;
+  is_staff?: boolean;
   avatar_url?: string | null;
   avatar_updated_at?: string | null;
 };
