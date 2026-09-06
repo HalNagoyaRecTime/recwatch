@@ -17,6 +17,7 @@ describe("toTeacherRow", () => {
       })
     ).toEqual({
       teacherId: 7,
+      userId: 11,
       displayName: "佐橋 晴斗",
       isLiveActive: true,
       isStaff: false,

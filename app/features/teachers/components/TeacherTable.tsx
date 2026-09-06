@@ -7,24 +7,20 @@ import type { TeacherRow } from "~/features/teachers/model/teacher";
 
 type TeacherTableProps = {
   footer?: ReactNode;
-  isMutating?: boolean;
   items: readonly TeacherRow[];
-  onDelete: (teacher: TeacherRow) => void;
   onSortChange?: (columnId: string) => void;
   sort?: DataTableSort;
 };
 
 export function TeacherTable({
   footer,
-  isMutating = false,
   items,
-  onDelete,
   onSortChange,
   sort,
 }: TeacherTableProps) {
   const columns: readonly DataTableColumn<TeacherRow>[] = [
     {
-      header: "教官ID",
+      header: "ID",
       id: "teacher-id",
       sortable: true,
       width: { type: "fixed", value: 120 },
@@ -36,6 +32,24 @@ export function TeacherTable({
       sortable: true,
       width: { type: "fluid", min: 180, grow: 1 },
       renderCell: (teacher) => teacher.displayName,
+    },
+    {
+      align: "center",
+      header: "staff",
+      id: "staff",
+      width: { type: "fixed", value: 150 },
+      renderCell: (teacher) => (
+        <span>{teacher.isStaff ? "staff" : "staffではない"}</span>
+      ),
+    },
+    {
+      align: "center",
+      header: "有効",
+      id: "active",
+      width: { type: "fixed", value: 150 },
+      renderCell: (teacher) => (
+        <span>{teacher.isLiveActive ? "有効" : "無効"}</span>
+      ),
     },
     {
       header: "クラスコード",
@@ -67,13 +81,7 @@ export function TeacherTable({
       header: "",
       id: "actions",
       width: { type: "fixed", value: 64 },
-      renderCell: (teacher) => (
-        <TeacherActionMenu
-          disabled={isMutating}
-          onDelete={onDelete}
-          teacher={teacher}
-        />
-      ),
+      renderCell: (teacher) => <TeacherActionMenu teacher={teacher} />,
     },
   ];
 
