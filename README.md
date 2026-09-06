@@ -123,9 +123,10 @@ npm run format
 
 - `pre-commit`: 変更ファイルのPrettier/ESLint（`lint-staged`）
 - `pre-push`: 全体Typecheckと、`origin/develop` との差分に影響するVitestのみ実行する
-  - `package.json`、`package-lock.json`、`tsconfig*.json`、Vitest/Vite設定変更時は全テストを実行する
+  - `package.json`、`package-lock.json`、`tsconfig*.json`、Vitest/Vite設定変更時は、pre-pushがGitの差分を判定して全テストを実行する
   - `origin/develop` が見つからない場合は全テストへフォールバックする
+  - 関連テストは現在チェックアウト中のHEADを基準に選択するため、別ref指定や複数refのpushでは実際のpush対象と完全一致しない場合がある
 - リモートブランチ削除だけの push では `pre-push` の検査をスキップする
-- Prettier/ESLintの全体確認、全テスト、buildはCIで実行する
+- Prettier/ESLintの全体確認、全テスト、buildはCIで実行し、CIを最終的な品質保証とする
 
 フックを手動で再設定する場合は `npm run prepare` を実行する。
