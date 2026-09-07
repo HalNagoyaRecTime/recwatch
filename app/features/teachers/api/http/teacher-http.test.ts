@@ -65,6 +65,24 @@ describe("teacherHttpApi", () => {
     );
   });
 
+  it("staff・activeソートをAPIクエリへ渡す", async () => {
+    mocks.getMock.mockResolvedValueOnce({
+      items: [],
+      total: 0,
+      limit: 50,
+      offset: 0,
+    });
+
+    await teacherHttpApi.getTeacherList({
+      sortBy: "isStaff",
+      sortOrder: "desc",
+    });
+
+    expect(mocks.getMock).toHaveBeenCalledWith(
+      "/api/v1/teachers?limit=50&offset=0&isStaff=all&isLiveActive=true&sortBy=isStaff&sortOrder=desc"
+    );
+  });
+
   it("作成・更新のHTTP契約を保持する", async () => {
     mocks.postMock.mockResolvedValueOnce({});
     mocks.putMock.mockResolvedValueOnce({});

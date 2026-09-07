@@ -63,4 +63,28 @@ describe("TeachersPage", () => {
       screen.getByRole("button", { name: "教官を無効化する（未接続）" })
     ).toBeDisabled();
   });
+
+  it("staff・有効列のソートをAPIのsortByへ反映する", async () => {
+    const user = userEvent.setup();
+    render(
+      <MemoryRouter initialEntries={["/teachers"]}>
+        <TeachersPage limit={50} offset={0} teachers={teachers} total={1} />
+        <LocationProbe />
+      </MemoryRouter>
+    );
+
+    await user.click(screen.getByRole("button", { name: "staff" }));
+    await waitFor(() =>
+      expect(screen.getByTestId("location-search")).toHaveTextContent(
+        "sortBy=isStaff&sortOrder=asc"
+      )
+    );
+
+    await user.click(screen.getByRole("button", { name: "有効" }));
+    await waitFor(() =>
+      expect(screen.getByTestId("location-search")).toHaveTextContent(
+        "sortBy=isLiveActive&sortOrder=asc"
+      )
+    );
+  });
 });
