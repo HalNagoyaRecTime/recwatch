@@ -2,8 +2,10 @@ import { DataTable } from "~/components/ui/data-table/DataTable";
 import type { DataTableColumn } from "~/components/ui/data-table/data-table-types";
 import type { DataTableSort } from "~/components/ui/data-table/data-table-types";
 import type { ReactNode } from "react";
+import { Link, useLocation } from "react-router";
 import { TeacherActionMenu } from "~/features/teachers/components/TeacherActionMenu";
 import type { TeacherRow } from "~/features/teachers/model/teacher";
+import { teacherEditTarget } from "~/features/teachers/application/teacher-navigation";
 
 type TeacherTableProps = {
   footer?: ReactNode;
@@ -18,13 +20,22 @@ export function TeacherTable({
   onSortChange,
   sort,
 }: TeacherTableProps) {
+  const location = useLocation();
   const columns: readonly DataTableColumn<TeacherRow>[] = [
     {
       header: "ID",
       id: "teacher-id",
       sortable: true,
       width: { type: "fixed", value: 120 },
-      renderCell: (teacher) => teacher.teacherId,
+      renderCell: (teacher) => (
+        <Link
+          aria-label={`教官ID ${teacher.teacherId}を編集`}
+          className="text-brand-primary hover:underline"
+          to={teacherEditTarget(teacher.teacherId, location.search)}
+        >
+          {teacher.teacherId}
+        </Link>
+      ),
     },
     {
       header: "教官名",
