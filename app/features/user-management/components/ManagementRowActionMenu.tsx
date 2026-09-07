@@ -13,6 +13,7 @@ type ManagementRowActionMenuProps = {
   deleteDanger?: boolean;
   deleteIcon?: ElementType;
   deleteLabel?: string;
+  editLabel?: string;
   onEdit: () => void;
 };
 
@@ -24,6 +25,7 @@ export function ManagementRowActionMenu({
   deleteDanger = true,
   deleteIcon = Trash2,
   deleteLabel,
+  editLabel = "編集",
   onEdit,
 }: ManagementRowActionMenuProps) {
   const resolvedDeleteLabel = deleteLabel ?? (onDelete ? "削除" : undefined);
@@ -32,7 +34,7 @@ export function ManagementRowActionMenu({
       disabled,
       id: "edit",
       icon: Pencil,
-      label: "編集",
+      label: editLabel,
       onClick: onEdit,
       type: "action" as const,
     },
