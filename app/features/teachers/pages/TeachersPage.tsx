@@ -92,12 +92,17 @@ export function TeachersPage({
     } as const;
     const nextSortBy = sortColumns[columnId as keyof typeof sortColumns];
     if (!nextSortBy) return;
-    const nextSortOrder =
-      sortBy === nextSortBy && sortOrder === "asc" ? "desc" : "asc";
-    updateSearchParams({
-      page: 1,
-      sortBy: nextSortBy,
-      sortOrder: nextSortOrder,
+    setSearchParams((currentSearchParams) => {
+      const currentState = parseTeacherListUrl(currentSearchParams);
+      const nextSortOrder =
+        currentState.sortBy === nextSortBy && currentState.sortOrder === "asc"
+          ? "desc"
+          : "asc";
+      return updateTeacherListUrl(currentSearchParams, {
+        page: 1,
+        sortBy: nextSortBy,
+        sortOrder: nextSortOrder,
+      });
     });
   }
 
