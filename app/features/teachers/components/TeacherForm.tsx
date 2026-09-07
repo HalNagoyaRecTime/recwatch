@@ -70,6 +70,17 @@ export function TeacherForm({
         />
       </label>
 
+      {initialTeacher ? (
+        <div className="flex flex-wrap gap-2" aria-label="教官の状態">
+          <Button disabled size="sm" type="button" variant="secondary">
+            {`アクティブ: ${initialTeacher.isLiveActive ? "有効" : "無効"}（未接続）`}
+          </Button>
+          <Button disabled size="sm" type="button" variant="secondary">
+            {`スタッフ: ${initialTeacher.isStaff ? "staff" : "staffではない"}（未接続）`}
+          </Button>
+        </div>
+      ) : null}
+
       <fieldset>
         <legend className="text-sm font-semibold">担当クラス</legend>
         <div className="border-border-base mt-2 max-h-64 space-y-1 overflow-y-auto rounded-md border p-2">
