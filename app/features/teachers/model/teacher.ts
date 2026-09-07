@@ -12,7 +12,7 @@ export type ClassRoomOption = {
 
 export type TeacherRow = {
   teacherId: number;
-  userId?: number;
+  userId: number;
   displayName: string;
   isLiveActive: boolean;
   isStaff: boolean;

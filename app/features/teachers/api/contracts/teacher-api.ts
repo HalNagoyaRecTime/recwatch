@@ -28,5 +28,3 @@ export type TeacherUpdateRequest = {
   userName: string;
   classRoomIds: number[];
 };
-
-export type TeacherAssignmentUpdateRequest = TeacherUpdateRequest;
