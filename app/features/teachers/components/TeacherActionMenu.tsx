@@ -29,6 +29,7 @@ export function TeacherActionMenu({
           : "教官を有効化する（未接続）"
       }
       disabled={disabled}
+      editLabel="教官を編集する"
       onEdit={() =>
         navigate(teacherEditTarget(teacher.teacherId, location.search))
       }
