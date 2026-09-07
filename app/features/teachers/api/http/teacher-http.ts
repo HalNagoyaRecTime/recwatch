@@ -1,15 +1,10 @@
 import { apiClient } from "~/lib/api-client";
 import type {
-  TeacherAssignmentUpdateRequest,
   TeacherCreateRequest,
   TeacherListQuery,
   TeacherUpdateRequest,
 } from "../contracts/teacher-api";
-import type {
-  ClassRoomPageDTO,
-  TeacherDTO,
-  TeacherListPageDTO,
-} from "../dto/teacher-dto";
+import type { TeacherDTO, TeacherListPageDTO } from "../dto/teacher-dto";
 
 export const teacherHttpApi = {
   createTeacher: (body: TeacherCreateRequest) =>
@@ -34,15 +29,4 @@ export const teacherHttpApi = {
     apiClient.get<TeacherDTO>(`/api/v1/teachers/${teacherId}`),
   updateTeacher: (teacherId: number, body: TeacherUpdateRequest) =>
     apiClient.put<TeacherDTO>(`/api/v1/teachers/${teacherId}`, body),
-  updateTeacherAssignment: (
-    teacherId: number,
-    body: TeacherAssignmentUpdateRequest
-  ) => apiClient.put<TeacherDTO>(`/api/v1/teachers/${teacherId}`, body),
-};
-
-export const classRoomHttpApi = {
-  getClassRoomsPage: (offset: number) =>
-    apiClient.get<ClassRoomPageDTO>(
-      `/api/v1/classrooms?limit=100&offset=${offset}`
-    ),
 };
