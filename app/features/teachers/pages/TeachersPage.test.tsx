@@ -60,6 +60,9 @@ describe("TeachersPage", () => {
     );
     await user.click(screen.getByRole("button", { name: "山田 花子の操作" }));
     expect(
+      screen.getByRole("button", { name: "教官を編集する" })
+    ).toBeInTheDocument();
+    expect(
       screen.getByRole("button", { name: "教官を無効化する（未接続）" })
     ).toBeDisabled();
   });
