@@ -222,7 +222,7 @@ describe("CompetitionAssignmentPage", () => {
       );
       await screen.findByRole("heading", { name: "参加者設定" });
       await user.click(
-        screen.getByRole("checkbox", { name: "山田 花子を選択" })
+        await screen.findByRole("checkbox", { name: "山田 花子を選択" })
       );
 
       await user.click(screen.getByRole("button", { name: "設定を保存" }));
