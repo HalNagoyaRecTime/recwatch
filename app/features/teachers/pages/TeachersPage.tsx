@@ -1,5 +1,5 @@
 import { Plus } from "lucide-react";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router";
 import { Button } from "~/components/ui/button/Button";
 import { PageHeader } from "~/components/ui/layout/PageHeader";
@@ -35,6 +35,7 @@ export function TeachersPage({
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
+  const [searchInput, setSearchInput] = useState("");
   const {
     search: query,
     classRoomId,
@@ -47,6 +48,23 @@ export function TeachersPage({
   const pageCount = Math.max(1, Math.ceil(total / limit));
 
   useEffect(() => {
+    setSearchInput(query);
+  }, [query]);
+
+  useEffect(() => {
+    if (searchInput.trim() === query) return;
+    const timer = window.setTimeout(() => {
+      setSearchParams(
+        updateTeacherListUrl(searchParams, {
+          page: 1,
+          search: searchInput,
+        })
+      );
+    }, 250);
+    return () => window.clearTimeout(timer);
+  }, [searchInput, query, searchParams, setSearchParams]);
+
+  useEffect(() => {
     if (currentPage <= pageCount) return;
     setSearchParams(updateTeacherListUrl(searchParams, { page: pageCount }), {
       replace: true,
@@ -57,10 +75,6 @@ export function TeachersPage({
     updates: Parameters<typeof updateTeacherListUrl>[1]
   ) {
     setSearchParams(updateTeacherListUrl(searchParams, updates));
-  }
-
-  function handleQueryChange(nextQuery: string) {
-    updateSearchParams({ page: 1, search: nextQuery });
   }
 
   function handlePageChange(nextPage: number) {
@@ -114,10 +128,10 @@ export function TeachersPage({
       <div className="flex flex-wrap items-center gap-3">
         <SearchField
           ariaLabel="教官を検索"
-          className="max-w-xl"
-          onValueChange={handleQueryChange}
+          className="min-w-60 flex-1"
+          onValueChange={setSearchInput}
           placeholder="氏名・クラス名で検索..."
-          value={query}
+          value={searchInput}
         />
         <Select
           ariaLabel="担当クラスフィルター"
@@ -139,9 +153,9 @@ export function TeachersPage({
           value={classRoomId ? String(classRoomId) : "all"}
         />
         <Select
-          ariaLabel="職員兼務フィルター"
+          ariaLabel="staffフィルター"
           onValueChange={(value) => handleFilterChange("isStaff", value)}
-          options={booleanFilterOptions("職員")}
+          options={booleanFilterOptions("staff")}
           value={isStaff}
         />
         <Select
