@@ -133,13 +133,14 @@ export function TeachersPage({
         title="教官管理"
       />
       <div className="flex flex-wrap items-center gap-3">
-        <SearchField
-          ariaLabel="教官を検索"
-          className="min-w-60 flex-1"
-          onValueChange={setSearchInput}
-          placeholder="氏名・クラス名で検索..."
-          value={searchInput}
-        />
+        <div className="min-w-60 flex-1">
+          <SearchField
+            ariaLabel="教官を検索"
+            onValueChange={setSearchInput}
+            placeholder="氏名・クラス名で検索..."
+            value={searchInput}
+          />
+        </div>
         <Select
           ariaLabel="担当クラスフィルター"
           onValueChange={(value) =>
