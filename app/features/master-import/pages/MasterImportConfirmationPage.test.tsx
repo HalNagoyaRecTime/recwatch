@@ -43,7 +43,7 @@ import { MasterImportConfirmationPage } from "./MasterImportConfirmationPage";
 describe("MasterImportConfirmationPage", () => {
   it("APIで検証済みのCSV内容を共通テーブルで表示する", async () => {
     render(
-      <MemoryRouter initialEntries={["/master-import?importId=import-1"]}>
+      <MemoryRouter initialEntries={["/students/import?importId=import-1"]}>
         <MasterImportConfirmationPage />
       </MemoryRouter>
     );
@@ -78,7 +78,7 @@ describe("MasterImportConfirmationPage", () => {
     });
 
     render(
-      <MemoryRouter initialEntries={["/master-import?importId=import-1"]}>
+      <MemoryRouter initialEntries={["/students/import?importId=import-1"]}>
         <MasterImportConfirmationPage />
       </MemoryRouter>
     );
@@ -124,7 +124,7 @@ describe("MasterImportConfirmationPage", () => {
     });
 
     render(
-      <MemoryRouter initialEntries={["/master-import?importId=import-error"]}>
+      <MemoryRouter initialEntries={["/students/import?importId=import-error"]}>
         <MasterImportConfirmationPage />
       </MemoryRouter>
     );

@@ -26,7 +26,6 @@ describe("buildSidebarMenu", () => {
       ])
     );
     expect(paths).not.toContain("/schedule");
-    expect(paths).not.toContain("/master-import");
     expect(paths).not.toContain("/events/new");
     expect(paths).not.toContain("/notifications/new");
     expect(paths).not.toContain("/events/assignments");

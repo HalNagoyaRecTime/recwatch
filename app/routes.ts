@@ -24,7 +24,6 @@ export default [
     route("notifications/new", "routes/main/notifications.new.tsx"),
     route("students", "routes/main/students.tsx"),
     route("students/import", "routes/main/students.import.tsx"),
-    route("master-import", "routes/main/master-import.tsx"),
     route("teams", "routes/main/teams.tsx"),
     route("ranking", "routes/main/ranking.tsx"),
     route("classroom", "routes/main/classRoom.tsx"),
