@@ -1,9 +1,12 @@
+import { Ellipsis, Pencil, Trash2 } from "lucide-react";
+import { useState } from "react";
 import { useLocation, useNavigate } from "react-router";
-import { Trash2 } from "lucide-react";
 
+import { Button } from "~/components/ui/button/Button";
+import { Menu, type MenuItemType } from "~/components/ui/navigation/Menu";
+import { FloatingPanel } from "~/components/ui/panel/FloatingPanel";
 import { teacherEditTarget } from "~/features/teachers/application/teacher-navigation";
 import type { TeacherRow } from "~/features/teachers/model/teacher";
-import { ManagementRowActionMenu } from "~/features/user-management/components/ManagementRowActionMenu";
 
 type TeacherActionMenuProps = {
   disabled?: boolean;
@@ -16,22 +19,47 @@ export function TeacherActionMenu({
 }: TeacherActionMenuProps) {
   const navigate = useNavigate();
   const location = useLocation();
+  const [isOpen, setIsOpen] = useState(false);
+  const statusLabel = teacher.isLiveActive
+    ? "教官を無効化する（未接続）"
+    : "教官を有効化する（未接続）";
+  const items: MenuItemType[] = [
+    {
+      disabled,
+      icon: Pencil,
+      id: "edit",
+      label: "教官を編集する",
+      onClick: () => {
+        setIsOpen(false);
+        navigate(teacherEditTarget(teacher.teacherId, location.search));
+      },
+      type: "action",
+    },
+    {
+      danger: teacher.isLiveActive,
+      disabled: true,
+      icon: teacher.isLiveActive ? Trash2 : undefined,
+      id: "status",
+      label: statusLabel,
+      type: "action",
+    },
+  ];
 
   return (
-    <ManagementRowActionMenu
-      ariaLabel={`${teacher.displayName}の操作`}
-      deleteDisabled
-      deleteDanger={teacher.isLiveActive}
-      deleteIcon={teacher.isLiveActive ? Trash2 : undefined}
-      deleteLabel={
-        teacher.isLiveActive
-          ? "教官を無効化する（未接続）"
-          : "教官を有効化する（未接続）"
-      }
-      disabled={disabled}
-      editLabel="教官を編集する"
-      onEdit={() =>
-        navigate(teacherEditTarget(teacher.teacherId, location.search))
+    <FloatingPanel
+      content={<Menu items={items} />}
+      isOpen={isOpen}
+      onOpenChange={setIsOpen}
+      placement="bottom-end"
+      trigger={
+        <Button
+          aria-label={`${teacher.displayName}の操作`}
+          disabled={disabled}
+          icon={Ellipsis}
+          iconOnly
+          size="sm"
+          variant="ghost"
+        />
       }
     />
   );
