@@ -67,4 +67,13 @@ describe("teacher list URL state", () => {
       "isLiveActive=all"
     );
   });
+
+  it("staff・activeのソート値を受け付ける", () => {
+    expect(parseTeacherListUrl("sortBy=isStaff&sortOrder=desc").sortBy).toBe(
+      "isStaff"
+    );
+    expect(
+      parseTeacherListUrl("sortBy=isLiveActive&sortOrder=asc").sortBy
+    ).toBe("isLiveActive");
+  });
 });

@@ -37,6 +37,7 @@ export function TeacherTable({
       align: "center",
       header: "staff",
       id: "staff",
+      sortable: true,
       width: { type: "fixed", value: 150 },
       renderCell: (teacher) => (
         <span>{teacher.isStaff ? "staff" : "staffではない"}</span>
@@ -46,6 +47,7 @@ export function TeacherTable({
       align: "center",
       header: "有効",
       id: "active",
+      sortable: true,
       width: { type: "fixed", value: 150 },
       renderCell: (teacher) => (
         <span>{teacher.isLiveActive ? "有効" : "無効"}</span>

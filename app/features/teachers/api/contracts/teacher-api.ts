@@ -6,6 +6,8 @@ export type TeacherCreateRequest = {
 export type TeacherListSortBy =
   | "teacherId"
   | "displayName"
+  | "isStaff"
+  | "isLiveActive"
   | "classCode"
   | "className";
 export type TeacherListSortOrder = "asc" | "desc";
