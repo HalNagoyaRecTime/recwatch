@@ -29,7 +29,7 @@ export function StudentTable({
 }: StudentTableProps) {
   const columns: readonly DataTableColumn<StudentRow>[] = [
     {
-      header: "学生ID",
+      header: "ID",
       id: "student-id",
       sortable: true,
       width: { type: "fixed", value: 100 },
