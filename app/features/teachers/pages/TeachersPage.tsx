@@ -85,6 +85,8 @@ export function TeachersPage({
     const sortColumns = {
       "teacher-id": "teacherId",
       "display-name": "displayName",
+      staff: "isStaff",
+      active: "isLiveActive",
       "class-code": "classCode",
       "class-name": "className",
     } as const;
@@ -176,9 +178,13 @@ export function TeachersPage({
                     ? "teacher-id"
                     : sortBy === "displayName"
                       ? "display-name"
-                      : sortBy === "classCode"
-                        ? "class-code"
-                        : "class-name",
+                      : sortBy === "isStaff"
+                        ? "staff"
+                        : sortBy === "isLiveActive"
+                          ? "active"
+                          : sortBy === "classCode"
+                            ? "class-code"
+                            : "class-name",
                 direction: sortOrder ?? "asc",
               }
             : undefined

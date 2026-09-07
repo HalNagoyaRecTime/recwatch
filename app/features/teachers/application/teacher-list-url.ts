@@ -1,6 +1,8 @@
 export type TeacherListSortBy =
   | "teacherId"
   | "displayName"
+  | "isStaff"
+  | "isLiveActive"
   | "classCode"
   | "className";
 export type TeacherListSortOrder = "asc" | "desc";
@@ -86,6 +88,8 @@ function isTeacherListSortBy(value: string | null): value is TeacherListSortBy {
   return (
     value === "teacherId" ||
     value === "displayName" ||
+    value === "isStaff" ||
+    value === "isLiveActive" ||
     value === "classCode" ||
     value === "className"
   );
