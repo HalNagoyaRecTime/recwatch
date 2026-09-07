@@ -150,12 +150,6 @@ export const sidebarSections = [
         to: "/gathering-spots",
         roles: ["admin"],
       },
-      {
-        id: "legacy-members",
-        label: "旧学生管理",
-        to: "/members",
-        roles: ["admin"],
-      },
     ],
   },
 ] satisfies SidebarSectionConfig[];

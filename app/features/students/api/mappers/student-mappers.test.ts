@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { toStudentRow } from "~/features/members/api/mappers/student-mappers";
+import { toStudentRow } from "~/features/students/api/mappers/student-mappers";
 
 describe("toStudentRow", () => {
   it("DTOのsnake_caseを画面用のmodelへ変換する", () => {

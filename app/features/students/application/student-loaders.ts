@@ -1,4 +1,4 @@
-import { StudentApi, type StudentListQuery } from "~/features/members/api";
+import { StudentApi, type StudentListQuery } from "~/features/students/api";
 
 export async function loadStudentListPage(query: StudentListQuery) {
   const page = await StudentApi.getStudents(query);

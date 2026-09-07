@@ -7,7 +7,7 @@ export const MASTER_IMPORT_TYPE_LABEL: Record<MasterImportType, string> = {
 };
 
 export const MASTER_IMPORT_LIST_PATH: Record<MasterImportType, string> = {
-  students: "/members",
+  students: "/students",
   classrooms: "/classroom",
   teachers: "/teachers",
 };

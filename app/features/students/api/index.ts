@@ -17,7 +17,7 @@ import type {
   StudentPage,
   StudentRow,
   StudentWriteInput,
-} from "~/features/members/model/student";
+} from "~/features/students/model/student";
 
 export const StudentApi: StudentManagementApi = {
   async getStudents(query = {}): Promise<StudentPage> {

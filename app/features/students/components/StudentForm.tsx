@@ -6,7 +6,7 @@ import type { ClassRoomData } from "~/features/classRoom/model/classRoom";
 import type {
   StudentRow,
   StudentWriteInput,
-} from "~/features/members/model/student";
+} from "~/features/students/model/student";
 
 type StudentFormProps = {
   classRooms: readonly ClassRoomData[];

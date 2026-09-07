@@ -1,8 +1,11 @@
 import type {
   StudentDTO,
   StudentPageDTO,
-} from "~/features/members/api/dto/student-dto";
-import type { StudentPage, StudentRow } from "~/features/members/model/student";
+} from "~/features/students/api/dto/student-dto";
+import type {
+  StudentPage,
+  StudentRow,
+} from "~/features/students/model/student";
 
 export function toStudentRow(dto: StudentDTO): StudentRow {
   return {

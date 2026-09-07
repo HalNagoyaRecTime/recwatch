@@ -17,7 +17,7 @@ const navigationGroups: NavigationGroup[] = [
     icon: UsersRound,
     id: "users",
     items: [
-      { label: "学生管理", to: "/members" },
+      { label: "学生管理", to: "/students" },
       { label: "クラス管理", to: "/classroom" },
       { label: "教官管理", to: "/teachers" },
     ],
