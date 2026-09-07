@@ -1,43 +1,74 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter } from "react-router";
+import { MemoryRouter, useLocation } from "react-router";
 import { describe, expect, it, vi } from "vitest";
 
-import type { StudentDTO } from "~/features/members/api";
+import type { StudentManagementApi } from "~/features/members/api";
+import type { StudentRow } from "~/features/members/model/student";
 import { MembersPage } from "./MembersPage";
 
-function makeStudent(id: number, name = `学生${id}`): StudentDTO {
+const classRoom = {
+  classRoomId: 1,
+  classRoomCode: "1A",
+  classRoomName: "1年Aクラス",
+  studentCount: 0,
+  teacherId: null,
+  teacherName: null,
+};
+
+function makeStudent(
+  id: number,
+  name = `学生${id}`,
+  overrides: Partial<StudentRow> = {}
+): StudentRow {
   return {
-    student_id: id,
-    user_id: id + 100,
-    display_name: name,
-    student_id_number: `S00${id}`,
-    attendance_number: id,
-    is_live_active: true,
-    is_staff: false,
-    class_room: {
-      class_room_id: 1,
-      class_code: "1A",
-      class_name: "1年Aクラス",
+    studentId: id,
+    userId: id + 100,
+    displayName: name,
+    studentIdNumber: `S00${id}`,
+    attendanceNumber: id,
+    isLiveActive: true,
+    isStaff: false,
+    classRoom: {
+      classRoomId: 1,
+      classCode: "1A",
+      className: "1年Aクラス",
     },
+    ...overrides,
   };
 }
 
-function classRooms() {
-  return [
-    {
-      classRoomId: 1,
-      classRoomCode: "1A",
-      classRoomName: "1年Aクラス",
-      studentCount: 0,
-      teacherId: null,
-      teacherName: null,
-    },
-  ];
+function LocationProbe() {
+  const location = useLocation();
+  return <output data-testid="location-search">{location.search}</output>;
+}
+
+function createApi(
+  getStudents: ReturnType<typeof vi.fn>,
+  overrides: Partial<StudentManagementApi> = {}
+): StudentManagementApi {
+  return {
+    createStudent: vi.fn(),
+    getStudents: getStudents as StudentManagementApi["getStudents"],
+    updateStudent: vi.fn(),
+    ...overrides,
+  };
+}
+
+function renderPage(api: StudentManagementApi, initialEntry = "/members") {
+  return render(
+    <MemoryRouter initialEntries={[initialEntry]}>
+      <MembersPage
+        api={api}
+        loadClassRooms={vi.fn().mockResolvedValue([classRoom])}
+      />
+      <LocationProbe />
+    </MemoryRouter>
+  );
 }
 
 describe("MembersPage", () => {
-  it("新しい学生一覧契約で検索条件をサーバーへ渡す", async () => {
+  it("一覧未指定時はstaff・activeがすべてで、検索をサーバーへ渡す", async () => {
     const getStudents = vi.fn().mockResolvedValue({
       items: [makeStudent(1, "山田太郎")],
       total: 1,
@@ -46,23 +77,18 @@ describe("MembersPage", () => {
     });
     const user = userEvent.setup();
 
-    render(
-      <MemoryRouter>
-        <MembersPage
-          api={{
-            createStudent: vi.fn(),
-            deleteStudent: vi.fn(),
-            getStudents,
-            updateStudent: vi.fn(),
-          }}
-          loadClassRooms={vi.fn().mockResolvedValue(classRooms())}
-        />
-      </MemoryRouter>
-    );
+    renderPage(createApi(getStudents));
 
     expect(
       await screen.findByRole("heading", { name: "学生管理" })
     ).toBeInTheDocument();
+    expect(
+      screen.getByRole("combobox", { name: "staffフィルター" })
+    ).toHaveTextContent("staff:すべて");
+    expect(
+      screen.getByRole("combobox", { name: "有効状態フィルター" })
+    ).toHaveTextContent("有効:すべて");
+
     await user.type(
       screen.getByRole("searchbox", { name: "学生を検索" }),
       "山田"
@@ -70,56 +96,20 @@ describe("MembersPage", () => {
 
     await waitFor(() =>
       expect(getStudents).toHaveBeenLastCalledWith(
-        expect.objectContaining({ search: "山田", limit: 50, offset: 0 })
+        expect.objectContaining({
+          search: "山田",
+          classRoomId: undefined,
+          isStaff: "all",
+          isLiveActive: "all",
+          limit: 50,
+          offset: 0,
+        })
       )
     );
     expect(screen.getByRole("table", { name: "学生一覧" })).toBeInTheDocument();
   });
 
-  it("学生を登録し、APIレスポンスを一覧へ追加する", async () => {
-    const saved = makeStudent(10, "山田太郎");
-    const createStudent = vi.fn().mockResolvedValue(saved);
-    const user = userEvent.setup();
-
-    render(
-      <MemoryRouter>
-        <MembersPage
-          api={{
-            createStudent,
-            deleteStudent: vi.fn(),
-            getStudents: vi.fn().mockResolvedValue({
-              items: [],
-              total: 0,
-              limit: 50,
-              offset: 0,
-            }),
-            updateStudent: vi.fn(),
-          }}
-          loadClassRooms={vi.fn().mockResolvedValue(classRooms())}
-        />
-      </MemoryRouter>
-    );
-
-    await screen.findByRole("table", { name: "学生一覧" });
-    await user.click(screen.getByRole("button", { name: "新規登録" }));
-    await user.type(screen.getByLabelText("氏名*"), "山田太郎");
-    await user.type(screen.getByLabelText("学籍番号*"), "S010");
-    await user.type(screen.getByLabelText("出席番号*"), "5");
-    await user.selectOptions(screen.getByLabelText("クラス*"), "1");
-    await user.click(screen.getByRole("button", { name: "保存する" }));
-
-    await waitFor(() =>
-      expect(createStudent).toHaveBeenCalledWith({
-        attendanceNumber: 5,
-        classRoomId: 1,
-        displayName: "山田太郎",
-        studentIdNumber: "S010",
-      })
-    );
-    expect(await screen.findByText("山田太郎")).toBeInTheDocument();
-  });
-
-  it("一覧のソート操作をURL経由でサーバー契約へ渡す", async () => {
+  it("classRoom・staff・active filterをURLへ反映する", async () => {
     const getStudents = vi.fn().mockResolvedValue({
       items: [makeStudent(1)],
       total: 1,
@@ -128,27 +118,175 @@ describe("MembersPage", () => {
     });
     const user = userEvent.setup();
 
-    render(
-      <MemoryRouter>
-        <MembersPage
-          api={{
-            createStudent: vi.fn(),
-            deleteStudent: vi.fn(),
-            getStudents,
-            updateStudent: vi.fn(),
-          }}
-          loadClassRooms={vi.fn().mockResolvedValue([])}
-        />
-      </MemoryRouter>
-    );
+    renderPage(createApi(getStudents));
 
     await screen.findByRole("table", { name: "学生一覧" });
-    await user.click(screen.getByRole("button", { name: "学籍番号" }));
+    await user.click(
+      screen.getByRole("combobox", { name: "担当クラスフィルター" })
+    );
+    await user.click(screen.getByRole("option", { name: /1A 1年Aクラス/ }));
+    await user.click(screen.getByRole("combobox", { name: "staffフィルター" }));
+    await user.click(screen.getByRole("option", { name: "staff:はい" }));
+    await user.click(
+      screen.getByRole("combobox", { name: "有効状態フィルター" })
+    );
+    await user.click(screen.getByRole("option", { name: "有効:いいえ" }));
 
     await waitFor(() =>
-      expect(getStudents).toHaveBeenLastCalledWith(
-        expect.objectContaining({ sortBy: "studentIdNumber", sortOrder: "asc" })
+      expect(screen.getByTestId("location-search")).toHaveTextContent(
+        "classRoomId=1&isStaff=true&isLiveActive=false"
       )
+    );
+    await waitFor(() =>
+      expect(getStudents).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          classRoomId: 1,
+          isStaff: "true",
+          isLiveActive: "false",
+          offset: 0,
+        })
+      )
+    );
+  });
+
+  it("8種類のsortをURL経由でAPI契約へ渡し、staff・activeを表示する", async () => {
+    const getStudents = vi.fn().mockResolvedValue({
+      items: [
+        makeStudent(1, "山田太郎", { isStaff: true, isLiveActive: false }),
+      ],
+      total: 1,
+      limit: 50,
+      offset: 0,
+    });
+    const user = userEvent.setup();
+
+    renderPage(createApi(getStudents));
+
+    const table = await screen.findByRole("table", { name: "学生一覧" });
+    expect(within(table).getAllByText("staff").length).toBeGreaterThanOrEqual(
+      2
+    );
+    expect(within(table).getByText("無効")).toBeInTheDocument();
+
+    for (const [column, sortBy] of [
+      ["学生ID", "studentId"],
+      ["学籍番号", "studentIdNumber"],
+      ["氏名", "displayName"],
+      ["staff", "isStaff"],
+      ["有効", "isLiveActive"],
+      ["クラスコード", "classCode"],
+      ["クラス名", "className"],
+      ["出席番号", "attendanceNumber"],
+    ] as const) {
+      await user.click(screen.getByRole("button", { name: column }));
+      await waitFor(() =>
+        expect(getStudents).toHaveBeenLastCalledWith(
+          expect.objectContaining({ sortBy, sortOrder: "asc", offset: 0 })
+        )
+      );
+    }
+  });
+
+  it("操作メニューに編集とAPI待ちの状態変更を表示し、削除を表示しない", async () => {
+    const student = makeStudent(1, "山田太郎", { isStaff: true });
+    const getStudents = vi.fn().mockResolvedValue({
+      items: [student],
+      total: 1,
+      limit: 50,
+      offset: 0,
+    });
+    const user = userEvent.setup();
+
+    renderPage(createApi(getStudents));
+
+    const table = await screen.findByRole("table", { name: "学生一覧" });
+    await user.click(
+      within(table).getByRole("button", { name: "山田太郎の操作" })
+    );
+
+    expect(
+      screen.getByRole("button", { name: "学生を編集する" })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "staffを解除する（API接続待ち）" })
+    ).toBeDisabled();
+    expect(
+      screen.getByRole("button", { name: "学生を無効化する（未接続）" })
+    ).toBeDisabled();
+    expect(
+      screen.queryByRole("button", { name: "削除" })
+    ).not.toBeInTheDocument();
+  });
+
+  it("作成成功後は現在条件で再取得し、レスポンスを一覧へ直接追加しない", async () => {
+    const saved = makeStudent(10, "佐藤花子");
+    const getStudents = vi
+      .fn()
+      .mockResolvedValueOnce({ items: [], total: 0, limit: 50, offset: 0 })
+      .mockResolvedValueOnce({ items: [], total: 0, limit: 50, offset: 0 });
+    const createStudent = vi.fn().mockResolvedValue(saved);
+    const user = userEvent.setup();
+
+    renderPage(createApi(getStudents, { createStudent }));
+
+    await screen.findByRole("table", { name: "学生一覧" });
+    await user.click(screen.getByRole("button", { name: "新規登録" }));
+    await user.type(screen.getByLabelText("氏名*"), "佐藤花子");
+    await user.type(screen.getByLabelText("学籍番号*"), "S010");
+    await user.type(screen.getByLabelText("出席番号*"), "5");
+    await user.selectOptions(screen.getByLabelText("クラス*"), "1");
+    await user.click(screen.getByRole("button", { name: "保存する" }));
+
+    await waitFor(() => expect(createStudent).toHaveBeenCalled());
+    await waitFor(() => expect(getStudents).toHaveBeenCalledTimes(2));
+    expect(screen.queryByText("佐藤花子")).not.toBeInTheDocument();
+    expect(getStudents).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        isStaff: "all",
+        isLiveActive: "all",
+        offset: 0,
+      })
+    );
+  });
+
+  it("更新成功後も現在の検索・filter・sort・ページ条件で再取得する", async () => {
+    const student = makeStudent(1, "山田太郎");
+    const getStudents = vi
+      .fn()
+      .mockResolvedValueOnce({
+        items: [student],
+        total: 1,
+        limit: 50,
+        offset: 0,
+      })
+      .mockResolvedValueOnce({ items: [], total: 0, limit: 50, offset: 0 });
+    const updateStudent = vi.fn().mockResolvedValue(student);
+    const user = userEvent.setup();
+
+    renderPage(
+      createApi(getStudents, { updateStudent }),
+      "/members?search=%E5%B1%B1%E7%94%B0&isStaff=true&sortBy=isStaff&sortOrder=desc"
+    );
+
+    const table = await screen.findByRole("table", { name: "学生一覧" });
+    await user.click(
+      within(table).getByRole("button", { name: "山田太郎の操作" })
+    );
+    await user.click(screen.getByRole("button", { name: "学生を編集する" }));
+    await user.click(screen.getByRole("button", { name: "保存する" }));
+
+    await waitFor(() =>
+      expect(updateStudent).toHaveBeenCalledWith(1, expect.anything())
+    );
+    await waitFor(() => expect(getStudents).toHaveBeenCalledTimes(2));
+    expect(getStudents).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        search: "山田",
+        isStaff: "true",
+        sortBy: "isStaff",
+        sortOrder: "desc",
+        offset: 0,
+      })
     );
   });
 });

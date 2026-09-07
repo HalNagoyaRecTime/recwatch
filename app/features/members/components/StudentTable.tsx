@@ -1,19 +1,19 @@
+import type { ReactNode } from "react";
+
 import { DataTable } from "~/components/ui/data-table/DataTable";
 import type {
   DataTableColumn,
   DataTableSort,
 } from "~/components/ui/data-table/data-table-types";
-import type { StudentDTO } from "~/features/members/api";
-import { ManagementRowActionMenu } from "~/features/user-management/components/ManagementRowActionMenu";
-import type { ReactNode } from "react";
+import { StudentActionMenu } from "~/features/members/components/StudentActionMenu";
+import type { StudentRow } from "~/features/members/model/student";
 
 type StudentTableProps = {
   emptyMessage?: string;
   footer?: ReactNode;
   isMutating?: boolean;
-  items: readonly StudentDTO[];
-  onDelete: (student: StudentDTO) => void;
-  onEdit: (student: StudentDTO) => void;
+  items: readonly StudentRow[];
+  onEdit: (student: StudentRow) => void;
   onSortChange?: (columnId: string) => void;
   sort?: DataTableSort;
 };
@@ -23,46 +23,65 @@ export function StudentTable({
   footer,
   isMutating = false,
   items,
-  onDelete,
   onEdit,
   onSortChange,
   sort,
 }: StudentTableProps) {
-  const columns: readonly DataTableColumn<StudentDTO>[] = [
+  const columns: readonly DataTableColumn<StudentRow>[] = [
     {
       header: "学生ID",
       id: "student-id",
       sortable: true,
       width: { type: "fixed", value: 100 },
-      renderCell: (student) => student.student_id,
+      renderCell: (student) => student.studentId,
     },
     {
       header: "学籍番号",
       id: "student-number",
       sortable: true,
       width: { type: "fluid", min: 150, grow: 1 },
-      renderCell: (student) => student.student_id_number,
+      renderCell: (student) => student.studentIdNumber,
     },
     {
       header: "氏名",
       id: "display-name",
       sortable: true,
       width: { type: "fluid", min: 180, grow: 2 },
-      renderCell: (student) => student.display_name,
+      renderCell: (student) => student.displayName,
+    },
+    {
+      align: "center",
+      header: "staff",
+      id: "staff",
+      sortable: true,
+      width: { type: "fluid", min: 120, grow: 0.6 },
+      renderCell: (student) => (
+        <span>{student.isStaff ? "staff" : "staffではない"}</span>
+      ),
+    },
+    {
+      align: "center",
+      header: "有効",
+      id: "active",
+      sortable: true,
+      width: { type: "fluid", min: 120, grow: 0.6 },
+      renderCell: (student) => (
+        <span>{student.isLiveActive ? "有効" : "無効"}</span>
+      ),
     },
     {
       header: "クラスコード",
       id: "class-code",
       sortable: true,
       width: { type: "fluid", min: 180, grow: 1 },
-      renderCell: (student) => student.class_room?.class_code ?? "-",
+      renderCell: (student) => student.classRoom.classCode,
     },
     {
       header: "クラス名",
       id: "class-name",
       sortable: true,
       width: { type: "fluid", min: 180, grow: 1 },
-      renderCell: (student) => student.class_room?.class_name ?? "-",
+      renderCell: (student) => student.classRoom.className,
     },
     {
       align: "end",
@@ -71,7 +90,7 @@ export function StudentTable({
       id: "attendance-number",
       sortable: true,
       width: { type: "fixed", value: 110 },
-      renderCell: (student) => student.attendance_number,
+      renderCell: (student) => student.attendanceNumber,
     },
     {
       align: "center",
@@ -80,11 +99,10 @@ export function StudentTable({
       id: "actions",
       width: { type: "fixed", value: 64 },
       renderCell: (student) => (
-        <ManagementRowActionMenu
-          ariaLabel={`${student.display_name}の操作`}
+        <StudentActionMenu
           disabled={isMutating}
-          onDelete={() => onDelete(student)}
           onEdit={() => onEdit(student)}
+          student={student}
         />
       ),
     },
@@ -96,7 +114,7 @@ export function StudentTable({
       columns={columns}
       emptyMessage={emptyMessage ?? "該当する学生が見つかりません。"}
       footer={footer}
-      getRowKey={(student) => student.student_id}
+      getRowKey={(student) => student.studentId}
       items={items}
       onSortChange={onSortChange}
       sort={sort}

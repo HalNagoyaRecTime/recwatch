@@ -1,12 +1,16 @@
+import { Check, X } from "lucide-react";
 import { useState } from "react";
 
 import { Button } from "~/components/ui/button/Button";
 import type { ClassRoomData } from "~/features/classRoom/model/classRoom";
-import type { StudentDTO, StudentWriteInput } from "~/features/members/api";
+import type {
+  StudentRow,
+  StudentWriteInput,
+} from "~/features/members/model/student";
 
 type StudentFormProps = {
   classRooms: readonly ClassRoomData[];
-  initialStudent?: StudentDTO;
+  initialStudent?: StudentRow;
   isSubmitting: boolean;
   onCancel: () => void;
   onSubmit: (input: StudentWriteInput) => void | Promise<void>;
@@ -22,21 +26,21 @@ export function StudentForm({
   submitError,
 }: StudentFormProps) {
   const [displayName, setDisplayName] = useState(
-    initialStudent?.display_name ?? ""
+    initialStudent?.displayName ?? ""
   );
   const [studentIdNumber, setStudentIdNumber] = useState(
-    initialStudent?.student_id_number ?? ""
+    initialStudent?.studentIdNumber ?? ""
   );
   const [attendanceNumber, setAttendanceNumber] = useState(
-    initialStudent ? String(initialStudent.attendance_number) : ""
+    initialStudent ? String(initialStudent.attendanceNumber) : ""
   );
   const [classRoomId, setClassRoomId] = useState(
     initialStudent &&
       classRooms.some(
         (classRoom) =>
-          classRoom.classRoomId === initialStudent.class_room?.class_room_id
+          classRoom.classRoomId === initialStudent.classRoom.classRoomId
       )
-      ? String(initialStudent.class_room?.class_room_id)
+      ? String(initialStudent.classRoom.classRoomId)
       : ""
   );
   const [validationError, setValidationError] = useState<string | null>(null);
@@ -82,6 +86,29 @@ export function StudentForm({
           value={displayName}
         />
       </label>
+
+      {initialStudent ? (
+        <div aria-label="学生の状態" className="flex flex-wrap gap-2">
+          <Button
+            disabled
+            icon={initialStudent.isLiveActive ? Check : X}
+            size="sm"
+            type="button"
+            variant={initialStudent.isLiveActive ? "success" : "secondary"}
+          >
+            {`アクティブ: ${initialStudent.isLiveActive ? "有効" : "無効"}（未接続）`}
+          </Button>
+          <Button
+            disabled
+            icon={initialStudent.isStaff ? Check : X}
+            size="sm"
+            type="button"
+            variant={initialStudent.isStaff ? "success" : "secondary"}
+          >
+            {`スタッフ: ${initialStudent.isStaff ? "staff" : "staffではない"}（未接続）`}
+          </Button>
+        </div>
+      ) : null}
       <div className="grid gap-4 sm:grid-cols-2">
         <label className={labelClassName}>
           学籍番号 <span className="text-tone-danger-text">*</span>

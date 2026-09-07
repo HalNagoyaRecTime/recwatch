@@ -1,4 +1,4 @@
-import { Outlet, useLoaderData } from "react-router";
+import { Outlet, useLoaderData, useRevalidator } from "react-router";
 
 import { PagePadding } from "~/features/frame/page-layout/PagePadding";
 import { PageLayout } from "~/features/frame/page-layout/PageLayout";
@@ -14,13 +14,21 @@ export function meta() {
 export async function clientLoader({ request }: { request: Request }) {
   const searchParams = new URL(request.url).searchParams;
   const limit = 50;
-  const { page, search, sortBy, sortOrder, isStaff, isLiveActive } =
-    parseStudentListUrl(searchParams);
+  const {
+    page,
+    search,
+    classRoomId,
+    sortBy,
+    sortOrder,
+    isStaff,
+    isLiveActive,
+  } = parseStudentListUrl(searchParams);
 
   return loadStudentListPage({
     limit,
     offset: (page - 1) * limit,
     search: search || undefined,
+    classRoomId: classRoomId ?? undefined,
     sortBy: sortBy ?? undefined,
     sortOrder: sortOrder ?? undefined,
     isStaff,
@@ -30,12 +38,16 @@ export async function clientLoader({ request }: { request: Request }) {
 
 export default function MembersRoute() {
   const page = useLoaderData<typeof clientLoader>();
+  const revalidator = useRevalidator();
 
   return (
     <>
       <PageLayout>
         <PagePadding>
-          <MembersPage {...page} />
+          <MembersPage
+            {...page}
+            onRevalidate={() => revalidator.revalidate()}
+          />
         </PagePadding>
       </PageLayout>
       <Outlet />

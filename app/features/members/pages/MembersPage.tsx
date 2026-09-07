@@ -1,23 +1,22 @@
 import { Plus } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "react-router";
 
 import { Button } from "~/components/ui/button/Button";
 import { SearchField } from "~/components/ui/form/SearchField";
 import { Select } from "~/components/ui/form/Select";
 import { PageHeader } from "~/components/ui/layout/PageHeader";
+import { FormModal } from "~/components/ui/modal/FormModal";
 import { Pagination } from "~/components/ui/navigation/Pagination";
-import { getErrorMessage } from "~/lib/client-error";
-import { getClassRoomData } from "~/features/classRoom/model/classRoom-data";
 import type { ClassRoomData } from "~/features/classRoom/model/classRoom";
+import { getClassRoomData } from "~/features/classRoom/model/classRoom-data";
 import { ImportUploadTrigger } from "~/features/master-import/components/ImportUploadTrigger";
 import {
   StudentApi,
   type StudentBooleanFilter,
-  type StudentDTO,
+  type StudentListQuery,
   type StudentListSortBy,
   type StudentManagementApi,
-  type StudentWriteInput,
 } from "~/features/members/api";
 import {
   parseStudentListUrl,
@@ -25,15 +24,19 @@ import {
 } from "~/features/members/application/student-list-url";
 import { StudentForm } from "~/features/members/components/StudentForm";
 import { StudentTable } from "~/features/members/components/StudentTable";
-import { UserManagementTabs } from "~/features/user-management/components/UserManagementTabs";
-import { FormModal } from "~/components/ui/modal/FormModal";
+import type {
+  StudentRow,
+  StudentWriteInput,
+} from "~/features/members/model/student";
+import { getErrorMessage } from "~/lib/client-error";
 
 type MembersPageProps = {
   api?: StudentManagementApi;
   loadClassRooms?: () => Promise<ClassRoomData[]>;
   limit?: number;
+  onRevalidate?: () => Promise<void>;
   offset?: number;
-  students?: StudentDTO[];
+  students?: StudentRow[];
   total?: number;
 };
 
@@ -41,26 +44,75 @@ export function MembersPage({
   api = StudentApi,
   loadClassRooms = getClassRoomData,
   limit: initialLimit,
+  onRevalidate,
   offset: initialOffset,
   students: initialStudents,
   total: initialTotal,
 }: MembersPageProps) {
   const [searchParams, setSearchParams] = useSearchParams();
-  const [students, setStudents] = useState<StudentDTO[]>(initialStudents ?? []);
+  const [students, setStudents] = useState<StudentRow[]>(initialStudents ?? []);
   const [total, setTotal] = useState(initialTotal ?? 0);
   const [classRooms, setClassRooms] = useState<ClassRoomData[]>([]);
-  const [editingStudent, setEditingStudent] = useState<StudentDTO | null>(null);
+  const [searchInput, setSearchInput] = useState("");
+  const [editingStudent, setEditingStudent] = useState<StudentRow | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(initialStudents === undefined);
   const [isMutating, setIsMutating] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
-  const { search, page, sortBy, sortOrder, isStaff, isLiveActive } =
-    parseStudentListUrl(searchParams);
+  const {
+    search,
+    page,
+    classRoomId,
+    sortBy,
+    sortOrder,
+    isStaff,
+    isLiveActive,
+  } = parseStudentListUrl(searchParams);
   const limit = initialLimit ?? 50;
   const offset = initialOffset ?? (page - 1) * limit;
   const currentPage = Math.floor(offset / limit) + 1;
   const pageCount = Math.max(1, Math.ceil(total / limit));
+
+  const buildStudentListQuery = useCallback(
+    (): StudentListQuery => ({
+      limit,
+      offset,
+      search: search || undefined,
+      classRoomId: classRoomId ?? undefined,
+      sortBy: sortBy ?? undefined,
+      sortOrder: sortOrder ?? undefined,
+      isStaff,
+      isLiveActive,
+    }),
+    [
+      classRoomId,
+      isLiveActive,
+      isStaff,
+      limit,
+      offset,
+      search,
+      sortBy,
+      sortOrder,
+    ]
+  );
+
+  useEffect(() => {
+    setSearchInput(search);
+  }, [search]);
+
+  useEffect(() => {
+    if (searchInput.trim() === search) return;
+    const timer = window.setTimeout(() => {
+      setSearchParams(
+        updateStudentListUrl(searchParams, {
+          page: 1,
+          search: searchInput,
+        })
+      );
+    }, 250);
+    return () => window.clearTimeout(timer);
+  }, [searchInput, search, searchParams, setSearchParams]);
 
   useEffect(() => {
     let isCurrent = true;
@@ -93,19 +145,12 @@ export function MembersPage({
     let isCurrent = true;
     setIsLoading(true);
     api
-      .getStudents({
-        limit,
-        offset,
-        search: search || undefined,
-        sortBy: sortBy ?? undefined,
-        sortOrder: sortOrder ?? undefined,
-        isStaff,
-        isLiveActive,
-      })
+      .getStudents(buildStudentListQuery())
       .then((result) => {
         if (!isCurrent) return;
         setStudents(result.items);
         setTotal(result.total);
+        setLoadError(null);
       })
       .catch((error: unknown) => {
         if (isCurrent) {
@@ -130,8 +175,10 @@ export function MembersPage({
     limit,
     offset,
     search,
+    classRoomId,
     sortBy,
     sortOrder,
+    buildStudentListQuery,
   ]);
 
   useEffect(() => {
@@ -152,18 +199,26 @@ export function MembersPage({
       "student-id": "studentId",
       "student-number": "studentIdNumber",
       "display-name": "displayName",
+      staff: "isStaff",
+      active: "isLiveActive",
       "class-code": "classCode",
       "class-name": "className",
       "attendance-number": "attendanceNumber",
     };
     const nextSortBy = sortColumns[columnId];
     if (!nextSortBy) return;
-    const nextSortOrder =
-      sortBy === nextSortBy && sortOrder === "asc" ? "desc" : "asc";
-    updateSearchParams({
-      page: 1,
-      sortBy: nextSortBy,
-      sortOrder: nextSortOrder,
+
+    setSearchParams((currentSearchParams) => {
+      const currentState = parseStudentListUrl(currentSearchParams);
+      const nextSortOrder =
+        currentState.sortBy === nextSortBy && currentState.sortOrder === "asc"
+          ? "desc"
+          : "asc";
+      return updateStudentListUrl(currentSearchParams, {
+        page: 1,
+        sortBy: nextSortBy,
+        sortOrder: nextSortOrder,
+      });
     });
   }
 
@@ -180,34 +235,38 @@ export function MembersPage({
     setIsFormOpen(true);
   }
 
+  function openEditForm(student: StudentRow) {
+    setEditingStudent(student);
+    setSubmitError(null);
+    setIsFormOpen(true);
+  }
+
   function closeForm() {
     setIsFormOpen(false);
     setEditingStudent(null);
     setSubmitError(null);
   }
 
-  function openEditForm(student: StudentDTO) {
-    setEditingStudent(student);
-    setSubmitError(null);
-    setIsFormOpen(true);
-  }
-
   async function saveStudent(input: StudentWriteInput) {
     if (isMutating) return;
+
     setIsMutating(true);
     setSubmitError(null);
     try {
-      const saved = editingStudent
-        ? await api.updateStudent(editingStudent.student_id, input)
-        : await api.createStudent(input);
-      setStudents((current) =>
-        editingStudent
-          ? current.map((student) =>
-              student.student_id === saved.student_id ? saved : student
-            )
-          : [...current, saved]
-      );
-      if (!editingStudent) setTotal((current) => current + 1);
+      if (editingStudent) {
+        await api.updateStudent(editingStudent.studentId, input);
+      } else {
+        await api.createStudent(input);
+      }
+
+      if (onRevalidate) {
+        await onRevalidate();
+      } else {
+        const refreshed = await api.getStudents(buildStudentListQuery());
+        setStudents(refreshed.items);
+        setTotal(refreshed.total);
+        setLoadError(null);
+      }
       closeForm();
     } catch (error) {
       setSubmitError(getErrorMessage(error, "学生を保存できませんでした。"));
@@ -216,65 +275,57 @@ export function MembersPage({
     }
   }
 
-  async function deleteStudent(student: StudentDTO) {
-    if (
-      isMutating ||
-      !window.confirm(
-        `「${student.display_name}」を削除します。よろしいですか？`
-      )
-    ) {
-      return;
-    }
-
-    setIsMutating(true);
-    setSubmitError(null);
-    try {
-      await api.deleteStudent(student.student_id);
-      setStudents((current) =>
-        current.filter((item) => item.student_id !== student.student_id)
-      );
-      setTotal((current) => Math.max(0, current - 1));
-    } catch (error) {
-      setSubmitError(getErrorMessage(error, "学生を削除できませんでした。"));
-    } finally {
-      setIsMutating(false);
-    }
-  }
-
   return (
     <div className="min-h-full space-y-5">
       <PageHeader
+        actions={
+          <div className="flex items-center gap-2">
+            <ImportUploadTrigger showHelperText={false} type="students" />
+            <Button
+              disabled={isLoading}
+              icon={Plus}
+              onClick={openCreateForm}
+              size="lg"
+              variant="primary"
+            >
+              新規登録
+            </Button>
+          </div>
+        }
         description="学生の基本情報と所属クラスを管理します"
         title="学生管理"
       />
-      <ImportUploadTrigger
-        adjacentAction={
-          <Button
-            disabled={isLoading || classRooms.length === 0}
-            icon={Plus}
-            onClick={openCreateForm}
-            variant="secondary"
-          >
-            新規登録
-          </Button>
-        }
-        helperText="取り込み前にプレビューで内容・データ種別を確認できます"
-        type="students"
-      />
-      <UserManagementTabs active="students" />
-      <SearchField
-        ariaLabel="学生を検索"
-        onValueChange={(value) =>
-          updateSearchParams({ page: 1, search: value })
-        }
-        placeholder="氏名・学籍番号・クラスで検索..."
-        value={search}
-      />
-      <div className="flex flex-wrap gap-3">
+
+      <div className="flex flex-wrap items-center gap-3">
+        <div className="min-w-60 flex-1">
+          <SearchField
+            ariaLabel="学生を検索"
+            onValueChange={setSearchInput}
+            placeholder="氏名・学籍番号・クラスで検索..."
+            value={searchInput}
+          />
+        </div>
         <Select
-          ariaLabel="職員兼務フィルター"
+          ariaLabel="担当クラスフィルター"
+          onValueChange={(value) =>
+            updateSearchParams({
+              page: 1,
+              classRoomId: value === "all" ? null : Number(value),
+            })
+          }
+          options={[
+            { label: "クラス:すべて", value: "all" },
+            ...classRooms.map((classRoom) => ({
+              label: `${classRoom.classRoomCode} ${classRoom.classRoomName}`,
+              value: String(classRoom.classRoomId),
+            })),
+          ]}
+          value={classRoomId ? String(classRoomId) : "all"}
+        />
+        <Select
+          ariaLabel="staffフィルター"
           onValueChange={(value) => handleFilterChange("isStaff", value)}
-          options={booleanFilterOptions("職員")}
+          options={booleanFilterOptions("staff")}
           value={isStaff}
         />
         <Select
@@ -284,11 +335,13 @@ export function MembersPage({
           value={isLiveActive}
         />
       </div>
+
       {loadError ? (
         <p className="text-tone-danger-text text-sm" role="alert">
           {loadError}
         </p>
       ) : null}
+
       <StudentTable
         emptyMessage={
           isLoading
@@ -296,16 +349,6 @@ export function MembersPage({
             : search
               ? "検索条件に一致する学生が見つかりません。"
               : undefined
-        }
-        isMutating={isMutating}
-        items={students}
-        onDelete={(student) => void deleteStudent(student)}
-        onEdit={openEditForm}
-        onSortChange={handleSortChange}
-        sort={
-          sortBy
-            ? { columnId: sortColumnId(sortBy), direction: sortOrder ?? "asc" }
-            : undefined
         }
         footer={
           <Pagination
@@ -316,12 +359,23 @@ export function MembersPage({
             totalItems={total}
           />
         }
+        isMutating={isMutating}
+        items={students}
+        onEdit={openEditForm}
+        onSortChange={handleSortChange}
+        sort={
+          sortBy
+            ? { columnId: sortColumnId(sortBy), direction: sortOrder ?? "asc" }
+            : undefined
+        }
       />
+
       {!isFormOpen && submitError ? (
         <p className="text-tone-danger-text text-sm" role="alert">
           {submitError}
         </p>
       ) : null}
+
       {isFormOpen ? (
         <FormModal
           description="氏名、学籍番号、出席番号、所属クラスを入力します"
@@ -347,6 +401,8 @@ function sortColumnId(sortBy: StudentListSortBy) {
     studentId: "student-id",
     studentIdNumber: "student-number",
     displayName: "display-name",
+    isStaff: "staff",
+    isLiveActive: "active",
     classCode: "class-code",
     className: "class-name",
     attendanceNumber: "attendance-number",
