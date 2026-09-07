@@ -169,7 +169,7 @@ describe("MembersPage", () => {
     expect(within(table).getByText("無効")).toBeInTheDocument();
 
     for (const [column, sortBy] of [
-      ["学生ID", "studentId"],
+      ["ID", "studentId"],
       ["学籍番号", "studentIdNumber"],
       ["氏名", "displayName"],
       ["staff", "isStaff"],
