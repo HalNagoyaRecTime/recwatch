@@ -21,7 +21,13 @@ import { formatMasterImportExpiration } from "~/features/master-import/format-ma
 
 const PAGE_SIZE = 25;
 
-export function MasterImportConfirmationPage() {
+type MasterImportConfirmationPageProps = {
+  fallbackListPath?: string;
+};
+
+export function MasterImportConfirmationPage({
+  fallbackListPath = "/dashboard",
+}: MasterImportConfirmationPageProps = {}) {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const importId = searchParams.get("importId");
@@ -63,7 +69,7 @@ export function MasterImportConfirmationPage() {
   }, [session]);
   const listPath = session
     ? MASTER_IMPORT_LIST_PATH[session.type]
-    : "/dashboard";
+    : fallbackListPath;
   const isSessionLoading =
     Boolean(importId) && (isLoading || session?.importId !== importId);
 

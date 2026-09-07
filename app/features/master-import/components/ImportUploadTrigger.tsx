@@ -7,6 +7,7 @@ import {
   buttonStyle,
 } from "~/components/ui/button/styles/button-styles";
 import { getErrorMessage } from "~/lib/client-error";
+import { MASTER_IMPORT_CONFIRMATION_PATH } from "../constants";
 import { masterImportApi, type MasterImportType } from "../api";
 
 interface ImportUploadTriggerProps {
@@ -37,7 +38,7 @@ export function ImportUploadTrigger({
     try {
       const session = await masterImportApi.create(type, file);
       navigate(
-        `/master-import?importId=${encodeURIComponent(session.importId)}`
+        `${MASTER_IMPORT_CONFIRMATION_PATH[type]}?importId=${encodeURIComponent(session.importId)}`
       );
     } catch (err) {
       setError(getErrorMessage(err, "ファイルの取り込みに失敗しました。"));

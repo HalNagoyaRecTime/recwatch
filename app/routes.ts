@@ -19,7 +19,7 @@ export default [
     route("notifications", "routes/main/notifications.tsx"),
     route("notifications/new", "routes/main/notifications.new.tsx"),
     route("students", "routes/main/students.tsx"),
-    route("master-import", "routes/main/master-import.tsx"),
+    route("students/import", "routes/main/students.import.tsx"),
     route("classroom", "routes/main/classRoom.tsx"),
     route("teachers", "routes/main/teachers.tsx", [
       route("new", "routes/main/teachers.new.tsx"),

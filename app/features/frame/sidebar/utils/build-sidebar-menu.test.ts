@@ -25,7 +25,6 @@ describe("buildSidebarMenu", () => {
         "/notifications",
       ])
     );
-    expect(paths).not.toContain("/master-import");
     expect(paths).not.toContain("/events/new");
     expect(paths).not.toContain("/notifications/new");
 
@@ -57,6 +56,11 @@ describe("buildSidebarMenu", () => {
     expect(labels).not.toContain("イベントマスター");
     expect(labels).not.toContain("スケジュール");
     expect(labels).not.toContain("新規登録");
+
+    const userManagementItem = buildSidebarMenu("admin")
+      .flatMap((section) => section.items)
+      .find((item) => item.label === "ユーザー管理");
+    expect(userManagementItem?.id).toBe("user-management");
 
     expect(
       buildSidebarMenu("admin")
