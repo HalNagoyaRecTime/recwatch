@@ -18,6 +18,7 @@ type ScrollbarAreaProps = {
  * - useScrollbar でロジックを管理
  * - Scrollbar で見た目を描画
  * - ネイティブスクロールバーは非表示
+ * - キーボード操作はフォーカス可能な子要素があることを前提とする
  */
 export function ScrollbarArea({
   children,
