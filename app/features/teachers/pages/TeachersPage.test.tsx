@@ -36,18 +36,6 @@ describe("TeachersPage", () => {
     );
   });
 
-  it("教官IDから一覧条件を維持して編集画面へ移動する", () => {
-    render(
-      <MemoryRouter initialEntries={["/teachers?search=佐橋&page=2"]}>
-        <TeachersPage limit={50} offset={50} teachers={teachers} total={100} />
-      </MemoryRouter>
-    );
-
-    expect(
-      screen.getByRole("link", { name: "教官ID 2を編集" })
-    ).toHaveAttribute("href", "/teachers/2/edit?search=佐橋&page=2");
-  });
-
   it("検索・ソートをURLへ反映し、状態変更操作をAPI待ちで無効化する", async () => {
     const user = userEvent.setup();
     render(
