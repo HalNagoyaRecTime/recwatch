@@ -80,6 +80,13 @@ describe("TeachersPage", () => {
       )
     );
 
+    await user.click(screen.getByRole("button", { name: "staff" }));
+    await waitFor(() =>
+      expect(screen.getByTestId("location-search")).toHaveTextContent(
+        "sortBy=isStaff&sortOrder=desc"
+      )
+    );
+
     await user.click(screen.getByRole("button", { name: "有効" }));
     await waitFor(() =>
       expect(screen.getByTestId("location-search")).toHaveTextContent(
