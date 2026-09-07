@@ -61,7 +61,7 @@ describe("TeacherForm", () => {
     });
   });
 
-  it("編集時はアクティブとスタッフの状態を未接続ボタンで表示する", () => {
+  it("編集時はチェックアイコン付きで状態を未接続ボタンに表示する", () => {
     render(
       <TeacherForm
         classRooms={[]}
