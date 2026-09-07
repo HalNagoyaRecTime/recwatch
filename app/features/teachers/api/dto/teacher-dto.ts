@@ -19,18 +19,3 @@ export type TeacherListPageDTO = {
   limit: number;
   offset: number;
 };
-
-export type ClassRoomDTO = {
-  class_room_id: number;
-  class_code: string;
-  class_name: string;
-  student_count: number;
-  teacher: { teacher_id: number; display_name: string } | null;
-};
-
-export type ClassRoomPageDTO = {
-  classrooms: ClassRoomDTO[];
-  total: number;
-  limit: number;
-  offset: number;
-};

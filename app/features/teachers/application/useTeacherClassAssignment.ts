@@ -55,7 +55,7 @@ export function useTeacherClassAssignment({
     setIsSubmitting(true);
     setErrorMessage("");
     try {
-      await TeacherApi.updateTeacherAssignment(teacherId, {
+      await TeacherApi.updateTeacher(teacherId, {
         userName: selectedTeacher.displayName,
         classRoomIds: checkedClassRoomIds,
       });

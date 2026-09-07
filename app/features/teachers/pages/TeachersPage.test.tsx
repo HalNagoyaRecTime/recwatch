@@ -9,6 +9,7 @@ import { TeachersPage } from "~/features/teachers/pages/TeachersPage";
 const teachers: TeacherRow[] = [
   {
     teacherId: 2,
+    userId: 12,
     displayName: "山田 花子",
     isLiveActive: true,
     isStaff: false,

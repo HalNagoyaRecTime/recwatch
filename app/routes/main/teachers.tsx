@@ -2,7 +2,7 @@ import { Outlet, useLoaderData } from "react-router";
 import { createPageTitle } from "~/lib/page-title";
 import { parseTeacherListUrl } from "~/features/teachers/application/teacher-list-url";
 import { loadTeacherListPage } from "~/features/teachers/application/teacher-loaders";
-import { ClassRoomApi } from "~/features/teachers/api";
+import { getClassRoomData } from "~/features/classRoom/model/classRoom-data";
 import { TeachersPage } from "~/features/teachers/pages/TeachersPage";
 import { PagePadding } from "~/features/frame/page-layout/PagePadding";
 import { PageLayout } from "~/features/frame/page-layout/PageLayout";
@@ -23,7 +23,7 @@ export async function clientLoader({ request }: { request: Request }) {
     isStaff,
     isLiveActive,
   } = parseTeacherListUrl(searchParams);
-  const [teacherPage, classRoomPage] = await Promise.all([
+  const [teacherPage, classRooms] = await Promise.all([
     loadTeacherListPage({
       limit,
       offset: (page - 1) * limit,
@@ -34,14 +34,14 @@ export async function clientLoader({ request }: { request: Request }) {
       isStaff,
       isLiveActive,
     }),
-    ClassRoomApi.getClassRooms(),
+    getClassRoomData(),
   ]);
   return {
     ...teacherPage,
-    classRooms: classRoomPage.classrooms.map((classRoom) => ({
-      classRoomId: classRoom.class_room_id,
-      classCode: classRoom.class_code,
-      className: classRoom.class_name,
+    classRooms: classRooms.map((classRoom) => ({
+      classRoomId: classRoom.classRoomId,
+      classCode: classRoom.classRoomCode,
+      className: classRoom.classRoomName,
     })),
   };
 }
