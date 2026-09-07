@@ -1,10 +1,10 @@
-import { Ellipsis, Pencil, Trash2, UserMinus, UserPlus } from "lucide-react";
+import { BadgeMinus, Ellipsis, Pencil, Trash2, UserPlus } from "lucide-react";
 import { useState } from "react";
 
 import { Button } from "~/components/ui/button/Button";
 import { Menu, type MenuItemType } from "~/components/ui/navigation/Menu";
 import { FloatingPanel } from "~/components/ui/panel/FloatingPanel";
-import type { StudentRow } from "~/features/members/model/student";
+import type { StudentRow } from "~/features/students/model/student";
 
 type StudentActionMenuProps = {
   disabled?: boolean;
@@ -33,7 +33,7 @@ export function StudentActionMenu({
     },
     {
       disabled: true,
-      icon: student.isStaff ? UserMinus : UserPlus,
+      icon: student.isStaff ? BadgeMinus : UserPlus,
       id: "staff",
       label: student.isStaff
         ? "staffを解除する（API接続待ち）"

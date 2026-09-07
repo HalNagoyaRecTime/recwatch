@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   parseStudentListUrl,
   updateStudentListUrl,
-} from "~/features/members/application/student-list-url";
+} from "~/features/students/application/student-list-url";
 
 describe("student list URL state", () => {
   it("未指定時はstaff・activeをallへ正規化する", () => {

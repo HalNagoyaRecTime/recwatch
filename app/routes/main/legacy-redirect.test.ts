@@ -17,7 +17,6 @@ describe("getLegacyDestination", () => {
     ["/events/past", "/events"],
     ["/events/tournament", "/events"],
     ["/events/scoring", "/events"],
-    ["/members/teams", "/members"],
     ["/teachers/42", "/teachers/42/edit"],
     ["/user/settings", "/dashboard"],
     ["/timing", "/schedule"],

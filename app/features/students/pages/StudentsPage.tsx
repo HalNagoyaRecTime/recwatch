@@ -17,20 +17,20 @@ import {
   type StudentListQuery,
   type StudentListSortBy,
   type StudentManagementApi,
-} from "~/features/members/api";
+} from "~/features/students/api";
 import {
   parseStudentListUrl,
   updateStudentListUrl,
-} from "~/features/members/application/student-list-url";
-import { StudentForm } from "~/features/members/components/StudentForm";
-import { StudentTable } from "~/features/members/components/StudentTable";
+} from "~/features/students/application/student-list-url";
+import { StudentForm } from "~/features/students/components/StudentForm";
+import { StudentTable } from "~/features/students/components/StudentTable";
 import type {
   StudentRow,
   StudentWriteInput,
-} from "~/features/members/model/student";
+} from "~/features/students/model/student";
 import { getErrorMessage } from "~/lib/client-error";
 
-type MembersPageProps = {
+type StudentsPageProps = {
   api?: StudentManagementApi;
   loadClassRooms?: () => Promise<ClassRoomData[]>;
   limit?: number;
@@ -40,7 +40,7 @@ type MembersPageProps = {
   total?: number;
 };
 
-export function MembersPage({
+export function StudentsPage({
   api = StudentApi,
   loadClassRooms = getClassRoomData,
   limit: initialLimit,
@@ -48,7 +48,7 @@ export function MembersPage({
   offset: initialOffset,
   students: initialStudents,
   total: initialTotal,
-}: MembersPageProps) {
+}: StudentsPageProps) {
   const [searchParams, setSearchParams] = useSearchParams();
   const [students, setStudents] = useState<StudentRow[]>(initialStudents ?? []);
   const [total, setTotal] = useState(initialTotal ?? 0);

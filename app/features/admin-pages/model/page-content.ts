@@ -20,51 +20,6 @@ export const pageContent = {
       },
     ],
   },
-  members: {
-    eyebrow: "Members",
-    title: "Member List",
-    description: "Management page for members.",
-    sections: [
-      {
-        title: "Member Table",
-        description: "This area will hold the table, search, and filters.",
-      },
-      {
-        title: "Member Detail",
-        description: "This area will show details for the selected member.",
-      },
-    ],
-  },
-  membersImport: {
-    eyebrow: "Members",
-    title: "Import",
-    description: "Import page for members.",
-    sections: [
-      {
-        title: "Import Queue",
-        description: "This area will list uploaded files and import status.",
-      },
-      {
-        title: "Validation Result",
-        description: "This area will show validation and mapping results.",
-      },
-    ],
-  },
-  membersTeams: {
-    eyebrow: "Members",
-    title: "Teams",
-    description: "Team management page for members.",
-    sections: [
-      {
-        title: "Team List",
-        description: "This area will hold team rosters and assignments.",
-      },
-      {
-        title: "Team Detail",
-        description: "This area will show details for the selected team.",
-      },
-    ],
-  },
   classRoom: {
     eyebrow: "Class Room",
     title: "Class Room Management",

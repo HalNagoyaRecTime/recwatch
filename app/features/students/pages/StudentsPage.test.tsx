@@ -3,9 +3,9 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter, useLocation } from "react-router";
 import { describe, expect, it, vi } from "vitest";
 
-import type { StudentManagementApi } from "~/features/members/api";
-import type { StudentRow } from "~/features/members/model/student";
-import { MembersPage } from "./MembersPage";
+import type { StudentManagementApi } from "~/features/students/api";
+import type { StudentRow } from "~/features/students/model/student";
+import { StudentsPage } from "./StudentsPage";
 
 const classRoom = {
   classRoomId: 1,
@@ -55,10 +55,10 @@ function createApi(
   };
 }
 
-function renderPage(api: StudentManagementApi, initialEntry = "/members") {
+function renderPage(api: StudentManagementApi, initialEntry = "/students") {
   return render(
     <MemoryRouter initialEntries={[initialEntry]}>
-      <MembersPage
+      <StudentsPage
         api={api}
         loadClassRooms={vi.fn().mockResolvedValue([classRoom])}
       />
@@ -67,7 +67,7 @@ function renderPage(api: StudentManagementApi, initialEntry = "/members") {
   );
 }
 
-describe("MembersPage", () => {
+describe("StudentsPage", () => {
   it("一覧未指定時はstaff・activeがすべてで、検索をサーバーへ渡す", async () => {
     const getStudents = vi.fn().mockResolvedValue({
       items: [makeStudent(1, "山田太郎")],
@@ -265,7 +265,7 @@ describe("MembersPage", () => {
 
     renderPage(
       createApi(getStudents, { updateStudent }),
-      "/members?search=%E5%B1%B1%E7%94%B0&isStaff=true&sortBy=isStaff&sortOrder=desc"
+      "/students?search=%E5%B1%B1%E7%94%B0&isStaff=true&sortBy=isStaff&sortOrder=desc"
     );
 
     const table = await screen.findByRole("table", { name: "学生一覧" });

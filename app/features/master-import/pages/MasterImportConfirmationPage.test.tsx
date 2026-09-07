@@ -38,13 +38,13 @@ vi.mock("~/features/master-import/api", () => ({
   masterImportApi: { get, commit },
 }));
 
-import { MembersImportConfirmationPage } from "./MembersImportConfirmationPage";
+import { MasterImportConfirmationPage } from "./MasterImportConfirmationPage";
 
-describe("MembersImportConfirmationPage", () => {
+describe("MasterImportConfirmationPage", () => {
   it("APIで検証済みのCSV内容を共通テーブルで表示する", async () => {
     render(
-      <MemoryRouter initialEntries={["/members/import?importId=import-1"]}>
-        <MembersImportConfirmationPage />
+      <MemoryRouter initialEntries={["/master-import?importId=import-1"]}>
+        <MasterImportConfirmationPage />
       </MemoryRouter>
     );
 
@@ -78,8 +78,8 @@ describe("MembersImportConfirmationPage", () => {
     });
 
     render(
-      <MemoryRouter initialEntries={["/members/import?importId=import-1"]}>
-        <MembersImportConfirmationPage />
+      <MemoryRouter initialEntries={["/master-import?importId=import-1"]}>
+        <MasterImportConfirmationPage />
       </MemoryRouter>
     );
 
@@ -124,8 +124,8 @@ describe("MembersImportConfirmationPage", () => {
     });
 
     render(
-      <MemoryRouter initialEntries={["/members/import?importId=import-error"]}>
-        <MembersImportConfirmationPage />
+      <MemoryRouter initialEntries={["/master-import?importId=import-error"]}>
+        <MasterImportConfirmationPage />
       </MemoryRouter>
     );
 

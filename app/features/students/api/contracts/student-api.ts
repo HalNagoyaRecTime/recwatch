@@ -2,7 +2,7 @@ import type {
   StudentPage,
   StudentRow,
   StudentWriteInput,
-} from "~/features/members/model/student";
+} from "~/features/students/model/student";
 
 export type StudentListSortBy =
   | "studentId"

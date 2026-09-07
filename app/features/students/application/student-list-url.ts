@@ -2,7 +2,7 @@ import type {
   StudentBooleanFilter,
   StudentListSortBy,
   StudentListSortOrder,
-} from "~/features/members/api";
+} from "~/features/students/api";
 
 export type StudentListUrlState = {
   search: string;

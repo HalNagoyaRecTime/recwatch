@@ -48,16 +48,17 @@ export const sidebarSections = [
   {
     items: [
       {
-        id: "members",
+        id: "students",
         label: "ユーザー管理",
         icon: "users",
+        activePatterns: ["/master-import"],
         roles: ["admin", "manager"],
         children: [
           {
-            id: "members-list",
+            id: "students-list",
             label: "学生管理",
-            to: "/members",
-            activePatterns: ["/members", "/members/teams"],
+            to: "/students",
+            activePatterns: ["/students"],
             roles: ["admin", "manager"],
           },
           {

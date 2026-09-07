@@ -5,8 +5,8 @@ import type {
   DataTableColumn,
   DataTableSort,
 } from "~/components/ui/data-table/data-table-types";
-import { StudentActionMenu } from "~/features/members/components/StudentActionMenu";
-import type { StudentRow } from "~/features/members/model/student";
+import { StudentActionMenu } from "~/features/students/components/StudentActionMenu";
+import type { StudentRow } from "~/features/students/model/student";
 
 type StudentTableProps = {
   emptyMessage?: string;

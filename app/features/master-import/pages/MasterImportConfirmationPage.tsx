@@ -21,7 +21,7 @@ import { formatMasterImportExpiration } from "~/features/master-import/format-ma
 
 const PAGE_SIZE = 25;
 
-export function MembersImportConfirmationPage() {
+export function MasterImportConfirmationPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const importId = searchParams.get("importId");
@@ -61,7 +61,9 @@ export function MembersImportConfirmationPage() {
     const firstRow = session?.rows[0];
     return firstRow ? Object.keys(firstRow) : [];
   }, [session]);
-  const listPath = session ? MASTER_IMPORT_LIST_PATH[session.type] : "/members";
+  const listPath = session
+    ? MASTER_IMPORT_LIST_PATH[session.type]
+    : "/dashboard";
   const isSessionLoading =
     Boolean(importId) && (isLoading || session?.importId !== importId);
 
@@ -105,7 +107,10 @@ export function MembersImportConfirmationPage() {
       title={title}
     >
       {!importId ? (
-        <EmptyImportState message="取り込み対象が指定されていません。" />
+        <EmptyImportState
+          listPath={listPath}
+          message="取り込み対象が指定されていません。"
+        />
       ) : isSessionLoading && !session ? (
         <div
           className="text-text-muted flex min-h-48 items-center justify-center gap-2 text-sm"
@@ -115,7 +120,7 @@ export function MembersImportConfirmationPage() {
           取り込み内容を読み込んでいます...
         </div>
       ) : loadError && !session ? (
-        <EmptyImportState message={loadError} />
+        <EmptyImportState listPath={listPath} message={loadError} />
       ) : session ? (
         <ImportSessionContent
           columns={columns}
@@ -265,13 +270,19 @@ function SummaryValue({ label, value }: { label: string; value: string }) {
   );
 }
 
-function EmptyImportState({ message }: { message: string }) {
+function EmptyImportState({
+  listPath,
+  message,
+}: {
+  listPath: string;
+  message: string;
+}) {
   return (
     <LayeredPanel>
       <p className="text-text-muted text-sm">{message}</p>
       <div className="mt-4">
-        <ButtonLink to="/members" variant="secondary">
-          生徒管理へ戻る
+        <ButtonLink to={listPath} variant="secondary">
+          管理画面へ戻る
         </ButtonLink>
       </div>
     </LayeredPanel>

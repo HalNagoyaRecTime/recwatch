@@ -1,11 +1,11 @@
 import { apiClient } from "~/lib/api-client";
-import type { StudentListQuery } from "~/features/members/api/contracts/student-api";
+import type { StudentListQuery } from "~/features/students/api/contracts/student-api";
 import type {
   StudentDTO,
   StudentPageDTO,
   StudentWriteDTO,
-} from "~/features/members/api/dto/student-dto";
-import type { StudentWriteInput } from "~/features/members/model/student";
+} from "~/features/students/api/dto/student-dto";
+import type { StudentWriteInput } from "~/features/students/model/student";
 
 export type StudentHttpClient = {
   get<T>(path: string): Promise<T>;

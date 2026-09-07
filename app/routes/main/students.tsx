@@ -2,9 +2,9 @@ import { Outlet, useLoaderData, useRevalidator } from "react-router";
 
 import { PagePadding } from "~/features/frame/page-layout/PagePadding";
 import { PageLayout } from "~/features/frame/page-layout/PageLayout";
-import { loadStudentListPage } from "~/features/members/application/student-loaders";
-import { parseStudentListUrl } from "~/features/members/application/student-list-url";
-import { MembersPage } from "~/features/members/pages/MembersPage";
+import { loadStudentListPage } from "~/features/students/application/student-loaders";
+import { parseStudentListUrl } from "~/features/students/application/student-list-url";
+import { StudentsPage } from "~/features/students/pages/StudentsPage";
 import { createPageTitle } from "~/lib/page-title";
 
 export function meta() {
@@ -36,7 +36,7 @@ export async function clientLoader({ request }: { request: Request }) {
   });
 }
 
-export default function MembersRoute() {
+export default function StudentsRoute() {
   const page = useLoaderData<typeof clientLoader>();
   const revalidator = useRevalidator();
 
@@ -44,7 +44,7 @@ export default function MembersRoute() {
     <>
       <PageLayout>
         <PagePadding>
-          <MembersPage
+          <StudentsPage
             {...page}
             onRevalidate={() => revalidator.revalidate()}
           />

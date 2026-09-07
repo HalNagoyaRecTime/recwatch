@@ -93,22 +93,22 @@ describe("isSidebarItemActive", () => {
   });
 
   it("表示されないインポート画面はユーザー親をフォールバック選択する", () => {
-    const members = item({
-      id: "members",
+    const students = item({
+      id: "students",
       label: "ユーザー",
       to: undefined,
-      activePatterns: ["/members/import"],
+      activePatterns: ["/master-import"],
       children: [
         item({
-          id: "members-list",
+          id: "students-list",
           label: "学生管理",
-          to: "/members",
+          to: "/students",
         }),
       ],
     });
 
-    expect(isSidebarItemActive(members, "/members/import")).toBe(true);
-    expect(isSidebarItemActive(members.children![0], "/members/import")).toBe(
+    expect(isSidebarItemActive(students, "/master-import")).toBe(true);
+    expect(isSidebarItemActive(students.children![0], "/master-import")).toBe(
       false
     );
   });

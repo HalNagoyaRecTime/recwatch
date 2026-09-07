@@ -14,7 +14,7 @@ describe("buildSidebarMenu", () => {
     expect(paths).toEqual(
       expect.arrayContaining([
         "/dashboard",
-        "/members",
+        "/students",
         "/classroom",
         "/teachers",
         "/events",
@@ -25,7 +25,7 @@ describe("buildSidebarMenu", () => {
         "/notifications",
       ])
     );
-    expect(paths).not.toContain("/members/import");
+    expect(paths).not.toContain("/master-import");
     expect(paths).not.toContain("/events/new");
     expect(paths).not.toContain("/notifications/new");
 
