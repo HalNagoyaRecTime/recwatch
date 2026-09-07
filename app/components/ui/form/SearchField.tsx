@@ -5,7 +5,7 @@ import { controlSurfaceStyle } from "~/components/ui/form/styles/control-styles"
 
 type SearchFieldProps = Omit<
   InputHTMLAttributes<HTMLInputElement>,
-  "aria-label" | "onChange" | "type" | "value"
+  "aria-label" | "className" | "onChange" | "type" | "value"
 > & {
   ariaLabel: string;
   inputRef?: Ref<HTMLInputElement>;
@@ -22,14 +22,11 @@ export function SearchField({
   autoComplete = "off",
   inputRef,
   onValueChange,
-  className,
   value,
   ...props
 }: SearchFieldProps) {
   return (
-    <label
-      className={`group app-rounded relative flex h-9 w-full min-w-0 items-center ${className ?? ""}`}
-    >
+    <label className="group app-rounded relative flex h-9 w-full min-w-0 items-center">
       <span
         aria-hidden="true"
         className={`${controlSurfaceStyle()} group-focus-within:border-border-strong pointer-events-none absolute inset-0 group-focus-within:border-[1.4px]`}
