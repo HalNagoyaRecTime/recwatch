@@ -15,7 +15,6 @@ export const TeacherApi = {
   getTeacherList: (query: TeacherListQuery = {}) =>
     teacherHttpApi.getTeacherList(query),
   getActiveTeachers: () => fetchAllTeachers("true"),
-  getAllTeachers: () => fetchAllTeachers("all"),
   getTeacherById: (teacherId: number) =>
     teacherHttpApi.getTeacherById(teacherId),
   updateTeacher: (teacherId: number, body: TeacherUpdateRequest) =>
