@@ -13,7 +13,13 @@ import { THEME_STORAGE_KEY } from "./lib/theme";
 import { ThemeProvider } from "~/components/providers/ThemeProvider";
 import "./app.css";
 
-export const links: Route.LinksFunction = () => [];
+export const links: Route.LinksFunction = () => [
+  {
+    rel: "icon",
+    href: "/recwatch-logo.svg",
+    type: "image/svg+xml",
+  },
+];
 
 export function Layout({ children }: { children: ReactNode }) {
   return (
