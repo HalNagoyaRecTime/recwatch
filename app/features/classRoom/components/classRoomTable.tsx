@@ -31,7 +31,7 @@ export function ClassRoomTable({
 }: ClassRoomTableProps) {
   const columns: readonly DataTableColumn<ClassRoomData>[] = [
     {
-      header: "クラスID",
+      header: "ID",
       id: "class-room-id",
       sortable: true,
       width: { type: "fixed", value: 100 },
@@ -59,7 +59,7 @@ export function ClassRoomTable({
       renderCell: (classRoom) => classRoom.teacher?.displayName ?? "未設定",
     },
     {
-      align: "end",
+      align: "start",
       edge: "right",
       header: "学生数",
       id: "student-count",
