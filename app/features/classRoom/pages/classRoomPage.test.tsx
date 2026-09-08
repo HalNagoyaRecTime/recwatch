@@ -11,14 +11,14 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { ClassRoomManagementApi } from "~/features/classRoom/api";
 import { ClassRoomPage } from "~/features/classRoom/pages/classRoomPage";
-import type { ClassRoomData } from "~/features/classRoom/model/classRoom";
+import type { ClassRoom } from "~/features/classRoom/model/classRoom";
 
 afterEach(() => {
   cleanup();
   vi.restoreAllMocks();
 });
 
-const firstClassRoom: ClassRoomData = {
+const firstClassRoom: ClassRoom = {
   classRoomId: 1,
   classCode: "1A",
   className: "1年A組",
@@ -54,7 +54,8 @@ describe("ClassRoomPage", () => {
     render(
       <MemoryRouter initialEntries={["/classroom"]}>
         <ClassRoomPage
-          classRooms={[firstClassRoom]}
+          api={createApi()}
+          items={[firstClassRoom]}
           teacherOptions={[]}
           total={51}
         />
@@ -87,7 +88,11 @@ describe("ClassRoomPage", () => {
     const user = userEvent.setup();
     render(
       <MemoryRouter initialEntries={["/classroom"]}>
-        <ClassRoomPage classRooms={[firstClassRoom]} teacherOptions={[]} />
+        <ClassRoomPage
+          api={createApi()}
+          items={[firstClassRoom]}
+          teacherOptions={[]}
+        />
         <LocationProbe />
       </MemoryRouter>
     );
@@ -113,7 +118,12 @@ describe("ClassRoomPage", () => {
   it("新規登録リンクは現在の一覧条件を維持する", () => {
     render(
       <MemoryRouter initialEntries={["/classroom?search=1A&page=2"]}>
-        <ClassRoomPage classRooms={[]} teacherOptions={[]} total={100} />
+        <ClassRoomPage
+          api={createApi()}
+          items={[]}
+          teacherOptions={[]}
+          total={100}
+        />
       </MemoryRouter>
     );
 
@@ -125,7 +135,7 @@ describe("ClassRoomPage", () => {
 
   it("既存クラスを編集して更新後に一覧を再取得する", async () => {
     const user = userEvent.setup();
-    const updated: ClassRoomData = {
+    const updated: ClassRoom = {
       ...firstClassRoom,
       classCode: "2A",
       className: "2年A組",
@@ -144,7 +154,7 @@ describe("ClassRoomPage", () => {
       <MemoryRouter>
         <ClassRoomPage
           api={api}
-          classRooms={[firstClassRoom]}
+          items={[firstClassRoom]}
           teacherOptions={[{ teacherId: 8, displayName: "鈴木教官" }]}
         />
       </MemoryRouter>
@@ -190,11 +200,7 @@ describe("ClassRoomPage", () => {
 
     render(
       <MemoryRouter>
-        <ClassRoomPage
-          api={api}
-          classRooms={[firstClassRoom]}
-          teacherOptions={[]}
-        />
+        <ClassRoomPage api={api} items={[firstClassRoom]} teacherOptions={[]} />
       </MemoryRouter>
     );
 
@@ -216,11 +222,7 @@ describe("ClassRoomPage", () => {
 
     render(
       <MemoryRouter>
-        <ClassRoomPage
-          api={api}
-          classRooms={[firstClassRoom]}
-          teacherOptions={[]}
-        />
+        <ClassRoomPage api={api} items={[firstClassRoom]} teacherOptions={[]} />
       </MemoryRouter>
     );
 

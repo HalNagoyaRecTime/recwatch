@@ -69,5 +69,14 @@ describe("notification audience response mapper", () => {
         offset: 0,
       })
     ).toThrowError(new ClientError(ClientErrors.RESPONSE_PARSE_ERROR));
+
+    expect(() =>
+      toClassRoomAudiencePage({
+        classrooms: [],
+        total: 0,
+        limit: 100,
+        offset: 0,
+      })
+    ).toThrowError(new ClientError(ClientErrors.RESPONSE_PARSE_ERROR));
   });
 });

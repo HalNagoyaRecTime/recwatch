@@ -4,10 +4,10 @@ import { useState } from "react";
 import { Button } from "~/components/ui/button/Button";
 import { Menu, type MenuItemType } from "~/components/ui/navigation/Menu";
 import { FloatingPanel } from "~/components/ui/panel/FloatingPanel";
-import type { ClassRoomData } from "~/features/classRoom/model/classRoom";
+import type { ClassRoom } from "~/features/classRoom/model/classRoom";
 
 type ClassRoomActionMenuProps = {
-  classRoom: ClassRoomData;
+  classRoom: ClassRoom;
   disabled?: boolean;
   onDelete: () => void;
   onEdit: () => void;

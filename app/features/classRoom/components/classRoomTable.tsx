@@ -6,15 +6,15 @@ import type {
   DataTableSort,
 } from "~/components/ui/data-table/data-table-types";
 import { ClassRoomActionMenu } from "~/features/classRoom/components/classRoomActionMenu";
-import type { ClassRoomData } from "~/features/classRoom/model/classRoom";
+import type { ClassRoom } from "~/features/classRoom/model/classRoom";
 
 type ClassRoomTableProps = {
   emptyMessage?: string;
   footer?: ReactNode;
   isMutating?: boolean;
-  items: readonly ClassRoomData[];
-  onDelete?: (classRoom: ClassRoomData) => void;
-  onEdit?: (classRoom: ClassRoomData) => void;
+  items: readonly ClassRoom[];
+  onDelete?: (classRoom: ClassRoom) => void;
+  onEdit?: (classRoom: ClassRoom) => void;
   onSortChange?: (columnId: string) => void;
   sort?: DataTableSort;
 };
@@ -29,7 +29,7 @@ export function ClassRoomTable({
   onSortChange,
   sort,
 }: ClassRoomTableProps) {
-  const columns: readonly DataTableColumn<ClassRoomData>[] = [
+  const columns: readonly DataTableColumn<ClassRoom>[] = [
     {
       header: "ID",
       id: "class-room-id",

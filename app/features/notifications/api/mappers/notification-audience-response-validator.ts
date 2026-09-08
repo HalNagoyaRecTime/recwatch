@@ -6,8 +6,7 @@ import type {
 } from "~/features/notifications/api/dto/notification-audience-api-dto";
 
 type ClassRoomAudiencePageResponse = {
-  items?: unknown[];
-  classrooms?: unknown[];
+  items: unknown[];
   total: number;
   limit: number;
   offset: number;
@@ -16,16 +15,9 @@ type ClassRoomAudiencePageResponse = {
 export function isClassRoomAudiencePageResponse(
   value: unknown
 ): value is ClassRoomAudiencePageResponse {
-  const classrooms =
-    isRecord(value) && Array.isArray(value.items)
-      ? value.items
-      : isRecord(value) && Array.isArray(value.classrooms)
-        ? value.classrooms
-        : null;
-
   return (
     isRecord(value) &&
-    classrooms !== null &&
+    Array.isArray(value.items) &&
     isNonNegativeInteger(value.total) &&
     isPositiveInteger(value.limit) &&
     isNonNegativeInteger(value.offset)
