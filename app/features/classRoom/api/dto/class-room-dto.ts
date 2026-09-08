@@ -20,18 +20,6 @@ export type ClassRoomPageDTO = {
   offset: number;
 };
 
-/** API移行期間に旧レスポンスも読み取れるようにします。 */
-export type LegacyClassRoomPageDTO = {
-  classrooms: ClassRoomDTO[];
-  total: number;
-  limit: number;
-  offset: number;
-};
-
-export type ClassRoomListResponseDTO =
-  | ClassRoomPageDTO
-  | LegacyClassRoomPageDTO;
-
 export type ClassRoomWriteDTO = {
   classCode: string;
   className: string;

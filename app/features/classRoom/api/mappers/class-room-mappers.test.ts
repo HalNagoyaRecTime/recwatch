@@ -36,7 +36,7 @@ describe("ClassRoom API mappers", () => {
     expect(toClassRoom({ ...dto, teacher: null }).teacher).toBeNull();
   });
 
-  it("items形式と旧classrooms形式のページを受け付ける", () => {
+  it("items形式のページをcamelCaseへ変換する", () => {
     expect(
       toClassRoomPage({
         items: [dto],
@@ -45,14 +45,17 @@ describe("ClassRoom API mappers", () => {
         offset: 0,
       }).items
     ).toHaveLength(1);
-    expect(
+  });
+
+  it("旧classrooms形式は受け付けない", () => {
+    expect(() =>
       toClassRoomPage({
         classrooms: [dto],
         total: 1,
         limit: 50,
         offset: 0,
-      }).items
-    ).toHaveLength(1);
+      })
+    ).toThrow("クラス一覧APIのレスポンス形式が不正です。");
   });
 
   it("ページの形式が不正ならエラーにする", () => {
@@ -60,6 +63,15 @@ describe("ClassRoom API mappers", () => {
       toClassRoomPage({
         items: [],
         total: -1,
+        limit: 50,
+        offset: 0,
+      })
+    ).toThrow("クラス一覧APIのレスポンス形式が不正です。");
+
+    expect(() =>
+      toClassRoomPage({
+        items: [{ ...dto, teacher: { invalid: true } }],
+        total: 1,
         limit: 50,
         offset: 0,
       })

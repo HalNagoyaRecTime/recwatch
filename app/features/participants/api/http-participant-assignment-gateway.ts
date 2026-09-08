@@ -34,12 +34,7 @@ export function createHttpParticipantAssignmentGateway(
         gatheringSpotsResponse,
         gatheringsResponse,
       ] = await Promise.all([
-        loadAllPageItems(
-          client,
-          "/api/v1/classrooms",
-          ["items", "classrooms"],
-          isClassroom
-        ),
+        loadAllPageItems(client, "/api/v1/classrooms", "items", isClassroom),
         loadAllPageItems(client, "/api/v1/students", "items", isStudent),
         loadAllPageItems(client, "/api/v1/events", "events", isEvent),
         client.get("/api/v1/gathering-spots"),
@@ -108,17 +103,12 @@ function parseBaseResponses(
 function loadAllPageItems<T>(
   client: ParticipantApiClient,
   path: string,
-  keys: string | readonly string[],
+  key: string,
   guard: (value: unknown) => value is T
 ): Promise<T[]> {
   return loadAllPages(async (offset, limit) => {
     const value = await client.get(`${path}?limit=${limit}&offset=${offset}`);
-    const items =
-      isRecord(value) && Array.isArray(keys)
-        ? keys.find((key) => Array.isArray(value[key]))
-        : keys;
-    const pageItems =
-      isRecord(value) && typeof items === "string" ? value[items] : undefined;
+    const pageItems = isRecord(value) ? value[key] : undefined;
     if (
       !isRecord(value) ||
       !Array.isArray(pageItems) ||

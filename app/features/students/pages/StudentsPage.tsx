@@ -8,7 +8,7 @@ import { Select } from "~/components/ui/form/Select";
 import { PageHeader } from "~/components/ui/layout/PageHeader";
 import { FormModal } from "~/components/ui/modal/FormModal";
 import { Pagination } from "~/components/ui/navigation/Pagination";
-import type { ClassRoomData } from "~/features/classRoom/model/classRoom";
+import type { ClassRoom } from "~/features/classRoom/model/classRoom";
 import { getClassRoomData } from "~/features/classRoom/application/class-room-options";
 import { ImportUploadTrigger } from "~/features/master-import/components/ImportUploadTrigger";
 import {
@@ -36,7 +36,7 @@ import { getErrorMessage } from "~/lib/client-error";
 
 type StudentsPageProps = {
   api?: StudentManagementApi;
-  loadClassRooms?: () => Promise<ClassRoomData[]>;
+  loadClassRooms?: () => Promise<ClassRoom[]>;
   limit?: number;
   onRevalidate?: () => Promise<void>;
   offset?: number;
@@ -58,7 +58,7 @@ export function StudentsPage({
   const [searchParams, setSearchParams] = useSearchParams();
   const [students, setStudents] = useState<StudentRow[]>(initialStudents ?? []);
   const [total, setTotal] = useState(initialTotal ?? 0);
-  const [classRooms, setClassRooms] = useState<ClassRoomData[]>([]);
+  const [classRooms, setClassRooms] = useState<ClassRoom[]>([]);
   const [searchInput, setSearchInput] = useState("");
   const [editingStudent, setEditingStudent] = useState<StudentRow | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);

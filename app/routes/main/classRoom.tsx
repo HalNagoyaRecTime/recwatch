@@ -6,6 +6,7 @@ import {
   useRouteError,
 } from "react-router";
 
+import { ClassRoomApi } from "~/features/classRoom/api";
 import { loadClassRoomListPage } from "~/features/classRoom/application/class-room-loaders";
 import { parseClassRoomListUrl } from "~/features/classRoom/application/class-room-list-url";
 import { ClassRoomPage } from "~/features/classRoom/pages/classRoomPage";
@@ -21,7 +22,7 @@ export async function clientLoader({ request }: { request: Request }) {
   const { page, search, sortBy, sortOrder } =
     parseClassRoomListUrl(searchParams);
   const [classRoomPage, teachers] = await Promise.all([
-    loadClassRoomListPage({
+    loadClassRoomListPage(ClassRoomApi, {
       limit: CLASS_ROOM_LIST_LIMIT,
       offset: (page - 1) * CLASS_ROOM_LIST_LIMIT,
       search: search || undefined,
@@ -77,6 +78,7 @@ export default function ClassRoomRoute() {
       <PageLayout>
         <PagePadding>
           <ClassRoomPage
+            api={ClassRoomApi}
             {...page}
             onRevalidate={() => revalidator.revalidate()}
           />

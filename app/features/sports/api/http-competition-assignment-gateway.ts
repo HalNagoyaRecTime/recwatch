@@ -32,12 +32,7 @@ export function createHttpCompetitionAssignmentGateway(
     async load() {
       const [classrooms, students, events, spots, gatherings] =
         await Promise.all([
-          loadAllPageItems(
-            client,
-            "/api/v1/classrooms",
-            ["items", "classrooms"],
-            toClassroom
-          ),
+          loadAllPageItems(client, "/api/v1/classrooms", "items", toClassroom),
           loadAllPageItems(client, "/api/v1/students", "items", toStudent),
           loadAllPageItems(client, "/api/v1/events", "events", toEvent),
           client.get("/api/v1/gathering-spots"),
@@ -128,17 +123,12 @@ export const httpCompetitionAssignmentGateway =
 function loadAllPageItems<T>(
   client: AssignmentApiClient,
   path: string,
-  keys: string | readonly string[],
+  key: string,
   mapper: (value: unknown) => T | null
 ): Promise<T[]> {
   return loadAllPages(async (offset, limit) => {
     const value = await client.get(`${path}?limit=${limit}&offset=${offset}`);
-    const items =
-      isRecord(value) && Array.isArray(keys)
-        ? keys.find((key) => Array.isArray(value[key]))
-        : keys;
-    const pageItems =
-      isRecord(value) && typeof items === "string" ? value[items] : undefined;
+    const pageItems = isRecord(value) ? value[key] : undefined;
     if (
       !isRecord(value) ||
       !Array.isArray(pageItems) ||

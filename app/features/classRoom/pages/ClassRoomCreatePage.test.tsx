@@ -64,8 +64,13 @@ describe("ClassRoomCreatePage", () => {
   it("登録成功後に一覧へ戻り、現在の検索条件を維持する", async () => {
     const user = userEvent.setup();
     const api = createApi({ createClassRoom: vi.fn().mockResolvedValue({}) });
+    const onRevalidate = vi.fn().mockResolvedValue(undefined);
     const listLoader = renderCreatePage(
-      <ClassRoomCreatePage api={api} teacherOptions={[]} />
+      <ClassRoomCreatePage
+        api={api}
+        onRevalidate={onRevalidate}
+        teacherOptions={[]}
+      />
     );
 
     await user.type(
@@ -79,7 +84,8 @@ describe("ClassRoomCreatePage", () => {
     await user.click(await screen.findByRole("button", { name: "保存する" }));
 
     expect(await screen.findByText("クラス一覧")).toBeInTheDocument();
-    await waitFor(() => expect(listLoader).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(onRevalidate).toHaveBeenCalledTimes(1));
+    expect(listLoader).toHaveBeenCalledTimes(1);
     expect(screen.getByTestId("location-search")).toHaveTextContent(
       "search=1A&page=2"
     );

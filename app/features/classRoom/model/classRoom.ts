@@ -12,8 +12,6 @@ export type ClassRoom = {
   teacher: ClassRoomTeacher | null;
 };
 
-export type ClassRoomData = ClassRoom;
-
 export type ClassRoomPage = {
   items: ClassRoom[];
   total: number;

@@ -1,6 +1,6 @@
 import { Plus } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { useLocation, useSearchParams } from "react-router";
+import { useLocation } from "react-router";
 
 import { ButtonLink } from "~/components/ui/button/ButtonLink";
 import { SearchField } from "~/components/ui/form/SearchField";
@@ -10,29 +10,25 @@ import { Pagination } from "~/components/ui/navigation/Pagination";
 import type {
   ClassRoomListSortBy,
   ClassRoomManagementApi,
-} from "~/features/classRoom/api";
-import { ClassRoomApi } from "~/features/classRoom/api";
-import {
-  parseClassRoomListUrl,
-  updateClassRoomListUrl,
-} from "~/features/classRoom/application/class-room-list-url";
+} from "~/features/classRoom/api/contracts/class-room-api";
 import {
   ClassRoomForm,
   type ClassRoomTeacherOption,
 } from "~/features/classRoom/components/ClassRoomForm";
 import { ClassRoomTable } from "~/features/classRoom/components/classRoomTable";
+import { useClassRoomList } from "~/features/classRoom/hooks/useClassRoomList";
+import { useClassRoomMutation } from "~/features/classRoom/hooks/useClassRoomMutation";
+import { useClassRoomListUrl } from "~/features/classRoom/hooks/useClassRoomListUrl";
 import { emptyClassRoomForm } from "~/features/classRoom/model/classRoom-form";
 import type {
-  ClassRoomData,
+  ClassRoom,
   ClassRoomWriteInput,
 } from "~/features/classRoom/model/classRoom";
 import { ImportUploadTrigger } from "~/features/master-import/components/ImportUploadTrigger";
-import { getErrorMessage } from "~/lib/client-error";
 
 type ClassRoomPageProps = {
-  api?: ClassRoomManagementApi;
-  classRooms?: readonly ClassRoomData[];
-  items?: readonly ClassRoomData[];
+  api: ClassRoomManagementApi;
+  items?: readonly ClassRoom[];
   limit?: number;
   offset?: number;
   onRevalidate?: () => Promise<void> | void;
@@ -41,8 +37,7 @@ type ClassRoomPageProps = {
 };
 
 export function ClassRoomPage({
-  api = ClassRoomApi,
-  classRooms,
+  api,
   items,
   limit: initialLimit,
   offset: initialOffset,
@@ -51,30 +46,22 @@ export function ClassRoomPage({
   total: initialTotal,
 }: ClassRoomPageProps) {
   const location = useLocation();
-  const [searchParams, setSearchParams] = useSearchParams();
-  const { page, search, sortBy, sortOrder } =
-    parseClassRoomListUrl(searchParams);
-  const [searchInput, setSearchInput] = useState(search);
-  const [editing, setEditing] = useState<ClassRoomData | null>(null);
+  const {
+    handleSortChange,
+    page,
+    search,
+    searchInput,
+    setSearchInput,
+    sortBy,
+    sortOrder,
+    updateSearchParams,
+  } = useClassRoomListUrl();
+  const [editing, setEditing] = useState<ClassRoom | null>(null);
   const [form, setForm] = useState<ClassRoomWriteInput>(emptyClassRoomForm);
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [isMutating, setIsMutating] = useState(false);
-  const [actionError, setActionError] = useState<string | null>(null);
-  const [loadError, setLoadError] = useState<string | null>(null);
-  const [listItems, setListItems] = useState<ClassRoomData[]>(() => [
-    ...(items ?? classRooms ?? []),
-  ]);
-  const [listTotal, setListTotal] = useState(
-    initialTotal ?? (items ?? classRooms ?? []).length
-  );
-  const [isLoading, setIsLoading] = useState(
-    items === undefined && classRooms === undefined
-  );
   const pageSize = initialLimit ?? 50;
   const offset = initialOffset ?? (page - 1) * pageSize;
   const currentPage = Math.floor(offset / pageSize) + 1;
-  const pageCount = Math.max(1, Math.ceil(listTotal / pageSize));
-  const hasLoaderData = items !== undefined || classRooms !== undefined;
   const listQuery = useMemo(
     () => ({
       limit: pageSize,
@@ -85,106 +72,41 @@ export function ClassRoomPage({
     }),
     [offset, pageSize, search, sortBy, sortOrder]
   );
-
-  useEffect(() => {
-    setSearchInput(search);
-  }, [search]);
-
-  useEffect(() => {
-    if (searchInput.trim() === search) return;
-    const timer = window.setTimeout(() => {
-      setSearchParams(
-        updateClassRoomListUrl(searchParams, {
-          page: 1,
-          search: searchInput,
-        })
-      );
-    }, 250);
-    return () => window.clearTimeout(timer);
-  }, [searchInput, search, searchParams, setSearchParams]);
-
-  useEffect(() => {
-    if (!hasLoaderData) return;
-    setListItems([...(items ?? classRooms ?? [])]);
-    setListTotal(initialTotal ?? (items ?? classRooms ?? []).length);
-    setIsLoading(false);
-  }, [classRooms, hasLoaderData, initialTotal, items]);
-
-  useEffect(() => {
-    if (hasLoaderData) return;
-    let isCurrent = true;
-    setIsLoading(true);
-    api
-      .getClassRoomList(listQuery)
-      .then((result) => {
-        if (!isCurrent) return;
-        setListItems(result.items);
-        setListTotal(result.total);
-        setLoadError(null);
-      })
-      .catch((error: unknown) => {
-        if (isCurrent) {
-          setLoadError(
-            getErrorMessage(error, "クラス一覧の取得に失敗しました。")
-          );
-        }
-      })
-      .finally(() => {
-        if (isCurrent) setIsLoading(false);
-      });
-
-    return () => {
-      isCurrent = false;
-    };
-  }, [api, hasLoaderData, listQuery]);
+  const {
+    error: loadError,
+    isLoading,
+    items: listItems,
+    refresh,
+    total: listTotal,
+  } = useClassRoomList({
+    api,
+    initialItems: items,
+    initialTotal,
+    onRevalidate,
+    query: listQuery,
+  });
+  const {
+    clearError,
+    error: actionError,
+    isMutating,
+    remove,
+    update,
+  } = useClassRoomMutation({ api, refresh });
+  const pageCount = Math.max(1, Math.ceil(listTotal / pageSize));
 
   useEffect(() => {
     if (currentPage <= pageCount) return;
-    setSearchParams(updateClassRoomListUrl(searchParams, { page: pageCount }), {
-      replace: true,
-    });
-  }, [currentPage, pageCount, searchParams, setSearchParams]);
+    updateSearchParams({ page: pageCount }, true);
+  }, [currentPage, pageCount, updateSearchParams]);
 
-  function updateSearchParams(
-    updates: Parameters<typeof updateClassRoomListUrl>[1],
-    replace = false
-  ) {
-    setSearchParams(updateClassRoomListUrl(searchParams, updates), { replace });
-  }
-
-  function handleSortChange(columnId: string) {
-    const sortColumns: Record<string, ClassRoomListSortBy> = {
-      "class-room-id": "classRoomId",
-      "class-room-code": "classCode",
-      "class-room-name": "className",
-      "teacher-name": "teacherName",
-      "student-count": "studentCount",
-    };
-    const nextSortBy = sortColumns[columnId];
-    if (!nextSortBy) return;
-
-    setSearchParams((currentSearchParams) => {
-      const currentState = parseClassRoomListUrl(currentSearchParams);
-      const nextSortOrder =
-        currentState.sortBy === nextSortBy && currentState.sortOrder === "asc"
-          ? "desc"
-          : "asc";
-      return updateClassRoomListUrl(currentSearchParams, {
-        page: 1,
-        sortBy: nextSortBy,
-        sortOrder: nextSortOrder,
-      });
-    });
-  }
-
-  function openEditForm(classRoom: ClassRoomData) {
+  function openEditForm(classRoom: ClassRoom) {
     setEditing(classRoom);
     setForm({
       classCode: classRoom.classCode,
       className: classRoom.className,
       teacherId: classRoom.teacher?.teacherId ?? null,
     });
-    setActionError(null);
+    clearError();
     setIsFormOpen(true);
   }
 
@@ -192,39 +114,18 @@ export function ClassRoomPage({
     setIsFormOpen(false);
     setEditing(null);
     setForm(emptyClassRoomForm);
-    setActionError(null);
-  }
-
-  async function refreshList() {
-    if (onRevalidate) {
-      await onRevalidate();
-      return null;
-    }
-
-    const refreshed = await api.getClassRoomList(listQuery);
-    setListItems(refreshed.items);
-    setListTotal(refreshed.total);
-    setLoadError(null);
-    return refreshed;
+    clearError();
   }
 
   async function saveClassRoom(input: ClassRoomWriteInput) {
-    if (isMutating || !editing) return;
+    if (!editing) return;
 
-    setIsMutating(true);
-    setActionError(null);
-    try {
-      await api.updateClassRoom(editing.classRoomId, input);
-      await refreshList();
+    if (await update(editing.classRoomId, input)) {
       closeForm();
-    } catch (error) {
-      setActionError(getErrorMessage(error, "クラスを保存できませんでした。"));
-    } finally {
-      setIsMutating(false);
     }
   }
 
-  async function deleteClassRoom(classRoom: ClassRoomData) {
+  async function deleteClassRoom(classRoom: ClassRoom) {
     if (
       isMutating ||
       !window.confirm(
@@ -234,23 +135,14 @@ export function ClassRoomPage({
       return;
     }
 
-    setIsMutating(true);
-    setActionError(null);
-    try {
-      await api.deleteClassRoom(classRoom.classRoomId);
-      const refreshed = await refreshList();
-      if (
-        refreshed &&
-        refreshed.items.length === 0 &&
-        refreshed.total > 0 &&
-        currentPage > 1
-      ) {
-        updateSearchParams({ page: currentPage - 1 }, true);
-      }
-    } catch (error) {
-      setActionError(getErrorMessage(error, "クラスを削除できませんでした。"));
-    } finally {
-      setIsMutating(false);
+    const refreshed = await remove(classRoom.classRoomId);
+    if (
+      refreshed &&
+      refreshed.items.length === 0 &&
+      refreshed.total > 0 &&
+      currentPage > 1
+    ) {
+      updateSearchParams({ page: currentPage - 1 }, true);
     }
   }
 
@@ -279,7 +171,7 @@ export function ClassRoomPage({
           <SearchField
             ariaLabel="クラスを検索"
             onValueChange={setSearchInput}
-            placeholder="ID・クラスコード・クラス名・担当教官で検索..."
+            placeholder="クラスコード・クラス名・担当教官で検索..."
             value={searchInput}
           />
         </div>

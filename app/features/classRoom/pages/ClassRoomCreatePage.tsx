@@ -1,11 +1,8 @@
 import { useState } from "react";
-import { useLocation, useNavigate, useRevalidator } from "react-router";
+import { useLocation, useNavigate } from "react-router";
 
 import { FormModal } from "~/components/ui/modal/FormModal";
-import {
-  ClassRoomApi,
-  type ClassRoomManagementApi,
-} from "~/features/classRoom/api";
+import type { ClassRoomManagementApi } from "~/features/classRoom/api/contracts/class-room-api";
 import {
   ClassRoomForm,
   type ClassRoomTeacherOption,
@@ -15,17 +12,18 @@ import type { ClassRoomWriteInput } from "~/features/classRoom/model/classRoom";
 import { getErrorMessage } from "~/lib/client-error";
 
 type ClassRoomCreatePageProps = {
-  api?: ClassRoomManagementApi;
+  api: ClassRoomManagementApi;
+  onRevalidate?: () => Promise<void> | void;
   teacherOptions: readonly ClassRoomTeacherOption[];
 };
 
 export function ClassRoomCreatePage({
-  api = ClassRoomApi,
+  api,
+  onRevalidate,
   teacherOptions,
 }: ClassRoomCreatePageProps) {
   const location = useLocation();
   const navigate = useNavigate();
-  const revalidator = useRevalidator();
   const [form, setForm] = useState<ClassRoomWriteInput>(emptyClassRoomForm);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -41,7 +39,7 @@ export function ClassRoomCreatePage({
     setSubmitError(null);
     try {
       await api.createClassRoom(input);
-      await revalidator.revalidate();
+      await onRevalidate?.();
       navigateToList();
     } catch (error) {
       setSubmitError(getErrorMessage(error, "クラスの登録に失敗しました。"));

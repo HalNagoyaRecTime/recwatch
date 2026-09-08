@@ -11,6 +11,27 @@ const classRoom = {
 };
 
 describe("ClassRoom HTTP API", () => {
+  it("Query未指定時はAPIの既定ページ条件を明示する", async () => {
+    const get = vi.fn().mockResolvedValue({
+      items: [],
+      total: 0,
+      limit: 50,
+      offset: 0,
+    });
+    const api = createClassRoomHttpApi({
+      get,
+      post: vi.fn(),
+      put: vi.fn(),
+      delete: vi.fn(),
+    });
+
+    await api.getClassRoomList();
+
+    expect(get).toHaveBeenCalledWith(
+      "/api/v1/classrooms?limit=50&offset=0&sortBy=classRoomId&sortOrder=asc"
+    );
+  });
+
   it("一覧QueryをAPIのsearch/sort/paginationへ変換する", async () => {
     const get = vi.fn().mockResolvedValue({
       items: [classRoom],

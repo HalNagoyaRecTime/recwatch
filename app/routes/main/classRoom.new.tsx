@@ -1,5 +1,6 @@
-import { useLoaderData } from "react-router";
+import { useLoaderData, useRevalidator } from "react-router";
 
+import { ClassRoomApi } from "~/features/classRoom/api";
 import { ClassRoomCreatePage } from "~/features/classRoom/pages/ClassRoomCreatePage";
 import { TeacherApi } from "~/features/teachers/api";
 import { createPageTitle } from "~/lib/page-title";
@@ -20,5 +21,12 @@ export async function clientLoader() {
 
 export default function ClassRoomCreateRoute() {
   const { teacherOptions } = useLoaderData<typeof clientLoader>();
-  return <ClassRoomCreatePage teacherOptions={teacherOptions} />;
+  const revalidator = useRevalidator();
+  return (
+    <ClassRoomCreatePage
+      api={ClassRoomApi}
+      onRevalidate={() => revalidator.revalidate()}
+      teacherOptions={teacherOptions}
+    />
+  );
 }
