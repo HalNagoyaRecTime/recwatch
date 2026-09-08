@@ -70,6 +70,16 @@ describe("ClassRoomPage", () => {
     expect(
       screen.getByRole("navigation", { name: "ページネーション" })
     ).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "新規登録" })).toHaveAttribute(
+      "href",
+      "/classroom/new"
+    );
+    expect(
+      screen.getByRole("button", { name: "ID列の幅を変更" })
+    ).toBeInTheDocument();
+    expect(screen.getByRole("columnheader", { name: "学生数" })).toHaveClass(
+      "justify-start"
+    );
     expect(screen.getByText("1年A組")).toBeInTheDocument();
   });
 
@@ -100,63 +110,17 @@ describe("ClassRoomPage", () => {
     );
   });
 
-  it("クラスを登録した後は現在の一覧条件で再取得する", async () => {
-    const user = userEvent.setup();
-    const created: ClassRoomData = {
-      classRoomId: 2,
-      classCode: "1B",
-      className: "1年B組",
-      studentCount: 0,
-      teacher: null,
-    };
-    const getClassRoomList = vi.fn().mockResolvedValue({
-      items: [created],
-      total: 1,
-      limit: 50,
-      offset: 0,
-    });
-    const createClassRoom = vi.fn().mockResolvedValue(created);
-    const api = createApi({ createClassRoom, getClassRoomList });
-
+  it("新規登録リンクは現在の一覧条件を維持する", () => {
     render(
       <MemoryRouter initialEntries={["/classroom?search=1A&page=2"]}>
-        <ClassRoomPage
-          api={api}
-          classRooms={[]}
-          teacherOptions={[]}
-          total={100}
-        />
+        <ClassRoomPage classRooms={[]} teacherOptions={[]} total={100} />
       </MemoryRouter>
     );
 
-    await user.click(screen.getByRole("button", { name: "新規登録" }));
-    await user.type(
-      screen.getByRole("textbox", { name: "クラスコード*" }),
-      "1B"
+    expect(screen.getByRole("link", { name: "新規登録" })).toHaveAttribute(
+      "href",
+      "/classroom/new?search=1A&page=2"
     );
-    await user.type(
-      screen.getByRole("textbox", { name: "クラス名*" }),
-      "1年B組"
-    );
-    await user.click(screen.getByRole("button", { name: "保存する" }));
-
-    await waitFor(() =>
-      expect(createClassRoom).toHaveBeenCalledWith({
-        classCode: "1B",
-        className: "1年B組",
-        teacherId: null,
-      })
-    );
-    await waitFor(() =>
-      expect(getClassRoomList).toHaveBeenCalledWith({
-        limit: 50,
-        offset: 50,
-        search: "1A",
-        sortBy: undefined,
-        sortOrder: undefined,
-      })
-    );
-    expect(await screen.findByText("1年B組")).toBeInTheDocument();
   });
 
   it("既存クラスを編集して更新後に一覧を再取得する", async () => {
@@ -247,24 +211,21 @@ describe("ClassRoomPage", () => {
   it("保存エラーはフォームを閉じたときに消去する", async () => {
     const user = userEvent.setup();
     const api = createApi({
-      createClassRoom: vi.fn().mockRejectedValue(new Error("保存失敗")),
+      updateClassRoom: vi.fn().mockRejectedValue(new Error("保存失敗")),
     });
 
     render(
       <MemoryRouter>
-        <ClassRoomPage api={api} classRooms={[]} teacherOptions={[]} />
+        <ClassRoomPage
+          api={api}
+          classRooms={[firstClassRoom]}
+          teacherOptions={[]}
+        />
       </MemoryRouter>
     );
 
-    await user.click(screen.getByRole("button", { name: "新規登録" }));
-    await user.type(
-      screen.getByRole("textbox", { name: "クラスコード*" }),
-      "1A"
-    );
-    await user.type(
-      screen.getByRole("textbox", { name: "クラス名*" }),
-      "1年A組"
-    );
+    await user.click(screen.getByRole("button", { name: "1年A組の操作" }));
+    await user.click(screen.getByRole("button", { name: "クラスを編集する" }));
     await user.click(screen.getByRole("button", { name: "保存する" }));
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "クラスを保存できませんでした。"

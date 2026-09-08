@@ -34,7 +34,7 @@ export function ClassRoomTable({
       header: "ID",
       id: "class-room-id",
       sortable: true,
-      width: { type: "fixed", value: 100 },
+      width: { type: "fluid", min: 70, max: 180, grow: 0.5 },
       renderCell: (classRoom) => classRoom.classRoomId,
     },
     {

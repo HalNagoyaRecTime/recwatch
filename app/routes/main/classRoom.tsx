@@ -1,5 +1,6 @@
 import {
   isRouteErrorResponse,
+  Outlet,
   useLoaderData,
   useRevalidator,
   useRouteError,
@@ -72,13 +73,16 @@ export default function ClassRoomRoute() {
   const revalidator = useRevalidator();
 
   return (
-    <PageLayout>
-      <PagePadding>
-        <ClassRoomPage
-          {...page}
-          onRevalidate={() => revalidator.revalidate()}
-        />
-      </PagePadding>
-    </PageLayout>
+    <>
+      <PageLayout>
+        <PagePadding>
+          <ClassRoomPage
+            {...page}
+            onRevalidate={() => revalidator.revalidate()}
+          />
+        </PagePadding>
+      </PageLayout>
+      <Outlet />
+    </>
   );
 }
