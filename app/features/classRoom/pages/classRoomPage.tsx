@@ -1,8 +1,8 @@
 import { Plus } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { useSearchParams } from "react-router";
+import { useLocation, useSearchParams } from "react-router";
 
-import { Button } from "~/components/ui/button/Button";
+import { ButtonLink } from "~/components/ui/button/ButtonLink";
 import { SearchField } from "~/components/ui/form/SearchField";
 import { PageHeader } from "~/components/ui/layout/PageHeader";
 import { FormModal } from "~/components/ui/modal/FormModal";
@@ -16,18 +16,18 @@ import {
   parseClassRoomListUrl,
   updateClassRoomListUrl,
 } from "~/features/classRoom/application/class-room-list-url";
+import {
+  ClassRoomForm,
+  type ClassRoomTeacherOption,
+} from "~/features/classRoom/components/ClassRoomForm";
 import { ClassRoomTable } from "~/features/classRoom/components/classRoomTable";
+import { emptyClassRoomForm } from "~/features/classRoom/model/classRoom-form";
 import type {
   ClassRoomData,
   ClassRoomWriteInput,
 } from "~/features/classRoom/model/classRoom";
 import { ImportUploadTrigger } from "~/features/master-import/components/ImportUploadTrigger";
 import { getErrorMessage } from "~/lib/client-error";
-
-type TeacherOption = {
-  teacherId: number;
-  displayName: string;
-};
 
 type ClassRoomPageProps = {
   api?: ClassRoomManagementApi;
@@ -36,14 +36,8 @@ type ClassRoomPageProps = {
   limit?: number;
   offset?: number;
   onRevalidate?: () => Promise<void> | void;
-  teacherOptions: readonly TeacherOption[];
+  teacherOptions: readonly ClassRoomTeacherOption[];
   total?: number;
-};
-
-const emptyForm: ClassRoomWriteInput = {
-  classCode: "",
-  className: "",
-  teacherId: null,
 };
 
 export function ClassRoomPage({
@@ -56,12 +50,13 @@ export function ClassRoomPage({
   teacherOptions,
   total: initialTotal,
 }: ClassRoomPageProps) {
+  const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
   const { page, search, sortBy, sortOrder } =
     parseClassRoomListUrl(searchParams);
   const [searchInput, setSearchInput] = useState(search);
   const [editing, setEditing] = useState<ClassRoomData | null>(null);
-  const [form, setForm] = useState<ClassRoomWriteInput>(emptyForm);
+  const [form, setForm] = useState<ClassRoomWriteInput>(emptyClassRoomForm);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isMutating, setIsMutating] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
@@ -182,13 +177,6 @@ export function ClassRoomPage({
     });
   }
 
-  function openCreateForm() {
-    setEditing(null);
-    setForm(emptyForm);
-    setActionError(null);
-    setIsFormOpen(true);
-  }
-
   function openEditForm(classRoom: ClassRoomData) {
     setEditing(classRoom);
     setForm({
@@ -203,7 +191,7 @@ export function ClassRoomPage({
   function closeForm() {
     setIsFormOpen(false);
     setEditing(null);
-    setForm(emptyForm);
+    setForm(emptyClassRoomForm);
     setActionError(null);
   }
 
@@ -220,27 +208,13 @@ export function ClassRoomPage({
     return refreshed;
   }
 
-  async function saveClassRoom() {
-    if (isMutating) return;
-
-    const input = {
-      classCode: form.classCode.trim(),
-      className: form.className.trim(),
-      teacherId: form.teacherId,
-    };
-    if (!input.classCode || !input.className) {
-      setActionError("クラスコードとクラス名を入力してください。");
-      return;
-    }
+  async function saveClassRoom(input: ClassRoomWriteInput) {
+    if (isMutating || !editing) return;
 
     setIsMutating(true);
     setActionError(null);
     try {
-      if (editing) {
-        await api.updateClassRoom(editing.classRoomId, input);
-      } else {
-        await api.createClassRoom(input);
-      }
+      await api.updateClassRoom(editing.classRoomId, input);
       await refreshList();
       closeForm();
     } catch (error) {
@@ -286,16 +260,14 @@ export function ClassRoomPage({
         actions={
           <div className="flex items-center gap-2">
             <ImportUploadTrigger showHelperText={false} type="classrooms" />
-            <Button
-              disabled={isLoading || isMutating}
+            <ButtonLink
               icon={Plus}
-              onClick={openCreateForm}
               size="lg"
-              type="button"
+              to={{ pathname: "/classroom/new", search: location.search }}
               variant="primary"
             >
               新規登録
-            </Button>
+            </ButtonLink>
           </div>
         }
         description="クラスの基本情報と担当教官を管理します"
@@ -307,7 +279,7 @@ export function ClassRoomPage({
           <SearchField
             ariaLabel="クラスを検索"
             onValueChange={setSearchInput}
-            placeholder="クラスコード・クラス名・担当教官で検索..."
+            placeholder="ID・クラスコード・クラス名・担当教官で検索..."
             value={searchInput}
           />
         </div>
@@ -361,87 +333,17 @@ export function ClassRoomPage({
         <FormModal
           description="クラスコード、クラス名、担当教官を入力します"
           onClose={closeForm}
-          title={editing ? "クラスを編集" : "クラスの新規登録"}
+          title="クラスを編集"
         >
-          <form
-            className="space-y-4"
-            onSubmit={(event) => {
-              event.preventDefault();
-              void saveClassRoom();
-            }}
-          >
-            <div className="grid gap-4 sm:grid-cols-2">
-              <label className="text-text-base text-sm font-medium">
-                クラスコード <span className="text-tone-danger-text">*</span>
-                <input
-                  aria-label="クラスコード*"
-                  className={inputClassName}
-                  disabled={isMutating}
-                  maxLength={50}
-                  onChange={(event) => {
-                    const value = event.currentTarget.value;
-                    setForm((current) => ({ ...current, classCode: value }));
-                  }}
-                  value={form.classCode}
-                />
-              </label>
-              <label className="text-text-base text-sm font-medium">
-                クラス名 <span className="text-tone-danger-text">*</span>
-                <input
-                  aria-label="クラス名*"
-                  className={inputClassName}
-                  disabled={isMutating}
-                  maxLength={100}
-                  onChange={(event) => {
-                    const value = event.currentTarget.value;
-                    setForm((current) => ({ ...current, className: value }));
-                  }}
-                  value={form.className}
-                />
-              </label>
-            </div>
-            <label className="text-text-base block text-sm font-medium">
-              担当教官
-              <select
-                aria-label="担当教官"
-                className={inputClassName}
-                disabled={isMutating}
-                onChange={(event) => {
-                  const value = event.currentTarget.value;
-                  setForm((current) => ({
-                    ...current,
-                    teacherId: value ? Number(value) : null,
-                  }));
-                }}
-                value={form.teacherId ?? ""}
-              >
-                <option value="">未設定</option>
-                {teacherOptions.map((teacher) => (
-                  <option key={teacher.teacherId} value={teacher.teacherId}>
-                    {teacher.displayName}
-                  </option>
-                ))}
-              </select>
-            </label>
-            {actionError ? (
-              <p className="text-tone-danger-text text-sm" role="alert">
-                {actionError}
-              </p>
-            ) : null}
-            <div className="flex justify-end gap-3">
-              <Button
-                disabled={isMutating}
-                onClick={closeForm}
-                type="button"
-                variant="secondary"
-              >
-                キャンセル
-              </Button>
-              <Button disabled={isMutating} type="submit" variant="primary">
-                {isMutating ? "保存中..." : "保存する"}
-              </Button>
-            </div>
-          </form>
+          <ClassRoomForm
+            form={form}
+            isSubmitting={isMutating}
+            onCancel={closeForm}
+            onChange={setForm}
+            onSubmit={saveClassRoom}
+            submitError={actionError}
+            teacherOptions={teacherOptions}
+          />
         </FormModal>
       ) : null}
     </div>
@@ -457,6 +359,3 @@ function sortColumnId(sortBy: ClassRoomListSortBy) {
     studentCount: "student-count",
   }[sortBy];
 }
-
-const inputClassName =
-  "border-border-base bg-surface-base text-text-base focus:border-border-strong mt-1.5 h-9 w-full rounded-md border px-3 text-sm outline-none disabled:opacity-50";
