@@ -37,7 +37,7 @@ export function parseStudentListUrl(
       : "all",
     isLiveActive: isBooleanFilter(params.get("isLiveActive"))
       ? (params.get("isLiveActive") as StudentBooleanFilter)
-      : "all",
+      : "true",
   };
 }
 
@@ -68,7 +68,7 @@ export function updateStudentListUrl(
   if (updates.isStaff !== undefined)
     setFilterOrDelete(params, "isStaff", updates.isStaff);
   if (updates.isLiveActive !== undefined) {
-    setFilterOrDelete(params, "isLiveActive", updates.isLiveActive);
+    params.set("isLiveActive", updates.isLiveActive);
   }
 
   return params.toString();

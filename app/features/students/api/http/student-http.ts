@@ -33,7 +33,7 @@ export function createStudentHttpApi(client: StudentHttpClient = apiClient): {
         params.set("classRoomId", String(query.classRoomId));
       }
       params.set("isStaff", query.isStaff ?? "all");
-      params.set("isLiveActive", query.isLiveActive ?? "all");
+      params.set("isLiveActive", query.isLiveActive ?? "true");
       params.set("sortBy", query.sortBy ?? "studentId");
       params.set("sortOrder", query.sortOrder ?? "asc");
 
