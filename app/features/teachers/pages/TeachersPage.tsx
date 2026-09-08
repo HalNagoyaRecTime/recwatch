@@ -29,6 +29,13 @@ type TeachersPageProps = {
   total: number;
 };
 
+type RemovedTeachers = {
+  ids: Set<number>;
+  scope: string;
+};
+
+const emptyTeacherIds = new Set<number>();
+
 export function TeachersPage({
   api = TeacherApi,
   limit,
@@ -39,9 +46,10 @@ export function TeachersPage({
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [removedTeacherIds, setRemovedTeacherIds] = useState<Set<number>>(
-    () => new Set()
-  );
+  const [removedTeachers, setRemovedTeachers] = useState<RemovedTeachers>(() => ({
+    ids: new Set(),
+    scope: "",
+  }));
   const [isMutating, setIsMutating] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
   const {
@@ -49,6 +57,9 @@ export function TeachersPage({
     sortBy,
     sortOrder,
   } = parseTeacherListUrl(searchParams);
+  const listScope = [offset, limit, query, sortBy ?? "", sortOrder ?? ""].join(":");
+  const removedTeacherIds =
+    removedTeachers.scope === listScope ? removedTeachers.ids : emptyTeacherIds;
   const currentPage = Math.floor(offset / limit) + 1;
   const items = teachers.filter(
     (teacher) => !removedTeacherIds.has(teacher.teacherId)
@@ -58,16 +69,19 @@ export function TeachersPage({
 
   useEffect(() => {
     if (currentPage <= pageCount) return;
-    setRemovedTeacherIds(new Set());
     setSearchParams(updateTeacherListUrl(searchParams, { page: pageCount }), {
       replace: true,
     });
   }, [currentPage, pageCount, searchParams, setSearchParams]);
 
+  function clearRemovedTeachers() {
+    setRemovedTeachers({ ids: new Set(), scope: listScope });
+  }
+
   function updateSearchParams(
     updates: Parameters<typeof updateTeacherListUrl>[1]
   ) {
-    setRemovedTeacherIds(new Set());
+    clearRemovedTeachers();
     setSearchParams(updateTeacherListUrl(searchParams, updates));
   }
 
@@ -104,10 +118,11 @@ export function TeachersPage({
     setActionError(null);
     try {
       await api.deleteTeacher(teacher.teacherId);
-      setRemovedTeacherIds((current) => {
-        const next = new Set(current);
-        next.add(teacher.teacherId);
-        return next;
+      setRemovedTeachers((current) => {
+        const nextIds =
+          current.scope === listScope ? new Set(current.ids) : new Set<number>();
+        nextIds.add(teacher.teacherId);
+        return { ids: nextIds, scope: listScope };
       });
     } catch (error) {
       setActionError(getErrorMessage(error, "教官を削除できませんでした。"));

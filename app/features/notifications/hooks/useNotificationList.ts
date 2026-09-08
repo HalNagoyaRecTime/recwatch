@@ -18,6 +18,11 @@ type UseNotificationListOptions = {
   api: NotificationManagementApi;
 };
 
+type LoadedPage = {
+  api: NotificationManagementApi;
+  page: number;
+};
+
 export function useNotificationList({ api }: UseNotificationListOptions) {
   const [notifications, setNotifications] = useState<ManagedNotification[]>([]);
   const [total, setTotal] = useState(0);
@@ -25,7 +30,7 @@ export function useNotificationList({ api }: UseNotificationListOptions) {
   const [sort, setSort] = useState<NotificationListSort>();
   const [selectedNotification, setSelectedNotification] =
     useState<ManagedNotification | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [loadedPage, setLoadedPage] = useState<LoadedPage | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const requestSequence = useRef(0);
@@ -33,8 +38,6 @@ export function useNotificationList({ api }: UseNotificationListOptions) {
   const loadPage = useCallback(
     async (page: number) => {
       const requestId = ++requestSequence.current;
-      setIsLoading(true);
-      setErrorMessage(null);
 
       try {
         const result = await api.list({
@@ -46,6 +49,8 @@ export function useNotificationList({ api }: UseNotificationListOptions) {
         }
         setNotifications(result.notifications);
         setTotal(result.total);
+        setErrorMessage(null);
+        setLoadedPage({ api, page });
       } catch (error) {
         if (requestId !== requestSequence.current) {
           return;
@@ -53,10 +58,7 @@ export function useNotificationList({ api }: UseNotificationListOptions) {
         setNotifications([]);
         setTotal(0);
         setErrorMessage(toErrorMessage(error));
-      } finally {
-        if (requestId === requestSequence.current) {
-          setIsLoading(false);
-        }
+        setLoadedPage({ api, page });
       }
     },
     [api]
@@ -66,10 +68,11 @@ export function useNotificationList({ api }: UseNotificationListOptions) {
     void loadPage(currentPage);
   }, [currentPage, loadPage]);
 
-  const reload = useCallback(
-    () => loadPage(currentPage),
-    [currentPage, loadPage]
-  );
+  const reload = useCallback(() => {
+    setLoadedPage(null);
+    setErrorMessage(null);
+    return loadPage(currentPage);
+  }, [currentPage, loadPage]);
 
   const items = useMemo(
     () => sortItems(notifications.map(toListItem), sort),
@@ -77,6 +80,8 @@ export function useNotificationList({ api }: UseNotificationListOptions) {
   );
 
   const pageCount = Math.max(1, Math.ceil(total / notificationListPageSize));
+  const isLoading = loadedPage?.api !== api || loadedPage.page !== currentPage;
+  const currentErrorMessage = isLoading ? null : errorMessage;
 
   function handleSortChange(columnId: string) {
     if (!isNotificationSortableColumnId(columnId)) {
@@ -95,6 +100,14 @@ export function useNotificationList({ api }: UseNotificationListOptions) {
     }
   }
 
+  function handlePageChange(nextPage: number) {
+    if (nextPage === currentPage) return;
+
+    setLoadedPage(null);
+    setErrorMessage(null);
+    setCurrentPage(nextPage);
+  }
+
   async function handleDelete() {
     if (!selectedNotification || isDeleting) {
       return;
@@ -110,12 +123,18 @@ export function useNotificationList({ api }: UseNotificationListOptions) {
         currentPage > 1 && notifications.length === 1
           ? currentPage - 1
           : currentPage;
-      setCurrentPage(nextPage);
-      await loadPage(nextPage);
+      setLoadedPage(null);
+
+      if (nextPage !== currentPage) {
+        setCurrentPage(nextPage);
+      } else {
+        await loadPage(nextPage);
+      }
     } catch (error) {
       const message = toErrorMessage(error);
       setErrorMessage(message);
       setSelectedNotification(null);
+      setLoadedPage(null);
       await loadPage(currentPage);
       setErrorMessage(message);
     } finally {
@@ -127,12 +146,12 @@ export function useNotificationList({ api }: UseNotificationListOptions) {
     closeDeleteDialog: () => setSelectedNotification(null),
     confirmDelete: handleDelete,
     currentPage,
-    errorMessage,
+    errorMessage: currentErrorMessage,
     isDeleting,
     isLoading,
     items,
     onDeleteRequest: handleDeleteRequest,
-    onPageChange: setCurrentPage,
+    onPageChange: handlePageChange,
     reload,
     onSortChange: handleSortChange,
     pageCount,

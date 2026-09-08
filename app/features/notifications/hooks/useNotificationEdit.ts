@@ -7,7 +7,6 @@ import type {
   NotificationUpdateAudience,
 } from "~/features/notifications/api/contracts/notification-management-api";
 import { ClientErrors, getErrorMessage } from "~/lib/client-error";
-import type { NotificationAudienceOption } from "~/features/notifications/model/notification-audience";
 import {
   canModifyNotification,
   type ManagedNotification,
@@ -20,10 +19,16 @@ import {
   validateNotificationDraft,
   type NotificationDraftErrors,
 } from "~/features/notifications/model/notification-draft-validation";
+import { useNotificationAudienceOptions } from "~/features/notifications/hooks/useNotificationAudienceOptions";
 
 type UseNotificationEditOptions = {
   api: NotificationManagementApi;
   audienceApi: NotificationAudienceApi;
+  notificationId: number;
+};
+
+type LoadedRequest = {
+  api: NotificationManagementApi;
   notificationId: number;
 };
 
@@ -39,25 +44,34 @@ export function useNotificationEdit({
     initialNotificationDraft
   );
   const [errors, setErrors] = useState<NotificationDraftErrors>({});
-  const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [submissionError, setSubmissionError] = useState<string | null>(null);
-  const [audienceOptions, setAudienceOptions] = useState<
-    NotificationAudienceOption[]
-  >([]);
-  const [isAudienceLoading, setIsAudienceLoading] = useState(true);
-  const [audienceError, setAudienceError] = useState<string | null>(null);
-  const [audienceReloadKey, setAudienceReloadKey] = useState(0);
+  const [loadedRequest, setLoadedRequest] = useState<LoadedRequest | null>(null);
+  const {
+    audienceError,
+    audienceOptions,
+    isAudienceLoading,
+    reloadAudience,
+  } = useNotificationAudienceOptions(audienceApi);
+
+  const hasValidNotificationId =
+    Number.isSafeInteger(notificationId) && notificationId > 0;
+  const isCurrentRequest =
+    loadedRequest?.api === api && loadedRequest.notificationId === notificationId;
+  const currentNotification = isCurrentRequest ? notification : null;
+  const currentDraft = isCurrentRequest ? draft : initialNotificationDraft;
+  const currentLoadError = !hasValidNotificationId
+    ? "通知IDが不正です。"
+    : isCurrentRequest
+      ? loadError
+      : null;
+  const isLoading = hasValidNotificationId && !isCurrentRequest;
 
   useEffect(() => {
     let active = true;
-    setIsLoading(true);
-    setLoadError(null);
 
-    if (!Number.isSafeInteger(notificationId) || notificationId <= 0) {
-      setLoadError("通知IDが不正です。");
-      setIsLoading(false);
+    if (!hasValidNotificationId) {
       return () => {
         active = false;
       };
@@ -70,52 +84,21 @@ export function useNotificationEdit({
 
         setNotification(loadedNotification);
         setDraft(toNotificationDraft(loadedNotification));
+        setLoadError(null);
+        setLoadedRequest({ api, notificationId });
       })
       .catch((error: unknown) => {
         if (!active) return;
 
         setNotification(null);
         setLoadError(toManagementErrorMessage(error));
-      })
-      .finally(() => {
-        if (active) {
-          setIsLoading(false);
-        }
+        setLoadedRequest({ api, notificationId });
       });
 
     return () => {
       active = false;
     };
-  }, [api, notificationId]);
-
-  useEffect(() => {
-    let active = true;
-    setIsAudienceLoading(true);
-    setAudienceError(null);
-
-    audienceApi
-      .load()
-      .then((options) => {
-        if (active) {
-          setAudienceOptions(options);
-        }
-      })
-      .catch((error: unknown) => {
-        if (active) {
-          setAudienceOptions([]);
-          setAudienceError(toAudienceErrorMessage(error));
-        }
-      })
-      .finally(() => {
-        if (active) {
-          setIsAudienceLoading(false);
-        }
-      });
-
-    return () => {
-      active = false;
-    };
-  }, [audienceApi, audienceReloadKey]);
+  }, [api, hasValidNotificationId, notificationId]);
 
   function handleChange(nextDraft: NotificationDraft) {
     setDraft(nextDraft);
@@ -130,11 +113,15 @@ export function useNotificationEdit({
   }
 
   async function submit() {
-    if (!notification || !canModifyNotification(notification) || isSubmitting) {
+    if (
+      !currentNotification ||
+      !canModifyNotification(currentNotification) ||
+      isSubmitting
+    ) {
       return false;
     }
 
-    const nextErrors = validateNotificationDraft(draft);
+    const nextErrors = validateNotificationDraft(currentDraft);
     setErrors(nextErrors);
 
     if (Object.keys(nextErrors).length > 0) {
@@ -142,8 +129,8 @@ export function useNotificationEdit({
     }
 
     const update = toNotificationUpdate(
-      draft,
-      isAudienceEditableFor(notification)
+      currentDraft,
+      isAudienceEditableFor(currentNotification)
     );
     if (!update) {
       setSubmissionError(ClientErrors.INVALID_REQUEST.message);
@@ -154,7 +141,7 @@ export function useNotificationEdit({
     setSubmissionError(null);
 
     try {
-      await api.update(notification.id, update);
+      await api.update(currentNotification.id, update);
       return true;
     } catch (error) {
       setSubmissionError(toManagementErrorMessage(error));
@@ -167,16 +154,20 @@ export function useNotificationEdit({
   return {
     audienceError,
     audienceOptions,
-    canEditAudience: notification ? isAudienceEditableFor(notification) : false,
-    draft,
+    canEditAudience: currentNotification
+      ? isAudienceEditableFor(currentNotification)
+      : false,
+    draft: currentDraft,
     errors,
     isAudienceLoading,
-    isEditable: notification ? canModifyNotification(notification) : false,
+    isEditable: currentNotification
+      ? canModifyNotification(currentNotification)
+      : false,
     isLoading,
     isSubmitting,
-    loadError,
-    notification,
-    onAudienceReload: () => setAudienceReloadKey((current) => current + 1),
+    loadError: currentLoadError,
+    notification: currentNotification,
+    onAudienceReload: reloadAudience,
     onChange: handleChange,
     submissionError,
     submit,
@@ -184,10 +175,6 @@ export function useNotificationEdit({
 }
 
 function toManagementErrorMessage(error: unknown) {
-  return getErrorMessage(error);
-}
-
-function toAudienceErrorMessage(error: unknown) {
   return getErrorMessage(error);
 }
 
