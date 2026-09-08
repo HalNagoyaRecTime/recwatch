@@ -25,7 +25,7 @@ export function ClassRoomActionMenu({
       disabled,
       icon: Pencil,
       id: "edit",
-      label: "編集",
+      label: "クラスを編集する",
       onClick: () => {
         setIsOpen(false);
         onEdit();
@@ -37,7 +37,7 @@ export function ClassRoomActionMenu({
       disabled,
       icon: Trash2,
       id: "delete",
-      label: "削除",
+      label: "クラスを削除する",
       onClick: () => {
         setIsOpen(false);
         onDelete();
