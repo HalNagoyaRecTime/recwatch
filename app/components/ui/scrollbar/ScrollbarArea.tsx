@@ -60,7 +60,7 @@ export function ScrollbarArea({
         ref={scrollRef}
         onScroll={onScroll}
         className={cn(
-          "scrollbar-none flex-1",
+          "flex-1 scrollbar-none",
           orientation === "vertical" && "overflow-x-hidden overflow-y-auto",
           orientation === "horizontal" && "overflow-x-auto overflow-y-hidden",
           orientation === "both" && "overflow-auto",

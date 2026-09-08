@@ -46,10 +46,12 @@ export function TeachersPage({
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [removedTeachers, setRemovedTeachers] = useState<RemovedTeachers>(() => ({
-    ids: new Set(),
-    scope: "",
-  }));
+  const [removedTeachers, setRemovedTeachers] = useState<RemovedTeachers>(
+    () => ({
+      ids: new Set(),
+      scope: "",
+    })
+  );
   const [isMutating, setIsMutating] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
   const {
@@ -57,7 +59,9 @@ export function TeachersPage({
     sortBy,
     sortOrder,
   } = parseTeacherListUrl(searchParams);
-  const listScope = [offset, limit, query, sortBy ?? "", sortOrder ?? ""].join(":");
+  const listScope = [offset, limit, query, sortBy ?? "", sortOrder ?? ""].join(
+    ":"
+  );
   const removedTeacherIds =
     removedTeachers.scope === listScope ? removedTeachers.ids : emptyTeacherIds;
   const currentPage = Math.floor(offset / limit) + 1;
@@ -120,7 +124,9 @@ export function TeachersPage({
       await api.deleteTeacher(teacher.teacherId);
       setRemovedTeachers((current) => {
         const nextIds =
-          current.scope === listScope ? new Set(current.ids) : new Set<number>();
+          current.scope === listScope
+            ? new Set(current.ids)
+            : new Set<number>();
         nextIds.add(teacher.teacherId);
         return { ids: nextIds, scope: listScope };
       });

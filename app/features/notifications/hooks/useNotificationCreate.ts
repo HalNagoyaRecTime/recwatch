@@ -31,12 +31,8 @@ export function useNotificationCreate({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [submissionError, setSubmissionError] = useState<string | null>(null);
-  const {
-    audienceError,
-    audienceOptions,
-    isAudienceLoading,
-    reloadAudience,
-  } = useNotificationAudienceOptions(audienceApi);
+  const { audienceError, audienceOptions, isAudienceLoading, reloadAudience } =
+    useNotificationAudienceOptions(audienceApi);
 
   function handleChange(nextDraft: NotificationDraft) {
     setDraft(nextDraft);

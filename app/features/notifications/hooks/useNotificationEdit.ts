@@ -47,18 +47,17 @@ export function useNotificationEdit({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [submissionError, setSubmissionError] = useState<string | null>(null);
-  const [loadedRequest, setLoadedRequest] = useState<LoadedRequest | null>(null);
-  const {
-    audienceError,
-    audienceOptions,
-    isAudienceLoading,
-    reloadAudience,
-  } = useNotificationAudienceOptions(audienceApi);
+  const [loadedRequest, setLoadedRequest] = useState<LoadedRequest | null>(
+    null
+  );
+  const { audienceError, audienceOptions, isAudienceLoading, reloadAudience } =
+    useNotificationAudienceOptions(audienceApi);
 
   const hasValidNotificationId =
     Number.isSafeInteger(notificationId) && notificationId > 0;
   const isCurrentRequest =
-    loadedRequest?.api === api && loadedRequest.notificationId === notificationId;
+    loadedRequest?.api === api &&
+    loadedRequest.notificationId === notificationId;
   const currentNotification = isCurrentRequest ? notification : null;
   const currentDraft = isCurrentRequest ? draft : initialNotificationDraft;
   const currentLoadError = !hasValidNotificationId
