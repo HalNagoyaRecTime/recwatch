@@ -40,10 +40,7 @@ export function useNotificationList({ api }: UseNotificationListOptions) {
       const requestId = ++requestSequence.current;
 
       try {
-        const result = await api.list({
-          limit: notificationListPageSize,
-          offset: (page - 1) * notificationListPageSize,
-        });
+        const result = await fetchNotificationPage(api, page);
         if (requestId !== requestSequence.current) {
           return;
         }
@@ -65,8 +62,26 @@ export function useNotificationList({ api }: UseNotificationListOptions) {
   );
 
   useEffect(() => {
-    void loadPage(currentPage);
-  }, [currentPage, loadPage]);
+    const requestId = ++requestSequence.current;
+
+    void fetchNotificationPage(api, currentPage)
+      .then((result) => {
+        if (requestId !== requestSequence.current) return;
+
+        setNotifications(result.notifications);
+        setTotal(result.total);
+        setErrorMessage(null);
+        setLoadedPage({ api, page: currentPage });
+      })
+      .catch((error: unknown) => {
+        if (requestId !== requestSequence.current) return;
+
+        setNotifications([]);
+        setTotal(0);
+        setErrorMessage(toErrorMessage(error));
+        setLoadedPage({ api, page: currentPage });
+      });
+  }, [api, currentPage]);
 
   const reload = useCallback(() => {
     setLoadedPage(null);
@@ -159,6 +174,13 @@ export function useNotificationList({ api }: UseNotificationListOptions) {
     sort,
     totalItems: total,
   };
+}
+
+function fetchNotificationPage(api: NotificationManagementApi, page: number) {
+  return api.list({
+    limit: notificationListPageSize,
+    offset: (page - 1) * notificationListPageSize,
+  });
 }
 
 function toErrorMessage(error: unknown) {
