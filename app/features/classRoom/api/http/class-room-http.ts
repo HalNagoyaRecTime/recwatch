@@ -5,7 +5,7 @@ import type {
 } from "~/features/classRoom/api/contracts/class-room-api";
 import type {
   ClassRoomDTO,
-  ClassRoomListResponseDTO,
+  ClassRoomPageDTO,
 } from "~/features/classRoom/api/dto/class-room-dto";
 import {
   toClassRoom,
@@ -35,7 +35,7 @@ export function createClassRoomHttpApi(
       params.set("sortBy", query.sortBy ?? "classRoomId");
       params.set("sortOrder", query.sortOrder ?? "asc");
 
-      const response = await client.get<ClassRoomListResponseDTO>(
+      const response = await client.get<ClassRoomPageDTO>(
         `/api/v1/classrooms?${params.toString()}`
       );
       return toClassRoomPage(response);

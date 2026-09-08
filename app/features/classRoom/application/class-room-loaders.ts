@@ -1,6 +1,11 @@
-import { ClassRoomApi } from "~/features/classRoom/api";
-import type { ClassRoomListQuery } from "~/features/classRoom/api";
+import type {
+  ClassRoomListQuery,
+  ClassRoomManagementApi,
+} from "~/features/classRoom/api/contracts/class-room-api";
 
-export async function loadClassRoomListPage(query: ClassRoomListQuery) {
-  return ClassRoomApi.getClassRoomList(query);
+export async function loadClassRoomListPage(
+  api: ClassRoomManagementApi,
+  query: ClassRoomListQuery
+) {
+  return api.getClassRoomList(query);
 }

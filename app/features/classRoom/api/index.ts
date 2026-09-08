@@ -10,15 +10,7 @@ export type {
   ClassRoomMutationApi,
 } from "~/features/classRoom/api/contracts/class-room-api";
 export type {
-  ClassRoomDTO,
-  ClassRoomListResponseDTO,
-  ClassRoomPageDTO,
-  ClassRoomTeacherDTO,
-  ClassRoomWriteDTO,
-} from "~/features/classRoom/api/dto/class-room-dto";
-export type {
   ClassRoom,
-  ClassRoomData,
   ClassRoomPage,
   ClassRoomTeacher,
   ClassRoomWriteInput,
