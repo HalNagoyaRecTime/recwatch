@@ -70,13 +70,13 @@ describe("studentHttpApi", () => {
     );
   });
 
-  it("一覧条件未指定時はstaff=all・active=allを既定値にする", async () => {
+  it("一覧条件未指定時はstaff=all・active=trueを既定値にする", async () => {
     mocks.get.mockResolvedValueOnce(makePage());
 
     await studentHttpApi.getStudents();
 
     expect(mocks.get).toHaveBeenCalledWith(
-      "/api/v1/students?limit=50&offset=0&isStaff=all&isLiveActive=all&sortBy=studentId&sortOrder=asc"
+      "/api/v1/students?limit=50&offset=0&isStaff=all&isLiveActive=true&sortBy=studentId&sortOrder=asc"
     );
   });
 
@@ -95,7 +95,7 @@ describe("studentHttpApi", () => {
     await studentHttpApi.getStudents({ sortBy, sortOrder: "desc" });
 
     expect(mocks.get).toHaveBeenCalledWith(
-      `/api/v1/students?limit=50&offset=0&isStaff=all&isLiveActive=all&sortBy=${sortBy}&sortOrder=desc`
+      `/api/v1/students?limit=50&offset=0&isStaff=all&isLiveActive=true&sortBy=${sortBy}&sortOrder=desc`
     );
   });
 
@@ -107,7 +107,7 @@ describe("studentHttpApi", () => {
       await studentHttpApi.getStudents({ isStaff });
 
       expect(mocks.get).toHaveBeenCalledWith(
-        `/api/v1/students?limit=50&offset=0&isStaff=${isStaff}&isLiveActive=all&sortBy=studentId&sortOrder=asc`
+        `/api/v1/students?limit=50&offset=0&isStaff=${isStaff}&isLiveActive=true&sortBy=studentId&sortOrder=asc`
       );
     }
   );

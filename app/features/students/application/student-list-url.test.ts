@@ -6,7 +6,7 @@ import {
 } from "~/features/students/application/student-list-url";
 
 describe("student list URL state", () => {
-  it("未指定時はstaff・activeをallへ正規化する", () => {
+  it("未指定時はstaffをall、activeをtrueへ正規化する", () => {
     expect(parseStudentListUrl("")).toEqual({
       search: "",
       page: 1,
@@ -14,7 +14,7 @@ describe("student list URL state", () => {
       sortBy: null,
       sortOrder: null,
       isStaff: "all",
-      isLiveActive: "all",
+      isLiveActive: "true",
     });
   });
 
@@ -46,7 +46,7 @@ describe("student list URL state", () => {
       sortBy: null,
       sortOrder: null,
       isStaff: "all",
-      isLiveActive: "all",
+      isLiveActive: "true",
     });
   });
 
@@ -79,12 +79,12 @@ describe("student list URL state", () => {
     );
   });
 
-  it("allを選択したfilterはURLから削除する", () => {
+  it("staffのallはURLから削除し、activeのallは保持する", () => {
     expect(
       updateStudentListUrl("isStaff=true&isLiveActive=false", {
         isStaff: "all",
         isLiveActive: "all",
       })
-    ).toBe("");
+    ).toBe("isLiveActive=all");
   });
 });

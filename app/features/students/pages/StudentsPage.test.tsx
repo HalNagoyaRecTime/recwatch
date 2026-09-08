@@ -68,7 +68,7 @@ function renderPage(api: StudentManagementApi, initialEntry = "/students") {
 }
 
 describe("StudentsPage", () => {
-  it("一覧未指定時はstaff・activeがすべてで、検索をサーバーへ渡す", async () => {
+  it("一覧未指定時はstaffがすべて・activeが有効で、検索をサーバーへ渡す", async () => {
     const getStudents = vi.fn().mockResolvedValue({
       items: [makeStudent(1, "山田太郎")],
       total: 1,
@@ -87,7 +87,7 @@ describe("StudentsPage", () => {
     ).toHaveTextContent("staff:すべて");
     expect(
       screen.getByRole("combobox", { name: "有効状態フィルター" })
-    ).toHaveTextContent("有効:すべて");
+    ).toHaveTextContent("有効:はい");
 
     await user.type(
       screen.getByRole("searchbox", { name: "学生を検索" }),
@@ -100,7 +100,7 @@ describe("StudentsPage", () => {
           search: "山田",
           classRoomId: undefined,
           isStaff: "all",
-          isLiveActive: "all",
+          isLiveActive: "true",
           limit: 50,
           offset: 0,
         })
@@ -243,7 +243,7 @@ describe("StudentsPage", () => {
     expect(getStudents).toHaveBeenLastCalledWith(
       expect.objectContaining({
         isStaff: "all",
-        isLiveActive: "all",
+        isLiveActive: "true",
         offset: 0,
       })
     );
