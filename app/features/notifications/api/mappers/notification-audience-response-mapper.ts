@@ -23,8 +23,10 @@ export function toClassRoomAudiencePage(
     throw unexpectedResponse();
   }
 
+  const classrooms = response.items ?? response.classrooms ?? [];
+
   return {
-    items: response.items.map(toClassRoomDto),
+    items: classrooms.map(toClassRoomDto),
     total: response.total,
     limit: response.limit,
     offset: response.offset,
