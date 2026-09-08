@@ -2,7 +2,7 @@ import { Outlet, useLoaderData } from "react-router";
 import { createPageTitle } from "~/lib/page-title";
 import { parseTeacherListUrl } from "~/features/teachers/application/teacher-list-url";
 import { loadTeacherListPage } from "~/features/teachers/application/teacher-loaders";
-import { getClassRoomData } from "~/features/classRoom/model/classRoom-data";
+import { getClassRoomData } from "~/features/classRoom/application/class-room-options";
 import { TeachersPage } from "~/features/teachers/pages/TeachersPage";
 import { PagePadding } from "~/features/frame/page-layout/PagePadding";
 import { PageLayout } from "~/features/frame/page-layout/PageLayout";
@@ -40,8 +40,8 @@ export async function clientLoader({ request }: { request: Request }) {
     ...teacherPage,
     classRooms: classRooms.map((classRoom) => ({
       classRoomId: classRoom.classRoomId,
-      classCode: classRoom.classRoomCode,
-      className: classRoom.classRoomName,
+      classCode: classRoom.classCode,
+      className: classRoom.className,
     })),
   };
 }

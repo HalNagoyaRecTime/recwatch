@@ -1,21 +1,28 @@
-import type { ClassRoomDTO } from "~/features/classRoom/api";
-
-export type ClassRoomData = {
-  classRoomId: number;
-  classRoomCode: string;
-  classRoomName: string;
-  studentCount: number;
-  teacherId: number | null;
-  teacherName: string | null;
+export type ClassRoomTeacher = {
+  teacherId: number;
+  userId: number;
+  displayName: string;
 };
 
-export function toClassRoomData(dto: ClassRoomDTO): ClassRoomData {
-  return {
-    classRoomId: dto.class_room_id,
-    classRoomCode: dto.class_code,
-    classRoomName: dto.class_name,
-    studentCount: dto.student_count,
-    teacherId: dto.teacher?.teacher_id ?? null,
-    teacherName: dto.teacher?.display_name ?? null,
-  };
-}
+export type ClassRoom = {
+  classRoomId: number;
+  classCode: string;
+  className: string;
+  studentCount: number;
+  teacher: ClassRoomTeacher | null;
+};
+
+export type ClassRoomData = ClassRoom;
+
+export type ClassRoomPage = {
+  items: ClassRoom[];
+  total: number;
+  limit: number;
+  offset: number;
+};
+
+export type ClassRoomWriteInput = {
+  classCode: string;
+  className: string;
+  teacherId: number | null;
+};

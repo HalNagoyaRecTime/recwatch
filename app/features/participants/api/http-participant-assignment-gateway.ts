@@ -37,7 +37,7 @@ export function createHttpParticipantAssignmentGateway(
         loadAllPageItems(
           client,
           "/api/v1/classrooms",
-          "classrooms",
+          ["items", "classrooms"],
           isClassroom
         ),
         loadAllPageItems(client, "/api/v1/students", "items", isStudent),
@@ -108,20 +108,26 @@ function parseBaseResponses(
 function loadAllPageItems<T>(
   client: ParticipantApiClient,
   path: string,
-  key: string,
+  keys: string | readonly string[],
   guard: (value: unknown) => value is T
 ): Promise<T[]> {
   return loadAllPages(async (offset, limit) => {
     const value = await client.get(`${path}?limit=${limit}&offset=${offset}`);
+    const items =
+      isRecord(value) && Array.isArray(keys)
+        ? keys.find((key) => Array.isArray(value[key]))
+        : keys;
+    const pageItems =
+      isRecord(value) && typeof items === "string" ? value[items] : undefined;
     if (
       !isRecord(value) ||
-      !Array.isArray(value[key]) ||
+      !Array.isArray(pageItems) ||
       !isNonNegativeInteger(value.total) ||
-      !value[key].every(guard)
+      !pageItems.every(guard)
     ) {
       throw new Error(INVALID_RESPONSE_MESSAGE);
     }
-    return { items: value[key], total: value.total };
+    return { items: pageItems, total: value.total };
   });
 }
 

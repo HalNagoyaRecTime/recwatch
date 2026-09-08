@@ -107,7 +107,9 @@ export function TeacherForm({
                 onChange={() => toggleClassRoom(classRoom.classRoomId)}
                 type="checkbox"
               />
-              {classRoom.className}
+              {classRoom.classCode
+                ? `${classRoom.classCode} — ${classRoom.className}`
+                : classRoom.className}
             </label>
           ))}
           {classRooms.length === 0 ? (

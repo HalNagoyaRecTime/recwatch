@@ -35,7 +35,7 @@ export function createHttpCompetitionAssignmentGateway(
           loadAllPageItems(
             client,
             "/api/v1/classrooms",
-            "classrooms",
+            ["items", "classrooms"],
             toClassroom
           ),
           loadAllPageItems(client, "/api/v1/students", "items", toStudent),
@@ -128,20 +128,26 @@ export const httpCompetitionAssignmentGateway =
 function loadAllPageItems<T>(
   client: AssignmentApiClient,
   path: string,
-  key: string,
+  keys: string | readonly string[],
   mapper: (value: unknown) => T | null
 ): Promise<T[]> {
   return loadAllPages(async (offset, limit) => {
     const value = await client.get(`${path}?limit=${limit}&offset=${offset}`);
+    const items =
+      isRecord(value) && Array.isArray(keys)
+        ? keys.find((key) => Array.isArray(value[key]))
+        : keys;
+    const pageItems =
+      isRecord(value) && typeof items === "string" ? value[items] : undefined;
     if (
       !isRecord(value) ||
-      !Array.isArray(value[key]) ||
+      !Array.isArray(pageItems) ||
       !isNonNegativeInteger(value.total)
     ) {
       throw new Error(INVALID_RESPONSE_MESSAGE);
     }
     return {
-      items: parseArray(value[key], mapper),
+      items: parseArray(pageItems, mapper),
       total: value.total,
     };
   });

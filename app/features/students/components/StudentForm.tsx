@@ -146,7 +146,7 @@ export function StudentForm({
           <option value="">クラスを選択</option>
           {classRooms.map((classRoom) => (
             <option key={classRoom.classRoomId} value={classRoom.classRoomId}>
-              {classRoom.classRoomName}
+              {classRoom.classCode} — {classRoom.className}
             </option>
           ))}
         </select>
