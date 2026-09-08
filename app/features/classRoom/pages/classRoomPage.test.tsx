@@ -187,7 +187,7 @@ describe("ClassRoomPage", () => {
     );
 
     await user.click(screen.getByRole("button", { name: "1年A組の操作" }));
-    await user.click(screen.getByRole("button", { name: "編集" }));
+    await user.click(screen.getByRole("button", { name: "クラスを編集する" }));
     await user.clear(screen.getByRole("textbox", { name: "クラスコード*" }));
     await user.type(
       screen.getByRole("textbox", { name: "クラスコード*" }),
@@ -236,7 +236,7 @@ describe("ClassRoomPage", () => {
 
     const table = screen.getByRole("table", { name: "クラス一覧" });
     await user.click(screen.getByRole("button", { name: "1年A組の操作" }));
-    await user.click(screen.getByRole("button", { name: "削除" }));
+    await user.click(screen.getByRole("button", { name: "クラスを削除する" }));
 
     await waitFor(() => expect(deleteClassRoom).toHaveBeenCalledWith(1));
     await waitFor(() => expect(getClassRoomList).toHaveBeenCalled());
