@@ -242,6 +242,33 @@ export function FloatingPanel({
       ref={refs.setFloating}
       style={floatingStyles}
       {...getFloatingProps()}
+      onBlur={(event) => {
+        const floatingElement = event.currentTarget;
+        const relatedTarget = event.relatedTarget;
+        if (
+          (relatedTarget instanceof Node &&
+            floatingElement.contains(relatedTarget)) ||
+          (relatedTarget instanceof Element &&
+            relatedTarget.closest("[data-floating-panel]") !== null)
+        ) {
+          return;
+        }
+
+        const nativeEvent = event.nativeEvent;
+        queueMicrotask(() => {
+          const activeElement = document.activeElement;
+          const focusStayedInFloatingUi =
+            (activeElement instanceof Node &&
+              floatingElement.contains(activeElement)) ||
+            (activeElement instanceof Element &&
+              (activeElement.closest("[data-floating-panel]") !== null ||
+                activeElement.hasAttribute("data-floating-ui-focus-guard")));
+
+          if (!focusStayedInFloatingUi) {
+            handleOpenChange(false, nativeEvent);
+          }
+        });
+      }}
       data-floating-panel
       className={cn("app-rounded z-140", className)}
     >
