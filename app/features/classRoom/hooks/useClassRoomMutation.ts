@@ -9,7 +9,7 @@ import { getErrorMessage } from "~/lib/client-error";
 
 type UseClassRoomMutationOptions = {
   api: ClassRoomManagementApi;
-  refresh: () => Promise<ClassRoomPage | null>;
+  refresh?: () => Promise<ClassRoomPage | null>;
 };
 
 export function useClassRoomMutation({
@@ -19,6 +19,27 @@ export function useClassRoomMutation({
   const [isMutating, setIsMutating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  async function refreshAfterMutation() {
+    await refresh?.();
+  }
+
+  async function create(input: ClassRoomWriteInput) {
+    if (isMutating) return false;
+
+    setIsMutating(true);
+    setError(null);
+    try {
+      await api.createClassRoom(input);
+      await refreshAfterMutation();
+      return true;
+    } catch (reason) {
+      setError(getErrorMessage(reason, "クラスの登録に失敗しました。"));
+      return false;
+    } finally {
+      setIsMutating(false);
+    }
+  }
+
   async function update(classRoomId: number, input: ClassRoomWriteInput) {
     if (isMutating) return false;
 
@@ -26,7 +47,7 @@ export function useClassRoomMutation({
     setError(null);
     try {
       await api.updateClassRoom(classRoomId, input);
-      await refresh();
+      await refreshAfterMutation();
       return true;
     } catch (reason) {
       setError(getErrorMessage(reason, "クラスを保存できませんでした。"));
@@ -43,7 +64,7 @@ export function useClassRoomMutation({
     setError(null);
     try {
       await api.deleteClassRoom(classRoomId);
-      return await refresh();
+      return await refresh?.();
     } catch (reason) {
       setError(getErrorMessage(reason, "クラスを削除できませんでした。"));
       return null;
@@ -54,6 +75,7 @@ export function useClassRoomMutation({
 
   return {
     clearError: () => setError(null),
+    create,
     error,
     isMutating,
     remove,
