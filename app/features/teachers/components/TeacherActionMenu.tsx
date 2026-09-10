@@ -21,8 +21,8 @@ export function TeacherActionMenu({
   const location = useLocation();
   const [isOpen, setIsOpen] = useState(false);
   const statusLabel = teacher.isLiveActive
-    ? "教官を無効化する（未接続）"
-    : "教官を有効化する（未接続）";
+    ? "教官を無効化する（Backend対応待ち）"
+    : "教官を有効化する（Backend対応待ち）";
   const items: MenuItemType[] = [
     {
       disabled,
