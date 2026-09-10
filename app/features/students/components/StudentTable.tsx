@@ -13,6 +13,8 @@ type StudentTableProps = {
   footer?: ReactNode;
   isMutating?: boolean;
   items: readonly StudentRow[];
+  onChangeActive: (student: StudentRow, isLiveActive: boolean) => void;
+  onChangeStaff: (student: StudentRow, isStaff: boolean) => void;
   onEdit: (student: StudentRow) => void;
   onSortChange?: (columnId: string) => void;
   sort?: DataTableSort;
@@ -23,6 +25,8 @@ export function StudentTable({
   footer,
   isMutating = false,
   items,
+  onChangeActive,
+  onChangeStaff,
   onEdit,
   onSortChange,
   sort,
@@ -101,6 +105,10 @@ export function StudentTable({
       renderCell: (student) => (
         <StudentActionMenu
           disabled={isMutating}
+          onChangeActive={(isLiveActive) =>
+            onChangeActive(student, isLiveActive)
+          }
+          onChangeStaff={(isStaff) => onChangeStaff(student, isStaff)}
           onEdit={() => onEdit(student)}
           student={student}
         />

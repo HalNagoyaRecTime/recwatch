@@ -8,13 +8,16 @@ import type { StudentRow } from "~/features/students/model/student";
 
 type StudentActionMenuProps = {
   disabled?: boolean;
+  onChangeActive: (isLiveActive: boolean) => void | Promise<void>;
+  onChangeStaff: (isStaff: boolean) => void | Promise<void>;
   onEdit: () => void;
   student: StudentRow;
 };
 
-/** Student固有の操作項目。状態変更APIが接続されるまで項目は無効化します。 */
 export function StudentActionMenu({
   disabled = false,
+  onChangeActive,
+  onChangeStaff,
   onEdit,
   student,
 }: StudentActionMenuProps) {
@@ -32,22 +35,41 @@ export function StudentActionMenu({
       type: "action",
     },
     {
-      disabled: true,
+      disabled,
       icon: student.isStaff ? BadgeMinus : UserPlus,
       id: "staff",
-      label: student.isStaff
-        ? "staffを解除する（API接続待ち）"
-        : "staff付与（API接続待ち）",
+      label: student.isStaff ? "staffを解除する" : "staffを付与する",
+      onClick: () => {
+        if (
+          !window.confirm(
+            `「${student.displayName}」のstaffを${student.isStaff ? "解除" : "付与"}します。よろしいですか？`
+          )
+        ) {
+          return;
+        }
+        setIsOpen(false);
+        void onChangeStaff(!student.isStaff);
+      },
       type: "action",
     },
     {
       danger: student.isLiveActive,
-      disabled: true,
+      disabled,
       icon: student.isLiveActive ? Trash2 : undefined,
       id: "active",
-      label: student.isLiveActive
-        ? "学生を無効化する（未接続）"
-        : "学生を有効化する（未接続）",
+      label: student.isLiveActive ? "学生を無効化する" : "学生を有効化する",
+      onClick: () => {
+        const action = student.isLiveActive ? "無効化" : "有効化";
+        if (
+          !window.confirm(
+            `「${student.displayName}」を${action}します。よろしいですか？`
+          )
+        ) {
+          return;
+        }
+        setIsOpen(false);
+        void onChangeActive(!student.isLiveActive);
+      },
       type: "action",
     },
   ];

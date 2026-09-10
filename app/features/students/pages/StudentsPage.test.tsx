@@ -5,6 +5,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import type { StudentManagementApi } from "~/features/students/api";
 import type { StudentRow } from "~/features/students/model/student";
+import type { UserManagementApi } from "~/features/user-management/api";
 import { StudentsPage } from "./StudentsPage";
 
 const classRoom = {
@@ -55,12 +56,17 @@ function createApi(
   };
 }
 
-function renderPage(api: StudentManagementApi, initialEntry = "/students") {
+function renderPage(
+  api: StudentManagementApi,
+  initialEntry = "/students",
+  userApi?: UserManagementApi
+) {
   return render(
     <MemoryRouter initialEntries={[initialEntry]}>
       <StudentsPage
         api={api}
         loadClassRooms={vi.fn().mockResolvedValue([classRoom])}
+        userApi={userApi}
       />
       <LocationProbe />
     </MemoryRouter>
@@ -187,7 +193,7 @@ describe("StudentsPage", () => {
     }
   });
 
-  it("操作メニューに編集とAPI待ちの状態変更を表示し、削除を表示しない", async () => {
+  it("操作メニューに編集・staff・有効状態変更を表示し、削除を表示しない", async () => {
     const student = makeStudent(1, "山田太郎", { isStaff: true });
     const getStudents = vi.fn().mockResolvedValue({
       items: [student],
@@ -208,14 +214,110 @@ describe("StudentsPage", () => {
       screen.getByRole("button", { name: "学生を編集する" })
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: "staffを解除する（API接続待ち）" })
-    ).toBeDisabled();
+      screen.getByRole("button", { name: "staffを解除する" })
+    ).toBeEnabled();
     expect(
-      screen.getByRole("button", { name: "学生を無効化する（未接続）" })
-    ).toBeDisabled();
+      screen.getByRole("button", { name: "学生を無効化する" })
+    ).toBeEnabled();
     expect(
       screen.queryByRole("button", { name: "削除" })
     ).not.toBeInTheDocument();
+  });
+
+  it("active変更はstudent.userIdへPATCHし、現在条件の一覧を再取得する", async () => {
+    const student = makeStudent(1, "山田太郎");
+    const getStudents = vi.fn().mockResolvedValue({
+      items: [student],
+      total: 100,
+      limit: 50,
+      offset: 50,
+    });
+    const updateUserStatus = vi.fn().mockResolvedValue(undefined);
+    const confirm = vi.fn().mockReturnValue(true);
+    const user = userEvent.setup();
+    vi.stubGlobal("confirm", confirm);
+
+    renderPage(
+      createApi(getStudents),
+      "/students?search=%E5%B1%B1%E7%94%B0&isStaff=true&sortBy=isStaff&sortOrder=desc&page=2",
+      {
+        grantStaff: vi.fn(),
+        revokeStaff: vi.fn(),
+        updateUserStatus,
+      }
+    );
+
+    const table = await screen.findByRole("table", { name: "学生一覧" });
+    getStudents.mockClear();
+    getStudents.mockResolvedValueOnce({
+      items: [{ ...student, isLiveActive: false }],
+      total: 100,
+      limit: 50,
+      offset: 50,
+    });
+    await user.click(
+      within(table).getByRole("button", { name: "山田太郎の操作" })
+    );
+    await user.click(screen.getByRole("button", { name: "学生を無効化する" }));
+
+    await waitFor(() =>
+      expect(updateUserStatus).toHaveBeenCalledWith(101, false)
+    );
+    await waitFor(() => expect(getStudents).toHaveBeenCalledTimes(1));
+    expect(confirm).toHaveBeenCalledWith(
+      "「山田太郎」を無効化します。よろしいですか？"
+    );
+    expect(getStudents).toHaveBeenLastCalledWith({
+      classRoomId: undefined,
+      isLiveActive: "true",
+      isStaff: "true",
+      limit: 50,
+      offset: 50,
+      search: "山田",
+      sortBy: "isStaff",
+      sortOrder: "desc",
+    });
+  });
+
+  it("staff変更はstudent.userIdへPUTし、取消時はAPIを呼ばない", async () => {
+    const student = makeStudent(1, "山田太郎");
+    const getStudents = vi.fn().mockResolvedValue({
+      items: [student],
+      total: 1,
+      limit: 50,
+      offset: 0,
+    });
+    const grantStaff = vi.fn().mockResolvedValue(undefined);
+    const confirm = vi
+      .fn()
+      .mockReturnValueOnce(false)
+      .mockReturnValueOnce(true);
+    const user = userEvent.setup();
+    vi.stubGlobal("confirm", confirm);
+
+    renderPage(createApi(getStudents), "/students", {
+      grantStaff,
+      revokeStaff: vi.fn(),
+      updateUserStatus: vi.fn(),
+    });
+
+    const table = await screen.findByRole("table", { name: "学生一覧" });
+    getStudents.mockClear();
+    getStudents.mockResolvedValueOnce({
+      items: [{ ...student, isStaff: true }],
+      total: 1,
+      limit: 50,
+      offset: 0,
+    });
+    await user.click(
+      within(table).getByRole("button", { name: "山田太郎の操作" })
+    );
+    await user.click(screen.getByRole("button", { name: "staffを付与する" }));
+    expect(grantStaff).not.toHaveBeenCalled();
+
+    await user.click(screen.getByRole("button", { name: "staffを付与する" }));
+    await waitFor(() => expect(grantStaff).toHaveBeenCalledWith(101));
+    await waitFor(() => expect(getStudents).toHaveBeenCalledTimes(1));
   });
 
   it("作成成功後は現在条件で再取得し、レスポンスを一覧へ直接追加しない", async () => {
