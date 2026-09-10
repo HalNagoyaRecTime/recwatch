@@ -159,17 +159,15 @@ describe("TeachersPage", () => {
     const user = userEvent.setup();
     render(
       <MemoryRouter initialEntries={["/teachers?page=3&isStaff=false"]}>
-        <TeachersPage
-          limit={50}
-          offset={100}
-          teachers={teachers}
-          total={150}
-        />
+        <TeachersPage limit={50} offset={100} teachers={teachers} total={150} />
         <LocationProbe />
       </MemoryRouter>
     );
 
-    await user.type(screen.getByRole("searchbox", { name: "教官を検索" }), "佐橋");
+    await user.type(
+      screen.getByRole("searchbox", { name: "教官を検索" }),
+      "佐橋"
+    );
 
     await waitFor(
       () => {
