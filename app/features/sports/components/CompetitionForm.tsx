@@ -1,7 +1,8 @@
-import { Check } from "lucide-react";
+import { Check, type LucideIcon } from "lucide-react";
 
 import { Button } from "~/components/ui/button/Button";
 import { PageHeader } from "~/components/ui/layout/PageHeader";
+import { cn } from "~/lib/cn";
 import type { CompetitionFormValue } from "~/features/sports/model/competition-form";
 
 type CompetitionFormProps = {
@@ -11,8 +12,10 @@ type CompetitionFormProps = {
   onChange: (value: CompetitionFormValue) => void;
   onSubmit: () => void;
   submitError: string | null;
+  submitIcon?: LucideIcon;
   submitLabel: string;
-  title: string;
+  /** 省略するとページ見出しを描画しない。モーダル内など、外側が見出しを持つ場合に使う。 */
+  title?: string;
   value: CompetitionFormValue;
 };
 
@@ -23,33 +26,40 @@ export function CompetitionForm({
   onChange,
   onSubmit,
   submitError,
+  submitIcon = Check,
   submitLabel,
   title,
   value,
 }: CompetitionFormProps) {
+  const isModal = !title;
+  const labelClass = isModal ? modalLabelClassName : labelClassName;
+  const inputClass = isModal ? modalInputClassName : inputClassName;
+
   function update(field: keyof CompetitionFormValue, nextValue: string) {
     onChange({ ...value, [field]: nextValue });
   }
 
   return (
-    <div className="min-h-full space-y-6">
-      <PageHeader
-        description="登録内容はイベント登録一覧へ反映されます"
-        title={title}
-      />
+    <div className={cn("space-y-6", title && "min-h-full")}>
+      {title ? (
+        <PageHeader
+          description="登録内容はイベント登録一覧へ反映されます"
+          title={title}
+        />
+      ) : null}
 
       <form
-        className="max-w-2xl space-y-4"
+        className={cn("space-y-4", title && "max-w-2xl")}
         onSubmit={(event) => {
           event.preventDefault();
           onSubmit();
         }}
       >
-        <label className={labelClassName}>
+        <label className={labelClass}>
           イベント名 <span className="text-tone-danger-text">*</span>
           <input
             aria-label="イベント名*"
-            className={inputClassName}
+            className={inputClass}
             disabled={isDisabled}
             maxLength={100}
             onChange={(event) => update("name", event.currentTarget.value)}
@@ -57,11 +67,11 @@ export function CompetitionForm({
             value={value.name}
           />
         </label>
-        <label className={labelClassName}>
+        <label className={labelClass}>
           イベントルール
           <textarea
             aria-label="イベントルール"
-            className={`${inputClassName} min-h-24 resize-y py-2`}
+            className={`${inputClass} resize-y py-2 ${isModal ? "min-h-32" : "min-h-24"}`}
             disabled={isDisabled}
             maxLength={1000}
             onChange={(event) => update("rules", event.currentTarget.value)}
@@ -69,11 +79,11 @@ export function CompetitionForm({
             value={value.rules}
           />
         </label>
-        <label className={labelClassName}>
+        <label className={labelClass}>
           実施場所 <span className="text-tone-danger-text">*</span>
           <input
             aria-label="実施場所*"
-            className={inputClassName}
+            className={inputClass}
             disabled={isDisabled}
             maxLength={100}
             onChange={(event) => update("venue", event.currentTarget.value)}
@@ -82,11 +92,11 @@ export function CompetitionForm({
           />
         </label>
         <div className="grid gap-4 sm:grid-cols-2">
-          <label className={labelClassName}>
+          <label className={labelClass}>
             開始時間 <span className="text-tone-danger-text">*</span>
             <input
               aria-label="開始時間*"
-              className={inputClassName}
+              className={inputClass}
               disabled={isDisabled}
               onChange={(event) =>
                 update("startTime", event.currentTarget.value)
@@ -95,11 +105,11 @@ export function CompetitionForm({
               value={value.startTime}
             />
           </label>
-          <label className={labelClassName}>
+          <label className={labelClass}>
             終了時間 <span className="text-tone-danger-text">*</span>
             <input
               aria-label="終了時間*"
-              className={inputClassName}
+              className={inputClass}
               disabled={isDisabled}
               onChange={(event) => update("endTime", event.currentTarget.value)}
               type="time"
@@ -109,18 +119,30 @@ export function CompetitionForm({
         </div>
 
         {submitError ? (
-          <p className="text-tone-danger-text text-sm" role="alert">
+          <p
+            className={cn(
+              "text-tone-danger-text",
+              isModal ? "text-base" : "text-sm"
+            )}
+            role="alert"
+          >
             {submitError}
           </p>
         ) : null}
 
         <div className="flex justify-end gap-3 pt-2">
-          <Button onClick={onCancel} type="button" variant="secondary">
+          <Button
+            onClick={onCancel}
+            size={isModal ? "lg" : "md"}
+            type="button"
+            variant="secondary"
+          >
             キャンセル
           </Button>
           <Button
             disabled={isDisabled}
-            icon={Check}
+            icon={submitIcon}
+            size={isModal ? "lg" : "md"}
             type="submit"
             variant="primary"
           >
@@ -135,3 +157,8 @@ export function CompetitionForm({
 const labelClassName = "text-text-base block text-sm font-medium";
 const inputClassName =
   "app-rounded border-border-base bg-surface-base text-text-base focus:border-border-strong mt-1.5 h-10 w-full border px-3 text-sm outline-none disabled:opacity-50";
+
+// モーダル内はページ見出しが無く表示領域も広いため、一段大きい文字送りにする。
+const modalLabelClassName = "text-text-base block text-base font-medium";
+const modalInputClassName =
+  "app-rounded border-border-base bg-surface-base text-text-base focus:border-border-strong mt-2 h-12 w-full border px-3.5 text-base outline-none disabled:opacity-50";
