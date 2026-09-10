@@ -1,31 +1,24 @@
 import {
   AlertCircleIcon,
   CheckIcon,
-  CheckCircle2Icon,
   CopyIcon,
-  InfoIcon,
   Minimize2Icon,
-  TriangleAlertIcon,
   XIcon,
 } from "lucide-react";
-import { useRef, useState, type KeyboardEvent, type MouseEvent } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type KeyboardEvent,
+  type MouseEvent,
+} from "react";
 
 import type { AppNotification } from "../model/app-notification";
 import { AppNotificationDiagnostic } from "./AppNotificationDiagnostic";
-
-const severityIcon = {
-  info: InfoIcon,
-  success: CheckCircle2Icon,
-  warning: TriangleAlertIcon,
-  error: AlertCircleIcon,
-} as const;
-
-const severityIconClass = {
-  info: "text-brand-primary",
-  success: "text-tone-success-text",
-  warning: "text-tone-warning-text",
-  error: "text-tone-danger-text",
-} as const;
+import {
+  notificationSeverityIcon,
+  notificationSeverityIconClass,
+} from "./notification-severity";
 
 const severityLabel = {
   info: "情報",
@@ -48,6 +41,12 @@ type AppNotificationRowProps = {
     event: KeyboardEvent<HTMLButtonElement>
   ) => void;
   handleActionKeyDown: (id: string, event: KeyboardEvent<HTMLElement>) => void;
+  focusRequestId?: number | string | null;
+};
+
+type ExpansionState = {
+  requestId?: number | string | null;
+  expanded: boolean;
 };
 
 export function AppNotificationRow({
@@ -61,19 +60,63 @@ export function AppNotificationRow({
   focusNotification,
   handleMessageKeyDown,
   handleActionKeyDown,
+  focusRequestId,
 }: AppNotificationRowProps) {
-  const Icon = severityIcon[notification.severity];
-  const [isMessageExpanded, setIsMessageExpanded] = useState(initiallyExpanded);
-  const [isCopied, setIsCopied] = useState(false);
+  const Icon = notificationSeverityIcon[notification.severity];
+  const [expansionState, setExpansionState] = useState<ExpansionState>(() => ({
+    requestId: focusRequestId,
+    expanded: initiallyExpanded,
+  }));
+  const [copyStatus, setCopyStatus] = useState<CopyStatus>("idle");
+  const copyResetTimerRef = useRef<number | null>(null);
   const suppressNextFocusReadRef = useRef(suppressInitialFocusRead);
   const diagnosticId = `notification-diagnostic-${notification.id}`;
   const diagnostic = notification.diagnostic;
   const canExpand = Boolean(diagnostic) || notification.message.length > 120;
   const focusLabel = `${notification.title}、${severityLabel[notification.severity]}、${notification.read ? "既読" : "未読"}`;
+  const isMessageExpanded =
+    expansionState.requestId === focusRequestId
+      ? expansionState.expanded
+      : initiallyExpanded || expansionState.expanded;
+  const copyButtonLabel =
+    copyStatus === "success"
+      ? "コピーしました"
+      : copyStatus === "error"
+        ? "コピーに失敗しました"
+        : "通知内容をコピー";
+
+  useEffect(() => {
+    if (suppressInitialFocusRead) {
+      suppressNextFocusReadRef.current = true;
+    }
+  }, [focusRequestId, suppressInitialFocusRead]);
+
+  useEffect(() => {
+    return () => {
+      if (copyResetTimerRef.current !== null) {
+        window.clearTimeout(copyResetTimerRef.current);
+      }
+    };
+  }, []);
+
+  const updateCopyStatus = (status: CopyStatus) => {
+    setCopyStatus(status);
+    if (copyResetTimerRef.current !== null) {
+      window.clearTimeout(copyResetTimerRef.current);
+    }
+    copyResetTimerRef.current = window.setTimeout(() => {
+      copyResetTimerRef.current = null;
+      setCopyStatus("idle");
+    }, COPY_STATUS_DISPLAY_MS);
+  };
+
+  const setMessageExpanded = (expanded: boolean) => {
+    setExpansionState({ requestId: focusRequestId, expanded });
+  };
 
   const toggleMessage = () => {
     onRead();
-    if (canExpand) setIsMessageExpanded((expanded) => !expanded);
+    if (canExpand) setMessageExpanded(!isMessageExpanded);
   };
 
   const handleMessageClick = (event: MouseEvent<HTMLButtonElement>) => {
@@ -95,14 +138,14 @@ export function AppNotificationRow({
     if (event.key === "ArrowRight") {
       if (canExpand) {
         event.preventDefault();
-        setIsMessageExpanded(true);
+        setMessageExpanded(true);
       }
       return;
     }
     if (event.key === "ArrowLeft") {
       if (canExpand) {
         event.preventDefault();
-        setIsMessageExpanded(false);
+        setMessageExpanded(false);
       }
       return;
     }
@@ -123,7 +166,7 @@ export function AppNotificationRow({
         <div className="flex items-start gap-2">
           <Icon
             aria-hidden="true"
-            className={`${severityIconClass[notification.severity]} mt-0.5 shrink-0`}
+            className={`${notificationSeverityIconClass[notification.severity]} mt-0.5 shrink-0`}
             size={16}
           />
           <div className="min-w-0 flex-1">
@@ -156,20 +199,19 @@ export function AppNotificationRow({
                     <button
                       type="button"
                       className="hover:text-text-base flex size-6 items-center justify-center rounded-md transition-colors"
-                      aria-label={
-                        isCopied ? "コピーしました" : "通知内容をコピー"
-                      }
+                      aria-label={copyButtonLabel}
                       onClick={(event) => {
                         event.stopPropagation();
                         onRead();
-                        void copyNotificationDetails(notification).then(() => {
-                          setIsCopied(true);
-                          window.setTimeout(() => setIsCopied(false), 1200);
-                        });
+                        void copyNotificationDetails(notification)
+                          .then(() => updateCopyStatus("success"))
+                          .catch(() => updateCopyStatus("error"));
                       }}
                     >
-                      {isCopied ? (
+                      {copyStatus === "success" ? (
                         <CheckIcon aria-hidden="true" size={13} />
+                      ) : copyStatus === "error" ? (
+                        <AlertCircleIcon aria-hidden="true" size={13} />
                       ) : (
                         <CopyIcon aria-hidden="true" size={13} />
                       )}
@@ -185,7 +227,7 @@ export function AppNotificationRow({
                       onClick={(event) => {
                         event.stopPropagation();
                         onRead();
-                        setIsMessageExpanded(false);
+                        setMessageExpanded(false);
                         focusNotification(notification.id);
                       }}
                     >
@@ -267,8 +309,17 @@ async function copyNotificationDetails(notification: AppNotification) {
         .map(([label, value]) => `${label}: ${value}`)
     );
   }
-  await navigator.clipboard?.writeText(lines.join("\n"));
+  if (
+    typeof navigator === "undefined" ||
+    typeof navigator.clipboard?.writeText !== "function"
+  ) {
+    throw new Error("Clipboard APIを利用できません");
+  }
+  await navigator.clipboard.writeText(lines.join("\n"));
 }
+
+type CopyStatus = "idle" | "success" | "error";
+const COPY_STATUS_DISPLAY_MS = 1200;
 
 function formatNotificationClock(createdAt: string) {
   const date = new Date(createdAt);

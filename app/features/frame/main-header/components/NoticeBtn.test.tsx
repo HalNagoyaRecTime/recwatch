@@ -1,4 +1,10 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it } from "vitest";
 
@@ -224,5 +230,42 @@ describe("NoticeBtn", () => {
 
     await user.click(screen.getByRole("button", { name: "通知を小さくする" }));
     expect(row.firstElementChild).not.toHaveClass("bg-surface-muted");
+  });
+
+  it("Toastから別の通知を開いても既存の展開状態を維持する", async () => {
+    const user = userEvent.setup();
+    render(
+      <FeedbackProvider userId="test-user">
+        <FeedbackToastHost />
+        <SeedFeedback />
+        <NoticeBtn />
+      </FeedbackProvider>
+    );
+
+    await user.click(screen.getByRole("button", { name: "report" }));
+    await user.click(screen.getByRole("button", { name: "report" }));
+    await user.click(screen.getByRole("button", { name: "通知" }));
+
+    const rows = screen.getAllByRole("listitem");
+    const secondMessage = within(rows[1]).getByRole("button", {
+      name: /詳細を表示$/,
+    });
+    await user.click(secondMessage);
+    expect(secondMessage).toHaveAttribute("aria-expanded", "true");
+
+    await user.click(screen.getAllByRole("alert")[0]);
+
+    await waitFor(() => {
+      expect(
+        screen
+          .getAllByRole("listitem")
+          .some((row) =>
+            Boolean(
+              within(row).queryByRole("button", { name: /詳細を閉じる$/ })
+            )
+          )
+      ).toBe(true);
+    });
+    expect(secondMessage).toHaveAttribute("aria-expanded", "true");
   });
 });

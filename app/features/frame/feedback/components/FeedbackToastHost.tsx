@@ -1,28 +1,12 @@
-import {
-  AlertCircleIcon,
-  CheckCircle2Icon,
-  InfoIcon,
-  TriangleAlertIcon,
-  XIcon,
-} from "lucide-react";
+import { XIcon, type LucideIcon } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { useFeedback } from "../hooks/useFeedback";
 import type { AppNotification } from "../model/app-notification";
-
-const toastIcon = {
-  info: InfoIcon,
-  success: CheckCircle2Icon,
-  warning: TriangleAlertIcon,
-  error: AlertCircleIcon,
-} as const;
-
-const toastIconClass = {
-  info: "text-brand-primary",
-  success: "text-tone-success-text",
-  warning: "text-tone-warning-text",
-  error: "text-tone-danger-text",
-} as const;
+import {
+  notificationSeverityIcon,
+  notificationSeverityIconClass,
+} from "./notification-severity";
 
 const TOAST_EXIT_DURATION_MS = 220;
 const TOAST_DURATION_MS = 4000;
@@ -98,7 +82,7 @@ function FeedbackToast({
   onDismiss: (id: string) => void;
   onOpenNotificationCenter: (notificationId: string) => void;
 }) {
-  const Icon = toastIcon[toast.severity];
+  const Icon = notificationSeverityIcon[toast.severity];
   const timerRef = useRef<number | null>(null);
   const startedAtRef = useRef<number | null>(null);
   const remainingMsRef = useRef(TOAST_DURATION_MS);
@@ -210,14 +194,14 @@ function ToastBody({
   Icon,
   toast,
 }: {
-  Icon: typeof InfoIcon;
+  Icon: LucideIcon;
   toast: AppNotification;
 }) {
   return (
     <>
       <Icon
         aria-hidden="true"
-        className={`${toastIconClass[toast.severity]} mt-0.5 shrink-0`}
+        className={`${notificationSeverityIconClass[toast.severity]} mt-0.5 shrink-0`}
         size={16}
       />
       <div className="min-w-0 flex-1">

@@ -188,6 +188,45 @@ describe("AppNotificationCenter", () => {
     );
   });
 
+  it("別通知の既読化・削除ではObserverと既読待ちを維持する", async () => {
+    vi.useFakeTimers();
+    const notifications: AppNotification[] = [0, 1].map((index) => ({
+      id: `notification-${index}`,
+      kind: "background-error",
+      severity: "error",
+      title: `通知${index}`,
+      message: "失敗しました",
+      createdAt: new Date(Date.now() - index * 1000).toISOString(),
+      read: false,
+    }));
+    window.localStorage.setItem(
+      getAppNotificationStorageKey("test-user"),
+      JSON.stringify(notifications)
+    );
+    renderCenter();
+
+    const rows = screen.getAllByRole("listitem");
+    const observer = MockIntersectionObserver.instances.at(-1);
+    expect(observer).toBeDefined();
+    observer?.emit(rows[1], 0.5);
+    await act(async () => {
+      vi.advanceTimersByTime(200);
+    });
+
+    fireEvent.click(within(rows[0]).getByRole("button", { name: /通知内容$/ }));
+    expect(MockIntersectionObserver.instances).toHaveLength(1);
+
+    await act(async () => {
+      vi.advanceTimersByTime(400);
+    });
+    expect(within(rows[1]).queryByLabelText("未読")).not.toBeInTheDocument();
+
+    fireEvent.click(
+      within(rows[0]).getByRole("button", { name: "通知0を削除" })
+    );
+    expect(MockIntersectionObserver.instances).toHaveLength(1);
+  });
+
   it("スクロールで新たに表示された通知だけを既読にする", async () => {
     vi.useFakeTimers();
     const notifications: AppNotification[] = [0, 1].map((index) => ({
@@ -435,6 +474,43 @@ describe("AppNotificationCenter", () => {
     expect(document.activeElement).toBe(message);
   });
 
+  it("補助操作のArrowUp・ArrowDown・Home・Endで一覧を移動する", async () => {
+    const user = userEvent.setup();
+    renderCenter();
+    await user.click(screen.getByRole("button", { name: "seed" }));
+    await user.click(screen.getByRole("button", { name: "seed" }));
+
+    const rows = screen.getAllByRole("listitem");
+    const firstMessage = within(rows[0]).getByRole("button", {
+      name: /詳細を表示$/,
+    });
+    const secondMessage = within(rows[1]).getByRole("button", {
+      name: /詳細を表示$/,
+    });
+    const firstDelete = within(rows[0]).getByRole("button", {
+      name: "更新失敗を削除",
+    });
+    const secondDelete = within(rows[1]).getByRole("button", {
+      name: "更新失敗を削除",
+    });
+
+    secondDelete.focus();
+    await user.keyboard("{ArrowUp}");
+    expect(document.activeElement).toBe(firstMessage);
+
+    secondDelete.focus();
+    await user.keyboard("{Home}");
+    expect(document.activeElement).toBe(firstMessage);
+
+    firstDelete.focus();
+    await user.keyboard("{ArrowDown}");
+    expect(document.activeElement).toBe(secondMessage);
+
+    firstDelete.focus();
+    await user.keyboard("{End}");
+    expect(document.activeElement).toBe(secondMessage);
+  });
+
   it("main action以外にタイトル専用のbuttonを作らない", async () => {
     const user = userEvent.setup();
     renderCenter();
@@ -653,5 +729,48 @@ describe("AppNotificationCenter", () => {
         .getByRole("button", { name: "コピーしました" })
         .querySelector("svg")
     ).toHaveClass("lucide-check");
+  });
+
+  it("Clipboard APIが利用できない場合は成功表示を出さない", async () => {
+    const user = userEvent.setup();
+    vi.stubGlobal("navigator", { clipboard: undefined });
+    Object.defineProperty(window.navigator, "clipboard", {
+      configurable: true,
+      value: undefined,
+    });
+    renderCenter();
+    await user.click(screen.getByRole("button", { name: "seed" }));
+    await user.click(screen.getByRole("button", { name: /詳細を表示$/ }));
+    fireEvent.click(screen.getByRole("button", { name: "通知内容をコピー" }));
+
+    await waitFor(() =>
+      expect(
+        screen.getByRole("button", { name: "コピーに失敗しました" })
+      ).toBeInTheDocument()
+    );
+    expect(
+      screen.queryByRole("button", { name: "コピーしました" })
+    ).not.toBeInTheDocument();
+  });
+
+  it("Clipboard APIのreject時も失敗表示に切り替える", async () => {
+    const user = userEvent.setup();
+    const writeText = vi.fn().mockRejectedValue(new Error("permission denied"));
+    vi.stubGlobal("navigator", { clipboard: { writeText } });
+    Object.defineProperty(window.navigator, "clipboard", {
+      configurable: true,
+      value: { writeText },
+    });
+    renderCenter();
+    await user.click(screen.getByRole("button", { name: "seed" }));
+    await user.click(screen.getByRole("button", { name: /詳細を表示$/ }));
+    fireEvent.click(screen.getByRole("button", { name: "通知内容をコピー" }));
+
+    await waitFor(() =>
+      expect(
+        screen.getByRole("button", { name: "コピーに失敗しました" })
+      ).toBeInTheDocument()
+    );
+    expect(writeText).toHaveBeenCalledTimes(1);
   });
 });

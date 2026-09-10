@@ -13,10 +13,12 @@ export function AppNotificationCenter({
   onFocusTrigger,
   onRegisterFocusFirst,
   initialNotificationId,
+  initialNotificationRequestId,
 }: {
   onFocusTrigger?: () => void;
   onRegisterFocusFirst?: (focusFirst: () => void) => () => void;
   initialNotificationId?: string | null;
+  initialNotificationRequestId?: number | null;
 }) {
   const { notifications, markRead, removeNotification, clearNotifications } =
     useFeedback();
@@ -99,6 +101,9 @@ export function AppNotificationCenter({
                   focusNotification={focusNotification}
                   handleMessageKeyDown={handleMessageKeyDown}
                   handleActionKeyDown={handleActionKeyDown}
+                  focusRequestId={
+                    initialNotificationRequestId ?? initialNotificationId
+                  }
                 />
               ))}
             </ul>

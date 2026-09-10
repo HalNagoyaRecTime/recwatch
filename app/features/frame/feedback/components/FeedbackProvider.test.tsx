@@ -1,6 +1,6 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
   APP_NOTIFICATION_MAX_COUNT,
@@ -73,6 +73,10 @@ function renderProbe() {
 describe("FeedbackProvider", () => {
   beforeEach(() => {
     window.localStorage.clear();
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
 
   it("Provider外でuseFeedbackを呼ぶと明確なエラーになる", () => {
@@ -251,5 +255,34 @@ describe("FeedbackProvider", () => {
       status: 500,
       requestId: "req-1",
     });
+  });
+
+  it("localStorageの読み込み失敗を警告する", () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    vi.spyOn(Storage.prototype, "getItem").mockImplementation(() => {
+      throw new Error("broken storage");
+    });
+
+    renderProbe();
+
+    expect(warn).toHaveBeenCalledWith(
+      "通知履歴の読み込みに失敗しました。",
+      expect.any(Error)
+    );
+  });
+
+  it("localStorageの保存失敗を警告する", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => {
+      throw new Error("quota exceeded");
+    });
+
+    renderProbe();
+    await waitFor(() =>
+      expect(warn).toHaveBeenCalledWith(
+        "通知履歴の保存に失敗しました。",
+        expect.any(Error)
+      )
+    );
   });
 });

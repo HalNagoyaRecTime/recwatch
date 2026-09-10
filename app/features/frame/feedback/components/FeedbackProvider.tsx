@@ -81,7 +81,8 @@ function readNotifications(userId: string | null): AppNotification[] {
         diagnostic: safeDiagnostic(notification.diagnostic),
       }))
     );
-  } catch {
+  } catch (error) {
+    console.warn("通知履歴の読み込みに失敗しました。", error);
     return [];
   }
 }
@@ -96,8 +97,8 @@ function writeNotifications(
       getAppNotificationStorageKey(userId),
       JSON.stringify(notifications)
     );
-  } catch {
-    // localStorageが利用できない環境ではメモリ上の履歴だけを維持します。
+  } catch (error) {
+    console.warn("通知履歴の保存に失敗しました。", error);
   }
 }
 

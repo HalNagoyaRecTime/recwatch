@@ -72,8 +72,10 @@ export function NoticeBtn() {
       }
       content={
         <AppNotificationCenter
-          key={notificationCenterRequest?.requestId ?? "notification-center"}
           initialNotificationId={initialNotificationId}
+          initialNotificationRequestId={
+            notificationCenterRequest?.requestId ?? null
+          }
           onFocusTrigger={() => bellRef.current?.focus()}
           onRegisterFocusFirst={(focusFirst) => {
             focusFirstNotificationRef.current = focusFirst;
