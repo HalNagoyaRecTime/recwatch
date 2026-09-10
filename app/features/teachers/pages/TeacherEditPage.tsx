@@ -46,7 +46,7 @@ export function TeacherEditPage({
 
   return (
     <TeacherFormModal
-      description={`teacher_id: ${teacher.teacherId}`}
+      description={`教官ID: ${teacher.teacherId}`}
       onClose={close}
       title="教官情報を編集"
     >
