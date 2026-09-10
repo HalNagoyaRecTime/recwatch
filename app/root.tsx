@@ -18,6 +18,7 @@ export const links: Route.LinksFunction = () => [
     rel: "icon",
     href: "/recwatch-logo.svg",
     type: "image/svg+xml",
+    sizes: "any",
   },
 ];
 
