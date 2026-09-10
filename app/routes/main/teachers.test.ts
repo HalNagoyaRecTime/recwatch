@@ -11,7 +11,7 @@ vi.mock("~/features/teachers/api", () => ({
   },
 }));
 
-vi.mock("~/features/classRoom/model/classRoom-data", () => ({
+vi.mock("~/features/classRoom/application/class-room-options", () => ({
   getClassRoomData: mocks.getClassRoomData,
 }));
 
