@@ -40,7 +40,7 @@ export function createHttpParticipantAssignmentGateway(
           "classrooms",
           isClassroom
         ),
-        loadAllPageItems(client, "/api/v1/students", "students", isStudent),
+        loadAllPageItems(client, "/api/v1/students", "items", isStudent),
         loadAllPageItems(client, "/api/v1/events", "events", isEvent),
         client.get("/api/v1/gathering-spots"),
         client.get("/api/v1/gatherings"),
@@ -149,7 +149,8 @@ function isStudent(
     isRecord(value) &&
     isPositiveInteger(value.user_id) &&
     typeof value.display_name === "string" &&
-    isPositiveInteger(value.class_room_id)
+    isRecord(value.class_room) &&
+    isPositiveInteger(value.class_room.class_room_id)
   );
 }
 

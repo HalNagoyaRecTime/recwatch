@@ -1,5 +1,5 @@
 import { Plus } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "react-router";
 
 import { Button } from "~/components/ui/button/Button";
@@ -24,6 +24,10 @@ import {
 } from "~/features/students/application/student-list-url";
 import { StudentForm } from "~/features/students/components/StudentForm";
 import { StudentTable } from "~/features/students/components/StudentTable";
+import {
+  userManagementApi,
+  type UserManagementApi as UserManagementApiContract,
+} from "~/features/user-management/api";
 import type {
   StudentRow,
   StudentWriteInput,
@@ -38,6 +42,7 @@ type StudentsPageProps = {
   offset?: number;
   students?: StudentRow[];
   total?: number;
+  userApi?: UserManagementApiContract;
 };
 
 export function StudentsPage({
@@ -48,6 +53,7 @@ export function StudentsPage({
   offset: initialOffset,
   students: initialStudents,
   total: initialTotal,
+  userApi = userManagementApi,
 }: StudentsPageProps) {
   const [searchParams, setSearchParams] = useSearchParams();
   const [students, setStudents] = useState<StudentRow[]>(initialStudents ?? []);
@@ -60,6 +66,7 @@ export function StudentsPage({
   const [isMutating, setIsMutating] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const mutationLock = useRef(false);
   const {
     search,
     page,
@@ -182,11 +189,11 @@ export function StudentsPage({
   ]);
 
   useEffect(() => {
-    if (currentPage <= pageCount) return;
+    if (isLoading || currentPage <= pageCount) return;
     setSearchParams(updateStudentListUrl(searchParams, { page: pageCount }), {
       replace: true,
     });
-  }, [currentPage, pageCount, searchParams, setSearchParams]);
+  }, [currentPage, isLoading, pageCount, searchParams, setSearchParams]);
 
   function updateSearchParams(
     updates: Parameters<typeof updateStudentListUrl>[1]
@@ -247,11 +254,33 @@ export function StudentsPage({
     setSubmitError(null);
   }
 
-  async function saveStudent(input: StudentWriteInput) {
-    if (isMutating) return;
+  async function refreshStudentList() {
+    if (onRevalidate) {
+      await onRevalidate();
+      return;
+    }
 
+    const refreshed = await api.getStudents(buildStudentListQuery());
+    setStudents(refreshed.items);
+    setTotal(refreshed.total);
+    setLoadError(null);
+  }
+
+  function beginMutation() {
+    if (mutationLock.current) return false;
+    mutationLock.current = true;
     setIsMutating(true);
     setSubmitError(null);
+    return true;
+  }
+
+  function endMutation() {
+    mutationLock.current = false;
+    setIsMutating(false);
+  }
+
+  async function saveStudent(input: StudentWriteInput) {
+    if (!beginMutation()) return;
     try {
       if (editingStudent) {
         await api.updateStudent(editingStudent.studentId, input);
@@ -259,19 +288,47 @@ export function StudentsPage({
         await api.createStudent(input);
       }
 
-      if (onRevalidate) {
-        await onRevalidate();
-      } else {
-        const refreshed = await api.getStudents(buildStudentListQuery());
-        setStudents(refreshed.items);
-        setTotal(refreshed.total);
-        setLoadError(null);
-      }
+      await refreshStudentList();
       closeForm();
     } catch (error) {
       setSubmitError(getErrorMessage(error, "学生を保存できませんでした。"));
     } finally {
-      setIsMutating(false);
+      endMutation();
+    }
+  }
+
+  async function updateStudentActive(
+    student: StudentRow,
+    isLiveActive: boolean
+  ) {
+    if (!beginMutation()) return;
+    try {
+      await userApi.updateUserStatus(student.userId, isLiveActive);
+      await refreshStudentList();
+    } catch (error) {
+      setSubmitError(
+        getErrorMessage(error, "学生の有効状態を更新できませんでした。")
+      );
+    } finally {
+      endMutation();
+    }
+  }
+
+  async function updateStudentStaff(student: StudentRow, isStaff: boolean) {
+    if (!beginMutation()) return;
+    try {
+      if (isStaff) {
+        await userApi.grantStaff(student.userId);
+      } else {
+        await userApi.revokeStaff(student.userId);
+      }
+      await refreshStudentList();
+    } catch (error) {
+      setSubmitError(
+        getErrorMessage(error, "学生のstaff状態を更新できませんでした。")
+      );
+    } finally {
+      endMutation();
     }
   }
 
@@ -361,6 +418,8 @@ export function StudentsPage({
         }
         isMutating={isMutating}
         items={students}
+        onChangeActive={updateStudentActive}
+        onChangeStaff={updateStudentStaff}
         onEdit={openEditForm}
         onSortChange={handleSortChange}
         sort={

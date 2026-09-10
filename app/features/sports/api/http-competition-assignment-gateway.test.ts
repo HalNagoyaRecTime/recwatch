@@ -15,12 +15,12 @@ function createClient() {
           total: 2,
         },
         "/api/v1/students?limit=100&offset=0": {
-          students: [
+          items: [
             {
               student_id: 2,
               user_id: 12,
               display_name: "山田 花子",
-              class_room_id: 1,
+              class_room: { class_room_id: 1 },
               attendance_number: 3,
               student_id_number: "S001",
             },

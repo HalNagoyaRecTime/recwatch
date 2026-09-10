@@ -96,7 +96,7 @@ export function StudentForm({
             type="button"
             variant={initialStudent.isLiveActive ? "success" : "secondary"}
           >
-            {`アクティブ: ${initialStudent.isLiveActive ? "有効" : "無効"}（未接続）`}
+            {`アクティブ: ${initialStudent.isLiveActive ? "有効" : "無効"}`}
           </Button>
           <Button
             disabled
@@ -105,7 +105,7 @@ export function StudentForm({
             type="button"
             variant={initialStudent.isStaff ? "success" : "secondary"}
           >
-            {`スタッフ: ${initialStudent.isStaff ? "staff" : "staffではない"}（未接続）`}
+            {`スタッフ: ${initialStudent.isStaff ? "staff" : "staffではない"}`}
           </Button>
         </div>
       ) : null}
