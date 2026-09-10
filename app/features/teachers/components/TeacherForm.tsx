@@ -80,7 +80,7 @@ export function TeacherForm({
             type="button"
             variant={initialTeacher.isLiveActive ? "success" : "secondary"}
           >
-            {`アクティブ: ${initialTeacher.isLiveActive ? "有効" : "無効"}（未接続）`}
+            {`アクティブ: ${initialTeacher.isLiveActive ? "有効" : "無効"}（Backend対応待ち）`}
           </Button>
           <Button
             disabled
@@ -89,7 +89,7 @@ export function TeacherForm({
             type="button"
             variant={initialTeacher.isStaff ? "success" : "secondary"}
           >
-            {`スタッフ: ${initialTeacher.isStaff ? "staff" : "staffではない"}（未接続）`}
+            {`スタッフ: ${initialTeacher.isStaff ? "staff" : "staffではない"}（Backend対応待ち）`}
           </Button>
         </div>
       ) : null}
