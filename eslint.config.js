@@ -32,6 +32,8 @@ export default tseslint.config(
     },
     rules: {
       ...reactHooks.configs.recommended.rules,
+      // eslint-plugin-react-hooks 7.1.1で新たに検出される既存違反があるため、
+      // 段階的に解消するまで一時的にwarnとして扱う。
       "react-hooks/set-state-in-effect": "warn",
       "react-refresh/only-export-components": [
         "warn",
