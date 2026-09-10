@@ -12,7 +12,7 @@ import { parseClassRoomListUrl } from "~/features/classRoom/application/class-ro
 import { ClassRoomPage } from "~/features/classRoom/pages/classRoomPage";
 import { PagePadding } from "~/features/frame/page-layout/PagePadding";
 import { PageLayout } from "~/features/frame/page-layout/PageLayout";
-import { TeacherApi } from "~/features/teachers/api";
+import { loadActiveTeacherList } from "~/features/teachers/application/teacher-loaders";
 import { createPageTitle } from "~/lib/page-title";
 
 const CLASS_ROOM_LIST_LIMIT = 50;
@@ -21,7 +21,7 @@ export async function clientLoader({ request }: { request: Request }) {
   const searchParams = new URL(request.url).searchParams;
   const { page, search, sortBy, sortOrder } =
     parseClassRoomListUrl(searchParams);
-  const [classRoomPage, teachers] = await Promise.all([
+  const [classRoomPage, activeTeacherPage] = await Promise.all([
     loadClassRoomListPage(ClassRoomApi, {
       limit: CLASS_ROOM_LIST_LIMIT,
       offset: (page - 1) * CLASS_ROOM_LIST_LIMIT,
@@ -29,16 +29,16 @@ export async function clientLoader({ request }: { request: Request }) {
       sortBy: sortBy ?? undefined,
       sortOrder: sortOrder ?? undefined,
     }),
-    TeacherApi.getActiveTeachers(),
+    loadActiveTeacherList(),
   ]);
 
   return {
     items: classRoomPage.items,
     limit: classRoomPage.limit,
     offset: classRoomPage.offset,
-    teacherOptions: teachers.items.map((teacher) => ({
-      teacherId: teacher.teacher_id,
-      displayName: teacher.display_name,
+    teacherOptions: activeTeacherPage.teachers.map((teacher) => ({
+      teacherId: teacher.teacherId,
+      displayName: teacher.displayName,
     })),
     total: classRoomPage.total,
   };
