@@ -19,7 +19,7 @@
     "@floating-ui/react": "^0.27.19",
     "@react-router/node": "8.3.1",
     "isbot": "^5.2.2",
-    "lucide-react": "^0.577.0",
+    "lucide-react": "^1.38.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "react-router": "8.3.1",
