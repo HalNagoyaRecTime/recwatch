@@ -247,6 +247,28 @@ describe("AccountMenu", () => {
     expect(trigger).toHaveFocus();
   }, 10000);
 
+  it("ログアウトからTabでメニュー外へ移動すると閉じる", async () => {
+    const user = userEvent.setup();
+    render(
+      <ThemeContext.Provider value={themeContext}>
+        <AccountBtn onLogout={vi.fn()} />
+        <button type="button">背面のボタン</button>
+      </ThemeContext.Provider>
+    );
+
+    await user.click(
+      screen.getByRole("button", { name: "アカウントメニュー" })
+    );
+    await user.tab();
+    await user.keyboard("{ArrowDown}");
+    expect(screen.getByRole("button", { name: "ログアウト" })).toHaveFocus();
+
+    await user.tab();
+
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "背面のボタン" })).toHaveFocus();
+  }, 10000);
+
   it("touch操作ではテーマ設定をtapで開ける", async () => {
     const user = userEvent.setup();
 

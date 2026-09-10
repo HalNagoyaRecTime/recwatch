@@ -30,6 +30,29 @@ describe("FloatingPanel", () => {
     expect(trigger).toHaveFocus();
   });
 
+  it("最後の項目からTabでパネル外へ移動すると閉じる", async () => {
+    const user = userEvent.setup();
+
+    render(
+      <>
+        <FloatingPanel
+          content={<button type="button">項目</button>}
+          trigger={<button type="button">開く</button>}
+        />
+        <button type="button">背面のボタン</button>
+      </>
+    );
+
+    await user.click(screen.getByRole("button", { name: "開く" }));
+    await user.tab();
+    expect(screen.getByRole("button", { name: "項目" })).toHaveFocus();
+
+    await user.tab();
+
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "背面のボタン" })).toHaveFocus();
+  });
+
   it("パネルの利用可能サイズをsurfaceへ渡し、wrapperをscrollportにしない", async () => {
     const user = userEvent.setup();
 
