@@ -2,7 +2,7 @@ import { useLoaderData, useRevalidator } from "react-router";
 
 import { ClassRoomApi } from "~/features/classRoom/api";
 import { ClassRoomCreatePage } from "~/features/classRoom/pages/ClassRoomCreatePage";
-import { TeacherApi } from "~/features/teachers/api";
+import { loadActiveTeacherOptions } from "~/features/teachers/application/teacher-loaders";
 import { createPageTitle } from "~/lib/page-title";
 
 export function meta() {
@@ -10,12 +10,9 @@ export function meta() {
 }
 
 export async function clientLoader() {
-  const teachers = await TeacherApi.getActiveTeachers();
+  const teacherOptions = await loadActiveTeacherOptions();
   return {
-    teacherOptions: teachers.items.map((teacher) => ({
-      displayName: teacher.display_name,
-      teacherId: teacher.teacher_id,
-    })),
+    teacherOptions,
   };
 }
 
