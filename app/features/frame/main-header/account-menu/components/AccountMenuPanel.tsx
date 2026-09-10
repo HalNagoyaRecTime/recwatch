@@ -140,6 +140,7 @@ export function AccountMenuPanel({
             }
             if (suppressFocusReopen) {
               suppressThemeFocusRef.current = false;
+              // list-navigation直後のfocusによる再オープンを抑止するため閉じ直します。
               setIsThemeOpen(false);
             }
           }}
