@@ -193,7 +193,7 @@ export function ScheduleForm({
         <button
           type="submit"
           disabled={!canSubmit || isSubmitting}
-          className="bg-button-brand-gradient-start text-text-base-inverse hover:bg-button-brand-gradient-end h-10 rounded-lg px-5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-45"
+          className="bg-button-brand-gradient-start hover:bg-button-brand-gradient-end h-10 rounded-lg px-5 text-sm font-semibold text-white transition disabled:cursor-not-allowed disabled:opacity-45"
         >
           {isSubmitting ? "処理中..." : submitLabel}
         </button>
