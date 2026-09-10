@@ -64,7 +64,9 @@ describe("TeachersPage", () => {
       screen.getByRole("button", { name: "教官を編集する" })
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: "教官を無効化する（未接続）" })
+      screen.getByRole("button", {
+        name: "教官を無効化する（Backend対応待ち）",
+      })
     ).toBeDisabled();
   });
 

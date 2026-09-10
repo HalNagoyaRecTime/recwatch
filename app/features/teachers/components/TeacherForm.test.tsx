@@ -61,7 +61,7 @@ describe("TeacherForm", () => {
     });
   });
 
-  it("編集時はチェックアイコン付きで状態を未接続ボタンに表示する", () => {
+  it("編集時はチェックアイコン付きで状態をBackend対応待ちボタンに表示する", () => {
     render(
       <TeacherForm
         classRooms={[]}
@@ -75,12 +75,12 @@ describe("TeacherForm", () => {
 
     expect(
       screen.getByRole("button", {
-        name: "アクティブ: 有効（未接続）",
+        name: "アクティブ: 有効（Backend対応待ち）",
       })
     ).toBeDisabled();
     expect(
       screen.getByRole("button", {
-        name: "スタッフ: staffではない（未接続）",
+        name: "スタッフ: staffではない（Backend対応待ち）",
       })
     ).toBeDisabled();
   });
