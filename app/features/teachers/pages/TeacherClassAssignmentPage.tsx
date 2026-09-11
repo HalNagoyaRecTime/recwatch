@@ -3,6 +3,7 @@ import type { TeacherRow } from "~/features/teachers/model/teacher";
 
 export type ClassRoomOption = {
   classRoomId: number;
+  classCode?: string;
   className: string;
 };
 
@@ -77,7 +78,9 @@ export function TeacherClassAssignmentPage({
                     onChange={() => toggleClassRoom(classRoom.classRoomId)}
                     className="size-4"
                   />
-                  {classRoom.className}
+                  {classRoom.classCode
+                    ? `${classRoom.classCode} — ${classRoom.className}`
+                    : classRoom.className}
                 </label>
               ))}
             </div>

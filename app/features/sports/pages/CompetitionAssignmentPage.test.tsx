@@ -99,10 +99,12 @@ describe("CompetitionAssignmentPage", () => {
       screen.getByRole("table", { name: "参加者候補の生徒一覧" })
     ).toBeInTheDocument();
 
-    fireEvent.change(screen.getByLabelText("集合時間"), {
+    fireEvent.change(await screen.findByLabelText("集合時間"), {
       target: { value: "08:50" },
     });
-    await user.click(screen.getByRole("checkbox", { name: "山田 花子を選択" }));
+    await user.click(
+      await screen.findByRole("checkbox", { name: "山田 花子を選択" })
+    );
     expect(screen.getByText("1名選択中")).toBeInTheDocument();
     expect(screen.getByText("開始時刻")).toBeInTheDocument();
     expect(screen.queryByText("割り当て内容")).not.toBeInTheDocument();
@@ -143,7 +145,9 @@ describe("CompetitionAssignmentPage", () => {
     fireEvent.change(await screen.findByLabelText("集合時間"), {
       target: { value: "08:50" },
     });
-    fireEvent.click(screen.getByRole("checkbox", { name: "山田 花子を選択" }));
+    fireEvent.click(
+      await screen.findByRole("checkbox", { name: "山田 花子を選択" })
+    );
     fireEvent.click(screen.getByRole("button", { name: "設定を保存" }));
 
     expect(screen.getByRole("button", { name: "保存中..." })).toBeDisabled();
@@ -185,7 +189,9 @@ describe("CompetitionAssignmentPage", () => {
     fireEvent.change(await screen.findByLabelText("集合時間"), {
       target: { value: "08:50" },
     });
-    fireEvent.click(screen.getByRole("checkbox", { name: "山田 花子を選択" }));
+    fireEvent.click(
+      await screen.findByRole("checkbox", { name: "山田 花子を選択" })
+    );
 
     vi.useFakeTimers();
     try {
@@ -222,7 +228,7 @@ describe("CompetitionAssignmentPage", () => {
       );
       await screen.findByRole("heading", { name: "参加者設定" });
       await user.click(
-        screen.getByRole("checkbox", { name: "山田 花子を選択" })
+        await screen.findByRole("checkbox", { name: "山田 花子を選択" })
       );
 
       await user.click(screen.getByRole("button", { name: "設定を保存" }));
@@ -241,7 +247,7 @@ describe("CompetitionAssignmentPage", () => {
         </MemoryRouter>
       );
       await screen.findByRole("heading", { name: "参加者設定" });
-      fireEvent.change(screen.getByLabelText("集合時間"), {
+      fireEvent.change(await screen.findByLabelText("集合時間"), {
         target: { value: "08:50" },
       });
 
@@ -277,11 +283,11 @@ describe("CompetitionAssignmentPage", () => {
         </MemoryRouter>
       );
       await screen.findByRole("heading", { name: "参加者設定" });
-      fireEvent.change(screen.getByLabelText("集合時間"), {
+      fireEvent.change(await screen.findByLabelText("集合時間"), {
         target: { value: "08:50" },
       });
       await user.click(
-        screen.getByRole("checkbox", { name: "山田 花子を選択" })
+        await screen.findByRole("checkbox", { name: "山田 花子を選択" })
       );
 
       await user.click(screen.getByRole("button", { name: "設定を保存" }));
@@ -318,11 +324,11 @@ describe("CompetitionAssignmentPage", () => {
         </MemoryRouter>
       );
       await screen.findByRole("heading", { name: "参加者設定" });
-      fireEvent.change(screen.getByLabelText("集合時間"), {
+      fireEvent.change(await screen.findByLabelText("集合時間"), {
         target: { value: "08:50" },
       });
       await user.click(
-        screen.getByRole("checkbox", { name: "山田 花子を選択" })
+        await screen.findByRole("checkbox", { name: "山田 花子を選択" })
       );
       // 集合場所は選択肢が無いため未入力のまま保存する
       await user.click(screen.getByRole("button", { name: "設定を保存" }));

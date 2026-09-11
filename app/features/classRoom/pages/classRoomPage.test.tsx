@@ -6,18 +6,59 @@ import {
   within,
 } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { MemoryRouter, useLocation } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { MemoryRouter } from "react-router";
 
-import { ClassRoomPage } from "./classRoomPage";
+import type { ClassRoomManagementApi } from "~/features/classRoom/api";
+import { ClassRoomPage } from "~/features/classRoom/pages/classRoomPage";
+import type { ClassRoom } from "~/features/classRoom/model/classRoom";
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  vi.restoreAllMocks();
+});
+
+const firstClassRoom: ClassRoom = {
+  classRoomId: 1,
+  classCode: "1A",
+  className: "1年A組",
+  studentCount: 12,
+  teacher: null,
+};
+
+function createApi(
+  overrides: Partial<ClassRoomManagementApi> = {}
+): ClassRoomManagementApi {
+  return {
+    createClassRoom: vi.fn(),
+    deleteClassRoom: vi.fn(),
+    getClassRoomById: vi.fn(),
+    getClassRoomList: vi.fn().mockResolvedValue({
+      items: [],
+      total: 0,
+      limit: 50,
+      offset: 0,
+    }),
+    updateClassRoom: vi.fn(),
+    ...overrides,
+  };
+}
+
+function LocationProbe() {
+  const location = useLocation();
+  return <output data-testid="location-search">{location.search}</output>;
+}
 
 describe("ClassRoomPage", () => {
-  it("教官管理と共通の一覧UIとユーザー管理ナビゲーションを表示する", () => {
+  it("一覧、検索、ページネーションを表示する", () => {
     render(
-      <MemoryRouter>
-        <ClassRoomPage classRooms={[]} teacherOptions={[]} />
+      <MemoryRouter initialEntries={["/classroom"]}>
+        <ClassRoomPage
+          api={createApi()}
+          items={[firstClassRoom]}
+          teacherOptions={[]}
+          total={51}
+        />
       </MemoryRouter>
     );
 
@@ -25,152 +66,107 @@ describe("ClassRoomPage", () => {
       screen.getByRole("table", { name: "クラス一覧" })
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("navigation", { name: "ユーザー" })
+      screen.getByRole("searchbox", { name: "クラスを検索" })
     ).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "教官管理" })).toHaveAttribute(
+    expect(
+      screen.getByRole("navigation", { name: "ページネーション" })
+    ).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "新規登録" })).toHaveAttribute(
       "href",
-      "/teachers"
+      "/classroom/new"
     );
+    expect(
+      screen.getByRole("button", { name: "ID列の幅を変更" })
+    ).toBeInTheDocument();
+    expect(screen.getByRole("columnheader", { name: "学生数" })).toHaveClass(
+      "justify-start"
+    );
+    expect(screen.getByText("1年A組")).toBeInTheDocument();
   });
 
-  it("個別にクラスを登録して一覧へ反映する", async () => {
-    const createClassRoom = vi.fn().mockResolvedValue({
-      class_room_id: 2,
-      class_code: "1B",
-      class_name: "1年B組",
-      student_count: 0,
-      teacher: null,
-    });
+  it("検索とソートをURLへ反映する", async () => {
     const user = userEvent.setup();
-
     render(
-      <MemoryRouter>
+      <MemoryRouter initialEntries={["/classroom"]}>
         <ClassRoomPage
-          api={{
-            createClassRoom,
-            updateClassRoom: vi.fn(),
-            deleteClassRoom: vi.fn(),
-          }}
-          classRooms={[]}
+          api={createApi()}
+          items={[firstClassRoom]}
           teacherOptions={[]}
         />
+        <LocationProbe />
       </MemoryRouter>
     );
 
-    await user.click(screen.getByRole("button", { name: "新規登録" }));
-    await user.type(screen.getByRole("textbox", { name: "クラス記号*" }), "1B");
-    await user.type(
-      screen.getByRole("textbox", { name: "クラス名*" }),
-      "1年B組"
-    );
-    await user.click(screen.getByRole("button", { name: "保存する" }));
-
+    await user.click(screen.getByRole("button", { name: "クラスコード" }));
     await waitFor(() =>
-      expect(createClassRoom).toHaveBeenCalledWith({
-        classCode: "1B",
-        className: "1年B組",
-        teacherId: null,
-      })
+      expect(screen.getByTestId("location-search")).toHaveTextContent(
+        "sortBy=classCode&sortOrder=asc"
+      )
     );
-    expect(await screen.findByText("1B")).toBeInTheDocument();
+
+    await user.type(
+      screen.getByRole("searchbox", { name: "クラスを検索" }),
+      "IH13A"
+    );
+    await waitFor(() =>
+      expect(screen.getByTestId("location-search")).toHaveTextContent(
+        "search=IH13A"
+      )
+    );
   });
 
-  it("クラスをソートし、3点メニューから削除する", async () => {
-    const deleteClassRoom = vi.fn().mockResolvedValue(undefined);
-    const confirm = vi.spyOn(window, "confirm").mockReturnValue(true);
-    const user = userEvent.setup();
-
+  it("新規登録リンクは現在の一覧条件を維持する", () => {
     render(
-      <MemoryRouter>
+      <MemoryRouter initialEntries={["/classroom?search=1A&page=2"]}>
         <ClassRoomPage
-          api={{
-            createClassRoom: vi.fn(),
-            deleteClassRoom,
-            updateClassRoom: vi.fn(),
-          }}
-          classRooms={[
-            {
-              classRoomId: 2,
-              classRoomCode: "B",
-              classRoomName: "Bクラス",
-              studentCount: 2,
-              teacherId: null,
-              teacherName: null,
-            },
-            {
-              classRoomId: 1,
-              classRoomCode: "A",
-              classRoomName: "Aクラス",
-              studentCount: 1,
-              teacherId: null,
-              teacherName: null,
-            },
-          ]}
+          api={createApi()}
+          items={[]}
           teacherOptions={[]}
+          total={100}
         />
       </MemoryRouter>
     );
 
-    const table = screen.getByRole("table", { name: "クラス一覧" });
-    await user.click(screen.getByRole("button", { name: "クラスID" }));
-    expect(within(table).getAllByRole("row")[1]).toHaveTextContent("Aクラス");
-
-    await user.click(screen.getByRole("button", { name: "クラスID" }));
-    expect(within(table).getAllByRole("row")[1]).toHaveTextContent("Bクラス");
-
-    await user.click(screen.getByRole("button", { name: "Bクラスの操作" }));
-    expect(screen.getByRole("button", { name: "編集" })).toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: "削除" }));
-
-    await waitFor(() => expect(deleteClassRoom).toHaveBeenCalledWith(2));
-    expect(screen.queryByText("Bクラス")).not.toBeInTheDocument();
-    confirm.mockRestore();
+    expect(screen.getByRole("link", { name: "新規登録" })).toHaveAttribute(
+      "href",
+      "/classroom/new?search=1A&page=2"
+    );
   });
 
-  it("既存クラスを編集して更新結果を一覧へ反映する", async () => {
-    const updateClassRoom = vi.fn().mockResolvedValue({
-      class_room_id: 1,
-      class_code: "2A",
-      class_name: "2年A組",
-      student_count: 12,
-      teacher: { teacher_id: 8, display_name: "鈴木教官" },
-    });
+  it("既存クラスを編集して更新後に一覧を再取得する", async () => {
     const user = userEvent.setup();
+    const updated: ClassRoom = {
+      ...firstClassRoom,
+      classCode: "2A",
+      className: "2年A組",
+      teacher: { teacherId: 8, userId: 80, displayName: "鈴木教官" },
+    };
+    const updateClassRoom = vi.fn().mockResolvedValue(updated);
+    const getClassRoomList = vi.fn().mockResolvedValue({
+      items: [updated],
+      total: 1,
+      limit: 50,
+      offset: 0,
+    });
+    const api = createApi({ updateClassRoom, getClassRoomList });
 
     render(
       <MemoryRouter>
         <ClassRoomPage
-          api={{
-            createClassRoom: vi.fn(),
-            deleteClassRoom: vi.fn(),
-            updateClassRoom,
-          }}
-          classRooms={[
-            {
-              classRoomId: 1,
-              classRoomCode: "1A",
-              classRoomName: "1年A組",
-              studentCount: 12,
-              teacherId: null,
-              teacherName: null,
-            },
-          ]}
+          api={api}
+          items={[firstClassRoom]}
           teacherOptions={[{ teacherId: 8, displayName: "鈴木教官" }]}
         />
       </MemoryRouter>
     );
 
     await user.click(screen.getByRole("button", { name: "1年A組の操作" }));
-    await user.click(screen.getByRole("button", { name: "編集" }));
-    expect(screen.getByRole("textbox", { name: "クラス記号*" })).toHaveValue(
-      "1A"
+    await user.click(screen.getByRole("button", { name: "クラスを編集する" }));
+    await user.clear(screen.getByRole("textbox", { name: "クラスコード*" }));
+    await user.type(
+      screen.getByRole("textbox", { name: "クラスコード*" }),
+      "2A"
     );
-    expect(screen.getByRole("textbox", { name: "クラス名*" })).toHaveValue(
-      "1年A組"
-    );
-
-    await user.clear(screen.getByRole("textbox", { name: "クラス記号*" }));
-    await user.type(screen.getByRole("textbox", { name: "クラス記号*" }), "2A");
     await user.clear(screen.getByRole("textbox", { name: "クラス名*" }));
     await user.type(
       screen.getByRole("textbox", { name: "クラス名*" }),
@@ -190,29 +186,48 @@ describe("ClassRoomPage", () => {
     expect(screen.queryByText("1年A組")).not.toBeInTheDocument();
   });
 
-  it("保存エラーはフォームを閉じたときに消去する", async () => {
+  it("クラスを削除した後は一覧を再取得する", async () => {
     const user = userEvent.setup();
+    const confirm = vi.spyOn(window, "confirm").mockReturnValue(true);
+    const deleteClassRoom = vi.fn().mockResolvedValue(undefined);
+    const getClassRoomList = vi.fn().mockResolvedValue({
+      items: [],
+      total: 0,
+      limit: 50,
+      offset: 0,
+    });
+    const api = createApi({ deleteClassRoom, getClassRoomList });
 
     render(
       <MemoryRouter>
-        <ClassRoomPage
-          api={{
-            createClassRoom: vi.fn().mockRejectedValue(new Error("保存失敗")),
-            deleteClassRoom: vi.fn(),
-            updateClassRoom: vi.fn(),
-          }}
-          classRooms={[]}
-          teacherOptions={[]}
-        />
+        <ClassRoomPage api={api} items={[firstClassRoom]} teacherOptions={[]} />
       </MemoryRouter>
     );
 
-    await user.click(screen.getByRole("button", { name: "新規登録" }));
-    await user.type(screen.getByRole("textbox", { name: "クラス記号*" }), "1A");
-    await user.type(
-      screen.getByRole("textbox", { name: "クラス名*" }),
-      "1年A組"
+    const table = screen.getByRole("table", { name: "クラス一覧" });
+    await user.click(screen.getByRole("button", { name: "1年A組の操作" }));
+    await user.click(screen.getByRole("button", { name: "クラスを削除する" }));
+
+    await waitFor(() => expect(deleteClassRoom).toHaveBeenCalledWith(1));
+    await waitFor(() => expect(getClassRoomList).toHaveBeenCalled());
+    expect(within(table).queryByText("1年A組")).not.toBeInTheDocument();
+    confirm.mockRestore();
+  });
+
+  it("保存エラーはフォームを閉じたときに消去する", async () => {
+    const user = userEvent.setup();
+    const api = createApi({
+      updateClassRoom: vi.fn().mockRejectedValue(new Error("保存失敗")),
+    });
+
+    render(
+      <MemoryRouter>
+        <ClassRoomPage api={api} items={[firstClassRoom]} teacherOptions={[]} />
+      </MemoryRouter>
     );
+
+    await user.click(screen.getByRole("button", { name: "1年A組の操作" }));
+    await user.click(screen.getByRole("button", { name: "クラスを編集する" }));
     await user.click(screen.getByRole("button", { name: "保存する" }));
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "クラスを保存できませんでした。"

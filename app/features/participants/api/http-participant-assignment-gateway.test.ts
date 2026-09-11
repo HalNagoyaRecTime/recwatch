@@ -7,7 +7,7 @@ describe("createHttpParticipantAssignmentGateway", () => {
     const get = vi.fn(async (path: string): Promise<unknown> => {
       const responses: Record<string, unknown> = {
         "/api/v1/classrooms?limit=100&offset=0": {
-          classrooms: [{ class_room_id: 1, class_name: "1年A組" }],
+          items: [{ class_room_id: 1, class_name: "1年A組" }],
           total: 1,
         },
         "/api/v1/students?limit=100&offset=0": {

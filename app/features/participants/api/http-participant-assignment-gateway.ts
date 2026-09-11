@@ -34,12 +34,7 @@ export function createHttpParticipantAssignmentGateway(
         gatheringSpotsResponse,
         gatheringsResponse,
       ] = await Promise.all([
-        loadAllPageItems(
-          client,
-          "/api/v1/classrooms",
-          "classrooms",
-          isClassroom
-        ),
+        loadAllPageItems(client, "/api/v1/classrooms", "items", isClassroom),
         loadAllPageItems(client, "/api/v1/students", "items", isStudent),
         loadAllPageItems(client, "/api/v1/events", "events", isEvent),
         client.get("/api/v1/gathering-spots"),
@@ -113,15 +108,16 @@ function loadAllPageItems<T>(
 ): Promise<T[]> {
   return loadAllPages(async (offset, limit) => {
     const value = await client.get(`${path}?limit=${limit}&offset=${offset}`);
+    const pageItems = isRecord(value) ? value[key] : undefined;
     if (
       !isRecord(value) ||
-      !Array.isArray(value[key]) ||
+      !Array.isArray(pageItems) ||
       !isNonNegativeInteger(value.total) ||
-      !value[key].every(guard)
+      !pageItems.every(guard)
     ) {
       throw new Error(INVALID_RESPONSE_MESSAGE);
     }
-    return { items: value[key], total: value.total };
+    return { items: pageItems, total: value.total };
   });
 }
 

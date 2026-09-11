@@ -19,14 +19,14 @@ describe("http notification audience loader", () => {
       switch (path) {
         case "/api/v1/classrooms?limit=100&offset=0":
           return {
-            classrooms: firstClassrooms,
+            items: firstClassrooms,
             total: 101,
             limit: 100,
             offset: 0,
           };
         case "/api/v1/classrooms?limit=100&offset=100":
           return {
-            classrooms: [
+            items: [
               { class_room_id: 101, class_code: "101A", class_name: "101組" },
             ],
             total: 101,
@@ -95,7 +95,7 @@ describe("http notification audience loader", () => {
           const isClassroom = loopingPath.endsWith("classrooms");
           return isClassroom
             ? {
-                classrooms: [
+                items: [
                   {
                     class_room_id: 1,
                     class_code: "1A",
@@ -115,7 +115,7 @@ describe("http notification audience loader", () => {
         }
         if (path.startsWith(completedPath)) {
           return completedPath.endsWith("classrooms")
-            ? { classrooms: [], total: 0, limit: 100, offset: 0 }
+            ? { items: [], total: 0, limit: 100, offset: 0 }
             : { events: [], total: 0, limit: 100, offset: 0 };
         }
         if (path === "/api/v1/gatherings") {

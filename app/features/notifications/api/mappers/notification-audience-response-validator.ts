@@ -1,17 +1,23 @@
 import type {
   ClassRoomAudienceApiDto,
-  ClassRoomAudiencePageApiDto,
   EventAudienceApiDto,
   EventAudiencePageApiDto,
   GatheringAudienceApiDto,
 } from "~/features/notifications/api/dto/notification-audience-api-dto";
 
+type ClassRoomAudiencePageResponse = {
+  items: unknown[];
+  total: number;
+  limit: number;
+  offset: number;
+};
+
 export function isClassRoomAudiencePageResponse(
   value: unknown
-): value is ClassRoomAudiencePageApiDto {
+): value is ClassRoomAudiencePageResponse {
   return (
     isRecord(value) &&
-    Array.isArray(value.classrooms) &&
+    Array.isArray(value.items) &&
     isNonNegativeInteger(value.total) &&
     isPositiveInteger(value.limit) &&
     isNonNegativeInteger(value.offset)
