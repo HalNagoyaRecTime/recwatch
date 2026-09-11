@@ -20,6 +20,7 @@ export function ManagementRowActionMenu({
   return (
     <FloatingPanel
       placement="bottom-end"
+      scrollable
       trigger={
         <Button
           aria-label={ariaLabel}
