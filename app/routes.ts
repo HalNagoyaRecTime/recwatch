@@ -11,6 +11,7 @@ export default [
     route("events", "routes/main/sports.tsx", [
       route("new", "routes/main/sports.new.tsx"),
     ]),
+    route("events/today", "routes/main/events.today.tsx"),
     route("events/assignments", "routes/main/sports.assignments.tsx"),
     route(
       "events/:competitionId/edit",
@@ -18,6 +19,9 @@ export default [
     ),
     route("notifications", "routes/main/notifications.tsx"),
     route("notifications/new", "routes/main/notifications.new.tsx"),
+    route("student", "routes/main/student.tsx"),
+    route("teams", "routes/main/teams.tsx"),
+    route("ranking", "routes/main/ranking.tsx"),
     route("members", "routes/main/members.tsx"),
     route("members/import", "routes/main/members.import.tsx"),
     route("classroom", "routes/main/classRoom.tsx"),

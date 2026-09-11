@@ -1,0 +1,10 @@
+import { createPageTitle } from "~/lib/page-title";
+import { SidebarPlaceholderPage } from "~/features/admin-pages/components/SidebarPlaceholderPage";
+
+export function meta() {
+  return [{ title: createPageTitle("学生") }];
+}
+
+export default function StudentRoute() {
+  return <SidebarPlaceholderPage title="学生" />;
+}
