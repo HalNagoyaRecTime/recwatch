@@ -2,6 +2,7 @@ import { useState } from "react";
 import { buildBackendUrl, hasBackendBaseUrl } from "~/config/env";
 import { getErrorMessage } from "~/lib/client-error";
 
+import { clearDeletionAuthPending } from "~/features/account-deletion/lib/deletionAuthFlow";
 import { AuthErrorMessage } from "~/features/auth/components/AuthErrorMessage";
 import { AuthLayout } from "~/features/auth/components/AuthLayout";
 import { AuthPrimaryButton } from "~/features/auth/components/AuthPrimaryButton";
@@ -14,6 +15,8 @@ const initialErrorMessages: Record<string, string> = {
   auth_failed: "ログインに失敗しました。もう一度お試しください。",
   logout_failed:
     "ログアウトに失敗しました。お手数ですが、もう一度ログアウトをお試しください。",
+  account_deletion_pending:
+    "このアカウントは削除処理中または削除済みのため、ログインできません。",
 };
 
 export function AuthLoginPage({
@@ -32,6 +35,7 @@ export function AuthLoginPage({
     try {
       setErrorMessage("");
       setIsOAuthSubmitting(true);
+      clearDeletionAuthPending();
       if (!hasBackendBaseUrl()) {
         setErrorMessage(backendUnavailableMessage);
         setIsOAuthSubmitting(false);
