@@ -87,18 +87,6 @@ export const sidebarSections = [
         ],
         roles: ["admin"],
       },
-      {
-        id: "schedule",
-        label: "スケジュール",
-        icon: "calendar",
-        to: "/schedule",
-        activePatterns: [
-          "/schedule",
-          "/schedule/new",
-          "/schedule/:scheduleId/edit",
-        ],
-        roles: ["admin"],
-      },
     ],
   },
   {
@@ -178,6 +166,17 @@ export const sidebarSections = [
         id: "legacy-members",
         label: "旧学生管理",
         to: "/members",
+        roles: ["admin"],
+      },
+      {
+        id: "schedule",
+        label: "スケジュール",
+        to: "/schedule",
+        activePatterns: [
+          "/schedule",
+          "/schedule/new",
+          "/schedule/:scheduleId/edit",
+        ],
         roles: ["admin"],
       },
     ],
