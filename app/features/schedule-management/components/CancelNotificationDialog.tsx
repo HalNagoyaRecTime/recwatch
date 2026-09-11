@@ -42,10 +42,10 @@ export function CancelNotificationDialog({
         aria-modal="true"
         aria-labelledby="delete-schedule-title"
         aria-describedby="delete-schedule-description"
-        className="w-full max-w-[440px] rounded-lg border border-[color:var(--border-2)] bg-[color:var(--surface-overlay-strong)] p-5 shadow-[var(--shadow-soft)]"
+        className="border-border-strong bg-surface-base shadow-soft w-full max-w-[440px] rounded-lg border p-5"
       >
         <div className="flex items-start gap-3">
-          <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[color:var(--tone-red-bg)] text-[color:var(--tone-red-text)]">
+          <span className="bg-tone-danger-bg text-tone-danger-text inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full">
             <AlertTriangleIcon size={18} aria-hidden="true" />
           </span>
           <div className="min-w-0">
@@ -54,7 +54,7 @@ export function CancelNotificationDialog({
             </h2>
             <p
               id="delete-schedule-description"
-              className="mt-2 text-sm leading-6 text-[color:var(--text-2)]"
+              className="text-text-muted mt-2 text-sm leading-6"
             >
               {schedule.relatedEventName || "名称未設定"}の未送信通知を
               削除します。イベント情報は削除されません。
@@ -66,7 +66,7 @@ export function CancelNotificationDialog({
             type="button"
             autoFocus
             disabled={isSubmitting}
-            className="h-9 rounded-lg border border-[color:var(--border-2)] px-4 text-sm font-medium hover:bg-[color:var(--surface-2)] disabled:opacity-50"
+            className="border-border-strong hover:bg-surface-hover h-9 rounded-lg border px-4 text-sm font-medium disabled:opacity-50"
             onClick={onClose}
           >
             戻る
