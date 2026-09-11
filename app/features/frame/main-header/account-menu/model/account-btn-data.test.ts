@@ -9,6 +9,7 @@ describe("getAccountBtnData", () => {
         id: "1",
         email: "user@example.com",
         display_name: "山田 花子",
+        is_staff: false,
       }).name
     ).toBe("山田 花子");
   });
@@ -16,5 +17,29 @@ describe("getAccountBtnData", () => {
   it("利用者情報が無い場合にモック利用者を表示しない", () => {
     expect(getAccountBtnData().name).toBe("ユーザー");
     expect(getAccountBtnData().imageUrl).toBeUndefined();
+  });
+
+  it("auth/meのis_staffがtrueの場合にstaffロールを設定する", () => {
+    const account = getAccountBtnData({
+      id: "1",
+      email: "staff@example.com",
+      display_name: "スタッフ",
+      is_staff: true,
+    });
+
+    expect(account.role).toBe("staff");
+    expect(account.borderColor).toBe("var(--brand-primary)");
+  });
+
+  it("auth/meのis_staffがfalseの場合はstaff表示を無効にする", () => {
+    const account = getAccountBtnData({
+      id: "1",
+      email: "user@example.com",
+      display_name: "一般ユーザー",
+      is_staff: false,
+    });
+
+    expect(account.role).toBe("");
+    expect(account.borderColor).toBe("var(--border-strong)");
   });
 });
