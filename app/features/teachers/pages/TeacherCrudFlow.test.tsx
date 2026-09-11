@@ -2,13 +2,12 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import {
   createMemoryRouter,
-  MemoryRouter,
   Outlet,
   RouterProvider,
+  useLocation,
 } from "react-router";
 import { describe, expect, it, vi } from "vitest";
 
-import { TeacherActionMenu } from "~/features/teachers/components/TeacherActionMenu";
 import { TeacherCreatePage } from "~/features/teachers/pages/TeacherCreatePage";
 import { TeacherEditPage } from "~/features/teachers/pages/TeacherEditPage";
 import type { TeacherRow } from "~/features/teachers/model/teacher";
@@ -44,9 +43,11 @@ const classRooms = [
 
 const teacher: TeacherRow = {
   teacherId: 7,
+  userId: 11,
   displayName: "佐橋 晴斗",
   isLiveActive: true,
-  classRooms: [{ classRoomId: 2, className: "2年A組" }],
+  isStaff: false,
+  classRooms: [{ classRoomId: 2, classCode: "2A", className: "2年A組" }],
 };
 
 function TeacherListDestination() {
@@ -57,9 +58,15 @@ function TeacherListRoute() {
   return (
     <>
       <TeacherListDestination />
+      <LocationProbe />
       <Outlet />
     </>
   );
+}
+
+function LocationProbe() {
+  const location = useLocation();
+  return <output data-testid="location-search">{location.search}</output>;
 }
 
 function renderNestedCreateRouter(element: React.ReactElement) {
@@ -74,6 +81,24 @@ function renderNestedCreateRouter(element: React.ReactElement) {
       },
     ],
     { initialEntries: ["/teachers/new?search=佐橋&page=2"] }
+  );
+
+  render(<RouterProvider router={router} />);
+  return listLoader;
+}
+
+function renderNestedEditRouter(element: React.ReactElement) {
+  const listLoader = vi.fn().mockResolvedValue(null);
+  const router = createMemoryRouter(
+    [
+      {
+        path: "/teachers",
+        loader: listLoader,
+        element: <TeacherListRoute />,
+        children: [{ path: ":teacherId/edit", element }],
+      },
+    ],
+    { initialEntries: ["/teachers/7/edit?sortBy=teacherId"] }
   );
 
   render(<RouterProvider router={router} />);
@@ -141,16 +166,18 @@ describe("teacher create and edit flows", () => {
     mocks.updateTeacher.mockResolvedValueOnce({});
     const user = userEvent.setup();
 
-    const listLoader = renderCrudRouter(
-      "/teachers/7/edit?sortBy=teacherId",
+    const listLoader = renderNestedEditRouter(
       <TeacherEditPage classRooms={classRooms} teacher={teacher} />
     );
 
-    await user.click(screen.getByRole("checkbox", { name: "4年A組" }));
-    await user.click(screen.getByRole("button", { name: "保存する" }));
+    await user.click(await screen.findByRole("checkbox", { name: "4年A組" }));
+    await user.click(await screen.findByRole("button", { name: "保存する" }));
 
     expect(await screen.findByText("教官一覧")).toBeInTheDocument();
-    expect(listLoader).toHaveBeenCalledTimes(1);
+    await waitFor(() => expect(listLoader).toHaveBeenCalledTimes(2));
+    expect(screen.getByTestId("location-search")).toHaveTextContent(
+      "sortBy=teacherId"
+    );
     expect(mocks.updateTeacher).toHaveBeenCalledWith(7, {
       classRoomIds: [2, 4],
       userName: "佐橋 晴斗",
@@ -163,55 +190,15 @@ describe("teacher create and edit flows", () => {
     );
     const user = userEvent.setup();
 
-    render(
-      <MemoryRouter initialEntries={["/teachers/7/edit"]}>
-        <TeacherEditPage classRooms={classRooms} teacher={teacher} />
-      </MemoryRouter>
+    renderNestedEditRouter(
+      <TeacherEditPage classRooms={classRooms} teacher={teacher} />
     );
 
-    await user.click(screen.getByRole("button", { name: "保存する" }));
+    await user.click(await screen.findByRole("button", { name: "保存する" }));
 
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "更新に失敗しました。"
     );
     expect(screen.getByRole("dialog")).toBeInTheDocument();
-  });
-});
-
-function renderActionRouter(onDelete = vi.fn()) {
-  const router = createMemoryRouter(
-    [
-      {
-        path: "/teachers",
-        element: <TeacherActionMenu onDelete={onDelete} teacher={teacher} />,
-      },
-      { path: "/teachers/7/edit", element: <p>編集ページ</p> },
-    ],
-    { initialEntries: ["/teachers"] }
-  );
-
-  render(<RouterProvider router={router} />);
-}
-
-describe("TeacherActionMenu", () => {
-  it("編集と削除を3点メニューから選べる", async () => {
-    const onDelete = vi.fn();
-    const user = userEvent.setup();
-
-    renderActionRouter(onDelete);
-    await user.click(
-      await screen.findByRole("button", { name: "佐橋 晴斗の操作" })
-    );
-
-    const editButton = screen.getByRole("button", { name: "編集" });
-    expect(editButton.querySelector("svg")).toBeNull();
-    const deleteButton = screen.getByRole("button", { name: "削除" });
-    expect(deleteButton).toBeInTheDocument();
-
-    await user.click(deleteButton);
-    expect(onDelete).toHaveBeenCalledWith(teacher);
-
-    await user.click(screen.getByRole("button", { name: "編集" }));
-    expect(await screen.findByText("編集ページ")).toBeInTheDocument();
   });
 });

@@ -7,24 +7,20 @@ import type { TeacherRow } from "~/features/teachers/model/teacher";
 
 type TeacherTableProps = {
   footer?: ReactNode;
-  isMutating?: boolean;
   items: readonly TeacherRow[];
-  onDelete: (teacher: TeacherRow) => void;
   onSortChange?: (columnId: string) => void;
   sort?: DataTableSort;
 };
 
 export function TeacherTable({
   footer,
-  isMutating = false,
   items,
-  onDelete,
   onSortChange,
   sort,
 }: TeacherTableProps) {
   const columns: readonly DataTableColumn<TeacherRow>[] = [
     {
-      header: "教官ID",
+      header: "ID",
       id: "teacher-id",
       sortable: true,
       width: { type: "fixed", value: 120 },
@@ -38,8 +34,41 @@ export function TeacherTable({
       renderCell: (teacher) => teacher.displayName,
     },
     {
-      header: "担当クラス",
-      id: "class-rooms",
+      align: "center",
+      header: "staff",
+      id: "staff",
+      sortable: true,
+      width: { type: "fluid", min: 120, grow: 0.6 },
+      renderCell: (teacher) => (
+        <span>{teacher.isStaff ? "staff" : "staffではない"}</span>
+      ),
+    },
+    {
+      align: "center",
+      header: "有効",
+      id: "active",
+      sortable: true,
+      width: { type: "fluid", min: 120, grow: 0.6 },
+      renderCell: (teacher) => (
+        <span>{teacher.isLiveActive ? "有効" : "無効"}</span>
+      ),
+    },
+    {
+      header: "クラスコード",
+      id: "class-code",
+      sortable: true,
+      width: { type: "fluid", min: 220, grow: 2 },
+      renderCell: (teacher) =>
+        teacher.classRooms.length > 0
+          ? teacher.classRooms
+              .map((classRoom) => classRoom.classCode)
+              .join("、")
+          : "-",
+    },
+    {
+      header: "クラス名",
+      id: "class-name",
+      sortable: true,
       width: { type: "fluid", min: 220, grow: 2 },
       renderCell: (teacher) =>
         teacher.classRooms.length > 0
@@ -54,13 +83,7 @@ export function TeacherTable({
       header: "",
       id: "actions",
       width: { type: "fixed", value: 64 },
-      renderCell: (teacher) => (
-        <TeacherActionMenu
-          disabled={isMutating}
-          onDelete={onDelete}
-          teacher={teacher}
-        />
-      ),
+      renderCell: (teacher) => <TeacherActionMenu teacher={teacher} />,
     },
   ];
 

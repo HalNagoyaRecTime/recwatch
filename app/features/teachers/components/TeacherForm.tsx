@@ -1,3 +1,4 @@
+import { Check, X } from "lucide-react";
 import { useState } from "react";
 
 import { Button } from "~/components/ui/button/Button";
@@ -69,6 +70,29 @@ export function TeacherForm({
           value={userName}
         />
       </label>
+
+      {initialTeacher ? (
+        <div className="flex flex-wrap gap-2" aria-label="教官の状態">
+          <Button
+            disabled
+            icon={initialTeacher.isLiveActive ? Check : X}
+            size="sm"
+            type="button"
+            variant={initialTeacher.isLiveActive ? "success" : "secondary"}
+          >
+            {`アクティブ: ${initialTeacher.isLiveActive ? "有効" : "無効"}（Backend対応待ち）`}
+          </Button>
+          <Button
+            disabled
+            icon={initialTeacher.isStaff ? Check : X}
+            size="sm"
+            type="button"
+            variant={initialTeacher.isStaff ? "success" : "secondary"}
+          >
+            {`スタッフ: ${initialTeacher.isStaff ? "staff" : "staffではない"}（Backend対応待ち）`}
+          </Button>
+        </div>
+      ) : null}
 
       <fieldset>
         <legend className="text-sm font-semibold">担当クラス</legend>

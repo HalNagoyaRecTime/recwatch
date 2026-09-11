@@ -13,7 +13,7 @@ import { TeacherApi } from "~/features/teachers/api";
 export async function clientLoader() {
   const [classRooms, teachers] = await Promise.all([
     getClassRoomData(),
-    TeacherApi.getTeachers(),
+    TeacherApi.getActiveTeachers(),
   ]);
   return {
     classRooms,

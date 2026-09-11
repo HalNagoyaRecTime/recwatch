@@ -4,6 +4,15 @@ import { describe, expect, it, vi } from "vitest";
 
 import { TeacherForm } from "~/features/teachers/components/TeacherForm";
 
+const initialTeacher = {
+  teacherId: 7,
+  userId: 11,
+  displayName: "佐橋 晴斗",
+  isLiveActive: true,
+  isStaff: false,
+  classRooms: [],
+};
+
 describe("TeacherForm", () => {
   it("空白だけの教官名を送信しない", async () => {
     const user = userEvent.setup();
@@ -50,5 +59,29 @@ describe("TeacherForm", () => {
       classRoomIds: [4],
       userName: "新任",
     });
+  });
+
+  it("編集時はチェックアイコン付きで状態をBackend対応待ちボタンに表示する", () => {
+    render(
+      <TeacherForm
+        classRooms={[]}
+        initialTeacher={initialTeacher}
+        isSubmitting={false}
+        onCancel={vi.fn()}
+        onSubmit={vi.fn()}
+        submitError={null}
+      />
+    );
+
+    expect(
+      screen.getByRole("button", {
+        name: "アクティブ: 有効（Backend対応待ち）",
+      })
+    ).toBeDisabled();
+    expect(
+      screen.getByRole("button", {
+        name: "スタッフ: staffではない（Backend対応待ち）",
+      })
+    ).toBeDisabled();
   });
 });

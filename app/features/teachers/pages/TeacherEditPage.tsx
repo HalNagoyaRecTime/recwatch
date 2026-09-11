@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useLocation, useNavigate } from "react-router";
+import { useLocation, useNavigate, useRevalidator } from "react-router";
 
 import { TeacherApi } from "~/features/teachers/api";
 import { teacherListTarget } from "~/features/teachers/application/teacher-navigation";
@@ -23,6 +23,7 @@ export function TeacherEditPage({
 }) {
   const navigate = useNavigate();
   const location = useLocation();
+  const revalidator = useRevalidator();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
@@ -31,6 +32,7 @@ export function TeacherEditPage({
     setSubmitError(null);
     try {
       await TeacherApi.updateTeacher(teacher.teacherId, input);
+      await revalidator.revalidate();
       close();
     } catch (error) {
       setSubmitError(getErrorMessage(error, "教官情報の更新に失敗しました。"));
@@ -44,7 +46,7 @@ export function TeacherEditPage({
 
   return (
     <TeacherFormModal
-      description={`teacher_id: ${teacher.teacherId}`}
+      description={`教官ID: ${teacher.teacherId}`}
       onClose={close}
       title="教官情報を編集"
     >

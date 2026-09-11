@@ -9,33 +9,12 @@ export type TeacherDTO = {
   user_id: number;
   display_name: string;
   is_live_active: boolean;
+  is_staff: boolean;
   class_rooms: TeacherClassRoomDTO[];
-};
-
-export type TeacherPageDTO = {
-  items: TeacherDTO[];
-  total: number;
-  limit: number;
-  offset: number;
 };
 
 export type TeacherListPageDTO = {
   items: TeacherDTO[];
-  total: number;
-  limit: number;
-  offset: number;
-};
-
-export type ClassRoomDTO = {
-  class_room_id: number;
-  class_code: string;
-  class_name: string;
-  student_count: number;
-  teacher: { teacher_id: number; display_name: string } | null;
-};
-
-export type ClassRoomPageDTO = {
-  classrooms: ClassRoomDTO[];
   total: number;
   limit: number;
   offset: number;

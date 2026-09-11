@@ -55,9 +55,8 @@ export function useTeacherClassAssignment({
     setIsSubmitting(true);
     setErrorMessage("");
     try {
-      await TeacherApi.updateTeacherAssignment(teacherId, {
+      await TeacherApi.updateTeacher(teacherId, {
         userName: selectedTeacher.displayName,
-        isLiveActive: selectedTeacher.isLiveActive,
         classRoomIds: checkedClassRoomIds,
       });
       navigate("/teachers");
