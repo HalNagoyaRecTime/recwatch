@@ -38,7 +38,7 @@ export function createHttpCompetitionAssignmentGateway(
             "classrooms",
             toClassroom
           ),
-          loadAllPageItems(client, "/api/v1/students", "students", toStudent),
+          loadAllPageItems(client, "/api/v1/students", "items", toStudent),
           loadAllPageItems(client, "/api/v1/events", "events", toEvent),
           client.get("/api/v1/gathering-spots"),
           client.get("/api/v1/gatherings"),
@@ -178,7 +178,8 @@ function toStudent(value: unknown): AssignmentStudent | null {
     !isPositiveInteger(value.student_id) ||
     !isPositiveInteger(value.user_id) ||
     typeof value.display_name !== "string" ||
-    !isPositiveInteger(value.class_room_id) ||
+    !isRecord(value.class_room) ||
+    !isPositiveInteger(value.class_room.class_room_id) ||
     !isPositiveInteger(value.attendance_number) ||
     typeof value.student_id_number !== "string"
   ) {
@@ -186,7 +187,7 @@ function toStudent(value: unknown): AssignmentStudent | null {
   }
   return {
     attendanceNumber: value.attendance_number,
-    classroomId: value.class_room_id,
+    classroomId: value.class_room.class_room_id,
     id: value.student_id,
     name: value.display_name,
     studentNumber: value.student_id_number,

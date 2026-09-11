@@ -1,0 +1,56 @@
+import { Outlet, useLoaderData, useRevalidator } from "react-router";
+
+import { PagePadding } from "~/features/frame/page-layout/PagePadding";
+import { PageLayout } from "~/features/frame/page-layout/PageLayout";
+import { loadStudentListPage } from "~/features/students/application/student-loaders";
+import { parseStudentListUrl } from "~/features/students/application/student-list-url";
+import { StudentsPage } from "~/features/students/pages/StudentsPage";
+import { createPageTitle } from "~/lib/page-title";
+
+export function meta() {
+  return [{ title: createPageTitle("学生管理") }];
+}
+
+export async function clientLoader({ request }: { request: Request }) {
+  const searchParams = new URL(request.url).searchParams;
+  const limit = 50;
+  const {
+    page,
+    search,
+    classRoomId,
+    sortBy,
+    sortOrder,
+    isStaff,
+    isLiveActive,
+  } = parseStudentListUrl(searchParams);
+
+  return loadStudentListPage({
+    limit,
+    offset: (page - 1) * limit,
+    search: search || undefined,
+    classRoomId: classRoomId ?? undefined,
+    sortBy: sortBy ?? undefined,
+    sortOrder: sortOrder ?? undefined,
+    isStaff,
+    isLiveActive,
+  });
+}
+
+export default function StudentsRoute() {
+  const page = useLoaderData<typeof clientLoader>();
+  const revalidator = useRevalidator();
+
+  return (
+    <>
+      <PageLayout>
+        <PagePadding>
+          <StudentsPage
+            {...page}
+            onRevalidate={() => revalidator.revalidate()}
+          />
+        </PagePadding>
+      </PageLayout>
+      <Outlet />
+    </>
+  );
+}

@@ -9,7 +9,7 @@ export type ParticipantAssignmentSource = {
   students: Array<{
     user_id: number;
     display_name: string;
-    class_room_id: number;
+    class_room: { class_room_id: number };
   }>;
   events: Array<{
     event_id: number;
@@ -58,7 +58,7 @@ export function toParticipantAssignments(
     const classNames = Array.from(
       new Set(
         members
-          .map((student) => classrooms.get(student.class_room_id))
+          .map((student) => classrooms.get(student.class_room.class_room_id))
           .filter((name): name is string => Boolean(name))
       )
     );

@@ -11,8 +11,12 @@ describe("createHttpParticipantAssignmentGateway", () => {
           total: 1,
         },
         "/api/v1/students?limit=100&offset=0": {
-          students: [
-            { user_id: 10, display_name: "山田 花子", class_room_id: 1 },
+          items: [
+            {
+              user_id: 10,
+              display_name: "山田 花子",
+              class_room: { class_room_id: 1 },
+            },
           ],
           total: 1,
         },

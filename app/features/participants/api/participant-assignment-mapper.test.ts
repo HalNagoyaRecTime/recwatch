@@ -11,7 +11,7 @@ describe("toParticipantAssignments", () => {
         {
           user_id: 10,
           display_name: "山田 花子",
-          class_room_id: 1,
+          class_room: { class_room_id: 1 },
         },
       ],
       events: [

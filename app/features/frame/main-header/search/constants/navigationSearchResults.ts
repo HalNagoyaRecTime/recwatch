@@ -15,11 +15,11 @@ export const NAVIGATION_SEARCH_RESULTS: readonly NavigationSearchResult[] = [
     keywords: ["home", "トップ"],
   },
   {
-    id: "members",
+    id: "students",
     title: "学生管理",
     category: "管理",
-    to: "/members",
-    keywords: ["生徒", "メンバー", "CSV", "名簿"],
+    to: "/students",
+    keywords: ["学生", "Student", "CSV", "名簿", "学籍番号"],
   },
   {
     id: "classrooms",

@@ -11,7 +11,7 @@ const tabs: ReadonlyArray<{
   label: string;
   to: string;
 }> = [
-  { id: "students", label: "学生管理", to: "/members" },
+  { id: "students", label: "学生管理", to: "/students" },
   { id: "classrooms", label: "クラス管理", to: "/classroom" },
   { id: "teachers", label: "教官管理", to: "/teachers" },
 ];

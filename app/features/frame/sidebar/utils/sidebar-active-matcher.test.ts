@@ -92,25 +92,25 @@ describe("isSidebarItemActive", () => {
     expect(isSidebarItemActive(schedule, "/schedule/123/edit")).toBe(true);
   });
 
-  it("表示されないインポート画面はユーザー親をフォールバック選択する", () => {
-    const members = item({
-      id: "members",
-      label: "ユーザー",
+  it("表示されないインポート画面はユーザー管理親をフォールバック選択する", () => {
+    const userManagement = item({
+      id: "user-management",
+      label: "ユーザー管理",
       to: undefined,
-      activePatterns: ["/members/import"],
+      activePatterns: ["/students/import"],
       children: [
         item({
-          id: "members-list",
+          id: "students-list",
           label: "学生管理",
-          to: "/members",
+          to: "/students",
         }),
       ],
     });
 
-    expect(isSidebarItemActive(members, "/members/import")).toBe(true);
-    expect(isSidebarItemActive(members.children![0], "/members/import")).toBe(
-      false
-    );
+    expect(isSidebarItemActive(userManagement, "/students/import")).toBe(true);
+    expect(
+      isSidebarItemActive(userManagement.children![0], "/students/import")
+    ).toBe(false);
   });
 
   it("子ページがactiveなら親フォルダをactiveにする", () => {
