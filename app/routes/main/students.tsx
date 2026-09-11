@@ -5,6 +5,6 @@ export function meta() {
   return [{ title: createPageTitle("学生") }];
 }
 
-export default function StudentRoute() {
+export default function StudentsRoute() {
   return <SidebarPlaceholderPage title="学生" />;
 }

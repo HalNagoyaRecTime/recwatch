@@ -14,7 +14,7 @@ describe("buildSidebarMenu", () => {
     expect(paths).toEqual(
       expect.arrayContaining([
         "/dashboard",
-        "/student",
+        "/students",
         "/classroom",
         "/teachers",
         "/events",

@@ -120,8 +120,8 @@ export const sidebarSections = [
           {
             id: "students",
             label: "学生",
-            to: "/student",
-            activePatterns: ["/student", "/student/import"],
+            to: "/students",
+            activePatterns: ["/students", "/students/import"],
             roles: ["admin"],
           },
           {
