@@ -1,15 +1,12 @@
-import { PageHeader } from "~/components/ui/layout/PageHeader";
-import { DashboardNavigationGrid } from "~/features/dashboard/components/DashboardNavigationGrid";
-
 export function DashboardPage({
   connectionError,
+  userName,
 }: {
   connectionError?: string;
+  userName?: string;
 }) {
   return (
     <div className="mx-auto flex min-h-[calc(100dvh-12rem)] w-full max-w-[1320px] flex-col">
-      <PageHeader title="ダッシュボード" />
-
       {connectionError ? (
         <p
           role="alert"
@@ -19,8 +16,13 @@ export function DashboardPage({
         </p>
       ) : null}
 
-      <div className="flex flex-1 items-start py-8 md:items-center">
-        <DashboardNavigationGrid />
+      <div className="flex flex-1 flex-col items-center justify-center gap-6 py-8 text-center">
+        <p className="text-text-base text-4xl font-bold tracking-wider">
+          ようこそ
+        </p>
+        <p className="text-text-base text-4xl font-bold tracking-wider">
+          {userName ?? "ユーザー"}さん
+        </p>
       </div>
     </div>
   );
