@@ -49,7 +49,7 @@ describe("AccountProfileHeader", () => {
     );
     expect(role).toHaveAttribute(
       "style",
-      expect.stringContaining("background: var(--surface-brand-soft)")
+      expect.stringContaining("background: var(--surface-hover)")
     );
     expect(role).toHaveAttribute(
       "style",

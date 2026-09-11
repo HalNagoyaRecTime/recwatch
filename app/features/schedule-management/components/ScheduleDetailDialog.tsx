@@ -18,8 +18,8 @@ function DetailItem({
 }) {
   return (
     <div>
-      <dt className="text-xs text-[color:var(--text-3)]">{label}</dt>
-      <dd className="mt-1 text-sm text-[color:var(--text-1)]">{children}</dd>
+      <dt className="text-text-subtle text-xs">{label}</dt>
+      <dd className="text-text-base mt-1 text-sm">{children}</dd>
     </div>
   );
 }
@@ -53,14 +53,14 @@ export function ScheduleDetailDialog({
         role="dialog"
         aria-modal="true"
         aria-labelledby="event-detail-title"
-        className="w-full max-w-[560px] rounded-lg border border-[color:var(--border-2)] bg-[color:var(--surface-overlay-strong)] shadow-[var(--shadow-soft)]"
+        className="border-border-strong bg-surface-base shadow-soft w-full max-w-[560px] rounded-lg border"
       >
-        <header className="flex items-center justify-between border-b border-[color:var(--border-1)] px-5 py-4">
+        <header className="border-border-base flex items-center justify-between border-b px-5 py-4">
           <div>
             <h2 id="event-detail-title" className="font-semibold">
               イベント詳細
             </h2>
-            <p className="mt-1 text-xs text-[color:var(--text-3)]">
+            <p className="text-text-subtle mt-1 text-xs">
               {schedule.relatedEventName || "名称未設定"}・{schedule.startTime}
               〜{schedule.endTime}
             </p>
@@ -70,7 +70,7 @@ export function ScheduleDetailDialog({
             autoFocus
             aria-label="詳細を閉じる"
             title="閉じる"
-            className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-[color:var(--text-3)] hover:bg-[color:var(--surface-2)]"
+            className="text-text-subtle hover:bg-surface-hover inline-flex h-8 w-8 items-center justify-center rounded-lg"
             onClick={onClose}
           >
             <XIcon size={17} aria-hidden="true" />
@@ -103,10 +103,10 @@ export function ScheduleDetailDialog({
           </div>
         </dl>
 
-        <footer className="flex justify-end gap-2 border-t border-[color:var(--border-1)] px-5 py-4">
+        <footer className="border-border-base flex justify-end gap-2 border-t px-5 py-4">
           <button
             type="button"
-            className="h-9 rounded-lg border border-[color:var(--border-2)] px-4 text-sm font-medium hover:bg-[color:var(--surface-2)]"
+            className="border-border-strong hover:bg-surface-hover h-9 rounded-lg border px-4 text-sm font-medium"
             onClick={onClose}
           >
             閉じる
