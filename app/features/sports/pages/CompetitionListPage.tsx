@@ -1,6 +1,6 @@
 import { Plus } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { Outlet, useNavigate } from "react-router";
 
 import { ButtonLink } from "~/components/ui/button/ButtonLink";
 import { getErrorMessage } from "~/lib/client-error";
@@ -20,6 +20,11 @@ type CompetitionListPageProps = {
   gateway?: CompetitionListGateway;
 };
 
+/** 子ルート（イベント新規作成モーダル）から一覧の再取得を依頼するための受け渡し口。 */
+export type CompetitionListOutletContext = {
+  reload: () => void;
+};
+
 export function CompetitionListPage({
   gateway = httpCompetitionListGateway,
 }: CompetitionListPageProps) {
@@ -31,6 +36,12 @@ export function CompetitionListPage({
   const [isDeleting, setIsDeleting] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [reloadToken, setReloadToken] = useState(0);
+  const reload = useCallback(() => setReloadToken((token) => token + 1), []);
+  const outletContext = useMemo<CompetitionListOutletContext>(
+    () => ({ reload }),
+    [reload]
+  );
 
   useEffect(() => {
     let isCurrent = true;
@@ -54,7 +65,7 @@ export function CompetitionListPage({
     return () => {
       isCurrent = false;
     };
-  }, [gateway]);
+  }, [gateway, reloadToken]);
 
   const filteredCompetitions = useMemo(() => {
     const normalizedQuery = query.trim().toLocaleLowerCase("ja");
@@ -158,6 +169,8 @@ export function CompetitionListPage({
         }
         sort={sort}
       />
+
+      <Outlet context={outletContext} />
     </div>
   );
 }

@@ -8,8 +8,9 @@ export default [
   route("/", "routes/main/frame.tsx", [
     index("routes/main/index.tsx"),
     route("dashboard", "routes/main/dashboard.tsx"),
-    route("events", "routes/main/sports.tsx"),
-    route("events/new", "routes/main/sports.new.tsx"),
+    route("events", "routes/main/sports.tsx", [
+      route("new", "routes/main/sports.new.tsx"),
+    ]),
     route("events/assignments", "routes/main/sports.assignments.tsx"),
     route(
       "events/:competitionId/edit",

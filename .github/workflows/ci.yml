@@ -10,17 +10,15 @@ env:
   VITE_BACKEND_BASE_URL: http://localhost:8787
 
 jobs:
-  # typecheckは既存の型エラー(develop時点で既に発生・本CI整備とは無関係)が
-  # 解消されるまで意図的に含めていない。詳細はフォローアップissueを参照。
   lint:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: "22"
           cache: "npm"
@@ -34,15 +32,18 @@ jobs:
       - name: Run Prettier check
         run: npm run format:check
 
+      - name: TypeScript type check
+        run: npm run typecheck
+
   test:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: "22"
           cache: "npm"
@@ -58,10 +59,10 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: "22"
           cache: "npm"
