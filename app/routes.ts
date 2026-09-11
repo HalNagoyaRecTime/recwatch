@@ -3,6 +3,8 @@ import { type RouteConfig, index, route } from "@react-router/dev/routes";
 export default [
   route("login", "routes/auth/auth.login.tsx"),
   route("auth/callback", "routes/auth/auth.callback.tsx"),
+  route("account-deletion", "routes/account-deletion.tsx"),
+  route("account-deletion/callback", "routes/account-deletion.callback.tsx"),
   // 未実装・emailログイン
   // route("login/email", "routes/auth/auth.email.tsx"),
   route("/", "routes/main/frame.tsx", [
