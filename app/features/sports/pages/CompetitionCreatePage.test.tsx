@@ -55,7 +55,65 @@ describe("CompetitionCreatePage", () => {
     ).toBeInTheDocument();
     expect(screen.getByTestId("location")).toHaveTextContent(/^\/events\/new$/);
 
-    await user.click(screen.getByRole("button", { name: "一覧へ戻る" }));
+    await user.click(screen.getByRole("button", { name: /あとで設定する/ }));
+    await waitFor(() =>
+      expect(screen.getByTestId("location")).toHaveTextContent(/^\/events$/)
+    );
+  });
+
+  it("作成後に集合設定ステップへ進み、作成したイベントの ID で保存する", async () => {
+    const create = vi.fn().mockResolvedValue({ id: 42 });
+    const load = vi.fn().mockResolvedValue({ eventId: 42, rounds: [] });
+    const save = vi.fn().mockResolvedValue({ eventId: 42, rounds: [] });
+    const user = userEvent.setup();
+
+    render(
+      <MemoryRouter initialEntries={["/events/new"]}>
+        <CompetitionCreatePage
+          api={{ create, get: vi.fn(), update: vi.fn() }}
+          gatheringMemberGateway={{
+            loadCandidates: vi.fn(),
+            saveMembers: vi.fn(),
+          }}
+          gatheringSettingsGateway={{ load, save }}
+          gatheringSpotGateway={{
+            list: vi.fn().mockResolvedValue({
+              items: [],
+              total: 0,
+              limit: 0,
+              offset: 0,
+            }),
+            getById: vi.fn(),
+            create: vi.fn(),
+            update: vi.fn(),
+            delete: vi.fn(),
+          }}
+        />
+        <LocationProbe />
+      </MemoryRouter>
+    );
+
+    await user.type(screen.getByLabelText("イベント名*"), "リレー");
+    await user.type(screen.getByLabelText("実施場所*"), "メインコート");
+    await user.type(screen.getByLabelText("開始時間*"), "11:00");
+    await user.type(screen.getByLabelText("終了時間*"), "12:30");
+    await user.click(screen.getByRole("button", { name: "確認へ" }));
+    await user.click(screen.getByRole("button", { name: "イベントを作成" }));
+    await screen.findByText("イベントを作成しました");
+
+    await user.click(screen.getByRole("button", { name: /集合を設定する/ }));
+
+    // 集合設定ステップは同じモーダル内に出て、作成済みイベントの設定を読み込む
+    expect(
+      await screen.findByRole("heading", { name: "集合設定" })
+    ).toBeInTheDocument();
+    await waitFor(() => expect(load).toHaveBeenCalledWith(42));
+    expect(screen.getByTestId("location")).toHaveTextContent(/^\/events\/new$/);
+
+    await user.click(
+      await screen.findByRole("button", { name: "集合設定を保存" })
+    );
+    await waitFor(() => expect(save).toHaveBeenCalledWith(42, { rounds: [] }));
     await waitFor(() =>
       expect(screen.getByTestId("location")).toHaveTextContent(/^\/events$/)
     );

@@ -10,6 +10,10 @@ export default [
     route("dashboard", "routes/main/dashboard.tsx"),
     route("events", "routes/main/sports.tsx", [
       route("new", "routes/main/sports.new.tsx"),
+      route(
+        ":competitionId/gatherings",
+        "routes/main/sports.$competitionId.gatherings.tsx"
+      ),
     ]),
     route("events/today", "routes/main/events.today.tsx"),
     route("events/assignments", "routes/main/sports.assignments.tsx"),
