@@ -44,7 +44,9 @@ describe("toEventGatheringSettingsFromLegacyList", () => {
     expect(
       settings.rounds[0].gatherings.map((gathering) => gathering.id)
     ).toEqual([1, 2, 3]);
-    expect(settings.rounds[1].gatherings.map((g) => g.id)).toEqual([5]);
+    expect(
+      settings.rounds[1].gatherings.map((gathering) => gathering.id)
+    ).toEqual([5]);
   });
 
   it("集合場所名と、集合ごとに読んだ参加者を含める", () => {

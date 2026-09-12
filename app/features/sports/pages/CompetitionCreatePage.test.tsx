@@ -114,6 +114,13 @@ describe("CompetitionCreatePage", () => {
       await screen.findByRole("button", { name: "集合設定を保存" })
     );
     await waitFor(() => expect(save).toHaveBeenCalledWith(42, { rounds: [] }));
+
+    // 保存後は完了画面を挟み、「一覧へ戻る」で閉じる
+    expect(
+      await screen.findByText("集合設定を保存しました")
+    ).toBeInTheDocument();
+    expect(screen.getByTestId("location")).toHaveTextContent(/^\/events\/new$/);
+    await user.click(screen.getByRole("button", { name: "一覧へ戻る" }));
     await waitFor(() =>
       expect(screen.getByTestId("location")).toHaveTextContent(/^\/events$/)
     );

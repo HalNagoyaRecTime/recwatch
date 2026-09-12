@@ -39,7 +39,9 @@ describe("toRoundDrafts", () => {
 
     expect(drafts).toHaveLength(1);
     expect(drafts[0].round).toBe(1);
-    expect(drafts[0].gatherings.map((g) => g.gatheringId)).toEqual([101, 102]);
+    expect(
+      drafts[0].gatherings.map((gathering) => gathering.gatheringId)
+    ).toEqual([101, 102]);
     expect(drafts[0].gatherings[0].time).toBe("10:45");
     expect(drafts[0].gatherings[1].time).toBe("");
   });
@@ -57,7 +59,7 @@ describe("toRoundDrafts", () => {
     const drafts = toRoundDrafts(settings);
     const keys = drafts.flatMap((round) => [
       round.key,
-      ...round.gatherings.map((g) => g.key),
+      ...round.gatherings.map((gathering) => gathering.key),
     ]);
 
     expect(new Set(keys).size).toBe(keys.length);

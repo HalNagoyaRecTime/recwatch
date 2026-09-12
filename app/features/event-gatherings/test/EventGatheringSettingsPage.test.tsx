@@ -56,6 +56,15 @@ describe("EventGatheringSettingsPage", () => {
       await screen.findByRole("button", { name: "集合設定を保存" })
     );
     await waitFor(() => expect(save).toHaveBeenCalledWith(7, { rounds: [] }));
+
+    // 完了画面は同じモーダル内に出て、「一覧へ戻る」で閉じる
+    expect(
+      await screen.findByText("集合設定を保存しました")
+    ).toBeInTheDocument();
+    expect(screen.getByTestId("location")).toHaveTextContent(
+      /^\/events\/7\/gatherings$/
+    );
+    await user.click(screen.getByRole("button", { name: "一覧へ戻る" }));
     await waitFor(() =>
       expect(screen.getByTestId("location")).toHaveTextContent(/^\/events$/)
     );

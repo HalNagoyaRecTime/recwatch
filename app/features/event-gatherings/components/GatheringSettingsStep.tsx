@@ -99,7 +99,11 @@ export function GatheringSettingsStep({
                 settings.updateRoundNumber(round.key, roundNumber)
               }
               onRemove={() => {
-                if (round.gatherings.some((g) => g.key === openPickerKey)) {
+                if (
+                  round.gatherings.some(
+                    (gathering) => gathering.key === openPickerKey
+                  )
+                ) {
                   setOpenPickerKey(null);
                 }
                 settings.removeRound(round.key);

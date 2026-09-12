@@ -5,7 +5,9 @@ import { useNavigate, useOutletContext } from "react-router";
 import { FormModal } from "~/components/ui/modal/FormModal";
 import type { EventGatheringSettingsGateway } from "~/features/event-gatherings/api/contracts/event-gathering-settings-gateway";
 import type { GatheringMemberGateway } from "~/features/event-gatherings/api/contracts/gathering-member-gateway";
+import { GatheringSettingsSavedStep } from "~/features/event-gatherings/components/GatheringSettingsSavedStep";
 import { GatheringSettingsStep } from "~/features/event-gatherings/components/GatheringSettingsStep";
+import type { EventGatheringSettings } from "~/features/event-gatherings/model/event-gathering-settings";
 import type { GatheringSpotGateway } from "~/features/gathering-spots/api/contracts/gathering-spot-gateway";
 import type { CompetitionEditorApi } from "~/features/sports/api/competition-editor-api";
 import { httpCompetitionEditorApi } from "~/features/sports/api/http-competition-editor-api";
@@ -27,7 +29,7 @@ type CompetitionCreatePageProps = {
   gatheringSpotGateway?: GatheringSpotGateway;
 };
 
-type Step = "form" | "confirm" | "done" | "gatherings";
+type Step = "form" | "confirm" | "done" | "gatherings" | "gatheringsSaved";
 
 const stepDescription: Record<Step, string> = {
   form: "まずイベント本体だけを作成します。",
@@ -35,6 +37,7 @@ const stepDescription: Record<Step, string> = {
     "この内容で作成します。よろしければ「イベントを作成」を押してください。",
   done: "イベントの作成が完了しました。",
   gatherings: "作成したイベントに、Roundごとの集合時間・集合場所を設定します。",
+  gatheringsSaved: "集合設定の保存が完了しました。",
 };
 
 export function CompetitionCreatePage({
@@ -54,6 +57,8 @@ export function CompetitionCreatePage({
   const [submitError, setSubmitError] = useState<string | null>(null);
   // 作成が成功したイベントの ID。集合設定ステップはこの ID に対して保存する。
   const [createdEventId, setCreatedEventId] = useState<number | null>(null);
+  const [savedGatheringSettings, setSavedGatheringSettings] =
+    useState<EventGatheringSettings | null>(null);
 
   function handleConfirm() {
     const result = validateCompetitionForm(form);
@@ -100,18 +105,28 @@ export function CompetitionCreatePage({
       {(requestClose) => (
         <div className="space-y-6">
           <CompetitionCreateSteps
-            current={step === "gatherings" ? "gatherings" : "event"}
+            current={
+              step === "gatherings" || step === "gatheringsSaved"
+                ? "gatherings"
+                : "event"
+            }
           />
 
-          {step === "gatherings" && createdEventId !== null ? (
+          {step === "gatheringsSaved" && savedGatheringSettings ? (
+            <GatheringSettingsSavedStep
+              onClose={requestClose}
+              settings={savedGatheringSettings}
+            />
+          ) : step === "gatherings" && createdEventId !== null ? (
             <GatheringSettingsStep
               backLabel="戻る"
               eventId={createdEventId}
               memberGateway={gatheringMemberGateway}
               onBack={() => setStep("done")}
-              onSaved={() => {
+              onSaved={(settings) => {
                 outletContext?.reload();
-                requestClose();
+                setSavedGatheringSettings(settings);
+                setStep("gatheringsSaved");
               }}
               settingsGateway={gatheringSettingsGateway}
               spotGateway={gatheringSpotGateway}
