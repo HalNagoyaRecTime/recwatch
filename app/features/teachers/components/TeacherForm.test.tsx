@@ -8,6 +8,7 @@ const initialTeacher = {
   teacherId: 7,
   userId: 11,
   displayName: "佐橋 晴斗",
+  email: "sahashi@example.com",
   isLiveActive: true,
   isStaff: false,
   classRooms: [],
@@ -52,16 +53,18 @@ describe("TeacherForm", () => {
     );
 
     await user.type(screen.getByLabelText("先生名"), "新任");
+    await user.type(screen.getByLabelText("メールアドレス"), "new@example.com");
     await user.click(screen.getByRole("checkbox"));
     await user.click(screen.getByRole("button", { name: "保存する" }));
 
     expect(onSubmit).toHaveBeenCalledWith({
       classRoomIds: [4],
+      email: "new@example.com",
       userName: "新任",
     });
   });
 
-  it("編集時はチェックアイコン付きで状態をBackend対応待ちボタンに表示する", () => {
+  it("編集時は既存メールアドレスを初期値に表示する", () => {
     render(
       <TeacherForm
         classRooms={[]}
@@ -73,15 +76,9 @@ describe("TeacherForm", () => {
       />
     );
 
-    expect(
-      screen.getByRole("button", {
-        name: "アクティブ: 有効（Backend対応待ち）",
-      })
-    ).toBeDisabled();
-    expect(
-      screen.getByRole("button", {
-        name: "スタッフ: staffではない（Backend対応待ち）",
-      })
-    ).toBeDisabled();
+    expect(screen.getByLabelText("メールアドレス")).toHaveValue(
+      "sahashi@example.com"
+    );
+    expect(screen.queryByText(/未接続/)).not.toBeInTheDocument();
   });
 });

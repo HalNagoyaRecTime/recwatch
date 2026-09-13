@@ -9,6 +9,7 @@ describe("toTeacherRow", () => {
         teacher_id: 7,
         user_id: 11,
         display_name: "佐橋 晴斗",
+        email: "sahashi@example.com",
         is_live_active: true,
         is_staff: false,
         class_rooms: [
@@ -19,6 +20,7 @@ describe("toTeacherRow", () => {
       teacherId: 7,
       userId: 11,
       displayName: "佐橋 晴斗",
+      email: "sahashi@example.com",
       isLiveActive: true,
       isStaff: false,
       classRooms: [{ classRoomId: 3, classCode: "A-1", className: "1年A組" }],

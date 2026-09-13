@@ -6,6 +6,7 @@ export function toTeacherRow(dto: TeacherDTO): TeacherRow {
     teacherId: dto.teacher_id,
     userId: dto.user_id,
     displayName: dto.display_name,
+    email: dto.email,
     isLiveActive: dto.is_live_active,
     isStaff: dto.is_staff,
     classRooms: dto.class_rooms.map((classRoom) => ({

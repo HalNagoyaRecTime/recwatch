@@ -15,7 +15,7 @@ export type ClassRoomDTO = {
 };
 
 export type ClassRoomPageDTO = {
-  classrooms: ClassRoomDTO[];
+  items: ClassRoomDTO[];
   total: number;
   limit: number;
   offset: number;

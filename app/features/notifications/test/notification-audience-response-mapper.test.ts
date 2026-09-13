@@ -11,7 +11,7 @@ import {
 describe("notification audience response mapper", () => {
   it("外部DTOを通知対象の内部モデルへ変換する", () => {
     const classrooms = toClassRoomAudiencePage({
-      classrooms: [
+      items: [
         {
           class_room_id: 1,
           class_code: "1A",
@@ -23,7 +23,7 @@ describe("notification audience response mapper", () => {
       total: 1,
       limit: 100,
       offset: 0,
-    }).classrooms;
+    }).items;
     const gatherings = toGatheringAudienceDtos([
       {
         gathering_id: 2,
@@ -63,7 +63,7 @@ describe("notification audience response mapper", () => {
   it("不正なレスポンスをunexpectedエラーへ変換する", () => {
     expect(() =>
       toClassRoomAudiencePage({
-        classrooms: [{ class_room_id: "1" }],
+        items: [{ class_room_id: "1" }],
         total: 1,
         limit: 100,
         offset: 0,

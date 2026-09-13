@@ -3,8 +3,13 @@ import type {
   TeacherCreateRequest,
   TeacherListQuery,
   TeacherUpdateRequest,
+  UserStatusUpdateRequest,
 } from "../contracts/teacher-api";
-import type { TeacherDTO, TeacherListPageDTO } from "../dto/teacher-dto";
+import type {
+  TeacherDTO,
+  TeacherListPageDTO,
+  UserStatusDTO,
+} from "../dto/teacher-dto";
 
 export const teacherHttpApi = {
   createTeacher: (body: TeacherCreateRequest) =>
@@ -29,4 +34,10 @@ export const teacherHttpApi = {
     apiClient.get<TeacherDTO>(`/api/v1/teachers/${teacherId}`),
   updateTeacher: (teacherId: number, body: TeacherUpdateRequest) =>
     apiClient.put<TeacherDTO>(`/api/v1/teachers/${teacherId}`, body),
+  updateUserStatus: (userId: number, body: UserStatusUpdateRequest) =>
+    apiClient.patch<UserStatusDTO>(`/api/v1/admin/users/${userId}`, body),
+  assignStaff: (userId: number) =>
+    apiClient.put<void>(`/api/v1/admin/users/${userId}/staff`),
+  revokeStaff: (userId: number) =>
+    apiClient.delete(`/api/v1/admin/users/${userId}/staff`),
 };

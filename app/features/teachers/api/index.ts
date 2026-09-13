@@ -5,6 +5,7 @@ import type {
   TeacherBooleanFilter,
   TeacherListQuery,
   TeacherUpdateRequest,
+  UserStatusUpdateRequest,
 } from "./contracts/teacher-api";
 
 const TEACHER_FETCH_LIMIT = 100;
@@ -19,6 +20,10 @@ export const TeacherApi = {
     teacherHttpApi.getTeacherById(teacherId),
   updateTeacher: (teacherId: number, body: TeacherUpdateRequest) =>
     teacherHttpApi.updateTeacher(teacherId, body),
+  updateUserStatus: (userId: number, body: UserStatusUpdateRequest) =>
+    teacherHttpApi.updateUserStatus(userId, body),
+  assignStaff: (userId: number) => teacherHttpApi.assignStaff(userId),
+  revokeStaff: (userId: number) => teacherHttpApi.revokeStaff(userId),
 };
 
 async function fetchAllTeachers(isLiveActive: TeacherBooleanFilter) {
@@ -51,7 +56,11 @@ async function fetchAllTeachers(isLiveActive: TeacherBooleanFilter) {
   return { items, total, limit: items.length, offset: 0 };
 }
 
-export type { TeacherDTO, TeacherListPageDTO } from "./dto/teacher-dto";
+export type {
+  TeacherDTO,
+  TeacherListPageDTO,
+  UserStatusDTO,
+} from "./dto/teacher-dto";
 export type {
   TeacherCreateRequest,
   TeacherBooleanFilter,
@@ -59,4 +68,5 @@ export type {
   TeacherListSortBy,
   TeacherListSortOrder,
   TeacherUpdateRequest,
+  UserStatusUpdateRequest,
 } from "./contracts/teacher-api";

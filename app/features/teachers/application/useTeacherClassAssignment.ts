@@ -1,11 +1,15 @@
 import { useMemo, useState } from "react";
-import { useNavigate } from "react-router";
+import { useLocation, useNavigate } from "react-router";
 
 import { TeacherApi } from "~/features/teachers/api";
-import type { TeacherRow } from "~/features/teachers/model/teacher";
+import type {
+  ClassRoomOption,
+  TeacherRow,
+} from "~/features/teachers/model/teacher";
+import { getErrorMessage } from "~/lib/client-error";
 
 type UseTeacherClassAssignmentOptions = {
-  classRooms: readonly { classRoomId: number; className: string }[];
+  classRooms: readonly ClassRoomOption[];
   selectedTeacherId: number;
   teachers: readonly TeacherRow[];
 };
@@ -16,6 +20,7 @@ export function useTeacherClassAssignment({
   teachers,
 }: UseTeacherClassAssignmentOptions) {
   const navigate = useNavigate();
+  const location = useLocation();
   const [teacherId, setTeacherId] = useState(selectedTeacherId);
   const [checkedClassRoomIds, setCheckedClassRoomIds] = useState<number[]>(() =>
     findAssignedClassRoomIds(teachers, selectedTeacherId)
@@ -56,20 +61,24 @@ export function useTeacherClassAssignment({
     setErrorMessage("");
     try {
       await TeacherApi.updateTeacher(teacherId, {
+        email: selectedTeacher.email,
         userName: selectedTeacher.displayName,
         classRoomIds: checkedClassRoomIds,
       });
-      navigate("/teachers");
-    } catch {
+      navigate({ pathname: "/teachers", search: location.search });
+    } catch (error) {
       setErrorMessage(
-        "割り当ての登録に失敗しました。時間をおいてもう一度お試しください。"
+        getErrorMessage(
+          error,
+          "割り当ての登録に失敗しました。時間をおいてもう一度お試しください。"
+        )
       );
       setIsSubmitting(false);
     }
   }
 
   return {
-    cancel: () => navigate("/teachers"),
+    cancel: () => navigate({ pathname: "/teachers", search: location.search }),
     checkedClassRoomIds,
     errorMessage,
     handleSubmit,
