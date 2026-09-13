@@ -14,6 +14,7 @@ export type TeacherRow = {
   teacherId: number;
   userId: number;
   displayName: string;
+  email: string;
   isLiveActive: boolean;
   isStaff: boolean;
   classRooms: TeacherClassRoomRow[];

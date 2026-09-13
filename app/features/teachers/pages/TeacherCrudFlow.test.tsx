@@ -45,6 +45,7 @@ const teacher: TeacherRow = {
   teacherId: 7,
   userId: 11,
   displayName: "佐橋 晴斗",
+  email: "sahashi@example.com",
   isLiveActive: true,
   isStaff: false,
   classRooms: [{ classRoomId: 2, classCode: "2A", className: "2年A組" }],
@@ -134,6 +135,7 @@ describe("teacher create and edit flows", () => {
     );
 
     await user.type(await screen.findByLabelText("先生名"), "新任");
+    await user.type(screen.getByLabelText("メールアドレス"), "new@example.com");
     await user.click(screen.getByRole("button", { name: "保存する" }));
 
     expect(await screen.findByText("教官一覧")).toBeInTheDocument();
@@ -141,6 +143,7 @@ describe("teacher create and edit flows", () => {
     await waitFor(() => expect(listLoader).toHaveBeenCalledTimes(2));
     expect(mocks.createTeacher).toHaveBeenCalledWith({
       classRoomIds: [],
+      email: "new@example.com",
       userName: "新任",
     });
   });
@@ -154,6 +157,7 @@ describe("teacher create and edit flows", () => {
     renderCrudRouter("/teachers/new", <TeacherCreatePage classRooms={[]} />);
 
     await user.type(screen.getByLabelText("先生名"), "新任");
+    await user.type(screen.getByLabelText("メールアドレス"), "new@example.com");
     await user.click(screen.getByRole("button", { name: "保存する" }));
 
     expect(await screen.findByRole("alert")).toHaveTextContent(
@@ -180,6 +184,7 @@ describe("teacher create and edit flows", () => {
     );
     expect(mocks.updateTeacher).toHaveBeenCalledWith(7, {
       classRoomIds: [2, 4],
+      email: "sahashi@example.com",
       userName: "佐橋 晴斗",
     });
   });

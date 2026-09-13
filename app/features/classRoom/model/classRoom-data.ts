@@ -3,14 +3,14 @@ import type { ClassRoomData } from "~/features/classRoom/model/classRoom";
 import { ClassRoomApi } from "~/features/classRoom/api";
 
 function validatePage(page: unknown): asserts page is {
-  classrooms: Parameters<typeof toClassRoomData>[0][];
+  items: Parameters<typeof toClassRoomData>[0][];
   total: number;
 } {
   if (
     !page ||
     typeof page !== "object" ||
-    !("classrooms" in page) ||
-    !Array.isArray(page.classrooms) ||
+    !("items" in page) ||
+    !Array.isArray(page.items) ||
     !("total" in page) ||
     typeof page.total !== "number" ||
     !Number.isInteger(page.total) ||
@@ -28,10 +28,10 @@ export async function getClassRoomData(): Promise<ClassRoomData[]> {
     const page = await ClassRoomApi.getClassRooms(offset);
     validatePage(page);
 
-    classRooms.push(...page.classrooms.map(toClassRoomData));
-    offset += page.classrooms.length;
+    classRooms.push(...page.items.map(toClassRoomData));
+    offset += page.items.length;
 
-    if (offset >= page.total || page.classrooms.length === 0) {
+    if (offset >= page.total || page.items.length === 0) {
       return classRooms;
     }
   }

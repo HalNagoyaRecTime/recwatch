@@ -1,4 +1,5 @@
 export type TeacherCreateRequest = {
+  email: string;
   userName: string;
   classRoomIds: number[];
 };
@@ -25,6 +26,11 @@ export type TeacherListQuery = {
 };
 
 export type TeacherUpdateRequest = {
+  email: string;
   userName: string;
   classRoomIds: number[];
+};
+
+export type UserStatusUpdateRequest = {
+  is_live_active: boolean;
 };

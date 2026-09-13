@@ -11,6 +11,7 @@ const teachers: TeacherRow[] = [
     teacherId: 2,
     userId: 12,
     displayName: "山田 花子",
+    email: "yamada@example.com",
     isLiveActive: true,
     isStaff: false,
     classRooms: [{ classRoomId: 1, classCode: "1A", className: "1年A組" }],
@@ -79,10 +80,8 @@ describe("TeachersPage", () => {
       screen.getByRole("button", { name: "教官を編集する" })
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("button", {
-        name: "教官を無効化する（Backend対応待ち）",
-      })
-    ).toBeDisabled();
+      screen.getByRole("button", { name: "教官を無効化する" })
+    ).toBeEnabled();
   });
 
   it("各filterをURLへ反映し、一覧を1ページ目へ戻す", async () => {

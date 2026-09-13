@@ -24,7 +24,7 @@ export function toClassRoomAudiencePage(
   }
 
   return {
-    classrooms: response.classrooms.map(toClassRoomDto),
+    items: response.items.map(toClassRoomDto),
     total: response.total,
     limit: response.limit,
     offset: response.offset,

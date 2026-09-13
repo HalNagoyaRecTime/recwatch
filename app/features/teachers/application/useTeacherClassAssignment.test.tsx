@@ -29,6 +29,7 @@ describe("useTeacherClassAssignment", () => {
               teacherId: 7,
               userId: 11,
               displayName: "佐橋 晴斗",
+              email: "sahashi@example.com",
               isLiveActive: true,
               isStaff: false,
               classRooms: [
@@ -48,6 +49,7 @@ describe("useTeacherClassAssignment", () => {
     await waitFor(() =>
       expect(updateTeacher).toHaveBeenCalledWith(7, {
         classRoomIds: [2, 4],
+        email: "sahashi@example.com",
         userName: "佐橋 晴斗",
       })
     );

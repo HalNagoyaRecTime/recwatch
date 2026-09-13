@@ -34,6 +34,12 @@ export function TeacherTable({
       renderCell: (teacher) => teacher.displayName,
     },
     {
+      header: "メールアドレス",
+      id: "email",
+      width: { type: "fluid", min: 220, grow: 1 },
+      renderCell: (teacher) => teacher.email,
+    },
+    {
       align: "center",
       header: "staff",
       id: "staff",
