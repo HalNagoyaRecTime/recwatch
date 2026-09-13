@@ -3,8 +3,8 @@ import type {
   DataTableColumn,
   DataTableSort,
 } from "~/components/ui/data-table/data-table-types";
+import { CompetitionRowActionMenu } from "~/features/sports/components/CompetitionRowActionMenu";
 import type { CompetitionListItem } from "~/features/sports/model/competition-list-item";
-import { ManagementRowActionMenu } from "~/features/user-management/components/ManagementRowActionMenu";
 
 type CompetitionTableProps = {
   emptyMessage: string;
@@ -12,6 +12,7 @@ type CompetitionTableProps = {
   items: readonly CompetitionListItem[];
   onDelete: (item: CompetitionListItem) => void;
   onEdit: (item: CompetitionListItem) => void;
+  onOpenGatherings: (item: CompetitionListItem) => void;
   onSortChange?: (columnId: string) => void;
   sort?: DataTableSort;
 };
@@ -22,6 +23,7 @@ export function CompetitionTable({
   items,
   onDelete,
   onEdit,
+  onOpenGatherings,
   onSortChange,
   sort,
 }: CompetitionTableProps) {
@@ -70,11 +72,12 @@ export function CompetitionTable({
       id: "actions",
       width: { type: "fixed", value: 64 },
       renderCell: (item) => (
-        <ManagementRowActionMenu
+        <CompetitionRowActionMenu
           ariaLabel={`${item.name}の操作`}
           disabled={isMutating}
           onDelete={() => onDelete(item)}
           onEdit={() => onEdit(item)}
+          onOpenGatherings={() => onOpenGatherings(item)}
         />
       ),
     },
