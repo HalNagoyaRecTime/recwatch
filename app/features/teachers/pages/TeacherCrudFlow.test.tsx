@@ -11,6 +11,7 @@ import { describe, expect, it, vi } from "vitest";
 import { TeacherCreatePage } from "~/features/teachers/pages/TeacherCreatePage";
 import { TeacherEditPage } from "~/features/teachers/pages/TeacherEditPage";
 import type { TeacherRow } from "~/features/teachers/model/teacher";
+import { ApiClientError } from "~/lib/api-client-error";
 
 const mocks = vi.hoisted(() => ({
   createTeacher: vi.fn(),
@@ -164,6 +165,31 @@ describe("teacher create and edit flows", () => {
       "登録に失敗しました。"
     );
     expect(screen.getByRole("dialog")).toBeInTheDocument();
+  });
+
+  it("email重複の409をフォームへ表示して一覧へ遷移しない", async () => {
+    const backendErrorMessage = "メールアドレスが既に登録されています。";
+    mocks.createTeacher.mockRejectedValueOnce(
+      new ApiClientError(409, backendErrorMessage)
+    );
+    const user = userEvent.setup();
+
+    renderCrudRouter("/teachers/new", <TeacherCreatePage classRooms={[]} />);
+
+    await user.type(screen.getByLabelText("先生名"), "新任");
+    await user.type(screen.getByLabelText("メールアドレス"), "new@example.com");
+    await user.click(screen.getByRole("button", { name: "保存する" }));
+
+    expect(mocks.createTeacher).toHaveBeenLastCalledWith({
+      classRoomIds: [],
+      email: "new@example.com",
+      userName: "新任",
+    });
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      backendErrorMessage
+    );
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+    expect(screen.queryByText("教官一覧")).not.toBeInTheDocument();
   });
 
   it("更新成功時にteacherIdと担当クラスを送信して一覧へ戻る", async () => {
