@@ -13,7 +13,7 @@ export function AuthLayout({
   contentClassName = "w-full max-w-sm flex-1 flex flex-col justify-center",
 }: AuthLayoutProps) {
   return (
-    <main className="flex min-h-dvh flex-col items-center justify-center px-6 pt-10">
+    <main className="flex min-h-dvh flex-col items-center justify-center overflow-visible px-6 pt-10 md:h-dvh md:overflow-x-hidden md:overflow-y-auto">
       <section className={contentClassName}>
         <AuthBrand />
         {children}
