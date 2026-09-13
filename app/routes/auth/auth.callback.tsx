@@ -1,5 +1,13 @@
 import { redirect } from "react-router";
 import { buildBackendUrl } from "~/config/env";
+import {
+  accountDeletionUnavailableMessage,
+  getAccountDeletionErrorMessage,
+} from "~/features/account-deletion/api/account-deletion-client";
+import {
+  consumeDeletionAuthPending,
+  saveDeletionAuthResult,
+} from "~/features/account-deletion/lib/deletionAuthFlow";
 import { setAccessToken } from "~/features/auth/lib/accessTokenStore";
 import { WEB_CLIENT_HEADERS } from "~/features/auth/lib/webClientHeaders";
 import { setRefreshTokenId } from "~/features/auth/lib/refreshTokenStore";
@@ -20,11 +28,102 @@ function isTokenExchangeResponse(
   );
 }
 
+type DeletionTokenResponse = {
+  deletion_confirmation_token: string;
+};
+
+function isDeletionTokenResponse(
+  value: unknown
+): value is DeletionTokenResponse {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    typeof (value as Record<string, unknown>).deletion_confirmation_token ===
+      "string"
+  );
+}
+
+type BackendErrorResponse = { error: { code: string } };
+
+function isBackendErrorResponse(value: unknown): value is BackendErrorResponse {
+  if (typeof value !== "object" || value === null || !("error" in value)) {
+    return false;
+  }
+
+  const error = (value as Record<string, unknown>).error;
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    typeof (error as Record<string, unknown>).code === "string"
+  );
+}
+
+const deletionAuthFailedMessage =
+  "本人確認を完了できませんでした。削除受付ページからもう一度お試しください。";
+
+async function handleDeletionAuthCallback(
+  code: string | null,
+  state: string | null,
+  error: string | null
+) {
+  if (error || !code || !state) {
+    saveDeletionAuthResult({
+      status: "error",
+      message: deletionAuthFailedMessage,
+    });
+    throw redirect("/account-deletion/callback");
+  }
+
+  const deleteTokenUrl = buildBackendUrl("/api/v1/auth/microsoft/delete-token");
+  if (!deleteTokenUrl) {
+    saveDeletionAuthResult({
+      status: "error",
+      message: deletionAuthFailedMessage,
+    });
+    throw redirect("/account-deletion/callback");
+  }
+
+  const response = await fetch(deleteTokenUrl, {
+    method: "POST",
+    headers: {
+      ...WEB_CLIENT_HEADERS,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ code, state }),
+  }).catch(() => null);
+
+  const payload: unknown = response
+    ? await response.json().catch(() => null)
+    : null;
+  if (!response?.ok || !isDeletionTokenResponse(payload)) {
+    const code = isBackendErrorResponse(payload)
+      ? payload.error.code
+      : undefined;
+    saveDeletionAuthResult({
+      status: "error",
+      message: response
+        ? getAccountDeletionErrorMessage(code, response.status)
+        : accountDeletionUnavailableMessage,
+    });
+    throw redirect("/account-deletion/callback");
+  }
+
+  saveDeletionAuthResult({
+    status: "confirmed",
+    token: payload.deletion_confirmation_token,
+  });
+  throw redirect("/account-deletion/callback");
+}
+
 export async function clientLoader({ request }: { request: Request }) {
   const url = new URL(request.url);
   const code = url.searchParams.get("code");
   const state = url.searchParams.get("state");
   const error = url.searchParams.get("error");
+
+  if (consumeDeletionAuthPending()) {
+    return handleDeletionAuthCallback(code, state, error);
+  }
 
   if (error || !code || !state) {
     throw redirect("/login?error=auth_failed");
