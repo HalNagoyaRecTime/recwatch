@@ -110,14 +110,14 @@ function ConfirmationView({
           削除を実行しますか？
         </h1>
         <p className="text-text-muted text-sm leading-7">
-          最終操作を行うと、RecTimeアカウントとRecTimeが管理する関連データの削除受付が始まります。この操作は取り消せません。
+          最終操作を行うと、RE:CREATIONアカウントとRE:CREATIONが管理する関連データの削除受付が始まります。この操作は取り消せません。
         </p>
       </header>
 
       <section className="border-tone-danger-border bg-tone-danger-bg text-tone-danger-text app-rounded border p-5">
         <h2 className="text-sm font-semibold">削除前にご確認ください</h2>
         <ul className="mt-2 space-y-2 text-sm leading-6">
-          <li>削除後はRecTimeを利用できなくなります。</li>
+          <li>削除後はRE:CREATIONを利用できなくなります。</li>
           <li>Microsoft 365アカウントそのものは削除されません。</li>
           <li>
             学校やMicrosoft側のメール・ファイル・公式記録には影響しません。
@@ -136,7 +136,7 @@ function ConfirmationView({
         >
           {isSubmitting
             ? "削除受付を送信しています..."
-            : "RecTimeアカウントを削除する"}
+            : "RE:CREATIONアカウントを削除する"}
         </Button>
       </div>
     </div>
@@ -155,7 +155,7 @@ function AcceptedView() {
           削除受付を完了しました
         </h1>
         <p className="text-text-muted text-sm leading-7">
-          BackendがRecTimeアカウントの削除要求を正常に受け付けました。以後、このアカウントでRecTimeを利用することはできません。
+          BackendがRE:CREATIONアカウントの削除要求を正常に受け付けました。以後、このアカウントでRE:CREATIONを利用することはできません。
         </p>
         <p className="text-text-muted text-sm leading-7">
           Microsoft 365アカウントそのものは削除されません。
@@ -173,7 +173,7 @@ function PendingView() {
           削除処理を受け付けました
         </h1>
         <p className="text-text-muted text-sm leading-7">
-          RecTimeアカウントの削除処理を受け付けました。以後、このアカウントでRecTimeを利用することはできません。
+          RE:CREATIONアカウントの削除処理を受け付けました。以後、このアカウントでRE:CREATIONを利用することはできません。
         </p>
       </header>
     </div>
