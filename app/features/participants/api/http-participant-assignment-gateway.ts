@@ -34,12 +34,7 @@ export function createHttpParticipantAssignmentGateway(
         gatheringSpotsResponse,
         gatheringsResponse,
       ] = await Promise.all([
-        loadAllPageItems(
-          client,
-          "/api/v1/classrooms",
-          "classrooms",
-          isClassroom
-        ),
+        loadAllPageItems(client, "/api/v1/classrooms", "items", isClassroom),
         loadAllPageItems(client, "/api/v1/students", "students", isStudent),
         loadAllPageItems(client, "/api/v1/events", "events", isEvent),
         client.get("/api/v1/gathering-spots"),

@@ -1,13 +1,13 @@
-import {
-  ClassRoomApi,
-  TeacherApi,
-  type TeacherListQuery,
-} from "~/features/teachers/api";
+import { getClassRoomData } from "~/features/classRoom/model/classRoom-data";
+import { TeacherApi, type TeacherListQuery } from "~/features/teachers/api";
 import { toTeacherRow } from "~/features/teachers/api/mappers/teacher-mappers";
 
-export async function loadTeacherList() {
-  const page = await TeacherApi.getTeachers();
-  return { teachers: page.items.map(toTeacherRow) };
+export async function loadActiveTeacherOptions() {
+  const page = await TeacherApi.getActiveTeachers();
+  return page.items.map((teacher) => {
+    const row = toTeacherRow(teacher);
+    return { displayName: row.displayName, teacherId: row.teacherId };
+  });
 }
 
 export async function loadTeacherListPage(query: TeacherListQuery) {
@@ -21,16 +21,27 @@ export async function loadTeacherListPage(query: TeacherListQuery) {
 }
 
 export async function loadTeacherAssignment(teacherId: number) {
-  const [teacherPage, classRoomPage] = await Promise.all([
-    TeacherApi.getTeachers(),
-    ClassRoomApi.getClassRooms(),
+  const [selectedTeacherDto, teacherPage, classRooms] = await Promise.all([
+    teacherId > 0
+      ? TeacherApi.getTeacherById(teacherId)
+      : Promise.resolve(null),
+    TeacherApi.getActiveTeachers(),
+    getClassRoomData(),
   ]);
 
+  const teachers = teacherPage.items.map(toTeacherRow);
+  if (
+    selectedTeacherDto &&
+    !teachers.some((teacher) => teacher.teacherId === teacherId)
+  ) {
+    teachers.unshift(toTeacherRow(selectedTeacherDto));
+  }
+
   return {
-    teachers: teacherPage.items.map(toTeacherRow),
-    classRooms: classRoomPage.classrooms.map((classRoom) => ({
-      classRoomId: classRoom.class_room_id,
-      className: classRoom.class_name,
+    teachers,
+    classRooms: classRooms.map((classRoom) => ({
+      classRoomId: classRoom.classRoomId,
+      className: classRoom.classRoomName,
     })),
     selectedTeacherId: teacherId,
   };

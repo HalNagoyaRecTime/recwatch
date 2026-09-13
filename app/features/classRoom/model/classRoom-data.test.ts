@@ -32,13 +32,13 @@ describe("getClassRoomData", () => {
     const getClassRooms = vi
       .spyOn(ClassRoomApi, "getClassRooms")
       .mockResolvedValueOnce({
-        classrooms: [firstClassRoom],
+        items: [firstClassRoom],
         total: 2,
         limit: 1,
         offset: 0,
       })
       .mockResolvedValueOnce({
-        classrooms: [secondClassRoom],
+        items: [secondClassRoom],
         total: 2,
         limit: 1,
         offset: 1,
@@ -70,7 +70,7 @@ describe("getClassRoomData", () => {
     const getClassRooms = vi
       .spyOn(ClassRoomApi, "getClassRooms")
       .mockResolvedValue({
-        classrooms: [],
+        items: [],
         total: 1,
         limit: 100,
         offset: 0,

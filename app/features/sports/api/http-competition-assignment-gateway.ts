@@ -32,12 +32,7 @@ export function createHttpCompetitionAssignmentGateway(
     async load() {
       const [classrooms, students, events, spots, gatherings] =
         await Promise.all([
-          loadAllPageItems(
-            client,
-            "/api/v1/classrooms",
-            "classrooms",
-            toClassroom
-          ),
+          loadAllPageItems(client, "/api/v1/classrooms", "items", toClassroom),
           loadAllPageItems(client, "/api/v1/students", "students", toStudent),
           loadAllPageItems(client, "/api/v1/events", "events", toEvent),
           client.get("/api/v1/gathering-spots"),

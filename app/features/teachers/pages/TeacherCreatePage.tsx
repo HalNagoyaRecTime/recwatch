@@ -40,7 +40,7 @@ export function TeacherCreatePage({
 
   return (
     <TeacherFormModal
-      description="先生名と担当クラスを登録します。"
+      description="先生名とメールアドレス、担当クラスを登録します。"
       onClose={close}
       title="教官を新規登録"
     >
