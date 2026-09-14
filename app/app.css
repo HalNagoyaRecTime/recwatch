@@ -144,15 +144,6 @@
     overflow: hidden;
   }
 
-  @media (max-width: 767px) {
-    body {
-      height: auto;
-      min-height: 100dvh;
-      overflow-x: hidden;
-      overflow-y: auto;
-    }
-  }
-
   a {
     color: inherit;
     text-decoration: none;

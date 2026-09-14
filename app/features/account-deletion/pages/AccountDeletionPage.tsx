@@ -80,7 +80,8 @@ export function AccountDeletionPage() {
           本人確認について
         </h2>
         <p className="text-text-muted mt-2 text-sm leading-6">
-          Microsoft 365アカウントで本人確認後、削除を確定します。
+          削除対象を本人が指定できるようにするため、学校から付与されたMicrosoft
+          365アカウントで再認証します。本人確認後に、最終的な削除操作を行います。
         </p>
 
         {errorMessage ? (
