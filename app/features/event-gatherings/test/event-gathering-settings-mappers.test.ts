@@ -1,61 +1,34 @@
 import { describe, expect, it } from "vitest";
 
-import type { LegacyEventGatheringResponseDto } from "~/features/event-gatherings/api/dto/event-gathering-settings-api-dto";
 import {
   toEventGatheringSettings,
-  toEventGatheringSettingsFromLegacyList,
   toEventGatheringSettingsWriteRequest,
 } from "~/features/event-gatherings/api/mappers/event-gathering-settings-mappers";
 
-function legacyItem(
-  overrides: Partial<LegacyEventGatheringResponseDto>
-): LegacyEventGatheringResponseDto {
+function gatheringResponse(gatheringId: number, time: string) {
   return {
-    gathering_id: 1,
-    event_id: 12,
-    gathering_spot_id: 1,
-    gathering_time: "10:45",
-    round: 1,
-    event_name: "リレー",
-    gathering_spot_name: "出入口①",
-    created_at: "2026-09-01T00:00:00Z",
-    updated_at: "2026-09-01T00:00:00Z",
-    ...overrides,
+    gathering_id: gatheringId,
+    gathering_time: time,
+    gathering_spot: { gathering_spot_id: 1, gathering_spot_name: "出入口①" },
+    member_count: 0,
   };
 }
 
-const noMembers = new Map();
-
-describe("toEventGatheringSettingsFromLegacyList", () => {
-  it("フラットな一覧を Round ごとにまとめ、round・時刻・ID の昇順にそろえる", () => {
-    const settings = toEventGatheringSettingsFromLegacyList(
-      12,
-      [
-        legacyItem({ gathering_id: 5, round: 2, gathering_time: "11:00" }),
-        legacyItem({ gathering_id: 3, round: 1, gathering_time: "10:55" }),
-        legacyItem({ gathering_id: 2, round: 1, gathering_time: "10:45" }),
-        legacyItem({ gathering_id: 1, round: 1, gathering_time: "10:45" }),
-      ],
-      noMembers
-    );
-
-    expect(settings.eventId).toBe(12);
-    expect(settings.rounds.map((round) => round.round)).toEqual([1, 2]);
-    expect(
-      settings.rounds[0].gatherings.map((gathering) => gathering.id)
-    ).toEqual([1, 2, 3]);
-    expect(
-      settings.rounds[1].gatherings.map((gathering) => gathering.id)
-    ).toEqual([5]);
-  });
-
-  it("集合場所名と、集合ごとに読んだ参加者を含める", () => {
-    const settings = toEventGatheringSettingsFromLegacyList(
-      12,
-      [
-        legacyItem({ gathering_spot_id: 7, gathering_spot_name: "体育館" }),
-        legacyItem({ gathering_id: 2, gathering_time: "10:55" }),
-      ],
+describe("toEventGatheringSettings", () => {
+  it("集合ごとに読んだ参加者を対応する集合へ含める", () => {
+    const settings = toEventGatheringSettings(
+      {
+        event_id: 12,
+        rounds: [
+          {
+            round: 1,
+            gatherings: [
+              { ...gatheringResponse(1, "10:45"), member_count: 2 },
+              gatheringResponse(2, "10:55"),
+            ],
+          },
+        ],
+      },
       new Map([
         [
           1,
@@ -70,7 +43,7 @@ describe("toEventGatheringSettingsFromLegacyList", () => {
     expect(settings.rounds[0].gatherings[0]).toEqual({
       id: 1,
       time: "10:45",
-      spot: { id: 7, name: "体育館" },
+      spot: { id: 1, name: "出入口①" },
       memberUserIds: [1001, 1002],
       memberCount: 2,
     });
@@ -79,14 +52,12 @@ describe("toEventGatheringSettingsFromLegacyList", () => {
   });
 
   it("集合が無ければ rounds を空にする", () => {
-    expect(toEventGatheringSettingsFromLegacyList(12, [], noMembers)).toEqual({
+    expect(toEventGatheringSettings({ event_id: 12, rounds: [] })).toEqual({
       eventId: 12,
       rounds: [],
     });
   });
-});
 
-describe("toEventGatheringSettings", () => {
   it("保存後レスポンスを参加人数付きで変換する", () => {
     const settings = toEventGatheringSettings({
       event_id: 12,
