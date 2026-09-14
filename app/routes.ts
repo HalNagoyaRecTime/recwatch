@@ -31,7 +31,7 @@ export default [
       route(":id/edit", "routes/main/teams.$id.edit.tsx"),
     ]),
     route("ranking", "routes/main/ranking.tsx", [
-      route(":rank/edit", "routes/main/ranking.$rank.edit.tsx"),
+      route(":teamId/edit", "routes/main/ranking.$teamId.edit.tsx"),
     ]),
     route("schedule", "routes/main/schedule.tsx"),
     route("schedule/new", "routes/main/schedule.new.tsx"),
