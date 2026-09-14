@@ -23,6 +23,7 @@ export function createTeam(input: TeamInput): Team {
     id: nextId,
     name: input.name,
     registeredClasses: [...input.registeredClasses],
+    scores: 0,
     registeredAt: "2026-09-05T09:00:00+09:00",
     updatedAt: "2026-09-05T12:00:00+09:00",
   } satisfies Team;
@@ -42,4 +43,12 @@ export function updateTeam(teamId: number, input: TeamInput): Team | null {
   };
   teams = teams.map((item) => (item.id === teamId ? updatedTeam : item));
   return { ...updatedTeam };
+}
+
+export function deleteTeam(teamId: number): boolean {
+  const exists = teams.some((item) => item.id === teamId);
+  if (!exists) return false;
+
+  teams = teams.filter((item) => item.id !== teamId);
+  return true;
 }
