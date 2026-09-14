@@ -11,10 +11,13 @@ const competition: CompetitionListItem = {
   code: "001",
   name: "大縄跳び",
   venue: "運動場",
-  meetingTime: "09:00",
   startTime: "09:30",
   endTime: "10:00",
-  meetingPlace: "正門",
+  gatheringSummary: {
+    gatheringCount: 2,
+    configuredGatheringCount: 1,
+    firstGatheringTime: "09:00",
+  },
   rules: "3分間",
 };
 
@@ -58,6 +61,7 @@ describe("CompetitionListPage", () => {
       "href",
       "/events/new"
     );
+    expect(screen.getByText("09:00")).toBeInTheDocument();
     expect(screen.queryByText("イベント詳細")).not.toBeInTheDocument();
     expect(
       screen.queryByRole("button", { name: competition.name })
