@@ -65,6 +65,7 @@ export function NotificationActionMenu({
       isOpen={isOpen}
       onOpenChange={setIsOpen}
       placement="bottom-end"
+      scrollable
       trigger={
         <Button
           aria-label={`${notification.title}のその他の操作`}

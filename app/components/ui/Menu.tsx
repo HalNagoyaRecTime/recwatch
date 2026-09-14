@@ -54,7 +54,9 @@ export function Menu({ items, className }: MenuProps) {
         }
 
         if (item.type === "divider") {
-          return <div key={item.id} className="bg-border-1 mx-1 my-1.5 h-px" />;
+          return (
+            <div key={item.id} className="bg-border-subtle mx-1 my-1.5 h-px" />
+          );
         }
 
         return (
@@ -109,7 +111,7 @@ export function MenuActionItem({
         <span className="app-text-small whitespace-nowrap">{label}</span>
       </div>
       {endIcon && (
-        <div className="text-text-3 flex shrink-0 items-center justify-center">
+        <div className="text-text-subtle flex shrink-0 items-center justify-center">
           {typeof endIcon === "function" ? (
             // @ts-expect-error valid element type
             <endIcon size={14} strokeWidth={1.8} />

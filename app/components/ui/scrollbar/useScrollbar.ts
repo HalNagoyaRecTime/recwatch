@@ -14,10 +14,16 @@ export type ScrollbarState = {
   verticalThumbTop: number;
   /** 縦サムをドラッグ中か */
   verticalIsDragging: boolean;
-  /** 縦サムのmousedownハンドラー */
-  onVerticalThumbMouseDown: (e: React.MouseEvent) => void;
-  /** 縦トラックのmousedownハンドラー */
-  onVerticalTrackMouseDown: (e: React.MouseEvent) => void;
+  /** 縦サムのpointerdownハンドラー */
+  onVerticalThumbPointerDown: (e: React.PointerEvent) => void;
+  /** 縦サムのpointermoveハンドラー */
+  onVerticalThumbPointerMove: (e: React.PointerEvent) => void;
+  /** 縦サムのpointerupハンドラー */
+  onVerticalThumbPointerUp: (e: React.PointerEvent) => void;
+  /** 縦サムのpointercancelハンドラー */
+  onVerticalThumbPointerCancel: (e: React.PointerEvent) => void;
+  /** 縦トラックのpointerdownハンドラー */
+  onVerticalTrackPointerDown: (e: React.PointerEvent) => void;
 
   /** 横サムの幅（px）。0のときはスクロール不要 */
   horizontalThumbWidth: number;
@@ -25,10 +31,16 @@ export type ScrollbarState = {
   horizontalThumbLeft: number;
   /** 横サムをドラッグ中か */
   horizontalIsDragging: boolean;
-  /** 横サムのmousedownハンドラー */
-  onHorizontalThumbMouseDown: (e: React.MouseEvent) => void;
-  /** 横トラックのmousedownハンドラー */
-  onHorizontalTrackMouseDown: (e: React.MouseEvent) => void;
+  /** 横サムのpointerdownハンドラー */
+  onHorizontalThumbPointerDown: (e: React.PointerEvent) => void;
+  /** 横サムのpointermoveハンドラー */
+  onHorizontalThumbPointerMove: (e: React.PointerEvent) => void;
+  /** 横サムのpointerupハンドラー */
+  onHorizontalThumbPointerUp: (e: React.PointerEvent) => void;
+  /** 横サムのpointercancelハンドラー */
+  onHorizontalThumbPointerCancel: (e: React.PointerEvent) => void;
+  /** 横トラックのpointerdownハンドラー */
+  onHorizontalTrackPointerDown: (e: React.PointerEvent) => void;
 
   /** スクロールバーを表示すべきか */
   isVisible: boolean;
@@ -41,6 +53,141 @@ export type ScrollbarState = {
 };
 
 const HIDE_DELAY_MS = 300;
+
+type ScrollAxis = "vertical" | "horizontal";
+
+function getPointerPosition(e: React.PointerEvent, axis: ScrollAxis) {
+  return axis === "vertical" ? e.clientY : e.clientX;
+}
+
+function setScrollPosition(
+  element: HTMLDivElement,
+  axis: ScrollAxis,
+  value: number
+) {
+  if (axis === "vertical") {
+    element.scrollTop = value;
+  } else {
+    element.scrollLeft = value;
+  }
+}
+
+function getScrollPosition(element: HTMLDivElement, axis: ScrollAxis) {
+  return axis === "vertical" ? element.scrollTop : element.scrollLeft;
+}
+
+function getScrollSize(element: HTMLDivElement, axis: ScrollAxis) {
+  return axis === "vertical" ? element.scrollHeight : element.scrollWidth;
+}
+
+function getClientSize(element: HTMLDivElement, axis: ScrollAxis) {
+  return axis === "vertical" ? element.clientHeight : element.clientWidth;
+}
+
+function calculateDragScrollPosition({
+  axis,
+  event,
+  scrollElement,
+  trackElement,
+  thumbSize,
+  startPointer,
+  startScroll,
+}: {
+  axis: ScrollAxis;
+  event: React.PointerEvent;
+  scrollElement: HTMLDivElement;
+  trackElement: HTMLDivElement;
+  thumbSize: number;
+  startPointer: number;
+  startScroll: number;
+}) {
+  const maxScroll =
+    getScrollSize(scrollElement, axis) - getClientSize(scrollElement, axis);
+  const maxThumbOffset = getClientSize(trackElement, axis) - thumbSize;
+  const ratio = maxThumbOffset > 0 ? maxScroll / maxThumbOffset : 0;
+  const delta = (getPointerPosition(event, axis) - startPointer) * ratio;
+
+  return Math.max(0, startScroll + delta);
+}
+
+function calculateTrackScrollPosition({
+  axis,
+  event,
+  scrollElement,
+  trackElement,
+  thumbSize,
+}: {
+  axis: ScrollAxis;
+  event: React.PointerEvent;
+  scrollElement: HTMLDivElement;
+  trackElement: HTMLDivElement;
+  thumbSize: number;
+}) {
+  const trackRect = trackElement.getBoundingClientRect();
+  const trackStart = axis === "vertical" ? trackRect.top : trackRect.left;
+  const clickOffset = getPointerPosition(event, axis) - trackStart;
+  const targetThumbOffset = clickOffset - thumbSize / 2;
+  const maxThumbOffset = Math.max(
+    0,
+    getClientSize(trackElement, axis) - thumbSize
+  );
+  const clampedThumbOffset = Math.max(
+    0,
+    Math.min(targetThumbOffset, maxThumbOffset)
+  );
+  const maxScroll =
+    getScrollSize(scrollElement, axis) - getClientSize(scrollElement, axis);
+  const ratio = maxThumbOffset > 0 ? clampedThumbOffset / maxThumbOffset : 0;
+
+  return ratio * maxScroll;
+}
+
+function startThumbDrag({
+  event,
+  axis,
+  scrollElement,
+  startPointerRef,
+  startScrollRef,
+  setDragging,
+  setVisible,
+  hideTimerRef,
+}: {
+  event: React.PointerEvent;
+  axis: ScrollAxis;
+  scrollElement: HTMLDivElement | null;
+  startPointerRef: React.MutableRefObject<number>;
+  startScrollRef: React.MutableRefObject<number>;
+  setDragging: (dragging: boolean) => void;
+  setVisible: (visible: boolean) => void;
+  hideTimerRef: React.MutableRefObject<ReturnType<typeof setTimeout> | null>;
+}) {
+  event.preventDefault();
+  event.stopPropagation();
+  event.currentTarget.setPointerCapture(event.pointerId);
+  startPointerRef.current = getPointerPosition(event, axis);
+  startScrollRef.current = scrollElement
+    ? getScrollPosition(scrollElement, axis)
+    : 0;
+  setDragging(true);
+  setVisible(true);
+  if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
+}
+
+function finishThumbDrag({
+  event,
+  setDragging,
+  resetHideTimer,
+}: {
+  event: React.PointerEvent;
+  setDragging: (dragging: boolean) => void;
+  resetHideTimer: () => void;
+}) {
+  if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+    event.currentTarget.releasePointerCapture(event.pointerId);
+  }
+  setDragging(false);
+  resetHideTimer();
+}
 
 export function useScrollbar(options?: {
   orientation?: "vertical" | "horizontal" | "both";
@@ -166,68 +313,6 @@ export function useScrollbar(options?: {
     };
   }, [recalculate]);
 
-  // 縦ドラッグ中のmousemove / mouseupをdocumentで捕捉
-  useEffect(() => {
-    if (!verticalIsDragging) return;
-
-    const onMouseMove = (e: MouseEvent) => {
-      const el = scrollRef.current;
-      const track = verticalTrackRef.current;
-      if (!el || !track) return;
-
-      const { scrollHeight, clientHeight } = el;
-      const trackHeight = track.clientHeight;
-      const ratio =
-        (scrollHeight - clientHeight) /
-        (trackHeight - verticalThumbHeightRef.current);
-      const delta = (e.clientY - dragStartYRef.current) * ratio;
-      el.scrollTop = Math.max(0, dragStartScrollTopRef.current + delta);
-    };
-
-    const onMouseUp = () => {
-      setVerticalIsDragging(false);
-      resetHideTimer();
-    };
-
-    document.addEventListener("mousemove", onMouseMove);
-    document.addEventListener("mouseup", onMouseUp);
-    return () => {
-      document.removeEventListener("mousemove", onMouseMove);
-      document.removeEventListener("mouseup", onMouseUp);
-    };
-  }, [verticalIsDragging, resetHideTimer]);
-
-  // 横ドラッグ中のmousemove / mouseupをdocumentで捕捉
-  useEffect(() => {
-    if (!horizontalIsDragging) return;
-
-    const onMouseMove = (e: MouseEvent) => {
-      const el = scrollRef.current;
-      const track = horizontalTrackRef.current;
-      if (!el || !track) return;
-
-      const { scrollWidth, clientWidth } = el;
-      const trackWidth = track.clientWidth;
-      const ratio =
-        (scrollWidth - clientWidth) /
-        (trackWidth - horizontalThumbWidthRef.current);
-      const delta = (e.clientX - dragStartXRef.current) * ratio;
-      el.scrollLeft = Math.max(0, dragStartScrollLeftRef.current + delta);
-    };
-
-    const onMouseUp = () => {
-      setHorizontalIsDragging(false);
-      resetHideTimer();
-    };
-
-    document.addEventListener("mousemove", onMouseMove);
-    document.addEventListener("mouseup", onMouseUp);
-    return () => {
-      document.removeEventListener("mousemove", onMouseMove);
-      document.removeEventListener("mouseup", onMouseUp);
-    };
-  }, [horizontalIsDragging, resetHideTimer]);
-
   // クリーンアップ
   useEffect(() => {
     return () => {
@@ -251,68 +336,144 @@ export function useScrollbar(options?: {
     resetHideTimer();
   }, [resetHideTimer]);
 
-  const onVerticalThumbMouseDown = useCallback((e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    dragStartYRef.current = e.clientY;
-    dragStartScrollTopRef.current = scrollRef.current?.scrollTop ?? 0;
-    setVerticalIsDragging(true);
-    setIsVisible(true);
-    if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
+  const onVerticalThumbPointerDown = useCallback((e: React.PointerEvent) => {
+    startThumbDrag({
+      event: e,
+      axis: "vertical",
+      scrollElement: scrollRef.current,
+      startPointerRef: dragStartYRef,
+      startScrollRef: dragStartScrollTopRef,
+      setDragging: setVerticalIsDragging,
+      setVisible: setIsVisible,
+      hideTimerRef,
+    });
   }, []);
 
-  const onVerticalTrackMouseDown = useCallback((e: React.MouseEvent) => {
+  const onVerticalThumbPointerMove = useCallback(
+    (e: React.PointerEvent) => {
+      if (!verticalIsDragging) return;
+
+      const el = scrollRef.current;
+      const track = verticalTrackRef.current;
+      if (!el || !track) return;
+
+      setScrollPosition(
+        el,
+        "vertical",
+        calculateDragScrollPosition({
+          axis: "vertical",
+          event: e,
+          scrollElement: el,
+          trackElement: track,
+          thumbSize: verticalThumbHeightRef.current,
+          startPointer: dragStartYRef.current,
+          startScroll: dragStartScrollTopRef.current,
+        })
+      );
+    },
+    [verticalIsDragging]
+  );
+
+  const onVerticalThumbPointerUp = useCallback(
+    (e: React.PointerEvent) => {
+      finishThumbDrag({
+        event: e,
+        setDragging: setVerticalIsDragging,
+        resetHideTimer,
+      });
+    },
+    [resetHideTimer]
+  );
+
+  const onVerticalThumbPointerCancel = onVerticalThumbPointerUp;
+
+  const onVerticalTrackPointerDown = useCallback((e: React.PointerEvent) => {
     e.preventDefault();
     const el = scrollRef.current;
     const track = verticalTrackRef.current;
     if (!el || !track) return;
 
-    const trackRect = track.getBoundingClientRect();
-    const clickY = e.clientY - trackRect.top;
-
-    const thumbHalfHeight = verticalThumbHeightRef.current / 2;
-    let targetThumbTop = clickY - thumbHalfHeight;
-
-    const trackHeight = track.clientHeight;
-    const maxThumbTop = trackHeight - verticalThumbHeightRef.current;
-
-    targetThumbTop = Math.max(0, Math.min(targetThumbTop, maxThumbTop));
-
-    const maxScrollTop = el.scrollHeight - el.clientHeight;
-    const ratio = maxThumbTop > 0 ? targetThumbTop / maxThumbTop : 0;
-    el.scrollTop = ratio * maxScrollTop;
+    setScrollPosition(
+      el,
+      "vertical",
+      calculateTrackScrollPosition({
+        axis: "vertical",
+        event: e,
+        scrollElement: el,
+        trackElement: track,
+        thumbSize: verticalThumbHeightRef.current,
+      })
+    );
   }, []);
 
-  const onHorizontalThumbMouseDown = useCallback((e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    dragStartXRef.current = e.clientX;
-    dragStartScrollLeftRef.current = scrollRef.current?.scrollLeft ?? 0;
-    setHorizontalIsDragging(true);
-    setIsVisible(true);
-    if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
+  const onHorizontalThumbPointerDown = useCallback((e: React.PointerEvent) => {
+    startThumbDrag({
+      event: e,
+      axis: "horizontal",
+      scrollElement: scrollRef.current,
+      startPointerRef: dragStartXRef,
+      startScrollRef: dragStartScrollLeftRef,
+      setDragging: setHorizontalIsDragging,
+      setVisible: setIsVisible,
+      hideTimerRef,
+    });
   }, []);
 
-  const onHorizontalTrackMouseDown = useCallback((e: React.MouseEvent) => {
+  const onHorizontalThumbPointerMove = useCallback(
+    (e: React.PointerEvent) => {
+      if (!horizontalIsDragging) return;
+
+      const el = scrollRef.current;
+      const track = horizontalTrackRef.current;
+      if (!el || !track) return;
+
+      setScrollPosition(
+        el,
+        "horizontal",
+        calculateDragScrollPosition({
+          axis: "horizontal",
+          event: e,
+          scrollElement: el,
+          trackElement: track,
+          thumbSize: horizontalThumbWidthRef.current,
+          startPointer: dragStartXRef.current,
+          startScroll: dragStartScrollLeftRef.current,
+        })
+      );
+    },
+    [horizontalIsDragging]
+  );
+
+  const onHorizontalThumbPointerUp = useCallback(
+    (e: React.PointerEvent) => {
+      finishThumbDrag({
+        event: e,
+        setDragging: setHorizontalIsDragging,
+        resetHideTimer,
+      });
+    },
+    [resetHideTimer]
+  );
+
+  const onHorizontalThumbPointerCancel = onHorizontalThumbPointerUp;
+
+  const onHorizontalTrackPointerDown = useCallback((e: React.PointerEvent) => {
     e.preventDefault();
     const el = scrollRef.current;
     const track = horizontalTrackRef.current;
     if (!el || !track) return;
 
-    const trackRect = track.getBoundingClientRect();
-    const clickX = e.clientX - trackRect.left;
-
-    const thumbHalfWidth = horizontalThumbWidthRef.current / 2;
-    let targetThumbLeft = clickX - thumbHalfWidth;
-
-    const trackWidth = track.clientWidth;
-    const maxThumbLeft = trackWidth - horizontalThumbWidthRef.current;
-
-    targetThumbLeft = Math.max(0, Math.min(targetThumbLeft, maxThumbLeft));
-
-    const maxScrollLeft = el.scrollWidth - el.clientWidth;
-    const ratio = maxThumbLeft > 0 ? targetThumbLeft / maxThumbLeft : 0;
-    el.scrollLeft = ratio * maxScrollLeft;
+    setScrollPosition(
+      el,
+      "horizontal",
+      calculateTrackScrollPosition({
+        axis: "horizontal",
+        event: e,
+        scrollElement: el,
+        trackElement: track,
+        thumbSize: horizontalThumbWidthRef.current,
+      })
+    );
   }, []);
 
   return {
@@ -322,13 +483,19 @@ export function useScrollbar(options?: {
     verticalThumbHeight,
     verticalThumbTop,
     verticalIsDragging,
-    onVerticalThumbMouseDown,
-    onVerticalTrackMouseDown,
+    onVerticalThumbPointerDown,
+    onVerticalThumbPointerMove,
+    onVerticalThumbPointerUp,
+    onVerticalThumbPointerCancel,
+    onVerticalTrackPointerDown,
     horizontalThumbWidth,
     horizontalThumbLeft,
     horizontalIsDragging,
-    onHorizontalThumbMouseDown,
-    onHorizontalTrackMouseDown,
+    onHorizontalThumbPointerDown,
+    onHorizontalThumbPointerMove,
+    onHorizontalThumbPointerUp,
+    onHorizontalThumbPointerCancel,
+    onHorizontalTrackPointerDown,
     isVisible,
     onScroll,
     onMouseEnter,

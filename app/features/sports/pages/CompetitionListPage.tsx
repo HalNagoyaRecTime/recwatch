@@ -164,6 +164,9 @@ export function CompetitionListPage({
         items={visibleCompetitions}
         onDelete={(competition) => void deleteCompetition(competition)}
         onEdit={(competition) => navigate(`/events/${competition.id}/edit`)}
+        onOpenGatherings={(competition) =>
+          navigate(`/events/${competition.id}/gatherings`)
+        }
         onSortChange={(columnId) =>
           setSort((current) => getNextManagementTableSort(current, columnId))
         }

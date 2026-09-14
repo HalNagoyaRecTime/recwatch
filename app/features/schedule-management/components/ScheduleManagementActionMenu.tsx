@@ -42,6 +42,7 @@ export function ScheduleManagementActionMenu({
   return (
     <FloatingPanel
       placement="bottom-end"
+      scrollable
       trigger={
         <Button
           aria-label={`${label}の操作`}
