@@ -1,9 +1,5 @@
 export type EventNotificationStatus =
-  | "none"
-  | "draft"
-  | "sending"
-  | "sent"
-  | "failed";
+  "none" | "draft" | "sending" | "sent" | "failed";
 
 export type EventPatch = {
   eventId: number;

@@ -16,8 +16,7 @@ import {
 import { WEB_CLIENT_HEADERS } from "~/features/auth/lib/webClientHeaders";
 
 export type LogoutResult =
-  | { status: "ok"; msLogoutUrl: string | null }
-  | { status: "error" };
+  { status: "ok"; msLogoutUrl: string | null } | { status: "error" };
 
 export async function logout(): Promise<LogoutResult> {
   clearAccountPhotoRefreshMarkers();
