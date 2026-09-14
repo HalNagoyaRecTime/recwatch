@@ -109,7 +109,7 @@ describe("auth.callback clientLoader", () => {
     expect(mocks.saveDeletionAuthResult).toHaveBeenCalledWith({
       status: "error",
       message:
-        "このMicrosoft 365アカウントに対応するRE:CREATIONアカウントが見つかりません。",
+        "このMicrosoft 365アカウントに対応するRecTimeアカウントが見つかりません。",
     });
   });
 

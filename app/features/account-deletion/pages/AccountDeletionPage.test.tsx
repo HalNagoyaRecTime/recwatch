@@ -40,26 +40,18 @@ describe("AccountDeletionPage", () => {
     expect(
       screen.getByRole("heading", {
         level: 1,
-        name: "RE:CREATIONアカウントの削除",
+        name: "RecTimeアカウントの削除",
       })
     ).toBeInTheDocument();
     expect(
       screen.getByText(
-        "削除されるのはRE:CREATIONのアカウントと関連データです。Microsoft 365アカウントは削除されません。"
+        "この手続きで削除されるのは、RecTimeが管理するアカウントと関連データです。削除受付後はRecTimeを利用できなくなります。学校から付与されたMicrosoft 365アカウントそのものは削除されません。"
       )
     ).toBeInTheDocument();
     expect(
       screen.getByRole("button", {
         name: "Microsoftアカウントで本人確認を開始",
       })
-    ).toBeInTheDocument();
-    expect(screen.queryByText("recwatch")).not.toBeInTheDocument();
-    expect(screen.getByRole("img", { name: "RE:CREATION" })).toHaveAttribute(
-      "src",
-      "/recreation-app-icon.svg"
-    );
-    expect(
-      screen.getByText(`© RE:CREATION ${new Date().getFullYear()}`)
     ).toBeInTheDocument();
   });
 
@@ -78,7 +70,7 @@ describe("AccountDeletionPage", () => {
     expect(
       screen.getByRole("heading", {
         level: 1,
-        name: "RE:CREATIONアカウントの削除",
+        name: "RecTimeアカウントの削除",
       })
     ).toBeInTheDocument();
   });

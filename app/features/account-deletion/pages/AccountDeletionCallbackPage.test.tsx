@@ -50,7 +50,7 @@ describe("AccountDeletionCallbackPage", () => {
 
     renderPage();
     const button = screen.getByRole("button", {
-      name: "RE:CREATIONアカウントを削除する",
+      name: "RecTimeアカウントを削除する",
     });
 
     fireEvent.click(button);
@@ -69,7 +69,7 @@ describe("AccountDeletionCallbackPage", () => {
     );
     expect(
       screen.getByText(
-        "BackendがRE:CREATIONアカウントの削除要求を正常に受け付けました。以後、このアカウントでRE:CREATIONを利用することはできません。"
+        "BackendがRecTimeアカウントの削除要求を正常に受け付けました。以後、このアカウントでRecTimeを利用することはできません。"
       )
     ).toBeInTheDocument();
   });
@@ -84,7 +84,7 @@ describe("AccountDeletionCallbackPage", () => {
 
     renderPage();
     fireEvent.click(
-      screen.getByRole("button", { name: "RE:CREATIONアカウントを削除する" })
+      screen.getByRole("button", { name: "RecTimeアカウントを削除する" })
     );
 
     await waitFor(() =>
@@ -105,7 +105,7 @@ describe("AccountDeletionCallbackPage", () => {
         <AccountDeletionCallbackPage
           data={{
             status: "error",
-            message: "このRE:CREATIONアカウントはすでに削除受付済みです。",
+            message: "このRecTimeアカウントはすでに削除受付済みです。",
             reason: "already-deleted",
           }}
         />
