@@ -70,6 +70,34 @@ function renderProbe() {
   );
 }
 
+function createStoredNotification(
+  overrides: Partial<AppNotification> = {}
+): AppNotification {
+  return {
+    id: "stored-notification",
+    kind: "background-error",
+    severity: "error",
+    title: "同期失敗",
+    message: "同期できませんでした",
+    createdAt: new Date().toISOString(),
+    read: false,
+    ...overrides,
+  };
+}
+
+function dispatchStorageEvent(
+  userId: string,
+  notifications: AppNotification[],
+  storageArea: Storage | null = window.localStorage
+) {
+  const key = getAppNotificationStorageKey(userId);
+  const newValue = JSON.stringify(notifications);
+  window.localStorage.setItem(key, newValue);
+  window.dispatchEvent(
+    new StorageEvent("storage", { key, newValue, storageArea })
+  );
+}
+
 describe("FeedbackProvider", () => {
   beforeEach(() => {
     window.localStorage.clear();
@@ -283,6 +311,192 @@ describe("FeedbackProvider", () => {
         "通知履歴の保存に失敗しました。",
         expect.any(Error)
       )
+    );
+  });
+
+  it("対象storage keyのstorageイベントで通知一覧を再読み込みする", async () => {
+    renderProbe();
+    const notification = createStoredNotification();
+
+    dispatchStorageEvent("test-user", [notification]);
+
+    await waitFor(() =>
+      expect(screen.getByTestId("history-count")).toHaveTextContent("1")
+    );
+  });
+
+  it("他ユーザーや別storage keyのstorageイベントでは状態を変更しない", async () => {
+    renderProbe();
+    const notification = createStoredNotification();
+    const otherUserKey = getAppNotificationStorageKey("other-user");
+
+    window.localStorage.setItem(otherUserKey, JSON.stringify([notification]));
+    window.dispatchEvent(
+      new StorageEvent("storage", {
+        key: otherUserKey,
+        newValue: JSON.stringify([notification]),
+        storageArea: window.localStorage,
+      })
+    );
+    window.dispatchEvent(
+      new StorageEvent("storage", {
+        key: "recwatch.app-notifications:unrelated",
+        newValue: JSON.stringify([notification]),
+        storageArea: window.localStorage,
+      })
+    );
+
+    await waitFor(() =>
+      expect(screen.getByTestId("history-count")).toHaveTextContent("0")
+    );
+  });
+
+  it("userId変更時に履歴を再読み込みし、購読先を切り替える", async () => {
+    const first = createStoredNotification({ id: "user-a-notification" });
+    const second = createStoredNotification({ id: "user-b-notification" });
+    const third = createStoredNotification({
+      id: "user-b-second-notification",
+    });
+    const { rerender } = render(
+      <FeedbackProvider userId="user-a">
+        <FeedbackProbe />
+      </FeedbackProvider>
+    );
+
+    dispatchStorageEvent("user-a", [first]);
+    await waitFor(() =>
+      expect(screen.getByTestId("history-count")).toHaveTextContent("1")
+    );
+
+    window.localStorage.setItem(
+      getAppNotificationStorageKey("user-b"),
+      JSON.stringify([second, third])
+    );
+    rerender(
+      <FeedbackProvider userId="user-b">
+        <FeedbackProbe />
+      </FeedbackProvider>
+    );
+    await waitFor(() =>
+      expect(screen.getByTestId("history-count")).toHaveTextContent("2")
+    );
+
+    dispatchStorageEvent("user-a", [
+      first,
+      createStoredNotification({ id: "old-user-notification" }),
+    ]);
+    expect(screen.getByTestId("history-count")).toHaveTextContent("2");
+
+    dispatchStorageEvent("user-b", [second]);
+    await waitFor(() =>
+      expect(screen.getByTestId("history-count")).toHaveTextContent("1")
+    );
+  });
+
+  it("他タブ側で追加された通知を既存の履歴を残して反映する", async () => {
+    const first = createStoredNotification({ id: "first" });
+    window.localStorage.setItem(
+      getAppNotificationStorageKey("test-user"),
+      JSON.stringify([first])
+    );
+    renderProbe();
+
+    dispatchStorageEvent("test-user", [
+      first,
+      createStoredNotification({ id: "second", title: "新しい通知" }),
+    ]);
+
+    await waitFor(() =>
+      expect(screen.getByTestId("history-count")).toHaveTextContent("2")
+    );
+  });
+
+  it("storageイベントによる再同期で通知履歴を同じ内容へ書き戻さない", async () => {
+    const first = createStoredNotification({ id: "first" });
+    const second = createStoredNotification({ id: "second" });
+    const key = getAppNotificationStorageKey("test-user");
+    window.localStorage.setItem(key, JSON.stringify([first]));
+    renderProbe();
+
+    const setItem = vi.spyOn(Storage.prototype, "setItem");
+    const newValue = JSON.stringify([first, second]);
+    window.localStorage.setItem(key, newValue);
+    setItem.mockClear();
+    window.dispatchEvent(
+      new StorageEvent("storage", {
+        key,
+        newValue,
+        storageArea: window.localStorage,
+      })
+    );
+
+    await waitFor(() =>
+      expect(screen.getByTestId("history-count")).toHaveTextContent("2")
+    );
+    expect(setItem).not.toHaveBeenCalled();
+  });
+
+  it("他タブ側で既読化された状態を反映する", async () => {
+    const notification = createStoredNotification({ id: "to-read" });
+    window.localStorage.setItem(
+      getAppNotificationStorageKey("test-user"),
+      JSON.stringify([notification])
+    );
+    renderProbe();
+    expect(screen.getByTestId("unread-count")).toHaveTextContent("1");
+
+    dispatchStorageEvent("test-user", [{ ...notification, read: true }]);
+
+    await waitFor(() =>
+      expect(screen.getByTestId("unread-count")).toHaveTextContent("0")
+    );
+  });
+
+  it("他タブ側で個別削除と全削除された状態を反映する", async () => {
+    const first = createStoredNotification({ id: "first" });
+    const second = createStoredNotification({ id: "second" });
+    window.localStorage.setItem(
+      getAppNotificationStorageKey("test-user"),
+      JSON.stringify([first, second])
+    );
+    renderProbe();
+
+    dispatchStorageEvent("test-user", [second]);
+    await waitFor(() =>
+      expect(screen.getByTestId("history-count")).toHaveTextContent("1")
+    );
+
+    dispatchStorageEvent("test-user", []);
+    await waitFor(() =>
+      expect(screen.getByTestId("history-count")).toHaveTextContent("0")
+    );
+
+    const key = getAppNotificationStorageKey("test-user");
+    window.localStorage.removeItem(key);
+    window.dispatchEvent(
+      new StorageEvent("storage", {
+        key,
+        newValue: null,
+        storageArea: window.localStorage,
+      })
+    );
+    await waitFor(() => expect(window.localStorage.getItem(key)).toBeNull());
+  });
+
+  it("コンポーネント破棄後にstorage listenerを解除する", () => {
+    const addEventListener = vi.spyOn(window, "addEventListener");
+    const removeEventListener = vi.spyOn(window, "removeEventListener");
+    const { unmount } = renderProbe();
+    const storageListenerCall = addEventListener.mock.calls.find(
+      ([eventType]) => eventType === "storage"
+    );
+
+    expect(storageListenerCall).toBeDefined();
+    unmount();
+
+    expect(removeEventListener).toHaveBeenCalledWith(
+      "storage",
+      storageListenerCall?.[1]
     );
   });
 });

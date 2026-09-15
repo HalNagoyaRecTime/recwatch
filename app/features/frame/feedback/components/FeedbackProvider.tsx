@@ -93,13 +93,20 @@ function writeNotifications(
 ) {
   if (typeof window === "undefined" || !userId) return;
   try {
-    window.localStorage.setItem(
-      getAppNotificationStorageKey(userId),
-      JSON.stringify(notifications)
-    );
+    const storageKey = getAppNotificationStorageKey(userId);
+    const serialized = JSON.stringify(notifications);
+    if (window.localStorage.getItem(storageKey) === serialized) return;
+    window.localStorage.setItem(storageKey, serialized);
   } catch (error) {
     console.warn("通知履歴の保存に失敗しました。", error);
   }
+}
+
+function areNotificationsEqual(
+  left: AppNotification[],
+  right: AppNotification[]
+) {
+  return JSON.stringify(left) === JSON.stringify(right);
 }
 
 function createId() {
@@ -144,10 +151,57 @@ export function FeedbackProvider({
   const [notificationCenterRequest, setNotificationCenterRequest] =
     useState<FeedbackContextValue["notificationCenterRequest"]>(null);
   const notificationCenterRequestIdRef = useRef(0);
+  const notificationsUserIdRef = useRef(userId);
+  const previousNotificationsRef = useRef(notifications);
+  const storageSyncedNotificationsRef = useRef<AppNotification[] | null>(null);
+  const hasPersistedNotificationsRef = useRef(false);
 
   useEffect(() => {
+    const notificationsChanged =
+      previousNotificationsRef.current !== notifications;
+    previousNotificationsRef.current = notifications;
+
+    if (notificationsUserIdRef.current !== userId) return;
+    if (storageSyncedNotificationsRef.current === notifications) {
+      storageSyncedNotificationsRef.current = null;
+      return;
+    }
+    if (hasPersistedNotificationsRef.current && !notificationsChanged) return;
+
+    hasPersistedNotificationsRef.current = true;
     writeNotifications(userId, notifications);
   }, [notifications, userId]);
+
+  useEffect(() => {
+    if (notificationsUserIdRef.current !== userId) {
+      notificationsUserIdRef.current = userId;
+      storageSyncedNotificationsRef.current = null;
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- userId変更時に履歴を再読み込みする
+      setNotifications(readNotifications(userId));
+    }
+
+    if (typeof window === "undefined" || !userId) return;
+
+    const storageKey = getAppNotificationStorageKey(userId);
+    const handleStorage = (event: StorageEvent) => {
+      if (event.key !== storageKey) return;
+      if (event.storageArea && event.storageArea !== window.localStorage) {
+        return;
+      }
+
+      const nextNotifications = readNotifications(userId);
+      setNotifications((current) => {
+        if (areNotificationsEqual(current, nextNotifications)) return current;
+        storageSyncedNotificationsRef.current = nextNotifications;
+        return nextNotifications;
+      });
+    };
+
+    window.addEventListener("storage", handleStorage);
+    return () => {
+      window.removeEventListener("storage", handleStorage);
+    };
+  }, [userId]);
 
   const report = useCallback((input: FeedbackInput) => {
     const policy = getFeedbackPolicy(input.kind);
@@ -183,13 +237,14 @@ export function FeedbackProvider({
   }, []);
 
   const removeNotification = useCallback((id: string) => {
-    setNotifications((current) =>
-      current.filter((notification) => notification.id !== id)
-    );
+    setNotifications((current) => {
+      const next = current.filter((notification) => notification.id !== id);
+      return next.length === current.length ? current : next;
+    });
   }, []);
 
   const clearNotifications = useCallback(() => {
-    setNotifications([]);
+    setNotifications((current) => (current.length === 0 ? current : []));
   }, []);
 
   const dismissToast = useCallback((id: string) => {
