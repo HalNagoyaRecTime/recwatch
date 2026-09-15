@@ -13,22 +13,35 @@ function createClient(overrides: Partial<Record<keyof Client, unknown>> = {}) {
 }
 
 describe("createHttpEventGatheringSettingsGateway", () => {
-  it("旧形式の集合予定一覧と集合ごとの参加者を読み、Event 単位の集合設定にする", async () => {
+  it("Event 詳細の rounds と集合ごとの参加者を読み、Event 単位の集合設定にする", async () => {
     const get = vi.fn().mockImplementation(async (path: string) => {
-      if (path === "/api/v1/events/12/gatherings") {
-        return [
-          {
-            gathering_id: 101,
-            event_id: 12,
-            gathering_spot_id: 1,
-            gathering_time: "10:45",
-            round: 1,
-            event_name: "リレー",
-            gathering_spot_name: "出入口①",
-            created_at: "",
-            updated_at: "",
-          },
-        ];
+      if (path === "/api/v1/events/12") {
+        return {
+          event_id: 12,
+          event_name: "リレー",
+          rule_text: null,
+          venue: "メインコート",
+          start_time: "1100",
+          end_time: "1230",
+          rounds: [
+            {
+              round: 1,
+              gatherings: [
+                {
+                  gathering_id: 101,
+                  gathering_time: "10:45",
+                  gathering_spot: {
+                    gathering_spot_id: 1,
+                    gathering_spot_name: "出入口①",
+                  },
+                  member_count: 1,
+                },
+              ],
+            },
+          ],
+          created_at: "",
+          updated_at: "",
+        };
       }
       if (path === "/api/v1/gatherings/101/members") {
         return [
@@ -58,8 +71,22 @@ describe("createHttpEventGatheringSettingsGateway", () => {
         },
       ],
     });
-    expect(get).toHaveBeenCalledWith("/api/v1/events/12/gatherings");
+    expect(get).toHaveBeenCalledWith("/api/v1/events/12");
     expect(get).toHaveBeenCalledWith("/api/v1/gatherings/101/members");
+    expect(get).not.toHaveBeenCalledWith("/api/v1/events/12/gatherings");
+  });
+
+  it("集合が 1 件もない Event は参加者を読まずに空の集合設定を返す", async () => {
+    const get = vi.fn().mockResolvedValue({ event_id: 12, rounds: [] });
+    const gateway = createHttpEventGatheringSettingsGateway(
+      createClient({ get })
+    );
+
+    await expect(gateway.load(12)).resolves.toEqual({
+      eventId: 12,
+      rounds: [],
+    });
+    expect(get).toHaveBeenCalledTimes(1);
   });
 
   it("保存 API へ snake_case で送り、保存後の状態を返す", async () => {

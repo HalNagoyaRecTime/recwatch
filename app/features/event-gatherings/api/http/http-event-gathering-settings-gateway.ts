@@ -2,11 +2,9 @@ import type { EventGatheringSettingsGateway } from "~/features/event-gatherings/
 import type {
   EventGatheringSettingsResponseDto,
   GatheringMemberResponseDto,
-  LegacyEventGatheringResponseDto,
 } from "~/features/event-gatherings/api/dto/event-gathering-settings-api-dto";
 import {
   toEventGatheringSettings,
-  toEventGatheringSettingsFromLegacyList,
   toEventGatheringSettingsWriteRequest,
 } from "~/features/event-gatherings/api/mappers/event-gathering-settings-mappers";
 
@@ -19,28 +17,27 @@ export function createHttpEventGatheringSettingsGateway(
   client: EventGatheringSettingsHttpClient
 ): EventGatheringSettingsGateway {
   return {
-    // 読み込みは旧形式の集合予定一覧に依存している。一覧に参加者が含まれないため、
-    // 集合ごとに参加者一覧を読み足す。Event 詳細 API が Round 構造と参加者を返す
-    // ようになったら、この 1 か所を差し替える。
+    // Event 詳細が Round ごとの集合を人数付きで返すため、それを読み込み元にする。
+    // 詳細には参加者の ID までは含まれないため、ピッカーの初期選択用に
+    // 集合ごとの参加者一覧を読み足している。
     async load(eventId) {
-      const response = await client.get<LegacyEventGatheringResponseDto[]>(
-        `/api/v1/events/${eventId}/gatherings`
+      const response = await client.get<EventGatheringSettingsResponseDto>(
+        `/api/v1/events/${eventId}`
+      );
+      const gatheringIds = response.rounds.flatMap((round) =>
+        round.gatherings.map((gathering) => gathering.gathering_id)
       );
       const membersByGatheringId = new Map(
         await Promise.all(
-          response.map(async (gathering) => {
+          gatheringIds.map(async (gatheringId) => {
             const members = await client.get<GatheringMemberResponseDto[]>(
-              `/api/v1/gatherings/${gathering.gathering_id}/members`
+              `/api/v1/gatherings/${gatheringId}/members`
             );
-            return [gathering.gathering_id, members] as const;
+            return [gatheringId, members] as const;
           })
         )
       );
-      return toEventGatheringSettingsFromLegacyList(
-        eventId,
-        response,
-        membersByGatheringId
-      );
+      return toEventGatheringSettings(response, membersByGatheringId);
     },
 
     async save(eventId, input) {

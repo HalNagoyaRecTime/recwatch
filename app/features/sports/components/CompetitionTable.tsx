@@ -59,11 +59,13 @@ export function CompetitionTable({
       renderCell: (item) => `${item.startTime}〜${item.endTime}`,
     },
     {
-      header: "集合情報",
+      header: "集合時間",
       id: "gathering",
       sortable: true,
-      width: { type: "fluid", min: 190, grow: 1 },
-      renderCell: (item) => `${item.meetingTime} / ${item.meetingPlace}`,
+      width: { type: "fluid", min: 120, grow: 1 },
+      // 一覧の集合表示は今後見直す予定のため、最初の集合時刻だけを出す
+      renderCell: (item) =>
+        item.gatheringSummary.firstGatheringTime ?? "未設定",
     },
     {
       align: "center",
