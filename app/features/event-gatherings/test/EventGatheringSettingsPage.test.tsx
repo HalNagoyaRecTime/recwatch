@@ -16,7 +16,11 @@ function renderPage(path: string, load = vi.fn(), save = vi.fn()) {
         <Route
           element={
             <EventGatheringSettingsPage
-              memberGateway={{ loadCandidates: vi.fn(), saveMembers: vi.fn() }}
+              memberGateway={{
+                loadCandidates: vi.fn(),
+                loadMembers: vi.fn(),
+                saveMembers: vi.fn(),
+              }}
               settingsGateway={{ load, save }}
               spotGateway={{
                 list: vi.fn().mockResolvedValue({

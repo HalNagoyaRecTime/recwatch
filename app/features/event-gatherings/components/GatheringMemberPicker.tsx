@@ -1,4 +1,4 @@
-import { Check } from "lucide-react";
+import { Check, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { Button } from "~/components/ui/button/Button";
@@ -8,25 +8,32 @@ import type { GatheringMemberCandidates } from "~/features/event-gatherings/mode
 
 type GatheringMemberPickerProps = {
   candidates: GatheringMemberCandidates | null;
+  /** 候補または登録済み参加者の読み込み中。どちらかが終わるまで一覧は出さない。 */
   isLoading: boolean;
+  isSaving: boolean;
   loadError: string | null;
+  onCancel: () => void;
   onChange: (userIds: number[]) => void;
-  onClose: () => void;
+  onSave: () => void;
+  saveError: string | null;
   selectedUserIds: readonly number[];
 };
 
 const ALL_CLASSROOMS = "all";
 
 /**
- * 集合 1 件の参加者を選ぶ。選択状態は呼び出し元が保持し、ここでは候補の絞り込みと
- * チェックの切り替えだけを扱う。
+ * 集合 1 件の参加者を選ぶ。選択状態と保存は呼び出し元が持ち、ここでは候補の絞り込みと
+ * チェックの切り替え、保存・キャンセルの操作だけを扱う。
  */
 export function GatheringMemberPicker({
   candidates,
   isLoading,
+  isSaving,
   loadError,
+  onCancel,
   onChange,
-  onClose,
+  onSave,
+  saveError,
   selectedUserIds,
 }: GatheringMemberPickerProps) {
   const [classroomId, setClassroomId] = useState(ALL_CLASSROOMS);
@@ -109,9 +116,6 @@ export function GatheringMemberPicker({
       className="border-border-subtle bg-surface-muted app-rounded space-y-3 border p-3"
       ref={rootRef}
     >
-      <p className="text-tone-danger-text text-sm font-medium" role="note">
-        参加者の保存は現在未対応です。ここでの選択内容は保存されません。
-      </p>
       <div className="flex flex-wrap items-center gap-3">
         {/* モーダル内では共有 Select のプルダウンが枠をはみ出すため、既存モーダルと同じネイティブ select を使う */}
         <select
@@ -152,7 +156,7 @@ export function GatheringMemberPicker({
           {loadError}
         </p>
       ) : isLoading || !candidates ? (
-        <p className="text-text-muted text-sm">参加者候補を読み込み中...</p>
+        <p className="text-text-muted text-sm">参加者を読み込み中...</p>
       ) : (
         <div className="relative">
           <div
@@ -242,21 +246,40 @@ export function GatheringMemberPicker({
         </div>
       )}
 
+      {saveError ? (
+        <p className="text-tone-danger-text text-sm" role="alert">
+          {saveError}
+        </p>
+      ) : null}
+
       <div className="flex items-center justify-between gap-3">
         <p className="text-text-base text-sm">
           {candidates ? `${visibleStudents.length}人を表示中` : ""}
           {hasMoreBelow ? "（スクロールで続きを表示）" : ""}
           {candidates ? ` ／ 選択中 ${selectedUserIds.length}人` : ""}
         </p>
-        <Button
-          icon={Check}
-          onClick={onClose}
-          size="sm"
-          type="button"
-          variant="primary"
-        >
-          完了
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            disabled={isSaving}
+            icon={X}
+            onClick={onCancel}
+            size="sm"
+            type="button"
+            variant="secondary"
+          >
+            キャンセル
+          </Button>
+          <Button
+            disabled={isSaving || isLoading || Boolean(loadError)}
+            icon={Check}
+            onClick={onSave}
+            size="sm"
+            type="button"
+            variant="primary"
+          >
+            {isSaving ? "保存中..." : "参加者を保存"}
+          </Button>
+        </div>
       </div>
     </div>
   );

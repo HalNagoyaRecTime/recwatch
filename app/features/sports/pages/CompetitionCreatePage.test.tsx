@@ -73,6 +73,7 @@ describe("CompetitionCreatePage", () => {
           api={{ create, get: vi.fn(), update: vi.fn() }}
           gatheringMemberGateway={{
             loadCandidates: vi.fn(),
+            loadMembers: vi.fn(),
             saveMembers: vi.fn(),
           }}
           gatheringSettingsGateway={{ load, save }}

@@ -15,7 +15,7 @@ import type { EventGatheringSettings } from "~/features/event-gatherings/model/e
 import type { GatheringSpotGateway } from "~/features/gathering-spots/api/contracts/gathering-spot-gateway";
 import { httpGatheringSpotGateway } from "~/features/gathering-spots/api/http/gathering-spot-dependencies";
 import { useGatheringSpots } from "~/features/gathering-spots/hooks/useGatheringSpots";
-import { GatheringMemberPicker } from "./GatheringMemberPicker";
+import { GatheringMemberEditor } from "./GatheringMemberEditor";
 import { RoundCard } from "./RoundCard";
 
 type GatheringSettingsStepProps = {
@@ -115,20 +115,27 @@ export function GatheringSettingsStep({
               onTogglePicker={togglePicker}
               openPickerKey={openPickerKey}
               position={index + 1}
-              renderPicker={(gathering) => (
-                <GatheringMemberPicker
-                  candidates={memberCandidates.candidates}
-                  isLoading={memberCandidates.isLoading}
-                  loadError={memberCandidates.loadError}
-                  onChange={(memberUserIds) =>
-                    settings.updateGathering(round.key, gathering.key, {
-                      memberUserIds,
-                    })
-                  }
-                  onClose={() => setOpenPickerKey(null)}
-                  selectedUserIds={gathering.memberUserIds}
-                />
-              )}
+              renderPicker={(gathering) =>
+                // 未保存の新規行はボタン側で開けないようにしているため、通常ここには来ない
+                gathering.gatheringId === null ? null : (
+                  <GatheringMemberEditor
+                    key={gathering.gatheringId}
+                    candidates={memberCandidates.candidates}
+                    candidatesError={memberCandidates.loadError}
+                    gatheringId={gathering.gatheringId}
+                    gateway={memberGateway}
+                    isCandidatesLoading={memberCandidates.isLoading}
+                    onCancel={() => setOpenPickerKey(null)}
+                    onSaved={(userIds) => {
+                      // 参加者は集合設定とは別に保存済みなので、削除可否の判断に使う人数だけ反映する
+                      settings.updateGathering(round.key, gathering.key, {
+                        savedMemberCount: userIds.length,
+                      });
+                      setOpenPickerKey(null);
+                    }}
+                  />
+                )
+              }
               spots={spotList.spots}
               value={round}
             />
