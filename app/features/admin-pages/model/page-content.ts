@@ -215,21 +215,6 @@ export const pageContent = {
       },
     ],
   },
-  schedule: {
-    eyebrow: "Schedule",
-    title: "Schedule",
-    description: "Management page for schedules.",
-    sections: [
-      {
-        title: "Calendar View",
-        description: "This area will show the schedule calendar.",
-      },
-      {
-        title: "Constraint Panel",
-        description: "This area will show conflicts and constraints.",
-      },
-    ],
-  },
   settings: {
     eyebrow: "Settings",
     title: "Settings",

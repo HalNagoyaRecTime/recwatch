@@ -165,13 +165,6 @@ export const navSections = [
           },
         ],
       },
-      {
-        id: "schedule",
-        label: "Schedule",
-        icon: "clock",
-        to: "/schedule",
-        roles: ["admin", "manager", "member"],
-      },
     ],
   },
 ] satisfies NavSectionConfig[];

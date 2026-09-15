@@ -19,7 +19,6 @@ export default [
     route("reports/summary", "routes/main/reports.summary.tsx"),
     route("reports/detail", "routes/main/reports.detail.tsx"),
     route("reports/export", "routes/main/reports.export.tsx"),
-    route("schedule", "routes/main/schedule.tsx"),
     route("settings", "routes/main/settings.tsx"),
   ]),
 ] satisfies RouteConfig;
