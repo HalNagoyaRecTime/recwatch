@@ -72,8 +72,8 @@ export function CompetitionListPage({
     if (!normalizedQuery) return competitions;
 
     return competitions.filter((competition) =>
-      [competition.name, competition.venue, competition.meetingPlace].some(
-        (value) => value.toLocaleLowerCase("ja").includes(normalizedQuery)
+      [competition.name, competition.venue].some((value) =>
+        value.toLocaleLowerCase("ja").includes(normalizedQuery)
       )
     );
   }, [competitions, query]);
@@ -94,7 +94,7 @@ export function CompetitionListPage({
             case "event-time":
               return `${competition.startTime}-${competition.endTime}`;
             case "gathering":
-              return `${competition.meetingTime}-${competition.meetingPlace}`;
+              return competition.gatheringSummary.firstGatheringTime;
             default:
               return null;
           }
@@ -148,7 +148,7 @@ export function CompetitionListPage({
       <SearchField
         ariaLabel="イベントを検索"
         onValueChange={setQuery}
-        placeholder="イベント名・実施場所・集合場所で検索..."
+        placeholder="イベント名・実施場所で検索..."
         value={query}
       />
 

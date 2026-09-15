@@ -1,11 +1,20 @@
 import type { CompetitionListGateway } from "~/features/sports/api/competition-list-gateway";
-import type { CompetitionListItem } from "~/features/sports/model/competition-list-item";
+import type {
+  CompetitionGatheringSummary,
+  CompetitionListItem,
+} from "~/features/sports/model/competition-list-item";
 import { apiClient } from "~/lib/api-client";
 import { loadAllPages } from "~/lib/load-all-pages";
 
 type CompetitionListApiClient = {
   delete(path: string): Promise<void>;
   get(path: string): Promise<unknown>;
+};
+
+type GatheringSummaryDto = {
+  gathering_count: number;
+  configured_gathering_count: number;
+  first_gathering_time: string | null;
 };
 
 type EventDto = {
@@ -15,12 +24,7 @@ type EventDto = {
   venue: string;
   start_time: string;
   end_time: string;
-};
-
-type GatheringDto = {
-  event_id: number;
-  gathering_spot_name?: string;
-  gathering_time: string;
+  gathering_summary: GatheringSummaryDto;
 };
 
 function parseEventPage(value: unknown): { events: EventDto[]; total: number } {
@@ -39,12 +43,6 @@ function parseEventPage(value: unknown): { events: EventDto[]; total: number } {
   return { events: value.events, total: Number(value.total) };
 }
 
-function assertGatherings(value: unknown): asserts value is GatheringDto[] {
-  if (!Array.isArray(value) || !value.every(isGatheringDto)) {
-    throw new Error("集合情報のレスポンス形式が正しくありません。");
-  }
-}
-
 function isEventDto(value: unknown): value is EventDto {
   return (
     isRecord(value) &&
@@ -54,18 +52,20 @@ function isEventDto(value: unknown): value is EventDto {
     (value.rule_text === null || typeof value.rule_text === "string") &&
     typeof value.venue === "string" &&
     typeof value.start_time === "string" &&
-    typeof value.end_time === "string"
+    typeof value.end_time === "string" &&
+    isGatheringSummaryDto(value.gathering_summary)
   );
 }
 
-function isGatheringDto(value: unknown): value is GatheringDto {
+function isGatheringSummaryDto(value: unknown): value is GatheringSummaryDto {
   return (
     isRecord(value) &&
-    Number.isSafeInteger(value.event_id) &&
-    Number(value.event_id) > 0 &&
-    typeof value.gathering_time === "string" &&
-    (value.gathering_spot_name === undefined ||
-      typeof value.gathering_spot_name === "string")
+    Number.isSafeInteger(value.gathering_count) &&
+    Number(value.gathering_count) >= 0 &&
+    Number.isSafeInteger(value.configured_gathering_count) &&
+    Number(value.configured_gathering_count) >= 0 &&
+    (value.first_gathering_time === null ||
+      typeof value.first_gathering_time === "string")
   );
 }
 
@@ -79,38 +79,25 @@ function formatTime(value: string): string {
     : value || "未設定";
 }
 
-function mapCompetition(
-  event: EventDto,
-  gatherings: readonly GatheringDto[]
-): CompetitionListItem {
-  const relatedGatherings = gatherings.filter(
-    (gathering) => gathering.event_id === event.event_id
-  );
-  const meetingTimes = Array.from(
-    new Set(
-      relatedGatherings
-        .map((gathering) => gathering.gathering_time)
-        .filter((time) => time && time !== "99:59")
-        .map(formatTime)
-    )
-  );
-  const meetingPlaces = Array.from(
-    new Set(
-      relatedGatherings
-        .map((gathering) => gathering.gathering_spot_name)
-        .filter((name): name is string => Boolean(name))
-    )
-  );
+function mapGatheringSummary(
+  summary: GatheringSummaryDto
+): CompetitionGatheringSummary {
+  return {
+    gatheringCount: summary.gathering_count,
+    configuredGatheringCount: summary.configured_gathering_count,
+    firstGatheringTime: summary.first_gathering_time,
+  };
+}
 
+function mapCompetition(event: EventDto): CompetitionListItem {
   return {
     id: event.event_id,
     code: String(event.event_id).padStart(3, "0"),
     name: event.event_name,
     venue: event.venue,
-    meetingTime: meetingTimes.join("、") || "未設定",
     startTime: formatTime(event.start_time),
     endTime: formatTime(event.end_time),
-    meetingPlace: meetingPlaces.join("、") || "未設定",
+    gatheringSummary: mapGatheringSummary(event.gathering_summary),
     rules: event.rule_text ?? "ルール未設定",
   };
 }
@@ -120,18 +107,14 @@ export function createHttpCompetitionListGateway(
 ): CompetitionListGateway {
   return {
     async load() {
-      const [events, gatherings] = await Promise.all([
-        loadAllPages(async (offset, limit) => {
-          const page = parseEventPage(
-            await client.get(`/api/v1/events?limit=${limit}&offset=${offset}`)
-          );
-          return { items: page.events, total: page.total };
-        }),
-        client.get("/api/v1/gatherings"),
-      ]);
-      assertGatherings(gatherings);
+      const events = await loadAllPages(async (offset, limit) => {
+        const page = parseEventPage(
+          await client.get(`/api/v1/events?limit=${limit}&offset=${offset}`)
+        );
+        return { items: page.events, total: page.total };
+      });
 
-      return events.map((event) => mapCompetition(event, gatherings));
+      return events.map(mapCompetition);
     },
     delete(eventId) {
       return client.delete(`/api/v1/events/${eventId}`);
