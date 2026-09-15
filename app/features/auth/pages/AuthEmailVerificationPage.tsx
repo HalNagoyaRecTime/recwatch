@@ -27,7 +27,7 @@ export function AuthEmailVerificationPage() {
           {verificationDigits.map((digit) => (
             <input
               key={digit}
-              className="h-12 w-11 rounded-lg border border-[color:var(--border-2)] bg-[color:var(--surface-1)] text-center text-lg font-semibold text-[color:var(--text-1)] transition outline-none placeholder:text-[color:var(--text-3)] focus:border-[color:var(--brand-1)] focus:ring-4 focus:ring-[color:var(--surface-brand-soft)]"
+              className="border-border-strong bg-surface-base text-text-base placeholder:text-text-subtle focus:border-brand-primary focus:ring-brand-primary/20 h-12 w-11 rounded-lg border text-center text-lg font-semibold transition outline-none focus:ring-4"
               inputMode="numeric"
               maxLength={1}
               aria-label={`verification digit ${digit + 1}`}
@@ -44,7 +44,7 @@ export function AuthEmailVerificationPage() {
 
           <Link
             to="/login"
-            className="mx-auto flex w-fit px-6 py-2 text-center text-sm font-medium text-[color:var(--text-2)] !underline decoration-current underline-offset-2 transition hover:text-[color:var(--text-1)]"
+            className="text-text-muted hover:text-text-base mx-auto flex w-fit px-6 py-2 text-center text-sm font-medium !underline decoration-current underline-offset-2 transition"
           >
             ログイン画面に戻る
           </Link>

@@ -101,7 +101,7 @@ export function ScheduleManagementPage({
 
       <div aria-live="polite" className="min-h-5">
         {errorMessage ? (
-          <div className="flex flex-wrap items-center gap-3 text-sm text-[color:var(--tone-red-text)]">
+          <div className="text-tone-danger-text flex flex-wrap items-center gap-3 text-sm">
             <p>{errorMessage}</p>
             {!isLoading ? (
               <button
@@ -114,9 +114,7 @@ export function ScheduleManagementPage({
             ) : null}
           </div>
         ) : feedbackMessage ? (
-          <p className="text-sm text-[color:var(--tone-green-text)]">
-            {feedbackMessage}
-          </p>
+          <p className="text-tone-success-text text-sm">{feedbackMessage}</p>
         ) : null}
       </div>
 
@@ -134,16 +132,16 @@ export function ScheduleManagementPage({
           {isLoading ? (
             <div
               role="status"
-              className="rounded-lg border border-[color:var(--border-2)] bg-[color:var(--surface-overlay-strong)] p-10 text-center text-sm text-[color:var(--text-3)]"
+              className="border-border-strong bg-surface-base text-text-subtle rounded-lg border p-10 text-center text-sm"
             >
               イベントを読み込んでいます...
             </div>
           ) : errorMessage && schedules.length === 0 ? (
-            <div className="rounded-lg border border-dashed border-[color:var(--border-2)] p-10 text-center text-sm text-[color:var(--text-3)]">
+            <div className="border-border-strong text-text-subtle rounded-lg border border-dashed p-10 text-center text-sm">
               一覧を表示できません
             </div>
           ) : filteredSchedules.length === 0 ? (
-            <div className="rounded-lg border border-dashed border-[color:var(--border-2)] p-10 text-center text-sm text-[color:var(--text-3)]">
+            <div className="border-border-strong text-text-subtle rounded-lg border border-dashed p-10 text-center text-sm">
               {query
                 ? "検索条件に一致するイベントはありません"
                 : "登録済みのイベントはありません"}
