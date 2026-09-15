@@ -83,6 +83,7 @@ describe("CompetitionAssignmentPage", () => {
     expect(
       await screen.findByRole("heading", { name: "参加者設定" })
     ).toBeInTheDocument();
+    await screen.findByRole("checkbox", { name: "山田 花子を選択" });
     expect(
       screen.getByRole("heading", { name: "対象を選択" })
     ).toBeInTheDocument();
@@ -222,7 +223,7 @@ describe("CompetitionAssignmentPage", () => {
       );
       await screen.findByRole("heading", { name: "参加者設定" });
       await user.click(
-        screen.getByRole("checkbox", { name: "山田 花子を選択" })
+        await screen.findByRole("checkbox", { name: "山田 花子を選択" })
       );
 
       await user.click(screen.getByRole("button", { name: "設定を保存" }));
@@ -241,7 +242,7 @@ describe("CompetitionAssignmentPage", () => {
         </MemoryRouter>
       );
       await screen.findByRole("heading", { name: "参加者設定" });
-      fireEvent.change(screen.getByLabelText("集合時間"), {
+      fireEvent.change(await screen.findByLabelText("集合時間"), {
         target: { value: "08:50" },
       });
 
@@ -277,11 +278,11 @@ describe("CompetitionAssignmentPage", () => {
         </MemoryRouter>
       );
       await screen.findByRole("heading", { name: "参加者設定" });
-      fireEvent.change(screen.getByLabelText("集合時間"), {
+      fireEvent.change(await screen.findByLabelText("集合時間"), {
         target: { value: "08:50" },
       });
       await user.click(
-        screen.getByRole("checkbox", { name: "山田 花子を選択" })
+        await screen.findByRole("checkbox", { name: "山田 花子を選択" })
       );
 
       await user.click(screen.getByRole("button", { name: "設定を保存" }));
@@ -318,11 +319,11 @@ describe("CompetitionAssignmentPage", () => {
         </MemoryRouter>
       );
       await screen.findByRole("heading", { name: "参加者設定" });
-      fireEvent.change(screen.getByLabelText("集合時間"), {
+      fireEvent.change(await screen.findByLabelText("集合時間"), {
         target: { value: "08:50" },
       });
       await user.click(
-        screen.getByRole("checkbox", { name: "山田 花子を選択" })
+        await screen.findByRole("checkbox", { name: "山田 花子を選択" })
       );
       // 集合場所は選択肢が無いため未入力のまま保存する
       await user.click(screen.getByRole("button", { name: "設定を保存" }));
