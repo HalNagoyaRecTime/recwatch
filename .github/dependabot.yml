@@ -4,8 +4,7 @@ updates:
   - package-ecosystem: "npm"
     directory: "/"
     schedule:
-      interval: "weekly"
-      day: "monday"
+      interval: "monthly"
       time: "09:00"
       timezone: "Asia/Tokyo"
     cooldown:
@@ -15,6 +14,11 @@ updates:
       - dependency-name: "@types/node"
         update-types:
           - "version-update:semver-major"
+    allow:
+      - dependency-name: "*"
+        update-types:
+          - "version-update:semver-minor"
+          - "version-update:semver-patch"
     groups:
       react-router-stack:
         applies-to: "version-updates"
@@ -22,7 +26,6 @@ updates:
           - "react-router"
           - "@react-router/*"
         update-types:
-          - "major"
           - "minor"
           - "patch"
       production-minor-and-patch:
@@ -49,13 +52,17 @@ updates:
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
-      interval: "weekly"
-      day: "monday"
+      interval: "monthly"
       time: "09:20"
       timezone: "Asia/Tokyo"
     cooldown:
       default-days: 7
     open-pull-requests-limit: 3
+    allow:
+      - dependency-name: "*"
+        update-types:
+          - "version-update:semver-minor"
+          - "version-update:semver-patch"
     groups:
       actions-minor-and-patch:
         applies-to: "version-updates"
