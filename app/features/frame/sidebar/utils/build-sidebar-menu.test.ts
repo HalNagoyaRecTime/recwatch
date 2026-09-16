@@ -20,7 +20,6 @@ describe("buildSidebarMenu", () => {
         "/events",
         "/events/today",
         "/notifications",
-        "/schedule",
         "/teams",
         "/ranking",
         "/events/assignments",
@@ -29,6 +28,7 @@ describe("buildSidebarMenu", () => {
         "/members",
       ])
     );
+    expect(paths).not.toContain("/schedule");
     expect(paths).not.toContain("/events/new");
     expect(paths).not.toContain("/notifications/new");
 
@@ -44,7 +44,6 @@ describe("buildSidebarMenu", () => {
         "イベント一覧",
         "本日の進行",
         "通知",
-        "スケジュール",
         "チーム",
         "ランキング",
         "ユーザー",
@@ -57,6 +56,7 @@ describe("buildSidebarMenu", () => {
         "旧学生管理",
       ])
     );
+    expect(labels).not.toContain("スケジュール");
     expect(labels).not.toContain("ユーザー管理");
     expect(labels).not.toContain("イベント管理");
     expect(labels).not.toContain("運用管理");
@@ -66,18 +66,12 @@ describe("buildSidebarMenu", () => {
       buildSidebarMenu("admin")
         .slice(1)
         .map((section) => section.label)
-    ).toEqual(["運用", "チーム・成績", "管理", "削除予定"]);
+    ).toEqual(["運用", "チーム・成績", "管理"]);
 
     const operationSection = buildSidebarMenu("admin").find(
       (section) => section.label === "運用"
     );
-    const deletionSection = buildSidebarMenu("admin").find(
-      (section) => section.label === "削除予定"
-    );
     expect(operationSection?.items.map((item) => item.label)).not.toContain(
-      "スケジュール"
-    );
-    expect(deletionSection?.items.map((item) => item.label)).toContain(
       "スケジュール"
     );
 
