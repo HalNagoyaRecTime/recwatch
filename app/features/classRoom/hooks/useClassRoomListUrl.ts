@@ -13,17 +13,22 @@ export function useClassRoomListUrl() {
   const [searchInput, setSearchInput] = useState(state.search);
 
   useEffect(() => {
+    const timer = window.setTimeout(() => setSearchInput(state.search), 0);
+    return () => window.clearTimeout(timer);
+  }, [state.search]);
+
+  useEffect(() => {
     if (searchInput.trim() === state.search) return;
     const timer = window.setTimeout(() => {
-      setSearchParams(
-        updateClassRoomListUrl(searchParams, {
+      setSearchParams((currentSearchParams) =>
+        updateClassRoomListUrl(currentSearchParams, {
           page: 1,
           search: searchInput,
         })
       );
     }, 250);
     return () => window.clearTimeout(timer);
-  }, [searchInput, searchParams, setSearchParams, state.search]);
+  }, [searchInput, setSearchParams, state.search]);
 
   const updateSearchParams = useCallback(
     (
