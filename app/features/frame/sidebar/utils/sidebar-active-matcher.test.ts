@@ -69,16 +69,12 @@ describe("isSidebarItemActive", () => {
     expect(isSidebarItemActive(eventsList, "/events/assignments")).toBe(false);
   });
 
-  it("スケジュールの派生ページを親フォルダーで選択する", () => {
-    const schedule = item({
-      id: "schedule",
-      label: "スケジュール",
-      to: "/schedule",
-      activePatterns: [
-        "/schedule",
-        "/schedule/new",
-        "/schedule/:scheduleId/edit",
-      ],
+  it("イベント一覧の派生ページを親フォルダーで選択する", () => {
+    const events = item({
+      id: "events",
+      label: "イベント",
+      to: "/events",
+      activePatterns: ["/events", "/events/new", "/events/:competitionId/edit"],
       children: [
         item({
           id: "notification-management",
@@ -88,8 +84,8 @@ describe("isSidebarItemActive", () => {
       ],
     });
 
-    expect(isSidebarItemActive(schedule, "/schedule/new")).toBe(true);
-    expect(isSidebarItemActive(schedule, "/schedule/123/edit")).toBe(true);
+    expect(isSidebarItemActive(events, "/events/new")).toBe(true);
+    expect(isSidebarItemActive(events, "/events/123/edit")).toBe(true);
   });
 
   it("表示されないインポート画面はユーザー親をフォールバック選択する", () => {

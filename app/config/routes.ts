@@ -87,24 +87,6 @@ export const sidebarSections = [
         ],
         roles: ["admin"],
       },
-      {
-        id: "events-assignments",
-        label: "参加者設定",
-        to: "/events/assignments",
-        roles: ["admin"],
-      },
-      {
-        id: "gathering-spots",
-        label: "集合場所管理",
-        to: "/gathering-spots",
-        roles: ["admin"],
-      },
-      {
-        id: "participants",
-        label: "出場メンバー管理",
-        to: "/participants",
-        roles: ["admin"],
-      },
     ],
   },
   {
@@ -155,6 +137,29 @@ export const sidebarSections = [
         label: "クラス",
         icon: "classRoom",
         to: "/classroom",
+        roles: ["admin"],
+      },
+    ],
+  },
+  {
+    label: "削除予定",
+    items: [
+      {
+        id: "events-assignments",
+        label: "参加者設定",
+        to: "/events/assignments",
+        roles: ["admin"],
+      },
+      {
+        id: "gathering-spots",
+        label: "集合場所管理",
+        to: "/gathering-spots",
+        roles: ["admin"],
+      },
+      {
+        id: "participants",
+        label: "出場メンバー管理",
+        to: "/participants",
         roles: ["admin"],
       },
       {

@@ -66,14 +66,23 @@ describe("buildSidebarMenu", () => {
       buildSidebarMenu("admin")
         .slice(1)
         .map((section) => section.label)
-    ).toEqual(["運用", "チーム・成績", "管理"]);
+    ).toEqual(["運用", "チーム・成績", "管理", "削除予定"]);
 
     const operationSection = buildSidebarMenu("admin").find(
       (section) => section.label === "運用"
     );
+    const deletionSection = buildSidebarMenu("admin").find(
+      (section) => section.label === "削除予定"
+    );
     expect(operationSection?.items.map((item) => item.label)).not.toContain(
       "スケジュール"
     );
+    expect(deletionSection?.items.map((item) => item.label)).toEqual([
+      "参加者設定",
+      "集合場所管理",
+      "出場メンバー管理",
+      "旧学生管理",
+    ]);
 
     const classRoomItem = buildSidebarMenu("admin")
       .flatMap((section) => section.items)
