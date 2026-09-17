@@ -1,11 +1,14 @@
-import { useLoaderData } from "react-router";
+import { useLoaderData, useOutletContext } from "react-router";
 
 import { createPageTitle } from "~/lib/page-title";
 import { buildBackendUrl } from "~/config/env";
 import { WEB_CLIENT_HEADERS } from "~/features/auth/lib/webClientHeaders";
+import { extractPersonName } from "~/features/dashboard/model/extract-person-name";
 import { DashboardPage } from "~/features/dashboard/pages/DashboardPage";
 import { PagePadding } from "~/features/frame/page-layout/PagePadding";
 import { PageLayout } from "~/features/frame/page-layout/PageLayout";
+import { getAccountBtnData } from "~/features/frame/main-header/account-menu/model/account-btn-data";
+import type { AccountUser } from "~/features/frame/main-header/account-menu/model/account-btn-data";
 
 export function meta() {
   return [{ title: createPageTitle("ダッシュボード") }];
@@ -65,11 +68,15 @@ export async function clientLoader(): Promise<DashboardLoaderData> {
 
 export default function DashboardRoute() {
   const result = useLoaderData<typeof clientLoader>();
+  const user = useOutletContext<AccountUser | null | undefined>();
+  const userName = extractPersonName(getAccountBtnData(user).name);
+
   return (
     <PageLayout>
       <PagePadding>
         <DashboardPage
           connectionError={result.status === "error" ? result.error : undefined}
+          userName={userName}
         />
       </PagePadding>
     </PageLayout>
