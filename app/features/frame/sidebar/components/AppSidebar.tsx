@@ -1,5 +1,4 @@
 import { useLocation } from "react-router";
-import { currentUser } from "~/config/permissions";
 import { cn } from "~/lib/cn";
 import { useSidebarUI } from "~/features/frame/sidebar/hooks/useSidebarUI";
 import { buildSidebarMenu } from "~/features/frame/sidebar/utils/build-sidebar-menu";
@@ -7,9 +6,10 @@ import type { SidebarSectionDef } from "~/types/sidebar";
 import { SidebarNavItem } from "~/features/frame/sidebar/components/SidebarNavItem";
 import { SIDEBAR_DURATION } from "~/features/frame/sidebar/styles/sidebar-styles";
 import { ScrollbarArea } from "~/components/ui/scrollbar/ScrollbarArea";
+import type { AccountUser } from "~/features/frame/main-header/account-menu/model/account-btn-data";
 
-export function AppSidebar() {
-  const sections = buildSidebarMenu(currentUser.role);
+export function AppSidebar({ user }: { user?: AccountUser | null }) {
+  const sections = buildSidebarMenu(user);
   const { isExpanded } = useSidebarUI();
   const location = useLocation();
   const pathname = location.pathname;

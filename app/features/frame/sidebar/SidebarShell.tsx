@@ -14,6 +14,7 @@ import {
   sidebarMobileContainerStyle,
   sidebarPlaceholderStyle,
 } from "~/features/frame/sidebar/styles/sidebar-styles";
+import type { AccountUser } from "~/features/frame/main-header/account-menu/model/account-btn-data";
 
 const MOBILE_SIDEBAR_ID = "app-sidebar-mobile";
 const DESKTOP_SIDEBAR_MEDIA_QUERY = "(min-width: 48rem)";
@@ -21,7 +22,7 @@ const NON_MOUSE_CLICK_MAX_DELAY_MS = 1000;
 const MOBILE_DRAWER_FOCUSABLE_SELECTOR =
   'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
-function DesktopSidebarContent() {
+function DesktopSidebarContent({ user }: { user?: AccountUser | null }) {
   const { sidebarPinnedOpen, pinOpen } = useSidebarState();
   const { isExpanded, setHovering } = useSidebarUI();
   const lastPointerTypeRef = useRef<{
@@ -71,7 +72,7 @@ function DesktopSidebarContent() {
             }}
           >
             <SidebarHeader />
-            <AppSidebar />
+            <AppSidebar user={user} />
           </div>
           <SidebarFooter />
         </div>
@@ -80,7 +81,7 @@ function DesktopSidebarContent() {
   );
 }
 
-function MobileSidebarContent() {
+function MobileSidebarContent({ user }: { user?: AccountUser | null }) {
   const { mobileOpen, closeForMobile } = useSidebarState();
   const drawerRef = useRef<HTMLDivElement>(null);
   const wasOpenRef = useRef(false);
@@ -207,21 +208,21 @@ function MobileSidebarContent() {
       >
         <SidebarHeader onClose={closeForMobile} />
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-          <AppSidebar />
+          <AppSidebar user={user} />
         </div>
       </div>
     </div>
   );
 }
 
-export function SidebarShell() {
+export function SidebarShell({ user }: { user?: AccountUser | null }) {
   return (
     <>
       <SidebarUIProvider>
-        <DesktopSidebarContent />
+        <DesktopSidebarContent user={user} />
       </SidebarUIProvider>
       <SidebarUIProvider forceExpanded>
-        <MobileSidebarContent />
+        <MobileSidebarContent user={user} />
       </SidebarUIProvider>
     </>
   );
