@@ -34,23 +34,25 @@ function renderPage() {
 }
 
 describe("AccountDeletionPage", () => {
-  it("未ログインでも公開ページを表示し、Microsoftアカウント自体は対象外と説明する", () => {
+  it("未ログインでも公開ページを表示し、Microsoft 365アカウント自体は対象外と説明する", () => {
     renderPage();
 
     expect(
       screen.getByRole("heading", {
         level: 1,
-        name: "RecTimeアカウントの削除",
+        name: "RecTimeアカウントを削除",
       })
     ).toBeInTheDocument();
     expect(
       screen.getByText(
-        "この手続きで削除されるのは、RecTimeが管理するアカウントと関連データです。削除受付後はRecTimeを利用できなくなります。学校から付与されたMicrosoft 365アカウントそのものは削除されません。"
+        "Microsoft 365アカウント自体が削除されることはありません。"
       )
     ).toBeInTheDocument();
+    expect(screen.queryByText("削除される情報")).not.toBeInTheDocument();
+    expect(screen.queryByText("お問い合わせ")).not.toBeInTheDocument();
     expect(
       screen.getByRole("button", {
-        name: "Microsoftアカウントで本人確認を開始",
+        name: "Microsoft 365で本人確認する",
       })
     ).toBeInTheDocument();
   });
@@ -70,7 +72,7 @@ describe("AccountDeletionPage", () => {
     expect(
       screen.getByRole("heading", {
         level: 1,
-        name: "RecTimeアカウントの削除",
+        name: "RecTimeアカウントを削除",
       })
     ).toBeInTheDocument();
   });
@@ -87,7 +89,7 @@ describe("AccountDeletionPage", () => {
 
     renderPage();
     const button = screen.getByRole("button", {
-      name: "Microsoftアカウントで本人確認を開始",
+      name: "Microsoft 365で本人確認する",
     });
 
     fireEvent.click(button);

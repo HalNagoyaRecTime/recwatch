@@ -6,7 +6,7 @@ import {
   waitFor,
 } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { MemoryRouter } from "react-router";
+import { MemoryRouter, Route, Routes } from "react-router";
 import type { AccountDeletionGateway } from "../api/contracts/account-deletion-gateway";
 
 const mocks = vi.hoisted(() => ({
@@ -24,22 +24,30 @@ afterEach(() => {
   cleanup();
   mocks.confirmAccountDeletion.mockReset();
   window.localStorage.clear();
+  window.sessionStorage.clear();
 });
 
 function renderPage() {
   return render(
     <MemoryRouter initialEntries={["/account-deletion/callback"]}>
-      <AccountDeletionCallbackPage
-        data={{
-          status: "confirm",
-          deletionConfirmationToken: "deletion-token",
-        }}
-        gateway={testGateway}
-      />
+      <Routes>
+        <Route
+          path="/account-deletion/callback"
+          element={
+            <AccountDeletionCallbackPage
+              data={{
+                status: "confirm",
+                deletionConfirmationToken: "deletion-token",
+              }}
+              gateway={testGateway}
+            />
+          }
+        />
+        <Route path="/login" element={<p>ログインページ</p>} />
+      </Routes>
     </MemoryRouter>
   );
 }
-
 describe("AccountDeletionCallbackPage", () => {
   it("本人確認後に最終確認を表示し、削除送信中は多重送信を防ぐ", async () => {
     let resolveDeletion: (value: { status: "done" }) => void = () => {};
@@ -50,6 +58,21 @@ describe("AccountDeletionCallbackPage", () => {
     );
 
     renderPage();
+    expect(screen.getByText("本人確認が完了しました")).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", {
+        name: "RecTimeアカウントを削除しますか？",
+      })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "この操作は取り消せません。Microsoft 365アカウントには影響しません。"
+      )
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "削除せず終了する" })
+    ).toBeInTheDocument();
+
     const button = screen.getByRole("button", {
       name: "RecTimeアカウントを削除する",
     });
@@ -65,16 +88,38 @@ describe("AccountDeletionCallbackPage", () => {
 
     await waitFor(() =>
       expect(
-        screen.getByRole("heading", { name: "削除受付を完了しました" })
+        screen.getByRole("heading", { name: "削除を受け付けました" })
       ).toBeInTheDocument()
     );
     expect(
       screen.getByText(
-        "BackendがRecTimeアカウントの削除要求を正常に受け付けました。以後、このアカウントでRecTimeを利用することはできません。"
+        "RecTimeアカウントの削除を受け付けました。このアカウントではRecTimeを利用できなくなります。"
       )
     ).toBeInTheDocument();
   });
 
+  it("削除せず終了すると削除APIを呼ばずログイン画面へ戻る", async () => {
+    window.sessionStorage.setItem("rectime_deletion_auth_pending", "1");
+    window.sessionStorage.setItem(
+      "rectime_deletion_auth_result",
+      JSON.stringify({
+        status: "confirmed",
+        token: "deletion-token",
+      })
+    );
+
+    renderPage();
+    fireEvent.click(screen.getByRole("button", { name: "削除せず終了する" }));
+
+    expect(await screen.findByText("ログインページ")).toBeInTheDocument();
+    expect(mocks.confirmAccountDeletion).not.toHaveBeenCalled();
+    expect(
+      window.sessionStorage.getItem("rectime_deletion_auth_pending")
+    ).toBeNull();
+    expect(
+      window.sessionStorage.getItem("rectime_deletion_auth_result")
+    ).toBeNull();
+  });
   it("Token無効時は本人確認からやり直せる", async () => {
     mocks.confirmAccountDeletion.mockResolvedValue({
       status: "error",
@@ -95,7 +140,7 @@ describe("AccountDeletionCallbackPage", () => {
     );
     expect(
       screen.getByRole("link", {
-        name: "Microsoftアカウントで本人確認をやり直す",
+        name: "Microsoft 365で本人確認をやり直す",
       })
     ).toHaveAttribute("href", "/account-deletion");
   });

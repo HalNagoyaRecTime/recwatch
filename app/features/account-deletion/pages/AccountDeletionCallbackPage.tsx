@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { CheckCircle2, RotateCcw, Trash2 } from "lucide-react";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 
 import type {
   AccountDeletionErrorReason,
@@ -9,6 +9,10 @@ import type {
 } from "~/features/account-deletion/api/contracts/account-deletion-gateway";
 import { AccountDeletionLayout } from "~/features/account-deletion/components/AccountDeletionLayout";
 import { accountDeletionContent } from "~/features/account-deletion/content/account-deletion-content";
+import {
+  clearDeletionAuthPending,
+  clearDeletionAuthResult,
+} from "~/features/account-deletion/lib/deletionAuthFlow";
 import { AuthErrorMessage } from "~/features/auth/components/AuthErrorMessage";
 import { Button } from "~/components/ui/button/Button";
 import { ButtonLink } from "~/components/ui/button/ButtonLink";
@@ -38,6 +42,13 @@ export function AccountDeletionCallbackPage({
 }) {
   const [view, setView] = useState(data);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const navigate = useNavigate();
+
+  function handleCancelDeletion() {
+    clearDeletionAuthPending();
+    clearDeletionAuthResult();
+    navigate("/login", { replace: true });
+  }
 
   async function handleConfirmDeletion() {
     if (isSubmitting || view.status !== "confirm") return;
@@ -79,6 +90,7 @@ export function AccountDeletionCallbackPage({
         <ConfirmationView
           isSubmitting={isSubmitting}
           onConfirm={handleConfirmDeletion}
+          onCancel={handleCancelDeletion}
         />
       ) : null}
 
@@ -98,9 +110,11 @@ export function AccountDeletionCallbackPage({
 function ConfirmationView({
   isSubmitting,
   onConfirm,
+  onCancel,
 }: {
   isSubmitting: boolean;
   onConfirm: () => void;
+  onCancel: () => void;
 }) {
   return (
     <div className="space-y-5">
@@ -109,25 +123,20 @@ function ConfirmationView({
           本人確認が完了しました
         </p>
         <h1 className="text-text-base text-2xl font-semibold">
-          削除を実行しますか？
+          RecTimeアカウントを削除しますか？
         </h1>
         <p className="text-text-muted text-sm leading-7">
-          最終操作を行うと、RecTimeアカウントとRecTimeが管理する関連データの削除受付が始まります。この操作は取り消せません。
+          RecTimeアカウントを削除します。この操作は取り消せません。
         </p>
       </header>
 
       <section className="border-tone-danger-border bg-tone-danger-bg text-tone-danger-text app-rounded border p-5">
-        <h2 className="text-sm font-semibold">削除前にご確認ください</h2>
-        <ul className="mt-2 space-y-2 text-sm leading-6">
-          <li>削除後はRecTimeを利用できなくなります。</li>
-          <li>Microsoft 365アカウントそのものは削除されません。</li>
-          <li>
-            学校やMicrosoft側のメール・ファイル・公式記録には影響しません。
-          </li>
-        </ul>
+        <p className="text-sm leading-6">
+          この操作は取り消せません。Microsoft 365アカウントには影響しません。
+        </p>
       </section>
 
-      <div className="flex justify-center">
+      <div className="flex flex-col items-center gap-3">
         <Button
           icon={Trash2}
           variant="danger"
@@ -139,6 +148,9 @@ function ConfirmationView({
           {isSubmitting
             ? "削除受付を送信しています..."
             : "RecTimeアカウントを削除する"}
+        </Button>
+        <Button variant="secondary" size="lg" onClick={onCancel}>
+          削除せず終了する
         </Button>
       </div>
     </div>
@@ -154,13 +166,13 @@ function AcceptedView() {
       />
       <header className="space-y-2">
         <h1 className="text-text-base text-2xl font-semibold">
-          削除受付を完了しました
+          削除を受け付けました
         </h1>
         <p className="text-text-muted text-sm leading-7">
-          BackendがRecTimeアカウントの削除要求を正常に受け付けました。以後、このアカウントでRecTimeを利用することはできません。
+          RecTimeアカウントの削除を受け付けました。このアカウントではRecTimeを利用できなくなります。
         </p>
         <p className="text-text-muted text-sm leading-7">
-          Microsoft 365アカウントそのものは削除されません。
+          Microsoft 365アカウントには影響しません。
         </p>
       </header>
     </div>
@@ -172,10 +184,13 @@ function PendingView() {
     <div className="space-y-5 text-center">
       <header className="space-y-2">
         <h1 className="text-text-base text-2xl font-semibold">
-          削除処理を受け付けました
+          削除を受け付けました
         </h1>
         <p className="text-text-muted text-sm leading-7">
-          RecTimeアカウントの削除処理を受け付けました。以後、このアカウントでRecTimeを利用することはできません。
+          RecTimeアカウントの削除を受け付けました。以後、このアカウントでRecTimeを利用することはできません。
+        </p>
+        <p className="text-text-muted text-sm leading-7">
+          Microsoft 365アカウントには影響しません。
         </p>
       </header>
     </div>
@@ -212,14 +227,14 @@ function ErrorView({
           size="lg"
           icon={RotateCcw}
         >
-          Microsoftアカウントで本人確認をやり直す
+          Microsoft 365で本人確認をやり直す
         </ButtonLink>
       </div>
       <Link
         to="/account-deletion"
         className="text-text-muted hover:text-text-base inline-block text-sm hover:underline"
       >
-        削除受付ページの説明に戻る
+        削除受付ページに戻る
       </Link>
     </div>
   );
