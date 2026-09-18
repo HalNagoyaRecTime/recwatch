@@ -96,6 +96,28 @@ describe("EventDetailPage", () => {
     expect(within(round2).queryByText("99:59")).not.toBeInTheDocument();
   });
 
+  it("Round 番号が連番でなくても保存された番号をそのまま表示する", async () => {
+    const [round1, round2] = relay.rounds;
+    renderPage("/events/12", {
+      load: vi.fn().mockResolvedValue({
+        ...relay,
+        rounds: [round1, { ...round2, round: 3 }],
+      }),
+    });
+
+    expect(
+      await screen.findByRole("region", { name: "Round 3" })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Round 3", level: 3 })
+    ).toBeInTheDocument();
+    // 配列上の位置（2 番目）を番号として出さない
+    expect(
+      screen.queryByRole("heading", { name: "Round 2", level: 3 })
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText("2")).not.toBeInTheDocument();
+  });
+
   it("編集・集合設定・一覧への導線を持ち、集合設定は子ルートとして開く", async () => {
     renderPage("/events/12", { load: vi.fn().mockResolvedValue(relay) });
 

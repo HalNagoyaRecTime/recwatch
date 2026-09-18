@@ -84,7 +84,7 @@ export function GatheringSettingsStep({
         <p className="text-text-muted text-sm">集合設定を読み込み中...</p>
       ) : (
         <div className="space-y-4">
-          {settings.rounds.map((round, index) => (
+          {settings.rounds.map((round) => (
             <RoundCard
               key={round.key}
               disabled={isDisabled}
@@ -114,7 +114,6 @@ export function GatheringSettingsStep({
               }}
               onTogglePicker={togglePicker}
               openPickerKey={openPickerKey}
-              position={index + 1}
               renderPicker={(gathering) => (
                 <GatheringMemberPicker
                   candidates={memberCandidates.candidates}

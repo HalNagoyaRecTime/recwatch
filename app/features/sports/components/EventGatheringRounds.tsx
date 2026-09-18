@@ -46,21 +46,16 @@ export function EventGatheringRounds({
         </p>
       ) : (
         <div className="space-y-3">
-          {rounds.map((round, index) => (
+          {rounds.map((round) => (
             <section
               key={round.round}
               aria-label={`Round ${round.round}`}
               className="bg-surface-muted app-rounded space-y-2 p-3"
             >
               <div className="flex items-center justify-between gap-3">
-                <div className="flex items-center gap-2.5">
-                  <span className="bg-brand-primary text-text-base-inverse inline-flex size-7 items-center justify-center rounded-full text-sm font-semibold">
-                    {index + 1}
-                  </span>
-                  <h3 className="text-text-base text-sm font-semibold">
-                    Round {round.round}
-                  </h3>
-                </div>
+                <h3 className="text-text-base text-sm font-semibold">
+                  Round {round.round}
+                </h3>
                 <span className="app-rounded bg-surface-base text-text-muted px-2 py-1 text-xs font-medium whitespace-nowrap">
                   合計 {sumRoundMemberCount(round.gatherings)}名
                 </span>
