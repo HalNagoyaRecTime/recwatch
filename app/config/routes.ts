@@ -62,8 +62,12 @@ export const sidebarSections = [
             activePatterns: [
               "/events",
               "/events/new",
+              "/events/:competitionId",
               "/events/:competitionId/edit",
+              "/events/:competitionId/gatherings",
             ],
+            // `/events/:competitionId` は固定パスの画面にも一致するため、別項目のものを除外する
+            activeExclusions: ["/events/today", "/events/assignments"],
             roles: ["admin"],
           },
           {
