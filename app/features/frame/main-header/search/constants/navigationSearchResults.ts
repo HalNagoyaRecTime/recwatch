@@ -50,25 +50,11 @@ export const NAVIGATION_SEARCH_RESULTS: readonly NavigationSearchResult[] = [
     keywords: ["イベント", "作成", "追加"],
   },
   {
-    id: "event-assignments",
-    title: "参加者設定",
-    category: "イベント",
-    to: "/events/assignments",
-    keywords: ["教官", "担当", "割当"],
-  },
-  {
     id: "gathering-spots",
     title: "集合場所管理",
     category: "イベント",
     to: "/gathering-spots",
     keywords: ["集合", "場所"],
-  },
-  {
-    id: "participants",
-    title: "出場メンバー管理",
-    category: "運用",
-    to: "/participants",
-    keywords: ["参加者", "選手", "割り当て"],
   },
   {
     id: "notifications",
