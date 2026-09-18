@@ -17,39 +17,80 @@ type EventDto = {
   end_time: string;
 };
 
+type EventDetailDto = EventDto & {
+  rounds: RoundDto[];
+};
+
+type RoundDto = {
+  round: number;
+  gatherings: EventGatheringDto[];
+};
+
+type EventGatheringDto = {
+  gathering_id: number;
+  gathering_time: string;
+  gathering_spot: {
+    gathering_spot_id: number;
+    gathering_spot_name: string;
+  };
+  member_count: number;
+};
+
 type GatheringDto = {
   event_id: number;
-  gathering_spot_name?: string;
+  gathering_spot_name: string;
   gathering_time: string;
 };
 
-function parseEventPage(value: unknown): { events: EventDto[]; total: number } {
+function parseEventPage(value: unknown): {
+  events: EventDto[];
+  total: number;
+} {
   if (
-    typeof value !== "object" ||
-    value === null ||
-    !("events" in value) ||
+    !isRecord(value) ||
     !Array.isArray(value.events) ||
-    !("total" in value) ||
-    !Number.isSafeInteger(value.total) ||
-    Number(value.total) < 0 ||
+    !isNonNegativeInteger(value.total) ||
     !value.events.every(isEventDto)
   ) {
     throw new Error("イベント一覧のレスポンス形式が正しくありません。");
   }
-  return { events: value.events, total: Number(value.total) };
+
+  return {
+    events: value.events,
+    total: value.total,
+  };
 }
 
-function assertGatherings(value: unknown): asserts value is GatheringDto[] {
-  if (!Array.isArray(value) || !value.every(isGatheringDto)) {
-    throw new Error("集合情報のレスポンス形式が正しくありません。");
+function parseEventDetail(value: unknown): EventDetailDto {
+  if (!isRecord(value)) {
+    throw new Error("イベント詳細のレスポンス形式が正しくありません。");
   }
+
+  const rounds = value.rounds;
+
+  if (
+    !isEventDto(value) ||
+    !Array.isArray(rounds) ||
+    !rounds.every(isRoundDto)
+  ) {
+    throw new Error("イベント詳細のレスポンス形式が正しくありません。");
+  }
+
+  return {
+    event_id: value.event_id,
+    event_name: value.event_name,
+    rule_text: value.rule_text,
+    venue: value.venue,
+    start_time: value.start_time,
+    end_time: value.end_time,
+    rounds,
+  };
 }
 
 function isEventDto(value: unknown): value is EventDto {
   return (
     isRecord(value) &&
-    Number.isSafeInteger(value.event_id) &&
-    Number(value.event_id) > 0 &&
+    isPositiveInteger(value.event_id) &&
     typeof value.event_name === "string" &&
     (value.rule_text === null || typeof value.rule_text === "string") &&
     typeof value.venue === "string" &&
@@ -58,19 +99,46 @@ function isEventDto(value: unknown): value is EventDto {
   );
 }
 
-function isGatheringDto(value: unknown): value is GatheringDto {
+function isRoundDto(value: unknown): value is RoundDto {
   return (
     isRecord(value) &&
-    Number.isSafeInteger(value.event_id) &&
-    Number(value.event_id) > 0 &&
+    Number.isSafeInteger(value.round) &&
+    Number(value.round) > 0 &&
+    Array.isArray(value.gatherings) &&
+    value.gatherings.every(isEventGatheringDto)
+  );
+}
+
+function isEventGatheringDto(value: unknown): value is EventGatheringDto {
+  return (
+    isRecord(value) &&
+    isPositiveInteger(value.gathering_id) &&
     typeof value.gathering_time === "string" &&
-    (value.gathering_spot_name === undefined ||
-      typeof value.gathering_spot_name === "string")
+    isGatheringSpotDto(value.gathering_spot) &&
+    isNonNegativeInteger(value.member_count)
+  );
+}
+
+function isGatheringSpotDto(
+  value: unknown
+): value is EventGatheringDto["gathering_spot"] {
+  return (
+    isRecord(value) &&
+    isPositiveInteger(value.gathering_spot_id) &&
+    typeof value.gathering_spot_name === "string"
   );
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
+}
+
+function isPositiveInteger(value: unknown): value is number {
+  return Number.isSafeInteger(value) && Number(value) > 0;
+}
+
+function isNonNegativeInteger(value: unknown): value is number {
+  return Number.isSafeInteger(value) && Number(value) >= 0;
 }
 
 function formatTime(value: string): string {
@@ -86,6 +154,7 @@ function mapCompetition(
   const relatedGatherings = gatherings.filter(
     (gathering) => gathering.event_id === event.event_id
   );
+
   const meetingTimes = Array.from(
     new Set(
       relatedGatherings
@@ -94,11 +163,12 @@ function mapCompetition(
         .map(formatTime)
     )
   );
+
   const meetingPlaces = Array.from(
     new Set(
       relatedGatherings
         .map((gathering) => gathering.gathering_spot_name)
-        .filter((name): name is string => Boolean(name))
+        .filter((name) => Boolean(name))
     )
   );
 
@@ -120,23 +190,44 @@ export function createHttpCompetitionListGateway(
 ): CompetitionListGateway {
   return {
     async load() {
-      const [events, gatherings] = await Promise.all([
-        loadAllPages(async (offset, limit) => {
-          const page = parseEventPage(
-            await client.get(`/api/v1/events?limit=${limit}&offset=${offset}`)
-          );
-          return { items: page.events, total: page.total };
-        }),
-        client.get("/api/v1/gatherings"),
-      ]);
-      assertGatherings(gatherings);
+      const events = await loadAllPages(async (offset, limit) => {
+        const page = parseEventPage(
+          await client.get(`/api/v1/events?limit=${limit}&offset=${offset}`)
+        );
+
+        return {
+          items: page.events,
+          total: page.total,
+        };
+      });
+
+      const eventDetails = await Promise.all(
+        events.map(async (event) =>
+          parseEventDetail(
+            await client.get(`/api/v1/events/${event.event_id}`)
+          )
+        )
+      );
+
+      const gatherings: GatheringDto[] = eventDetails.flatMap((event) =>
+        event.rounds.flatMap((round) =>
+          round.gatherings.map((gathering) => ({
+            event_id: event.event_id,
+            gathering_spot_name:
+              gathering.gathering_spot.gathering_spot_name,
+            gathering_time: gathering.gathering_time,
+          }))
+        )
+      );
 
       return events.map((event) => mapCompetition(event, gatherings));
     },
+
     delete(eventId) {
       return client.delete(`/api/v1/events/${eventId}`);
     },
   };
 }
 
-export const httpCompetitionListGateway = createHttpCompetitionListGateway();
+export const httpCompetitionListGateway =
+  createHttpCompetitionListGateway();

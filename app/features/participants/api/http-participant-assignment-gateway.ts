@@ -2,6 +2,7 @@ import { apiClient } from "~/lib/api-client";
 import { loadAllPages } from "~/lib/load-all-pages";
 
 import type { ParticipantAssignment } from "../model/participant-assignment";
+
 import {
   toParticipantAssignments,
   type ParticipantAssignmentSource,
@@ -10,6 +11,26 @@ import {
 type ParticipantApiClient = {
   delete(path: string): Promise<void>;
   get(path: string): Promise<unknown>;
+};
+
+type EventDetailDto = {
+  event_id: number;
+  rounds: RoundDto[];
+};
+
+type RoundDto = {
+  round: number;
+  gatherings: EventGatheringDto[];
+};
+
+type EventGatheringDto = {
+  gathering_id: number;
+  gathering_time: string;
+  gathering_spot: {
+    gathering_spot_id: number;
+    gathering_spot_name: string;
+  };
+  member_count: number;
 };
 
 export type ParticipantAssignmentGateway = {
@@ -26,13 +47,13 @@ export function createHttpParticipantAssignmentGateway(
     delete(gatheringId) {
       return client.delete(`/api/v1/gatherings/${gatheringId}`);
     },
+
     async load() {
       const [
         classrooms,
         students,
         events,
         gatheringSpotsResponse,
-        gatheringsResponse,
       ] = await Promise.all([
         loadAllPageItems(
           client,
@@ -40,19 +61,50 @@ export function createHttpParticipantAssignmentGateway(
           "classrooms",
           isClassroom
         ),
-        loadAllPageItems(client, "/api/v1/students", "students", isStudent),
-        loadAllPageItems(client, "/api/v1/events", "events", isEvent),
+        loadAllPageItems(
+          client,
+          "/api/v1/students",
+          "students",
+          isStudent
+        ),
+        loadAllPageItems(
+          client,
+          "/api/v1/events",
+          "events",
+          isEvent
+        ),
         client.get("/api/v1/gathering-spots"),
-        client.get("/api/v1/gatherings"),
       ]);
+
+      const eventDetails = await Promise.all(
+        events.map(async (event) =>
+          parseEventDetail(
+            await client.get(`/api/v1/events/${event.event_id}`)
+          )
+        )
+      );
+
+      const gatherings: ParticipantAssignmentSource["gatherings"] =
+        eventDetails.flatMap((event) =>
+          event.rounds.flatMap((round) =>
+            round.gatherings.map((gathering) => ({
+              gathering_id: gathering.gathering_id,
+              event_id: event.event_id,
+              gathering_spot_id:
+                gathering.gathering_spot.gathering_spot_id,
+              gathering_time: gathering.gathering_time,
+            }))
+          )
+        );
 
       const source = parseBaseResponses(
         classrooms,
         students,
         events,
         gatheringSpotsResponse,
-        gatheringsResponse
+        gatherings
       );
+
       const memberEntries = await Promise.all(
         source.gatherings.map(
           async (gathering) =>
@@ -83,26 +135,26 @@ function parseBaseResponses(
   students: ParticipantAssignmentSource["students"],
   events: ParticipantAssignmentSource["events"],
   gatheringSpotsResponse: unknown,
-  gatheringsResponse: unknown
+  gatherings: ParticipantAssignmentSource["gatherings"]
 ): Omit<ParticipantAssignmentSource, "membersByGatheringId"> {
-  if (
-    !Array.isArray(gatheringSpotsResponse) ||
-    !Array.isArray(gatheringsResponse)
-  ) {
+  if (!Array.isArray(gatheringSpotsResponse)) {
     throw new Error(INVALID_RESPONSE_MESSAGE);
   }
 
-  const gatheringSpots = gatheringSpotsResponse.filter(isGatheringSpot);
-  const gatherings = gatheringsResponse.filter(isGathering);
+  const gatheringSpots =
+    gatheringSpotsResponse.filter(isGatheringSpot);
 
-  if (
-    gatheringSpots.length !== gatheringSpotsResponse.length ||
-    gatherings.length !== gatheringsResponse.length
-  ) {
+  if (gatheringSpots.length !== gatheringSpotsResponse.length) {
     throw new Error(INVALID_RESPONSE_MESSAGE);
   }
 
-  return { classrooms, students, events, gatheringSpots, gatherings };
+  return {
+    classrooms,
+    students,
+    events,
+    gatheringSpots,
+    gatherings,
+  };
 }
 
 function loadAllPageItems<T>(
@@ -112,7 +164,10 @@ function loadAllPageItems<T>(
   guard: (value: unknown) => value is T
 ): Promise<T[]> {
   return loadAllPages(async (offset, limit) => {
-    const value = await client.get(`${path}?limit=${limit}&offset=${offset}`);
+    const value = await client.get(
+      `${path}?limit=${limit}&offset=${offset}`
+    );
+
     if (
       !isRecord(value) ||
       !Array.isArray(value[key]) ||
@@ -121,14 +176,71 @@ function loadAllPageItems<T>(
     ) {
       throw new Error(INVALID_RESPONSE_MESSAGE);
     }
-    return { items: value[key], total: value.total };
+
+    return {
+      items: value[key],
+      total: value.total,
+    };
   });
+}
+
+function parseEventDetail(value: unknown): EventDetailDto {
+  if (!isRecord(value)) {
+    throw new Error(INVALID_RESPONSE_MESSAGE);
+  }
+
+  const rounds = value.rounds;
+
+  if (
+    !isPositiveInteger(value.event_id) ||
+    !Array.isArray(rounds) ||
+    !rounds.every(isRoundDto)
+  ) {
+    throw new Error(INVALID_RESPONSE_MESSAGE);
+  }
+
+  return {
+    event_id: value.event_id,
+    rounds,
+  };
+}
+
+function isRoundDto(value: unknown): value is RoundDto {
+  return (
+    isRecord(value) &&
+    isPositiveInteger(value.round) &&
+    Array.isArray(value.gatherings) &&
+    value.gatherings.every(isEventGatheringDto)
+  );
+}
+
+function isEventGatheringDto(
+  value: unknown
+): value is EventGatheringDto {
+  return (
+    isRecord(value) &&
+    isPositiveInteger(value.gathering_id) &&
+    typeof value.gathering_time === "string" &&
+    isGatheringSpotDto(value.gathering_spot) &&
+    isNonNegativeInteger(value.member_count)
+  );
+}
+
+function isGatheringSpotDto(
+  value: unknown
+): value is EventGatheringDto["gathering_spot"] {
+  return (
+    isRecord(value) &&
+    isPositiveInteger(value.gathering_spot_id) &&
+    typeof value.gathering_spot_name === "string"
+  );
 }
 
 function parseMembers(value: unknown) {
   if (!Array.isArray(value) || !value.every(isMember)) {
     throw new Error(INVALID_RESPONSE_MESSAGE);
   }
+
   return value;
 }
 
@@ -162,18 +274,6 @@ function isEvent(
     typeof value.event_name === "string" &&
     typeof value.start_time === "string" &&
     typeof value.end_time === "string"
-  );
-}
-
-function isGathering(
-  value: unknown
-): value is ParticipantAssignmentSource["gatherings"][number] {
-  return (
-    isRecord(value) &&
-    isPositiveInteger(value.gathering_id) &&
-    isPositiveInteger(value.event_id) &&
-    isPositiveInteger(value.gathering_spot_id) &&
-    typeof value.gathering_time === "string"
   );
 }
 
