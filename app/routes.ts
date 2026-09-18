@@ -34,12 +34,6 @@ export default [
       route("new", "routes/main/teachers.new.tsx"),
       route(":teacherId/edit", "routes/main/teachers.$teacherId.edit.tsx"),
     ]),
-    route("schedule", "routes/main/schedule.tsx"),
-    route("schedule/new", "routes/main/schedule.new.tsx"),
-    route(
-      "schedule/:scheduleId/edit",
-      "routes/main/schedule.$scheduleId.edit.tsx"
-    ),
     route("participants", "routes/main/participants.tsx"),
     route("gathering-spots", "routes/main/gatheringSpots.tsx"),
     route("*", "routes/main/legacy-redirect.tsx"),
