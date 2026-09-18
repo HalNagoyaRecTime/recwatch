@@ -64,20 +64,6 @@ export const NAVIGATION_SEARCH_RESULTS: readonly NavigationSearchResult[] = [
     keywords: ["集合", "場所"],
   },
   {
-    id: "schedule",
-    title: "スケジュール管理",
-    category: "運用",
-    to: "/schedule",
-    keywords: ["日程", "予定"],
-  },
-  {
-    id: "schedule-new",
-    title: "スケジュールの新規登録",
-    category: "運用",
-    to: "/schedule/new",
-    keywords: ["日程", "予定", "追加"],
-  },
-  {
     id: "participants",
     title: "出場メンバー管理",
     category: "運用",

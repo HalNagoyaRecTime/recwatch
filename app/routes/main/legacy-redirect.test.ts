@@ -20,7 +20,7 @@ describe("getLegacyDestination", () => {
     ["/members/teams", "/members"],
     ["/teachers/42", "/teachers/42/edit"],
     ["/user/settings", "/dashboard"],
-    ["/timing", "/schedule"],
+    ["/timing", "/dashboard"],
     ["/reports/summary", "/dashboard"],
     ["/settings", "/dashboard"],
   ])(

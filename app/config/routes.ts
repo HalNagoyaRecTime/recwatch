@@ -168,17 +168,6 @@ export const sidebarSections = [
         to: "/members",
         roles: ["admin"],
       },
-      {
-        id: "schedule",
-        label: "スケジュール",
-        to: "/schedule",
-        activePatterns: [
-          "/schedule",
-          "/schedule/new",
-          "/schedule/:scheduleId/edit",
-        ],
-        roles: ["admin"],
-      },
     ],
   },
 ] satisfies SidebarSectionConfig[];

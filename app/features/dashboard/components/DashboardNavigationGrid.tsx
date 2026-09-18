@@ -37,7 +37,6 @@ const navigationGroups: NavigationGroup[] = [
     icon: CalendarDays,
     id: "operations",
     items: [
-      { label: "スケジュール管理", to: "/schedule" },
       { label: "出場メンバー管理", to: "/participants" },
       { label: "通知一覧", to: "/notifications" },
     ],

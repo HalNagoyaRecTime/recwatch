@@ -8,7 +8,7 @@ const destinationByPath: Readonly<Record<string, string>> = {
   "/reports/export": "/dashboard",
   "/reports/summary": "/dashboard",
   "/settings": "/dashboard",
-  "/timing": "/schedule",
+  "/timing": "/dashboard",
 };
 
 export function getLegacyDestination(pathname: string): string {
