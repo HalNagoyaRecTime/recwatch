@@ -1,4 +1,4 @@
-import { render } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
 import { FloatingListSurface } from "./FloatingListSurface";
@@ -28,5 +28,33 @@ describe("FloatingListSurface", () => {
 
     expect(container.querySelector(".scrollbar-none")).not.toBeInTheDocument();
     expect(container.firstElementChild).toHaveClass("p-2");
+  });
+
+  it("fixedHeaderをスクロール領域の外側へ配置する", () => {
+    const { container } = render(
+      <FloatingListSurface fixedHeader={<h2>ヘッダー</h2>} scrollable>
+        <div>内容</div>
+      </FloatingListSurface>
+    );
+
+    const header = container.querySelector("h2");
+    expect(header).toBeInTheDocument();
+    expect(header?.closest(".scrollbar-none")).not.toBeInTheDocument();
+    expect(container.querySelector(".scrollbar-none")).toContainElement(
+      screen.getByText("内容")
+    );
+  });
+
+  it("必要な画面だけスクロール領域をTab順から外せる", () => {
+    const { container } = render(
+      <FloatingListSurface scrollable scrollTabIndex={-1}>
+        <div>内容</div>
+      </FloatingListSurface>
+    );
+
+    expect(container.querySelector(".scrollbar-none")).toHaveAttribute(
+      "tabindex",
+      "-1"
+    );
   });
 });

@@ -28,7 +28,6 @@ const navigationGroups: NavigationGroup[] = [
     id: "events",
     items: [
       { label: "イベント登録一覧", to: "/events" },
-      { label: "参加者設定", to: "/events/assignments" },
       { label: "集合場所管理", to: "/gathering-spots" },
     ],
     title: "イベント管理",
@@ -36,11 +35,7 @@ const navigationGroups: NavigationGroup[] = [
   {
     icon: CalendarDays,
     id: "operations",
-    items: [
-      { label: "スケジュール管理", to: "/schedule" },
-      { label: "出場メンバー管理", to: "/participants" },
-      { label: "通知一覧", to: "/notifications" },
-    ],
+    items: [{ label: "通知一覧", to: "/notifications" }],
     title: "運用管理",
   },
 ];
