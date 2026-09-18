@@ -11,10 +11,12 @@ describe("http notification audience loader", () => {
       class_code: `${index + 1}A`,
       class_name: `${index + 1}組`,
     }));
+
     const firstEvents = Array.from({ length: 100 }, (_, index) => ({
       event_id: index + 1,
       event_name: `競技${index + 1}`,
     }));
+
     const get = vi.fn(async (path: string) => {
       switch (path) {
         case "/api/v1/classrooms?limit=100&offset=0":
@@ -24,17 +26,21 @@ describe("http notification audience loader", () => {
             limit: 100,
             offset: 0,
           };
+
         case "/api/v1/classrooms?limit=100&offset=100":
           return {
             classrooms: [
-              { class_room_id: 101, class_code: "101A", class_name: "101組" },
+              {
+                class_room_id: 101,
+                class_code: "101A",
+                class_name: "101組",
+              },
             ],
             total: 101,
             limit: 100,
             offset: 100,
           };
-        case "/api/v1/gatherings":
-          return [];
+
         case "/api/v1/events?limit=100&offset=0":
           return {
             events: firstEvents,
@@ -42,6 +48,7 @@ describe("http notification audience loader", () => {
             limit: 100,
             offset: 0,
           };
+
         case "/api/v1/events?limit=100&offset=100":
           return {
             events: [{ event_id: 101, event_name: "競技101" }],
@@ -49,19 +56,31 @@ describe("http notification audience loader", () => {
             limit: 100,
             offset: 100,
           };
-        default:
+
+        default: {
+          const eventDetailMatch = path.match(/^\/api\/v1\/events\/(\d+)$/);
+
+          if (eventDetailMatch) {
+            return {
+              rounds: [],
+            };
+          }
+
           throw new Error(`Unexpected path: ${path}`);
+        }
       }
     });
 
     const options = await createHttpNotificationAudienceApi({ get }).load();
 
     expect(options).toHaveLength(202);
+
     expect(options).toContainEqual({
       id: "101",
       name: "101A 101組",
       type: "class_room",
     });
+
     expect(options).toContainEqual({
       id: "101",
       name: "競技101",
@@ -75,6 +94,7 @@ describe("http notification audience loader", () => {
     [500, "unexpected"],
   ] as const)("HTTP %sのApiClientErrorをそのまま伝播する", async (...args) => {
     const [status] = args;
+
     const loader = createHttpNotificationAudienceApi({
       get: vi.fn().mockRejectedValue(new ApiClientError(status, "failed")),
     });
@@ -93,6 +113,7 @@ describe("http notification audience loader", () => {
       const get = vi.fn(async (path: string) => {
         if (path.startsWith(loopingPath)) {
           const isClassroom = loopingPath.endsWith("classrooms");
+
           return isClassroom
             ? {
                 classrooms: [
@@ -113,14 +134,23 @@ describe("http notification audience loader", () => {
                 offset: 0,
               };
         }
+
         if (path.startsWith(completedPath)) {
           return completedPath.endsWith("classrooms")
-            ? { classrooms: [], total: 0, limit: 100, offset: 0 }
-            : { events: [], total: 0, limit: 100, offset: 0 };
+            ? {
+                classrooms: [],
+                total: 0,
+                limit: 100,
+                offset: 0,
+              }
+            : {
+                events: [],
+                total: 0,
+                limit: 100,
+                offset: 0,
+              };
         }
-        if (path === "/api/v1/gatherings") {
-          return [];
-        }
+
         throw new Error(`Unexpected path: ${path}`);
       });
 

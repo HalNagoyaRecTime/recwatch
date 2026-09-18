@@ -54,17 +54,15 @@ export function createHttpNotificationAudienceApi(
         }))
       );
 
-      const gatheringsResponse = eventDetails.flatMap(
-        ({ event, detail }) =>
-          detail.rounds.flatMap((round) =>
-            round.gatherings.map((gathering) => ({
-              gathering_id: gathering.gathering_id,
-              event_name: event.event_name,
-              gathering_spot_name:
-                gathering.gathering_spot.gathering_spot_name,
-              gathering_time: gathering.gathering_time,
-            }))
-          )
+      const gatheringsResponse = eventDetails.flatMap(({ event, detail }) =>
+        detail.rounds.flatMap((round) =>
+          round.gatherings.map((gathering) => ({
+            gathering_id: gathering.gathering_id,
+            event_name: event.event_name,
+            gathering_spot_name: gathering.gathering_spot.gathering_spot_name,
+            gathering_time: gathering.gathering_time,
+          }))
+        )
       );
 
       return toNotificationAudienceOptions({
@@ -76,8 +74,7 @@ export function createHttpNotificationAudienceApi(
   };
 }
 
-export const httpNotificationAudienceApi =
-  createHttpNotificationAudienceApi();
+export const httpNotificationAudienceApi = createHttpNotificationAudienceApi();
 
 function parseEventDetail(value: unknown): EventDetailDto {
   if (!isRecord(value)) {
@@ -86,10 +83,7 @@ function parseEventDetail(value: unknown): EventDetailDto {
 
   const rounds = value.rounds;
 
-  if (
-    !Array.isArray(rounds) ||
-    !rounds.every(isRoundDto)
-  ) {
+  if (!Array.isArray(rounds) || !rounds.every(isRoundDto)) {
     throw new Error(INVALID_RESPONSE_MESSAGE);
   }
 
@@ -107,9 +101,7 @@ function isRoundDto(value: unknown): value is RoundDto {
   );
 }
 
-function isEventGatheringDto(
-  value: unknown
-): value is EventGatheringDto {
+function isEventGatheringDto(value: unknown): value is EventGatheringDto {
   return (
     isRecord(value) &&
     isPositiveInteger(value.gathering_id) &&
