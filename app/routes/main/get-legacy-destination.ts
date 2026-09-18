@@ -19,7 +19,7 @@ export function getLegacyDestination(pathname: string): string {
   if (pathname.startsWith("/sports/")) {
     const suffix = pathname.slice("/sports/".length);
 
-    if (suffix === "new" || suffix === "assignments") {
+    if (suffix === "new") {
       return `/events/${suffix}`;
     }
 

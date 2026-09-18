@@ -22,15 +22,15 @@ describe("buildSidebarMenu", () => {
         "/notifications",
         "/teams",
         "/ranking",
-        "/events/assignments",
         "/gathering-spots",
-        "/participants",
         "/members",
       ])
     );
     expect(paths).not.toContain("/schedule");
     expect(paths).not.toContain("/events/new");
     expect(paths).not.toContain("/notifications/new");
+    expect(paths).not.toContain("/events/assignments");
+    expect(paths).not.toContain("/participants");
 
     const labels = buildSidebarMenu("admin").flatMap((section) =>
       section.items.flatMap((item) => [
@@ -50,9 +50,7 @@ describe("buildSidebarMenu", () => {
         "学生",
         "教官",
         "クラス",
-        "参加者設定",
         "集合場所管理",
-        "出場メンバー管理",
         "旧学生管理",
       ])
     );
@@ -61,6 +59,8 @@ describe("buildSidebarMenu", () => {
     expect(labels).not.toContain("イベント管理");
     expect(labels).not.toContain("運用管理");
     expect(labels).not.toContain("スケジュール管理");
+    expect(labels).not.toContain("参加者設定");
+    expect(labels).not.toContain("出場メンバー管理");
 
     expect(
       buildSidebarMenu("admin")
@@ -78,9 +78,7 @@ describe("buildSidebarMenu", () => {
       "スケジュール"
     );
     expect(deletionSection?.items.map((item) => item.label)).toEqual([
-      "参加者設定",
       "集合場所管理",
-      "出場メンバー管理",
       "旧学生管理",
     ]);
 
