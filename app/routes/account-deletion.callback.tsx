@@ -1,5 +1,6 @@
 import { useLoaderData } from "react-router";
 
+import { httpAccountDeletionGateway } from "~/features/account-deletion/api/http/account-deletion-gateway";
 import { AccountDeletionCallbackPage } from "~/features/account-deletion/pages/AccountDeletionCallbackPage";
 import type { AccountDeletionCallbackData } from "~/features/account-deletion/pages/AccountDeletionCallbackPage";
 import {
@@ -43,5 +44,10 @@ function toConfirmationData(
 
 export default function AccountDeletionCallbackRoute() {
   const data = useLoaderData<typeof clientLoader>();
-  return <AccountDeletionCallbackPage data={data} />;
+  return (
+    <AccountDeletionCallbackPage
+      data={data}
+      gateway={httpAccountDeletionGateway}
+    />
+  );
 }

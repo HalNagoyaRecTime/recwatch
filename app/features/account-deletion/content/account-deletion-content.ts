@@ -1,4 +1,6 @@
 export const accountDeletionContent = {
+  unavailableMessage:
+    "削除受付サービスに接続できませんでした。時間をおいてもう一度お試しください。",
   title: "RecTimeアカウントの削除",
   lead: "Microsoft 365の職場または学校アカウントで本人確認を行ったあと、RecTimeアカウントの削除を受け付けます。",
   scopeNotice:

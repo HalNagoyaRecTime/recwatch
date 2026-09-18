@@ -1,16 +1,17 @@
 import { useState } from "react";
 
-import {
-  accountDeletionUnavailableMessage,
-  startAccountDeletionAuth,
-} from "~/features/account-deletion/api/account-deletion-client";
+import type { AccountDeletionGateway } from "~/features/account-deletion/api/contracts/account-deletion-gateway";
 import { AccountDeletionLayout } from "~/features/account-deletion/components/AccountDeletionLayout";
 import { accountDeletionContent } from "~/features/account-deletion/content/account-deletion-content";
 import { AuthErrorMessage } from "~/features/auth/components/AuthErrorMessage";
 import { AuthPrimaryButton } from "~/features/auth/components/AuthPrimaryButton";
 import { MicrosoftLogo } from "~/features/auth/components/MicrosoftLogo";
 
-export function AccountDeletionPage() {
+export function AccountDeletionPage({
+  gateway,
+}: {
+  gateway: AccountDeletionGateway;
+}) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
@@ -20,8 +21,12 @@ export function AccountDeletionPage() {
     setErrorMessage("");
     setIsSubmitting(true);
 
-    const result = await startAccountDeletionAuth().catch(
-      () => ({ ok: false, message: accountDeletionUnavailableMessage }) as const
+    const result = await gateway.startAuth().catch(
+      () =>
+        ({
+          ok: false,
+          message: accountDeletionContent.unavailableMessage,
+        }) as const
     );
 
     if (!result.ok) {

@@ -8,7 +8,7 @@ vi.mock("~/config/env", () => ({
 import {
   confirmAccountDeletion,
   startAccountDeletionAuth,
-} from "./account-deletion-client";
+} from "../api/http/account-deletion-gateway";
 
 afterEach(() => {
   vi.unstubAllGlobals();

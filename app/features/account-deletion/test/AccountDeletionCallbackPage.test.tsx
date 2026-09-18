@@ -7,18 +7,18 @@ import {
 } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { MemoryRouter } from "react-router";
+import type { AccountDeletionGateway } from "../api/contracts/account-deletion-gateway";
 
 const mocks = vi.hoisted(() => ({
   confirmAccountDeletion: vi.fn(),
 }));
 
-vi.mock("~/features/account-deletion/api/account-deletion-client", () => ({
-  accountDeletionUnavailableMessage:
-    "削除受付サービスに接続できませんでした。時間をおいてもう一度お試しください。",
-  confirmAccountDeletion: mocks.confirmAccountDeletion,
-}));
+const testGateway: AccountDeletionGateway = {
+  startAuth: vi.fn(),
+  confirm: mocks.confirmAccountDeletion,
+};
 
-import { AccountDeletionCallbackPage } from "./AccountDeletionCallbackPage";
+import { AccountDeletionCallbackPage } from "../pages/AccountDeletionCallbackPage";
 
 afterEach(() => {
   cleanup();
@@ -34,6 +34,7 @@ function renderPage() {
           status: "confirm",
           deletionConfirmationToken: "deletion-token",
         }}
+        gateway={testGateway}
       />
     </MemoryRouter>
   );
@@ -108,6 +109,7 @@ describe("AccountDeletionCallbackPage", () => {
             message: "このRecTimeアカウントはすでに削除受付済みです。",
             reason: "already-deleted",
           }}
+          gateway={testGateway}
         />
       </MemoryRouter>
     );

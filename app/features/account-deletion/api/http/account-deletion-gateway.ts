@@ -1,5 +1,11 @@
 import { buildBackendUrl, hasBackendBaseUrl } from "~/config/env";
 import { WEB_CLIENT_HEADERS } from "~/features/auth/lib/webClientHeaders";
+import type {
+  AccountDeletionErrorReason,
+  AccountDeletionGateway,
+  ConfirmDeletionResult,
+  StartDeletionAuthResult,
+} from "~/features/account-deletion/api/contracts/account-deletion-gateway";
 import {
   clearDeletionAuthResult,
   markDeletionAuthPending,
@@ -35,26 +41,6 @@ const accountDeletionErrorMessages: Record<string, string> = {
   NETWORK_ERROR: accountDeletionUnavailableMessage,
   CONFIG_ERROR: accountDeletionUnavailableMessage,
 };
-
-export type AccountDeletionErrorReason =
-  | "reauth"
-  | "already-deleted"
-  | "generic";
-
-export type StartDeletionAuthResult =
-  | { ok: true; authUrl: string }
-  | { ok: false; message: string };
-
-export type ConfirmDeletionResult =
-  | { status: "done" }
-  | { status: "accepted" }
-  | { status: "pending" }
-  | {
-      status: "error";
-      code?: string;
-      message: string;
-      reason?: AccountDeletionErrorReason;
-    };
 
 type BackendErrorPayload = {
   error: {
@@ -183,3 +169,8 @@ function isBackendErrorPayload(value: unknown): value is BackendErrorPayload {
     typeof error.code === "string"
   );
 }
+
+export const httpAccountDeletionGateway: AccountDeletionGateway = {
+  startAuth: startAccountDeletionAuth,
+  confirm: confirmAccountDeletion,
+};

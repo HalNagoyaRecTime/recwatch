@@ -7,18 +7,18 @@ import {
 } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { MemoryRouter } from "react-router";
+import type { AccountDeletionGateway } from "../api/contracts/account-deletion-gateway";
 
 const mocks = vi.hoisted(() => ({
   startAccountDeletionAuth: vi.fn(),
 }));
 
-vi.mock("~/features/account-deletion/api/account-deletion-client", () => ({
-  accountDeletionUnavailableMessage:
-    "削除受付サービスに接続できませんでした。時間をおいてもう一度お試しください。",
-  startAccountDeletionAuth: mocks.startAccountDeletionAuth,
-}));
+const testGateway: AccountDeletionGateway = {
+  startAuth: mocks.startAccountDeletionAuth,
+  confirm: vi.fn(),
+};
 
-import { AccountDeletionPage } from "./AccountDeletionPage";
+import { AccountDeletionPage } from "../pages/AccountDeletionPage";
 
 afterEach(() => {
   cleanup();
@@ -28,7 +28,7 @@ afterEach(() => {
 function renderPage() {
   return render(
     <MemoryRouter initialEntries={["/account-deletion"]}>
-      <AccountDeletionPage />
+      <AccountDeletionPage gateway={testGateway} />
     </MemoryRouter>
   );
 }
@@ -62,7 +62,7 @@ describe("AccountDeletionPage", () => {
           "/account-deletion?userId=123&email=someone@example.com",
         ]}
       >
-        <AccountDeletionPage />
+        <AccountDeletionPage gateway={testGateway} />
       </MemoryRouter>
     );
 

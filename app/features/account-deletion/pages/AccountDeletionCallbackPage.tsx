@@ -2,13 +2,13 @@ import { useState } from "react";
 import { CheckCircle2, RotateCcw, Trash2 } from "lucide-react";
 import { Link } from "react-router";
 
-import {
-  accountDeletionUnavailableMessage,
-  confirmAccountDeletion,
-  type AccountDeletionErrorReason,
-  type ConfirmDeletionResult,
-} from "~/features/account-deletion/api/account-deletion-client";
+import type {
+  AccountDeletionErrorReason,
+  AccountDeletionGateway,
+  ConfirmDeletionResult,
+} from "~/features/account-deletion/api/contracts/account-deletion-gateway";
 import { AccountDeletionLayout } from "~/features/account-deletion/components/AccountDeletionLayout";
+import { accountDeletionContent } from "~/features/account-deletion/content/account-deletion-content";
 import { AuthErrorMessage } from "~/features/auth/components/AuthErrorMessage";
 import { Button } from "~/components/ui/button/Button";
 import { ButtonLink } from "~/components/ui/button/ButtonLink";
@@ -31,8 +31,10 @@ const unexpectedDeletionErrorMessage =
 
 export function AccountDeletionCallbackPage({
   data,
+  gateway,
 }: {
   data: AccountDeletionCallbackData;
+  gateway: AccountDeletionGateway;
 }) {
   const [view, setView] = useState(data);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -43,12 +45,12 @@ export function AccountDeletionCallbackPage({
     const token = view.deletionConfirmationToken;
     setIsSubmitting(true);
 
-    const result = await confirmAccountDeletion(token).catch(
+    const result = await gateway.confirm(token).catch(
       () =>
         ({
           status: "error",
           code: "NETWORK_ERROR",
-          message: accountDeletionUnavailableMessage,
+          message: accountDeletionContent.unavailableMessage,
           reason: "generic",
         }) satisfies ConfirmDeletionResult
     );

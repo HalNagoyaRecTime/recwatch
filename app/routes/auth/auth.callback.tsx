@@ -3,7 +3,7 @@ import { buildBackendUrl } from "~/config/env";
 import {
   accountDeletionUnavailableMessage,
   getAccountDeletionErrorMessage,
-} from "~/features/account-deletion/api/account-deletion-client";
+} from "~/features/account-deletion/api/http/account-deletion-gateway";
 import {
   consumeDeletionAuthPending,
   saveDeletionAuthResult,
