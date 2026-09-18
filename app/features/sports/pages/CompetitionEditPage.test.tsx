@@ -24,6 +24,7 @@ function renderPage(api: CompetitionEditorApi, path = "/events/7/edit") {
           }
         />
         <Route path="/events" element={<LocationProbe />} />
+        <Route path="/events/:competitionId" element={<LocationProbe />} />
       </Routes>
     </MemoryRouter>
   );
@@ -65,7 +66,10 @@ describe("CompetitionEditPage", () => {
         venue: "運動場",
       })
     );
-    expect(screen.getByTestId("location")).toHaveTextContent("/events");
+    // 編集はイベント詳細から開くため、保存後は詳細へ戻る
+    await waitFor(() =>
+      expect(screen.getByTestId("location")).toHaveTextContent(/^\/events\/7$/)
+    );
   });
 
   it("読み込み失敗を表示してフォームを無効化する", async () => {
