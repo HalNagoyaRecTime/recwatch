@@ -1,5 +1,5 @@
 import { ArrowRight } from "lucide-react";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { useNavigate, useOutletContext } from "react-router";
 
 import { FormModal } from "~/components/ui/modal/FormModal";
@@ -82,14 +82,19 @@ export function CompetitionCreatePage({
     }
   }
 
-  // 作成後はどの段階で閉じても、作成したイベントの詳細へ移動する
+  // 作成後はどの段階で閉じても、作成したイベントの詳細へ移動する。
+  // モーダルは閉じるアニメーション中に onClose が変わると閉じ直すため、関数を固定しておく。
   const closePath =
     createdEventId === null ? "/events" : `/events/${createdEventId}`;
+  const handleClose = useCallback(
+    () => navigate(closePath),
+    [closePath, navigate]
+  );
 
   return (
     <FormModal
       description={stepDescription[step]}
-      onClose={() => navigate(closePath)}
+      onClose={handleClose}
       size="xl"
       title="イベントを新規作成"
     >

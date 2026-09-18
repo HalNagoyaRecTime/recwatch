@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { useNavigate, useOutletContext, useParams } from "react-router";
 
 import { FormModal } from "~/components/ui/modal/FormModal";
@@ -35,8 +35,13 @@ export function EventGatheringSettingsPage({
     useState<EventGatheringSettings | null>(null);
   const eventId = Number(competitionId);
   const isValidEventId = Number.isInteger(eventId) && eventId > 0;
-  // ID が不正なら詳細も表示できないため一覧へ戻す
+  // ID が不正なら詳細も表示できないため一覧へ戻す。
+  // モーダルは閉じるアニメーション中に onClose が変わると閉じ直すため、関数を固定しておく。
   const closePath = isValidEventId ? `/events/${eventId}` : "/events";
+  const handleClose = useCallback(
+    () => navigate(closePath),
+    [closePath, navigate]
+  );
 
   return (
     <FormModal
@@ -45,7 +50,7 @@ export function EventGatheringSettingsPage({
           ? "集合設定の保存が完了しました。"
           : "Roundごとの集合時間・集合場所を編集します。"
       }
-      onClose={() => navigate(closePath)}
+      onClose={handleClose}
       size="xl"
       title="集合設定"
     >
