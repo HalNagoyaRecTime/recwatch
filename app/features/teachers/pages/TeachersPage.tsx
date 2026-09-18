@@ -13,16 +13,12 @@ import {
   updateTeacherListUrl,
 } from "~/features/teachers/application/teacher-list-url";
 import { teacherCreateTarget } from "~/features/teachers/application/teacher-navigation";
-import { UserManagementTabs } from "~/features/user-management/components/UserManagementTabs";
-import { TeacherApi } from "~/features/teachers/api";
-import { getErrorMessage } from "~/lib/client-error";
-
-type TeacherDeletionApi = {
-  deleteTeacher(teacherId: number): Promise<unknown>;
-};
+import { Select } from "~/components/ui/form/Select";
+import type { TeacherBooleanFilter } from "~/features/teachers/api";
+import type { ClassRoomOption } from "~/features/teachers/model/teacher";
 
 type TeachersPageProps = {
-  api?: TeacherDeletionApi;
+  classRooms?: readonly ClassRoomOption[];
   limit: number;
   offset: number;
   teachers: TeacherRow[];
@@ -30,7 +26,7 @@ type TeachersPageProps = {
 };
 
 export function TeachersPage({
-  api = TeacherApi,
+  classRooms = [],
   limit,
   offset,
   teachers,
@@ -39,26 +35,37 @@ export function TeachersPage({
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [removedTeacherIds, setRemovedTeacherIds] = useState<Set<number>>(
-    () => new Set()
-  );
-  const [isMutating, setIsMutating] = useState(false);
-  const [actionError, setActionError] = useState<string | null>(null);
+  const [searchInput, setSearchInput] = useState("");
   const {
     search: query,
+    classRoomId,
     sortBy,
     sortOrder,
+    isStaff,
+    isLiveActive,
   } = parseTeacherListUrl(searchParams);
   const currentPage = Math.floor(offset / limit) + 1;
-  const items = teachers.filter(
-    (teacher) => !removedTeacherIds.has(teacher.teacherId)
-  );
-  const visibleTotal = Math.max(0, total - removedTeacherIds.size);
-  const pageCount = Math.max(1, Math.ceil(visibleTotal / limit));
+  const pageCount = Math.max(1, Math.ceil(total / limit));
+
+  useEffect(() => {
+    setSearchInput(query);
+  }, [query]);
+
+  useEffect(() => {
+    if (searchInput.trim() === query) return;
+    const timer = window.setTimeout(() => {
+      setSearchParams(
+        updateTeacherListUrl(searchParams, {
+          page: 1,
+          search: searchInput,
+        })
+      );
+    }, 250);
+    return () => window.clearTimeout(timer);
+  }, [searchInput, query, searchParams, setSearchParams]);
 
   useEffect(() => {
     if (currentPage <= pageCount) return;
-    setRemovedTeacherIds(new Set());
     setSearchParams(updateTeacherListUrl(searchParams, { page: pageCount }), {
       replace: true,
     });
@@ -67,12 +74,7 @@ export function TeachersPage({
   function updateSearchParams(
     updates: Parameters<typeof updateTeacherListUrl>[1]
   ) {
-    setRemovedTeacherIds(new Set());
     setSearchParams(updateTeacherListUrl(searchParams, updates));
-  }
-
-  function handleQueryChange(nextQuery: string) {
-    updateSearchParams({ page: 1, search: nextQuery });
   }
 
   function handlePageChange(nextPage: number) {
@@ -80,80 +82,115 @@ export function TeachersPage({
   }
 
   function handleSortChange(columnId: string) {
-    const nextSortBy = columnId === "teacher-id" ? "teacherId" : "displayName";
-    const nextSortOrder =
-      sortBy === nextSortBy && sortOrder === "asc" ? "desc" : "asc";
-    updateSearchParams({
-      page: 1,
-      sortBy: nextSortBy,
-      sortOrder: nextSortOrder,
+    const sortColumns = {
+      "teacher-id": "teacherId",
+      "display-name": "displayName",
+      staff: "isStaff",
+      active: "isLiveActive",
+      "class-code": "classCode",
+      "class-name": "className",
+    } as const;
+    const nextSortBy = sortColumns[columnId as keyof typeof sortColumns];
+    if (!nextSortBy) return;
+    setSearchParams((currentSearchParams) => {
+      const currentState = parseTeacherListUrl(currentSearchParams);
+      const nextSortOrder =
+        currentState.sortBy === nextSortBy && currentState.sortOrder === "asc"
+          ? "desc"
+          : "asc";
+      return updateTeacherListUrl(currentSearchParams, {
+        page: 1,
+        sortBy: nextSortBy,
+        sortOrder: nextSortOrder,
+      });
     });
   }
 
-  async function deleteTeacher(teacher: TeacherRow) {
-    if (
-      isMutating ||
-      !window.confirm(
-        `「${teacher.displayName}」を削除します。よろしいですか？`
-      )
-    ) {
-      return;
-    }
-
-    setIsMutating(true);
-    setActionError(null);
-    try {
-      await api.deleteTeacher(teacher.teacherId);
-      setRemovedTeacherIds((current) => {
-        const next = new Set(current);
-        next.add(teacher.teacherId);
-        return next;
-      });
-    } catch (error) {
-      setActionError(getErrorMessage(error, "教官を削除できませんでした。"));
-    } finally {
-      setIsMutating(false);
-    }
+  function handleFilterChange(
+    key: "isStaff" | "isLiveActive",
+    value: TeacherBooleanFilter
+  ) {
+    updateSearchParams({ page: 1, [key]: value });
   }
 
   return (
     <div className="min-h-full space-y-5">
-      <PageHeader description="教官の基本情報を管理します" title="教官管理" />
-      <ImportUploadTrigger
-        adjacentAction={
-          <Button
-            icon={Plus}
-            onClick={() => navigate(teacherCreateTarget(location.search))}
-            variant="secondary"
-          >
-            新規登録
-          </Button>
+      <PageHeader
+        actions={
+          <div className="flex items-center gap-2">
+            <ImportUploadTrigger showHelperText={false} type="teachers" />
+            <Button
+              icon={Plus}
+              onClick={() => navigate(teacherCreateTarget(location.search))}
+              size="lg"
+              variant="primary"
+            >
+              新規登録
+            </Button>
+          </div>
         }
-        type="teachers"
-        helperText="取り込み前にプレビューで内容・データ種別を確認できます"
+        description="教官の基本情報を管理します"
+        title="教官管理"
       />
-      <UserManagementTabs active="teachers" />
-      <SearchField
-        ariaLabel="教官を検索"
-        onValueChange={handleQueryChange}
-        placeholder="氏名・クラス名で検索..."
-        value={query}
-      />
-      {actionError ? (
-        <p className="text-tone-danger-text text-sm" role="alert">
-          {actionError}
-        </p>
-      ) : null}
+      <div className="flex flex-wrap items-center gap-3">
+        <div className="min-w-60 flex-1">
+          <SearchField
+            ariaLabel="教官を検索"
+            onValueChange={setSearchInput}
+            placeholder="氏名・クラス名で検索..."
+            value={searchInput}
+          />
+        </div>
+        <Select
+          ariaLabel="担当クラスフィルター"
+          onValueChange={(value) =>
+            updateSearchParams({
+              page: 1,
+              classRoomId: value === "all" ? null : Number(value),
+            })
+          }
+          options={[
+            { label: "クラス:すべて", value: "all" },
+            ...classRooms.map((classRoom) => ({
+              label: classRoom.classCode
+                ? `${classRoom.classCode} ${classRoom.className}`
+                : classRoom.className,
+              value: String(classRoom.classRoomId),
+            })),
+          ]}
+          value={classRoomId ? String(classRoomId) : "all"}
+        />
+        <Select
+          ariaLabel="staffフィルター"
+          onValueChange={(value) => handleFilterChange("isStaff", value)}
+          options={booleanFilterOptions("staff")}
+          value={isStaff}
+        />
+        <Select
+          ariaLabel="有効状態フィルター"
+          onValueChange={(value) => handleFilterChange("isLiveActive", value)}
+          options={booleanFilterOptions("有効")}
+          value={isLiveActive}
+        />
+      </div>
       <TeacherTable
-        isMutating={isMutating}
-        items={items}
-        onDelete={(teacher) => void deleteTeacher(teacher)}
+        items={teachers}
         onSortChange={handleSortChange}
         sort={
           sortBy
             ? {
                 columnId:
-                  sortBy === "teacherId" ? "teacher-id" : "display-name",
+                  sortBy === "teacherId"
+                    ? "teacher-id"
+                    : sortBy === "displayName"
+                      ? "display-name"
+                      : sortBy === "isStaff"
+                        ? "staff"
+                        : sortBy === "isLiveActive"
+                          ? "active"
+                          : sortBy === "classCode"
+                            ? "class-code"
+                            : "class-name",
                 direction: sortOrder ?? "asc",
               }
             : undefined
@@ -164,10 +201,18 @@ export function TeachersPage({
             onPageChange={handlePageChange}
             pageCount={pageCount}
             pageSize={limit}
-            totalItems={visibleTotal}
+            totalItems={total}
           />
         }
       />
     </div>
   );
+}
+
+function booleanFilterOptions(label: string) {
+  return [
+    { label: `${label}:すべて`, value: "all" as const },
+    { label: `${label}:はい`, value: "true" as const },
+    { label: `${label}:いいえ`, value: "false" as const },
+  ];
 }

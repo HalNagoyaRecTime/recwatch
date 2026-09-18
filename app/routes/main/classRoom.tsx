@@ -8,19 +8,16 @@ import { ClassRoomPage } from "~/features/classRoom/pages/classRoomPage";
 import { PagePadding } from "~/features/frame/page-layout/PagePadding";
 import { PageLayout } from "~/features/frame/page-layout/PageLayout";
 import { getClassRoomData } from "~/features/classRoom/model/classRoom-data";
-import { TeacherApi } from "~/features/teachers/api";
+import { loadActiveTeacherOptions } from "~/features/teachers/application/teacher-loaders";
 
 export async function clientLoader() {
-  const [classRooms, teachers] = await Promise.all([
+  const [classRooms, teacherOptions] = await Promise.all([
     getClassRoomData(),
-    TeacherApi.getTeachers(),
+    loadActiveTeacherOptions(),
   ]);
   return {
     classRooms,
-    teacherOptions: teachers.items.map((teacher) => ({
-      teacherId: teacher.teacher_id,
-      displayName: teacher.display_name,
-    })),
+    teacherOptions,
   };
 }
 
