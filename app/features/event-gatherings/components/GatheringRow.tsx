@@ -35,9 +35,11 @@ export function GatheringRow({
   spots,
   value,
 }: GatheringRowProps) {
-  const selectedCount = value.memberUserIds.length;
-  const memberLabel = `${selectedCount}人選択`;
-  const isLockedByMembers = value.savedMemberCount > 0;
+  const memberCount = value.savedMemberCount;
+  const memberLabel = `${memberCount}人登録済み`;
+  const isLockedByMembers = memberCount > 0;
+  // 参加者は集合の ID 単位で保存するため、まだ保存していない新規行では選べない
+  const isSavedGathering = value.gatheringId !== null;
 
   return (
     <div className="space-y-2">
@@ -79,10 +81,15 @@ export function GatheringRow({
           <div className="mt-1.5 flex items-center gap-2">
             <Button
               aria-expanded={isPickerOpen}
-              disabled={disabled}
+              disabled={disabled || !isSavedGathering}
               icon={Users}
               onClick={onTogglePicker}
               size="sm"
+              title={
+                isSavedGathering
+                  ? undefined
+                  : "集合設定を保存すると参加者を選べます"
+              }
               type="button"
               variant={isPickerOpen ? "primary" : "secondary"}
             >
@@ -91,7 +98,7 @@ export function GatheringRow({
             <span
               className={cn(
                 "app-rounded bg-surface-muted text-text-muted px-2 py-1 text-xs font-medium whitespace-nowrap",
-                selectedCount > 0 && "bg-tone-success-bg text-tone-success-text"
+                memberCount > 0 && "bg-tone-success-bg text-tone-success-text"
               )}
             >
               {memberLabel}

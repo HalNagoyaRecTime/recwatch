@@ -1,23 +1,21 @@
 import { loadAllPages } from "~/lib/load-all-pages";
-import { ClientError, type ClientErrorDefinition } from "~/lib/client-error";
 
 import type { GatheringMemberGateway } from "~/features/event-gatherings/api/contracts/gathering-member-gateway";
 import type {
   ClassroomPageResponseDto,
+  GatheringMemberResponseDto,
   StudentPageResponseDto,
 } from "~/features/event-gatherings/api/dto/gathering-member-api-dto";
 import {
   toMemberClassroom,
   toMemberStudent,
+  toMemberUserIds,
+  toReplaceGatheringMembersRequest,
 } from "~/features/event-gatherings/api/mappers/gathering-member-mappers";
 
 type GatheringMemberHttpClient = {
   get<T>(path: string): Promise<T>;
-};
-
-const MEMBER_SAVE_UNSUPPORTED: ClientErrorDefinition = {
-  code: "GATHERING_MEMBER_SAVE_UNSUPPORTED",
-  message: "参加者の保存は現在未対応です。",
+  put<T>(path: string, body: unknown): Promise<T>;
 };
 
 export function createHttpGatheringMemberGateway(
@@ -49,10 +47,20 @@ export function createHttpGatheringMemberGateway(
       return { classrooms, students };
     },
 
-    // 参加者の保存は送信方法・形式が未確定のため、まだ API を呼ばない。
-    // 呼び出し元は保存を試みず、画面上で未対応であることを案内する。
-    async saveMembers() {
-      throw new ClientError(MEMBER_SAVE_UNSUPPORTED);
+    async loadMembers(gatheringId) {
+      const response = await client.get<GatheringMemberResponseDto[]>(
+        `/api/v1/gatherings/${gatheringId}/members`
+      );
+      return toMemberUserIds(response);
+    },
+
+    // 参加者は 1 人ずつ追加・削除せず、選択内容全体を 1 回の PUT で置き換える。
+    async saveMembers(gatheringId, userIds) {
+      const response = await client.put<GatheringMemberResponseDto[]>(
+        `/api/v1/gatherings/${gatheringId}/members`,
+        toReplaceGatheringMembersRequest(userIds)
+      );
+      return toMemberUserIds(response);
     },
   };
 }

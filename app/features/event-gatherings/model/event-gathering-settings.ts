@@ -11,10 +11,8 @@ export type GatheringSetting = {
   id: number;
   time: string;
   spot: GatheringSpotSummary;
-  /** 登録済みの参加者の user_id。読み込み元に含まれない場合は空。 */
-  memberUserIds: number[];
-  /** 登録済みの参加人数。読み込み元に含まれない場合は null。 */
-  memberCount: number | null;
+  /** 登録済みの参加人数。参加者の ID は含まず、集合ごとに参加者ピッカーで別途読み込む。 */
+  memberCount: number;
 };
 
 export type RoundSetting = {
@@ -38,11 +36,10 @@ export type GatheringDraft = {
   /** "HH:mm"。未入力は空文字。 */
   time: string;
   spotId: number | null;
-  /** 参加者ピッカーで選択中の user_id。登録済みの参加者で初期化する。保存の送信は未対応。 */
-  memberUserIds: number[];
   /**
    * サーバーに登録済みの参加人数。参加者がいる集合は保存 API が削除を拒否するため、
    * 画面でも削除できないようにする判断に使う。
+   * 参加者はこの下書きとは別に集合ごとの参加者ピッカーで保存し、保存後に人数だけ反映する。
    */
   savedMemberCount: number;
 };
@@ -88,7 +85,6 @@ export function createEmptyGatheringDraft(): GatheringDraft {
     gatheringId: null,
     time: "",
     spotId: null,
-    memberUserIds: [],
     savedMemberCount: 0,
   };
 }
@@ -117,8 +113,7 @@ export function toRoundDrafts(settings: EventGatheringSettings): RoundDraft[] {
       gatheringId: gathering.id,
       time: gathering.time === UNSET_GATHERING_TIME ? "" : gathering.time,
       spotId: gathering.spot.id,
-      memberUserIds: gathering.memberUserIds,
-      savedMemberCount: gathering.memberCount ?? gathering.memberUserIds.length,
+      savedMemberCount: gathering.memberCount,
     })),
   }));
 }

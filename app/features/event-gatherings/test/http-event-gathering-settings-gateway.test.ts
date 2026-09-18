@@ -13,42 +13,32 @@ function createClient(overrides: Partial<Record<keyof Client, unknown>> = {}) {
 }
 
 describe("createHttpEventGatheringSettingsGateway", () => {
-  it("Event 詳細の rounds と集合ごとの参加者を読み、Event 単位の集合設定にする", async () => {
-    const get = vi.fn().mockImplementation(async (path: string) => {
-      if (path === "/api/v1/events/12") {
-        return {
-          event_id: 12,
-          event_name: "リレー",
-          rule_text: null,
-          venue: "メインコート",
-          start_time: "1100",
-          end_time: "1230",
-          rounds: [
+  it("Event 詳細 1 回の GET だけで Event 単位の集合設定にし、集合ごとの参加者は読まない", async () => {
+    const get = vi.fn().mockResolvedValue({
+      event_id: 12,
+      event_name: "リレー",
+      rule_text: null,
+      venue: "メインコート",
+      start_time: "1100",
+      end_time: "1230",
+      rounds: [
+        {
+          round: 1,
+          gatherings: [
             {
-              round: 1,
-              gatherings: [
-                {
-                  gathering_id: 101,
-                  gathering_time: "10:45",
-                  gathering_spot: {
-                    gathering_spot_id: 1,
-                    gathering_spot_name: "出入口①",
-                  },
-                  member_count: 1,
-                },
-              ],
+              gathering_id: 101,
+              gathering_time: "10:45",
+              gathering_spot: {
+                gathering_spot_id: 1,
+                gathering_spot_name: "出入口①",
+              },
+              member_count: 1,
             },
           ],
-          created_at: "",
-          updated_at: "",
-        };
-      }
-      if (path === "/api/v1/gatherings/101/members") {
-        return [
-          { gathering_group_member_id: 1, gathering_id: 101, user_id: 1001 },
-        ];
-      }
-      throw new Error(`unexpected path: ${path}`);
+        },
+      ],
+      created_at: "",
+      updated_at: "",
     });
     const gateway = createHttpEventGatheringSettingsGateway(
       createClient({ get })
@@ -64,19 +54,17 @@ describe("createHttpEventGatheringSettingsGateway", () => {
               id: 101,
               time: "10:45",
               spot: { id: 1, name: "出入口①" },
-              memberUserIds: [1001],
               memberCount: 1,
             },
           ],
         },
       ],
     });
+    expect(get).toHaveBeenCalledTimes(1);
     expect(get).toHaveBeenCalledWith("/api/v1/events/12");
-    expect(get).toHaveBeenCalledWith("/api/v1/gatherings/101/members");
-    expect(get).not.toHaveBeenCalledWith("/api/v1/events/12/gatherings");
   });
 
-  it("集合が 1 件もない Event は参加者を読まずに空の集合設定を返す", async () => {
+  it("集合が 1 件もない Event は空の集合設定を返す", async () => {
     const get = vi.fn().mockResolvedValue({ event_id: 12, rounds: [] });
     const gateway = createHttpEventGatheringSettingsGateway(
       createClient({ get })
@@ -189,13 +177,29 @@ describe("createHttpGatheringMemberGateway", () => {
     expect(get).toHaveBeenCalledWith("/api/v1/students?limit=100&offset=0");
   });
 
-  it("参加者の保存はまだ API を呼ばず、未対応として失敗する", async () => {
-    const get = vi.fn();
+  it("集合 1 件の登録済み参加者を user_id の一覧として読む", async () => {
+    const get = vi.fn().mockResolvedValue([
+      { gathering_group_member_id: 1, gathering_id: 101, user_id: 1001 },
+      { gathering_group_member_id: 2, gathering_id: 101, user_id: 1003 },
+    ]);
     const gateway = createHttpGatheringMemberGateway(createClient({ get }));
 
-    await expect(gateway.saveMembers(101, [1001])).rejects.toThrow(
-      "参加者の保存は現在未対応です。"
-    );
-    expect(get).not.toHaveBeenCalled();
+    await expect(gateway.loadMembers(101)).resolves.toEqual([1001, 1003]);
+    expect(get).toHaveBeenCalledWith("/api/v1/gatherings/101/members");
+  });
+
+  it("参加者を user_ids の一括置換で送り、保存後の一覧を返す", async () => {
+    const put = vi
+      .fn()
+      .mockResolvedValue([
+        { gathering_group_member_id: 3, gathering_id: 101, user_id: 1002 },
+      ]);
+    const gateway = createHttpGatheringMemberGateway(createClient({ put }));
+
+    await expect(gateway.saveMembers(101, [1002])).resolves.toEqual([1002]);
+    expect(put).toHaveBeenCalledTimes(1);
+    expect(put).toHaveBeenCalledWith("/api/v1/gatherings/101/members", {
+      user_ids: [1002],
+    });
   });
 });

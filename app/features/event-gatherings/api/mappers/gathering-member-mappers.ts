@@ -1,5 +1,7 @@
 import type {
   ClassroomResponseDto,
+  GatheringMemberResponseDto,
+  ReplaceGatheringMembersRequestDto,
   StudentResponseDto,
 } from "~/features/event-gatherings/api/dto/gathering-member-api-dto";
 import type {
@@ -22,4 +24,17 @@ export function toMemberStudent(response: StudentResponseDto): MemberStudent {
     attendanceNumber: response.attendance_number,
     studentNumber: response.student_id_number,
   };
+}
+
+/** 参加者一覧のレスポンスから、画面の選択状態として使う user_id だけを取り出す。 */
+export function toMemberUserIds(
+  response: readonly GatheringMemberResponseDto[]
+): number[] {
+  return response.map((member) => member.user_id);
+}
+
+export function toReplaceGatheringMembersRequest(
+  userIds: readonly number[]
+): ReplaceGatheringMembersRequestDto {
+  return { user_ids: [...userIds] };
 }
