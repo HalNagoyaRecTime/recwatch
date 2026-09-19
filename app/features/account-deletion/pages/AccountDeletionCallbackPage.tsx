@@ -1,5 +1,11 @@
 import { useState } from "react";
-import { CheckCircle2, RotateCcw, Trash2 } from "lucide-react";
+import {
+  CheckCircle2,
+  Info,
+  RotateCcw,
+  Trash2,
+  TriangleAlert,
+} from "lucide-react";
 import { Link, useNavigate } from "react-router";
 
 import type {
@@ -94,11 +100,11 @@ export function AccountDeletionCallbackPage({
         />
       ) : null}
 
-      {view.status === "accepted" || view.status === "done" ? (
-        <AcceptedView />
+      {view.status === "accepted" ||
+      view.status === "done" ||
+      view.status === "pending" ? (
+        <CompletionView />
       ) : null}
-
-      {view.status === "pending" ? <PendingView /> : null}
 
       {view.status === "error" ? (
         <ErrorView message={view.message} reason={view.reason} />
@@ -118,40 +124,51 @@ function ConfirmationView({
 }) {
   return (
     <div className="space-y-5">
-      <header className="space-y-2 text-center">
-        <h1 className="text-text-base text-2xl font-semibold">
-          アカウントを削除しますか？
+      <header className="text-center">
+        <h1 className="text-2xl font-semibold tracking-tight text-[#333333] sm:text-3xl">
+          アカウントを削除
         </h1>
       </header>
 
-      <section className="border-tone-danger-border bg-tone-danger-bg text-tone-danger-text app-rounded border p-5">
-        <p className="text-sm leading-6">
-          この操作は取り消せません。Microsoft 365アカウントには影響しません。
-        </p>
+      <section className="app-rounded border-border-base bg-surface-muted text-text-base border p-5">
+        <h2 className="text-sm font-semibold">確認事項</h2>
+        <div className="mt-4 space-y-3">
+          <p className="flex items-start gap-2 text-sm leading-6">
+            <TriangleAlert
+              aria-hidden="true"
+              className="text-tone-warning-text mt-0.5 size-4 shrink-0"
+            />
+            <span>この操作は取り消せません。</span>
+          </p>
+          <p className="text-text-muted flex items-start gap-2 text-xs leading-5">
+            <Info aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
+            <span>Microsoft アカウントが削除されることはありません。</span>
+          </p>
+        </div>
       </section>
 
       <div className="flex flex-col items-center gap-3">
-        <Button
-          icon={Trash2}
-          variant="danger"
-          size="lg"
+        <button
+          type="button"
+          className="app-rounded bg-tone-danger-text inline-flex h-12 w-full items-center justify-center gap-2 px-4 font-medium text-white transition-colors hover:brightness-90 disabled:pointer-events-none disabled:opacity-50"
           onClick={onConfirm}
           disabled={isSubmitting}
           aria-busy={isSubmitting}
         >
-          {isSubmitting
-            ? "削除受付を送信しています..."
-            : "RecTimeアカウントを削除する"}
-        </Button>
-        <Button variant="secondary" size="lg" onClick={onCancel}>
-          削除せず終了する
+          <Trash2 aria-hidden="true" className="size-4 shrink-0" />
+          <span className="truncate">
+            {isSubmitting ? "アカウントを削除する..." : "アカウントを削除する"}
+          </span>
+        </button>
+        <Button variant="ghost" size="lg" onClick={onCancel}>
+          キャンセル
         </Button>
       </div>
     </div>
   );
 }
 
-function AcceptedView() {
+function CompletionView() {
   return (
     <div className="space-y-5 text-center">
       <CheckCircle2
@@ -166,25 +183,7 @@ function AcceptedView() {
           RecTimeアカウントの削除を受け付けました。このアカウントではRecTimeを利用できなくなります。
         </p>
         <p className="text-text-muted text-sm leading-7">
-          Microsoft 365アカウントには影響しません。
-        </p>
-      </header>
-    </div>
-  );
-}
-
-function PendingView() {
-  return (
-    <div className="space-y-5 text-center">
-      <header className="space-y-2">
-        <h1 className="text-text-base text-2xl font-semibold">
-          削除を受け付けました
-        </h1>
-        <p className="text-text-muted text-sm leading-7">
-          RecTimeアカウントの削除を受け付けました。以後、このアカウントでRecTimeを利用することはできません。
-        </p>
-        <p className="text-text-muted text-sm leading-7">
-          Microsoft 365アカウントには影響しません。
+          Microsoft アカウントには影響しません。
         </p>
       </header>
     </div>
@@ -221,7 +220,7 @@ function ErrorView({
           size="lg"
           icon={RotateCcw}
         >
-          Microsoftアカウントで本人確認をやり直す
+          Microsoft アカウントで本人確認をやり直す
         </ButtonLink>
       </div>
       <Link

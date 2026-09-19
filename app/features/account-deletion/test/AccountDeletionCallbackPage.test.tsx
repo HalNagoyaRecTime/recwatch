@@ -66,20 +66,20 @@ describe("AccountDeletionCallbackPage", () => {
     ).toBeInTheDocument();
     expect(
       screen.getByRole("heading", {
-        name: "アカウントを削除しますか？",
+        name: "アカウントを削除",
       })
     ).toBeInTheDocument();
+    expect(screen.getByText("確認事項")).toBeInTheDocument();
+    expect(screen.getByText("この操作は取り消せません。")).toBeInTheDocument();
     expect(
-      screen.getByText(
-        "この操作は取り消せません。Microsoft 365アカウントには影響しません。"
-      )
+      screen.getByText("Microsoft アカウントが削除されることはありません。")
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: "削除せず終了する" })
+      screen.getByRole("button", { name: "キャンセル" })
     ).toBeInTheDocument();
 
     const button = screen.getByRole("button", {
-      name: "RecTimeアカウントを削除する",
+      name: "アカウントを削除する",
     });
 
     fireEvent.click(button);
@@ -101,6 +101,9 @@ describe("AccountDeletionCallbackPage", () => {
         "RecTimeアカウントの削除を受け付けました。このアカウントではRecTimeを利用できなくなります。"
       )
     ).toBeInTheDocument();
+    expect(
+      screen.getByText("Microsoft アカウントには影響しません。")
+    ).toBeInTheDocument();
   });
 
   it("削除せず終了すると削除APIを呼ばずログイン画面へ戻る", async () => {
@@ -114,7 +117,7 @@ describe("AccountDeletionCallbackPage", () => {
     );
 
     renderPage();
-    fireEvent.click(screen.getByRole("button", { name: "削除せず終了する" }));
+    fireEvent.click(screen.getByRole("button", { name: "キャンセル" }));
 
     expect(await screen.findByText("ログインページ")).toBeInTheDocument();
     expect(mocks.confirmAccountDeletion).not.toHaveBeenCalled();
@@ -124,6 +127,24 @@ describe("AccountDeletionCallbackPage", () => {
     expect(
       window.sessionStorage.getItem("rectime_deletion_auth_result")
     ).toBeNull();
+  });
+
+  it("削除処理中も完了案内を表示する", () => {
+    render(
+      <MemoryRouter>
+        <AccountDeletionCallbackPage
+          data={{ status: "pending" }}
+          gateway={testGateway}
+        />
+      </MemoryRouter>
+    );
+
+    expect(
+      screen.getByRole("heading", { name: "削除を受け付けました" })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("Microsoft アカウントには影響しません。")
+    ).toBeInTheDocument();
   });
 
   it("Token無効時は本人確認からやり直せる", async () => {
@@ -136,7 +157,7 @@ describe("AccountDeletionCallbackPage", () => {
 
     renderPage();
     fireEvent.click(
-      screen.getByRole("button", { name: "RecTimeアカウントを削除する" })
+      screen.getByRole("button", { name: "アカウントを削除する" })
     );
 
     await waitFor(() =>
@@ -146,7 +167,7 @@ describe("AccountDeletionCallbackPage", () => {
     );
     expect(
       screen.getByRole("link", {
-        name: "Microsoftアカウントで本人確認をやり直す",
+        name: "Microsoft アカウントで本人確認をやり直す",
       })
     ).toHaveAttribute("href", "/account-deletion");
   });

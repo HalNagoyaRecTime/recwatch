@@ -19,11 +19,11 @@ const accountDeletionServerErrorMessage =
 
 const accountDeletionErrorMessages: Record<string, string> = {
   INVALID_REQUEST:
-    "削除確認に必要な情報が不足しています。Microsoft 365アカウントで本人確認をやり直してください。",
+    "削除確認に必要な情報が不足しています。Microsoft アカウントで本人確認をやり直してください。",
   DELETION_CONFIRMATION_TOKEN_INVALID:
-    "本人確認の有効期限が切れたか、確認情報が無効です。Microsoft 365アカウントで本人確認をやり直してください。",
+    "本人確認の有効期限が切れたか、確認情報が無効です。Microsoft アカウントで本人確認をやり直してください。",
   ACCOUNT_NOT_FOUND:
-    "このMicrosoft 365アカウントに対応するRecTimeアカウントが見つかりません。",
+    "このMicrosoft アカウントに対応するRecTimeアカウントが見つかりません。",
   ACCOUNT_DELETION_NOT_STARTED:
     "アカウント削除の受付を開始できませんでした。本人確認からやり直してください。",
   ACCOUNT_ALREADY_PURGED:
@@ -31,7 +31,7 @@ const accountDeletionErrorMessages: Record<string, string> = {
   ACCOUNT_DELETION_PENDING:
     "このRecTimeアカウントは削除処理中または削除済みのため、操作を続けられません。",
   STATE_MISMATCH:
-    "本人確認の有効期限が切れました。Microsoft 365アカウントで本人確認をやり直してください。",
+    "本人確認の有効期限が切れました。Microsoft アカウントで本人確認をやり直してください。",
   INVALID_STATE_PURPOSE:
     "本人確認の用途を確認できませんでした。削除受付ページからやり直してください。",
   TOKEN_EXCHANGE_FAILED:

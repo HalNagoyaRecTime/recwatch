@@ -48,7 +48,7 @@ function addDefaultFavicon() {
 }
 
 describe("AccountDeletionPage", () => {
-  it("未ログインでも公開ページを表示し、Microsoftアカウント自体は対象外と説明する", () => {
+  it("未ログインでも公開ページを表示し、Microsoft アカウント自体は対象外と説明する", () => {
     renderPage();
 
     expect(
@@ -80,7 +80,7 @@ describe("AccountDeletionPage", () => {
     expect(screen.queryByText("お問い合わせ")).not.toBeInTheDocument();
 
     const microsoftButton = screen.getByRole("button", {
-      name: "Microsoftアカウントで認証する",
+      name: "Microsoft アカウントで認証する",
     });
     expect(microsoftButton).toBeInTheDocument();
     expect(microsoftButton).toHaveClass(
@@ -173,7 +173,7 @@ describe("AccountDeletionPage", () => {
 
     renderPage();
     const button = screen.getByRole("button", {
-      name: "Microsoftアカウントで認証する",
+      name: "Microsoft アカウントで認証する",
     });
 
     fireEvent.click(button);
