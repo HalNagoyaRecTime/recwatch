@@ -185,6 +185,32 @@
     font-size: 14px;
   }
 
+  .root-hydrate-fallback-deletion {
+    display: none;
+  }
+
+  html[data-account-deletion-auth-callback="true"] .root-hydrate-fallback {
+    display: flex;
+    min-height: 100dvh;
+    align-items: center;
+    justify-content: center;
+    background: #ffffff;
+    color: #808080;
+    text-align: center;
+  }
+
+  html[data-account-deletion-auth-callback="true"]
+    .root-hydrate-fallback-default {
+    display: none;
+  }
+
+  html[data-account-deletion-auth-callback="true"]
+    .root-hydrate-fallback-deletion {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
   @keyframes feedback-toast-enter {
     from {
       opacity: 1;
