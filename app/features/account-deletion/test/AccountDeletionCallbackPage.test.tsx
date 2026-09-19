@@ -136,7 +136,7 @@ describe("AccountDeletionCallbackPage", () => {
     );
 
     const dialog = screen.getByRole("dialog");
-    fireEvent.click(within(dialog).getByRole("button", { name: "キャンセル" }));
+    fireEvent.click(within(dialog).getByRole("button", { name: "とじる" }));
 
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     expect(mocks.confirmAccountDeletion).not.toHaveBeenCalled();
