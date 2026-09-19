@@ -69,6 +69,26 @@ describe("isSidebarItemActive", () => {
     expect(isSidebarItemActive(eventsList, "/events/assignments")).toBe(false);
   });
 
+  it("イベント一覧は詳細・集合設定でも選択し、除外した固定パスでは選択しない", () => {
+    const eventsList = item({
+      id: "events-list",
+      label: "イベント一覧",
+      to: "/events",
+      activePatterns: [
+        "/events",
+        "/events/:competitionId",
+        "/events/:competitionId/gatherings",
+      ],
+      activeExclusions: ["/events/today", "/events/assignments"],
+    });
+
+    expect(isSidebarItemActive(eventsList, "/events/12")).toBe(true);
+    expect(isSidebarItemActive(eventsList, "/events/12/gatherings")).toBe(true);
+    // `:competitionId` に一致してしまう固定パスは除外で弾く
+    expect(isSidebarItemActive(eventsList, "/events/today")).toBe(false);
+    expect(isSidebarItemActive(eventsList, "/events/assignments")).toBe(false);
+  });
+
   it("イベント一覧の派生ページを親フォルダーで選択する", () => {
     const events = item({
       id: "events",
