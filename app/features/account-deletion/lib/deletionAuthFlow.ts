@@ -2,8 +2,7 @@ const PENDING_KEY = "rectime_deletion_auth_pending";
 const RESULT_KEY = "rectime_deletion_auth_result";
 
 export type DeletionAuthResult =
-  | { status: "confirmed"; token: string }
-  | { status: "error"; message: string };
+  { status: "confirmed"; token: string } | { status: "error"; message: string };
 
 function hasSessionStorage(): boolean {
   return typeof window !== "undefined" && !!window.sessionStorage;
