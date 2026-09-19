@@ -119,15 +119,9 @@ function ConfirmationView({
   return (
     <div className="space-y-5">
       <header className="space-y-2 text-center">
-        <p className="text-brand-primary text-xs font-semibold tracking-[0.16em] uppercase">
-          本人確認が完了しました
-        </p>
         <h1 className="text-text-base text-2xl font-semibold">
-          RecTimeアカウントを削除しますか？
+          アカウントを削除しますか？
         </h1>
-        <p className="text-text-muted text-sm leading-7">
-          RecTimeアカウントを削除します。この操作は取り消せません。
-        </p>
       </header>
 
       <section className="border-tone-danger-border bg-tone-danger-bg text-tone-danger-text app-rounded border p-5">

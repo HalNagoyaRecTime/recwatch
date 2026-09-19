@@ -42,6 +42,43 @@ const accountDeletionThemeStyle = {
   "--shadow-soft": "0 20px 45px rgba(15, 23, 42, 0.12)",
 } as CSSProperties;
 
+function useAccountDeletionFavicon() {
+  useEffect(() => {
+    const favicon =
+      document.querySelector<HTMLLinkElement>('link[rel~="icon"]');
+
+    if (!favicon) return;
+
+    const previousHref = favicon.getAttribute("href");
+    const previousType = favicon.getAttribute("type");
+    const previousSizes = favicon.getAttribute("sizes");
+
+    favicon.setAttribute("href", "/recreation-favicon.svg");
+    favicon.setAttribute("type", "image/svg+xml");
+    favicon.setAttribute("sizes", "any");
+
+    return () => {
+      if (previousHref === null) {
+        favicon.removeAttribute("href");
+      } else {
+        favicon.setAttribute("href", previousHref);
+      }
+
+      if (previousType === null) {
+        favicon.removeAttribute("type");
+      } else {
+        favicon.setAttribute("type", previousType);
+      }
+
+      if (previousSizes === null) {
+        favicon.removeAttribute("sizes");
+      } else {
+        favicon.setAttribute("sizes", previousSizes);
+      }
+    };
+  }, []);
+}
+
 function useAccountDeletionViewport() {
   useEffect(() => {
     const root = document.documentElement;
@@ -111,8 +148,9 @@ function useAccountDeletionViewport() {
 
 export function AccountDeletionLayout({
   children,
-  contentClassName = "flex w-full max-w-md flex-1 flex-col justify-center gap-4",
+  contentClassName = "flex w-full max-w-sm flex-1 flex-col justify-center gap-4",
 }: AccountDeletionLayoutProps) {
+  useAccountDeletionFavicon();
   useAccountDeletionViewport();
 
   return (

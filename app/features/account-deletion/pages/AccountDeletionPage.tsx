@@ -62,10 +62,10 @@ export function AccountDeletionPage({
           isLoading={isSubmitting}
         >
           {isSubmitting
-            ? "本人確認を開始しています..."
-            : "Microsoftアカウントで本人確認する"}
+            ? "Microsoftアカウントで認証する..."
+            : "Microsoftアカウントで認証する"}
         </AccountDeletionMicrosoftButton>
-        <div className="text-text-muted flex items-center gap-1">
+        <div className="text-text-muted flex items-center justify-center gap-1">
           <Info size={16} className="mb-px shrink-0" />
           <p className="text-[12px] leading-4">
             Microsoft アカウントが削除されることはありません。

@@ -3,6 +3,7 @@ import { httpAccountDeletionGateway } from "~/features/account-deletion/api/http
 
 export function meta() {
   return [
+    { title: "RE:CREATION | アカウント削除" },
     { name: "theme-color", content: "#ffffff" },
     { name: "color-scheme", content: "light" },
   ];

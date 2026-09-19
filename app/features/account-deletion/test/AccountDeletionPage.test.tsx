@@ -22,6 +22,9 @@ import { AccountDeletionPage } from "../pages/AccountDeletionPage";
 
 afterEach(() => {
   cleanup();
+  document
+    .querySelectorAll("link[data-test-account-deletion-favicon]")
+    .forEach((link) => link.remove());
   mocks.startAccountDeletionAuth.mockReset();
 });
 
@@ -31,6 +34,17 @@ function renderPage() {
       <AccountDeletionPage gateway={testGateway} />
     </MemoryRouter>
   );
+}
+
+function addDefaultFavicon() {
+  const favicon = document.createElement("link");
+  favicon.rel = "icon";
+  favicon.href = "/recwatch-logo.svg";
+  favicon.type = "image/svg+xml";
+  favicon.sizes = "any";
+  favicon.dataset.testAccountDeletionFavicon = "true";
+  document.head.append(favicon);
+  return favicon;
 }
 
 describe("AccountDeletionPage", () => {
@@ -66,7 +80,7 @@ describe("AccountDeletionPage", () => {
     expect(screen.queryByText("お問い合わせ")).not.toBeInTheDocument();
 
     const microsoftButton = screen.getByRole("button", {
-      name: "Microsoftアカウントで本人確認する",
+      name: "Microsoftアカウントで認証する",
     });
     expect(microsoftButton).toBeInTheDocument();
     expect(microsoftButton).toHaveClass(
@@ -102,6 +116,18 @@ describe("AccountDeletionPage", () => {
     expect(document.body.style.overflowY).toBe("");
     expect(document.body.style.background).toBe("");
   });
+
+  it("表示中だけfaviconをRE:CREATIONへ切り替え、終了時に戻す", () => {
+    const favicon = addDefaultFavicon();
+    const { unmount } = renderPage();
+
+    expect(favicon.getAttribute("href")).toBe("/recreation-favicon.svg");
+
+    unmount();
+
+    expect(favicon.getAttribute("href")).toBe("/recwatch-logo.svg");
+  });
+
   it("dark祖先でもライトテーマの背景を維持する", () => {
     render(
       <div className="dark">
@@ -147,7 +173,7 @@ describe("AccountDeletionPage", () => {
 
     renderPage();
     const button = screen.getByRole("button", {
-      name: "Microsoftアカウントで本人確認する",
+      name: "Microsoftアカウントで認証する",
     });
 
     fireEvent.click(button);
