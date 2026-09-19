@@ -1,23 +1,43 @@
 import {
-  useLoaderData,
-  useRouteError,
   isRouteErrorResponse,
+  Outlet,
+  useLoaderData,
+  useRevalidator,
+  useRouteError,
 } from "react-router";
-import { createPageTitle } from "~/lib/page-title";
+
+import { ClassRoomApi } from "~/features/classRoom/api";
+import { loadClassRoomListPage } from "~/features/classRoom/application/class-room-loaders";
+import { parseClassRoomListUrl } from "~/features/classRoom/application/class-room-list-url";
 import { ClassRoomPage } from "~/features/classRoom/pages/classRoomPage";
 import { PagePadding } from "~/features/frame/page-layout/PagePadding";
 import { PageLayout } from "~/features/frame/page-layout/PageLayout";
-import { getClassRoomData } from "~/features/classRoom/model/classRoom-data";
 import { loadActiveTeacherOptions } from "~/features/teachers/application/teacher-loaders";
+import { createPageTitle } from "~/lib/page-title";
 
-export async function clientLoader() {
-  const [classRooms, teacherOptions] = await Promise.all([
-    getClassRoomData(),
+const CLASS_ROOM_LIST_LIMIT = 50;
+
+export async function clientLoader({ request }: { request: Request }) {
+  const searchParams = new URL(request.url).searchParams;
+  const { page, search, sortBy, sortOrder } =
+    parseClassRoomListUrl(searchParams);
+  const [classRoomPage, teacherOptions] = await Promise.all([
+    loadClassRoomListPage(ClassRoomApi, {
+      limit: CLASS_ROOM_LIST_LIMIT,
+      offset: (page - 1) * CLASS_ROOM_LIST_LIMIT,
+      search: search || undefined,
+      sortBy: sortBy ?? undefined,
+      sortOrder: sortOrder ?? undefined,
+    }),
     loadActiveTeacherOptions(),
   ]);
+
   return {
-    classRooms,
+    items: classRoomPage.items,
+    limit: classRoomPage.limit,
+    offset: classRoomPage.offset,
     teacherOptions,
+    total: classRoomPage.total,
   };
 }
 
@@ -29,14 +49,16 @@ export function ErrorBoundary() {
   const error = useRouteError();
   let message = "予期しないエラーが発生しました。";
   if (isRouteErrorResponse(error)) {
-    if (error.status === 401)
+    if (error.status === 401) {
       message = "認証が必要です。再ログインしてください。";
-    else message = `エラー${error.status}:${error.data || error.statusText} `;
+    } else {
+      message = `エラー${error.status}:${error.data || error.statusText}`;
+    }
   }
   return (
     <PageLayout>
       <PagePadding>
-        <div role="alert" className="p-6 text-red-500">
+        <div role="alert" className="text-tone-danger-text p-6">
           {message}
         </div>
       </PagePadding>
@@ -45,15 +67,21 @@ export function ErrorBoundary() {
 }
 
 export default function ClassRoomRoute() {
-  const { classRooms, teacherOptions } = useLoaderData<typeof clientLoader>();
+  const page = useLoaderData<typeof clientLoader>();
+  const revalidator = useRevalidator();
+
   return (
-    <PageLayout>
-      <PagePadding>
-        <ClassRoomPage
-          classRooms={classRooms}
-          teacherOptions={teacherOptions}
-        />
-      </PagePadding>
-    </PageLayout>
+    <>
+      <PageLayout>
+        <PagePadding>
+          <ClassRoomPage
+            api={ClassRoomApi}
+            {...page}
+            onRevalidate={() => revalidator.revalidate()}
+          />
+        </PagePadding>
+      </PageLayout>
+      <Outlet />
+    </>
   );
 }

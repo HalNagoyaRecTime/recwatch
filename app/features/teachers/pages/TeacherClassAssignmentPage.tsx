@@ -75,7 +75,9 @@ export function TeacherClassAssignmentPage({
                     onChange={() => toggleClassRoom(classRoom.classRoomId)}
                     className="size-4"
                   />
-                  {classRoom.className}
+                  {classRoom.classCode
+                    ? `${classRoom.classCode} — ${classRoom.className}`
+                    : classRoom.className}
                 </label>
               ))}
             </div>
