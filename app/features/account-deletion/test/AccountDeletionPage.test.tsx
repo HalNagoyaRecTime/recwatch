@@ -74,8 +74,8 @@ describe("AccountDeletionPage", () => {
       screen.getByText("Developed by RE:CREATION Development Team")
     ).toBeInTheDocument();
     expect(
-      screen.getByText("Microsoft アカウントが削除されることはありません。")
-    ).toBeInTheDocument();
+      screen.queryByText("Microsoft アカウントが削除されることはありません。")
+    ).not.toBeInTheDocument();
     expect(screen.queryByText("削除される情報")).not.toBeInTheDocument();
     expect(screen.queryByText("お問い合わせ")).not.toBeInTheDocument();
 

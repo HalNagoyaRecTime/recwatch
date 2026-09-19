@@ -23,13 +23,13 @@ const accountDeletionErrorMessages: Record<string, string> = {
   DELETION_CONFIRMATION_TOKEN_INVALID:
     "本人確認の有効期限が切れたか、確認情報が無効です。Microsoft アカウントで本人確認をやり直してください。",
   ACCOUNT_NOT_FOUND:
-    "このMicrosoft アカウントに対応するRecTimeアカウントが見つかりません。",
+    "このMicrosoft アカウントに対応するアカウントが見つかりません。",
   ACCOUNT_DELETION_NOT_STARTED:
     "アカウント削除の受付を開始できませんでした。本人確認からやり直してください。",
   ACCOUNT_ALREADY_PURGED:
-    "このRecTimeアカウントはすでに削除受付済みか、削除処理が完了しています。",
+    "このアカウントはすでに削除受付済みか、削除処理が完了しています。",
   ACCOUNT_DELETION_PENDING:
-    "このRecTimeアカウントは削除処理中または削除済みのため、操作を続けられません。",
+    "このアカウントは削除処理中または削除済みのため、操作を続けられません。",
   STATE_MISMATCH:
     "本人確認の有効期限が切れました。Microsoft アカウントで本人確認をやり直してください。",
   INVALID_STATE_PURPOSE:

@@ -6,8 +6,6 @@ import { AccountDeletionMicrosoftButton } from "~/features/account-deletion/comp
 
 import { AuthErrorMessage } from "~/features/auth/components/AuthErrorMessage";
 
-import { Info } from "lucide-react";
-
 export function AccountDeletionPage({
   gateway,
 }: {
@@ -64,12 +62,6 @@ export function AccountDeletionPage({
             ? "Microsoft アカウントで認証する..."
             : "Microsoft アカウントで認証する"}
         </AccountDeletionMicrosoftButton>
-        <div className="text-text-muted flex items-center justify-center gap-1">
-          <Info size={16} className="mb-px shrink-0" />
-          <p className="text-[12px] leading-4">
-            Microsoft アカウントが削除されることはありません。
-          </p>
-        </div>
       </section>
     </AccountDeletionLayout>
   );

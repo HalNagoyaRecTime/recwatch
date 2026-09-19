@@ -6,7 +6,7 @@ import {
   Trash2,
   TriangleAlert,
 } from "lucide-react";
-import { Link, useNavigate } from "react-router";
+import { useNavigate } from "react-router";
 
 import type {
   AccountDeletionErrorReason,
@@ -180,10 +180,7 @@ function CompletionView() {
           削除を受け付けました
         </h1>
         <p className="text-text-muted text-sm leading-7">
-          RecTimeアカウントの削除を受け付けました。このアカウントではRecTimeを利用できなくなります。
-        </p>
-        <p className="text-text-muted text-sm leading-7">
-          Microsoft アカウントには影響しません。
+          このアカウントは利用できなくなります。
         </p>
       </header>
     </div>
@@ -223,12 +220,6 @@ function ErrorView({
           Microsoft アカウントで本人確認をやり直す
         </ButtonLink>
       </div>
-      <Link
-        to="/account-deletion"
-        className="text-text-muted hover:text-text-base inline-block text-sm hover:underline"
-      >
-        削除受付ページに戻る
-      </Link>
     </div>
   );
 }

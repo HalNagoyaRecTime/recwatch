@@ -97,12 +97,7 @@ describe("AccountDeletionCallbackPage", () => {
       ).toBeInTheDocument()
     );
     expect(
-      screen.getByText(
-        "RecTimeアカウントの削除を受け付けました。このアカウントではRecTimeを利用できなくなります。"
-      )
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText("Microsoft アカウントには影響しません。")
+      screen.getByText("このアカウントは利用できなくなります。")
     ).toBeInTheDocument();
   });
 
@@ -143,7 +138,7 @@ describe("AccountDeletionCallbackPage", () => {
       screen.getByRole("heading", { name: "削除を受け付けました" })
     ).toBeInTheDocument();
     expect(
-      screen.getByText("Microsoft アカウントには影響しません。")
+      screen.getByText("このアカウントは利用できなくなります。")
     ).toBeInTheDocument();
   });
 
@@ -178,7 +173,7 @@ describe("AccountDeletionCallbackPage", () => {
         <AccountDeletionCallbackPage
           data={{
             status: "error",
-            message: "このRecTimeアカウントはすでに削除受付済みです。",
+            message: "このアカウントはすでに削除受付済みです。",
             reason: "already-deleted",
           }}
           gateway={testGateway}

@@ -108,8 +108,7 @@ describe("auth.callback clientLoader", () => {
 
     expect(mocks.saveDeletionAuthResult).toHaveBeenCalledWith({
       status: "error",
-      message:
-        "このMicrosoft アカウントに対応するRecTimeアカウントが見つかりません。",
+      message: "このMicrosoft アカウントに対応するアカウントが見つかりません。",
     });
   });
 
