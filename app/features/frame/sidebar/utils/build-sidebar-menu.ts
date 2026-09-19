@@ -1,4 +1,4 @@
-import { currentUser, type AppRole } from "~/config/permissions";
+import { resolveAppRole, type AppRole } from "~/config/permissions";
 import {
   sidebarSections,
   type SidebarItemConfig,
@@ -7,6 +7,7 @@ import {
 import { canAccess } from "~/utils/permissions";
 import { sidebarIconMap } from "~/features/frame/sidebar/utils/sidebar-icon-mapper";
 import type { SidebarItemDef, SidebarSectionDef } from "~/types/sidebar";
+import type { AccountUser } from "~/features/frame/main-header/account-menu/model/account-btn-data";
 
 function mapItem(
   role: AppRole,
@@ -55,8 +56,19 @@ function mapSection(
   };
 }
 
-export function buildSidebarMenu(role: AppRole = currentUser.role) {
+export function buildSidebarMenu(role: AppRole): SidebarSectionDef[];
+export function buildSidebarMenu(
+  user?: AccountUser | null
+): SidebarSectionDef[];
+export function buildSidebarMenu(
+  userOrRole?: AccountUser | null | AppRole
+): SidebarSectionDef[] {
+  const resolvedRole =
+    typeof userOrRole === "string"
+      ? userOrRole
+      : resolveAppRole(userOrRole ?? null);
+
   return sidebarSections
-    .map((section) => mapSection(role, section))
+    .map((section) => mapSection(resolvedRole, section))
     .filter((section): section is SidebarSectionDef => section !== null);
 }
