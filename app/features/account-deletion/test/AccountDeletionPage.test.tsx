@@ -69,8 +69,13 @@ describe("AccountDeletionPage", () => {
       name: "Microsoftアカウントで本人確認する",
     });
     expect(microsoftButton).toBeInTheDocument();
-    expect(microsoftButton).toHaveClass("h-12", "bg-[#333333]", "font-medium");
-    expect(microsoftButton).toHaveStyle({ borderRadius: "4px" });
+    expect(microsoftButton).toHaveClass(
+      "h-12",
+      "bg-[#333333]",
+      "font-medium",
+      "rounded-sm"
+    );
+
     expect(microsoftButton.querySelector("svg")).toHaveClass("h-4.5", "w-4.5");
     expect(microsoftButton.querySelectorAll("rect")).toHaveLength(4);
   });
