@@ -43,17 +43,14 @@ export function AccountDeletionPage({
     <AccountDeletionLayout>
       <header className="space-y-2 text-center">
         <h1 className="text-2xl font-semibold tracking-tight text-[#333333] sm:text-3xl">
-          Accountを削除
+          アカウントを削除
         </h1>
-        <p className="text-text-muted mx-auto w-full max-w-md text-left text-sm leading-7">
-          Microsoftアカウントで本人確認を行います。
+        <p className="text-text-muted mx-auto w-full max-w-md text-center text-sm leading-7">
+          アカウントの削除手続きを行います。
         </p>
       </header>
 
       <section className="mb-10 space-y-4">
-        <p className="text-text-muted mx-auto w-full max-w-md text-left text-sm leading-6">
-          Microsoft アカウント自体が削除されることはありません。
-        </p>
         {errorMessage ? (
           <AuthErrorMessage>{errorMessage}</AuthErrorMessage>
         ) : null}
@@ -66,6 +63,9 @@ export function AccountDeletionPage({
             ? "本人確認を開始しています..."
             : "Microsoftアカウントで本人確認する"}
         </AccountDeletionMicrosoftButton>
+        <p className="text-text-muted mx-auto w-full max-w-md text-center text-sm leading-6">
+          Microsoft アカウントが削除されることはありません。
+        </p>
       </section>
     </AccountDeletionLayout>
   );

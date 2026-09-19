@@ -34,36 +34,33 @@ function renderPage() {
 }
 
 describe("AccountDeletionPage", () => {
-  it("未ログインでも公開ページを表示し、Microsoft 365アカウント自体は対象外と説明する", () => {
+  it("未ログインでも公開ページを表示し、Microsoftアカウント自体は対象外と説明する", () => {
     renderPage();
 
     expect(
       screen.getByRole("heading", {
         level: 1,
-        name: "RecTimeアカウントを削除",
+        name: "アカウントを削除",
       })
     ).toBeInTheDocument();
     expect(screen.getByText("RE:CREATION")).toBeInTheDocument();
     expect(
       screen.getByRole("heading", {
         level: 1,
-        name: "RecTimeアカウントを削除",
+        name: "アカウントを削除",
       })
     ).toHaveClass("text-[#333333]");
-    expect(
-      screen.getByText(
-        "アカウント削除のため、学校から付与されたMicrosoft 365アカウントで本人確認を行います。"
-      )
-    ).toHaveClass("max-w-md", "text-left");
+    expect(screen.getByText("アカウントの削除手続きを行います。")).toHaveClass(
+      "max-w-md",
+      "text-center"
+    );
     expect(screen.queryByText(/recwatch/i)).not.toBeInTheDocument();
     expect(screen.getByText("Produced by HAL Nagoya")).toBeInTheDocument();
     expect(
       screen.getByText("Developed by RE:CREATION Development Team")
     ).toBeInTheDocument();
     expect(
-      screen.getByText(
-        "Microsoft 365アカウント自体が削除されることはありません。"
-      )
+      screen.getByText("Microsoft アカウントが削除されることはありません。")
     ).toBeInTheDocument();
     expect(screen.queryByText("削除される情報")).not.toBeInTheDocument();
     expect(screen.queryByText("お問い合わせ")).not.toBeInTheDocument();
@@ -106,7 +103,7 @@ describe("AccountDeletionPage", () => {
     expect(
       screen.getByRole("heading", {
         level: 1,
-        name: "RecTimeアカウントを削除",
+        name: "アカウントを削除",
       })
     ).toBeInTheDocument();
   });
