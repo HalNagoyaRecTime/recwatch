@@ -50,7 +50,7 @@ export function AccountDeletionPage({
         </p>
       </header>
 
-      <section className="mb-10 space-y-4">
+      <section className="space-y-3">
         {errorMessage ? (
           <AuthErrorMessage>{errorMessage}</AuthErrorMessage>
         ) : null}
