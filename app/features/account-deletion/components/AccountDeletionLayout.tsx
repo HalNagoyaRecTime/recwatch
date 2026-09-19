@@ -34,9 +34,9 @@ function useAccountDeletionFavicon() {
     const previousType = favicon.getAttribute("type");
     const previousSizes = favicon.getAttribute("sizes");
 
-    favicon.setAttribute("href", "/recreation-favicon.svg");
-    favicon.setAttribute("type", "image/svg+xml");
-    favicon.setAttribute("sizes", "any");
+    favicon.setAttribute("href", "/recreation-favicon.png");
+    favicon.setAttribute("type", "image/png");
+    favicon.setAttribute("sizes", "512x512");
 
     return () => {
       if (previousHref === null) {

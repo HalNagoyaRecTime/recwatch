@@ -4,6 +4,7 @@ import {
   render,
   screen,
   waitFor,
+  within,
 } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { MemoryRouter, Route, Routes } from "react-router";
@@ -58,6 +59,17 @@ function renderPage() {
     </MemoryRouter>
   );
 }
+
+function confirmDeletion() {
+  fireEvent.click(screen.getByRole("button", { name: "アカウントを削除する" }));
+  const dialog = screen.getByRole("dialog");
+  const confirmButton = within(dialog).getByRole("button", {
+    name: "削除する",
+  });
+  fireEvent.click(confirmButton);
+  return { confirmButton, dialog };
+}
+
 describe("AccountDeletionCallbackPage", () => {
   it("本人確認後に最終確認を表示し、削除送信中は多重送信を防ぎ、通常ログイン情報を保持する", async () => {
     setAccessToken("existing-access-token");
@@ -91,16 +103,17 @@ describe("AccountDeletionCallbackPage", () => {
       screen.getByRole("button", { name: "キャンセル" })
     ).toBeInTheDocument();
 
-    const button = screen.getByRole("button", {
-      name: "アカウントを削除する",
-    });
-
-    fireEvent.click(button);
-    fireEvent.click(button);
+    const { confirmButton, dialog } = confirmDeletion();
+    fireEvent.click(confirmButton);
 
     expect(mocks.confirmAccountDeletion).toHaveBeenCalledTimes(1);
     expect(mocks.confirmAccountDeletion).toHaveBeenCalledWith("deletion-token");
-    expect(button).toBeDisabled();
+    expect(confirmButton).toBeDisabled();
+    expect(
+      within(dialog).getByRole("heading", {
+        name: "本当にアカウントを削除しますか？",
+      })
+    ).toBeInTheDocument();
 
     resolveDeletion({ status: "done" });
 
@@ -110,10 +123,23 @@ describe("AccountDeletionCallbackPage", () => {
       ).toBeInTheDocument()
     );
     expect(
-      screen.getByText("このアカウントでは利用できません。")
-    ).toBeInTheDocument();
+      screen.queryByText("このアカウントでは利用できません。")
+    ).not.toBeInTheDocument();
     expect(getAccessToken()).toBe("existing-access-token");
     expect(getRefreshTokenId()).toBe("existing-refresh-id");
+  });
+
+  it("確認モーダルでキャンセルすると削除APIを呼ばない", () => {
+    renderPage();
+    fireEvent.click(
+      screen.getByRole("button", { name: "アカウントを削除する" })
+    );
+
+    const dialog = screen.getByRole("dialog");
+    fireEvent.click(within(dialog).getByRole("button", { name: "キャンセル" }));
+
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(mocks.confirmAccountDeletion).not.toHaveBeenCalled();
   });
 
   it("削除せず終了すると削除APIを呼ばずログイン画面へ戻る", async () => {
@@ -148,9 +174,7 @@ describe("AccountDeletionCallbackPage", () => {
     });
 
     renderPage();
-    fireEvent.click(
-      screen.getByRole("button", { name: "アカウントを削除する" })
-    );
+    confirmDeletion();
 
     await waitFor(() =>
       expect(
@@ -158,8 +182,8 @@ describe("AccountDeletionCallbackPage", () => {
       ).toBeInTheDocument()
     );
     expect(
-      screen.getByText("このアカウントでは利用できません。")
-    ).toBeInTheDocument();
+      screen.queryByText("このアカウントでは利用できません。")
+    ).not.toBeInTheDocument();
   });
 
   it("Token無効時は認証からやり直せる", async () => {
@@ -172,9 +196,7 @@ describe("AccountDeletionCallbackPage", () => {
     });
 
     renderPage();
-    fireEvent.click(
-      screen.getByRole("button", { name: "アカウントを削除する" })
-    );
+    confirmDeletion();
 
     await waitFor(() =>
       expect(

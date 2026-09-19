@@ -140,7 +140,7 @@ describe("AccountDeletionPage", () => {
     const favicon = addDefaultFavicon();
     const { unmount } = renderPage();
 
-    expect(favicon.getAttribute("href")).toBe("/recreation-favicon.svg");
+    expect(favicon.getAttribute("href")).toBe("/recreation-favicon.png");
 
     unmount();
 
