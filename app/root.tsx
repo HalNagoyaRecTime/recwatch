@@ -47,6 +47,19 @@ export function Layout({ children }: { children: ReactNode }) {
                 root.classList.toggle("dark", isDark);
                 root.dataset.theme = theme;
                 root.style.colorScheme = isDark ? "dark" : "light";
+
+                try {
+                  if (
+                    window.location.pathname === "/auth/callback" &&
+                    window.sessionStorage.getItem(
+                      "rectime_deletion_auth_pending"
+                    ) === "1"
+                  ) {
+                    root.dataset.accountDeletionAuthCallback = "true";
+                  }
+                } catch {
+                  // sessionStorageが利用できない場合は通常のfallbackを表示する。
+                }
               })();
             `,
           }}
@@ -108,5 +121,15 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
 }
 
 export function HydrateFallback() {
-  return <div className="bg-surface-hover p-6">読み込み中...</div>;
+  return (
+    <div className="root-hydrate-fallback bg-surface-hover p-6">
+      <span className="root-hydrate-fallback-default">読み込み中...</span>
+      <span className="root-hydrate-fallback-deletion">
+        <span className="text-xl font-semibold text-[#333333]">
+          RE:CREATION
+        </span>
+        <span>認証情報を確認しています...</span>
+      </span>
+    </div>
+  );
 }

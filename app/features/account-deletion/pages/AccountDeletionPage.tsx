@@ -2,10 +2,9 @@ import { useState } from "react";
 
 import { getAccountDeletionInitialErrorMessage } from "~/features/account-deletion/api/http/account-deletion-gateway";
 import type { AccountDeletionGateway } from "~/features/account-deletion/api/contracts/account-deletion-gateway";
+import { AccountDeletionErrorMessage } from "~/features/account-deletion/components/AccountDeletionErrorMessage";
 import { AccountDeletionLayout } from "~/features/account-deletion/components/AccountDeletionLayout";
 import { AccountDeletionMicrosoftButton } from "~/features/account-deletion/components/AccountDeletionMicrosoftButton";
-
-import { AuthErrorMessage } from "~/features/auth/components/AuthErrorMessage";
 
 export function AccountDeletionPage({
   gateway,
@@ -50,14 +49,16 @@ export function AccountDeletionPage({
         <h1 className="text-2xl font-semibold tracking-tight text-[#333333] sm:text-3xl">
           アカウントを削除
         </h1>
-        <p className="text-text-muted mx-auto w-full max-w-md text-center text-sm leading-7">
+        <p className="mx-auto w-full max-w-md text-center text-sm leading-7 text-[#808080]">
           アカウントの削除手続きを行います。
         </p>
       </header>
 
       <section className="space-y-3">
         {errorMessage ? (
-          <AuthErrorMessage>{errorMessage}</AuthErrorMessage>
+          <AccountDeletionErrorMessage>
+            {errorMessage}
+          </AccountDeletionErrorMessage>
         ) : null}
         <AccountDeletionMicrosoftButton
           onClick={handleStartDeletion}

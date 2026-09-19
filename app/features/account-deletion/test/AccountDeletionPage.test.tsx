@@ -156,8 +156,9 @@ describe("AccountDeletionPage", () => {
 
     const main = screen.getByRole("main");
     expect(main).toHaveClass("bg-white");
-    expect(main.getAttribute("style")).toContain("--text-base");
-    expect(main.getAttribute("style")).toContain("#333333");
+    expect(
+      screen.getByRole("heading", { name: "アカウントを削除" })
+    ).toHaveClass("text-[#333333]");
   });
 
   it("URLのuserIdやメールアドレスに依存せず表示する", () => {
