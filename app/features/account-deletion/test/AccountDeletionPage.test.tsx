@@ -94,6 +94,25 @@ describe("AccountDeletionPage", () => {
     expect(microsoftButton.querySelectorAll("rect")).toHaveLength(4);
   });
 
+  it("アカウント未登録エラーを本人確認開始ページに表示する", () => {
+    render(
+      <MemoryRouter
+        initialEntries={["/account-deletion?error=account_not_found"]}
+      >
+        <AccountDeletionPage
+          gateway={testGateway}
+          initialError="account_not_found"
+        />
+      </MemoryRouter>
+    );
+
+    expect(
+      screen.getByText(
+        "このMicrosoft アカウントに対応するアカウントは存在しません。"
+      )
+    ).toBeInTheDocument();
+  });
+
   it("Safari向けのスクロール設定を表示中だけ適用し、終了時に戻す", () => {
     const { unmount } = renderPage();
 

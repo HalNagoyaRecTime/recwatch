@@ -17,30 +17,45 @@ export const accountDeletionUnavailableMessage =
 const accountDeletionServerErrorMessage =
   "削除受付サービスでエラーが発生しました。時間をおいてもう一度お試しください。";
 
+const deletionAuthFailedMessage =
+  "Microsoft アカウントで認証できませんでした。";
+
 const accountDeletionErrorMessages: Record<string, string> = {
   INVALID_REQUEST:
-    "削除確認に必要な情報が不足しています。Microsoft アカウントで本人確認をやり直してください。",
+    "削除確認に必要な情報が不足しています。Microsoft アカウントで認証し直してください。",
   DELETION_CONFIRMATION_TOKEN_INVALID:
-    "本人確認の有効期限が切れたか、確認情報が無効です。Microsoft アカウントで本人確認をやり直してください。",
+    "Microsoft アカウントの認証情報が無効か、有効期限が切れている可能性があります。もう一度認証してください。",
   ACCOUNT_NOT_FOUND:
-    "このMicrosoft アカウントに対応するアカウントが見つかりません。",
-  ACCOUNT_DELETION_NOT_STARTED:
-    "アカウント削除の受付を開始できませんでした。本人確認からやり直してください。",
-  ACCOUNT_ALREADY_PURGED:
-    "このアカウントはすでに削除受付済みか、削除処理が完了しています。",
-  ACCOUNT_DELETION_PENDING:
-    "このアカウントは削除処理中または削除済みのため、操作を続けられません。",
-  STATE_MISMATCH:
-    "本人確認の有効期限が切れました。Microsoft アカウントで本人確認をやり直してください。",
-  INVALID_STATE_PURPOSE:
-    "本人確認の用途を確認できませんでした。削除受付ページからやり直してください。",
-  TOKEN_EXCHANGE_FAILED:
-    "Microsoftとの本人確認に失敗しました。もう一度お試しください。",
-  INVALID_ID_TOKEN:
-    "Microsoftとの本人確認に失敗しました。もう一度お試しください。",
+    "このMicrosoft アカウントに対応するアカウントは存在しません。",
+  ACCOUNT_ALREADY_PURGED: "削除処理はすでに完了しています。",
+  ACCOUNT_DELETION_NOT_STARTED: accountDeletionServerErrorMessage,
+  ACCOUNT_DELETION_PENDING: accountDeletionServerErrorMessage,
+  STATE_MISMATCH: deletionAuthFailedMessage,
+  INVALID_STATE_PURPOSE: deletionAuthFailedMessage,
+  TOKEN_EXCHANGE_FAILED: "Microsoft アカウントで認証できませんでした。",
+  INVALID_ID_TOKEN: "Microsoft アカウントで認証できませんでした。",
   NETWORK_ERROR: accountDeletionUnavailableMessage,
   CONFIG_ERROR: accountDeletionUnavailableMessage,
 };
+
+const deletionAuthRequiredMessage = "Microsoft アカウントで認証してください。";
+
+export function getAccountDeletionInitialErrorMessage(
+  error: string | null
+): string {
+  switch (error) {
+    case "auth_required":
+      return deletionAuthRequiredMessage;
+    case "auth_failed":
+      return deletionAuthFailedMessage;
+    case "account_not_found":
+      return accountDeletionErrorMessages.ACCOUNT_NOT_FOUND;
+    case "service_unavailable":
+      return accountDeletionUnavailableMessage;
+    default:
+      return "";
+  }
+}
 
 type BackendErrorPayload = {
   error: {
@@ -58,7 +73,7 @@ export function getAccountDeletionErrorMessage(
 
   return (
     (code ? accountDeletionErrorMessages[code] : undefined) ??
-    "本人確認または削除受付を完了できませんでした。削除受付ページからやり直してください。"
+    "サーバーでエラーが発生しました。時間をおいてもう一度お試しください。"
   );
 }
 
@@ -72,11 +87,8 @@ export function getAccountDeletionErrorReason(
     return "reauth";
   }
 
-  if (
-    code === "ACCOUNT_ALREADY_PURGED" ||
-    code === "ACCOUNT_DELETION_PENDING"
-  ) {
-    return "already-deleted";
+  if (code === "ACCOUNT_ALREADY_PURGED") {
+    return "generic";
   }
 
   return "generic";

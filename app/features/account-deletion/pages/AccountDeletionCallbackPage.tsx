@@ -1,11 +1,5 @@
 import { useState } from "react";
-import {
-  CheckCircle2,
-  Info,
-  RotateCcw,
-  Trash2,
-  TriangleAlert,
-} from "lucide-react";
+import { Info, Trash2, TriangleAlert } from "lucide-react";
 import { useNavigate } from "react-router";
 
 import type {
@@ -21,14 +15,11 @@ import {
 import { AuthErrorMessage } from "~/features/auth/components/AuthErrorMessage";
 import { Button } from "~/components/ui/button/Button";
 import { ButtonLink } from "~/components/ui/button/ButtonLink";
-import { setAccessToken } from "~/features/auth/lib/accessTokenStore";
-import { setRefreshTokenId } from "~/features/auth/lib/refreshTokenStore";
 
 export type AccountDeletionCallbackData =
   | { status: "confirm"; deletionConfirmationToken: string }
-  | { status: "accepted" }
   | { status: "done" }
-  | { status: "pending" }
+  | { status: "completed" }
   | {
       status: "error";
       message: string;
@@ -72,13 +63,13 @@ export function AccountDeletionCallbackPage({
         }) satisfies ConfirmDeletionResult
     );
 
-    if (result.status === "accepted" || result.status === "done") {
-      // 削除成功後は通常ログイン用の認証情報も残さない。
-      setAccessToken(null);
-      setRefreshTokenId(null);
-      setView({ status: "accepted" });
-    } else if (result.status === "pending") {
-      setView({ status: "pending" });
+    if (result.status === "done") {
+      setView({ status: "done" });
+    } else if (
+      result.status === "error" &&
+      result.code === "ACCOUNT_ALREADY_PURGED"
+    ) {
+      setView({ status: "completed" });
     } else {
       setView({
         status: "error",
@@ -100,11 +91,9 @@ export function AccountDeletionCallbackPage({
         />
       ) : null}
 
-      {view.status === "accepted" ||
-      view.status === "done" ||
-      view.status === "pending" ? (
-        <CompletionView />
-      ) : null}
+      {view.status === "done" ? <CompletionView /> : null}
+
+      {view.status === "completed" ? <CompletionView alreadyCompleted /> : null}
 
       {view.status === "error" ? (
         <ErrorView message={view.message} reason={view.reason} />
@@ -168,19 +157,19 @@ function ConfirmationView({
   );
 }
 
-function CompletionView() {
+function CompletionView({
+  alreadyCompleted = false,
+}: {
+  alreadyCompleted?: boolean;
+}) {
   return (
     <div className="space-y-5 text-center">
-      <CheckCircle2
-        aria-hidden="true"
-        className="text-tone-success-text mx-auto size-12"
-      />
       <header className="space-y-2">
-        <h1 className="text-text-base text-2xl font-semibold">
-          削除を受け付けました
+        <h1 className="text-text-base text-xl leading-tight font-semibold sm:text-2xl">
+          {alreadyCompleted ? "削除処理は完了しています" : "削除が完了しました"}
         </h1>
         <p className="text-text-muted text-sm leading-7">
-          このアカウントは利用できなくなります。
+          このアカウントでは利用できません。
         </p>
       </header>
     </div>
@@ -194,30 +183,22 @@ function ErrorView({
   message: string;
   reason?: AccountDeletionErrorReason;
 }) {
-  const title =
-    reason === "already-deleted"
-      ? "削除受付済みです"
-      : reason === "reauth"
-        ? "本人確認の有効期限が切れました"
-        : "削除を受け付けられませんでした";
+  const isReauthenticationRequired = reason === "reauth";
+  const title = isReauthenticationRequired
+    ? "認証情報を確認できませんでした"
+    : "サーバーでエラーが発生しました";
 
   return (
     <div className="space-y-5 text-center">
-      <header className="space-y-2">
-        <h1 className="text-text-base text-2xl font-semibold">{title}</h1>
-        <p className="text-text-muted text-sm leading-7">
-          削除受付を完了できませんでした。
-        </p>
+      <header>
+        <h1 className="text-text-base text-xl leading-tight font-semibold sm:text-2xl">
+          {title}
+        </h1>
       </header>
       <AuthErrorMessage>{message}</AuthErrorMessage>
       <div className="flex justify-center">
-        <ButtonLink
-          to="/account-deletion"
-          variant="secondary"
-          size="lg"
-          icon={RotateCcw}
-        >
-          Microsoft アカウントで本人確認をやり直す
+        <ButtonLink to="/account-deletion" variant="secondary" size="lg">
+          アカウント削除ページに戻る
         </ButtonLink>
       </div>
     </div>

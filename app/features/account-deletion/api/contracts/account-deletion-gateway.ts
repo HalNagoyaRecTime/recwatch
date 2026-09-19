@@ -1,13 +1,10 @@
-export type AccountDeletionErrorReason =
-  "reauth" | "already-deleted" | "generic";
+export type AccountDeletionErrorReason = "reauth" | "generic";
 
 export type StartDeletionAuthResult =
   { ok: true; authUrl: string } | { ok: false; message: string };
 
 export type ConfirmDeletionResult =
   | { status: "done" }
-  | { status: "accepted" }
-  | { status: "pending" }
   | {
       status: "error";
       code?: string;

@@ -8,6 +8,14 @@ import {
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { MemoryRouter, Route, Routes } from "react-router";
 import type { AccountDeletionGateway } from "../api/contracts/account-deletion-gateway";
+import {
+  getAccessToken,
+  setAccessToken,
+} from "~/features/auth/lib/accessTokenStore";
+import {
+  getRefreshTokenId,
+  setRefreshTokenId,
+} from "~/features/auth/lib/refreshTokenStore";
 
 const mocks = vi.hoisted(() => ({
   confirmAccountDeletion: vi.fn(),
@@ -23,6 +31,8 @@ import { AccountDeletionCallbackPage } from "../pages/AccountDeletionCallbackPag
 afterEach(() => {
   cleanup();
   mocks.confirmAccountDeletion.mockReset();
+  setAccessToken(null);
+  setRefreshTokenId(null);
   window.localStorage.clear();
   window.sessionStorage.clear();
 });
@@ -49,7 +59,10 @@ function renderPage() {
   );
 }
 describe("AccountDeletionCallbackPage", () => {
-  it("本人確認後に最終確認を表示し、削除送信中は多重送信を防ぐ", async () => {
+  it("本人確認後に最終確認を表示し、削除送信中は多重送信を防ぎ、通常ログイン情報を保持する", async () => {
+    setAccessToken("existing-access-token");
+    setRefreshTokenId("existing-refresh-id");
+
     let resolveDeletion: (value: { status: "done" }) => void = () => {};
     mocks.confirmAccountDeletion.mockReturnValue(
       new Promise((resolve) => {
@@ -93,12 +106,14 @@ describe("AccountDeletionCallbackPage", () => {
 
     await waitFor(() =>
       expect(
-        screen.getByRole("heading", { name: "削除を受け付けました" })
+        screen.getByRole("heading", { name: "削除が完了しました" })
       ).toBeInTheDocument()
     );
     expect(
-      screen.getByText("このアカウントは利用できなくなります。")
+      screen.getByText("このアカウントでは利用できません。")
     ).toBeInTheDocument();
+    expect(getAccessToken()).toBe("existing-access-token");
+    expect(getRefreshTokenId()).toBe("existing-refresh-id");
   });
 
   it("削除せず終了すると削除APIを呼ばずログイン画面へ戻る", async () => {
@@ -124,29 +139,35 @@ describe("AccountDeletionCallbackPage", () => {
     ).toBeNull();
   });
 
-  it("削除処理中も完了案内を表示する", () => {
-    render(
-      <MemoryRouter>
-        <AccountDeletionCallbackPage
-          data={{ status: "pending" }}
-          gateway={testGateway}
-        />
-      </MemoryRouter>
+  it("すでに削除済みの場合は完了案内を表示する", async () => {
+    mocks.confirmAccountDeletion.mockResolvedValue({
+      status: "error",
+      code: "ACCOUNT_ALREADY_PURGED",
+      message: "削除処理はすでに完了しています。",
+      reason: "generic",
+    });
+
+    renderPage();
+    fireEvent.click(
+      screen.getByRole("button", { name: "アカウントを削除する" })
     );
 
+    await waitFor(() =>
+      expect(
+        screen.getByRole("heading", { name: "削除処理は完了しています" })
+      ).toBeInTheDocument()
+    );
     expect(
-      screen.getByRole("heading", { name: "削除を受け付けました" })
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText("このアカウントは利用できなくなります。")
+      screen.getByText("このアカウントでは利用できません。")
     ).toBeInTheDocument();
   });
 
-  it("Token無効時は本人確認からやり直せる", async () => {
+  it("Token無効時は認証からやり直せる", async () => {
     mocks.confirmAccountDeletion.mockResolvedValue({
       status: "error",
       code: "DELETION_CONFIRMATION_TOKEN_INVALID",
-      message: "本人確認をやり直してください。",
+      message:
+        "Microsoft アカウントの認証情報が無効か、有効期限が切れている可能性があります。もう一度認証してください。",
       reason: "reauth",
     });
 
@@ -157,24 +178,27 @@ describe("AccountDeletionCallbackPage", () => {
 
     await waitFor(() =>
       expect(
-        screen.getByText("本人確認をやり直してください。")
+        screen.getByText(
+          "Microsoft アカウントの認証情報が無効か、有効期限が切れている可能性があります。もう一度認証してください。"
+        )
       ).toBeInTheDocument()
     );
     expect(
       screen.getByRole("link", {
-        name: "Microsoft アカウントで本人確認をやり直す",
+        name: "アカウント削除ページに戻る",
       })
     ).toHaveAttribute("href", "/account-deletion");
   });
 
-  it("削除受付済みエラーを利用者向けに表示する", () => {
+  it("サーバーエラーでは重複した説明を表示せず、削除受付ページへ戻れる", () => {
     render(
       <MemoryRouter>
         <AccountDeletionCallbackPage
           data={{
             status: "error",
-            message: "このアカウントはすでに削除受付済みです。",
-            reason: "already-deleted",
+            message:
+              "削除受付サービスでエラーが発生しました。時間をおいてもう一度お試しください。",
+            reason: "generic",
           }}
           gateway={testGateway}
         />
@@ -182,7 +206,15 @@ describe("AccountDeletionCallbackPage", () => {
     );
 
     expect(
-      screen.getByRole("heading", { name: "削除受付済みです" })
+      screen.getByRole("heading", { name: "サーバーでエラーが発生しました" })
     ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "削除受付サービスでエラーが発生しました。時間をおいてもう一度お試しください。"
+      )
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: "アカウント削除ページに戻る" })
+    ).toHaveAttribute("href", "/account-deletion");
   });
 });

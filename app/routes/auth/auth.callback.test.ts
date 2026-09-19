@@ -5,11 +5,13 @@ vi.mock("~/config/env", () => ({
 }));
 
 const mocks = vi.hoisted(() => ({
+  clearDeletionAuthResult: vi.fn(),
   consumeDeletionAuthPending: vi.fn(),
   saveDeletionAuthResult: vi.fn(),
 }));
 
 vi.mock("~/features/account-deletion/lib/deletionAuthFlow", () => ({
+  clearDeletionAuthResult: mocks.clearDeletionAuthResult,
   consumeDeletionAuthPending: mocks.consumeDeletionAuthPending,
   saveDeletionAuthResult: mocks.saveDeletionAuthResult,
 }));
@@ -26,6 +28,7 @@ afterEach(() => {
   setAccessToken(null);
   setRefreshTokenId(null);
   mocks.consumeDeletionAuthPending.mockReset();
+  mocks.clearDeletionAuthResult.mockReset();
   mocks.saveDeletionAuthResult.mockReset();
   mocks.consumeDeletionAuthPending.mockReturnValue(false);
 });
@@ -82,7 +85,7 @@ describe("auth.callback clientLoader", () => {
     expect(getAccessToken()).toBeNull();
   });
 
-  it("削除Token取得エラーを技術コードではなく日本語で保存する", async () => {
+  it("アカウント未登録エラーは削除受付ページへ戻し、日本語のエラーを保存する", async () => {
     mocks.consumeDeletionAuthPending.mockReturnValue(true);
     vi.stubGlobal(
       "fetch",
@@ -102,14 +105,49 @@ describe("auth.callback clientLoader", () => {
       )
     );
 
-    await getRedirectLocation(
+    const location = await getRedirectLocation(
       clientLoader({ request: makeRequest("?code=abc&state=xyz") })
     );
 
-    expect(mocks.saveDeletionAuthResult).toHaveBeenCalledWith({
-      status: "error",
-      message: "このMicrosoft アカウントに対応するアカウントが見つかりません。",
-    });
+    expect(location).toBe("/account-deletion?error=account_not_found");
+    expect(mocks.clearDeletionAuthResult).toHaveBeenCalledTimes(1);
+    expect(mocks.saveDeletionAuthResult).not.toHaveBeenCalled();
+  });
+
+  it("削除認証のキャンセルは通常ログインへ進まず削除フローへ戻す", async () => {
+    mocks.consumeDeletionAuthPending.mockReturnValue(true);
+    setAccessToken("existing-access-token");
+    setRefreshTokenId("existing-refresh-id");
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+
+    const location = await getRedirectLocation(
+      clientLoader({
+        request: makeRequest("?error=access_denied&state=deletion-state"),
+      })
+    );
+
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(location).toBe("/account-deletion?error=auth_failed");
+    expect(mocks.clearDeletionAuthResult).toHaveBeenCalledTimes(1);
+    expect(mocks.saveDeletionAuthResult).not.toHaveBeenCalled();
+    expect(getAccessToken()).toBe("existing-access-token");
+  });
+
+  it("通常ログインのキャンセルはログイン画面へ戻す", async () => {
+    mocks.consumeDeletionAuthPending.mockReturnValue(false);
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+
+    const location = await getRedirectLocation(
+      clientLoader({
+        request: makeRequest("?error=access_denied&state=login-state"),
+      })
+    );
+
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(location).toBe("/login?error=auth_failed");
+    expect(mocks.saveDeletionAuthResult).not.toHaveBeenCalled();
   });
 
   it("通常ログイン成功時は従来どおり通常Tokenを保存する", async () => {

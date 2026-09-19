@@ -1,4 +1,4 @@
-import { useLoaderData } from "react-router";
+import { redirect, useLoaderData } from "react-router";
 
 import { httpAccountDeletionGateway } from "~/features/account-deletion/api/http/account-deletion-gateway";
 import { AccountDeletionCallbackPage } from "~/features/account-deletion/pages/AccountDeletionCallbackPage";
@@ -15,26 +15,15 @@ export function meta() {
     { name: "color-scheme", content: "light" },
   ];
 }
-const missingResultMessage =
-  "本人確認の結果を確認できませんでした。削除受付ページからやり直してください。";
-
 export async function clientLoader(): Promise<AccountDeletionCallbackData> {
   const result = consumeDeletionAuthResult();
 
   if (!result) {
-    return {
-      status: "error",
-      message: missingResultMessage,
-      reason: "reauth",
-    };
+    throw redirect("/account-deletion?error=auth_required");
   }
 
   if (result.status === "error") {
-    return {
-      status: "error",
-      message: result.message,
-      reason: "reauth",
-    };
+    throw redirect("/account-deletion?error=auth_failed");
   }
 
   return toConfirmationData(result);

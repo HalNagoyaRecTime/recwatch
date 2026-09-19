@@ -85,7 +85,7 @@ describe("confirmAccountDeletion", () => {
       status: "error",
       code: "DELETION_CONFIRMATION_TOKEN_INVALID",
       message:
-        "本人確認の有効期限が切れたか、確認情報が無効です。Microsoft アカウントで本人確認をやり直してください。",
+        "Microsoft アカウントの認証情報が無効か、有効期限が切れている可能性があります。もう一度認証してください。",
       reason: "reauth",
     });
   });

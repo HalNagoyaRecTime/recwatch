@@ -1,11 +1,8 @@
 import { redirect } from "react-router";
 import { buildBackendUrl } from "~/config/env";
 import {
-  accountDeletionUnavailableMessage,
-  getAccountDeletionErrorMessage,
-} from "~/features/account-deletion/api/http/account-deletion-gateway";
-import {
   consumeDeletionAuthPending,
+  clearDeletionAuthResult,
   saveDeletionAuthResult,
 } from "~/features/account-deletion/lib/deletionAuthFlow";
 import { setAccessToken } from "~/features/auth/lib/accessTokenStore";
@@ -58,8 +55,28 @@ function isBackendErrorResponse(value: unknown): value is BackendErrorResponse {
   );
 }
 
-const deletionAuthFailedMessage =
-  "本人確認を完了できませんでした。削除受付ページからもう一度お試しください。";
+function getDeletionAuthErrorQuery(
+  response: Response | null,
+  code?: string
+): string {
+  if (code === "ACCOUNT_NOT_FOUND") {
+    return "account_not_found";
+  }
+
+  if (!response) {
+    return "service_unavailable";
+  }
+
+  if (response.status >= 500) {
+    return "service_unavailable";
+  }
+
+  return "auth_failed";
+}
+
+function redirectToAccountDeletion(error: string): never {
+  throw redirect(`/account-deletion?error=${error}`);
+}
 
 async function handleDeletionAuthCallback(
   code: string | null,
@@ -67,20 +84,14 @@ async function handleDeletionAuthCallback(
   error: string | null
 ) {
   if (error || !code || !state) {
-    saveDeletionAuthResult({
-      status: "error",
-      message: deletionAuthFailedMessage,
-    });
-    throw redirect("/account-deletion/callback");
+    clearDeletionAuthResult();
+    redirectToAccountDeletion("auth_failed");
   }
 
   const deleteTokenUrl = buildBackendUrl("/api/v1/auth/microsoft/delete-token");
   if (!deleteTokenUrl) {
-    saveDeletionAuthResult({
-      status: "error",
-      message: deletionAuthFailedMessage,
-    });
-    throw redirect("/account-deletion/callback");
+    clearDeletionAuthResult();
+    redirectToAccountDeletion("service_unavailable");
   }
 
   const response = await fetch(deleteTokenUrl, {
@@ -99,13 +110,8 @@ async function handleDeletionAuthCallback(
     const code = isBackendErrorResponse(payload)
       ? payload.error.code
       : undefined;
-    saveDeletionAuthResult({
-      status: "error",
-      message: response
-        ? getAccountDeletionErrorMessage(code, response.status)
-        : accountDeletionUnavailableMessage,
-    });
-    throw redirect("/account-deletion/callback");
+    clearDeletionAuthResult();
+    redirectToAccountDeletion(getDeletionAuthErrorQuery(response, code));
   }
 
   saveDeletionAuthResult({

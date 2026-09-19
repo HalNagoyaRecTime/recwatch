@@ -27,14 +27,18 @@ describe("account-deletion.callback clientLoader", () => {
     });
   });
 
-  it("結果が無い直接アクセスや再読込は本人確認やり直しのエラーになる", async () => {
+  it("結果が無い直接アクセスや再読込は削除受付ページへ戻す", async () => {
     mocks.consumeDeletionAuthResult.mockReturnValue(null);
 
-    await expect(clientLoader()).resolves.toEqual({
-      status: "error",
-      message:
-        "本人確認の結果を確認できませんでした。削除受付ページからやり直してください。",
-      reason: "reauth",
-    });
+    try {
+      await clientLoader();
+      throw new Error("expected a redirect");
+    } catch (error) {
+      expect(error).toBeInstanceOf(Response);
+      expect((error as Response).status).toBe(302);
+      expect((error as Response).headers.get("Location")).toBe(
+        "/account-deletion?error=auth_required"
+      );
+    }
   });
 });

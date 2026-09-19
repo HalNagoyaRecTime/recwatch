@@ -1,5 +1,6 @@
 import { useState } from "react";
 
+import { getAccountDeletionInitialErrorMessage } from "~/features/account-deletion/api/http/account-deletion-gateway";
 import type { AccountDeletionGateway } from "~/features/account-deletion/api/contracts/account-deletion-gateway";
 import { AccountDeletionLayout } from "~/features/account-deletion/components/AccountDeletionLayout";
 import { AccountDeletionMicrosoftButton } from "~/features/account-deletion/components/AccountDeletionMicrosoftButton";
@@ -8,11 +9,15 @@ import { AuthErrorMessage } from "~/features/auth/components/AuthErrorMessage";
 
 export function AccountDeletionPage({
   gateway,
+  initialError,
 }: {
   gateway: AccountDeletionGateway;
+  initialError?: string | null;
 }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [errorMessage, setErrorMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState(() =>
+    getAccountDeletionInitialErrorMessage(initialError ?? null)
+  );
 
   async function handleStartDeletion() {
     if (isSubmitting) return;
