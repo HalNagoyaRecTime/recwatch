@@ -66,8 +66,8 @@ export function AccountDeletionPage({
             : "Microsoftアカウントで本人確認する"}
         </AccountDeletionMicrosoftButton>
         <div className="text-text-muted flex items-center gap-1">
-          <Info size={15} />
-          <p className="mx-auto w-full text-[12px] leading-6">
+          <Info size={16} className="mb-px shrink-0" />
+          <p className="text-[12px] leading-4">
             Microsoft アカウントが削除されることはありません。
           </p>
         </div>

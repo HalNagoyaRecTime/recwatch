@@ -80,6 +80,28 @@ describe("AccountDeletionPage", () => {
     expect(microsoftButton.querySelectorAll("rect")).toHaveLength(4);
   });
 
+  it("Safari向けのスクロール設定を表示中だけ適用し、終了時に戻す", () => {
+    const { unmount } = renderPage();
+
+    expect(screen.getByRole("main")).toHaveClass(
+      "account-deletion-viewport",
+      "min-h-screen",
+      "min-h-dvh"
+    );
+    expect(document.documentElement.style.background).toBe(
+      "rgb(255, 255, 255)"
+    );
+    expect(document.body.style.height).toBe("auto");
+    expect(document.body.style.overflowY).toBe("auto");
+    expect(document.body.style.background).toBe("transparent");
+
+    unmount();
+
+    expect(document.documentElement.style.background).toBe("");
+    expect(document.body.style.height).toBe("");
+    expect(document.body.style.overflowY).toBe("");
+    expect(document.body.style.background).toBe("");
+  });
   it("dark祖先でもライトテーマの背景を維持する", () => {
     render(
       <div className="dark">

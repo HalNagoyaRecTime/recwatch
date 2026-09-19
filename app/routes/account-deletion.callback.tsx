@@ -8,6 +8,12 @@ import {
   type DeletionAuthResult,
 } from "~/features/account-deletion/lib/deletionAuthFlow";
 
+export function meta() {
+  return [
+    { name: "theme-color", content: "#ffffff" },
+    { name: "color-scheme", content: "light" },
+  ];
+}
 const missingResultMessage =
   "本人確認の結果を確認できませんでした。削除受付ページからやり直してください。";
 

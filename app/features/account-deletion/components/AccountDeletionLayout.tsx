@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import type { CSSProperties, ReactNode } from "react";
 
 import { AccountDeletionBrand } from "~/features/account-deletion/components/AccountDeletionBrand";
@@ -41,14 +42,89 @@ const accountDeletionThemeStyle = {
   "--shadow-soft": "0 20px 45px rgba(15, 23, 42, 0.12)",
 } as CSSProperties;
 
+function useAccountDeletionViewport() {
+  useEffect(() => {
+    const root = document.documentElement;
+    const body = document.body;
+    const app = document.getElementById("app");
+    const viewportMeta = document.querySelector<HTMLMetaElement>(
+      'meta[name="viewport"]'
+    );
+    const previousBodyStyle = {
+      height: body.style.height,
+      minHeight: body.style.minHeight,
+      overflowX: body.style.overflowX,
+      overflowY: body.style.overflowY,
+      overscrollBehaviorY: body.style.overscrollBehaviorY,
+      background: body.style.background,
+    };
+    const previousRootStyle = {
+      background: root.style.background,
+      backgroundColor: root.style.backgroundColor,
+    };
+    const previousAppStyle = app
+      ? {
+          height: app.style.height,
+          minHeight: app.style.minHeight,
+        }
+      : null;
+    const previousViewportContent = viewportMeta?.content ?? null;
+
+    root.style.background = "#ffffff";
+    body.style.height = "auto";
+    body.style.minHeight = "100%";
+    body.style.overflowX = "hidden";
+    body.style.overflowY = "auto";
+    body.style.overscrollBehaviorY = "auto";
+    body.style.background = "transparent";
+
+    if (app) {
+      app.style.height = "auto";
+      app.style.minHeight = "100%";
+    }
+
+    if (viewportMeta && !viewportMeta.content.includes("viewport-fit=cover")) {
+      viewportMeta.content = `${viewportMeta.content}, viewport-fit=cover`;
+    }
+
+    return () => {
+      root.style.background = previousRootStyle.background;
+      root.style.backgroundColor = previousRootStyle.backgroundColor;
+      body.style.height = previousBodyStyle.height;
+      body.style.minHeight = previousBodyStyle.minHeight;
+      body.style.overflowX = previousBodyStyle.overflowX;
+      body.style.overflowY = previousBodyStyle.overflowY;
+      body.style.overscrollBehaviorY = previousBodyStyle.overscrollBehaviorY;
+      body.style.background = previousBodyStyle.background;
+
+      if (app && previousAppStyle) {
+        app.style.height = previousAppStyle.height;
+        app.style.minHeight = previousAppStyle.minHeight;
+      }
+
+      if (viewportMeta && previousViewportContent !== null) {
+        viewportMeta.content = previousViewportContent;
+      }
+    };
+  }, []);
+}
+
 export function AccountDeletionLayout({
   children,
   contentClassName = "flex w-full max-w-md flex-1 flex-col justify-center gap-4",
 }: AccountDeletionLayoutProps) {
+  useAccountDeletionViewport();
+
   return (
     <main
-      className="flex min-h-dvh flex-col items-center justify-center-safe overflow-y-auto bg-white px-6 py-8 text-[#333333] sm:px-6"
-      style={accountDeletionThemeStyle}
+      className="account-deletion-viewport flex min-h-dvh min-h-screen flex-col items-center justify-center-safe overflow-y-auto bg-white px-6 py-8 text-[#333333] sm:px-6"
+      style={{
+        ...accountDeletionThemeStyle,
+        background:
+          "linear-gradient(to bottom, #ffffff 0%, #ffffff calc(100% - env(safe-area-inset-bottom, 0px)), transparent calc(100% - env(safe-area-inset-bottom, 0px)), transparent 100%)",
+        paddingTop: "calc(2rem + env(safe-area-inset-top, 0px))",
+        paddingBottom: "calc(2rem + env(safe-area-inset-bottom, 0px))",
+      }}
     >
       <section className={contentClassName}>
         <AccountDeletionBrand />
