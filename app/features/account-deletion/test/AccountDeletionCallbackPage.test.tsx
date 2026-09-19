@@ -59,6 +59,12 @@ describe("AccountDeletionCallbackPage", () => {
 
     renderPage();
     expect(screen.getByText("本人確認が完了しました")).toBeInTheDocument();
+    expect(screen.getByText("RE:CREATION")).toBeInTheDocument();
+    expect(screen.queryByText(/recwatch/i)).not.toBeInTheDocument();
+    expect(screen.getByText("Produced by HAL Nagoya")).toBeInTheDocument();
+    expect(
+      screen.getByText("Developed by RE:CREATION Development Team")
+    ).toBeInTheDocument();
     expect(
       screen.getByRole("heading", {
         name: "RecTimeアカウントを削除しますか？",
@@ -120,6 +126,7 @@ describe("AccountDeletionCallbackPage", () => {
       window.sessionStorage.getItem("rectime_deletion_auth_result")
     ).toBeNull();
   });
+
   it("Token無効時は本人確認からやり直せる", async () => {
     mocks.confirmAccountDeletion.mockResolvedValue({
       status: "error",
@@ -140,7 +147,7 @@ describe("AccountDeletionCallbackPage", () => {
     );
     expect(
       screen.getByRole("link", {
-        name: "Microsoft 365で本人確認をやり直す",
+        name: "Microsoftアカウントで本人確認をやり直す",
       })
     ).toHaveAttribute("href", "/account-deletion");
   });

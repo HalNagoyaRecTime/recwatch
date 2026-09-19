@@ -43,6 +43,23 @@ describe("AccountDeletionPage", () => {
         name: "RecTimeアカウントを削除",
       })
     ).toBeInTheDocument();
+    expect(screen.getByText("RE:CREATION")).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", {
+        level: 1,
+        name: "RecTimeアカウントを削除",
+      })
+    ).toHaveClass("text-[#333333]");
+    expect(
+      screen.getByText(
+        "アカウント削除のため、学校から付与されたMicrosoft 365アカウントで本人確認を行います。"
+      )
+    ).toHaveClass("max-w-md", "text-left");
+    expect(screen.queryByText(/recwatch/i)).not.toBeInTheDocument();
+    expect(screen.getByText("Produced by HAL Nagoya")).toBeInTheDocument();
+    expect(
+      screen.getByText("Developed by RE:CREATION Development Team")
+    ).toBeInTheDocument();
     expect(
       screen.getByText(
         "Microsoft 365アカウント自体が削除されることはありません。"
@@ -50,11 +67,28 @@ describe("AccountDeletionPage", () => {
     ).toBeInTheDocument();
     expect(screen.queryByText("削除される情報")).not.toBeInTheDocument();
     expect(screen.queryByText("お問い合わせ")).not.toBeInTheDocument();
-    expect(
-      screen.getByRole("button", {
-        name: "Microsoft 365で本人確認する",
-      })
-    ).toBeInTheDocument();
+
+    const microsoftButton = screen.getByRole("button", {
+      name: "Microsoftアカウントで本人確認する",
+    });
+    expect(microsoftButton).toBeInTheDocument();
+    expect(microsoftButton).toHaveClass("h-12", "bg-[#333333]", "font-medium");
+    expect(microsoftButton).toHaveStyle({ borderRadius: "4px" });
+    expect(microsoftButton.querySelector("svg")).toHaveClass("h-4.5", "w-4.5");
+    expect(microsoftButton.querySelectorAll("rect")).toHaveLength(4);
+  });
+
+  it("dark祖先でもライトテーマの背景を維持する", () => {
+    render(
+      <div className="dark">
+        <AccountDeletionPage gateway={testGateway} />
+      </div>
+    );
+
+    const main = screen.getByRole("main");
+    expect(main).toHaveClass("bg-white");
+    expect(main.getAttribute("style")).toContain("--text-base");
+    expect(main.getAttribute("style")).toContain("#333333");
   });
 
   it("URLのuserIdやメールアドレスに依存せず表示する", () => {
@@ -89,7 +123,7 @@ describe("AccountDeletionPage", () => {
 
     renderPage();
     const button = screen.getByRole("button", {
-      name: "Microsoft 365で本人確認する",
+      name: "Microsoftアカウントで本人確認する",
     });
 
     fireEvent.click(button);

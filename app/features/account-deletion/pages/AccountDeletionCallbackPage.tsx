@@ -8,7 +8,6 @@ import type {
   ConfirmDeletionResult,
 } from "~/features/account-deletion/api/contracts/account-deletion-gateway";
 import { AccountDeletionLayout } from "~/features/account-deletion/components/AccountDeletionLayout";
-import { accountDeletionContent } from "~/features/account-deletion/content/account-deletion-content";
 import {
   clearDeletionAuthPending,
   clearDeletionAuthResult,
@@ -61,7 +60,8 @@ export function AccountDeletionCallbackPage({
         ({
           status: "error",
           code: "NETWORK_ERROR",
-          message: accountDeletionContent.unavailableMessage,
+          message:
+            "削除受付サービスに接続できませんでした。時間をおいてもう一度お試しください。",
           reason: "generic",
         }) satisfies ConfirmDeletionResult
     );
@@ -227,7 +227,7 @@ function ErrorView({
           size="lg"
           icon={RotateCcw}
         >
-          Microsoft 365で本人確認をやり直す
+          Microsoftアカウントで本人確認をやり直す
         </ButtonLink>
       </div>
       <Link

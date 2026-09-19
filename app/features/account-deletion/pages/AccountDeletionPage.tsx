@@ -2,10 +2,9 @@ import { useState } from "react";
 
 import type { AccountDeletionGateway } from "~/features/account-deletion/api/contracts/account-deletion-gateway";
 import { AccountDeletionLayout } from "~/features/account-deletion/components/AccountDeletionLayout";
-import { accountDeletionContent } from "~/features/account-deletion/content/account-deletion-content";
+import { AccountDeletionMicrosoftButton } from "~/features/account-deletion/components/AccountDeletionMicrosoftButton";
+
 import { AuthErrorMessage } from "~/features/auth/components/AuthErrorMessage";
-import { AuthPrimaryButton } from "~/features/auth/components/AuthPrimaryButton";
-import { MicrosoftLogo } from "~/features/auth/components/MicrosoftLogo";
 
 export function AccountDeletionPage({
   gateway,
@@ -25,7 +24,8 @@ export function AccountDeletionPage({
       () =>
         ({
           ok: false,
-          message: accountDeletionContent.unavailableMessage,
+          message:
+            "削除受付サービスに接続できませんでした。時間をおいてもう一度お試しください。",
         }) as const
     );
 
@@ -41,39 +41,31 @@ export function AccountDeletionPage({
 
   return (
     <AccountDeletionLayout>
-      <header className="space-y-3 text-center">
-        <p className="text-brand-primary text-xs font-semibold tracking-[0.16em] uppercase">
-          アカウント削除手続き
-        </p>
-        <h1 className="text-text-base text-2xl font-semibold tracking-tight sm:text-3xl">
-          {accountDeletionContent.title}
+      <header className="space-y-2 text-center">
+        <h1 className="text-2xl font-semibold tracking-tight text-[#333333] sm:text-3xl">
+          Accountを削除
         </h1>
-        <p className="text-text-muted text-sm leading-7">
-          {accountDeletionContent.lead}
+        <p className="text-text-muted mx-auto w-full max-w-md text-left text-sm leading-7">
+          Microsoftアカウントで本人確認を行います。
         </p>
       </header>
 
-      <section className="border-border-base bg-surface-base shadow-soft app-rounded border p-5">
-        <p className="text-text-muted text-sm leading-6">
-          {accountDeletionContent.microsoftAccountNotice}
+      <section className="mb-10 space-y-4">
+        <p className="text-text-muted mx-auto w-full max-w-md text-left text-sm leading-6">
+          Microsoft アカウント自体が削除されることはありません。
         </p>
         {errorMessage ? (
-          <div className="mt-4">
-            <AuthErrorMessage>{errorMessage}</AuthErrorMessage>
-          </div>
+          <AuthErrorMessage>{errorMessage}</AuthErrorMessage>
         ) : null}
-
-        <AuthPrimaryButton
-          className="mt-5 gap-3"
+        <AccountDeletionMicrosoftButton
           onClick={handleStartDeletion}
           disabled={isSubmitting}
-          aria-busy={isSubmitting}
+          isLoading={isSubmitting}
         >
-          <MicrosoftLogo />
           {isSubmitting
             ? "本人確認を開始しています..."
-            : "Microsoft 365で本人確認する"}
-        </AuthPrimaryButton>
+            : "Microsoftアカウントで本人確認する"}
+        </AccountDeletionMicrosoftButton>
       </section>
     </AccountDeletionLayout>
   );
