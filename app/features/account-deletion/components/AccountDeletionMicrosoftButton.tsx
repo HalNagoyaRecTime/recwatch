@@ -33,7 +33,7 @@ export function AccountDeletionMicrosoftButton({
       {...props}
       aria-busy={isLoading}
       className={[
-        "app-rounded flex h-12 w-full cursor-pointer items-center justify-center gap-3 bg-[#333333] text-sm font-medium text-white transition-opacity",
+        "flex h-12 w-full cursor-pointer items-center justify-center gap-3 rounded-sm bg-[#333333] text-sm font-medium text-white transition-opacity",
         "hover:bg-[#333333]/90 focus-visible:ring-2 focus-visible:ring-[#333333] focus-visible:ring-offset-2 focus-visible:outline-none",
         "disabled:cursor-not-allowed disabled:opacity-70",
         className,
@@ -41,7 +41,6 @@ export function AccountDeletionMicrosoftButton({
         .filter(Boolean)
         .join(" ")}
       disabled={disabled || isLoading}
-      // style={{ borderRadius: "4px" }}
       type="button"
     >
       <AccountDeletionMicrosoftLogo />
