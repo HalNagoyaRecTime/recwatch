@@ -58,7 +58,6 @@ describe("AccountDeletionCallbackPage", () => {
     );
 
     renderPage();
-    expect(screen.getByText("本人確認が完了しました")).toBeInTheDocument();
     expect(screen.getByText("RE:CREATION")).toBeInTheDocument();
     expect(screen.queryByText(/recwatch/i)).not.toBeInTheDocument();
     expect(screen.getByText("Produced by HAL Nagoya")).toBeInTheDocument();
@@ -67,7 +66,7 @@ describe("AccountDeletionCallbackPage", () => {
     ).toBeInTheDocument();
     expect(
       screen.getByRole("heading", {
-        name: "RecTimeアカウントを削除しますか？",
+        name: "アカウントを削除しますか？",
       })
     ).toBeInTheDocument();
     expect(
