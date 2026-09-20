@@ -3,7 +3,6 @@ const destinationByPath: Readonly<Record<string, string>> = {
   "/events/past": "/events",
   "/events/scoring": "/events",
   "/events/tournament": "/events",
-  "/members/teams": "/members",
   "/reports/detail": "/dashboard",
   "/reports/export": "/dashboard",
   "/reports/summary": "/dashboard",

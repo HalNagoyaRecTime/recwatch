@@ -1,17 +1,17 @@
 import { createPageTitle } from "~/lib/page-title";
-import { MembersPage } from "~/features/members/pages/MembersPage";
+import { EventDetailPage } from "~/features/sports/pages/EventDetailPage";
 import { PagePadding } from "~/features/frame/page-layout/PagePadding";
 import { PageLayout } from "~/features/frame/page-layout/PageLayout";
 
 export function meta() {
-  return [{ title: createPageTitle("学生管理") }];
+  return [{ title: createPageTitle("イベント詳細") }];
 }
 
-export default function MembersRoute() {
+export default function EventDetailRoute() {
   return (
     <PageLayout>
       <PagePadding>
-        <MembersPage />
+        <EventDetailPage />
       </PagePadding>
     </PageLayout>
   );

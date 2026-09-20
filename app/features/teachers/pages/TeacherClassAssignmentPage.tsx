@@ -1,10 +1,8 @@
 import { useTeacherClassAssignment } from "~/features/teachers/application/useTeacherClassAssignment";
-import type { TeacherRow } from "~/features/teachers/model/teacher";
-
-export type ClassRoomOption = {
-  classRoomId: number;
-  className: string;
-};
+import type {
+  ClassRoomOption,
+  TeacherRow,
+} from "~/features/teachers/model/teacher";
 
 export function TeacherClassAssignmentPage({
   teachers,
@@ -83,7 +81,9 @@ export function TeacherClassAssignmentPage({
             </div>
           </div>
           {errorMessage ? (
-            <p className="text-xs text-red-600">{errorMessage}</p>
+            <p className="text-xs text-red-600" role="alert">
+              {errorMessage}
+            </p>
           ) : null}
           <div className="flex gap-3 pt-2">
             <button

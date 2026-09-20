@@ -41,7 +41,7 @@ function renderPage(path: string, load = vi.fn(), save = vi.fn()) {
 }
 
 describe("EventGatheringSettingsPage", () => {
-  it("URL のイベント ID で集合設定を読み込み、保存後に一覧へ戻る", async () => {
+  it("URL のイベント ID で集合設定を読み込み、保存後にイベント詳細へ戻る", async () => {
     const load = vi.fn().mockResolvedValue({ eventId: 7, rounds: [] });
     const save = vi.fn().mockResolvedValue({ eventId: 7, rounds: [] });
     const user = userEvent.setup();
@@ -57,16 +57,18 @@ describe("EventGatheringSettingsPage", () => {
     );
     await waitFor(() => expect(save).toHaveBeenCalledWith(7, { rounds: [] }));
 
-    // 完了画面は同じモーダル内に出て、「一覧へ戻る」で閉じる
+    // 完了画面は同じモーダル内に出て、「イベント詳細へ戻る」で閉じると詳細へ戻る
     expect(
       await screen.findByText("集合設定を保存しました")
     ).toBeInTheDocument();
     expect(screen.getByTestId("location")).toHaveTextContent(
       /^\/events\/7\/gatherings$/
     );
-    await user.click(screen.getByRole("button", { name: "一覧へ戻る" }));
+    await user.click(
+      screen.getByRole("button", { name: "イベント詳細へ戻る" })
+    );
     await waitFor(() =>
-      expect(screen.getByTestId("location")).toHaveTextContent(/^\/events$/)
+      expect(screen.getByTestId("location")).toHaveTextContent(/^\/events\/7$/)
     );
   });
 

@@ -12,24 +12,22 @@ export default [
     route("dashboard", "routes/main/dashboard.tsx"),
     route("events", "routes/main/sports.tsx", [
       route("new", "routes/main/sports.new.tsx"),
-      route(
-        ":competitionId/gatherings",
-        "routes/main/sports.$competitionId.gatherings.tsx"
-      ),
     ]),
     route("events/today", "routes/main/events.today.tsx"),
     route(
       "events/:competitionId/edit",
       "routes/main/sports.$competitionId.edit.tsx"
     ),
+    // 集合設定モーダルはイベント詳細の上に開き、閉じると詳細へ戻る
+    route("events/:competitionId", "routes/main/sports.$competitionId.tsx", [
+      route("gatherings", "routes/main/sports.$competitionId.gatherings.tsx"),
+    ]),
     route("notifications", "routes/main/notifications.tsx"),
     route("notifications/new", "routes/main/notifications.new.tsx"),
     route("students", "routes/main/students.tsx"),
     route("students/import", "routes/main/students.import.tsx"),
     route("teams", "routes/main/teams.tsx"),
     route("ranking", "routes/main/ranking.tsx"),
-    route("members", "routes/main/members.tsx"),
-    route("members/import", "routes/main/members.import.tsx"),
     route("classroom", "routes/main/classRoom.tsx"),
     route("teachers", "routes/main/teachers.tsx", [
       route("new", "routes/main/teachers.new.tsx"),

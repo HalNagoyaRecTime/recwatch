@@ -49,7 +49,7 @@ describe("navigation search results", () => {
     );
 
     expect(filterNavigationSearchResults("CSV")).toEqual([
-      expect.objectContaining({ title: "学生管理", to: "/members" }),
+      expect.objectContaining({ title: "学生管理", to: "/students" }),
     ]);
   });
 

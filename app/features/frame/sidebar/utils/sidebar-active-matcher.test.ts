@@ -69,6 +69,26 @@ describe("isSidebarItemActive", () => {
     expect(isSidebarItemActive(eventsList, "/events/assignments")).toBe(false);
   });
 
+  it("イベント一覧は詳細・集合設定でも選択し、除外した固定パスでは選択しない", () => {
+    const eventsList = item({
+      id: "events-list",
+      label: "イベント一覧",
+      to: "/events",
+      activePatterns: [
+        "/events",
+        "/events/:competitionId",
+        "/events/:competitionId/gatherings",
+      ],
+      activeExclusions: ["/events/today", "/events/assignments"],
+    });
+
+    expect(isSidebarItemActive(eventsList, "/events/12")).toBe(true);
+    expect(isSidebarItemActive(eventsList, "/events/12/gatherings")).toBe(true);
+    // `:competitionId` に一致してしまう固定パスは除外で弾く
+    expect(isSidebarItemActive(eventsList, "/events/today")).toBe(false);
+    expect(isSidebarItemActive(eventsList, "/events/assignments")).toBe(false);
+  });
+
   it("イベント一覧の派生ページを親フォルダーで選択する", () => {
     const events = item({
       id: "events",
@@ -88,25 +108,25 @@ describe("isSidebarItemActive", () => {
     expect(isSidebarItemActive(events, "/events/123/edit")).toBe(true);
   });
 
-  it("表示されないインポート画面はユーザー親をフォールバック選択する", () => {
-    const members = item({
-      id: "members",
-      label: "ユーザー",
+  it("表示されないインポート画面はユーザー管理親をフォールバック選択する", () => {
+    const userManagement = item({
+      id: "user-management",
+      label: "ユーザー管理",
       to: undefined,
-      activePatterns: ["/members/import"],
+      activePatterns: ["/students/import"],
       children: [
         item({
-          id: "members-list",
+          id: "students-list",
           label: "学生管理",
-          to: "/members",
+          to: "/students",
         }),
       ],
     });
 
-    expect(isSidebarItemActive(members, "/members/import")).toBe(true);
-    expect(isSidebarItemActive(members.children![0], "/members/import")).toBe(
-      false
-    );
+    expect(isSidebarItemActive(userManagement, "/students/import")).toBe(true);
+    expect(
+      isSidebarItemActive(userManagement.children![0], "/students/import")
+    ).toBe(false);
   });
 
   it("子ページがactiveなら親フォルダをactiveにする", () => {
