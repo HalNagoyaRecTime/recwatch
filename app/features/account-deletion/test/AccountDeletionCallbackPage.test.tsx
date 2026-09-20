@@ -9,14 +9,6 @@ import {
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { MemoryRouter, Route, Routes } from "react-router";
 import type { AccountDeletionGateway } from "../api/contracts/account-deletion-gateway";
-import {
-  getAccessToken,
-  setAccessToken,
-} from "~/features/auth/lib/accessTokenStore";
-import {
-  getRefreshTokenId,
-  setRefreshTokenId,
-} from "~/features/auth/lib/refreshTokenStore";
 
 const mocks = vi.hoisted(() => ({
   confirmAccountDeletion: vi.fn(),
@@ -32,8 +24,6 @@ import { AccountDeletionCallbackPage } from "../pages/AccountDeletionCallbackPag
 afterEach(() => {
   cleanup();
   mocks.confirmAccountDeletion.mockReset();
-  setAccessToken(null);
-  setRefreshTokenId(null);
   window.localStorage.clear();
   window.sessionStorage.clear();
 });
@@ -71,10 +61,7 @@ function confirmDeletion() {
 }
 
 describe("AccountDeletionCallbackPage", () => {
-  it("本人確認後に最終確認を表示し、削除送信中は多重送信を防ぎ、通常ログイン情報を保持する", async () => {
-    setAccessToken("existing-access-token");
-    setRefreshTokenId("existing-refresh-id");
-
+  it("本人確認後に最終確認を表示し、削除送信中は多重送信を防ぐ", async () => {
     let resolveDeletion: (value: { status: "done" }) => void = () => {};
     mocks.confirmAccountDeletion.mockReturnValue(
       new Promise((resolve) => {
@@ -125,8 +112,6 @@ describe("AccountDeletionCallbackPage", () => {
     expect(
       screen.queryByText("このアカウントでは利用できません。")
     ).not.toBeInTheDocument();
-    expect(getAccessToken()).toBe("existing-access-token");
-    expect(getRefreshTokenId()).toBe("existing-refresh-id");
   });
 
   it("確認モーダルでキャンセルすると削除APIを呼ばない", () => {

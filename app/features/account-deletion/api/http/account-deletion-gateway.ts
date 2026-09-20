@@ -1,5 +1,5 @@
 import { buildBackendUrl, hasBackendBaseUrl } from "~/config/env";
-import { WEB_CLIENT_HEADERS } from "~/features/auth/lib/webClientHeaders";
+import { WEB_CLIENT_HEADERS } from "~/lib/web-client-headers";
 import type {
   AccountDeletionErrorReason,
   AccountDeletionGateway,
