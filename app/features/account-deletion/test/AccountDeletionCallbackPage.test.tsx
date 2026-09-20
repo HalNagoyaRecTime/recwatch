@@ -54,7 +54,7 @@ function renderPage() {
             />
           }
         />
-        <Route path="/login" element={<p>ログインページ</p>} />
+        <Route path="/account-deletion" element={<p>アカウント削除ページ</p>} />
       </Routes>
     </MemoryRouter>
   );
@@ -142,7 +142,7 @@ describe("AccountDeletionCallbackPage", () => {
     expect(mocks.confirmAccountDeletion).not.toHaveBeenCalled();
   });
 
-  it("削除せず終了すると削除APIを呼ばずログイン画面へ戻る", async () => {
+  it("削除せず終了すると削除APIを呼ばずアカウント削除ページへ戻る", async () => {
     window.sessionStorage.setItem("rectime_deletion_auth_pending", "1");
     window.sessionStorage.setItem(
       "rectime_deletion_auth_result",
@@ -155,7 +155,7 @@ describe("AccountDeletionCallbackPage", () => {
     renderPage();
     fireEvent.click(screen.getByRole("button", { name: "キャンセル" }));
 
-    expect(await screen.findByText("ログインページ")).toBeInTheDocument();
+    expect(await screen.findByText("アカウント削除ページ")).toBeInTheDocument();
     expect(mocks.confirmAccountDeletion).not.toHaveBeenCalled();
     expect(
       window.sessionStorage.getItem("rectime_deletion_auth_pending")

@@ -42,7 +42,7 @@ export function AccountDeletionCallbackPage({
   function handleCancelDeletion() {
     clearDeletionAuthPending();
     clearDeletionAuthResult();
-    navigate("/login", { replace: true });
+    navigate("/account-deletion", { replace: true });
   }
 
   async function handleConfirmDeletion() {
@@ -127,17 +127,17 @@ function ConfirmationView({
         </h1>
       </header>
 
-      <section className="rounded-lg border border-[#dddfe1] bg-[#f4f4f4] p-5 text-[#333333]">
+      <section className="border-border-base bg-surface-muted text-text-base rounded-lg border p-5">
         <h2 className="text-sm font-semibold">確認事項</h2>
         <div className="mt-4 space-y-3">
           <p className="flex items-start gap-2 text-sm leading-6">
             <TriangleAlert
               aria-hidden="true"
-              className="mt-0.5 size-4 shrink-0 text-[#d97706]"
+              className="text-tone-warning-text mt-0.5 size-4 shrink-0"
             />
             <span>この操作は取り消せません。</span>
           </p>
-          <p className="flex items-start gap-2 text-xs leading-5 text-[#808080]">
+          <p className="text-text-muted flex items-start gap-2 text-xs leading-5">
             <Info aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
             <span>Microsoft アカウントが削除されることはありません。</span>
           </p>
@@ -153,7 +153,7 @@ function ConfirmationView({
           アカウントを削除する
         </DeleteActionButton>
         <button
-          className="inline-flex h-11 shrink-0 cursor-pointer items-center justify-center gap-2 rounded-lg bg-transparent px-4 text-sm font-medium text-[#808080] transition-colors hover:bg-[#f4f4f4] hover:text-[#333333] disabled:pointer-events-none disabled:opacity-50"
+          className="text-text-muted hover:bg-surface-hover hover:text-text-base inline-flex h-11 shrink-0 cursor-pointer items-center justify-center gap-2 rounded-lg bg-transparent px-4 text-sm font-medium transition-colors disabled:pointer-events-none disabled:opacity-50"
           onClick={onCancel}
           type="button"
         >
@@ -178,7 +178,7 @@ function DeleteActionButton({
   return (
     <button
       type="button"
-      className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-[#dc2626] px-4 font-medium text-white transition-colors hover:brightness-90 disabled:pointer-events-none disabled:opacity-50"
+      className="bg-tone-danger-text inline-flex h-12 w-full items-center justify-center gap-2 rounded-lg px-4 font-medium text-white transition-colors hover:brightness-90 disabled:pointer-events-none disabled:opacity-50"
       onClick={onClick}
       disabled={disabled || isSubmitting}
       aria-busy={isSubmitting}
@@ -226,18 +226,18 @@ function DeleteConfirmationModal({
         aria-describedby={descriptionId}
         aria-labelledby={titleId}
         aria-modal="true"
-        className="w-full max-w-md overflow-hidden rounded-lg border border-[#dddfe1] bg-white px-5 shadow-lg"
+        className="border-border-base bg-surface-base w-full max-w-md overflow-hidden rounded-lg border px-5 shadow-lg"
         role="dialog"
       >
         <header className="flex flex-col items-center justify-between gap-2 pt-6 pb-3">
           <h2
-            className="w-fit text-lg leading-tight font-semibold text-[#333333]"
+            className="text-text-base w-fit text-lg leading-tight font-semibold"
             id={titleId}
           >
             本当にアカウントを削除しますか？
           </h2>
           <p
-            className="w-fit text-sm leading-6 text-[#808080]"
+            className="text-text-muted w-fit text-sm leading-6"
             id={descriptionId}
           >
             この操作は取り消せません。
@@ -250,7 +250,7 @@ function DeleteConfirmationModal({
               削除する
             </DeleteActionButton>
             <button
-              className="inline-flex h-12 w-full items-center justify-center rounded-lg border border-[#dddfe1] bg-white px-4 text-base font-medium text-[#808080] transition-colors hover:border-[#c5c7cc] hover:text-[#333333] disabled:pointer-events-none disabled:opacity-50"
+              className="border-border-base bg-surface-base text-text-muted hover:border-border-strong hover:text-text-base inline-flex h-12 w-full items-center justify-center rounded-lg border px-4 text-base font-medium transition-colors disabled:pointer-events-none disabled:opacity-50"
               disabled={isSubmitting}
               onClick={onClose}
               type="button"
@@ -275,9 +275,9 @@ function CompletionView({
         <div className="flex items-center justify-center gap-2">
           <CheckCircle2
             aria-hidden="true"
-            className="size-5 shrink-0 text-[#15803d]"
+            className="text-tone-success-text size-5 shrink-0"
           />
-          <h1 className="text-xl leading-tight font-semibold text-[#333333] sm:text-2xl">
+          <h1 className="text-text-base text-xl leading-tight font-semibold sm:text-2xl">
             {alreadyCompleted
               ? "削除処理は完了しています"
               : "削除が完了しました"}
@@ -303,14 +303,14 @@ function ErrorView({
   return (
     <div className="space-y-5 text-center">
       <header>
-        <h1 className="text-xl leading-tight font-semibold text-[#333333] sm:text-2xl">
+        <h1 className="text-text-base text-xl leading-tight font-semibold sm:text-2xl">
           {title}
         </h1>
       </header>
       <AccountDeletionErrorMessage>{message}</AccountDeletionErrorMessage>
       <div className="flex justify-center">
         <Link
-          className="inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-lg border border-[#dddfe1] bg-white px-4 text-sm font-medium text-[#808080] transition-colors hover:border-[#c5c7cc] hover:text-[#333333]"
+          className="border-border-base bg-surface-base text-text-muted hover:border-border-strong hover:text-text-base inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-lg border px-4 text-sm font-medium transition-colors"
           to="/account-deletion"
         >
           アカウント削除ページに戻る

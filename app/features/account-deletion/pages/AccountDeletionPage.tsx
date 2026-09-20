@@ -49,7 +49,7 @@ export function AccountDeletionPage({
         <h1 className="text-2xl font-semibold tracking-tight text-[#333333] sm:text-3xl">
           アカウントを削除
         </h1>
-        <p className="mx-auto w-full max-w-md text-center text-sm leading-7 text-[#808080]">
+        <p className="text-text-muted mx-auto w-full max-w-md text-center text-sm leading-7">
           アカウントの削除手続きを行います。
         </p>
       </header>

@@ -185,6 +185,7 @@
     font-size: 14px;
   }
 
+  /* 削除認証の属性があるときだけ切り替え、通常画面のfallbackには影響させない。 */
   .root-hydrate-fallback-deletion {
     display: none;
   }

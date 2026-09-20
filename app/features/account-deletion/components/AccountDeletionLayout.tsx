@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import type { ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
 
 import { AccountDeletionBrand } from "~/features/account-deletion/components/AccountDeletionBrand";
 import { AccountDeletionFooter } from "~/features/account-deletion/components/AccountDeletionFooter";
@@ -7,6 +7,22 @@ import { AccountDeletionFooter } from "~/features/account-deletion/components/Ac
 type AccountDeletionLayoutProps = {
   children: ReactNode;
 };
+
+// 削除画面内の共通UIが参照する値。main配下だけに適用し、通常画面のテーマへ影響させない。
+const accountDeletionThemeStyle = {
+  "--surface-base": "#ffffff",
+  "--surface-muted": "#f4f4f4",
+  "--surface-hover": "#f4f4f4",
+  "--border-base": "#dddfe1",
+  "--border-strong": "#c5c7cc",
+  "--text-base": "#333333",
+  "--text-muted": "#808080",
+  "--tone-success-text": "#15803d",
+  "--tone-danger-bg": "rgba(239, 68, 68, 0.12)",
+  "--tone-danger-border": "rgba(239, 68, 68, 0.28)",
+  "--tone-danger-text": "#dc2626",
+  "--tone-warning-text": "#d97706",
+} as CSSProperties;
 
 function useAccountDeletionFavicon() {
   useEffect(() => {
@@ -122,6 +138,7 @@ export function AccountDeletionLayout({
     <main
       className="account-deletion-viewport flex min-h-dvh min-h-screen flex-col items-center justify-center-safe overflow-y-auto bg-white px-6 py-8 text-[#333333]"
       style={{
+        ...accountDeletionThemeStyle,
         background:
           "linear-gradient(to bottom, #ffffff 0%, #ffffff calc(100% - env(safe-area-inset-bottom, 0px)), transparent calc(100% - env(safe-area-inset-bottom, 0px)), transparent 100%)",
         paddingTop: "calc(2rem + env(safe-area-inset-top, 0px))",
