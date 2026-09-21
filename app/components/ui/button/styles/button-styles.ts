@@ -12,7 +12,7 @@ export const buttonStyle = cva(
         ghost:
           "app-rounded bg-transparent text-text-muted font-medium hover:bg-surface-hover hover:text-text-base",
         danger:
-          "app-rounded bg-tone-danger-surface text-tone-danger-text font-medium hover:brightness-95",
+          "app-rounded bg-tone-danger-bg text-tone-danger-text font-medium hover:brightness-95",
         success:
           "app-rounded border border-tone-success-border bg-tone-success-bg text-tone-success-text font-semibold shadow-sm hover:bg-tone-success-bg-hover",
       },
