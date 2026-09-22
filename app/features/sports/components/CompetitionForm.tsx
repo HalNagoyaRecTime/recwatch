@@ -4,6 +4,7 @@ import { Button } from "~/components/ui/button/Button";
 import { PageHeader } from "~/components/ui/layout/PageHeader";
 import { cn } from "~/lib/cn";
 import type { CompetitionFormValue } from "~/features/sports/model/competition-form";
+import type { CompetitionVenue } from "~/features/sports/model/competition-venue";
 
 type CompetitionFormProps = {
   isDisabled: boolean;
@@ -17,6 +18,7 @@ type CompetitionFormProps = {
   /** 省略するとページ見出しを描画しない。モーダル内など、外側が見出しを持つ場合に使う。 */
   title?: string;
   value: CompetitionFormValue;
+  venueOptions: readonly CompetitionVenue[];
 };
 
 export function CompetitionForm({
@@ -30,13 +32,26 @@ export function CompetitionForm({
   submitLabel,
   title,
   value,
+  venueOptions,
 }: CompetitionFormProps) {
   const isModal = !title;
   const labelClass = isModal ? modalLabelClassName : labelClassName;
   const inputClass = isModal ? modalInputClassName : inputClassName;
 
-  function update(field: keyof CompetitionFormValue, nextValue: string) {
+  function update(
+    field: Exclude<keyof CompetitionFormValue, "venueIds">,
+    nextValue: string
+  ) {
     onChange({ ...value, [field]: nextValue });
+  }
+
+  function toggleVenue(venueId: number) {
+    onChange({
+      ...value,
+      venueIds: value.venueIds.includes(venueId)
+        ? value.venueIds.filter((id) => id !== venueId)
+        : [...value.venueIds, venueId],
+    });
   }
 
   return (
@@ -79,18 +94,40 @@ export function CompetitionForm({
             value={value.rules}
           />
         </label>
-        <label className={labelClass}>
-          実施場所 <span className="text-tone-danger-text">*</span>
-          <input
-            aria-label="実施場所*"
-            className={inputClass}
-            disabled={isDisabled}
-            maxLength={100}
-            onChange={(event) => update("venue", event.currentTarget.value)}
-            placeholder="例：運動場"
-            value={value.venue}
-          />
-        </label>
+        <fieldset disabled={isDisabled}>
+          <legend className={labelClass}>
+            実施場所 <span className="text-tone-danger-text">*</span>
+          </legend>
+          <div
+            className={cn(
+              "border-border-base app-rounded max-h-64 space-y-1 overflow-y-auto border p-2",
+              isModal ? "mt-2" : "mt-1.5",
+              isDisabled && "opacity-50"
+            )}
+          >
+            {venueOptions.map((venue) => (
+              <label
+                className={cn(
+                  "hover:bg-surface-hover text-text-base flex items-center gap-2 rounded px-2 py-2",
+                  isModal ? "text-base" : "text-sm"
+                )}
+                key={venue.id}
+              >
+                <input
+                  checked={value.venueIds.includes(venue.id)}
+                  onChange={() => toggleVenue(venue.id)}
+                  type="checkbox"
+                />
+                {venue.name}
+              </label>
+            ))}
+            {venueOptions.length === 0 ? (
+              <p className="text-text-muted px-2 py-2 text-sm">
+                登録済みの実施場所はありません。
+              </p>
+            ) : null}
+          </div>
+        </fieldset>
         <div className="grid gap-4 sm:grid-cols-2">
           <label className={labelClass}>
             開始時間 <span className="text-tone-danger-text">*</span>

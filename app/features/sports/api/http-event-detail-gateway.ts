@@ -15,7 +15,7 @@ type EventDetailApiClient = {
 type EventDetailDto = EventGatheringSettingsResponseDto & {
   event_name: string;
   rule_text: string | null;
-  venue: string;
+  venues: { venue_id: number; venue_name: string }[];
   start_time: string;
   end_time: string;
 };
@@ -31,7 +31,10 @@ function toEventDetail(response: EventDetailDto): EventDetail {
   return {
     id: response.event_id,
     name: response.event_name,
-    venue: response.venue,
+    venues: response.venues.map((venue) => ({
+      id: venue.venue_id,
+      name: venue.venue_name,
+    })),
     startTime: formatTime(response.start_time),
     endTime: formatTime(response.end_time),
     rules: response.rule_text,

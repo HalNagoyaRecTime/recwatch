@@ -3,7 +3,7 @@ export type CompetitionFormValue = {
   name: string;
   rules: string;
   startTime: string;
-  venue: string;
+  venueIds: number[];
 };
 
 export type CompetitionWriteInput = {
@@ -11,7 +11,7 @@ export type CompetitionWriteInput = {
   name: string;
   rules: string | null;
   startTime: string;
-  venue: string;
+  venueIds: number[];
 };
 
 export const emptyCompetitionForm: CompetitionFormValue = {
@@ -19,14 +19,14 @@ export const emptyCompetitionForm: CompetitionFormValue = {
   name: "",
   rules: "",
   startTime: "",
-  venue: "",
+  venueIds: [],
 };
 
 export function validateCompetitionForm(
   value: CompetitionFormValue
 ): { error: string } | { input: CompetitionWriteInput } {
-  if (!value.name.trim() || !value.venue.trim()) {
-    return { error: "イベント名および実施場所を入力してください。" };
+  if (!value.name.trim() || value.venueIds.length === 0) {
+    return { error: "イベント名を入力し、実施場所を選択してください。" };
   }
   if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(value.startTime)) {
     return { error: "開始時間を正しく入力してください。" };
@@ -44,7 +44,7 @@ export function validateCompetitionForm(
       name: value.name.trim(),
       rules: value.rules.trim() || null,
       startTime: value.startTime,
-      venue: value.venue.trim(),
+      venueIds: value.venueIds,
     },
   };
 }

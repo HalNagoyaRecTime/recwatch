@@ -3,7 +3,27 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter, useLocation } from "react-router";
 import { describe, expect, it, vi } from "vitest";
 
+import type { CompetitionEditorApi } from "~/features/sports/api/competition-editor-api";
 import { CompetitionCreatePage } from "./CompetitionCreatePage";
+
+function createApi(
+  overrides: Partial<CompetitionEditorApi> = {}
+): CompetitionEditorApi {
+  return {
+    create: vi.fn(),
+    get: vi.fn(),
+    listVenues: vi.fn().mockResolvedValue([
+      { id: 1, name: "運動場" },
+      { id: 2, name: "体育館" },
+    ]),
+    update: vi.fn(),
+    ...overrides,
+  };
+}
+
+async function waitForVenueOptions() {
+  await screen.findByRole("checkbox", { name: "運動場" });
+}
 
 function LocationProbe() {
   return <output data-testid="location">{useLocation().pathname}</output>;
@@ -16,18 +36,18 @@ describe("CompetitionCreatePage", () => {
 
     render(
       <MemoryRouter initialEntries={["/events/new"]}>
-        <CompetitionCreatePage
-          api={{ create, get: vi.fn(), update: vi.fn() }}
-        />
+        <CompetitionCreatePage api={createApi({ create })} />
         <LocationProbe />
       </MemoryRouter>
     );
+    await waitForVenueOptions();
 
     expect(
       screen.getByRole("heading", { name: "イベントを新規作成" })
     ).toBeInTheDocument();
     await user.type(screen.getByLabelText("イベント名*"), "大縄跳び");
-    await user.type(screen.getByLabelText("実施場所*"), "運動場");
+    await user.click(screen.getByRole("checkbox", { name: "運動場" }));
+    await user.click(screen.getByRole("checkbox", { name: "体育館" }));
     await user.type(screen.getByLabelText("開始時間*"), "09:30");
     await user.type(screen.getByLabelText("終了時間*"), "10:00");
 
@@ -35,7 +55,7 @@ describe("CompetitionCreatePage", () => {
     await user.click(screen.getByRole("button", { name: "確認へ" }));
     expect(create).not.toHaveBeenCalled();
     expect(screen.getByText("大縄跳び")).toBeInTheDocument();
-    expect(screen.getByText("運動場")).toBeInTheDocument();
+    expect(screen.getByText("運動場、体育館")).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "イベントを作成" }));
 
@@ -45,7 +65,7 @@ describe("CompetitionCreatePage", () => {
         name: "大縄跳び",
         rules: null,
         startTime: "09:30",
-        venue: "運動場",
+        venueIds: [1, 2],
       })
     );
 
@@ -74,18 +94,17 @@ describe("CompetitionCreatePage", () => {
 
     render(
       <MemoryRouter initialEntries={["/events/new"]}>
-        <CompetitionCreatePage
-          api={{ create, get: vi.fn(), update: vi.fn() }}
-        />
+        <CompetitionCreatePage api={createApi({ create })} />
       </MemoryRouter>
     );
+    await waitForVenueOptions();
 
     await user.type(screen.getByLabelText("イベント名*"), "大縄跳び");
     await user.click(screen.getByRole("button", { name: "確認へ" }));
 
     expect(create).not.toHaveBeenCalled();
     expect(screen.getByRole("alert")).toHaveTextContent(
-      "イベント名および実施場所を入力してください。"
+      "イベント名を入力し、実施場所を選択してください。"
     );
     expect(screen.getByLabelText("イベント名*")).toBeInTheDocument();
   });
@@ -96,14 +115,13 @@ describe("CompetitionCreatePage", () => {
 
     render(
       <MemoryRouter initialEntries={["/events/new"]}>
-        <CompetitionCreatePage
-          api={{ create, get: vi.fn(), update: vi.fn() }}
-        />
+        <CompetitionCreatePage api={createApi({ create })} />
       </MemoryRouter>
     );
+    await waitForVenueOptions();
 
     await user.type(screen.getByLabelText("イベント名*"), "大縄跳び");
-    await user.type(screen.getByLabelText("実施場所*"), "運動場");
+    await user.click(screen.getByRole("checkbox", { name: "運動場" }));
     await user.type(screen.getByLabelText("開始時間*"), "09:30");
     await user.type(screen.getByLabelText("終了時間*"), "10:00");
     await user.click(screen.getByRole("button", { name: "確認へ" }));
@@ -111,5 +129,24 @@ describe("CompetitionCreatePage", () => {
 
     expect(create).not.toHaveBeenCalled();
     expect(screen.getByLabelText("イベント名*")).toHaveValue("大縄跳び");
+    expect(screen.getByRole("checkbox", { name: "運動場" })).toBeChecked();
+  });
+
+  it("実施場所の一覧を取得できなければフォームを無効化する", async () => {
+    render(
+      <MemoryRouter initialEntries={["/events/new"]}>
+        <CompetitionCreatePage
+          api={createApi({
+            listVenues: vi.fn().mockRejectedValue(new Error("failed")),
+          })}
+        />
+      </MemoryRouter>
+    );
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "実施場所の一覧を取得できませんでした。"
+    );
+    expect(screen.getByRole("group", { name: /実施場所/ })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "確認へ" })).toBeDisabled();
   });
 });
