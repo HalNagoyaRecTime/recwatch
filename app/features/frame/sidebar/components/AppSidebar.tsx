@@ -6,10 +6,10 @@ import type { SidebarSectionDef } from "~/types/sidebar";
 import { SidebarNavItem } from "~/features/frame/sidebar/components/SidebarNavItem";
 import { SIDEBAR_DURATION } from "~/features/frame/sidebar/styles/sidebar-styles";
 import { ScrollbarArea } from "~/components/ui/scrollbar/ScrollbarArea";
-import type { AccountUser } from "~/features/frame/main-header/account-menu/model/account-btn-data";
 
-export function AppSidebar({ user }: { user?: AccountUser | null }) {
-  const sections = buildSidebarMenu(user);
+export function AppSidebar() {
+  // 2026: role-based feature permissions are not implemented; all staff share this menu.
+  const sections = buildSidebarMenu("admin");
   const { isExpanded } = useSidebarUI();
   const location = useLocation();
   const pathname = location.pathname;

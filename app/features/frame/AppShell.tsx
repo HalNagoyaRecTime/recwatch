@@ -15,7 +15,7 @@ export function AppShell({ user }: AppShellProps) {
       <FeedbackToastHost />
       <SidebarStateProvider>
         <div className="flex h-dvh overflow-hidden md:flex-row">
-          <SidebarShell user={user} />
+          <SidebarShell />
           <MainShell user={user} />
         </div>
       </SidebarStateProvider>

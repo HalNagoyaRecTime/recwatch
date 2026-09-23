@@ -3,10 +3,6 @@ import { describe, expect, it } from "vitest";
 import { buildSidebarMenu } from "./build-sidebar-menu";
 
 describe("buildSidebarMenu", () => {
-  it("ユーザー情報が未指定のときは安全側にメニューを非表示にする", () => {
-    expect(buildSidebarMenu()).toEqual([]);
-  });
-
   it("管理者には画像のサイドメニュー構成で画面を案内する", () => {
     const paths = buildSidebarMenu("admin").flatMap((section) =>
       section.items.flatMap((item) => [

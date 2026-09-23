@@ -14,7 +14,6 @@ import {
   sidebarMobileContainerStyle,
   sidebarPlaceholderStyle,
 } from "~/features/frame/sidebar/styles/sidebar-styles";
-import type { AccountUser } from "~/features/frame/main-header/account-menu/model/account-btn-data";
 
 const MOBILE_SIDEBAR_ID = "app-sidebar-mobile";
 const DESKTOP_SIDEBAR_MEDIA_QUERY = "(min-width: 48rem)";
@@ -22,7 +21,7 @@ const NON_MOUSE_CLICK_MAX_DELAY_MS = 1000;
 const MOBILE_DRAWER_FOCUSABLE_SELECTOR =
   'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
-function DesktopSidebarContent({ user }: { user?: AccountUser | null }) {
+function DesktopSidebarContent() {
   const { sidebarPinnedOpen, pinOpen } = useSidebarState();
   const { isExpanded, setHovering } = useSidebarUI();
   const lastPointerTypeRef = useRef<{
@@ -72,7 +71,7 @@ function DesktopSidebarContent({ user }: { user?: AccountUser | null }) {
             }}
           >
             <SidebarHeader />
-            <AppSidebar user={user} />
+            <AppSidebar />
           </div>
           <SidebarFooter />
         </div>
@@ -81,7 +80,7 @@ function DesktopSidebarContent({ user }: { user?: AccountUser | null }) {
   );
 }
 
-function MobileSidebarContent({ user }: { user?: AccountUser | null }) {
+function MobileSidebarContent() {
   const { mobileOpen, closeForMobile } = useSidebarState();
   const drawerRef = useRef<HTMLDivElement>(null);
   const wasOpenRef = useRef(false);
@@ -208,21 +207,21 @@ function MobileSidebarContent({ user }: { user?: AccountUser | null }) {
       >
         <SidebarHeader onClose={closeForMobile} />
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-          <AppSidebar user={user} />
+          <AppSidebar />
         </div>
       </div>
     </div>
   );
 }
 
-export function SidebarShell({ user }: { user?: AccountUser | null }) {
+export function SidebarShell() {
   return (
     <>
       <SidebarUIProvider>
-        <DesktopSidebarContent user={user} />
+        <DesktopSidebarContent />
       </SidebarUIProvider>
       <SidebarUIProvider forceExpanded>
-        <MobileSidebarContent user={user} />
+        <MobileSidebarContent />
       </SidebarUIProvider>
     </>
   );

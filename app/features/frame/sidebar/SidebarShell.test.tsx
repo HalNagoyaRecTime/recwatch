@@ -11,19 +11,12 @@ function LocationProbe() {
   return <div data-testid="location">{location.pathname}</div>;
 }
 
-function renderShell(
-  user = {
-    id: "user-1",
-    email: "staff@example.com",
-    display_name: "管理者ユーザー",
-    is_staff: true,
-  }
-) {
+function renderShell() {
   render(
     <MemoryRouter>
       <SidebarStateProvider>
         <MobileHamburgerMenuBtn />
-        <SidebarShell user={user} />
+        <SidebarShell />
         <LocationProbe />
       </SidebarStateProvider>
     </MemoryRouter>
