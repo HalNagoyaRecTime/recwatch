@@ -3,5 +3,4 @@ export type Ranking = {
   teamId: number;
   teamName: string;
   score: number;
-  updatedAt: string;
 };

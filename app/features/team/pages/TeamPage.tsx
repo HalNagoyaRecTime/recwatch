@@ -33,16 +33,14 @@ export function TeamPage({ teams }: { teams: readonly Team[] }) {
   const [teamPendingDelete, setTeamPendingDelete] = useState<Team | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
+  // rectime-apiのGET /teams?searchはチーム名の部分一致のみに対応しているため、
+  // モックの検索範囲もチーム名のみに揃える。
   const filteredTeams = useMemo(() => {
     const normalizedSearch = search.toLocaleLowerCase();
     return teams.filter(
       (team) =>
         !normalizedSearch ||
-        team.name.toLocaleLowerCase().includes(normalizedSearch) ||
-        String(team.id).includes(normalizedSearch) ||
-        team.registeredClasses.some((classCode) =>
-          classCode.toLocaleLowerCase().includes(normalizedSearch)
-        )
+        team.name.toLocaleLowerCase().includes(normalizedSearch)
     );
   }, [search, teams]);
 
@@ -138,9 +136,9 @@ export function TeamPage({ teams }: { teams: readonly Team[] }) {
         title="チーム管理"
       />
       <SearchField
-        ariaLabel="チームまたはクラスを検索"
+        ariaLabel="チームを検索"
         onValueChange={(value) => updateUrl({ page: 1, search: value })}
-        placeholder="チーム名・クラスで検索..."
+        placeholder="チーム名で検索..."
         value={search}
       />
       <TeamTable

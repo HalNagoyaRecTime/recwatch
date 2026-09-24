@@ -2,7 +2,6 @@ import { DataTable } from "~/components/ui/data-table/DataTable";
 import type { DataTableColumn } from "~/components/ui/data-table/data-table-types";
 import { RankingActionMenu } from "~/features/ranking/components/RankingActionMenu";
 import type { Ranking } from "~/features/ranking/model/ranking";
-import { formatDisplayDateTime } from "~/lib/format-display-date-time";
 
 type RankingTableProps = {
   footer?: import("react").ReactNode;
@@ -28,12 +27,6 @@ export function RankingTable({ footer, items }: RankingTableProps) {
       id: "score",
       width: { type: "fixed", value: 140 },
       renderCell: (ranking) => `${ranking.score} pt`,
-    },
-    {
-      header: "更新日時",
-      id: "updated-at",
-      width: { type: "fluid", min: 180, grow: 1 },
-      renderCell: (ranking) => formatDisplayDateTime(ranking.updatedAt),
     },
     {
       align: "center",
