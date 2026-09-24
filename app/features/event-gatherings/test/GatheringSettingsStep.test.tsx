@@ -493,7 +493,7 @@ describe("GatheringSettingsStep", () => {
 
     expect(screen.getByText(/選択中 31人 \/ 30人/)).toBeInTheDocument();
     expect(screen.getByRole("alert")).toHaveTextContent(
-      "参加者は30人までです。1人ぶん選択を減らしてください。"
+      "参加者は30人までです。1人減らしてください。"
     );
     expect(screen.getByRole("button", { name: "参加者を保存" })).toBeDisabled();
 

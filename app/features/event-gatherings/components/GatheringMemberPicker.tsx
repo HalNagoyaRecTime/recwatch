@@ -263,7 +263,7 @@ export function GatheringMemberPicker({
         <p className="text-tone-danger-text text-sm" role="alert">
           参加者は{MAX_GATHERING_MEMBERS}人までです。
           {selectedUserIds.length - MAX_GATHERING_MEMBERS}
-          人ぶん選択を減らしてください。
+          人減らしてください。
         </p>
       ) : null}
 
