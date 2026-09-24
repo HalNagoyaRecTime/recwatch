@@ -3,12 +3,11 @@ const destinationByPath: Readonly<Record<string, string>> = {
   "/events/past": "/events",
   "/events/scoring": "/events",
   "/events/tournament": "/events",
-  "/members/teams": "/members",
   "/reports/detail": "/dashboard",
   "/reports/export": "/dashboard",
   "/reports/summary": "/dashboard",
   "/settings": "/dashboard",
-  "/timing": "/schedule",
+  "/timing": "/dashboard",
 };
 
 export function getLegacyDestination(pathname: string): string {
@@ -19,7 +18,7 @@ export function getLegacyDestination(pathname: string): string {
   if (pathname.startsWith("/sports/")) {
     const suffix = pathname.slice("/sports/".length);
 
-    if (suffix === "new" || suffix === "assignments") {
+    if (suffix === "new") {
       return `/events/${suffix}`;
     }
 

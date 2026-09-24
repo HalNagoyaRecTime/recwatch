@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { useNavigate, useOutletContext, useParams } from "react-router";
 
 import { FormModal } from "~/components/ui/modal/FormModal";
@@ -9,7 +9,7 @@ import { GatheringSettingsSavedStep } from "~/features/event-gatherings/componen
 import { GatheringSettingsStep } from "~/features/event-gatherings/components/GatheringSettingsStep";
 import type { EventGatheringSettings } from "~/features/event-gatherings/model/event-gathering-settings";
 import type { GatheringSpotGateway } from "~/features/gathering-spots/api/contracts/gathering-spot-gateway";
-import type { CompetitionListOutletContext } from "~/features/sports/pages/CompetitionListPage";
+import type { EventDetailOutletContext } from "~/features/sports/pages/EventDetailPage";
 
 type EventGatheringSettingsPageProps = {
   memberGateway?: GatheringMemberGateway;
@@ -18,7 +18,7 @@ type EventGatheringSettingsPageProps = {
 };
 
 /**
- * 既存 Event の集合設定をイベント一覧の上にモーダルで開く。
+ * 既存 Event の集合設定をイベント詳細の上にモーダルで開く。閉じると詳細へ戻る。
  */
 export function EventGatheringSettingsPage({
   memberGateway,
@@ -27,14 +27,21 @@ export function EventGatheringSettingsPage({
 }: EventGatheringSettingsPageProps) {
   const { competitionId } = useParams();
   const navigate = useNavigate();
-  // 一覧の子ルートとして開かれた場合のみ受け取れる。テストなど単体描画時は undefined。
+  // 詳細の子ルートとして開かれた場合のみ受け取れる。テストなど単体描画時は undefined。
   const outletContext = useOutletContext<
-    CompetitionListOutletContext | undefined
+    EventDetailOutletContext | undefined
   >();
   const [savedSettings, setSavedSettings] =
     useState<EventGatheringSettings | null>(null);
   const eventId = Number(competitionId);
   const isValidEventId = Number.isInteger(eventId) && eventId > 0;
+  // ID が不正なら詳細も表示できないため一覧へ戻す。
+  // モーダルは閉じるアニメーション中に onClose が変わると閉じ直すため、関数を固定しておく。
+  const closePath = isValidEventId ? `/events/${eventId}` : "/events";
+  const handleClose = useCallback(
+    () => navigate(closePath),
+    [closePath, navigate]
+  );
 
   return (
     <FormModal
@@ -43,7 +50,7 @@ export function EventGatheringSettingsPage({
           ? "集合設定の保存が完了しました。"
           : "Roundごとの集合時間・集合場所を編集します。"
       }
-      onClose={() => navigate("/events")}
+      onClose={handleClose}
       size="xl"
       title="集合設定"
     >

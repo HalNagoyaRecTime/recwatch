@@ -11,7 +11,7 @@ export function isClassRoomAudiencePageResponse(
 ): value is ClassRoomAudiencePageApiDto {
   return (
     isRecord(value) &&
-    Array.isArray(value.classrooms) &&
+    Array.isArray(value.items) &&
     isNonNegativeInteger(value.total) &&
     isPositiveInteger(value.limit) &&
     isNonNegativeInteger(value.offset)

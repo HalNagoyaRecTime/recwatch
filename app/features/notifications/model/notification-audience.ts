@@ -1,8 +1,5 @@
 export type NotificationAudienceType =
-  | "all"
-  | "class_room"
-  | "gathering"
-  | "event_participants";
+  "all" | "class_room" | "gathering" | "event_participants";
 
 export type NotificationAudience =
   | { type: "all" }

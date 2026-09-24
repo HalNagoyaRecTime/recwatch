@@ -5,7 +5,7 @@ export type ClassRoomAudienceApiDto = {
 };
 
 export type ClassRoomAudiencePageApiDto = {
-  classrooms: ClassRoomAudienceApiDto[];
+  items: ClassRoomAudienceApiDto[];
   total: number;
   limit: number;
   offset: number;

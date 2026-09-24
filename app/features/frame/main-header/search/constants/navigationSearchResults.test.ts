@@ -29,13 +29,27 @@ describe("navigation search results", () => {
     );
   });
 
+  it("旧出場メンバー画面を案内せず集合場所管理を維持する", () => {
+    expect(NAVIGATION_SEARCH_RESULTS).not.toContainEqual(
+      expect.objectContaining({ to: "/events/assignments" })
+    );
+    expect(NAVIGATION_SEARCH_RESULTS).not.toContainEqual(
+      expect.objectContaining({ to: "/participants" })
+    );
+    expect(NAVIGATION_SEARCH_RESULTS).toContainEqual(
+      expect.objectContaining({ title: "集合場所管理", to: "/gathering-spots" })
+    );
+    expect(filterNavigationSearchResults("参加者設定")).toEqual([]);
+    expect(filterNavigationSearchResults("出場メンバー管理")).toEqual([]);
+  });
+
   it("filters destinations by Japanese title and keyword", () => {
     expect(filterNavigationSearchResults("教官")).toContainEqual(
       expect.objectContaining({ title: "教官管理", to: "/teachers" })
     );
 
     expect(filterNavigationSearchResults("CSV")).toEqual([
-      expect.objectContaining({ title: "学生管理", to: "/members" }),
+      expect.objectContaining({ title: "学生管理", to: "/students" }),
     ]);
   });
 

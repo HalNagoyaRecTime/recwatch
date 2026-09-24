@@ -49,38 +49,62 @@ describe("CompetitionListPage", () => {
     );
 
     expect(
-      await screen.findByRole("heading", { name: "イベント登録一覧" })
+      await screen.findByRole("heading", { name: "イベント一覧" })
     ).toBeInTheDocument();
     expect(
       screen.getByRole("searchbox", { name: "イベントを検索" })
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("table", { name: "イベント登録一覧" })
+      screen.getByRole("table", { name: "イベント一覧" })
     ).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "新規登録" })).toHaveAttribute(
       "href",
       "/events/new"
     );
     expect(screen.getByText("09:00")).toBeInTheDocument();
-    expect(screen.queryByText("イベント詳細")).not.toBeInTheDocument();
     expect(
       screen.queryByRole("button", { name: competition.name })
     ).not.toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: `${competition.name}の操作` })
-    ).toBeInTheDocument();
 
-    await user.click(
-      screen.getByRole("button", { name: `${competition.name}の操作` })
-    );
-    expect(screen.getByRole("button", { name: "削除" })).toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: "編集" }));
+    // 行からは詳細と削除だけを行い、編集・集合設定はイベント詳細から行う
+    expect(screen.getByRole("button", { name: "詳細" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: `${competition.name}を削除` })
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: `${competition.name}の操作` })
+    ).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "詳細" }));
     expect(screen.getByTestId("location")).toHaveTextContent(
-      `/events/${competition.id}/edit`
+      new RegExp(`/events/${competition.id}$`)
     );
   });
 
-  it("イベントをソートし、3点メニューから削除する", async () => {
+  it("ID でも検索できる", async () => {
+    const user = userEvent.setup();
+
+    render(
+      <MemoryRouter initialEntries={["/events"]}>
+        <CompetitionListPage
+          gateway={{
+            load: vi.fn().mockResolvedValue([anotherCompetition, competition]),
+            delete: vi.fn(),
+          }}
+        />
+      </MemoryRouter>
+    );
+
+    const table = await screen.findByRole("table", { name: "イベント一覧" });
+    await user.type(
+      screen.getByRole("searchbox", { name: "イベントを検索" }),
+      competition.code
+    );
+    expect(within(table).getAllByRole("row")).toHaveLength(2);
+    expect(within(table).getByText(competition.name)).toBeInTheDocument();
+  });
+
+  it("イベントをソートし、行の削除ボタンから削除する", async () => {
     const deleteEvent = vi.fn().mockResolvedValue(undefined);
     vi.spyOn(window, "confirm").mockReturnValue(true);
     const user = userEvent.setup();
@@ -96,18 +120,14 @@ describe("CompetitionListPage", () => {
       </MemoryRouter>
     );
 
-    const table = await screen.findByRole("table", {
-      name: "イベント登録一覧",
-    });
-    await user.click(screen.getByRole("button", { name: "イベントID" }));
+    const table = await screen.findByRole("table", { name: "イベント一覧" });
+    await user.click(screen.getByRole("button", { name: "ID" }));
     expect(within(table).getAllByRole("row")[1]).toHaveTextContent("大縄跳び");
 
-    await user.click(screen.getByRole("button", { name: "イベントID" }));
+    await user.click(screen.getByRole("button", { name: "ID" }));
     expect(within(table).getAllByRole("row")[1]).toHaveTextContent("リレー");
 
-    await user.click(screen.getByRole("button", { name: "リレーの操作" }));
-    expect(screen.getByRole("button", { name: "編集" })).toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: "削除" }));
+    await user.click(screen.getByRole("button", { name: "リレーを削除" }));
 
     await waitFor(() => expect(deleteEvent).toHaveBeenCalledWith(2));
     expect(screen.queryByText("リレー")).not.toBeInTheDocument();

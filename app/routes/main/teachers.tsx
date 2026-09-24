@@ -2,6 +2,7 @@ import { Outlet, useLoaderData } from "react-router";
 import { createPageTitle } from "~/lib/page-title";
 import { parseTeacherListUrl } from "~/features/teachers/application/teacher-list-url";
 import { loadTeacherListPage } from "~/features/teachers/application/teacher-loaders";
+import { getClassRoomData } from "~/features/classRoom/model/classRoom-data";
 import { TeachersPage } from "~/features/teachers/pages/TeachersPage";
 import { PagePadding } from "~/features/frame/page-layout/PagePadding";
 import { PageLayout } from "~/features/frame/page-layout/PageLayout";
@@ -13,19 +14,40 @@ export function meta() {
 export async function clientLoader({ request }: { request: Request }) {
   const searchParams = new URL(request.url).searchParams;
   const limit = 50;
-  const { page, search, sortBy, sortOrder } = parseTeacherListUrl(searchParams);
-
-  return loadTeacherListPage({
-    limit,
-    offset: (page - 1) * limit,
-    search: search || undefined,
-    sortBy: sortBy ?? undefined,
-    sortOrder: sortOrder ?? undefined,
-  });
+  const {
+    page,
+    search,
+    classRoomId,
+    sortBy,
+    sortOrder,
+    isStaff,
+    isLiveActive,
+  } = parseTeacherListUrl(searchParams);
+  const [teacherPage, classRooms] = await Promise.all([
+    loadTeacherListPage({
+      limit,
+      offset: (page - 1) * limit,
+      search: search || undefined,
+      classRoomId: classRoomId ?? undefined,
+      sortBy: sortBy ?? undefined,
+      sortOrder: sortOrder ?? undefined,
+      isStaff,
+      isLiveActive,
+    }),
+    getClassRoomData(),
+  ]);
+  return {
+    ...teacherPage,
+    classRooms: classRooms.map((classRoom) => ({
+      classRoomId: classRoom.classRoomId,
+      classCode: classRoom.classRoomCode,
+      className: classRoom.classRoomName,
+    })),
+  };
 }
 
 export default function TeachersRoute() {
-  const { limit, offset, teachers, total } =
+  const { limit, offset, teachers, total, classRooms } =
     useLoaderData<typeof clientLoader>();
   return (
     <>
@@ -36,6 +58,7 @@ export default function TeachersRoute() {
             offset={offset}
             teachers={teachers}
             total={total}
+            classRooms={classRooms}
           />
         </PagePadding>
       </PageLayout>

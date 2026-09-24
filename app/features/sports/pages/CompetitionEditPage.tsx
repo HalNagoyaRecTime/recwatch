@@ -20,6 +20,10 @@ export function CompetitionEditPage({
   const { competitionId } = useParams();
   const navigate = useNavigate();
   const eventId = Number(competitionId);
+  // 編集はイベント詳細から開くため、保存・キャンセルのどちらでも詳細へ戻す。
+  // ID が不正なら詳細も表示できないので一覧へ戻す。
+  const detailPath =
+    Number.isInteger(eventId) && eventId > 0 ? `/events/${eventId}` : "/events";
   const [form, setForm] = useState(emptyCompetitionForm);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -78,7 +82,7 @@ export function CompetitionEditPage({
     setSubmitError(null);
     try {
       await api.update(eventId, result.input);
-      navigate("/events");
+      navigate(detailPath);
     } catch (error) {
       setSubmitError(
         getErrorMessage(error, "イベントデータの更新に失敗しました。")
@@ -92,7 +96,7 @@ export function CompetitionEditPage({
     <CompetitionForm
       isDisabled={isLoading || isSubmitting || Boolean(loadError)}
       isSubmitting={isSubmitting}
-      onCancel={() => navigate("/events")}
+      onCancel={() => navigate(detailPath)}
       onChange={setForm}
       onSubmit={() => void handleSubmit()}
       submitError={loadError ?? submitError}
