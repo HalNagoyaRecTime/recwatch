@@ -433,6 +433,33 @@ describe("GatheringSettingsStep", () => {
     );
   });
 
+  it("学生でない参加者は選択から落とし、保存すると集合から外れる", async () => {
+    const memberGateway = createMemberGateway();
+    // user 9001 は学生でないため候補に現れない（管理画面では作れない状態）
+    (memberGateway.loadMembers as Mock).mockResolvedValue([1001, 9001]);
+    renderStep({
+      memberGateway,
+      settingsGateway: {
+        load: vi.fn().mockResolvedValue(existingSettings),
+        save: vi.fn(),
+      },
+    });
+    const user = userEvent.setup();
+
+    await screen.findByRole("region", { name: "Round 1" });
+    await user.click(screen.getByRole("button", { name: "メンバーを選択" }));
+
+    expect(await screen.findByLabelText("山田 太郎を選択")).toBeChecked();
+    // 行を出せない参加者は人数にも数えない
+    expect(screen.getByText(/選択中 1人/)).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "参加者を保存" }));
+
+    await waitFor(() =>
+      expect(memberGateway.saveMembers).toHaveBeenCalledWith(101, [1001])
+    );
+  });
+
   it("上限を超えて選ぶと不足人数を案内し、保存できない", async () => {
     const memberGateway = createMemberGateway();
     (memberGateway.loadCandidates as Mock).mockResolvedValue({
