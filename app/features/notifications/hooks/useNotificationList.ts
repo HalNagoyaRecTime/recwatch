@@ -1,11 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import type { NotificationManagementApi } from "~/features/notifications/api/contracts/notification-management-api";
+import type { AdminNotificationCommandApi } from "~/features/notifications/api/contracts/admin-notification-command-api";
+import type { AdminNotificationQueryApi } from "~/features/notifications/api/contracts/admin-notification-query-api";
+import type { AdminNotificationListItemDto } from "~/features/notifications/api/dto/admin-notification-dto";
 import { getErrorMessage } from "~/lib/client-error";
-import {
-  canModifyNotification,
-  type ManagedNotification,
-} from "~/features/notifications/model/notification";
 import {
   getNextNotificationListSort,
   isNotificationSortableColumnId,
@@ -13,111 +11,120 @@ import {
   type NotificationListItem,
   type NotificationListSort,
 } from "~/features/notifications/model/notification-list";
+import {
+  reportNotificationActionError,
+  reportNotificationBackgroundError,
+  type NotificationFeedbackReporter,
+} from "~/features/notifications/hooks/notification-feedback";
 
 type UseNotificationListOptions = {
-  api: NotificationManagementApi;
+  commandApi: AdminNotificationCommandApi;
+  queryApi: AdminNotificationQueryApi;
+  reportFeedback?: NotificationFeedbackReporter;
 };
 
-export function useNotificationList({ api }: UseNotificationListOptions) {
-  const [notifications, setNotifications] = useState<ManagedNotification[]>([]);
-  const [total, setTotal] = useState(0);
+export function useNotificationList({
+  commandApi,
+  queryApi,
+  reportFeedback,
+}: UseNotificationListOptions) {
+  const [notifications, setNotifications] = useState<
+    AdminNotificationListItemDto[]
+  >([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [sort, setSort] = useState<NotificationListSort>();
   const [selectedNotification, setSelectedNotification] =
-    useState<ManagedNotification | null>(null);
+    useState<AdminNotificationListItemDto | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isDeleting, setIsDeleting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const requestSequence = useRef(0);
 
-  const loadPage = useCallback(
-    async (page: number) => {
+  const load = useCallback(
+    async (background = false) => {
       const requestId = ++requestSequence.current;
       setIsLoading(true);
       setErrorMessage(null);
 
       try {
-        const result = await api.list({
-          limit: notificationListPageSize,
-          offset: (page - 1) * notificationListPageSize,
-        });
-        if (requestId !== requestSequence.current) {
-          return;
-        }
-        setNotifications(result.notifications);
-        setTotal(result.total);
+        const result = await queryApi.list();
+        if (requestId !== requestSequence.current) return;
+        setNotifications(result.items);
       } catch (error) {
-        if (requestId !== requestSequence.current) {
-          return;
-        }
+        if (requestId !== requestSequence.current) return;
         setNotifications([]);
-        setTotal(0);
-        setErrorMessage(toErrorMessage(error));
-      } finally {
-        if (requestId === requestSequence.current) {
-          setIsLoading(false);
+        const message = getErrorMessage(error);
+        setErrorMessage(message);
+        if (background) {
+          reportNotificationBackgroundError(reportFeedback, {
+            title: "通知一覧を更新できませんでした",
+            message,
+            action: "notification.list.reload",
+            endpoint: "/api/v1/admin/notifications",
+            error,
+          });
         }
+      } finally {
+        if (requestId === requestSequence.current) setIsLoading(false);
       }
     },
-    [api]
+    [queryApi, reportFeedback]
   );
 
   useEffect(() => {
-    void loadPage(currentPage);
-  }, [currentPage, loadPage]);
+    void load();
+  }, [load]);
 
-  const reload = useCallback(
-    () => loadPage(currentPage),
-    [currentPage, loadPage]
-  );
-
-  const items = useMemo(
+  const allItems = useMemo(
     () => sortItems(notifications.map(toListItem), sort),
     [notifications, sort]
   );
-
-  const pageCount = Math.max(1, Math.ceil(total / notificationListPageSize));
+  const pageCount = Math.max(
+    1,
+    Math.ceil(allItems.length / notificationListPageSize)
+  );
+  const items = allItems.slice(
+    (currentPage - 1) * notificationListPageSize,
+    currentPage * notificationListPageSize
+  );
 
   function handleSortChange(columnId: string) {
-    if (!isNotificationSortableColumnId(columnId)) {
-      return;
-    }
-
+    if (!isNotificationSortableColumnId(columnId)) return;
     setSort((current) => getNextNotificationListSort(current, columnId));
   }
 
   function handleDeleteRequest(item: NotificationListItem) {
     const notification = notifications.find(
-      (candidate) => String(candidate.id) === item.id
+      (candidate) => String(candidate.notificationId) === item.id
     );
-    if (notification) {
-      setSelectedNotification(notification);
-    }
+    if (notification) setSelectedNotification(notification);
   }
 
   async function handleDelete() {
-    if (!selectedNotification || isDeleting) {
-      return;
-    }
+    if (!selectedNotification || isDeleting) return;
 
     setIsDeleting(true);
     setErrorMessage(null);
-
     try {
-      await api.delete(selectedNotification.id);
+      await commandApi.delete(selectedNotification.notificationId);
       setSelectedNotification(null);
-      const nextPage =
-        currentPage > 1 && notifications.length === 1
-          ? currentPage - 1
-          : currentPage;
-      setCurrentPage(nextPage);
-      await loadPage(nextPage);
+      await load(true);
+      reportFeedback?.({
+        kind: "action-success",
+        title: "通知を削除しました",
+        message: "未送信の通知を削除しました。",
+      });
     } catch (error) {
-      const message = toErrorMessage(error);
+      const message = getErrorMessage(error);
       setErrorMessage(message);
       setSelectedNotification(null);
-      await loadPage(currentPage);
-      setErrorMessage(message);
+      reportNotificationActionError(reportFeedback, {
+        title: "通知を削除できませんでした",
+        message,
+        action: "notification.delete",
+        endpoint: `/api/v1/admin/notifications/${selectedNotification.notificationId}`,
+        error,
+      });
     } finally {
       setIsDeleting(false);
     }
@@ -133,24 +140,19 @@ export function useNotificationList({ api }: UseNotificationListOptions) {
     items,
     onDeleteRequest: handleDeleteRequest,
     onPageChange: setCurrentPage,
-    reload,
     onSortChange: handleSortChange,
     pageCount,
+    reload: () => load(true),
     selectedNotification,
     sort,
-    totalItems: total,
+    totalItems: allItems.length,
   };
 }
 
-function toErrorMessage(error: unknown) {
-  return getErrorMessage(error);
-}
-
-function formatDate(value: string) {
+function formatDate(value: string | undefined) {
+  if (!value) return "—";
   const date = new Date(value);
-  if (Number.isNaN(date.getTime())) {
-    return "—";
-  }
+  if (Number.isNaN(date.getTime())) return "—";
 
   return new Intl.DateTimeFormat("ja-JP", {
     day: "2-digit",
@@ -161,17 +163,34 @@ function formatDate(value: string) {
   }).format(date);
 }
 
-function toListItem(notification: ManagedNotification): NotificationListItem {
+function toListItem(
+  notification: AdminNotificationListItemDto
+): NotificationListItem {
+  const schedule = notification.schedules[0];
+  const audienceLabels = schedule?.audience.items.map((item) => {
+    if (item.type === "all") return "全体";
+    return item.label ?? "削除済み";
+  });
+  const sourceLabel =
+    notification.creation.method === "automatic"
+      ? (notification.creation.source.label ?? "削除済み")
+      : "—";
+
   return {
-    audience: notification.audienceName,
-    canModify: canModifyNotification(notification),
-    competition: notification.relatedEventName ?? "—",
-    deliveredAt: formatDate(notification.scheduledAt),
-    id: String(notification.id),
-    schedule: formatDate(notification.scheduledAt),
-    sender: notification.creatorName,
-    status: notification.status,
-    title: notification.title,
+    audience: audienceLabels?.join("、") || "—",
+    canModify:
+      notification.schedules.length > 0 &&
+      notification.schedules.every((item) => item.status === "scheduled"),
+    competition: sourceLabel,
+    deliveredAt: formatDate(schedule?.sendAt),
+    id: String(notification.notificationId),
+    schedule: formatDate(schedule?.sendAt),
+    sender:
+      notification.creation.method === "manual"
+        ? (notification.creation.user?.userName ?? "—")
+        : sourceLabel,
+    status: schedule?.status ?? null,
+    title: notification.content.push.title,
   };
 }
 
@@ -179,9 +198,7 @@ function sortItems(
   items: readonly NotificationListItem[],
   sort: NotificationListSort | undefined
 ) {
-  if (!sort) {
-    return items;
-  }
+  if (!sort) return items;
 
   const collator = new Intl.Collator("ja", {
     numeric: true,
@@ -189,7 +206,10 @@ function sortItems(
   });
 
   return [...items].sort((left, right) => {
-    const result = collator.compare(left[sort.columnId], right[sort.columnId]);
+    const result = collator.compare(
+      String(left[sort.columnId] ?? ""),
+      String(right[sort.columnId] ?? "")
+    );
     return sort.direction === "asc" ? result : -result;
   });
 }

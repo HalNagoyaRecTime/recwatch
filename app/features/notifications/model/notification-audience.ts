@@ -1,12 +1,6 @@
-export type NotificationAudienceType =
-  "all" | "class_room" | "gathering" | "event_participants";
+import type { NotificationAudienceInputItemDto } from "~/features/notifications/api/dto/notification-common-dto";
 
-export type NotificationAudience =
-  | { type: "all" }
-  | { type: "class_room"; classRoomId: number }
-  | { type: "gathering"; gatheringId: number }
-  | { type: "event_participants"; eventId: number }
-  | { type: "resolved_recipients" };
+export type NotificationAudienceType = NotificationAudienceInputItemDto["type"];
 
 export type NotificationAudienceOption = {
   id: string;

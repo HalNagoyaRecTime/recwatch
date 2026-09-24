@@ -56,7 +56,7 @@ describe("notification audience response mapper", () => {
         name: "大縄跳び / 体育館前 (08:50)",
         type: "gathering",
       },
-      { id: "3", name: "大縄跳び", type: "event_participants" },
+      { id: "3", name: "大縄跳び", type: "event" },
     ]);
   });
 

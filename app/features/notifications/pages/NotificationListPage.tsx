@@ -11,11 +11,13 @@ import { SegmentedControl } from "~/components/ui/form/SegmentedControl";
 import { Select } from "~/components/ui/form/Select";
 import { PageHeader } from "~/components/ui/layout/PageHeader";
 import { Pagination } from "~/components/ui/navigation/Pagination";
-import type { NotificationManagementApi } from "~/features/notifications/api/contracts/notification-management-api";
+import type { AdminNotificationCommandApi } from "~/features/notifications/api/contracts/admin-notification-command-api";
+import type { AdminNotificationQueryApi } from "~/features/notifications/api/contracts/admin-notification-query-api";
 import { DeleteNotificationDialog } from "~/features/notifications/components/list/DeleteNotificationDialog";
 import { NotificationsTable } from "~/features/notifications/components/list/NotificationsTable";
 import { useNotificationList } from "~/features/notifications/hooks/useNotificationList";
 import { notificationListPageSize } from "~/features/notifications/model/notification-list";
+import type { NotificationFeedbackReporter } from "~/features/notifications/hooks/notification-feedback";
 
 const notificationViewOptions = [
   {
@@ -49,11 +51,21 @@ type NotificationDisplayMode =
 const notificationSearchOptions: readonly SearchOption[] = [];
 
 type NotificationListPageProps = {
-  api: NotificationManagementApi;
+  commandApi: AdminNotificationCommandApi;
+  queryApi: AdminNotificationQueryApi;
+  reportFeedback?: NotificationFeedbackReporter;
 };
 
-export function NotificationListPage({ api }: NotificationListPageProps) {
-  const state = useNotificationList({ api });
+export function NotificationListPage({
+  commandApi,
+  queryApi,
+  reportFeedback,
+}: NotificationListPageProps) {
+  const state = useNotificationList({
+    commandApi,
+    queryApi,
+    reportFeedback,
+  });
   const [searchQuery, setSearchQuery] = useState("");
   const [displayMode, setDisplayMode] =
     useState<NotificationDisplayMode>("all");

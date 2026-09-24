@@ -36,7 +36,8 @@ const notificationAudienceLabels: Record<NotificationAudienceType, string> = {
   all: "全体",
   class_room: "クラス",
   gathering: "集合",
-  event_participants: "競技参加者",
+  event: "競技参加者",
+  user: "ユーザー",
 };
 
 const audienceTypeOptions = Object.entries(notificationAudienceLabels).map(
@@ -169,7 +170,7 @@ export function NotificationForm({
               value={draft.audienceType}
             />
             <p className="text-text-subtle mt-1.5 text-xs">
-              全体 / クラス / 集合 / 競技参加者
+              全体 / クラス / 集合 / 競技参加者 / ユーザー
             </p>
           </div>
 

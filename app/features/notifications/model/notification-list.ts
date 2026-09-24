@@ -1,6 +1,6 @@
-import type { ManagedNotificationStatus } from "~/features/notifications/model/notification";
+import type { NotificationScheduleStatusDto } from "~/features/notifications/api/dto/notification-common-dto";
 
-export type NotificationDeliveryStatus = ManagedNotificationStatus;
+export type NotificationDeliveryStatus = NotificationScheduleStatusDto | null;
 
 export type NotificationListItem = {
   audience: string;

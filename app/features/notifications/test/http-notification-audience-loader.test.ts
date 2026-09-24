@@ -65,7 +65,7 @@ describe("http notification audience loader", () => {
     expect(options).toContainEqual({
       id: "101",
       name: "競技101",
-      type: "event_participants",
+      type: "event",
     });
   });
 
