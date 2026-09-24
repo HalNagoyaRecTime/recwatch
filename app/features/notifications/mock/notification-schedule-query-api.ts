@@ -10,10 +10,14 @@ export const mockNotificationScheduleQueryApi: NotificationScheduleQueryApi = {
   async list() {
     return cloneFixture(notificationScheduleListFixture);
   },
-  async getDetail() {
-    return cloneFixture(notificationScheduleDetailFixture);
+  async getDetail(notificationScheduleId) {
+    const detail = cloneFixture(notificationScheduleDetailFixture);
+    detail.notificationScheduleId = notificationScheduleId;
+    return detail;
   },
-  async getResults() {
-    return cloneFixture(notificationScheduleResultsFixture);
+  async getResults(notificationScheduleId) {
+    const results = cloneFixture(notificationScheduleResultsFixture);
+    results.notificationScheduleId = notificationScheduleId;
+    return results;
   },
 };

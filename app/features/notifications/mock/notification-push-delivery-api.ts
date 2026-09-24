@@ -5,7 +5,9 @@ import {
 } from "~/features/notifications/mock/notification-fixtures";
 
 export const mockNotificationPushDeliveryApi: NotificationPushDeliveryApi = {
-  async getDetail() {
-    return cloneFixture(notificationPushDeliveryDetailFixture);
+  async getDetail(notificationPushDeliveryId) {
+    const delivery = cloneFixture(notificationPushDeliveryDetailFixture);
+    delivery.notificationPushDeliveryId = notificationPushDeliveryId;
+    return delivery;
   },
 };
