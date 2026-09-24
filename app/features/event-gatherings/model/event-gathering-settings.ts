@@ -72,6 +72,13 @@ export const UNSET_GATHERING_TIME = "99:59";
 export const MIN_ROUND = 1;
 export const MAX_ROUND = 99;
 
+/**
+ * PUT /gatherings/:gatheringId/members の user_ids は 30 件が上限。
+ * D1 のバインド変数（1 人あたり 2 個・1 クエリ 100 個まで）に由来するため、
+ * 保存して 400 を受け取る前に画面側でも同じ値で止める。
+ */
+export const MAX_GATHERING_MEMBERS = 30;
+
 let draftKeySequence = 0;
 
 export function createDraftKey(): string {

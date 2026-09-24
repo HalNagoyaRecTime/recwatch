@@ -433,6 +433,50 @@ describe("GatheringSettingsStep", () => {
     );
   });
 
+  it("上限を超えて選ぶと不足人数を案内し、保存できない", async () => {
+    const memberGateway = createMemberGateway();
+    (memberGateway.loadCandidates as Mock).mockResolvedValue({
+      classrooms: [{ id: 1, name: "HAL1A" }],
+      students: Array.from({ length: 31 }, (_, index) => ({
+        id: 10 + index,
+        userId: 1001 + index,
+        name: `学生${index + 1}`,
+        classroomId: 1,
+        attendanceNumber: index + 1,
+        studentNumber: `2026${String(index + 1).padStart(3, "0")}`,
+        isLiveActive: true,
+      })),
+    });
+    renderStep({
+      memberGateway,
+      settingsGateway: {
+        load: vi.fn().mockResolvedValue(existingSettings),
+        save: vi.fn(),
+      },
+    });
+    const user = userEvent.setup();
+
+    await screen.findByRole("region", { name: "Round 1" });
+    await user.click(screen.getByRole("button", { name: "メンバーを選択" }));
+    await screen.findByLabelText("学生1を選択");
+
+    await user.click(
+      screen.getByRole("button", { name: "表示中の全員を選択" })
+    );
+
+    expect(screen.getByText(/選択中 31人 \/ 30人/)).toBeInTheDocument();
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "参加者は30人までです。1人ぶん選択を減らしてください。"
+    );
+    expect(screen.getByRole("button", { name: "参加者を保存" })).toBeDisabled();
+
+    // 1 人減らせば保存できる
+    await user.click(screen.getByLabelText("学生1を選択"));
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "参加者を保存" }));
+    await waitFor(() => expect(memberGateway.saveMembers).toHaveBeenCalled());
+  });
+
   it("参加者の保存に失敗しても選択を保持し、再試行できる", async () => {
     const memberGateway = createMemberGateway();
     (memberGateway.saveMembers as Mock)

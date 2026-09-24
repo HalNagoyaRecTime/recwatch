@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "~/components/ui/button/Button";
 import { SearchField } from "~/components/ui/form/SearchField";
 
+import { MAX_GATHERING_MEMBERS } from "~/features/event-gatherings/model/event-gathering-settings";
 import type { GatheringMemberCandidates } from "~/features/event-gatherings/model/gathering-member-candidate";
 
 type GatheringMemberPickerProps = {
@@ -88,6 +89,9 @@ export function GatheringMemberPicker({
   useEffect(() => {
     setHasMoreBelow(hasScrollBelow(listRef.current));
   }, [visibleStudents]);
+
+  // 一括選択で上限を超えることがあるため、黙って打ち切らず保存の手前で止める。
+  const isOverLimit = selectedUserIds.length > MAX_GATHERING_MEMBERS;
 
   const isAllVisibleSelected =
     visibleStudents.length > 0 &&
@@ -255,6 +259,14 @@ export function GatheringMemberPicker({
         </div>
       )}
 
+      {isOverLimit ? (
+        <p className="text-tone-danger-text text-sm" role="alert">
+          参加者は{MAX_GATHERING_MEMBERS}人までです。
+          {selectedUserIds.length - MAX_GATHERING_MEMBERS}
+          人ぶん選択を減らしてください。
+        </p>
+      ) : null}
+
       {saveError ? (
         <p className="text-tone-danger-text text-sm" role="alert">
           {saveError}
@@ -265,7 +277,9 @@ export function GatheringMemberPicker({
         <p className="text-text-base text-sm">
           {candidates ? `${visibleStudents.length}人を表示中` : ""}
           {hasMoreBelow ? "（スクロールで続きを表示）" : ""}
-          {candidates ? ` ／ 選択中 ${selectedUserIds.length}人` : ""}
+          {candidates
+            ? ` ／ 選択中 ${selectedUserIds.length}人 / ${MAX_GATHERING_MEMBERS}人`
+            : ""}
         </p>
         <div className="flex items-center gap-2">
           <Button
@@ -279,7 +293,9 @@ export function GatheringMemberPicker({
             キャンセル
           </Button>
           <Button
-            disabled={isSaving || isLoading || Boolean(loadError)}
+            disabled={
+              isSaving || isLoading || isOverLimit || Boolean(loadError)
+            }
             icon={Check}
             onClick={onSave}
             size="sm"
