@@ -39,7 +39,7 @@ export function ClassRoomCreatePage({
   });
 
   function navigateToList() {
-    navigate(`/classroom${location.search}`);
+    navigate(`/classroom${location.search}`, { replace: true });
   }
 
   async function handleSubmit(input: ClassRoomWriteInput) {
