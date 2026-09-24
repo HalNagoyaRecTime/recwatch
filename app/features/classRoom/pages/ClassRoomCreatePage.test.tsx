@@ -128,15 +128,10 @@ describe("ClassRoomCreatePage", () => {
     const user = userEvent.setup();
     const { router } = renderCreatePage(
       <ClassRoomCreatePage api={createApi()} teacherOptions={[]} />,
-      [
-        "/classroom?search=1A&page=2",
-        "/classroom/new?search=1A&page=2",
-      ]
+      ["/classroom?search=1A&page=2", "/classroom/new?search=1A&page=2"]
     );
 
-    await user.click(
-      await screen.findByRole("button", { name: "キャンセル" })
-    );
+    await user.click(await screen.findByRole("button", { name: "キャンセル" }));
     await waitFor(() =>
       expect(router.state.location.pathname).toBe("/classroom")
     );
