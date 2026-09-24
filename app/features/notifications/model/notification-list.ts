@@ -1,31 +1,15 @@
-import type { NotificationScheduleStatusDto } from "~/features/notifications/api/dto/notification-common-dto";
-
-export type NotificationDeliveryStatus = NotificationScheduleStatusDto | null;
-
-export type NotificationListItem = {
-  audience: string;
-  canModify: boolean;
-  competition: string;
-  deliveredAt: string;
-  id: string;
-  schedule: string;
-  sender: string;
-  status: NotificationDeliveryStatus;
-  title: string;
-};
-
 export const notificationListPageSize = 20;
 
 export const notificationSortableColumnIds = [
-  "id",
+  "notificationId",
   "title",
   "audience",
-  "deliveredAt",
-  "sender",
-  "competition",
-  "schedule",
+  "sendAt",
+  "creationMethod",
+  "creator",
+  "importance",
   "status",
-] as const satisfies readonly (keyof NotificationListItem)[];
+] as const;
 
 export type NotificationSortableColumnId =
   (typeof notificationSortableColumnIds)[number];
@@ -36,6 +20,8 @@ export type NotificationListSort = {
   columnId: NotificationSortableColumnId;
   direction: NotificationListSortDirection;
 };
+
+export type NotificationCreationMethodFilter = "all" | "manual" | "automatic";
 
 export function getNextNotificationListSort(
   current: NotificationListSort | undefined,

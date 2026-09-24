@@ -1,4 +1,3 @@
-import { Check, Clock3, X } from "lucide-react";
 import type { ReactNode } from "react";
 
 import { TextLink } from "~/components/ui/button/TextLink";
@@ -6,40 +5,43 @@ import {
   DataTable,
   type DataTableColumn,
 } from "~/components/ui/data-table/DataTable";
-import type {
-  NotificationListItem,
-  NotificationListSort,
-} from "~/features/notifications/model/notification-list";
+import type { AdminNotificationListItem } from "~/features/notifications/api/contracts/admin-notification-query-api";
 import { NotificationActionMenu } from "~/features/notifications/components/list/NotificationActionMenu";
+import {
+  formatNotificationAudience,
+  formatNotificationCreationMethod,
+  formatNotificationCreator,
+  formatNotificationDateTime,
+  formatNotificationImportance,
+} from "~/features/notifications/components/list/notification-display";
+import { NotificationStatusBadge } from "~/features/notifications/components/list/NotificationStatusBadge";
+import {
+  canModifyNotification,
+  selectRepresentativeSchedule,
+} from "~/features/notifications/hooks/notification-list-data";
+import type { NotificationListSort } from "~/features/notifications/model/notification-list";
 
-const notificationTableColumns: readonly DataTableColumn<NotificationListItem>[] =
+const notificationTableColumns: readonly DataTableColumn<AdminNotificationListItem>[] =
   [
     {
       header: "id",
-      id: "id",
+      id: "notificationId",
       sortable: true,
-      width: {
-        type: "fixed",
-        value: 72,
-      },
-      renderCell: (item) => item.id,
+      width: { type: "fixed", value: 72 },
+      renderCell: (item) => item.notificationId,
     },
     {
       header: "件名",
       id: "title",
       padding: "wide",
       sortable: true,
-      width: {
-        grow: 2.2,
-        min: 90,
-        type: "fluid",
-      },
+      width: { grow: 2, min: 150, type: "fluid" },
       renderCell: (item) => (
         <TextLink
-          aria-label={`${item.title}の詳細を表示`}
-          to={`/notifications/${item.id}`}
+          aria-label={`${item.content.push.title}の詳細を表示`}
+          to={`/notifications/${item.notificationId}`}
         >
-          {item.title}
+          {item.content.push.title}
         </TextLink>
       ),
     },
@@ -47,86 +49,75 @@ const notificationTableColumns: readonly DataTableColumn<NotificationListItem>[]
       header: "配信対象",
       id: "audience",
       sortable: true,
-      width: {
-        grow: 0.7,
-        min: 110,
-        type: "fluid",
-      },
-      renderCell: (item) => item.audience,
+      width: { grow: 1, min: 130, type: "fluid" },
+      renderCell: (item) =>
+        formatNotificationAudience(selectRepresentativeSchedule(item)),
     },
     {
       header: "配信日時",
-      id: "deliveredAt",
+      id: "sendAt",
       sortable: true,
-      width: {
-        grow: 0.8,
-        min: 110,
-        type: "fluid",
+      width: { grow: 1, min: 155, type: "fluid" },
+      renderCell: (item) => {
+        const schedule = selectRepresentativeSchedule(item);
+        const additionalCount = Math.max(item.schedules.length - 1, 0);
+        return (
+          <span>
+            {formatNotificationDateTime(schedule?.sendAt)}
+            {additionalCount > 0 ? `（他${additionalCount}件）` : ""}
+          </span>
+        );
       },
-      renderCell: (item) => item.deliveredAt,
     },
     {
-      header: "作成・配信者",
-      id: "sender",
+      header: "作成方法",
+      id: "creationMethod",
       sortable: true,
-      width: {
-        grow: 0.8,
-        min: 140,
-        type: "fluid",
-      },
-      renderCell: (item) => item.sender,
+      width: { grow: 0.6, min: 90, type: "fluid" },
+      renderCell: formatNotificationCreationMethod,
     },
     {
-      header: "関連イベント",
-      id: "competition",
+      header: "作成者・参照元",
+      id: "creator",
       sortable: true,
-      width: {
-        grow: 1,
-        min: 110,
-        type: "fluid",
-      },
-      renderCell: (item) => item.competition,
+      width: { grow: 1, min: 135, type: "fluid" },
+      renderCell: formatNotificationCreator,
     },
     {
-      header: "関連スケジュール",
-      id: "schedule",
+      header: "重要度",
+      id: "importance",
       sortable: true,
-      width: {
-        grow: 1,
-        min: 160,
-        type: "fluid",
-      },
-      renderCell: (item) => item.schedule,
+      width: { grow: 0.5, min: 80, type: "fluid" },
+      renderCell: (item) => formatNotificationImportance(item.importance),
     },
     {
       header: "状態",
       id: "status",
       sortable: true,
-      width: {
-        grow: 0.7,
-        min: 90,
-        resizable: false,
-        type: "fluid",
+      width: { grow: 0.8, min: 120, resizable: false, type: "fluid" },
+      renderCell: (item) => {
+        const schedule = selectRepresentativeSchedule(item);
+        return schedule ? (
+          <NotificationStatusBadge status={schedule.status} />
+        ) : (
+          <span className="text-text-muted">—</span>
+        );
       },
-      renderCell: (item) => <DeliveryStatus status={item.status} />,
     },
     {
       align: "center",
       header: "",
       id: "actions",
       edge: "end",
-      width: {
-        type: "fixed",
-        value: 64,
-      },
+      width: { type: "fixed", value: 64 },
       renderCell: (item) => <NotificationActionMenu notification={item} />,
     },
   ];
 
 type NotificationsTableProps = {
   footer?: ReactNode;
-  items: readonly NotificationListItem[];
-  onDelete?: (item: NotificationListItem) => void;
+  items: readonly AdminNotificationListItem[];
+  onDelete?: (item: AdminNotificationListItem) => void;
   onSortChange: (columnId: string) => void;
   sort?: NotificationListSort;
 };
@@ -142,8 +133,12 @@ export function NotificationsTable({
     column.id === "actions"
       ? {
           ...column,
-          renderCell: (item: NotificationListItem) => (
-            <NotificationActionMenu notification={item} onDelete={onDelete} />
+          renderCell: (item: AdminNotificationListItem) => (
+            <NotificationActionMenu
+              canModify={canModifyNotification(item)}
+              notification={item}
+              onDelete={onDelete}
+            />
           ),
         }
       : column
@@ -153,57 +148,12 @@ export function NotificationsTable({
     <DataTable
       ariaLabel="通知一覧"
       columns={columns}
+      emptyMessage="条件に一致する通知はありません"
       footer={footer}
-      getRowKey={(item) => item.id}
+      getRowKey={(item) => String(item.notificationId)}
       items={items}
       onSortChange={onSortChange}
       sort={sort}
     />
-  );
-}
-
-function DeliveryStatus({
-  status,
-}: {
-  status: NotificationListItem["status"];
-}) {
-  if (status === null) {
-    return <span className="text-text-muted">—</span>;
-  }
-
-  const delivered = status === "completed";
-  const waiting = status === "scheduled" || status === "resolving";
-  const sending = status === "sending";
-  const stopped = status === "stopped";
-
-  return (
-    <span
-      className={`inline-flex items-center gap-1 font-medium ${
-        delivered
-          ? "text-tone-success-text"
-          : waiting || sending || stopped
-            ? "text-text-muted"
-            : "text-tone-danger-text"
-      }`}
-    >
-      {delivered ? (
-        <Check aria-hidden="true" className="size-4" />
-      ) : waiting || sending || stopped ? (
-        <Clock3 aria-hidden="true" className="size-4" />
-      ) : (
-        <X aria-hidden="true" className="size-4" />
-      )}
-      {delivered
-        ? "配信済"
-        : status === "scheduled"
-          ? "配信予定"
-          : status === "resolving"
-            ? "対象解決中"
-            : sending
-              ? "送信中"
-              : stopped
-                ? "停止済"
-                : "送信失敗"}
-    </span>
   );
 }

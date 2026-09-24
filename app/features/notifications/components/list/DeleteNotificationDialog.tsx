@@ -2,10 +2,10 @@ import { AlertTriangleIcon } from "lucide-react";
 import { useEffect } from "react";
 
 import { Button } from "~/components/ui/button/Button";
-import type { AdminNotificationListItemDto } from "~/features/notifications/api/dto/admin-notification-dto";
+import type { AdminNotificationListItem } from "~/features/notifications/api/contracts/admin-notification-query-api";
 
 type DeleteNotificationDialogProps = {
-  notification: AdminNotificationListItemDto;
+  notification: AdminNotificationListItem;
   isSubmitting: boolean;
   onClose: () => void;
   onConfirm: () => void;

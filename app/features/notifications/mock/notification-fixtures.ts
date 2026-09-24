@@ -26,6 +26,37 @@ export const adminNotificationListFixture: AdminNotificationListResponseDto = {
   items: scheduleStatuses.map((status, index) => {
     const notificationId = 101 + index;
     const isAutomatic = index === 1 || index === 5;
+    const primarySchedule = {
+      notificationScheduleId: 501 + index,
+      sendAt: `2026-11-07T${String(index + 9).padStart(2, "0")}:20:00+09:00`,
+      status,
+      scheduledBy: isAutomatic ? null : { userId: 123, userName: "HAL 太郎" },
+      createdAt: `2026-11-07T0${index + 7}:05:00+09:00`,
+      audience: {
+        items: [
+          index === 0
+            ? ({ type: "all" } as const)
+            : ({
+                type: "gathering",
+                targetId: 51 + index,
+                label: index === 5 ? null : `第${index}集合`,
+              } as const),
+        ],
+        recipientResolution: {
+          status:
+            status === "scheduled"
+              ? ("pending" as const)
+              : ("resolved" as const),
+          resolvedCount: status === "scheduled" ? 0 : 40,
+        },
+      },
+      recipientPushSummary: {
+        totalCount: 42,
+        successCount: status === "completed" ? 38 : 0,
+        failedCount: status === "failed" ? 2 : 0,
+        noPushTargetCount: 2,
+      },
+    };
     return {
       notificationId,
       content: {
@@ -51,38 +82,31 @@ export const adminNotificationListFixture: AdminNotificationListResponseDto = {
             source: null,
           },
       createdAt: `2026-11-07T0${index + 7}:00:00+09:00`,
-      schedules: [
-        {
-          notificationScheduleId: 501 + index,
-          sendAt: `2026-11-07T${String(index + 9).padStart(2, "0")}:20:00+09:00`,
-          status,
-          scheduledBy: isAutomatic
-            ? null
-            : { userId: 123, userName: "HAL 太郎" },
-          createdAt: `2026-11-07T0${index + 7}:05:00+09:00`,
-          audience: {
-            items: [
-              index === 0
-                ? { type: "all" as const }
-                : {
-                    type: "gathering" as const,
-                    targetId: 51 + index,
-                    label: index === 5 ? null : `第${index}集合`,
+      schedules:
+        index === 0
+          ? [
+              primarySchedule,
+              {
+                ...primarySchedule,
+                notificationScheduleId: 601,
+                sendAt: "2026-11-08T09:20:00+09:00",
+                status: "scheduled" as const,
+                audience: {
+                  ...primarySchedule.audience,
+                  recipientResolution: {
+                    status: "pending" as const,
+                    resolvedCount: 0,
                   },
-            ],
-            recipientResolution: {
-              status: status === "scheduled" ? "pending" : "resolved",
-              resolvedCount: status === "scheduled" ? 0 : 40,
-            },
-          },
-          recipientPushSummary: {
-            totalCount: 42,
-            successCount: status === "completed" ? 38 : 0,
-            failedCount: status === "failed" ? 2 : 0,
-            noPushTargetCount: 2,
-          },
-        },
-      ],
+                },
+                recipientPushSummary: {
+                  totalCount: 42,
+                  successCount: 0,
+                  failedCount: 0,
+                  noPushTargetCount: 2,
+                },
+              },
+            ]
+          : [primarySchedule],
     };
   }),
 };
