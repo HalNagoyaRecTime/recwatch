@@ -4,7 +4,10 @@ import { Button } from "~/components/ui/button/Button";
 import { PageHeader } from "~/components/ui/layout/PageHeader";
 import { cn } from "~/lib/cn";
 import type { CompetitionFormValue } from "~/features/sports/model/competition-form";
-import type { CompetitionVenue } from "~/features/sports/model/competition-venue";
+import {
+  maxVenueSelection,
+  type CompetitionVenue,
+} from "~/features/sports/model/competition-venue";
 
 type CompetitionFormProps = {
   isDisabled: boolean;
@@ -44,6 +47,8 @@ export function CompetitionForm({
   ) {
     onChange({ ...value, [field]: nextValue });
   }
+
+  const isVenueSelectionFull = value.venueIds.length >= maxVenueSelection;
 
   function toggleVenue(venueId: number) {
     onChange({
@@ -115,6 +120,9 @@ export function CompetitionForm({
               >
                 <input
                   checked={value.venueIds.includes(venue.id)}
+                  disabled={
+                    isVenueSelectionFull && !value.venueIds.includes(venue.id)
+                  }
                   onChange={() => toggleVenue(venue.id)}
                   type="checkbox"
                 />
@@ -127,6 +135,11 @@ export function CompetitionForm({
               </p>
             ) : null}
           </div>
+          <p className="text-text-subtle mt-1.5 text-xs">
+            {isVenueSelectionFull
+              ? `実施場所は${maxVenueSelection}件まで選択できます。`
+              : `${value.venueIds.length}／${maxVenueSelection}件を選択中`}
+          </p>
         </fieldset>
         <div className="grid gap-4 sm:grid-cols-2">
           <label className={labelClass}>

@@ -1,3 +1,5 @@
+import { maxVenueSelection } from "~/features/sports/model/competition-venue";
+
 export type CompetitionFormValue = {
   endTime: string;
   name: string;
@@ -27,6 +29,11 @@ export function validateCompetitionForm(
 ): { error: string } | { input: CompetitionWriteInput } {
   if (!value.name.trim() || value.venueIds.length === 0) {
     return { error: "イベント名を入力し、実施場所を選択してください。" };
+  }
+  if (value.venueIds.length > maxVenueSelection) {
+    return {
+      error: `実施場所は${maxVenueSelection}件まで選択できます。`,
+    };
   }
   if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(value.startTime)) {
     return { error: "開始時間を正しく入力してください。" };

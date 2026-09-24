@@ -132,6 +132,38 @@ describe("CompetitionCreatePage", () => {
     expect(screen.getByRole("checkbox", { name: "運動場" })).toBeChecked();
   });
 
+  it("実施場所を上限まで選ぶと残りの実施場所を選べなくする", async () => {
+    const user = userEvent.setup();
+
+    render(
+      <MemoryRouter initialEntries={["/events/new"]}>
+        <CompetitionCreatePage
+          api={createApi({
+            listVenues: vi.fn().mockResolvedValue(
+              Array.from({ length: 21 }, (_, index) => ({
+                id: index + 1,
+                name: `実施場所${index + 1}`,
+              }))
+            ),
+          })}
+        />
+      </MemoryRouter>
+    );
+
+    await screen.findByRole("checkbox", { name: "実施場所1" });
+    for (let index = 1; index <= 20; index += 1) {
+      await user.click(
+        screen.getByRole("checkbox", { name: `実施場所${index}` })
+      );
+    }
+
+    expect(screen.getByRole("checkbox", { name: "実施場所21" })).toBeDisabled();
+    expect(screen.getByRole("checkbox", { name: "実施場所20" })).toBeEnabled();
+    expect(
+      screen.getByText("実施場所は20件まで選択できます。")
+    ).toBeInTheDocument();
+  });
+
   it("実施場所の一覧を取得できなければフォームを無効化する", async () => {
     render(
       <MemoryRouter initialEntries={["/events/new"]}>
