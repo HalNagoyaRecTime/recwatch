@@ -103,10 +103,9 @@ describe("ClassRoomCreatePage", () => {
         .fn()
         .mockRejectedValue(new Error("登録に失敗しました。")),
     });
-    renderCreatePage(
-      <ClassRoomCreatePage api={api} teacherOptions={[]} />,
-      ["/classroom/new"]
-    );
+    renderCreatePage(<ClassRoomCreatePage api={api} teacherOptions={[]} />, [
+      "/classroom/new",
+    ]);
 
     await user.type(
       await screen.findByRole("textbox", { name: "クラスコード*" }),
