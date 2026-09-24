@@ -133,7 +133,7 @@ describe("createHttpEventGatheringSettingsGateway", () => {
 });
 
 describe("createHttpGatheringMemberGateway", () => {
-  it("クラスと学生を全ページ読み込む", async () => {
+  it("クラスと学生を全ページ読み込み、停止中の学生も候補に含める", async () => {
     const get = vi.fn().mockImplementation(async (path: string) => {
       if (path.startsWith("/api/v1/classrooms")) {
         return {
@@ -150,10 +150,20 @@ describe("createHttpGatheringMemberGateway", () => {
               display_name: "山田 太郎",
               attendance_number: 1,
               student_id_number: "2026001",
+              is_live_active: true,
+              class_room: { class_room_id: 1, class_name: "HAL1A" },
+            },
+            {
+              student_id: 11,
+              user_id: 1002,
+              display_name: "佐藤 花子",
+              attendance_number: 2,
+              student_id_number: "2026002",
+              is_live_active: false,
               class_room: { class_room_id: 1, class_name: "HAL1A" },
             },
           ],
-          total: 1,
+          total: 2,
         };
       }
       throw new Error(`unexpected path: ${path}`);
@@ -170,11 +180,24 @@ describe("createHttpGatheringMemberGateway", () => {
           classroomId: 1,
           attendanceNumber: 1,
           studentNumber: "2026001",
+          isLiveActive: true,
+        },
+        {
+          id: 11,
+          userId: 1002,
+          name: "佐藤 花子",
+          classroomId: 1,
+          attendanceNumber: 2,
+          studentNumber: "2026002",
+          isLiveActive: false,
         },
       ],
     });
     expect(get).toHaveBeenCalledWith("/api/v1/classrooms?limit=100&offset=0");
-    expect(get).toHaveBeenCalledWith("/api/v1/students?limit=100&offset=0");
+    // 登録済みの参加者が停止されても外せるよう、停止中を含めて取得する
+    expect(get).toHaveBeenCalledWith(
+      "/api/v1/students?limit=100&offset=0&isLiveActive=all"
+    );
   });
 
   it("集合 1 件の登録済み参加者を user_id の一覧として読む", async () => {

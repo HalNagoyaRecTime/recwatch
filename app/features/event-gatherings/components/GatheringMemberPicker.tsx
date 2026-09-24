@@ -66,6 +66,10 @@ export function GatheringMemberPicker({
     const students = candidates?.students ?? [];
     const keyword = query.trim().toLowerCase();
     return students.filter((student) => {
+      // 停止中の学生は新しく追加させない。ただし登録済みの参加者は、外せるように残す。
+      if (!student.isLiveActive && !selectedUserIds.includes(student.userId)) {
+        return false;
+      }
       if (
         classroomId !== ALL_CLASSROOMS &&
         String(student.classroomId) !== classroomId
@@ -78,7 +82,7 @@ export function GatheringMemberPicker({
         (value) => value.toLowerCase().includes(keyword)
       );
     });
-  }, [candidates, classroomId, classroomNames, query]);
+  }, [candidates, classroomId, classroomNames, query, selectedUserIds]);
 
   // 絞り込みで行数が変わるたびに、続きがあるかを取り直す
   useEffect(() => {
@@ -224,6 +228,11 @@ export function GatheringMemberPicker({
                       </td>
                       <td className="text-text-base truncate px-3 py-2 font-semibold">
                         {student.name}
+                        {student.isLiveActive ? null : (
+                          <span className="app-rounded bg-surface-muted text-text-muted ml-2 px-1.5 py-0.5 text-xs font-medium">
+                            停止中
+                          </span>
+                        )}
                       </td>
                       <td className="text-text-base truncate px-3 py-2">
                         {classroomNames.get(student.classroomId) ?? "—"}

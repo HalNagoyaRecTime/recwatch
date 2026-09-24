@@ -23,6 +23,7 @@ export function toMemberStudent(response: StudentResponseDto): MemberStudent {
     classroomId: response.class_room.class_room_id,
     attendanceNumber: response.attendance_number,
     studentNumber: response.student_id_number,
+    isLiveActive: response.is_live_active,
   };
 }
 

@@ -16,6 +16,7 @@ export type StudentResponseDto = {
   display_name: string;
   attendance_number: number;
   student_id_number: string;
+  is_live_active: boolean;
   class_room: {
     class_room_id: number;
     class_name: string;

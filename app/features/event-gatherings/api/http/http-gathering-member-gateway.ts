@@ -33,9 +33,12 @@ export function createHttpGatheringMemberGateway(
             total: page.total,
           };
         }),
+        // 停止中の学生も取得する。登録済みの参加者が停止されると、利用中だけの
+        // 一覧では行が消えてチェックを外せず、参加者からも集合からも外せなくなるため。
+        // 新しく追加させない制御は候補一覧側で行う。
         loadAllPages(async (offset, limit) => {
           const page = await client.get<StudentPageResponseDto>(
-            `/api/v1/students?limit=${limit}&offset=${offset}`
+            `/api/v1/students?limit=${limit}&offset=${offset}&isLiveActive=all`
           );
           return {
             items: page.items.map(toMemberStudent),

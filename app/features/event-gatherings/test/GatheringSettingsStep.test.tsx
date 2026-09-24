@@ -83,6 +83,7 @@ function createMemberGateway(): GatheringMemberGateway {
           classroomId: 1,
           attendanceNumber: 1,
           studentNumber: "2026001",
+          isLiveActive: true,
         },
         {
           id: 11,
@@ -91,6 +92,7 @@ function createMemberGateway(): GatheringMemberGateway {
           classroomId: 1,
           attendanceNumber: 2,
           studentNumber: "2026002",
+          isLiveActive: true,
         },
         {
           id: 12,
@@ -99,6 +101,7 @@ function createMemberGateway(): GatheringMemberGateway {
           classroomId: 2,
           attendanceNumber: 1,
           studentNumber: "2026003",
+          isLiveActive: true,
         },
       ],
     }),
@@ -375,6 +378,59 @@ describe("GatheringSettingsStep", () => {
     expect(
       screen.getByText("参加者が登録されているため、この集合は削除できません。")
     ).toBeInTheDocument();
+  });
+
+  it("停止中の学生は登録済みなら外せるが、新しくは追加できない", async () => {
+    const memberGateway = createMemberGateway();
+    (memberGateway.loadCandidates as Mock).mockResolvedValue({
+      classrooms: [{ id: 1, name: "HAL1A" }],
+      students: [
+        {
+          id: 10,
+          userId: 1001,
+          name: "山田 太郎",
+          classroomId: 1,
+          attendanceNumber: 1,
+          studentNumber: "2026001",
+          isLiveActive: false,
+        },
+        {
+          id: 11,
+          userId: 1002,
+          name: "佐藤 花子",
+          classroomId: 1,
+          attendanceNumber: 2,
+          studentNumber: "2026002",
+          isLiveActive: false,
+        },
+      ],
+    });
+    // 山田だけが停止前から参加者として登録されている
+    (memberGateway.loadMembers as Mock).mockResolvedValue([1001]);
+    renderStep({
+      memberGateway,
+      settingsGateway: {
+        load: vi.fn().mockResolvedValue(existingSettings),
+        save: vi.fn(),
+      },
+    });
+    const user = userEvent.setup();
+
+    await screen.findByRole("region", { name: "Round 1" });
+    await user.click(screen.getByRole("button", { name: "メンバーを選択" }));
+
+    // 登録済みの停止中学生は行が残り、チェックを外せる
+    expect(await screen.findByLabelText("山田 太郎を選択")).toBeChecked();
+    expect(screen.getByText("停止中")).toBeInTheDocument();
+    // 未登録の停止中学生は候補に出さない
+    expect(screen.queryByLabelText("佐藤 花子を選択")).not.toBeInTheDocument();
+
+    await user.click(screen.getByLabelText("山田 太郎を選択"));
+    await user.click(screen.getByRole("button", { name: "参加者を保存" }));
+
+    await waitFor(() =>
+      expect(memberGateway.saveMembers).toHaveBeenCalledWith(101, [])
+    );
   });
 
   it("参加者の保存に失敗しても選択を保持し、再試行できる", async () => {
