@@ -1,5 +1,4 @@
 import { useLocation } from "react-router";
-import { currentUser } from "~/config/permissions";
 import { cn } from "~/lib/cn";
 import { useSidebarUI } from "~/features/frame/sidebar/hooks/useSidebarUI";
 import { buildSidebarMenu } from "~/features/frame/sidebar/utils/build-sidebar-menu";
@@ -9,7 +8,8 @@ import { SIDEBAR_DURATION } from "~/features/frame/sidebar/styles/sidebar-styles
 import { ScrollbarArea } from "~/components/ui/scrollbar/ScrollbarArea";
 
 export function AppSidebar() {
-  const sections = buildSidebarMenu(currentUser.role);
+  // 2026: role-based feature permissions are not implemented; all staff share this menu.
+  const sections = buildSidebarMenu("admin");
   const { isExpanded } = useSidebarUI();
   const location = useLocation();
   const pathname = location.pathname;
