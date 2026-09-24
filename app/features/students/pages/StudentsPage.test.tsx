@@ -10,11 +10,10 @@ import { StudentsPage } from "./StudentsPage";
 
 const classRoom = {
   classRoomId: 1,
-  classRoomCode: "1A",
-  classRoomName: "1年Aクラス",
+  classCode: "1A",
+  className: "1年Aクラス",
   studentCount: 0,
-  teacherId: null,
-  teacherName: null,
+  teacher: null,
 };
 
 function makeStudent(

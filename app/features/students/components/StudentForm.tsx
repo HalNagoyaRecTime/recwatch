@@ -2,14 +2,14 @@ import { Check, X } from "lucide-react";
 import { useState } from "react";
 
 import { Button } from "~/components/ui/button/Button";
-import type { ClassRoomData } from "~/features/classRoom/model/classRoom";
+import type { ClassRoom } from "~/features/classRoom/model/classRoom";
 import type {
   StudentRow,
   StudentWriteInput,
 } from "~/features/students/model/student";
 
 type StudentFormProps = {
-  classRooms: readonly ClassRoomData[];
+  classRooms: readonly ClassRoom[];
   initialStudent?: StudentRow;
   isSubmitting: boolean;
   onCancel: () => void;
@@ -146,7 +146,7 @@ export function StudentForm({
           <option value="">クラスを選択</option>
           {classRooms.map((classRoom) => (
             <option key={classRoom.classRoomId} value={classRoom.classRoomId}>
-              {classRoom.classRoomName}
+              {classRoom.classCode} — {classRoom.className}
             </option>
           ))}
         </select>
