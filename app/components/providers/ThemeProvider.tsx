@@ -1,4 +1,10 @@
-import { createContext, useEffect, useState, type ReactNode } from "react";
+import {
+  createContext,
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import {
   applyTheme,
   getPreferredTheme,
@@ -19,19 +25,23 @@ export const ThemeContext = createContext<ThemeContextType | undefined>(
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setThemeState] = useState<ThemeMode>(() => getPreferredTheme());
+  const initialTheme = useRef(theme);
 
   useEffect(() => {
-    applyTheme(theme);
+    applyTheme(initialTheme.current);
+  }, []);
 
-    if (theme === "system") {
-      const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
-      const handleChange = () => applyTheme("system");
-      mediaQuery.addEventListener("change", handleChange);
-      return () => mediaQuery.removeEventListener("change", handleChange);
-    }
+  useEffect(() => {
+    if (theme !== "system") return;
+
+    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+    const handleChange = () => applyTheme("system");
+    mediaQuery.addEventListener("change", handleChange);
+    return () => mediaQuery.removeEventListener("change", handleChange);
   }, [theme]);
 
   const setTheme = (nextTheme: ThemeMode) => {
+    applyTheme(nextTheme);
     setThemeState(nextTheme);
     window.localStorage.setItem(THEME_STORAGE_KEY, nextTheme);
   };

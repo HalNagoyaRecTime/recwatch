@@ -1,10 +1,54 @@
-import { act, render } from "@testing-library/react";
-import { createElement } from "react";
+import {
+  act,
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+} from "@testing-library/react";
+import { createElement, useContext } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { ThemeProvider } from "~/components/providers/ThemeProvider";
+import {
+  ThemeContext,
+  ThemeProvider,
+} from "~/components/providers/ThemeProvider";
 
-import { applyTheme, THEME_STORAGE_KEY } from "./theme";
+import { applyTheme, THEME_STORAGE_KEY, type ThemeMode } from "./theme";
+
+type ThemeSnapshot = {
+  isDark: boolean;
+  theme: string | undefined;
+  colorScheme: string;
+  rootBackground: string;
+  bodyBackground: string;
+};
+
+function ThemeSelectionProbe({
+  onApplied,
+}: {
+  onApplied: (snapshot: ThemeSnapshot) => void;
+}) {
+  const context = useContext(ThemeContext);
+  if (!context) throw new Error("ThemeProviderが必要です");
+
+  const selectTheme = (theme: ThemeMode) => {
+    context.setTheme(theme);
+    onApplied({
+      isDark: document.documentElement.classList.contains("dark"),
+      theme: document.documentElement.dataset.theme,
+      colorScheme: document.documentElement.style.colorScheme,
+      rootBackground: document.documentElement.style.backgroundColor,
+      bodyBackground: document.body.style.backgroundColor,
+    });
+  };
+
+  return createElement(
+    "div",
+    null,
+    createElement("button", { onClick: () => selectTheme("dark") }, "dark"),
+    createElement("button", { onClick: () => selectTheme("light") }, "light")
+  );
+}
 
 describe("applyTheme", () => {
   beforeEach(() => {
@@ -19,6 +63,7 @@ describe("applyTheme", () => {
   });
 
   afterEach(() => {
+    cleanup();
     vi.unstubAllGlobals();
   });
 
@@ -40,6 +85,40 @@ describe("applyTheme", () => {
     );
     expect(document.documentElement).not.toHaveClass("dark");
     expect(document.body.style.backgroundColor).toBe("rgb(255, 255, 255)");
+  });
+
+  it("ユーザー操作と同じイベント内でrootとbackgroundへ同期反映する", () => {
+    window.localStorage.setItem(THEME_STORAGE_KEY, "light");
+    const snapshots: ThemeSnapshot[] = [];
+    render(
+      createElement(
+        ThemeProvider,
+        null,
+        createElement(ThemeSelectionProbe, {
+          onApplied: (snapshot: ThemeSnapshot) => snapshots.push(snapshot),
+        })
+      )
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "dark" }));
+    fireEvent.click(screen.getByRole("button", { name: "light" }));
+
+    expect(snapshots).toEqual([
+      {
+        isDark: true,
+        theme: "dark",
+        colorScheme: "dark",
+        rootBackground: "rgb(0, 0, 0)",
+        bodyBackground: "rgb(0, 0, 0)",
+      },
+      {
+        isDark: false,
+        theme: "light",
+        colorScheme: "light",
+        rootBackground: "rgb(255, 255, 255)",
+        bodyBackground: "rgb(255, 255, 255)",
+      },
+    ]);
   });
 
   it("systemテーマはmatchMediaの現在値から背景色を決める", () => {
