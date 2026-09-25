@@ -144,6 +144,20 @@ export function FeedbackProvider({
   children: ReactNode;
   userId: string | null;
 }) {
+  return (
+    <FeedbackProviderForUser key={userId ?? "anonymous"} userId={userId}>
+      {children}
+    </FeedbackProviderForUser>
+  );
+}
+
+function FeedbackProviderForUser({
+  children,
+  userId,
+}: {
+  children: ReactNode;
+  userId: string | null;
+}) {
   const [notifications, setNotifications] = useState<AppNotification[]>(() =>
     readNotifications(userId)
   );
@@ -151,7 +165,6 @@ export function FeedbackProvider({
   const [notificationCenterRequest, setNotificationCenterRequest] =
     useState<FeedbackContextValue["notificationCenterRequest"]>(null);
   const notificationCenterRequestIdRef = useRef(0);
-  const notificationsUserIdRef = useRef(userId);
   const previousNotificationsRef = useRef(notifications);
   const storageSyncedNotificationsRef = useRef<AppNotification[] | null>(null);
   const hasPersistedNotificationsRef = useRef(false);
@@ -161,7 +174,6 @@ export function FeedbackProvider({
       previousNotificationsRef.current !== notifications;
     previousNotificationsRef.current = notifications;
 
-    if (notificationsUserIdRef.current !== userId) return;
     if (storageSyncedNotificationsRef.current === notifications) {
       storageSyncedNotificationsRef.current = null;
       return;
@@ -173,12 +185,6 @@ export function FeedbackProvider({
   }, [notifications, userId]);
 
   useEffect(() => {
-    if (notificationsUserIdRef.current !== userId) {
-      notificationsUserIdRef.current = userId;
-      storageSyncedNotificationsRef.current = null;
-      setNotifications(readNotifications(userId));
-    }
-
     if (typeof window === "undefined" || !userId) return;
 
     const storageKey = getAppNotificationStorageKey(userId);
