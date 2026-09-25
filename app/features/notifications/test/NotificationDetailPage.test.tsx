@@ -131,6 +131,24 @@ describe("NotificationDetailPage", () => {
     ).toBeInTheDocument();
   });
 
+  it("削除済みの予約者・手動停止者をシステム操作と断定しない", async () => {
+    const detail = cloneFixture(adminNotificationDetailFixture);
+    detail.schedules[0].scheduledBy = null;
+    detail.schedules[0].stop = {
+      reason: "manual",
+      stoppedAt: "2026-11-07T13:00:00+09:00",
+      stoppedBy: null,
+    };
+    renderPage(createApis({ getDetail: vi.fn().mockResolvedValue(detail) }));
+
+    expect(
+      await screen.findByText("不明（削除済みの可能性あり）")
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("停止者: 削除済みユーザー", { exact: false })
+    ).toBeInTheDocument();
+  });
+
   it("Resultsをタブを開いた時だけ取得し、Delivery詳細を必要時だけ表示する", async () => {
     const user = userEvent.setup();
     const getResults = vi

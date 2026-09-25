@@ -285,7 +285,9 @@ function OverviewTab({
             />
             <Definition
               label="予約者"
-              value={schedule.scheduledBy?.userName ?? "自動"}
+              value={
+                schedule.scheduledBy?.userName ?? "不明（削除済みの可能性あり）"
+              }
             />
             <Definition
               label="Audience確定"

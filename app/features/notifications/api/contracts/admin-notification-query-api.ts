@@ -1,21 +1,23 @@
 import type {
-  AdminNotificationDetailDto,
-  AdminNotificationListItemDto,
-  AdminNotificationListQueryDto,
-  AdminNotificationListResponseDto,
-  AdminNotificationListScheduleDto,
-  NotificationScheduleSummaryDto,
-} from "~/features/notifications/api/dto/admin-notification-dto";
+  AdminNotificationDetail as AdminNotificationDetailModel,
+  AdminNotificationListItem as AdminNotificationListItemModel,
+  AdminNotificationListSchedule as AdminNotificationListScheduleModel,
+  NotificationScheduleSummary as NotificationScheduleSummaryModel,
+} from "~/features/notifications/model/admin-notification";
 
-export type AdminNotificationDetail = AdminNotificationDetailDto;
-export type AdminNotificationListItem = AdminNotificationListItemDto;
-export type AdminNotificationListQuery = AdminNotificationListQueryDto;
-export type AdminNotificationListSchedule = AdminNotificationListScheduleDto;
-export type NotificationScheduleSummary = NotificationScheduleSummaryDto;
+export type AdminNotificationDetail = AdminNotificationDetailModel;
+export type AdminNotificationListItem = AdminNotificationListItemModel;
+export type AdminNotificationListSchedule = AdminNotificationListScheduleModel;
+export type NotificationScheduleSummary = NotificationScheduleSummaryModel;
+export type AdminNotificationListQuery =
+  { from?: undefined; to?: undefined } | { from: string; to: string };
+export type AdminNotificationListResponse = {
+  items: AdminNotificationListItem[];
+};
 
 export interface AdminNotificationQueryApi {
   list(
-    query?: AdminNotificationListQueryDto
-  ): Promise<AdminNotificationListResponseDto>;
-  getDetail(notificationId: number): Promise<AdminNotificationDetailDto>;
+    query?: AdminNotificationListQuery
+  ): Promise<AdminNotificationListResponse>;
+  getDetail(notificationId: number): Promise<AdminNotificationDetail>;
 }

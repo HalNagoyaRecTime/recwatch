@@ -1,11 +1,13 @@
-import type { NotificationCreateRequestDto } from "~/features/notifications/api/dto/admin-notification-dto";
-import type { NotificationAudienceInputItemDto } from "~/features/notifications/api/dto/notification-common-dto";
+import type {
+  NotificationAudienceInputItem,
+  NotificationCreateRequest,
+} from "~/features/notifications/model/admin-notification";
 import type { NotificationDraft } from "~/features/notifications/model/notification-draft";
 import { ClientError, ClientErrors } from "~/lib/client-error";
 
 export function toNotificationCreateRequest(
   draft: NotificationDraft
-): NotificationCreateRequestDto {
+): NotificationCreateRequest {
   const title = draft.title.trim();
   const body = draft.body.trim();
 
@@ -25,7 +27,7 @@ export function toNotificationCreateRequest(
 
 function toAudienceInputItem(
   draft: NotificationDraft
-): NotificationAudienceInputItemDto {
+): NotificationAudienceInputItem {
   if (draft.audienceType === "all") return { type: "all" };
 
   const targetId = Number(draft.audienceId);

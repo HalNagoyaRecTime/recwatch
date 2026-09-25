@@ -1,11 +1,11 @@
 import type {
-  NotificationCreationDto,
-  NotificationImportanceDto,
-  NotificationPlatformDto,
-  NotificationPushDeliveryStatusDto,
-  NotificationScheduleStatusDto,
-  NotificationStopDto,
-} from "~/features/notifications/api/dto/notification-common-dto";
+  NotificationCreation,
+  NotificationImportance,
+  NotificationPlatform,
+  NotificationPushDeliveryStatus,
+  NotificationScheduleStatus,
+  NotificationStop,
+} from "~/features/notifications/model/admin-notification";
 
 export function formatNotificationDetailDateTime(value: string | null) {
   if (!value) return "—";
@@ -28,7 +28,7 @@ export const scheduleStatusLabel = {
   completed: "完了",
   failed: "失敗",
   stopped: "停止済み",
-} satisfies Record<NotificationScheduleStatusDto, string>;
+} satisfies Record<NotificationScheduleStatus, string>;
 
 export const deliveryStatusLabel = {
   pending: "送信待ち",
@@ -37,29 +37,31 @@ export const deliveryStatusLabel = {
   sent: "FCM受付成功",
   failed: "失敗",
   stopped: "停止済み",
-} satisfies Record<NotificationPushDeliveryStatusDto, string>;
+} satisfies Record<NotificationPushDeliveryStatus, string>;
 
 export const platformLabel = {
   ios: "iOS",
   android: "Android",
-} satisfies Record<NotificationPlatformDto, string>;
+} satisfies Record<NotificationPlatform, string>;
 
 export const importanceLabel = {
   low: "低",
   normal: "通常",
   high: "高",
-} satisfies Record<NotificationImportanceDto, string>;
+} satisfies Record<NotificationImportance, string>;
 
-export function formatCreation(creation: NotificationCreationDto) {
+export function formatCreation(creation: NotificationCreation) {
   if (creation.method === "manual") {
     return `手動通知・${creation.user?.userName ?? "作成者不明"}`;
   }
   return `自動通知・${creation.source.label ?? "削除済み"}`;
 }
 
-export function formatStop(stop: NotificationStopDto | null) {
+export function formatStop(stop: NotificationStop | null) {
   if (!stop) return "—";
   const reason = stop.reason === "source_deleted" ? "配信元削除" : "手動停止";
-  const stoppedBy = stop.stoppedBy?.userName ?? "システム";
+  const stoppedBy =
+    stop.stoppedBy?.userName ??
+    (stop.reason === "manual" ? "削除済みユーザー" : "システム");
   return `${reason}・${formatNotificationDetailDateTime(stop.stoppedAt)}・停止者: ${stoppedBy}`;
 }
