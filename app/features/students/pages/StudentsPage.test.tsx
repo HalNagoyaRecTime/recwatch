@@ -1,6 +1,6 @@
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter, useLocation } from "react-router";
+import { MemoryRouter, useLocation, useNavigate } from "react-router";
 import { describe, expect, it, vi } from "vitest";
 
 import type { StudentManagementApi } from "~/features/students/api";
@@ -43,6 +43,15 @@ function LocationProbe() {
   return <output data-testid="location-search">{location.search}</output>;
 }
 
+function HistoryBackButton() {
+  const navigate = useNavigate();
+  return (
+    <button onClick={() => navigate(-1)} type="button">
+      ブラウザーの戻る
+    </button>
+  );
+}
+
 function createApi(
   getStudents: ReturnType<typeof vi.fn>,
   overrides: Partial<StudentManagementApi> = {}
@@ -73,6 +82,64 @@ function renderPage(
 }
 
 describe("StudentsPage", () => {
+  it("loaderから新しい学生一覧が渡されると表示を更新する", async () => {
+    const loadClassRooms = vi.fn().mockResolvedValue([classRoom]);
+    const { rerender } = render(
+      <MemoryRouter initialEntries={["/students"]}>
+        <StudentsPage
+          loadClassRooms={loadClassRooms}
+          students={[makeStudent(1, "初回データ")]}
+          total={1}
+        />
+      </MemoryRouter>
+    );
+
+    expect(await screen.findByText("初回データ")).toBeInTheDocument();
+
+    rerender(
+      <MemoryRouter initialEntries={["/students"]}>
+        <StudentsPage
+          loadClassRooms={loadClassRooms}
+          students={[makeStudent(2, "再検証後データ")]}
+          total={1}
+        />
+      </MemoryRouter>
+    );
+
+    expect(await screen.findByText("再検証後データ")).toBeInTheDocument();
+    expect(screen.queryByText("初回データ")).not.toBeInTheDocument();
+  });
+
+  it("URLの検索を初期表示し、ブラウザーの戻る操作で検索欄を戻す", async () => {
+    const user = userEvent.setup();
+    render(
+      <MemoryRouter initialEntries={["/students?search=%E5%88%9D%E6%9C%9F"]}>
+        <StudentsPage
+          loadClassRooms={vi.fn().mockResolvedValue([classRoom])}
+          students={[]}
+          total={0}
+        />
+        <LocationProbe />
+        <HistoryBackButton />
+      </MemoryRouter>
+    );
+
+    const search = screen.getByRole("searchbox", { name: "学生を検索" });
+    expect(search).toHaveValue("初期");
+    await user.clear(search);
+    await user.type(search, "新しい検索");
+    await waitFor(() =>
+      expect(
+        new URLSearchParams(
+          screen.getByTestId("location-search").textContent ?? ""
+        ).get("search")
+      ).toBe("新しい検索")
+    );
+
+    await user.click(screen.getByRole("button", { name: "ブラウザーの戻る" }));
+    await waitFor(() => expect(search).toHaveValue("初期"));
+  });
+
   it("一覧未指定時はstaffがすべて・activeが有効で、検索をサーバーへ渡す", async () => {
     const getStudents = vi.fn().mockResolvedValue({
       items: [makeStudent(1, "山田太郎")],

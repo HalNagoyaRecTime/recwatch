@@ -1,6 +1,6 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter, useLocation } from "react-router";
+import { MemoryRouter, useLocation, useNavigate } from "react-router";
 import { describe, expect, it } from "vitest";
 
 import type { TeacherRow } from "~/features/teachers/model/teacher";
@@ -23,6 +23,15 @@ function LocationProbe() {
   return <output data-testid="location-search">{location.search}</output>;
 }
 
+function HistoryBackButton() {
+  const navigate = useNavigate();
+  return (
+    <button onClick={() => navigate(-1)} type="button">
+      ブラウザーの戻る
+    </button>
+  );
+}
+
 function getLocationParams() {
   return new URLSearchParams(
     screen.getByTestId("location-search").textContent ?? ""
@@ -39,6 +48,28 @@ async function selectOption(
 }
 
 describe("TeachersPage", () => {
+  it("URLの検索を初期表示し、ブラウザーの戻る操作で検索欄を戻す", async () => {
+    const user = userEvent.setup();
+    render(
+      <MemoryRouter initialEntries={["/teachers?search=%E5%88%9D%E6%9C%9F"]}>
+        <TeachersPage limit={50} offset={0} teachers={teachers} total={1} />
+        <LocationProbe />
+        <HistoryBackButton />
+      </MemoryRouter>
+    );
+
+    const search = screen.getByRole("searchbox", { name: "教官を検索" });
+    expect(search).toHaveValue("初期");
+    await user.clear(search);
+    await user.type(search, "新しい検索");
+    await waitFor(() =>
+      expect(getLocationParams().get("search")).toBe("新しい検索")
+    );
+
+    await user.click(screen.getByRole("button", { name: "ブラウザーの戻る" }));
+    await waitFor(() => expect(search).toHaveValue("初期"));
+  });
+
   it("新規登録ボタンから一覧条件を維持して遷移する", async () => {
     const user = userEvent.setup();
     render(

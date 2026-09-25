@@ -35,7 +35,10 @@ export function TeachersPage({
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [searchInput, setSearchInput] = useState("");
+  const [searchDraft, setSearchDraft] = useState<{
+    query: string;
+    value: string;
+  } | null>(null);
   const {
     search: query,
     classRoomId,
@@ -44,12 +47,9 @@ export function TeachersPage({
     isStaff,
     isLiveActive,
   } = parseTeacherListUrl(searchParams);
+  const searchInput = searchDraft?.query === query ? searchDraft.value : query;
   const currentPage = Math.floor(offset / limit) + 1;
   const pageCount = Math.max(1, Math.ceil(total / limit));
-
-  useEffect(() => {
-    setSearchInput(query);
-  }, [query]);
 
   useEffect(() => {
     if (searchInput.trim() === query) return;
@@ -60,6 +60,7 @@ export function TeachersPage({
           search: searchInput,
         })
       );
+      setSearchDraft(null);
     }, 250);
     return () => window.clearTimeout(timer);
   }, [searchInput, query, searchParams, setSearchParams]);
@@ -136,7 +137,7 @@ export function TeachersPage({
         <div className="min-w-60 flex-1">
           <SearchField
             ariaLabel="教官を検索"
-            onValueChange={setSearchInput}
+            onValueChange={(value) => setSearchDraft({ query, value })}
             placeholder="氏名・クラス名で検索..."
             value={searchInput}
           />
