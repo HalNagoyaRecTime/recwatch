@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 
 import { Button } from "~/components/ui/button/Button";
-import type { TeamClassOption } from "~/features/team/mock/team-class-data";
+import type { TeamClassOption } from "~/features/team/model/team-class-option";
 import type { Team } from "~/features/team/model/team";
 
 export type TeamFormInput = {

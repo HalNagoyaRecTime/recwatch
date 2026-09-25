@@ -1,1 +1,1 @@
-export { clientLoader, default, meta } from "./teams";
+export { default, meta } from "./teams";

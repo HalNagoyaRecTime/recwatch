@@ -1,7 +1,7 @@
 import { useLoaderData } from "react-router";
 
 import { TeamDetailPage } from "~/features/team/pages/TeamDetailPage";
-import { getTeam } from "~/features/team/mock/team-store";
+import { TeamApi } from "~/features/team/api";
 import { createPageTitle } from "~/lib/page-title";
 
 export function meta() {
@@ -10,8 +10,11 @@ export function meta() {
 
 export async function clientLoader({ params }: { params: { id?: string } }) {
   const id = Number(params.id);
-  const team = Number.isInteger(id) ? getTeam(id) : null;
-  if (!team) throw new Response("Not Found", { status: 404 });
+  if (!Number.isInteger(id)) {
+    throw new Response("Not Found", { status: 404 });
+  }
+
+  const team = await TeamApi.getTeamById(id);
   return { team };
 }
 
