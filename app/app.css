@@ -249,7 +249,7 @@
 
   .page-side-panel {
     position: sticky;
-    top: calc(var(--main-header-total-height) + env(safe-area-inset-top, 0px));
+    top: var(--main-header-total-height);
     align-self: start;
     height: calc(100vh - var(--main-header-total-height));
     max-height: calc(100vh - var(--main-header-total-height));
@@ -257,12 +257,8 @@
 
   @supports (height: 100dvh) {
     .page-side-panel {
-      height: calc(
-        100dvh - var(--main-header-total-height) - env(safe-area-inset-top, 0px)
-      );
-      max-height: calc(
-        100dvh - var(--main-header-total-height) - env(safe-area-inset-top, 0px)
-      );
+      height: calc(100dvh - var(--main-header-total-height));
+      max-height: calc(100dvh - var(--main-header-total-height));
     }
   }
 
