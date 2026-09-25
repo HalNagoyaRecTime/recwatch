@@ -34,7 +34,7 @@ export function MainHeader({ user }: MainHeaderProps) {
   }
 
   return (
-    <header className="main-header-safe-area border-border-subtle bg-surface-layout/95 sticky top-0 z-30 border-b backdrop-blur-xl">
+    <header className="main-header-safe-area border-border-subtle bg-surface-base md:bg-surface-layout/95 sticky top-0 z-30 border-b backdrop-blur-xl">
       <div className="main-header-height main-header-row flex items-center justify-between">
         <div className="flex h-full min-w-0 flex-1">
           <MobileHamburgerMenuBtn />

@@ -95,6 +95,23 @@ describe("モバイル Drawer", () => {
     expect(document.activeElement).toBe(getMobileDrawer());
   });
 
+  it("Drawerを開いている間は背面をロックし、Drawer内はスクロール可能にする", () => {
+    const previousOverflow = document.body.style.overflow;
+    renderShell();
+
+    fireEvent.click(getHamburger());
+
+    expect(document.body.style.overflow).toBe("hidden");
+    expect(getMobileDrawer().querySelector(".scrollbar-none")).toHaveClass(
+      "overflow-y-auto",
+      "overscroll-y-contain"
+    );
+
+    fireEvent.keyDown(document, { key: "Escape" });
+
+    expect(document.body.style.overflow).toBe(previousOverflow);
+  });
+
   it("開いている間だけDrawerの直後ろにテーマ背景を表示する", () => {
     renderShell();
 

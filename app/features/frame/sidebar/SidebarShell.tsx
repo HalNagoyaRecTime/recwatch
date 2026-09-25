@@ -102,6 +102,17 @@ function MobileSidebarContent() {
   }, [closeForMobile]);
 
   useEffect(() => {
+    if (!mobileOpen) return;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [mobileOpen]);
+
+  useEffect(() => {
     if (!mobileOpen) {
       if (wasOpenRef.current) {
         wasOpenRef.current = false;
