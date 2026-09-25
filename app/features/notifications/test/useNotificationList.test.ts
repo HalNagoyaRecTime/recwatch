@@ -50,6 +50,54 @@ function createApi(
 }
 
 describe("useNotificationList", () => {
+  it("初回取得・ページ移動・reloadで対象ページを取得する", async () => {
+    const list = vi
+      .fn<NotificationManagementApi["list"]>()
+      .mockResolvedValueOnce({
+        notifications: [createNotification("1ページ目")],
+        total: 25,
+        limit: 20,
+        offset: 0,
+      })
+      .mockResolvedValueOnce({
+        notifications: [createNotification("2ページ目")],
+        total: 25,
+        limit: 20,
+        offset: 20,
+      })
+      .mockResolvedValueOnce({
+        notifications: [createNotification("再読込後")],
+        total: 25,
+        limit: 20,
+        offset: 20,
+      });
+    const api = createApi(list);
+    const { result } = renderHook(() => useNotificationList({ api }));
+
+    await waitFor(() => expect(list).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    expect(result.current.items[0]?.title).toBe("1ページ目");
+
+    act(() => result.current.onPageChange(2));
+    await waitFor(() => expect(list).toHaveBeenCalledTimes(2));
+    await waitFor(() =>
+      expect(result.current.items[0]?.title).toBe("2ページ目")
+    );
+    expect(list).toHaveBeenLastCalledWith({
+      limit: 20,
+      offset: 20,
+    });
+    expect(result.current.currentPage).toBe(2);
+
+    act(() => {
+      void result.current.reload();
+    });
+    await waitFor(() => expect(list).toHaveBeenCalledTimes(3));
+    await waitFor(() =>
+      expect(result.current.items[0]?.title).toBe("再読込後")
+    );
+  });
+
   it("古いリクエストが後から返っても最新のレスポンスだけを反映する", async () => {
     type NotificationPage = Awaited<
       ReturnType<NotificationManagementApi["list"]>
