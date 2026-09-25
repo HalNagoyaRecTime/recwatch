@@ -3,6 +3,7 @@ import type { CSSProperties, ReactNode } from "react";
 
 import { AccountDeletionBrand } from "~/features/account-deletion/components/AccountDeletionBrand";
 import { AccountDeletionFooter } from "~/features/account-deletion/components/AccountDeletionFooter";
+import { applyTheme, isThemeMode } from "~/lib/theme";
 
 type AccountDeletionLayoutProps = {
   children: ReactNode;
@@ -64,22 +65,14 @@ function useAccountDeletionFavicon() {
 function useAccountDeletionDocumentBackground() {
   useEffect(() => {
     const root = document.documentElement;
-    const previousBackgroundColor =
-      root.style.getPropertyValue("background-color");
-    const previousPriority = root.style.getPropertyPriority("background-color");
-
+    root.dataset.documentBackgroundOverride = "#ffffff";
     root.style.setProperty("background-color", "#ffffff");
 
     return () => {
-      if (previousBackgroundColor) {
-        root.style.setProperty(
-          "background-color",
-          previousBackgroundColor,
-          previousPriority
-        );
-      } else {
-        root.style.removeProperty("background-color");
-      }
+      delete root.dataset.documentBackgroundOverride;
+      delete root.dataset.accountDeletionAuthCallback;
+      const theme = root.dataset.theme ?? null;
+      applyTheme(isThemeMode(theme) ? theme : "system");
     };
   }, []);
 }

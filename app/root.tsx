@@ -50,6 +50,7 @@ export function Layout({ children }: { children: ReactNode }) {
                 root.classList.toggle("dark", isDark);
                 root.dataset.theme = theme;
                 root.style.colorScheme = isDark ? "dark" : "light";
+                root.style.backgroundColor = isDark ? "#000000" : "#ffffff";
 
                 // sessionStorageはサーバーから読めないため、初回HTMLを分岐せず属性だけ先に付ける。
                 // SPAのroot fallbackを削除認証だけ切り替えるため、pendingはここでは消費しない。
@@ -61,6 +62,8 @@ export function Layout({ children }: { children: ReactNode }) {
                     ) === "1"
                   ) {
                     root.dataset.accountDeletionAuthCallback = "true";
+                    root.dataset.documentBackgroundOverride = "#ffffff";
+                    root.style.backgroundColor = "#ffffff";
                   }
                 } catch {
                   // sessionStorageが利用できない場合は通常のfallbackを表示する。

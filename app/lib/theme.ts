@@ -29,9 +29,13 @@ export function applyTheme(theme: ThemeMode) {
   const isDark =
     theme === "dark" ||
     (theme === "system" &&
+      typeof window !== "undefined" &&
+      typeof window.matchMedia === "function" &&
       window.matchMedia("(prefers-color-scheme: dark)").matches);
 
   root.classList.toggle("dark", isDark);
   root.dataset.theme = theme;
   root.style.colorScheme = isDark ? "dark" : "light";
+  root.style.backgroundColor =
+    root.dataset.documentBackgroundOverride || (isDark ? "#000000" : "#ffffff");
 }

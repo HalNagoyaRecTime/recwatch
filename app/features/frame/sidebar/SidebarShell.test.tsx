@@ -62,29 +62,70 @@ function tap(element: Element, pointerType: "touch" | "pen" | "mouse") {
   fireEvent.click(element);
 }
 
+let nextFrameId = 0;
+const animationFrames = new Map<number, FrameRequestCallback>();
+
+function flushAnimationFrames() {
+  act(() => {
+    const callbacks = Array.from(animationFrames.values());
+    animationFrames.clear();
+    callbacks.forEach((callback) => callback(0));
+  });
+}
+
+function openMobileDrawer() {
+  fireEvent.click(getHamburger());
+  flushAnimationFrames();
+}
+
+function finishMobileClose() {
+  const drawer = document.getElementById("app-sidebar-mobile");
+  if (drawer) fireEvent.transitionEnd(drawer, { propertyName: "transform" });
+}
+
 beforeEach(() => {
   sessionStorage.clear();
+  document.body.style.removeProperty("overflow");
+  document.body.style.removeProperty("overscroll-behavior");
+  document.documentElement.style.removeProperty("overflow");
+  document.documentElement.style.removeProperty("overscroll-behavior");
+  animationFrames.clear();
+  nextFrameId = 0;
+  vi.stubGlobal("requestAnimationFrame", (callback: FrameRequestCallback) => {
+    nextFrameId += 1;
+    animationFrames.set(nextFrameId, callback);
+    return nextFrameId;
+  });
+  vi.stubGlobal("cancelAnimationFrame", (frameId: number) => {
+    animationFrames.delete(frameId);
+  });
 });
 
 afterEach(() => {
+  animationFrames.clear();
   vi.unstubAllGlobals();
 });
 
 describe("モバイル Drawer", () => {
-  it("初期状態では閉じており、閉じた中身が操作対象にならない", () => {
+  it("初期状態では閉じた固定UIをDOMに残さない", () => {
     renderShell();
 
     expect(getHamburger()).toHaveAttribute("aria-expanded", "false");
-    expect(getMobileDrawer()).toHaveAttribute("aria-hidden", "true");
-    expect(getMobileDrawer()).toHaveAttribute("inert", "");
-    expect(getMobileOverlay()).toBeDisabled();
-    expect(getMobileOverlay()).toHaveAttribute("tabindex", "-1");
+    expect(
+      document.getElementById("app-sidebar-mobile")
+    ).not.toBeInTheDocument();
+    expect(
+      document.getElementById("mobile-nav-overlay")
+    ).not.toBeInTheDocument();
+    expect(
+      document.getElementById("mobile-nav-backplate")
+    ).not.toBeInTheDocument();
   });
 
   it("Hamburgerで開き、Drawerへフォーカスを移す", () => {
     renderShell();
 
-    fireEvent.click(getHamburger());
+    openMobileDrawer();
 
     expect(getHamburger()).toHaveAttribute("aria-expanded", "true");
     expect(getMobileDrawer()).toHaveAttribute("aria-hidden", "false");
@@ -95,13 +136,37 @@ describe("モバイル Drawer", () => {
     expect(document.activeElement).toBe(getMobileDrawer());
   });
 
-  it("Drawerを開いている間は背面をロックし、Drawer内はスクロール可能にする", () => {
-    const previousOverflow = document.body.style.overflow;
+  it("最初の表示フレーム前に閉じた場合はロックとDOMをすぐ解除する", () => {
     renderShell();
 
     fireEvent.click(getHamburger());
+    expect(getMobileDrawer()).toBeInTheDocument();
+    expect(document.body.style.overflow).toBe("hidden");
+
+    fireEvent.keyDown(document, { key: "Escape" });
+
+    expect(
+      document.getElementById("app-sidebar-mobile")
+    ).not.toBeInTheDocument();
+    expect(
+      document.getElementById("mobile-nav-overlay")
+    ).not.toBeInTheDocument();
+    expect(document.body.style.overflow).toBe("");
+  });
+
+  it("Drawerを開いている間は背面をロックし、Drawer内はスクロール可能にする", () => {
+    document.body.style.setProperty("overflow", "auto");
+    document.body.style.setProperty("overscroll-behavior", "contain");
+    document.documentElement.style.setProperty("overflow", "scroll");
+    document.documentElement.style.setProperty("overscroll-behavior", "none");
+    renderShell();
+
+    openMobileDrawer();
 
     expect(document.body.style.overflow).toBe("hidden");
+    expect(document.body.style.overscrollBehavior).toBe("none");
+    expect(document.documentElement.style.overflow).toBe("hidden");
+    expect(document.documentElement.style.overscrollBehavior).toBe("none");
     expect(getMobileDrawer().querySelector(".scrollbar-none")).toHaveClass(
       "overflow-y-auto",
       "overscroll-y-contain"
@@ -109,21 +174,24 @@ describe("モバイル Drawer", () => {
 
     fireEvent.keyDown(document, { key: "Escape" });
 
-    expect(document.body.style.overflow).toBe(previousOverflow);
+    expect(document.body.style.overflow).toBe("hidden");
+    const drawer = getMobileDrawer();
+    fireEvent.transitionEnd(drawer, { propertyName: "opacity" });
+    expect(drawer).toBeInTheDocument();
+    expect(document.getElementById("mobile-nav-overlay")).toBeInTheDocument();
+    finishMobileClose();
+    expect(document.body.style.overflow).toBe("auto");
+    expect(document.body.style.overscrollBehavior).toBe("contain");
+    expect(document.documentElement.style.overflow).toBe("scroll");
+    expect(document.documentElement.style.overscrollBehavior).toBe("none");
   });
 
   it("開いている間だけDrawerの直後ろにテーマ背景を表示する", () => {
     renderShell();
 
-    expect(getMobileBackplate()).toHaveAttribute("aria-hidden", "true");
-    expect(getMobileBackplate()).toHaveClass(
-      "bg-surface-base",
-      "z-98",
-      "-translate-x-full"
-    );
-    expect(getMobileDrawer()).toHaveClass("bg-surface-base");
+    expect(document.getElementById("mobile-nav-backplate")).toBeNull();
 
-    fireEvent.click(getHamburger());
+    openMobileDrawer();
 
     expect(getMobileBackplate()).toHaveClass("translate-x-0");
     expect(getMobileDrawer()).toHaveClass("z-99", "translate-x-0");
@@ -132,26 +200,39 @@ describe("モバイル Drawer", () => {
   it("Overlay、Escape、Headerで閉じ、閉じた後はHamburgerへ戻る", () => {
     renderShell();
 
-    fireEvent.click(getHamburger());
+    openMobileDrawer();
     fireEvent.click(getMobileOverlay());
     expect(getHamburger()).toHaveAttribute("aria-expanded", "false");
     expect(document.activeElement).toBe(getHamburger());
+    expect(getMobileDrawer()).toHaveAttribute("aria-hidden", "true");
+    finishMobileClose();
 
-    fireEvent.click(getHamburger());
+    openMobileDrawer();
     fireEvent.keyDown(document, { key: "Escape" });
     expect(getHamburger()).toHaveAttribute("aria-expanded", "false");
+    finishMobileClose();
 
-    fireEvent.click(getHamburger());
+    openMobileDrawer();
     const mobileCloseButton = within(getMobileDrawer()).getByRole("button", {
       name: "サイドメニューを閉じる",
     });
     fireEvent.click(mobileCloseButton);
     expect(getHamburger()).toHaveAttribute("aria-expanded", "false");
+    finishMobileClose();
+    expect(
+      document.getElementById("mobile-nav-overlay")
+    ).not.toBeInTheDocument();
+    expect(
+      document.getElementById("mobile-nav-backplate")
+    ).not.toBeInTheDocument();
+    expect(
+      document.getElementById("app-sidebar-mobile")
+    ).not.toBeInTheDocument();
   });
 
   it("Footerを表示せず、Headerに閉じるボタンを表示する", () => {
     renderShell();
-    fireEvent.click(getHamburger());
+    openMobileDrawer();
     const drawer = getMobileDrawer();
 
     expect(drawer.querySelector(".main-footer-height")).not.toBeInTheDocument();
@@ -163,18 +244,19 @@ describe("モバイル Drawer", () => {
   it("開いた Drawer 内でNavigation選択後に閉じる", () => {
     renderShell();
 
-    fireEvent.click(getHamburger());
+    openMobileDrawer();
     fireEvent.click(
       within(getMobileDrawer()).getByRole("link", { name: "ダッシュボード" })
     );
 
     expect(getHamburger()).toHaveAttribute("aria-expanded", "false");
     expect(screen.getByTestId("location")).toHaveTextContent("/dashboard");
+    finishMobileClose();
   });
 
   it("Drawer内のTab移動をループさせる", () => {
     renderShell();
-    fireEvent.click(getHamburger());
+    openMobileDrawer();
 
     const drawer = getMobileDrawer();
     const focusables = drawer.querySelectorAll<HTMLElement>(
@@ -216,14 +298,17 @@ describe("モバイル Drawer", () => {
       )
     );
     renderShell();
-    fireEvent.click(getHamburger());
+    openMobileDrawer();
 
     act(() => {
       handleChange?.({ matches: true } as MediaQueryListEvent);
     });
 
     expect(getHamburger()).toHaveAttribute("aria-expanded", "false");
-    expect(getMobileDrawer()).toHaveAttribute("aria-hidden", "true");
+    expect(
+      document.getElementById("app-sidebar-mobile")
+    ).not.toBeInTheDocument();
+    expect(document.body.style.overflow).toBe("");
   });
 });
 
@@ -284,7 +369,7 @@ describe("Desktop / Tablet Sidebar", () => {
     fireEvent.click(getDesktopFooterToggle());
     expect(desktopSidebar.className).toContain("sidebar-close-width");
 
-    fireEvent.click(getHamburger());
+    openMobileDrawer();
     expect(desktopSidebar.className).toContain("sidebar-close-width");
     fireEvent.click(getHamburger());
     expect(desktopSidebar.className).toContain("sidebar-close-width");

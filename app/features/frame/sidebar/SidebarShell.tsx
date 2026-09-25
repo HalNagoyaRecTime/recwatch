@@ -1,5 +1,7 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import type { TransitionEvent as ReactTransitionEvent } from "react";
 
+import { useDocumentScrollLock } from "~/hooks/useDocumentScrollLock";
 import { useSidebarState } from "~/hooks/useSidebarState";
 import { cn } from "~/lib/cn";
 
@@ -82,6 +84,8 @@ function DesktopSidebarContent() {
 
 function MobileSidebarContent() {
   const { mobileOpen, closeForMobile } = useSidebarState();
+  const [isVisible, setIsVisible] = useState(false);
+  const [hasEntered, setHasEntered] = useState(false);
   const drawerRef = useRef<HTMLDivElement>(null);
   const wasOpenRef = useRef(false);
 
@@ -90,10 +94,16 @@ function MobileSidebarContent() {
 
     const desktopMediaQuery = window.matchMedia(DESKTOP_SIDEBAR_MEDIA_QUERY);
     const handleBreakpointChange = (event: MediaQueryListEvent) => {
-      if (event.matches) closeForMobile();
+      if (event.matches) {
+        closeForMobile();
+        setHasEntered(false);
+        setIsVisible(false);
+      }
     };
 
-    if (desktopMediaQuery.matches) closeForMobile();
+    if (desktopMediaQuery.matches) {
+      closeForMobile();
+    }
     desktopMediaQuery.addEventListener("change", handleBreakpointChange);
 
     return () => {
@@ -101,16 +111,17 @@ function MobileSidebarContent() {
     };
   }, [closeForMobile]);
 
+  useDocumentScrollLock(mobileOpen || hasEntered);
+
   useEffect(() => {
-    if (!mobileOpen) return;
+    if (!mobileOpen || isVisible) return;
 
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-
-    return () => {
-      document.body.style.overflow = previousOverflow;
-    };
-  }, [mobileOpen]);
+    const frameId = window.requestAnimationFrame(() => {
+      setHasEntered(true);
+      setIsVisible(true);
+    });
+    return () => window.cancelAnimationFrame(frameId);
+  }, [mobileOpen, isVisible]);
 
   useEffect(() => {
     if (!mobileOpen) {
@@ -175,52 +186,76 @@ function MobileSidebarContent() {
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [mobileOpen, closeForMobile]);
 
+  const handleDrawerTransitionEnd = (
+    event: ReactTransitionEvent<HTMLDivElement>
+  ) => {
+    if (
+      event.target !== event.currentTarget ||
+      event.propertyName !== "transform" ||
+      mobileOpen ||
+      !hasEntered
+    ) {
+      return;
+    }
+
+    setHasEntered(false);
+    setIsVisible(false);
+  };
+
+  const isActive = mobileOpen && isVisible;
+  const shouldRender = mobileOpen || hasEntered;
+
   return (
     <div className="md:hidden">
-      <button
-        type="button"
-        id="mobile-nav-overlay"
-        aria-label="サイドメニューを閉じる"
-        aria-hidden={!mobileOpen}
-        tabIndex={mobileOpen ? 0 : -1}
-        disabled={!mobileOpen}
-        onClick={closeForMobile}
-        className={cn(
-          "fixed inset-0 z-90 bg-black/30 transition-opacity duration-300",
-          mobileOpen
-            ? "pointer-events-auto opacity-100"
-            : "pointer-events-none opacity-0"
-        )}
-      />
+      {shouldRender ? (
+        <>
+          <button
+            type="button"
+            id="mobile-nav-overlay"
+            aria-label="サイドメニューを閉じる"
+            aria-hidden={!mobileOpen}
+            tabIndex={mobileOpen ? 0 : -1}
+            disabled={!mobileOpen}
+            onClick={closeForMobile}
+            className={cn(
+              "fixed inset-0 z-90 bg-black/30 transition-opacity duration-300",
+              isActive
+                ? "pointer-events-auto opacity-100"
+                : "pointer-events-none opacity-0"
+            )}
+          />
 
-      <div
-        id="mobile-nav-backplate"
-        aria-hidden="true"
-        className={cn(
-          sidebarMobileBackplateStyle,
-          mobileOpen ? "translate-x-0" : "-translate-x-full"
-        )}
-      />
+          <div
+            id="mobile-nav-backplate"
+            aria-hidden="true"
+            className={cn(
+              sidebarMobileBackplateStyle,
+              isActive ? "translate-x-0" : "-translate-x-full"
+            )}
+          />
 
-      <div
-        ref={drawerRef}
-        id={MOBILE_SIDEBAR_ID}
-        role="dialog"
-        aria-label="サイドメニュー"
-        aria-modal="true"
-        aria-hidden={!mobileOpen}
-        inert={!mobileOpen}
-        tabIndex={-1}
-        className={cn(
-          sidebarMobileContainerStyle,
-          mobileOpen ? "translate-x-0" : "-translate-x-full"
-        )}
-      >
-        <SidebarHeader onClose={closeForMobile} safeArea />
-        <div className="sidebar-mobile-content-safe-area flex min-h-0 flex-1 flex-col overflow-hidden">
-          <AppSidebar />
-        </div>
-      </div>
+          <div
+            ref={drawerRef}
+            id={MOBILE_SIDEBAR_ID}
+            role="dialog"
+            aria-label="サイドメニュー"
+            aria-modal="true"
+            aria-hidden={!mobileOpen}
+            inert={!mobileOpen}
+            tabIndex={-1}
+            onTransitionEnd={handleDrawerTransitionEnd}
+            className={cn(
+              sidebarMobileContainerStyle,
+              isActive ? "translate-x-0" : "-translate-x-full"
+            )}
+          >
+            <SidebarHeader onClose={closeForMobile} safeArea />
+            <div className="sidebar-mobile-content-safe-area flex min-h-0 flex-1 flex-col overflow-hidden">
+              <AppSidebar />
+            </div>
+          </div>
+        </>
+      ) : null}
     </div>
   );
 }
