@@ -92,6 +92,71 @@ describe("notification v2 HTTP adapters", () => {
     );
   });
 
+  it("Backendが拒否する空contentをPATCH前に拒否する", async () => {
+    const patch = vi.fn();
+    const api = createHttpAdminNotificationCommandApi({
+      post: vi.fn(),
+      patch,
+      delete: vi.fn(),
+    });
+
+    await expect(api.patch(103, { content: {} })).rejects.toBeInstanceOf(
+      ClientError
+    );
+    expect(patch).not.toHaveBeenCalled();
+  });
+
+  it("allと他のAudienceの同時指定をPOST前に拒否する", async () => {
+    const post = vi.fn();
+    const api = createHttpAdminNotificationCommandApi({
+      post,
+      patch: vi.fn(),
+      delete: vi.fn(),
+    });
+
+    await expect(
+      api.create({
+        content: {
+          push: { title: "タイトル", body: "本文" },
+          detail: { title: "タイトル", body: "本文" },
+        },
+        audience: {
+          items: [{ type: "all" }, { type: "event", targetId: 81 }],
+        },
+        delivery: { type: "immediate", sendAt: null },
+        importance: "normal",
+      })
+    ).rejects.toBeInstanceOf(ClientError);
+    expect(post).not.toHaveBeenCalled();
+  });
+
+  it("同じAudienceの重複指定をPOST前に拒否する", async () => {
+    const post = vi.fn();
+    const api = createHttpAdminNotificationCommandApi({
+      post,
+      patch: vi.fn(),
+      delete: vi.fn(),
+    });
+
+    await expect(
+      api.create({
+        content: {
+          push: { title: "タイトル", body: "本文" },
+          detail: { title: "タイトル", body: "本文" },
+        },
+        audience: {
+          items: [
+            { type: "gathering", targetId: 51 },
+            { type: "gathering", targetId: 51 },
+          ],
+        },
+        delivery: { type: "immediate", sendAt: null },
+        importance: "normal",
+      })
+    ).rejects.toBeInstanceOf(ClientError);
+    expect(post).not.toHaveBeenCalled();
+  });
+
   it("configとAudience人数を取得する", async () => {
     const get = vi.fn().mockResolvedValue(notificationConfigFixture);
     const post = vi.fn().mockResolvedValue({ recipientCount: 42 });

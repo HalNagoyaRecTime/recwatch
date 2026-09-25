@@ -34,6 +34,9 @@ export function validateNotificationPatchRequest(
 
   const push = request.content?.push;
   const detail = request.content?.detail;
+  if (request.content && push === undefined && detail === undefined) {
+    throw invalidRequest();
+  }
   if (push && push.title === undefined && push.body === undefined) {
     throw invalidRequest();
   }
@@ -70,6 +73,11 @@ export function validateNotificationAudienceInput(
 ) {
   if (audience.items.length === 0) throw invalidRequest();
 
+  const includesAll = audience.items.some((item) => item.type === "all");
+  if (includesAll && audience.items.length > 1) throw invalidRequest();
+
+  const audienceKeys = new Set<string>();
+
   for (const item of audience.items) {
     if (
       item.type !== "all" &&
@@ -77,6 +85,11 @@ export function validateNotificationAudienceInput(
     ) {
       throw invalidRequest();
     }
+
+    const key =
+      item.type === "all" ? item.type : `${item.type}:${item.targetId}`;
+    if (audienceKeys.has(key)) throw invalidRequest();
+    audienceKeys.add(key);
   }
   return audience;
 }

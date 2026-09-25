@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import type { AdminNotificationCommandApi } from "~/features/notifications/api/contracts/admin-notification-command-api";
 import type { AdminNotificationQueryApi } from "~/features/notifications/api/contracts/admin-notification-query-api";
-import type { AdminNotificationListItemDto } from "~/features/notifications/api/dto/admin-notification-dto";
+import type { AdminNotificationListItem } from "~/features/notifications/model/admin-notification";
 import { getErrorMessage } from "~/lib/client-error";
 import {
   getNextNotificationListSort,
@@ -29,12 +29,12 @@ export function useNotificationList({
   reportFeedback,
 }: UseNotificationListOptions) {
   const [notifications, setNotifications] = useState<
-    AdminNotificationListItemDto[]
+    AdminNotificationListItem[]
   >([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [sort, setSort] = useState<NotificationListSort>();
   const [selectedNotification, setSelectedNotification] =
-    useState<AdminNotificationListItemDto | null>(null);
+    useState<NotificationListItem | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isDeleting, setIsDeleting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -94,10 +94,7 @@ export function useNotificationList({
   }
 
   function handleDeleteRequest(item: NotificationListItem) {
-    const notification = notifications.find(
-      (candidate) => String(candidate.notificationId) === item.id
-    );
-    if (notification) setSelectedNotification(notification);
+    setSelectedNotification(item);
   }
 
   async function handleDelete() {
@@ -106,7 +103,7 @@ export function useNotificationList({
     setIsDeleting(true);
     setErrorMessage(null);
     try {
-      await commandApi.delete(selectedNotification.notificationId);
+      await commandApi.delete(Number(selectedNotification.id));
       setSelectedNotification(null);
       await load(true);
       reportFeedback?.({
@@ -122,7 +119,7 @@ export function useNotificationList({
         title: "通知を削除できませんでした",
         message,
         action: "notification.delete",
-        endpoint: `/api/v1/admin/notifications/${selectedNotification.notificationId}`,
+        endpoint: `/api/v1/admin/notifications/${selectedNotification.id}`,
         error,
       });
     } finally {
@@ -164,7 +161,7 @@ function formatDate(value: string | undefined) {
 }
 
 function toListItem(
-  notification: AdminNotificationListItemDto
+  notification: AdminNotificationListItem
 ): NotificationListItem {
   const schedule = notification.schedules[0];
   const audienceLabels = schedule?.audience.items.map((item) => {

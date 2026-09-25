@@ -2,10 +2,10 @@ import { AlertTriangleIcon } from "lucide-react";
 import { useEffect } from "react";
 
 import { Button } from "~/components/ui/button/Button";
-import type { AdminNotificationListItemDto } from "~/features/notifications/api/dto/admin-notification-dto";
+import type { NotificationListItem } from "~/features/notifications/model/notification-list";
 
 type DeleteNotificationDialogProps = {
-  notification: AdminNotificationListItemDto;
+  notification: NotificationListItem;
   isSubmitting: boolean;
   onClose: () => void;
   onConfirm: () => void;
@@ -57,7 +57,7 @@ export function DeleteNotificationDialog({
               id="delete-notification-description"
               className="text-text-muted mt-2 text-sm leading-6"
             >
-              「{notification.content.push.title}
+              「{notification.title}
               」は配信されず、一覧から削除されます。この操作は元に戻せません。
             </p>
           </div>

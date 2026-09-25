@@ -4,9 +4,9 @@ import type { AdminNotificationCommandApi } from "~/features/notifications/api/c
 import type { AdminNotificationQueryApi } from "~/features/notifications/api/contracts/admin-notification-query-api";
 import type { NotificationAudienceApi } from "~/features/notifications/api/contracts/notification-audience-api";
 import type {
-  AdminNotificationDetailDto,
-  NotificationPatchRequestDto,
-} from "~/features/notifications/api/dto/admin-notification-dto";
+  AdminNotificationDetail,
+  NotificationPatchRequest,
+} from "~/features/notifications/model/admin-notification";
 import type { NotificationAudienceOption } from "~/features/notifications/model/notification-audience";
 import {
   initialNotificationDraft,
@@ -38,7 +38,7 @@ export function useNotificationEdit({
   reportFeedback,
 }: UseNotificationEditOptions) {
   const [notification, setNotification] =
-    useState<AdminNotificationDetailDto | null>(null);
+    useState<AdminNotificationDetail | null>(null);
   const [draft, setDraft] = useState<NotificationDraft>(
     initialNotificationDraft
   );
@@ -182,7 +182,7 @@ export function useNotificationEdit({
 }
 
 function toNotificationDraft(
-  notification: AdminNotificationDetailDto
+  notification: AdminNotificationDetail
 ): NotificationDraft {
   const schedule = notification.schedules[0];
   const audience = schedule?.audience.items[0] ?? { type: "all" as const };
@@ -197,9 +197,9 @@ function toNotificationDraft(
 }
 
 function toNotificationPatchRequest(
-  notification: AdminNotificationDetailDto,
+  notification: AdminNotificationDetail,
   draft: NotificationDraft
-): NotificationPatchRequestDto | null {
+): NotificationPatchRequest | null {
   const allSchedulesUnstarted = notification.schedules.every(
     (schedule) => schedule.status === "scheduled"
   );
