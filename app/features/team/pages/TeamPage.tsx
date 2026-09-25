@@ -53,7 +53,7 @@ export function TeamPage({ teams }: { teams: readonly Team[] }) {
           : undefined,
         (team, columnId) => {
           switch (columnId) {
-            case "name":
+            case "teamName":
               return team.name;
             case "registeredAt":
               return team.registeredAt;
@@ -86,7 +86,7 @@ export function TeamPage({ teams }: { teams: readonly Team[] }) {
 
   function handleSortChange(columnId: string) {
     const nextSortBy = {
-      "team-name": "name",
+      "team-name": "teamName",
       "registered-at": "registeredAt",
       "updated-at": "updatedAt",
     }[columnId];
@@ -150,7 +150,7 @@ export function TeamPage({ teams }: { teams: readonly Team[] }) {
           sortBy && sortOrder
             ? {
                 columnId: {
-                  name: "team-name",
+                  teamName: "team-name",
                   registeredAt: "registered-at",
                   updatedAt: "updated-at",
                 }[sortBy],

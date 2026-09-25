@@ -1,6 +1,6 @@
 import type { DataTableSortDirection } from "~/components/ui/data-table/data-table-types";
 
-export type TeamListSortBy = "name" | "registeredAt" | "updatedAt";
+export type TeamListSortBy = "teamName" | "registeredAt" | "updatedAt";
 
 export type TeamListUrlState = {
   search: string;
@@ -52,7 +52,9 @@ export function updateTeamListUrl(
 }
 
 function isSortBy(value: string | null): value is TeamListSortBy {
-  return value === "name" || value === "registeredAt" || value === "updatedAt";
+  return (
+    value === "teamName" || value === "registeredAt" || value === "updatedAt"
+  );
 }
 
 function isSortOrder(value: string | null): value is DataTableSortDirection {
