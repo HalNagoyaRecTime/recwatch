@@ -70,7 +70,7 @@ export function Layout({ children }: { children: ReactNode }) {
           }}
         />
       </head>
-      <body className="text-text-base bg-[radial-gradient(circle_at_top_right,var(--bg-gradient-glow),transparent_32%),linear-gradient(180deg,var(--bg-gradient-start)_0%,var(--bg-gradient-end)_100%)] antialiased transition-colors duration-200">
+      <body>
         {children}
         <ScrollRestoration />
         <Scripts />

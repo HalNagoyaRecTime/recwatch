@@ -51,9 +51,6 @@
   );
   --main-footer-row-height: 42px;
 
-  /***** new *****/
-  --bg-gradient-start: #eef8ff;
-  --bg-gradient-end: #f8fcff;
   --bg-gradient-glow: rgba(56, 189, 248, 0.3);
 
   --surface-layout: rgba(255, 255, 255, 0.78);
@@ -92,8 +89,6 @@
 }
 
 .dark {
-  --bg-gradient-start: #03131d;
-  --bg-gradient-end: #07131b;
   --bg-gradient-glow: rgba(56, 189, 248, 0.3);
 
   --surface-layout: rgba(0, 0, 0, 0.7);
@@ -157,6 +152,16 @@
     min-height: 100vh;
     overflow-x: hidden;
     background-color: var(--surface-base);
+    background-image: radial-gradient(
+      circle at top right,
+      var(--bg-gradient-glow),
+      transparent 50%
+    );
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    transition:
+      color 200ms cubic-bezier(0.4, 0, 0.2, 1),
+      background-color 200ms cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   a {
