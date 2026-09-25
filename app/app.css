@@ -130,18 +130,23 @@
 }
 
 @layer base {
+  html {
+    height: 100%;
+  }
+
   html,
   body {
     margin: 0;
-    height: 100%;
+    min-height: 100%;
     color: var(--text-base);
     font-family: Meiryo, system-ui, sans-serif;
   }
 
   body {
-    height: 100dvh;
-    overscroll-behavior-y: none;
-    overflow: hidden;
+    min-height: 100vh;
+    min-height: 100dvh;
+    overflow-x: hidden;
+    overflow-y: auto;
   }
 
   a {
@@ -160,7 +165,8 @@
   }
 
   #app {
-    height: 100dvh;
+    min-height: 100vh;
+    min-height: 100dvh;
   }
 
   ::selection {
@@ -169,6 +175,16 @@
 }
 
 @layer utilities {
+  .auth-safe-viewport {
+    box-sizing: border-box;
+    min-height: 100vh;
+    min-height: 100dvh;
+    padding: calc(2.5rem + env(safe-area-inset-top, 0px))
+      calc(1.5rem + env(safe-area-inset-right, 0px))
+      calc(2rem + env(safe-area-inset-bottom, 0px))
+      calc(1.5rem + env(safe-area-inset-left, 0px));
+  }
+
   .main-header-height {
     height: 52px;
   }
@@ -268,6 +284,7 @@
 
 @utility scrollbar-none {
   scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
   &::-webkit-scrollbar {
     display: none;
   }
