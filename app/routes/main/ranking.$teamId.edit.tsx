@@ -8,9 +8,13 @@ export function meta() {
   return [{ title: createPageTitle("得点編集") }];
 }
 
-export async function clientLoader({ params }: { params: { rank?: string } }) {
-  const rank = Number(params.rank);
-  const ranking = Number.isInteger(rank) ? getRanking(rank) : null;
+export async function clientLoader({
+  params,
+}: {
+  params: { teamId?: string };
+}) {
+  const teamId = Number(params.teamId);
+  const ranking = Number.isInteger(teamId) ? getRanking(teamId) : null;
   if (!ranking) throw new Response("Not Found", { status: 404 });
   return { ranking };
 }

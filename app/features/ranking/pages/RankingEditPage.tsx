@@ -24,7 +24,7 @@ export function RankingEditPage({ ranking }: { ranking: Ranking }) {
     setIsSubmitting(true);
     setSubmitError(null);
     try {
-      const updated = updateRanking(ranking.rank, input);
+      const updated = updateRanking(ranking.teamId, input);
       if (!updated) throw new Error("ranking not found");
       close();
     } catch {

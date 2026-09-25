@@ -2,13 +2,29 @@ import { mockRankings } from "~/features/ranking/mock/ranking-data";
 import type { Ranking } from "~/features/ranking/model/ranking";
 
 export type RankingInput = {
-  score: number;
+  points: number;
 };
 
-let rankings = mockRankings.map((ranking) => ({ ...ranking }));
+// 得点降順に並べ直し、同点は同順位として次の順位を人数分繰り下げる。
+// rectime-apiのGET /rankingが行うRANK() OVER (ORDER BY scores DESC)と
+// 同じ考え方。得点が変わるたびにここを通すことで、rankと表示順を
+// 常に最新の状態に保つ。
+function recomputeRanks(items: Ranking[]): Ranking[] {
+  const sorted = [...items].sort((a, b) => b.score - a.score);
+  let previousScore: number | null = null;
+  let previousRank = 0;
+  return sorted.map((item, index) => {
+    const rank = item.score === previousScore ? previousRank : index + 1;
+    previousScore = item.score;
+    previousRank = rank;
+    return { ...item, rank };
+  });
+}
 
-export function getRanking(rank: number): Ranking | null {
-  const ranking = rankings.find((item) => item.rank === rank);
+let rankings = recomputeRanks(mockRankings.map((ranking) => ({ ...ranking })));
+
+export function getRanking(teamId: number): Ranking | null {
+  const ranking = rankings.find((item) => item.teamId === teamId);
   return ranking ? { ...ranking } : null;
 }
 
@@ -17,19 +33,17 @@ export function getRankings(): Ranking[] {
 }
 
 export function updateRanking(
-  currentRank: number,
+  teamId: number,
   input: RankingInput
 ): Ranking | null {
-  const ranking = rankings.find((item) => item.rank === currentRank);
-  if (!ranking) return null;
+  const exists = rankings.some((item) => item.teamId === teamId);
+  if (!exists) return null;
 
-  const updatedRanking = {
-    ...ranking,
-    score: input.score,
-    updatedAt: "2026-09-05T12:00:00+09:00",
-  };
-  rankings = rankings.map((item) =>
-    item.rank === currentRank ? updatedRanking : item
+  const updated = rankings.map((item) =>
+    item.teamId === teamId
+      ? { ...item, score: item.score + input.points }
+      : item
   );
-  return { ...updatedRanking };
+  rankings = recomputeRanks(updated);
+  return rankings.find((item) => item.teamId === teamId) ?? null;
 }

@@ -1,17 +1,22 @@
 import { Plus } from "lucide-react";
-import { useEffect, useMemo } from "react";
-import { useLocation, useSearchParams } from "react-router";
+import { useEffect, useMemo, useState } from "react";
+import { useLocation, useNavigate, useSearchParams } from "react-router";
 
 import { ButtonLink } from "~/components/ui/button/ButtonLink";
 import { PageHeader } from "~/components/ui/layout/PageHeader";
 import { SearchField } from "~/components/ui/form/SearchField";
 import { Pagination } from "~/components/ui/navigation/Pagination";
+import { DeleteTeamDialog } from "~/features/team/components/DeleteTeamDialog";
 import {
   parseTeamListUrl,
   updateTeamListUrl,
 } from "~/features/team/application/team-list-url";
-import { teamCreateTarget } from "~/features/team/application/team-navigation";
+import {
+  teamCreateTarget,
+  teamListTarget,
+} from "~/features/team/application/team-navigation";
 import { TeamTable } from "~/features/team/components/TeamTable";
+import { deleteTeam } from "~/features/team/mock/team-store";
 import type { Team } from "~/features/team/model/team";
 import {
   getNextManagementTableSort,
@@ -22,19 +27,20 @@ const PAGE_SIZE = 10;
 
 export function TeamPage({ teams }: { teams: readonly Team[] }) {
   const location = useLocation();
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { page, search, sortBy, sortOrder } = parseTeamListUrl(searchParams);
+  const [teamPendingDelete, setTeamPendingDelete] = useState<Team | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
+  // rectime-apiのGET /teams?searchはチーム名の部分一致のみに対応しているため、
+  // モックの検索範囲もチーム名のみに揃える。
   const filteredTeams = useMemo(() => {
     const normalizedSearch = search.toLocaleLowerCase();
     return teams.filter(
       (team) =>
         !normalizedSearch ||
-        team.name.toLocaleLowerCase().includes(normalizedSearch) ||
-        String(team.id).includes(normalizedSearch) ||
-        team.registeredClasses.some((classCode) =>
-          classCode.toLocaleLowerCase().includes(normalizedSearch)
-        )
+        team.name.toLocaleLowerCase().includes(normalizedSearch)
     );
   }, [search, teams]);
 
@@ -47,10 +53,10 @@ export function TeamPage({ teams }: { teams: readonly Team[] }) {
           : undefined,
         (team, columnId) => {
           switch (columnId) {
-            case "id":
-              return team.id;
-            case "name":
+            case "teamName":
               return team.name;
+            case "registeredAt":
+              return team.registeredAt;
             case "updatedAt":
               return team.updatedAt;
             default:
@@ -80,8 +86,8 @@ export function TeamPage({ teams }: { teams: readonly Team[] }) {
 
   function handleSortChange(columnId: string) {
     const nextSortBy = {
-      "team-id": "id",
-      "team-name": "name",
+      "team-name": "teamName",
+      "registered-at": "registeredAt",
       "updated-at": "updatedAt",
     }[columnId];
     if (!nextSortBy) return;
@@ -101,6 +107,18 @@ export function TeamPage({ teams }: { teams: readonly Team[] }) {
     });
   }
 
+  async function confirmDelete() {
+    if (!teamPendingDelete) return;
+    setIsDeleting(true);
+    try {
+      deleteTeam(teamPendingDelete.id);
+      setTeamPendingDelete(null);
+      navigate(teamListTarget(location.search), { replace: true });
+    } finally {
+      setIsDeleting(false);
+    }
+  }
+
   return (
     <div className="min-h-full space-y-5">
       <PageHeader
@@ -118,21 +136,22 @@ export function TeamPage({ teams }: { teams: readonly Team[] }) {
         title="チーム管理"
       />
       <SearchField
-        ariaLabel="チームまたはクラスを検索"
+        ariaLabel="チームを検索"
         onValueChange={(value) => updateUrl({ page: 1, search: value })}
-        placeholder="チーム名・クラスで検索..."
+        placeholder="チーム名で検索..."
         value={search}
       />
       <TeamTable
         items={visibleTeams}
+        onDeleteRequest={setTeamPendingDelete}
         onSortChange={handleSortChange}
         search={location.search}
         sort={
           sortBy && sortOrder
             ? {
                 columnId: {
-                  id: "team-id",
-                  name: "team-name",
+                  teamName: "team-name",
+                  registeredAt: "registered-at",
                   updatedAt: "updated-at",
                 }[sortBy],
                 direction: sortOrder,
@@ -149,6 +168,14 @@ export function TeamPage({ teams }: { teams: readonly Team[] }) {
           />
         }
       />
+      {teamPendingDelete ? (
+        <DeleteTeamDialog
+          isSubmitting={isDeleting}
+          onClose={() => setTeamPendingDelete(null)}
+          onConfirm={() => void confirmDelete()}
+          team={teamPendingDelete}
+        />
+      ) : null}
     </div>
   );
 }

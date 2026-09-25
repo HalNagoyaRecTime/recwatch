@@ -37,6 +37,10 @@ export function TeamDetailPage({ team }: { team: Team }) {
           <dd className="text-text-base mt-1 font-medium">{team.name}</dd>
         </div>
         <div>
+          <dt className="text-text-muted">得点</dt>
+          <dd className="text-text-base mt-1">{team.scores}pt</dd>
+        </div>
+        <div>
           <dt className="text-text-muted">登録日</dt>
           <dd className="text-text-base mt-1">
             {formatDisplayDateTime(team.registeredAt)}

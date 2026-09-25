@@ -30,7 +30,7 @@ export function RankingActionMenu({ ranking }: { ranking: Ranking }) {
               id: "edit",
               label: "得点編集",
               onClick: () =>
-                navigate(rankingEditTarget(ranking.rank, location.search)),
+                navigate(rankingEditTarget(ranking.teamId, location.search)),
               type: "action",
             },
           ]}
