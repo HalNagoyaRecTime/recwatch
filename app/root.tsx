@@ -104,7 +104,7 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
   }
 
   return (
-    <main className="min-h-dvh p-6 md:p-8">
+    <main className="viewport-min-height p-6 md:p-8">
       <div className="shadow-soft border-border-subtle bg-surface-base mx-auto max-w-5xl rounded-3xl border p-6 md:p-8">
         <div className="text-brand-primary font-['DM_Mono'] text-xs tracking-[0.18em] uppercase">
           Failure Boundary
@@ -128,7 +128,7 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
 export function HydrateFallback() {
   // サーバーとクライアントのHydration対象DOMを揃えるため、表示はCSSで切り替える。
   return (
-    <div className="root-hydrate-fallback bg-surface-hover p-6">
+    <div className="root-hydrate-fallback viewport-min-height bg-surface-hover p-6">
       <span className="root-hydrate-fallback-default">読み込み中...</span>
       {/* アカウント削除ページ専用 */}
       <span className="root-hydrate-fallback-deletion">

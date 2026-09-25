@@ -14,7 +14,7 @@ export function AppShell({ user }: AppShellProps) {
     <FeedbackProvider key={user?.id ?? "anonymous"} userId={user?.id ?? null}>
       <FeedbackToastHost />
       <SidebarStateProvider>
-        <div className="flex min-h-dvh min-h-screen md:flex-row">
+        <div className="viewport-min-height flex md:flex-row">
           <SidebarShell />
           <MainShell user={user} />
         </div>

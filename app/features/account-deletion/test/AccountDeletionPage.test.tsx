@@ -22,6 +22,7 @@ import { AccountDeletionPage } from "../pages/AccountDeletionPage";
 
 afterEach(() => {
   cleanup();
+  document.documentElement.style.removeProperty("background-color");
   document
     .querySelectorAll("link[data-test-account-deletion-favicon]")
     .forEach((link) => link.remove());
@@ -113,22 +114,26 @@ describe("AccountDeletionPage", () => {
     ).toBeInTheDocument();
   });
 
-  it("globalのdocument scrollとsafe area設定を使い、viewportを動的変更しない", () => {
+  it("document外を白くし、unmount時に元の背景へ戻す", () => {
+    document.documentElement.style.setProperty("background-color", "pink");
     const { unmount } = renderPage();
 
     expect(screen.getByRole("main")).toHaveClass(
       "account-deletion-viewport",
-      "min-h-screen",
-      "min-h-dvh"
+      "viewport-min-height"
     );
-    expect(document.documentElement.style.background).toBe("");
+    expect(
+      document.documentElement.style.getPropertyValue("background-color")
+    ).toBe("rgb(255, 255, 255)");
     expect(document.body.style.height).toBe("");
     expect(document.body.style.overflowY).toBe("");
     expect(document.body.style.background).toBe("");
 
     unmount();
 
-    expect(document.documentElement.style.background).toBe("");
+    expect(
+      document.documentElement.style.getPropertyValue("background-color")
+    ).toBe("pink");
     expect(document.body.style.height).toBe("");
     expect(document.body.style.overflowY).toBe("");
     expect(document.body.style.background).toBe("");

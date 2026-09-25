@@ -17,7 +17,7 @@ export function PageLayout({ children, left, right, top }: PageLayoutProps) {
   const hasSidePanel = hasLeftPanel || hasRightPanel;
 
   return (
-    <div className="page-layout flex flex-col">
+    <div className="page-layout flex flex-1 flex-col">
       {hasTopPanel && <PagePanel placement="top">{top}</PagePanel>}
       <div
         className={

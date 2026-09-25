@@ -61,14 +61,38 @@ function useAccountDeletionFavicon() {
   }, []);
 }
 
+function useAccountDeletionDocumentBackground() {
+  useEffect(() => {
+    const root = document.documentElement;
+    const previousBackgroundColor =
+      root.style.getPropertyValue("background-color");
+    const previousPriority = root.style.getPropertyPriority("background-color");
+
+    root.style.setProperty("background-color", "#ffffff");
+
+    return () => {
+      if (previousBackgroundColor) {
+        root.style.setProperty(
+          "background-color",
+          previousBackgroundColor,
+          previousPriority
+        );
+      } else {
+        root.style.removeProperty("background-color");
+      }
+    };
+  }, []);
+}
+
 export function AccountDeletionLayout({
   children,
 }: AccountDeletionLayoutProps) {
   useAccountDeletionFavicon();
+  useAccountDeletionDocumentBackground();
 
   return (
     <main
-      className="account-deletion-viewport box-border flex min-h-dvh min-h-screen flex-col items-center justify-center-safe bg-white text-[#333333]"
+      className="account-deletion-viewport viewport-min-height box-border flex flex-col items-center justify-center-safe bg-white text-[#333333]"
       style={{
         ...accountDeletionThemeStyle,
         paddingTop: "calc(2rem + env(safe-area-inset-top, 0px))",

@@ -139,6 +139,15 @@
 @layer base {
   html {
     min-height: 100%;
+    background-color: #ffffff;
+  }
+
+  html.dark {
+    background-color: #000000;
+  }
+
+  html[data-account-deletion-auth-callback="true"] {
+    background-color: #ffffff;
   }
 
   html,
@@ -151,7 +160,6 @@
 
   body {
     min-height: 100vh;
-    min-height: 100dvh;
     overflow-x: hidden;
   }
 
@@ -172,7 +180,13 @@
 
   #app {
     min-height: 100vh;
-    min-height: 100dvh;
+  }
+
+  @supports (min-height: 100dvh) {
+    body,
+    #app {
+      min-height: 100dvh;
+    }
   }
 
   ::selection {
@@ -181,6 +195,16 @@
 }
 
 @layer utilities {
+  .viewport-min-height {
+    min-height: 100vh;
+  }
+
+  @supports (min-height: 100dvh) {
+    .viewport-min-height {
+      min-height: 100dvh;
+    }
+  }
+
   .main-header-height {
     height: var(--main-header-row-height);
   }
@@ -221,25 +245,23 @@
     padding-left: env(safe-area-inset-left, 0px);
   }
 
-  .page-layout {
-    min-height: calc(100vh - var(--main-header-total-height));
-    min-height: calc(
-      100dvh - var(--main-header-total-height) - env(safe-area-inset-top, 0px)
-    );
-  }
-
   .page-side-panel {
     position: sticky;
     top: calc(var(--main-header-total-height) + env(safe-area-inset-top, 0px));
     align-self: start;
     height: calc(100vh - var(--main-header-total-height));
     max-height: calc(100vh - var(--main-header-total-height));
-    height: calc(
-      100dvh - var(--main-header-total-height) - env(safe-area-inset-top, 0px)
-    );
-    max-height: calc(
-      100dvh - var(--main-header-total-height) - env(safe-area-inset-top, 0px)
-    );
+  }
+
+  @supports (height: 100dvh) {
+    .page-side-panel {
+      height: calc(
+        100dvh - var(--main-header-total-height) - env(safe-area-inset-top, 0px)
+      );
+      max-height: calc(
+        100dvh - var(--main-header-total-height) - env(safe-area-inset-top, 0px)
+      );
+    }
   }
 
   .page-padding {
@@ -269,7 +291,6 @@
 
   html[data-account-deletion-auth-callback="true"] .root-hydrate-fallback {
     display: flex;
-    min-height: 100dvh;
     align-items: center;
     justify-content: center;
     background: #ffffff;

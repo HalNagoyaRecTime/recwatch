@@ -14,7 +14,7 @@ export function AuthLayout({
 }: AuthLayoutProps) {
   return (
     <main
-      className="box-border flex min-h-dvh min-h-screen flex-col items-center justify-center"
+      className="viewport-min-height box-border flex flex-col items-center justify-center"
       style={authLayoutStyle}
     >
       <section className={contentClassName}>

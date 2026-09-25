@@ -11,7 +11,7 @@ export function MainShell({ user }: MainShellProps) {
   return (
     <div className="flex min-w-0 flex-1 flex-col">
       <MainHeader user={user} />
-      <main className="min-w-0 flex-1">
+      <main className="flex min-w-0 flex-1 flex-col">
         <Outlet />
       </main>
     </div>
