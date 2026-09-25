@@ -36,6 +36,10 @@ export function applyTheme(theme: ThemeMode) {
   root.classList.toggle("dark", isDark);
   root.dataset.theme = theme;
   root.style.colorScheme = isDark ? "dark" : "light";
-  root.style.backgroundColor =
+  const backgroundColor =
     root.dataset.documentBackgroundOverride || (isDark ? "#000000" : "#ffffff");
+  root.style.backgroundColor = backgroundColor;
+  if (document.body) {
+    document.body.style.backgroundColor = backgroundColor;
+  }
 }

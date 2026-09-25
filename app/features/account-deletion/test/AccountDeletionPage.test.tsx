@@ -24,6 +24,7 @@ import { AccountDeletionPage } from "../pages/AccountDeletionPage";
 afterEach(() => {
   cleanup();
   document.documentElement.style.removeProperty("background-color");
+  document.body.style.removeProperty("background-color");
   delete document.documentElement.dataset.documentBackgroundOverride;
   delete document.documentElement.dataset.accountDeletionAuthCallback;
   delete document.documentElement.dataset.theme;
@@ -121,6 +122,8 @@ describe("AccountDeletionPage", () => {
 
   it("表示中は白く保ち、unmount時に最新テーマの背景へ戻す", () => {
     applyTheme("dark");
+    expect(document.documentElement.style.backgroundColor).toBe("rgb(0, 0, 0)");
+    expect(document.body.style.backgroundColor).toBe("rgb(0, 0, 0)");
     const { unmount } = renderPage();
 
     expect(screen.getByRole("main")).toHaveClass(
@@ -130,6 +133,7 @@ describe("AccountDeletionPage", () => {
     expect(
       document.documentElement.style.getPropertyValue("background-color")
     ).toBe("rgb(255, 255, 255)");
+    expect(document.body.style.backgroundColor).toBe("rgb(255, 255, 255)");
     expect(document.documentElement.dataset.documentBackgroundOverride).toBe(
       "#ffffff"
     );
@@ -138,6 +142,9 @@ describe("AccountDeletionPage", () => {
     expect(document.documentElement.style.backgroundColor).toBe(
       "rgb(255, 255, 255)"
     );
+    expect(document.body.style.backgroundColor).toBe("rgb(255, 255, 255)");
+    applyTheme("dark");
+    expect(document.body.style.backgroundColor).toBe("rgb(255, 255, 255)");
 
     expect(document.body.style.height).toBe("");
     expect(document.body.style.overflowY).toBe("");
@@ -145,9 +152,8 @@ describe("AccountDeletionPage", () => {
 
     unmount();
 
-    expect(document.documentElement.style.backgroundColor).toBe(
-      "rgb(255, 255, 255)"
-    );
+    expect(document.documentElement.style.backgroundColor).toBe("rgb(0, 0, 0)");
+    expect(document.body.style.backgroundColor).toBe("rgb(0, 0, 0)");
     expect(document.documentElement.dataset.documentBackgroundOverride).toBe(
       undefined
     );

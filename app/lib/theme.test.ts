@@ -14,6 +14,7 @@ describe("applyTheme", () => {
     root.removeAttribute("data-document-background-override");
     root.style.removeProperty("color-scheme");
     root.style.removeProperty("background-color");
+    document.body.style.removeProperty("background-color");
     window.localStorage.removeItem(THEME_STORAGE_KEY);
   });
 
@@ -25,7 +26,9 @@ describe("applyTheme", () => {
     applyTheme("dark");
 
     expect(document.documentElement.style.colorScheme).toBe("dark");
+    expect(document.documentElement).toHaveClass("dark");
     expect(document.documentElement.style.backgroundColor).toBe("rgb(0, 0, 0)");
+    expect(document.body.style.backgroundColor).toBe("rgb(0, 0, 0)");
   });
 
   it("ライトモードへ戻すとブラウザ標準部品もライト配色に戻す", () => {
@@ -35,6 +38,25 @@ describe("applyTheme", () => {
     expect(document.documentElement.style.backgroundColor).toBe(
       "rgb(255, 255, 255)"
     );
+    expect(document.documentElement).not.toHaveClass("dark");
+    expect(document.body.style.backgroundColor).toBe("rgb(255, 255, 255)");
+  });
+
+  it("systemテーマはmatchMediaの現在値から背景色を決める", () => {
+    let matchesDark = false;
+    vi.stubGlobal(
+      "matchMedia",
+      vi.fn(() => ({ matches: matchesDark }) as MediaQueryList)
+    );
+
+    applyTheme("system");
+    expect(document.body.style.backgroundColor).toBe("rgb(255, 255, 255)");
+    expect(document.documentElement).not.toHaveClass("dark");
+
+    matchesDark = true;
+    applyTheme("system");
+    expect(document.body.style.backgroundColor).toBe("rgb(0, 0, 0)");
+    expect(document.documentElement).toHaveClass("dark");
   });
 
   it("systemテーマの変更に合わせてdocument背景を更新する", () => {
@@ -62,6 +84,7 @@ describe("applyTheme", () => {
     expect(document.documentElement.style.backgroundColor).toBe(
       "rgb(255, 255, 255)"
     );
+    expect(document.body.style.backgroundColor).toBe("rgb(255, 255, 255)");
 
     act(() => {
       matchesDark = true;
@@ -70,6 +93,7 @@ describe("applyTheme", () => {
 
     expect(document.documentElement).toHaveClass("dark");
     expect(document.documentElement.style.backgroundColor).toBe("rgb(0, 0, 0)");
+    expect(document.body.style.backgroundColor).toBe("rgb(0, 0, 0)");
 
     unmount();
     expect(mediaQuery.removeEventListener).toHaveBeenCalledWith(

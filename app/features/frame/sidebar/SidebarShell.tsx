@@ -218,12 +218,19 @@ function MobileSidebarContent() {
             disabled={!mobileOpen}
             onClick={closeForMobile}
             className={cn(
-              "fixed inset-0 z-90 bg-black/30 transition-opacity duration-300",
-              isActive
-                ? "pointer-events-auto opacity-100"
-                : "pointer-events-none opacity-0"
+              "fixed inset-0 z-90 bg-transparent",
+              isActive ? "pointer-events-auto" : "pointer-events-none"
             )}
-          />
+          >
+            <span
+              data-testid="mobile-nav-overlay-visual"
+              aria-hidden="true"
+              className={cn(
+                "pointer-events-none absolute inset-0 bg-black/30 transition-opacity duration-300",
+                isActive ? "opacity-100" : "opacity-0"
+              )}
+            />
+          </button>
 
           <div
             id="mobile-nav-backplate"

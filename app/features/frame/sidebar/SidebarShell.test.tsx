@@ -201,10 +201,24 @@ describe("モバイル Drawer", () => {
     renderShell();
 
     openMobileDrawer();
-    fireEvent.click(getMobileOverlay());
+    const overlay = getMobileOverlay();
+    const visualOverlay = screen.getByTestId("mobile-nav-overlay-visual");
+    expect(overlay).toHaveClass("fixed", "inset-0", "bg-transparent");
+    expect(overlay).not.toHaveClass("bg-black/30");
+    expect(visualOverlay).toHaveClass(
+      "pointer-events-none",
+      "absolute",
+      "inset-0",
+      "bg-black/30",
+      "opacity-100"
+    );
+
+    fireEvent.click(visualOverlay);
     expect(getHamburger()).toHaveAttribute("aria-expanded", "false");
     expect(document.activeElement).toBe(getHamburger());
     expect(getMobileDrawer()).toHaveAttribute("aria-hidden", "true");
+    expect(overlay).toBeInTheDocument();
+    expect(visualOverlay).toHaveClass("opacity-0");
     finishMobileClose();
 
     openMobileDrawer();

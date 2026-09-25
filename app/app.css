@@ -151,7 +151,7 @@
   body {
     min-height: 100vh;
     overflow-x: hidden;
-    background-color: var(--surface-base);
+    background-color: #ffffff;
     background-image: radial-gradient(
       circle at top right,
       var(--bg-gradient-glow),
@@ -159,9 +159,15 @@
     );
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    transition:
-      color 200ms cubic-bezier(0.4, 0, 0.2, 1),
-      background-color 200ms cubic-bezier(0.4, 0, 0.2, 1);
+    transition: color 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  html.dark body {
+    background-color: #000000;
+  }
+
+  html[data-document-background-override] body {
+    background-color: #ffffff;
   }
 
   a {
@@ -208,11 +214,6 @@
 
   .main-header-height {
     height: var(--main-header-row-height);
-  }
-
-  .main-header-safe-area {
-    box-sizing: content-box;
-    padding-top: env(safe-area-inset-top, 0px);
   }
 
   .main-header-row {

@@ -67,6 +67,7 @@ function useAccountDeletionDocumentBackground() {
     const root = document.documentElement;
     root.dataset.documentBackgroundOverride = "#ffffff";
     root.style.setProperty("background-color", "#ffffff");
+    document.body.style.setProperty("background-color", "#ffffff");
 
     return () => {
       delete root.dataset.documentBackgroundOverride;
