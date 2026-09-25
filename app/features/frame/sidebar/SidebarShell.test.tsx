@@ -169,7 +169,7 @@ describe("モバイル Drawer", () => {
     expect(document.documentElement.style.overscrollBehavior).toBe("none");
     expect(getMobileDrawer().querySelector(".scrollbar-none")).toHaveClass(
       "overflow-y-auto",
-      "overscroll-y-contain"
+      "overscroll-y-none"
     );
 
     fireEvent.keyDown(document, { key: "Escape" });
@@ -331,6 +331,10 @@ describe("Desktop / Tablet Sidebar", () => {
     renderShell();
 
     expect(getDesktopSidebar().parentElement).toHaveClass("h-dvh", "sticky");
+    expect(getDesktopSidebar().querySelector(".scrollbar-none")).toHaveClass(
+      "overflow-y-auto",
+      "overscroll-y-contain"
+    );
   });
 
   it("Mouse hoverで一時展開し、leaveで戻る", () => {

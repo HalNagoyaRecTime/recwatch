@@ -7,7 +7,13 @@ import { SidebarNavItem } from "~/features/frame/sidebar/components/SidebarNavIt
 import { SIDEBAR_DURATION } from "~/features/frame/sidebar/styles/sidebar-styles";
 import { ScrollbarArea } from "~/components/ui/scrollbar/ScrollbarArea";
 
-export function AppSidebar() {
+type AppSidebarProps = {
+  overscrollBehavior?: "contain" | "none";
+};
+
+export function AppSidebar({
+  overscrollBehavior = "contain",
+}: AppSidebarProps) {
   // 2026: role-based feature permissions are not implemented; all staff share this menu.
   const sections = buildSidebarMenu("admin");
   const { isExpanded } = useSidebarUI();
@@ -26,7 +32,10 @@ export function AppSidebar() {
 
       <ScrollbarArea
         className={cn(
-          "overscroll-y-contain py-3",
+          overscrollBehavior === "none"
+            ? "overscroll-y-none"
+            : "overscroll-y-contain",
+          "py-3",
           "transition-all",
           SIDEBAR_DURATION,
           isExpanded ? "px-3.5" : "px-2"

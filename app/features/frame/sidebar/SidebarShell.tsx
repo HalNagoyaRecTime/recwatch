@@ -258,7 +258,7 @@ function MobileSidebarContent() {
           >
             <SidebarHeader onClose={closeForMobile} safeArea />
             <div className="sidebar-mobile-content-safe-area flex min-h-0 flex-1 flex-col overflow-hidden">
-              <AppSidebar />
+              <AppSidebar overscrollBehavior="none" />
             </div>
           </div>
         </>
