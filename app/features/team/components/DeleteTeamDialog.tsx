@@ -9,6 +9,7 @@ type DeleteTeamDialogProps = {
   isSubmitting: boolean;
   onClose: () => void;
   onConfirm: () => void;
+  submitError?: string | null;
 };
 
 export function DeleteTeamDialog({
@@ -16,6 +17,7 @@ export function DeleteTeamDialog({
   isSubmitting,
   onClose,
   onConfirm,
+  submitError,
 }: DeleteTeamDialogProps) {
   useEffect(() => {
     function handleEscape(event: KeyboardEvent) {
@@ -62,6 +64,11 @@ export function DeleteTeamDialog({
             </p>
           </div>
         </div>
+        {submitError ? (
+          <p className="text-tone-danger-text mt-3 text-sm" role="alert">
+            {submitError}
+          </p>
+        ) : null}
         <div className="mt-5 flex justify-end gap-2">
           <Button
             autoFocus

@@ -1,6 +1,6 @@
 import { Plus } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
-import { useLocation, useNavigate, useSearchParams } from "react-router";
+import { useEffect, useState } from "react";
+import { useLocation, useSearchParams } from "react-router";
 
 import { ButtonLink } from "~/components/ui/button/ButtonLink";
 import { PageHeader } from "~/components/ui/layout/PageHeader";
@@ -10,86 +10,64 @@ import { DeleteTeamDialog } from "~/features/team/components/DeleteTeamDialog";
 import {
   parseTeamListUrl,
   updateTeamListUrl,
+  type TeamListSortBy,
 } from "~/features/team/application/team-list-url";
-import {
-  teamCreateTarget,
-  teamListTarget,
-} from "~/features/team/application/team-navigation";
+import { teamCreateTarget } from "~/features/team/application/team-navigation";
 import { TeamTable } from "~/features/team/components/TeamTable";
-import { deleteTeam } from "~/features/team/mock/team-store";
+import { TeamApi } from "~/features/team/api";
+import { getNextManagementTableSort } from "~/features/user-management/model/management-table-sort";
 import type { Team } from "~/features/team/model/team";
-import {
-  getNextManagementTableSort,
-  sortManagementTableItems,
-} from "~/features/user-management/model/management-table-sort";
+import { getErrorMessage } from "~/lib/client-error";
 
-const PAGE_SIZE = 10;
+const sortByColumnId: Record<TeamListSortBy, string> = {
+  teamName: "team-name",
+  registeredAt: "registered-at",
+  updatedAt: "updated-at",
+};
 
-export function TeamPage({ teams }: { teams: readonly Team[] }) {
+const columnIdToSortBy: Record<string, TeamListSortBy> = {
+  "team-name": "teamName",
+  "registered-at": "registeredAt",
+  "updated-at": "updatedAt",
+};
+
+type TeamPageProps = {
+  limit: number;
+  offset: number;
+  teams: readonly Team[];
+  total: number;
+};
+
+export function TeamPage({ limit, offset, teams, total }: TeamPageProps) {
   const location = useLocation();
-  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { page, search, sortBy, sortOrder } = parseTeamListUrl(searchParams);
+  const { search, sortBy, sortOrder } = parseTeamListUrl(searchParams);
+  const [removedTeamIds, setRemovedTeamIds] = useState<Set<number>>(
+    () => new Set()
+  );
   const [teamPendingDelete, setTeamPendingDelete] = useState<Team | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
-  // rectime-apiのGET /teams?searchはチーム名の部分一致のみに対応しているため、
-  // モックの検索範囲もチーム名のみに揃える。
-  const filteredTeams = useMemo(() => {
-    const normalizedSearch = search.toLocaleLowerCase();
-    return teams.filter(
-      (team) =>
-        !normalizedSearch ||
-        team.name.toLocaleLowerCase().includes(normalizedSearch)
-    );
-  }, [search, teams]);
-
-  const sortedTeams = useMemo(
-    () =>
-      sortManagementTableItems(
-        filteredTeams,
-        sortBy && sortOrder
-          ? { columnId: sortBy, direction: sortOrder }
-          : undefined,
-        (team, columnId) => {
-          switch (columnId) {
-            case "teamName":
-              return team.name;
-            case "registeredAt":
-              return team.registeredAt;
-            case "updatedAt":
-              return team.updatedAt;
-            default:
-              return null;
-          }
-        }
-      ),
-    [filteredTeams, sortBy, sortOrder]
-  );
-  const pageCount = Math.max(1, Math.ceil(sortedTeams.length / PAGE_SIZE));
-  const currentPage = Math.min(page, pageCount);
-  const visibleTeams = sortedTeams.slice(
-    (currentPage - 1) * PAGE_SIZE,
-    currentPage * PAGE_SIZE
-  );
+  const currentPage = Math.floor(offset / limit) + 1;
+  const items = teams.filter((team) => !removedTeamIds.has(team.id));
+  const visibleTotal = Math.max(0, total - removedTeamIds.size);
+  const pageCount = Math.max(1, Math.ceil(visibleTotal / limit));
 
   useEffect(() => {
-    if (page <= pageCount) return;
+    if (currentPage <= pageCount) return;
     setSearchParams(updateTeamListUrl(searchParams, { page: pageCount }), {
       replace: true,
     });
-  }, [page, pageCount, searchParams, setSearchParams]);
+  }, [currentPage, pageCount, searchParams, setSearchParams]);
 
   function updateUrl(updates: Parameters<typeof updateTeamListUrl>[1]) {
+    setRemovedTeamIds(new Set());
     setSearchParams(updateTeamListUrl(searchParams, updates));
   }
 
   function handleSortChange(columnId: string) {
-    const nextSortBy = {
-      "team-name": "teamName",
-      "registered-at": "registeredAt",
-      "updated-at": "updatedAt",
-    }[columnId];
+    const nextSortBy = columnIdToSortBy[columnId];
     if (!nextSortBy) return;
 
     const nextSort = getNextManagementTableSort(
@@ -100,9 +78,7 @@ export function TeamPage({ teams }: { teams: readonly Team[] }) {
     );
     updateUrl({
       page: 1,
-      sortBy: nextSort.columnId as Parameters<
-        typeof updateTeamListUrl
-      >[1]["sortBy"],
+      sortBy: nextSort.columnId as TeamListSortBy,
       sortOrder: nextSort.direction,
     });
   }
@@ -110,10 +86,17 @@ export function TeamPage({ teams }: { teams: readonly Team[] }) {
   async function confirmDelete() {
     if (!teamPendingDelete) return;
     setIsDeleting(true);
+    setDeleteError(null);
     try {
-      deleteTeam(teamPendingDelete.id);
+      await TeamApi.deleteTeam(teamPendingDelete.id);
+      setRemovedTeamIds((current) => {
+        const next = new Set(current);
+        next.add(teamPendingDelete.id);
+        return next;
+      });
       setTeamPendingDelete(null);
-      navigate(teamListTarget(location.search), { replace: true });
+    } catch (error) {
+      setDeleteError(getErrorMessage(error));
     } finally {
       setIsDeleting(false);
     }
@@ -142,20 +125,13 @@ export function TeamPage({ teams }: { teams: readonly Team[] }) {
         value={search}
       />
       <TeamTable
-        items={visibleTeams}
+        items={items}
         onDeleteRequest={setTeamPendingDelete}
         onSortChange={handleSortChange}
         search={location.search}
         sort={
           sortBy && sortOrder
-            ? {
-                columnId: {
-                  teamName: "team-name",
-                  registeredAt: "registered-at",
-                  updatedAt: "updated-at",
-                }[sortBy],
-                direction: sortOrder,
-              }
+            ? { columnId: sortByColumnId[sortBy], direction: sortOrder }
             : undefined
         }
         footer={
@@ -163,16 +139,20 @@ export function TeamPage({ teams }: { teams: readonly Team[] }) {
             currentPage={currentPage}
             onPageChange={(nextPage) => updateUrl({ page: nextPage })}
             pageCount={pageCount}
-            pageSize={PAGE_SIZE}
-            totalItems={sortedTeams.length}
+            pageSize={limit}
+            totalItems={visibleTotal}
           />
         }
       />
       {teamPendingDelete ? (
         <DeleteTeamDialog
           isSubmitting={isDeleting}
-          onClose={() => setTeamPendingDelete(null)}
+          onClose={() => {
+            setTeamPendingDelete(null);
+            setDeleteError(null);
+          }}
           onConfirm={() => void confirmDelete()}
+          submitError={deleteError}
           team={teamPendingDelete}
         />
       ) : null}
