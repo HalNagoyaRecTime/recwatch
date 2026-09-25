@@ -7,8 +7,9 @@ import {
   type RankingFormInput,
 } from "~/features/ranking/components/RankingForm";
 import { rankingListTarget } from "~/features/ranking/application/ranking-navigation";
-import { updateRanking } from "~/features/ranking/mock/ranking-store";
+import { TeamApi } from "~/features/team/api";
 import type { Ranking } from "~/features/ranking/model/ranking";
+import { getErrorMessage } from "~/lib/client-error";
 
 export function RankingEditPage({ ranking }: { ranking: Ranking }) {
   const navigate = useNavigate();
@@ -24,18 +25,19 @@ export function RankingEditPage({ ranking }: { ranking: Ranking }) {
     setIsSubmitting(true);
     setSubmitError(null);
     try {
-      const updated = updateRanking(ranking.teamId, input);
-      if (!updated) throw new Error("ranking not found");
+      await TeamApi.addTeamScore(ranking.teamId, { points: input.points });
       close();
-    } catch {
-      setSubmitError("ランキングの更新に失敗しました。");
+    } catch (error) {
+      setSubmitError(
+        getErrorMessage(error, "ランキングの更新に失敗しました。")
+      );
       setIsSubmitting(false);
     }
   }
 
   return (
     <FormModal
-      description={`順位: ${ranking.rank}`}
+      description={`チーム名: ${ranking.teamName}`}
       onClose={close}
       title="得点編集"
     >
