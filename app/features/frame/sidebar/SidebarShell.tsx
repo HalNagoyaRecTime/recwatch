@@ -12,8 +12,8 @@ import { useSidebarUI } from "~/features/frame/sidebar/hooks/useSidebarUI";
 import { SidebarHeader } from "~/features/frame/sidebar/components/SidebarHeader";
 import {
   sidebarContainerStyle,
-  sidebarMobileBackplateStyle,
   sidebarMobileContainerStyle,
+  sidebarMobileSurfaceStyle,
   sidebarPlaceholderStyle,
 } from "~/features/frame/sidebar/styles/sidebar-styles";
 
@@ -111,7 +111,7 @@ function MobileSidebarContent() {
     };
   }, [closeForMobile]);
 
-  useDocumentScrollLock(mobileOpen || hasEntered);
+  useDocumentScrollLock(mobileOpen);
 
   useEffect(() => {
     if (!mobileOpen || isVisible) return;
@@ -186,20 +186,20 @@ function MobileSidebarContent() {
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [mobileOpen, closeForMobile]);
 
-  const handleDrawerTransitionEnd = (
-    event: ReactTransitionEvent<HTMLDivElement>
-  ) => {
-    if (
-      event.target !== event.currentTarget ||
-      event.propertyName !== "transform" ||
-      mobileOpen ||
-      !hasEntered
-    ) {
+  const completeDrawerClose = (event: ReactTransitionEvent<HTMLDivElement>) => {
+    if (event.target !== event.currentTarget || mobileOpen || !hasEntered) {
       return;
     }
 
     setHasEntered(false);
     setIsVisible(false);
+  };
+
+  const handleDrawerTransitionEnd = (
+    event: ReactTransitionEvent<HTMLDivElement>
+  ) => {
+    if (event.propertyName !== "transform") return;
+    completeDrawerClose(event);
   };
 
   const isActive = mobileOpen && isVisible;
@@ -233,15 +233,6 @@ function MobileSidebarContent() {
           </button>
 
           <div
-            id="mobile-nav-backplate"
-            aria-hidden="true"
-            className={cn(
-              sidebarMobileBackplateStyle,
-              isActive ? "translate-x-0" : "-translate-x-full"
-            )}
-          />
-
-          <div
             ref={drawerRef}
             id={MOBILE_SIDEBAR_ID}
             role="dialog"
@@ -255,10 +246,14 @@ function MobileSidebarContent() {
               sidebarMobileContainerStyle,
               isActive ? "translate-x-0" : "-translate-x-full"
             )}
+            onTransitionCancel={completeDrawerClose}
           >
-            <SidebarHeader onClose={closeForMobile} safeArea />
-            <div className="sidebar-mobile-content-safe-area flex min-h-0 flex-1 flex-col overflow-hidden">
-              <AppSidebar overscrollBehavior="none" />
+            <div aria-hidden="true" className={sidebarMobileSurfaceStyle} />
+            <div className="relative z-10 flex h-full w-full flex-col">
+              <SidebarHeader onClose={closeForMobile} safeArea />
+              <div className="sidebar-mobile-content-safe-area flex min-h-0 flex-1 flex-col overflow-hidden">
+                <AppSidebar overscrollBehavior="none" />
+              </div>
             </div>
           </div>
         </>

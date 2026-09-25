@@ -45,12 +45,6 @@ function getMobileOverlay() {
   return overlay;
 }
 
-function getMobileBackplate() {
-  const backplate = document.getElementById("mobile-nav-backplate");
-  if (!backplate) throw new Error("モバイル Backplate が見つかりません");
-  return backplate;
-}
-
 function getDesktopFooterToggle() {
   return within(getDesktopSidebar()).getByRole("button", {
     name: "サイドバーの固定表示を切り替える",
@@ -132,7 +126,6 @@ describe("モバイル Drawer", () => {
     expect(getMobileDrawer()).not.toHaveAttribute("inert");
     expect(getMobileDrawer()).toHaveAttribute("aria-modal", "true");
     expect(getMobileDrawer().className).toContain("translate-x-0");
-    expect(getMobileBackplate().className).toContain("translate-x-0");
     expect(document.activeElement).toBe(getMobileDrawer());
   });
 
@@ -174,27 +167,76 @@ describe("モバイル Drawer", () => {
 
     fireEvent.keyDown(document, { key: "Escape" });
 
-    expect(document.body.style.overflow).toBe("hidden");
+    expect(document.body.style.overflow).toBe("auto");
+    expect(document.body.style.overscrollBehavior).toBe("contain");
+    expect(document.documentElement.style.overflow).toBe("scroll");
+    expect(document.documentElement.style.overscrollBehavior).toBe("none");
     const drawer = getMobileDrawer();
-    fireEvent.transitionEnd(drawer, { propertyName: "opacity" });
     expect(drawer).toBeInTheDocument();
+    expect(drawer).toHaveClass("-translate-x-full");
     expect(document.getElementById("mobile-nav-overlay")).toBeInTheDocument();
     finishMobileClose();
+    expect(
+      document.getElementById("app-sidebar-mobile")
+    ).not.toBeInTheDocument();
+    expect(
+      document.getElementById("mobile-nav-overlay")
+    ).not.toBeInTheDocument();
     expect(document.body.style.overflow).toBe("auto");
     expect(document.body.style.overscrollBehavior).toBe("contain");
     expect(document.documentElement.style.overflow).toBe("scroll");
     expect(document.documentElement.style.overscrollBehavior).toBe("none");
   });
 
-  it("開いている間だけDrawerの直後ろにテーマ背景を表示する", () => {
+  it("Mobile Drawerのfixed rootを透明にし、内側のsurfaceで背景を表示する", () => {
     renderShell();
 
     expect(document.getElementById("mobile-nav-backplate")).toBeNull();
 
     openMobileDrawer();
 
-    expect(getMobileBackplate()).toHaveClass("translate-x-0");
-    expect(getMobileDrawer()).toHaveClass("z-99", "translate-x-0");
+    const drawer = getMobileDrawer();
+    const surface = drawer.querySelector(".sidebar-mobile-surface");
+
+    expect(drawer).toHaveClass(
+      "fixed",
+      "z-99",
+      "bg-transparent",
+      "translate-x-0"
+    );
+    expect(drawer).not.toHaveClass("bg-surface-base");
+    expect(surface).toHaveClass(
+      "pointer-events-none",
+      "absolute",
+      "inset-0",
+      "border-r",
+      "border-border-subtle",
+      "bg-surface-base",
+      "backdrop-blur-xl"
+    );
+    expect(
+      document.getElementById("mobile-nav-backplate")
+    ).not.toBeInTheDocument();
+  });
+
+  it("transform transitioncancelでもclose後のDrawerをunmountする", () => {
+    renderShell();
+    openMobileDrawer();
+
+    fireEvent.keyDown(document, { key: "Escape" });
+
+    const drawer = getMobileDrawer();
+    expect(document.body.style.overflow).toBe("");
+    expect(drawer).toBeInTheDocument();
+
+    fireEvent.transitionCancel(drawer, { propertyName: "transform" });
+
+    expect(
+      document.getElementById("app-sidebar-mobile")
+    ).not.toBeInTheDocument();
+    expect(
+      document.getElementById("mobile-nav-overlay")
+    ).not.toBeInTheDocument();
   });
 
   it("Overlay、Escape、Headerで閉じ、閉じた後はHamburgerへ戻る", () => {

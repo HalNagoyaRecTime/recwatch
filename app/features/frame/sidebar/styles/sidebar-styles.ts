@@ -29,9 +29,8 @@ export const sidebarContainerStyle = cva(
 );
 
 export const sidebarMobileContainerStyle =
-  "fixed inset-y-0 left-0 z-99 flex w-72 flex-col border-r bg-surface-base backdrop-blur-xl border-border-subtle transition-transform " +
+  "fixed inset-y-0 left-0 z-99 w-72 bg-transparent transition-transform " +
   SIDEBAR_DURATION;
 
-export const sidebarMobileBackplateStyle =
-  "pointer-events-none fixed inset-y-0 left-0 z-98 w-72 bg-surface-base transition-transform " +
-  SIDEBAR_DURATION;
+export const sidebarMobileSurfaceStyle =
+  "sidebar-mobile-surface pointer-events-none absolute inset-0 border-r border-border-subtle bg-surface-base backdrop-blur-xl";
