@@ -13,6 +13,10 @@ export function AuthLayout({
   contentClassName = "w-full max-w-sm flex-1 flex flex-col justify-center",
 }: AuthLayoutProps) {
   useEffect(() => {
+    const body = document.body;
+    const previousAuthSafeArea = body.getAttribute("data-auth-safe-area");
+    body.dataset.authSafeArea = "true";
+
     const viewportMeta = document.querySelector<HTMLMetaElement>(
       'meta[name="viewport"]'
     );
@@ -25,6 +29,11 @@ export function AuthLayout({
     return () => {
       if (viewportMeta && previousViewportContent !== null) {
         viewportMeta.content = previousViewportContent;
+      }
+      if (previousAuthSafeArea === null) {
+        body.removeAttribute("data-auth-safe-area");
+      } else {
+        body.setAttribute("data-auth-safe-area", previousAuthSafeArea);
       }
     };
   }, []);

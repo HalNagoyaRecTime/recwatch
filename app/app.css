@@ -185,6 +185,38 @@
       calc(1.5rem + env(safe-area-inset-left, 0px));
   }
 
+  body[data-auth-safe-area="true"] {
+    background: transparent;
+  }
+
+  .auth-safe-viewport {
+    position: relative;
+    isolation: isolate;
+  }
+
+  .auth-safe-viewport::before {
+    position: fixed;
+    z-index: 0;
+    inset: env(safe-area-inset-top, 0px) 0 env(safe-area-inset-bottom, 0px);
+    background-image:
+      radial-gradient(
+        circle at top right,
+        var(--bg-gradient-glow),
+        transparent 32%
+      ),
+      linear-gradient(
+        180deg,
+        var(--bg-gradient-start) 0%,
+        var(--bg-gradient-end) 100%
+      );
+    content: "";
+    pointer-events: none;
+  }
+
+  .auth-safe-viewport > * {
+    position: relative;
+    z-index: 1;
+  }
   .main-header-height {
     height: 52px;
   }
