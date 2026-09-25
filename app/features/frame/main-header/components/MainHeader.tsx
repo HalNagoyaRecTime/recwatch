@@ -34,16 +34,23 @@ export function MainHeader({ user }: MainHeaderProps) {
   }
 
   return (
-    <header className="border-border-subtle bg-surface-base md:bg-surface-layout/95 sticky top-0 z-30 border-b backdrop-blur-xl">
-      <div className="main-header-height main-header-row flex items-center justify-between">
-        <div className="flex h-full min-w-0 flex-1">
-          <MobileHamburgerMenuBtn />
-        </div>
+    <header className="border-border-subtle sticky top-0 z-30 border-b bg-white dark:bg-black">
+      <div
+        aria-hidden="true"
+        data-testid="main-header-visual"
+        className="bg-surface-base md:bg-surface-layout/95 pointer-events-none absolute inset-0 backdrop-blur-xl"
+      />
+      <div className="relative z-10">
+        <div className="main-header-height main-header-row flex items-center justify-between">
+          <div className="flex h-full min-w-0 flex-1">
+            <MobileHamburgerMenuBtn />
+          </div>
 
-        <div className="flex h-full shrink-0 gap-1 md:min-w-0 md:shrink">
-          <SearchBtn />
-          <NoticeBtn />
-          <AccountBtn user={user} onLogout={() => void handleLogout()} />
+          <div className="flex h-full shrink-0 gap-1 md:min-w-0 md:shrink">
+            <SearchBtn />
+            <NoticeBtn />
+            <AccountBtn user={user} onLogout={() => void handleLogout()} />
+          </div>
         </div>
       </div>
     </header>

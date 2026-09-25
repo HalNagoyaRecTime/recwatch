@@ -50,4 +50,36 @@ describe("MainHeader", () => {
     expect(appCss).toMatch(/--main-header-row-height:\s*52px;/);
     expect(appCss).not.toContain(".main-header-safe-area");
   });
+
+  it("Safari sampling用rootをsolidにし、半透明とblurを内側へ分ける", () => {
+    render(
+      <MemoryRouter>
+        <MainHeader />
+      </MemoryRouter>
+    );
+
+    const header = screen.getByRole("banner");
+    const visual = header.querySelector('[data-testid="main-header-visual"]');
+    const content = header.querySelector(":scope > .relative.z-10");
+
+    expect(header).toHaveClass("sticky", "top-0", "bg-white", "dark:bg-black");
+    expect(header).not.toHaveClass(
+      "bg-surface-base",
+      "md:bg-surface-layout/95",
+      "backdrop-blur-xl"
+    );
+    expect(visual).toHaveClass(
+      "pointer-events-none",
+      "absolute",
+      "inset-0",
+      "bg-surface-base",
+      "md:bg-surface-layout/95",
+      "backdrop-blur-xl"
+    );
+    expect(content).toBeInTheDocument();
+    expect(content?.firstElementChild).toHaveClass(
+      "main-header-height",
+      "main-header-row"
+    );
+  });
 });
