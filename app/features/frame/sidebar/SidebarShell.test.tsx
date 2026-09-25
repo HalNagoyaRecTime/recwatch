@@ -121,6 +121,7 @@ describe("モバイル Drawer", () => {
       "z-98",
       "-translate-x-full"
     );
+    expect(getMobileDrawer()).toHaveClass("bg-surface-base");
 
     fireEvent.click(getHamburger());
 

@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 
 import { cva } from "~/lib/cva";
 
-const pagePanelStyle = cva("min-w-0 bg-surface-base md:bg-surface-layout", {
+const pagePanelStyle = cva("min-w-0 bg-surface-layout", {
   variants: {
     placement: {
       left: "border-border-base border-r",
