@@ -38,7 +38,7 @@ export type NotificationAudienceItemDto =
   | {
       type: "class_room" | "gathering" | "event" | "user";
       targetId: number;
-      label?: string | null;
+      label: string | null;
     };
 
 export type NotificationAudienceInputDto = {

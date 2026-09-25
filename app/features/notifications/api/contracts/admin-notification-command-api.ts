@@ -1,17 +1,21 @@
 import type {
-  NotificationCreateRequestDto,
-  NotificationCreateResponseDto,
-  NotificationPatchRequestDto,
-  NotificationPatchResponseDto,
-} from "~/features/notifications/api/dto/admin-notification-dto";
+  AdminNotificationDetail,
+  NotificationCreateRequest,
+  NotificationPatchRequest,
+} from "~/features/notifications/model/admin-notification";
+
+export type NotificationCreateResponse = {
+  notificationId: number;
+  notificationScheduleId: number;
+};
 
 export interface AdminNotificationCommandApi {
   create(
-    request: NotificationCreateRequestDto
-  ): Promise<NotificationCreateResponseDto>;
+    request: NotificationCreateRequest
+  ): Promise<NotificationCreateResponse>;
   patch(
     notificationId: number,
-    request: NotificationPatchRequestDto
-  ): Promise<NotificationPatchResponseDto>;
+    request: NotificationPatchRequest
+  ): Promise<AdminNotificationDetail>;
   delete(notificationId: number): Promise<void>;
 }

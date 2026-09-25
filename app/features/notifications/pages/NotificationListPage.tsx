@@ -180,6 +180,9 @@ export function NotificationListPage({
               items={state.calendarItems}
               month={calendarMonth}
               onMonthChange={setCalendarMonth}
+              showEmptyState={
+                !state.isCalendarLoading && !state.calendarErrorMessage
+              }
             />
           </>
         ) : activeLoading && activeItemCount === 0 ? (

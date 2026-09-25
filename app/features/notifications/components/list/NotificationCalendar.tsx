@@ -12,12 +12,14 @@ type NotificationCalendarProps = {
   items: readonly AdminNotificationListItem[];
   month: Date;
   onMonthChange: (month: Date) => void;
+  showEmptyState: boolean;
 };
 
 export function NotificationCalendar({
   items,
   month,
   onMonthChange,
+  showEmptyState,
 }: NotificationCalendarProps) {
   const days = buildCalendarDays(month);
   const schedules = groupSchedulesByDate(items);
@@ -101,7 +103,7 @@ export function NotificationCalendar({
           );
         })}
       </div>
-      {schedules.size === 0 ? (
+      {showEmptyState && schedules.size === 0 ? (
         <p className="text-text-muted px-4 py-6 text-center text-sm">
           この月に配信予定・配信済みの通知はありません
         </p>

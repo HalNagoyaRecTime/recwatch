@@ -4,8 +4,10 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { MemoryRouter } from "react-router";
 
 import type { AdminNotificationCommandApi } from "~/features/notifications/api/contracts/admin-notification-command-api";
-import type { AdminNotificationQueryApi } from "~/features/notifications/api/contracts/admin-notification-query-api";
-import type { AdminNotificationListResponseDto } from "~/features/notifications/api/dto/admin-notification-dto";
+import type {
+  AdminNotificationListResponse,
+  AdminNotificationQueryApi,
+} from "~/features/notifications/api/contracts/admin-notification-query-api";
 import { toNotificationMonthRange } from "~/features/notifications/hooks/notification-calendar-range";
 import {
   adminNotificationDetailFixture,
@@ -140,8 +142,8 @@ describe("NotificationListPage", () => {
   });
 
   it("遅れて完了した前月Responseで表示を巻き戻さない", async () => {
-    let resolveNovember!: (value: AdminNotificationListResponseDto) => void;
-    const novemberRequest = new Promise<AdminNotificationListResponseDto>(
+    let resolveNovember!: (value: AdminNotificationListResponse) => void;
+    const novemberRequest = new Promise<AdminNotificationListResponse>(
       (resolve) => {
         resolveNovember = resolve;
       }
@@ -174,9 +176,57 @@ describe("NotificationListPage", () => {
     expect(screen.queryByText("遅い11月の通知")).not.toBeInTheDocument();
   });
 
+  it("Calendarのemptyをloading・errorと同時に表示しない", async () => {
+    let resolveCalendar!: (value: AdminNotificationListResponse) => void;
+    const calendarRequest = new Promise<AdminNotificationListResponse>(
+      (resolve) => {
+        resolveCalendar = resolve;
+      }
+    );
+    const list = vi
+      .fn()
+      .mockResolvedValueOnce(adminNotificationListFixture)
+      .mockReturnValueOnce(calendarRequest);
+    const user = userEvent.setup();
+    const { unmount } = renderPage(createQueryApi(list));
+    await screen.findByText("通知101");
+
+    await user.click(screen.getByRole("button", { name: "カレンダー表示" }));
+    expect(await screen.findByRole("status")).toHaveTextContent(
+      "カレンダーを読み込み中です"
+    );
+    expect(
+      screen.queryByText("この月に配信予定・配信済みの通知はありません")
+    ).not.toBeInTheDocument();
+
+    await act(async () => {
+      resolveCalendar({ items: [] });
+      await calendarRequest;
+    });
+    expect(
+      screen.getByText("この月に配信予定・配信済みの通知はありません")
+    ).toBeInTheDocument();
+    unmount();
+
+    const errorList = vi
+      .fn()
+      .mockResolvedValueOnce(adminNotificationListFixture)
+      .mockRejectedValueOnce(new Error("Calendar読込失敗"));
+    renderPage(createQueryApi(errorList));
+    await screen.findByText("通知101");
+    await user.click(screen.getByRole("button", { name: "カレンダー表示" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "予期しないエラーが発生しました。"
+    );
+    expect(
+      screen.queryByText("この月に配信予定・配信済みの通知はありません")
+    ).not.toBeInTheDocument();
+  });
+
   it("loading・empty・初期Errorを画面内で表示する", async () => {
-    let resolveList!: (value: AdminNotificationListResponseDto) => void;
-    const request = new Promise<AdminNotificationListResponseDto>((resolve) => {
+    let resolveList!: (value: AdminNotificationListResponse) => void;
+    const request = new Promise<AdminNotificationListResponse>((resolve) => {
       resolveList = resolve;
     });
     const { unmount } = renderPage(createQueryApi(vi.fn(() => request)));

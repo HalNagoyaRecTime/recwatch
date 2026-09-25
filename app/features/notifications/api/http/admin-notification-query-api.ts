@@ -1,5 +1,7 @@
-import type { AdminNotificationQueryApi } from "~/features/notifications/api/contracts/admin-notification-query-api";
-import type { AdminNotificationListQueryDto } from "~/features/notifications/api/dto/admin-notification-dto";
+import type {
+  AdminNotificationListQuery,
+  AdminNotificationQueryApi,
+} from "~/features/notifications/api/contracts/admin-notification-query-api";
 import {
   parseAdminNotificationDetail,
   parseAdminNotificationListResponse,
@@ -18,7 +20,7 @@ export function createHttpAdminNotificationQueryApi(
   client: AdminNotificationQueryHttpClient = apiClient
 ): AdminNotificationQueryApi {
   return {
-    async list(query: AdminNotificationListQueryDto = {}) {
+    async list(query: AdminNotificationListQuery = {}) {
       const path = toNotificationDateRangePath(
         "/api/v1/admin/notifications",
         query
