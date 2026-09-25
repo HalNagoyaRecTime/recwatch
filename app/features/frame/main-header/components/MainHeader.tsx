@@ -34,15 +34,17 @@ export function MainHeader({ user }: MainHeaderProps) {
   }
 
   return (
-    <header className="main-header-height border-border-subtle bg-surface-layout/95 sticky top-0 z-30 flex items-center justify-between border-b px-3 py-2.5 backdrop-blur-xl">
-      <div className="flex h-full min-w-0 flex-1">
-        <MobileHamburgerMenuBtn />
-      </div>
+    <header className="main-header-safe-area border-border-subtle bg-surface-layout/95 sticky top-0 z-30 border-b backdrop-blur-xl">
+      <div className="main-header-height main-header-row flex items-center justify-between">
+        <div className="flex h-full min-w-0 flex-1">
+          <MobileHamburgerMenuBtn />
+        </div>
 
-      <div className="flex h-full shrink-0 gap-1 md:min-w-0 md:shrink">
-        <SearchBtn />
-        <NoticeBtn />
-        <AccountBtn user={user} onLogout={() => void handleLogout()} />
+        <div className="flex h-full shrink-0 gap-1 md:min-w-0 md:shrink">
+          <SearchBtn />
+          <NoticeBtn />
+          <AccountBtn user={user} onLogout={() => void handleLogout()} />
+        </div>
       </div>
     </header>
   );

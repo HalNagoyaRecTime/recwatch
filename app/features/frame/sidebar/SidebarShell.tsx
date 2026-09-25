@@ -30,7 +30,7 @@ function DesktopSidebarContent() {
   } | null>(null);
 
   return (
-    <div className="hidden h-full shrink-0 md:block">
+    <div className="hidden shrink-0 md:block">
       <div className={sidebarPlaceholderStyle({ isOpen: sidebarPinnedOpen })}>
         <div
           id="app-sidebar-desktop"
@@ -205,8 +205,8 @@ function MobileSidebarContent() {
           mobileOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
-        <SidebarHeader onClose={closeForMobile} />
-        <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+        <SidebarHeader onClose={closeForMobile} safeArea />
+        <div className="sidebar-mobile-content-safe-area flex min-h-0 flex-1 flex-col overflow-hidden">
           <AppSidebar />
         </div>
       </div>

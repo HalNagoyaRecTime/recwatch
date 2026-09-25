@@ -3,7 +3,7 @@ import { cva } from "~/lib/cva";
 export const SIDEBAR_DURATION = "duration-400 ease-[cubic-bezier(0.4,0,0.2,1)]";
 
 export const sidebarPlaceholderStyle = cva(
-  "relative z-99 h-full overflow-visible transition-[width] " +
+  "relative z-99 sticky top-0 h-screen h-dvh overflow-visible transition-[width] " +
     SIDEBAR_DURATION,
   {
     variants: {

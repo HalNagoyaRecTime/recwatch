@@ -44,6 +44,13 @@
 }
 
 :root {
+  --main-header-row-height: 52px;
+  --main-header-border-width: 1px;
+  --main-header-total-height: calc(
+    var(--main-header-row-height) + var(--main-header-border-width)
+  );
+  --main-footer-row-height: 42px;
+
   /***** new *****/
   --bg-gradient-start: #eef8ff;
   --bg-gradient-end: #f8fcff;
@@ -131,7 +138,7 @@
 
 @layer base {
   html {
-    height: 100%;
+    min-height: 100%;
   }
 
   html,
@@ -146,7 +153,6 @@
     min-height: 100vh;
     min-height: 100dvh;
     overflow-x: hidden;
-    overflow-y: auto;
   }
 
   a {
@@ -175,54 +181,77 @@
 }
 
 @layer utilities {
-  .auth-safe-viewport {
-    box-sizing: border-box;
-    min-height: 100vh;
-    min-height: 100dvh;
-    padding: calc(2.5rem + env(safe-area-inset-top, 0px))
-      calc(1.5rem + env(safe-area-inset-right, 0px))
-      calc(2rem + env(safe-area-inset-bottom, 0px))
-      calc(1.5rem + env(safe-area-inset-left, 0px));
-  }
-
-  body[data-auth-safe-area="true"] {
-    background: transparent;
-  }
-
-  .auth-safe-viewport {
-    position: relative;
-    isolation: isolate;
-  }
-
-  .auth-safe-viewport::before {
-    position: fixed;
-    z-index: 0;
-    inset: env(safe-area-inset-top, 0px) 0 env(safe-area-inset-bottom, 0px);
-    background-image:
-      radial-gradient(
-        circle at top right,
-        var(--bg-gradient-glow),
-        transparent 32%
-      ),
-      linear-gradient(
-        180deg,
-        var(--bg-gradient-start) 0%,
-        var(--bg-gradient-end) 100%
-      );
-    content: "";
-    pointer-events: none;
-  }
-
-  .auth-safe-viewport > * {
-    position: relative;
-    z-index: 1;
-  }
   .main-header-height {
-    height: 52px;
+    height: var(--main-header-row-height);
+  }
+
+  .main-header-safe-area {
+    box-sizing: content-box;
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+
+  .main-header-row {
+    padding-top: 0.625rem;
+    padding-right: calc(0.75rem + env(safe-area-inset-right, 0px));
+    padding-bottom: 0.625rem;
+    padding-left: calc(0.75rem + env(safe-area-inset-left, 0px));
   }
 
   .main-footer-height {
-    height: 42px;
+    height: var(--main-footer-row-height);
+  }
+
+  .main-footer-safe-area {
+    box-sizing: content-box;
+    padding-right: calc(0.75rem + env(safe-area-inset-right, 0px));
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    padding-left: calc(0.75rem + env(safe-area-inset-left, 0px));
+  }
+
+  .sidebar-mobile-header-safe-area {
+    box-sizing: content-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-right: calc(0.75rem + env(safe-area-inset-right, 0px));
+    padding-left: calc(1rem + env(safe-area-inset-left, 0px));
+  }
+
+  .sidebar-mobile-content-safe-area {
+    padding-right: env(safe-area-inset-right, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    padding-left: env(safe-area-inset-left, 0px);
+  }
+
+  .page-layout {
+    min-height: calc(100vh - var(--main-header-total-height));
+    min-height: calc(
+      100dvh - var(--main-header-total-height) - env(safe-area-inset-top, 0px)
+    );
+  }
+
+  .page-side-panel {
+    position: sticky;
+    top: calc(var(--main-header-total-height) + env(safe-area-inset-top, 0px));
+    align-self: start;
+    height: calc(100vh - var(--main-header-total-height));
+    max-height: calc(100vh - var(--main-header-total-height));
+    height: calc(
+      100dvh - var(--main-header-total-height) - env(safe-area-inset-top, 0px)
+    );
+    max-height: calc(
+      100dvh - var(--main-header-total-height) - env(safe-area-inset-top, 0px)
+    );
+  }
+
+  .page-padding {
+    padding: 1.5rem calc(1.25rem + env(safe-area-inset-right, 0px)) 1.5rem
+      calc(1.25rem + env(safe-area-inset-left, 0px));
+  }
+
+  @media (min-width: 48rem) {
+    .page-padding {
+      padding-right: calc(2.5rem + env(safe-area-inset-right, 0px));
+      padding-left: calc(2.5rem + env(safe-area-inset-left, 0px));
+    }
   }
 
   .app-rounded {
@@ -316,7 +345,6 @@
 
 @utility scrollbar-none {
   scrollbar-width: none;
-  -webkit-overflow-scrolling: touch;
   &::-webkit-scrollbar {
     display: none;
   }

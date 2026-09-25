@@ -29,8 +29,8 @@ export function PagePanel({ children, placement }: PagePanelProps) {
   }
 
   return (
-    <aside className={pagePanelStyle({ placement })}>
-      <div className="h-full min-h-0 overflow-hidden">{children}</div>
+    <aside className={pagePanelStyle({ placement }) + " page-side-panel"}>
+      <div className="h-full overflow-hidden">{children}</div>
     </aside>
   );
 }

@@ -113,7 +113,7 @@ describe("AccountDeletionPage", () => {
     ).toBeInTheDocument();
   });
 
-  it("Safari向けのスクロール設定を表示中だけ適用し、終了時に戻す", () => {
+  it("globalのdocument scrollとsafe area設定を使い、viewportを動的変更しない", () => {
     const { unmount } = renderPage();
 
     expect(screen.getByRole("main")).toHaveClass(
@@ -121,12 +121,10 @@ describe("AccountDeletionPage", () => {
       "min-h-screen",
       "min-h-dvh"
     );
-    expect(document.documentElement.style.background).toBe(
-      "rgb(255, 255, 255)"
-    );
-    expect(document.body.style.height).toBe("auto");
-    expect(document.body.style.overflowY).toBe("auto");
-    expect(document.body.style.background).toBe("transparent");
+    expect(document.documentElement.style.background).toBe("");
+    expect(document.body.style.height).toBe("");
+    expect(document.body.style.overflowY).toBe("");
+    expect(document.body.style.background).toBe("");
 
     unmount();
 

@@ -1,6 +1,5 @@
 import type { ReactNode } from "react";
 
-import { ScrollbarArea } from "~/components/ui/scrollbar/ScrollbarArea";
 import MainFooter from "~/features/frame/main-header/components/MainFooter";
 import { PagePanel } from "~/features/frame/page-layout/PagePanel";
 
@@ -18,19 +17,19 @@ export function PageLayout({ children, left, right, top }: PageLayoutProps) {
   const hasSidePanel = hasLeftPanel || hasRightPanel;
 
   return (
-    <div className="flex h-full min-h-0 flex-col">
+    <div className="page-layout flex flex-col">
       {hasTopPanel && <PagePanel placement="top">{top}</PagePanel>}
       <div
         className={
           hasSidePanel
-            ? `grid min-h-0 flex-1 ${
+            ? `grid flex-1 ${
                 hasLeftPanel && hasRightPanel
                   ? "grid-cols-[auto_minmax(0,1fr)_auto]"
                   : hasLeftPanel
                     ? "grid-cols-[auto_minmax(0,1fr)]"
                     : "grid-cols-[minmax(0,1fr)_auto]"
               }`
-            : "flex min-h-0 flex-1 flex-col"
+            : "flex flex-1 flex-col"
         }
       >
         {hasLeftPanel && <PagePanel placement="left">{left}</PagePanel>}
@@ -43,16 +42,9 @@ export function PageLayout({ children, left, right, top }: PageLayoutProps) {
 
 function PageMain({ children }: { children: ReactNode }) {
   return (
-    <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-      <ScrollbarArea
-        className="overscroll-y-contain"
-        verticalTrackInsetBottom={42}
-      >
-        <div className="flex min-h-full flex-col">
-          <div className="flex-1">{children}</div>
-          <MainFooter />
-        </div>
-      </ScrollbarArea>
+    <div className="flex min-w-0 flex-1 flex-col">
+      <div className="flex-1">{children}</div>
+      <MainFooter />
     </div>
   );
 }

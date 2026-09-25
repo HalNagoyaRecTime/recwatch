@@ -213,7 +213,7 @@ describe("Desktop / Tablet Sidebar", () => {
   it("通常幅の高さいっぱいに表示される", () => {
     renderShell();
 
-    expect(getDesktopSidebar().parentElement).toHaveClass("h-full");
+    expect(getDesktopSidebar().parentElement).toHaveClass("h-dvh", "sticky");
   });
 
   it("Mouse hoverで一時展開し、leaveで戻る", () => {

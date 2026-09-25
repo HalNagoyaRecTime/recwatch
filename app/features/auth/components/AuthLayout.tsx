@@ -1,4 +1,4 @@
-import { useEffect, type ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
 
 import { AuthBrand } from "~/features/auth/components/AuthBrand";
 import { AuthFooter } from "~/features/auth/components/AuthFooter";
@@ -12,34 +12,11 @@ export function AuthLayout({
   children,
   contentClassName = "w-full max-w-sm flex-1 flex flex-col justify-center",
 }: AuthLayoutProps) {
-  useEffect(() => {
-    const body = document.body;
-    const previousAuthSafeArea = body.getAttribute("data-auth-safe-area");
-    body.dataset.authSafeArea = "true";
-
-    const viewportMeta = document.querySelector<HTMLMetaElement>(
-      'meta[name="viewport"]'
-    );
-    const previousViewportContent = viewportMeta?.content ?? null;
-
-    if (viewportMeta && !viewportMeta.content.includes("viewport-fit=cover")) {
-      viewportMeta.content = `${viewportMeta.content}, viewport-fit=cover`;
-    }
-
-    return () => {
-      if (viewportMeta && previousViewportContent !== null) {
-        viewportMeta.content = previousViewportContent;
-      }
-      if (previousAuthSafeArea === null) {
-        body.removeAttribute("data-auth-safe-area");
-      } else {
-        body.setAttribute("data-auth-safe-area", previousAuthSafeArea);
-      }
-    };
-  }, []);
-
   return (
-    <main className="auth-safe-viewport flex flex-col items-center justify-center">
+    <main
+      className="box-border flex min-h-dvh min-h-screen flex-col items-center justify-center"
+      style={authLayoutStyle}
+    >
       <section className={contentClassName}>
         <AuthBrand />
         {children}
@@ -48,3 +25,10 @@ export function AuthLayout({
     </main>
   );
 }
+
+const authLayoutStyle = {
+  paddingTop: "calc(2.5rem + env(safe-area-inset-top, 0px))",
+  paddingRight: "calc(1.5rem + env(safe-area-inset-right, 0px))",
+  paddingBottom: "calc(2rem + env(safe-area-inset-bottom, 0px))",
+  paddingLeft: "calc(1.5rem + env(safe-area-inset-left, 0px))",
+} satisfies CSSProperties;
