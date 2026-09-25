@@ -72,9 +72,11 @@ export function CompetitionListPage({
     if (!normalizedQuery) return competitions;
 
     return competitions.filter((competition) =>
-      [competition.name, competition.venue, competition.code].some((value) =>
-        value.toLocaleLowerCase("ja").includes(normalizedQuery)
-      )
+      [
+        competition.name,
+        competition.code,
+        ...competition.venues.map((venue) => venue.name),
+      ].some((value) => value.toLocaleLowerCase("ja").includes(normalizedQuery))
     );
   }, [competitions, query]);
 
@@ -90,7 +92,7 @@ export function CompetitionListPage({
             case "event-name":
               return competition.name;
             case "venue":
-              return competition.venue;
+              return competition.venues[0]?.name;
             case "event-time":
               return `${competition.startTime}-${competition.endTime}`;
             case "gathering":

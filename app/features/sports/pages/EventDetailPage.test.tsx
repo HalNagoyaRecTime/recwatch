@@ -9,7 +9,7 @@ import { EventDetailPage } from "~/features/sports/pages/EventDetailPage";
 const relay: EventDetail = {
   id: 12,
   name: "リレー",
-  venue: "メインコート",
+  venues: [{ id: 1, name: "メインコート" }],
   startTime: "11:00",
   endTime: "12:30",
   rules: "バトンを使用します。",

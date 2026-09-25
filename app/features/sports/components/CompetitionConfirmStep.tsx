@@ -2,6 +2,10 @@ import { ArrowLeft, Check } from "lucide-react";
 
 import { Button } from "~/components/ui/button/Button";
 import type { CompetitionFormValue } from "~/features/sports/model/competition-form";
+import {
+  formatVenueNames,
+  type CompetitionVenue,
+} from "~/features/sports/model/competition-venue";
 
 type CompetitionConfirmStepProps = {
   isSubmitting: boolean;
@@ -9,6 +13,7 @@ type CompetitionConfirmStepProps = {
   onSubmit: () => void;
   submitError: string | null;
   value: CompetitionFormValue;
+  venueOptions: readonly CompetitionVenue[];
 };
 
 export function CompetitionConfirmStep({
@@ -17,12 +22,17 @@ export function CompetitionConfirmStep({
   onSubmit,
   submitError,
   value,
+  venueOptions,
 }: CompetitionConfirmStepProps) {
+  const selectedVenues = venueOptions.filter((venue) =>
+    value.venueIds.includes(venue.id)
+  );
+
   return (
     <div className="space-y-6">
       <dl className="border-border-base app-rounded divide-border-subtle divide-y border">
         <ConfirmRow label="イベント名" value={value.name} />
-        <ConfirmRow label="実施場所" value={value.venue} />
+        <ConfirmRow label="実施場所" value={formatVenueNames(selectedVenues)} />
         <ConfirmRow label="開始時間" value={value.startTime} />
         <ConfirmRow label="終了時間" value={value.endTime} />
         <ConfirmRow label="ルール・備考" value={value.rules} />
