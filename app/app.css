@@ -3,8 +3,6 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
-  --color-bg-gradient-start: var(--bg-gradient-start);
-  --color-bg-gradient-end: var(--bg-gradient-end);
   --color-bg-gradient-glow: var(--bg-gradient-glow);
 
   --color-surface-layout: var(--surface-layout);
@@ -46,9 +44,7 @@
 }
 
 :root {
-  --bg-gradient-start: #eef8ff;
-  --bg-gradient-end: #f8fcff;
-  --bg-gradient-glow: rgba(56, 189, 248, 0.2);
+  --bg-gradient-glow: rgba(56, 189, 248, 0.3);
 
   --surface-layout: rgba(255, 255, 255, 0.78);
   --surface-base: #ffffff;
@@ -86,9 +82,7 @@
 }
 
 .dark {
-  --bg-gradient-start: #03131d;
-  --bg-gradient-end: #000000;
-  --bg-gradient-glow: rgba(56, 189, 248, 0.1);
+  --bg-gradient-glow: rgba(56, 189, 248, 0.3);
 
   --surface-layout: rgba(0, 0, 0, 0.7);
   --surface-base: #000000;
@@ -138,6 +132,17 @@
     height: 100dvh;
     overscroll-behavior-y: none;
     overflow: hidden;
+    background-color: var(--surface-base);
+    background-image: radial-gradient(
+      circle at top right,
+      var(--bg-gradient-glow),
+      transparent 50%
+    );
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    transition:
+      color 200ms cubic-bezier(0.4, 0, 0.2, 1),
+      background-color 200ms cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   a {
