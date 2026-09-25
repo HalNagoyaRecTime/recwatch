@@ -27,88 +27,124 @@ type UseNotificationEditOptions = {
   notificationId: number;
 };
 
+type NotificationEditResult =
+  | {
+      api: NotificationManagementApi;
+      notificationId: number;
+      status: "loaded";
+      notification: ManagedNotification;
+      draft: NotificationDraft;
+    }
+  | {
+      api: NotificationManagementApi;
+      notificationId: number;
+      status: "error";
+      error: string;
+    };
+
 export function useNotificationEdit({
   api,
   audienceApi,
   notificationId,
 }: UseNotificationEditOptions) {
-  const [notification, setNotification] = useState<ManagedNotification | null>(
-    null
-  );
-  const [draft, setDraft] = useState<NotificationDraft>(
-    initialNotificationDraft
-  );
+  const [notificationResult, setNotificationResult] =
+    useState<NotificationEditResult | null>(null);
   const [errors, setErrors] = useState<NotificationDraftErrors>({});
-  const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [loadError, setLoadError] = useState<string | null>(null);
   const [submissionError, setSubmissionError] = useState<string | null>(null);
-  const [audienceOptions, setAudienceOptions] = useState<
-    NotificationAudienceOption[]
-  >([]);
-  const [isAudienceLoading, setIsAudienceLoading] = useState(true);
-  const [audienceError, setAudienceError] = useState<string | null>(null);
   const [audienceReloadKey, setAudienceReloadKey] = useState(0);
+  const [audienceResult, setAudienceResult] = useState<{
+    api: NotificationAudienceApi;
+    reloadKey: number;
+    options: NotificationAudienceOption[];
+    error: string | null;
+  } | null>(null);
+
+  const isValidNotificationId =
+    Number.isSafeInteger(notificationId) && notificationId > 0;
+  const currentNotificationResult =
+    notificationResult?.api === api &&
+    notificationResult.notificationId === notificationId
+      ? notificationResult
+      : null;
+  const notification =
+    currentNotificationResult?.status === "loaded"
+      ? currentNotificationResult.notification
+      : null;
+  const draft =
+    currentNotificationResult?.status === "loaded"
+      ? currentNotificationResult.draft
+      : initialNotificationDraft;
+  const isLoading = isValidNotificationId && currentNotificationResult === null;
+  const loadError = !isValidNotificationId
+    ? "通知IDが不正です。"
+    : currentNotificationResult?.status === "error"
+      ? currentNotificationResult.error
+      : null;
+  const hasCurrentAudienceResult =
+    audienceResult?.api === audienceApi &&
+    audienceResult.reloadKey === audienceReloadKey;
+  const audienceOptions = audienceResult?.options ?? [];
+  const isAudienceLoading = !hasCurrentAudienceResult;
+  const audienceError = hasCurrentAudienceResult ? audienceResult.error : null;
 
   useEffect(() => {
-    let active = true;
-    setIsLoading(true);
-    setLoadError(null);
+    if (!isValidNotificationId) return;
 
-    if (!Number.isSafeInteger(notificationId) || notificationId <= 0) {
-      setLoadError("通知IDが不正です。");
-      setIsLoading(false);
-      return () => {
-        active = false;
-      };
-    }
+    let active = true;
 
     api
       .getById(notificationId)
       .then((loadedNotification) => {
         if (!active) return;
 
-        setNotification(loadedNotification);
-        setDraft(toNotificationDraft(loadedNotification));
+        setNotificationResult({
+          api,
+          notificationId,
+          status: "loaded",
+          notification: loadedNotification,
+          draft: toNotificationDraft(loadedNotification),
+        });
       })
       .catch((error: unknown) => {
         if (!active) return;
 
-        setNotification(null);
-        setLoadError(toManagementErrorMessage(error));
-      })
-      .finally(() => {
-        if (active) {
-          setIsLoading(false);
-        }
+        setNotificationResult({
+          api,
+          notificationId,
+          status: "error",
+          error: toManagementErrorMessage(error),
+        });
       });
 
     return () => {
       active = false;
     };
-  }, [api, notificationId]);
+  }, [api, isValidNotificationId, notificationId]);
 
   useEffect(() => {
     let active = true;
-    setIsAudienceLoading(true);
-    setAudienceError(null);
 
     audienceApi
       .load()
       .then((options) => {
         if (active) {
-          setAudienceOptions(options);
+          setAudienceResult({
+            api: audienceApi,
+            reloadKey: audienceReloadKey,
+            options,
+            error: null,
+          });
         }
       })
       .catch((error: unknown) => {
         if (active) {
-          setAudienceOptions([]);
-          setAudienceError(toAudienceErrorMessage(error));
-        }
-      })
-      .finally(() => {
-        if (active) {
-          setIsAudienceLoading(false);
+          setAudienceResult({
+            api: audienceApi,
+            reloadKey: audienceReloadKey,
+            options: [],
+            error: toAudienceErrorMessage(error),
+          });
         }
       });
 
@@ -118,7 +154,13 @@ export function useNotificationEdit({
   }, [audienceApi, audienceReloadKey]);
 
   function handleChange(nextDraft: NotificationDraft) {
-    setDraft(nextDraft);
+    setNotificationResult((current) =>
+      current?.api === api &&
+      current.notificationId === notificationId &&
+      current.status === "loaded"
+        ? { ...current, draft: nextDraft }
+        : current
+    );
     setSubmissionError(null);
     setErrors((current) => ({
       ...current,

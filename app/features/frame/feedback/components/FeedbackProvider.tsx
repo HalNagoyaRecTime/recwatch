@@ -176,7 +176,6 @@ export function FeedbackProvider({
     if (notificationsUserIdRef.current !== userId) {
       notificationsUserIdRef.current = userId;
       storageSyncedNotificationsRef.current = null;
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- userId変更時に履歴を再読み込みする
       setNotifications(readNotifications(userId));
     }
 

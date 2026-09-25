@@ -31,34 +31,44 @@ export function useNotificationCreate({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [submissionError, setSubmissionError] = useState<string | null>(null);
-  const [audienceOptions, setAudienceOptions] = useState<
-    NotificationAudienceOption[]
-  >([]);
-  const [isAudienceLoading, setIsAudienceLoading] = useState(true);
-  const [audienceError, setAudienceError] = useState<string | null>(null);
   const [audienceReloadKey, setAudienceReloadKey] = useState(0);
+  const [audienceResult, setAudienceResult] = useState<{
+    api: NotificationAudienceApi;
+    reloadKey: number;
+    options: NotificationAudienceOption[];
+    error: string | null;
+  } | null>(null);
+
+  const hasCurrentAudienceResult =
+    audienceResult?.api === audienceApi &&
+    audienceResult.reloadKey === audienceReloadKey;
+  const audienceOptions = audienceResult?.options ?? [];
+  const isAudienceLoading = !hasCurrentAudienceResult;
+  const audienceError = hasCurrentAudienceResult ? audienceResult.error : null;
 
   useEffect(() => {
     let active = true;
-    setIsAudienceLoading(true);
-    setAudienceError(null);
 
     audienceApi
       .load()
       .then((options) => {
         if (active) {
-          setAudienceOptions(options);
+          setAudienceResult({
+            api: audienceApi,
+            reloadKey: audienceReloadKey,
+            options,
+            error: null,
+          });
         }
       })
       .catch((error: unknown) => {
         if (active) {
-          setAudienceOptions([]);
-          setAudienceError(toAudienceErrorMessage(error));
-        }
-      })
-      .finally(() => {
-        if (active) {
-          setIsAudienceLoading(false);
+          setAudienceResult({
+            api: audienceApi,
+            reloadKey: audienceReloadKey,
+            options: [],
+            error: toAudienceErrorMessage(error),
+          });
         }
       });
 

@@ -26,15 +26,17 @@ export function useNotificationList({ api }: UseNotificationListOptions) {
   const [selectedNotification, setSelectedNotification] =
     useState<ManagedNotification | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [loadedApi, setLoadedApi] = useState<NotificationManagementApi | null>(
+    null
+  );
   const [isDeleting, setIsDeleting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const requestSequence = useRef(0);
+  const skipNextPageLoad = useRef<number | null>(null);
 
   const loadPage = useCallback(
     async (page: number) => {
       const requestId = ++requestSequence.current;
-      setIsLoading(true);
-      setErrorMessage(null);
 
       try {
         const result = await api.list({
@@ -46,6 +48,8 @@ export function useNotificationList({ api }: UseNotificationListOptions) {
         }
         setNotifications(result.notifications);
         setTotal(result.total);
+        setErrorMessage(null);
+        setLoadedApi(api);
       } catch (error) {
         if (requestId !== requestSequence.current) {
           return;
@@ -53,6 +57,7 @@ export function useNotificationList({ api }: UseNotificationListOptions) {
         setNotifications([]);
         setTotal(0);
         setErrorMessage(toErrorMessage(error));
+        setLoadedApi(api);
       } finally {
         if (requestId === requestSequence.current) {
           setIsLoading(false);
@@ -63,13 +68,27 @@ export function useNotificationList({ api }: UseNotificationListOptions) {
   );
 
   useEffect(() => {
+    if (skipNextPageLoad.current === currentPage) {
+      skipNextPageLoad.current = null;
+      return;
+    }
+
     void loadPage(currentPage);
   }, [currentPage, loadPage]);
 
-  const reload = useCallback(
-    () => loadPage(currentPage),
-    [currentPage, loadPage]
-  );
+  const reload = useCallback(() => {
+    setIsLoading(true);
+    setErrorMessage(null);
+    return loadPage(currentPage);
+  }, [currentPage, loadPage]);
+
+  function handlePageChange(page: number) {
+    if (page === currentPage) return;
+
+    setIsLoading(true);
+    setErrorMessage(null);
+    setCurrentPage(page);
+  }
 
   const items = useMemo(
     () => sortItems(notifications.map(toListItem), sort),
@@ -110,12 +129,18 @@ export function useNotificationList({ api }: UseNotificationListOptions) {
         currentPage > 1 && notifications.length === 1
           ? currentPage - 1
           : currentPage;
-      setCurrentPage(nextPage);
+      setIsLoading(true);
+      setErrorMessage(null);
+      if (nextPage !== currentPage) {
+        skipNextPageLoad.current = nextPage;
+        setCurrentPage(nextPage);
+      }
       await loadPage(nextPage);
     } catch (error) {
       const message = toErrorMessage(error);
-      setErrorMessage(message);
       setSelectedNotification(null);
+      setIsLoading(true);
+      setErrorMessage(null);
       await loadPage(currentPage);
       setErrorMessage(message);
     } finally {
@@ -129,10 +154,10 @@ export function useNotificationList({ api }: UseNotificationListOptions) {
     currentPage,
     errorMessage,
     isDeleting,
-    isLoading,
+    isLoading: isLoading || loadedApi !== api,
     items,
     onDeleteRequest: handleDeleteRequest,
-    onPageChange: setCurrentPage,
+    onPageChange: handlePageChange,
     reload,
     onSortChange: handleSortChange,
     pageCount,
