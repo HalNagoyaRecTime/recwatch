@@ -84,7 +84,6 @@ function DesktopSidebarContent() {
 
 function MobileSidebarContent() {
   const { mobileOpen, closeForMobile } = useSidebarState();
-  const [isVisible, setIsVisible] = useState(false);
   const [hasEntered, setHasEntered] = useState(false);
   const drawerRef = useRef<HTMLDivElement>(null);
   const wasOpenRef = useRef(false);
@@ -97,7 +96,6 @@ function MobileSidebarContent() {
       if (event.matches) {
         closeForMobile();
         setHasEntered(false);
-        setIsVisible(false);
       }
     };
 
@@ -114,14 +112,13 @@ function MobileSidebarContent() {
   useDocumentScrollLock(mobileOpen);
 
   useEffect(() => {
-    if (!mobileOpen || isVisible) return;
+    if (!mobileOpen || hasEntered) return;
 
     const frameId = window.requestAnimationFrame(() => {
       setHasEntered(true);
-      setIsVisible(true);
     });
     return () => window.cancelAnimationFrame(frameId);
-  }, [mobileOpen, isVisible]);
+  }, [mobileOpen, hasEntered]);
 
   useEffect(() => {
     if (!mobileOpen) {
@@ -192,7 +189,6 @@ function MobileSidebarContent() {
     }
 
     setHasEntered(false);
-    setIsVisible(false);
   };
 
   const handleDrawerTransitionEnd = (
@@ -202,7 +198,7 @@ function MobileSidebarContent() {
     completeDrawerClose(event);
   };
 
-  const isActive = mobileOpen && isVisible;
+  const isActive = mobileOpen && hasEntered;
   const shouldRender = mobileOpen || hasEntered;
 
   return (

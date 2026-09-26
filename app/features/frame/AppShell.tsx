@@ -1,5 +1,6 @@
 import { SidebarShell } from "~/features/frame/sidebar/SidebarShell";
 import { MainShell } from "~/features/frame/main-header/MainShell";
+import { DocumentScrollbar } from "~/components/ui/scrollbar/DocumentScrollbar";
 import { SidebarStateProvider } from "~/components/providers/SidebarStateProvider";
 import type { AccountUser } from "~/features/frame/main-header/account-menu/model/account-btn-data";
 import { FeedbackProvider } from "~/features/frame/feedback/components/FeedbackProvider";
@@ -17,6 +18,7 @@ export function AppShell({ user }: AppShellProps) {
         <div className="viewport-min-height flex md:flex-row">
           <SidebarShell />
           <MainShell user={user} />
+          <DocumentScrollbar />
         </div>
       </SidebarStateProvider>
     </FeedbackProvider>

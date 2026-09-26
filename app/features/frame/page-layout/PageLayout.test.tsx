@@ -6,7 +6,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import { ScrollbarArea } from "~/components/ui/scrollbar/ScrollbarArea";
 import { PageLayout } from "~/features/frame/page-layout/PageLayout";
 
-const appCss = readFileSync("app/app.css", "utf8");
+const normalizedCss = readFileSync("app/app.css", "utf8").replace(/\s+/g, " ");
 
 afterEach(() => {
   cleanup();
@@ -53,35 +53,38 @@ describe("PageLayout", () => {
     expect(container.querySelector(".scrollbar-none")).not.toBeInTheDocument();
   });
 
-  it("SidePanelをHeader基準でstickyに配置し、top safe areaをviewport計算に含めない", () => {
-    const fallbackRule = appCss.match(
-      /\.page-side-panel\s*\{([\s\S]*?)\}/
-    )?.[1];
-    const dynamicViewportRule = appCss.match(
-      /@supports\s*\(height:\s*100dvh\)\s*\{\s*\.page-side-panel\s*\{([\s\S]*?)\}/
-    )?.[1];
-
-    expect(fallbackRule).toBeDefined();
-    expect(dynamicViewportRule).toBeDefined();
-    expect(fallbackRule).toMatch(/position:\s*sticky\s*;/);
-    expect(fallbackRule).toMatch(
-      /top:\s*var\(--main-header-total-height\)\s*;/
+  it("HeaderとSidePanelが単一の52px tokenを共有する", () => {
+    expect(normalizedCss).toContain("--main-header-height: 52px;");
+    expect(normalizedCss).not.toContain("--main-header-row-height");
+    expect(normalizedCss).not.toContain("--main-header-border-width");
+    expect(normalizedCss).not.toContain("--main-header-total-height");
+    expect(normalizedCss).toContain("height: var(--main-header-height);");
+    expect(normalizedCss).toContain("top: var(--main-header-height);");
+    expect(normalizedCss).toContain(
+      "height: calc(100vh - var(--main-header-height));"
     );
-    expect(fallbackRule).not.toMatch(/safe-area-inset-top/);
-    expect(dynamicViewportRule).not.toMatch(/safe-area-inset-top/);
+    expect(normalizedCss).toContain(
+      "height: calc(100dvh - var(--main-header-height));"
+    );
+    expect(normalizedCss).toContain(
+      'html[data-document-scrollbar="active"] body { scrollbar-width: none; }'
+    );
+    expect(normalizedCss).toContain(
+      "@media (pointer: coarse) { .document-scrollbar [data-scrollbar-track], .document-scrollbar [data-scrollbar-thumb] { pointer-events: none !important; } }"
+    );
+  });
 
-    for (const property of ["height", "max-height"]) {
-      expect(fallbackRule).toMatch(
-        new RegExp(
-          `${property}:\\s*calc\\(\\s*100vh\\s*-\\s*var\\(--main-header-total-height\\)\\s*\\)\\s*;`
-        )
-      );
-      expect(dynamicViewportRule).toMatch(
-        new RegExp(
-          `${property}:\\s*calc\\(\\s*100dvh\\s*-\\s*var\\(--main-header-total-height\\)\\s*\\)\\s*;`
-        )
-      );
-    }
+  it("top panelはborder込みの52px boxを使う", () => {
+    const { container } = render(
+      <PageLayout top={<div>top panel</div>}>
+        <div>page content</div>
+      </PageLayout>
+    );
+    const topPanel = container.querySelector(".page-layout > aside");
+
+    expect(topPanel).toHaveClass("main-header-height", "border-b");
+    expect(topPanel?.firstElementChild).toHaveClass("h-full");
+    expect(topPanel?.firstElementChild).not.toHaveClass("main-header-height");
   });
 
   it("独立したside panelのlocal scrollは維持する", () => {

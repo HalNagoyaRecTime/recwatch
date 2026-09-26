@@ -44,11 +44,7 @@
 }
 
 :root {
-  --main-header-row-height: 52px;
-  --main-header-border-width: 1px;
-  --main-header-total-height: calc(
-    var(--main-header-row-height) + var(--main-header-border-width)
-  );
+  --main-header-height: 52px;
   --main-footer-row-height: 42px;
 
   --bg-gradient-glow: rgba(56, 189, 248, 0.3);
@@ -213,7 +209,7 @@
   }
 
   .main-header-height {
-    height: var(--main-header-row-height);
+    height: var(--main-header-height);
   }
 
   .main-header-row {
@@ -249,16 +245,35 @@
 
   .page-side-panel {
     position: sticky;
-    top: var(--main-header-total-height);
+    top: var(--main-header-height);
     align-self: start;
-    height: calc(100vh - var(--main-header-total-height));
-    max-height: calc(100vh - var(--main-header-total-height));
+    height: calc(100vh - var(--main-header-height));
+    max-height: calc(100vh - var(--main-header-height));
   }
 
   @supports (height: 100dvh) {
     .page-side-panel {
-      height: calc(100dvh - var(--main-header-total-height));
-      max-height: calc(100dvh - var(--main-header-total-height));
+      height: calc(100dvh - var(--main-header-height));
+      max-height: calc(100dvh - var(--main-header-height));
+    }
+  }
+
+  html[data-document-scrollbar="active"],
+  html[data-document-scrollbar="active"] body {
+    scrollbar-width: none;
+  }
+
+  html[data-document-scrollbar="active"]::-webkit-scrollbar,
+  html[data-document-scrollbar="active"] body::-webkit-scrollbar {
+    display: none;
+    width: 0;
+    height: 0;
+  }
+
+  @media (pointer: coarse) {
+    .document-scrollbar [data-scrollbar-track],
+    .document-scrollbar [data-scrollbar-thumb] {
+      pointer-events: none !important;
     }
   }
 

@@ -20,8 +20,8 @@ type PagePanelProps = {
 export function PagePanel({ children, placement }: PagePanelProps) {
   if (placement === "top") {
     return (
-      <aside className={pagePanelStyle({ placement })}>
-        <div className="main-header-height flex items-center px-4.5 md:px-6">
+      <aside className={pagePanelStyle({ placement }) + " main-header-height"}>
+        <div className="flex h-full items-center px-4.5 md:px-6">
           {children}
         </div>
       </aside>

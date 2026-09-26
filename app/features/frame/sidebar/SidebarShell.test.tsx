@@ -291,6 +291,7 @@ describe("モバイル Drawer", () => {
     openMobileDrawer();
     const drawer = getMobileDrawer();
 
+    expect(drawer.querySelector(".main-header-height")).toHaveClass("border-b");
     expect(drawer.querySelector(".main-footer-height")).not.toBeInTheDocument();
     expect(
       within(drawer).getByRole("button", { name: "サイドメニューを閉じる" })
@@ -373,6 +374,9 @@ describe("Desktop / Tablet Sidebar", () => {
     renderShell();
 
     expect(getDesktopSidebar().parentElement).toHaveClass("h-dvh", "sticky");
+    expect(
+      getDesktopSidebar().querySelector(".main-header-height")
+    ).toHaveClass("border-b");
     expect(getDesktopSidebar().querySelector(".scrollbar-none")).toHaveClass(
       "overflow-y-auto",
       "overscroll-y-contain"
