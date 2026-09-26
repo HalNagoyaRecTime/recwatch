@@ -1,32 +1,49 @@
-import { Check } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Check, X } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { Button } from "~/components/ui/button/Button";
 import { SearchField } from "~/components/ui/form/SearchField";
 
-import type { GatheringMemberCandidates } from "~/features/event-gatherings/model/gathering-member-candidate";
+import { MAX_GATHERING_MEMBERS } from "~/features/event-gatherings/model/event-gathering-settings";
+import type {
+  GatheringMemberCandidates,
+  MemberStudent,
+} from "~/features/event-gatherings/model/gathering-member-candidate";
 
 type GatheringMemberPickerProps = {
   candidates: GatheringMemberCandidates | null;
+  /**
+   * 開いた時点で登録済みだった参加者。停止中の学生を操作できるかの判定に使う。
+   * 操作中の選択で判定すると、チェックを外した瞬間に判定が変わって戻せなくなる。
+   */
+  initialUserIds: readonly number[];
+  /** 候補または登録済み参加者の読み込み中。どちらかが終わるまで一覧は出さない。 */
   isLoading: boolean;
+  isSaving: boolean;
   loadError: string | null;
+  onCancel: () => void;
   onChange: (userIds: number[]) => void;
-  onClose: () => void;
+  onSave: () => void;
+  saveError: string | null;
   selectedUserIds: readonly number[];
 };
 
 const ALL_CLASSROOMS = "all";
 
 /**
- * 集合 1 件の参加者を選ぶ。選択状態は呼び出し元が保持し、ここでは候補の絞り込みと
- * チェックの切り替えだけを扱う。
+ * 集合 1 件の参加者を選ぶ。選択状態と保存は呼び出し元が持ち、ここでは候補の絞り込みと
+ * チェックの切り替え、保存・キャンセルの操作だけを扱う。
  */
 export function GatheringMemberPicker({
   candidates,
+  initialUserIds,
   isLoading,
+  isSaving,
   loadError,
+  onCancel,
   onChange,
-  onClose,
+  onSave,
+  saveError,
   selectedUserIds,
 }: GatheringMemberPickerProps) {
   const [classroomId, setClassroomId] = useState(ALL_CLASSROOMS);
@@ -73,14 +90,30 @@ export function GatheringMemberPicker({
     });
   }, [candidates, classroomId, classroomNames, query]);
 
+  // 停止中の学生は新しく追加させない。ただし開いた時点で登録済みなら外せる必要がある。
+  const isSelectable = useCallback(
+    (student: MemberStudent) =>
+      student.isLiveActive || initialUserIds.includes(student.userId),
+    [initialUserIds]
+  );
+
+  const selectableVisibleStudents = useMemo(
+    () => visibleStudents.filter(isSelectable),
+    [isSelectable, visibleStudents]
+  );
+
   // 絞り込みで行数が変わるたびに、続きがあるかを取り直す
   useEffect(() => {
     setHasMoreBelow(hasScrollBelow(listRef.current));
   }, [visibleStudents]);
 
+  // 一括選択で上限を超えることがあるため、黙って打ち切らず保存の手前で止める。
+  const isOverLimit = selectedUserIds.length > MAX_GATHERING_MEMBERS;
+
+  // 一括選択の対象は操作できる行だけ。停止中の未登録者を巻き込まない。
   const isAllVisibleSelected =
-    visibleStudents.length > 0 &&
-    visibleStudents.every((student) =>
+    selectableVisibleStudents.length > 0 &&
+    selectableVisibleStudents.every((student) =>
       selectedUserIds.includes(student.userId)
     );
 
@@ -93,7 +126,9 @@ export function GatheringMemberPicker({
   }
 
   function toggleAllVisible() {
-    const visibleIds = visibleStudents.map((student) => student.userId);
+    const visibleIds = selectableVisibleStudents.map(
+      (student) => student.userId
+    );
     if (isAllVisibleSelected) {
       onChange(selectedUserIds.filter((id) => !visibleIds.includes(id)));
       return;
@@ -109,9 +144,6 @@ export function GatheringMemberPicker({
       className="border-border-subtle bg-surface-muted app-rounded space-y-3 border p-3"
       ref={rootRef}
     >
-      <p className="text-tone-danger-text text-sm font-medium" role="note">
-        参加者の保存は現在未対応です。ここでの選択内容は保存されません。
-      </p>
       <div className="flex flex-wrap items-center gap-3">
         {/* モーダル内では共有 Select のプルダウンが枠をはみ出すため、既存モーダルと同じネイティブ select を使う */}
         <select
@@ -137,7 +169,7 @@ export function GatheringMemberPicker({
           />
         </div>
         <Button
-          disabled={visibleStudents.length === 0}
+          disabled={selectableVisibleStudents.length === 0}
           onClick={toggleAllVisible}
           size="sm"
           type="button"
@@ -152,7 +184,7 @@ export function GatheringMemberPicker({
           {loadError}
         </p>
       ) : isLoading || !candidates ? (
-        <p className="text-text-muted text-sm">参加者候補を読み込み中...</p>
+        <p className="text-text-muted text-sm">参加者を読み込み中...</p>
       ) : (
         <div className="relative">
           <div
@@ -213,13 +245,19 @@ export function GatheringMemberPicker({
                         <input
                           aria-label={`${student.name}を選択`}
                           checked={selectedUserIds.includes(student.userId)}
-                          className="accent-brand-primary size-4 align-middle"
+                          className="accent-brand-primary size-4 align-middle disabled:opacity-50"
+                          disabled={!isSelectable(student)}
                           onChange={() => toggle(student.userId)}
                           type="checkbox"
                         />
                       </td>
                       <td className="text-text-base truncate px-3 py-2 font-semibold">
                         {student.name}
+                        {student.isLiveActive ? null : (
+                          <span className="app-rounded bg-surface-muted text-text-muted ml-2 px-1.5 py-0.5 text-xs font-medium">
+                            停止中
+                          </span>
+                        )}
                       </td>
                       <td className="text-text-base truncate px-3 py-2">
                         {classroomNames.get(student.classroomId) ?? "—"}
@@ -242,21 +280,52 @@ export function GatheringMemberPicker({
         </div>
       )}
 
+      {isOverLimit ? (
+        <p className="text-tone-danger-text text-sm" role="alert">
+          参加者は{MAX_GATHERING_MEMBERS}人までです。
+          {selectedUserIds.length - MAX_GATHERING_MEMBERS}
+          人減らしてください。
+        </p>
+      ) : null}
+
+      {saveError ? (
+        <p className="text-tone-danger-text text-sm" role="alert">
+          {saveError}
+        </p>
+      ) : null}
+
       <div className="flex items-center justify-between gap-3">
         <p className="text-text-base text-sm">
           {candidates ? `${visibleStudents.length}人を表示中` : ""}
           {hasMoreBelow ? "（スクロールで続きを表示）" : ""}
-          {candidates ? ` ／ 選択中 ${selectedUserIds.length}人` : ""}
+          {candidates
+            ? ` ／ 選択中 ${selectedUserIds.length}人 / ${MAX_GATHERING_MEMBERS}人`
+            : ""}
         </p>
-        <Button
-          icon={Check}
-          onClick={onClose}
-          size="sm"
-          type="button"
-          variant="primary"
-        >
-          完了
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            disabled={isSaving}
+            icon={X}
+            onClick={onCancel}
+            size="sm"
+            type="button"
+            variant="secondary"
+          >
+            キャンセル
+          </Button>
+          <Button
+            disabled={
+              isSaving || isLoading || isOverLimit || Boolean(loadError)
+            }
+            icon={Check}
+            onClick={onSave}
+            size="sm"
+            type="button"
+            variant="primary"
+          >
+            {isSaving ? "保存中..." : "参加者を保存"}
+          </Button>
+        </div>
       </div>
     </div>
   );

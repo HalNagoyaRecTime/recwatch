@@ -34,7 +34,7 @@ export type NotificationAudienceInputItemDto =
     };
 
 export type NotificationAudienceItemDto =
-  | { type: "all"; label?: null }
+  | { type: "all" }
   | {
       type: "class_room" | "gathering" | "event" | "user";
       targetId: number;

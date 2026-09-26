@@ -49,29 +49,44 @@ export function useNotificationList({
     useState<AdminNotificationListItem | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isCalendarLoading, setIsCalendarLoading] = useState(false);
+  const [loadedApi, setLoadedApi] = useState<AdminNotificationQueryApi | null>(
+    null
+  );
   const [isDeleting, setIsDeleting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [calendarErrorMessage, setCalendarErrorMessage] = useState<
     string | null
   >(null);
-  const listRequestSequence = useRef(0);
+  const requestSequence = useRef(0);
   const calendarRequestSequence = useRef(0);
 
   const load = useCallback(
     async (background = false) => {
-      const requestId = ++listRequestSequence.current;
-      setIsLoading(true);
-      setErrorMessage(null);
-
+      const requestId = ++requestSequence.current;
       try {
-        const result = await queryApi.list();
-        if (requestId !== listRequestSequence.current) return;
+        const result = await Promise.resolve().then(() => queryApi.list());
+        if (requestId !== requestSequence.current) return;
         setNotifications(result.items);
+        setCurrentPage((page) =>
+          Math.min(
+            page,
+            Math.max(
+              1,
+              Math.ceil(result.items.length / notificationListPageSize)
+            )
+          )
+        );
+        setErrorMessage(null);
+        setLoadedApi(queryApi);
       } catch (error) {
-        if (requestId !== listRequestSequence.current) return;
-        if (!background) setNotifications([]);
+        if (requestId !== requestSequence.current) return;
+        if (!background) {
+          setNotifications([]);
+          setCurrentPage(1);
+        }
         const message = getErrorMessage(error);
         setErrorMessage(message);
+        setLoadedApi(queryApi);
         if (background) {
           reportNotificationBackgroundError(reportFeedback, {
             title: "通知一覧を更新できませんでした",
@@ -82,7 +97,7 @@ export function useNotificationList({
           });
         }
       } finally {
-        if (requestId === listRequestSequence.current) setIsLoading(false);
+        if (requestId === requestSequence.current) setIsLoading(false);
       }
     },
     [queryApi, reportFeedback]
@@ -122,7 +137,22 @@ export function useNotificationList({
   );
 
   useEffect(() => {
-    void load();
+    let active = true;
+    void Promise.resolve().then(() => {
+      if (active) void load();
+    });
+
+    return () => {
+      active = false;
+      requestSequence.current += 1;
+      calendarRequestSequence.current += 1;
+    };
+  }, [load]);
+
+  const reload = useCallback(() => {
+    setIsLoading(true);
+    setErrorMessage(null);
+    return load(true);
   }, [load]);
 
   const filteredItems = useMemo(
@@ -137,18 +167,19 @@ export function useNotificationList({
     1,
     Math.ceil(allItems.length / notificationListPageSize)
   );
+  const validPage = Math.min(currentPage, pageCount);
   const items = allItems.slice(
-    (currentPage - 1) * notificationListPageSize,
-    currentPage * notificationListPageSize
+    (validPage - 1) * notificationListPageSize,
+    validPage * notificationListPageSize
   );
   const calendarItems = useMemo(
     () => filterNotificationList(calendarNotifications, creationMethod),
     [calendarNotifications, creationMethod]
   );
 
-  useEffect(() => {
-    setCurrentPage((page) => Math.min(page, pageCount));
-  }, [pageCount]);
+  function handlePageChange(page: number) {
+    setCurrentPage(Math.min(Math.max(page, 1), pageCount));
+  }
 
   function handleSortChange(columnId: string) {
     if (!isNotificationSortableColumnId(columnId)) return;
@@ -172,7 +203,7 @@ export function useNotificationList({
     try {
       await commandApi.delete(selectedNotification.notificationId);
       setSelectedNotification(null);
-      await load(true);
+      await reload();
       reportFeedback?.({
         kind: "action-success",
         title: "通知を削除しました",
@@ -200,19 +231,19 @@ export function useNotificationList({
     closeDeleteDialog: () => setSelectedNotification(null),
     confirmDelete: handleDelete,
     creationMethod,
-    currentPage,
-    errorMessage,
+    currentPage: validPage,
+    errorMessage: loadedApi === queryApi ? errorMessage : null,
     isCalendarLoading,
     isDeleting,
-    isLoading,
+    isLoading: isLoading || loadedApi !== queryApi,
     items,
     loadCalendar,
     onCreationMethodChange: handleCreationMethodChange,
     onDeleteRequest: handleDeleteRequest,
-    onPageChange: setCurrentPage,
+    onPageChange: handlePageChange,
     onSortChange: handleSortChange,
     pageCount,
-    reload: () => load(true),
+    reload,
     selectedNotification,
     sort,
     totalItems: allItems.length,

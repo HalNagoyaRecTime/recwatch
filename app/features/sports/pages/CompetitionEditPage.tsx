@@ -4,6 +4,7 @@ import { useNavigate, useParams } from "react-router";
 import type { CompetitionEditorApi } from "~/features/sports/api/competition-editor-api";
 import { httpCompetitionEditorApi } from "~/features/sports/api/http-competition-editor-api";
 import { CompetitionForm } from "~/features/sports/components/CompetitionForm";
+import { useCompetitionVenueOptions } from "~/features/sports/hooks/useCompetitionVenueOptions";
 import { getErrorMessage } from "~/lib/client-error";
 import {
   emptyCompetitionForm,
@@ -24,6 +25,7 @@ export function CompetitionEditPage({
   // ID が不正なら詳細も表示できないので一覧へ戻す。
   const detailPath =
     Number.isInteger(eventId) && eventId > 0 ? `/events/${eventId}` : "/events";
+  const venueOptions = useCompetitionVenueOptions(api);
   const [form, setForm] = useState(emptyCompetitionForm);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -94,15 +96,22 @@ export function CompetitionEditPage({
 
   return (
     <CompetitionForm
-      isDisabled={isLoading || isSubmitting || Boolean(loadError)}
+      isDisabled={
+        isLoading ||
+        isSubmitting ||
+        Boolean(loadError) ||
+        venueOptions.isLoading ||
+        Boolean(venueOptions.loadError)
+      }
       isSubmitting={isSubmitting}
       onCancel={() => navigate(detailPath)}
       onChange={setForm}
       onSubmit={() => void handleSubmit()}
-      submitError={loadError ?? submitError}
+      submitError={loadError ?? venueOptions.loadError ?? submitError}
       submitLabel="変更を保存する"
       title="イベントを編集"
       value={form}
+      venueOptions={venueOptions.venues}
     />
   );
 }

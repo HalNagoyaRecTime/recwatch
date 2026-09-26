@@ -1,7 +1,7 @@
 import type {
   NotificationAudienceInputItem,
   NotificationCreateRequest,
-} from "~/features/notifications/model/admin-notification";
+} from "~/features/notifications/api/contracts/admin-notification-command-api";
 import type { NotificationDraft } from "~/features/notifications/model/notification-draft";
 import { ClientError, ClientErrors } from "~/lib/client-error";
 

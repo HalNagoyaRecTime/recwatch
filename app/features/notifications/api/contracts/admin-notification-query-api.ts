@@ -1,19 +1,17 @@
 import type {
-  AdminNotificationDetail as AdminNotificationDetailModel,
-  AdminNotificationListItem as AdminNotificationListItemModel,
-  AdminNotificationListSchedule as AdminNotificationListScheduleModel,
-  NotificationScheduleSummary as NotificationScheduleSummaryModel,
-} from "~/features/notifications/model/admin-notification";
+  AdminNotificationDetail,
+  AdminNotificationListQuery,
+  AdminNotificationListResponse,
+} from "~/features/notifications/api/contracts/admin-notification-types";
 
-export type AdminNotificationDetail = AdminNotificationDetailModel;
-export type AdminNotificationListItem = AdminNotificationListItemModel;
-export type AdminNotificationListSchedule = AdminNotificationListScheduleModel;
-export type NotificationScheduleSummary = NotificationScheduleSummaryModel;
-export type AdminNotificationListQuery =
-  { from?: undefined; to?: undefined } | { from: string; to: string };
-export type AdminNotificationListResponse = {
-  items: AdminNotificationListItem[];
-};
+export type {
+  AdminNotificationDetail,
+  AdminNotificationListItem,
+  AdminNotificationListSchedule,
+  NotificationScheduleSummary,
+  AdminNotificationListQuery,
+  AdminNotificationListResponse,
+} from "~/features/notifications/api/contracts/admin-notification-types";
 
 export interface AdminNotificationQueryApi {
   list(

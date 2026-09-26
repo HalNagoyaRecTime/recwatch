@@ -12,7 +12,6 @@ function gathering(overrides: Partial<GatheringDraft> = {}): GatheringDraft {
     gatheringId: null,
     time: "10:45",
     spotId: 1,
-    memberUserIds: [],
     savedMemberCount: 0,
     ...overrides,
   };

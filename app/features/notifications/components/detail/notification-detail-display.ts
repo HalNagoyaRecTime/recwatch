@@ -5,7 +5,7 @@ import type {
   NotificationPushDeliveryStatus,
   NotificationScheduleStatus,
   NotificationStop,
-} from "~/features/notifications/model/admin-notification";
+} from "~/features/notifications/api/contracts/admin-notification-types";
 
 export function formatNotificationDetailDateTime(value: string | null) {
   if (!value) return "—";
