@@ -1,23 +1,21 @@
 import { loadAllPages } from "~/lib/load-all-pages";
-import { ClientError, type ClientErrorDefinition } from "~/lib/client-error";
 
 import type { GatheringMemberGateway } from "~/features/event-gatherings/api/contracts/gathering-member-gateway";
 import type {
   ClassroomPageResponseDto,
+  GatheringMemberResponseDto,
   StudentPageResponseDto,
 } from "~/features/event-gatherings/api/dto/gathering-member-api-dto";
 import {
   toMemberClassroom,
   toMemberStudent,
+  toMemberUserIds,
+  toReplaceGatheringMembersRequest,
 } from "~/features/event-gatherings/api/mappers/gathering-member-mappers";
 
 type GatheringMemberHttpClient = {
   get<T>(path: string): Promise<T>;
-};
-
-const MEMBER_SAVE_UNSUPPORTED: ClientErrorDefinition = {
-  code: "GATHERING_MEMBER_SAVE_UNSUPPORTED",
-  message: "参加者の保存は現在未対応です。",
+  put<T>(path: string, body: unknown): Promise<T>;
 };
 
 export function createHttpGatheringMemberGateway(
@@ -35,9 +33,12 @@ export function createHttpGatheringMemberGateway(
             total: page.total,
           };
         }),
+        // 停止中の学生も取得する。登録済みの参加者が停止されると、利用中だけの
+        // 一覧では行が消えてチェックを外せず、参加者からも集合からも外せなくなるため。
+        // 新しく追加させない制御は候補一覧側で行う。
         loadAllPages(async (offset, limit) => {
           const page = await client.get<StudentPageResponseDto>(
-            `/api/v1/students?limit=${limit}&offset=${offset}`
+            `/api/v1/students?limit=${limit}&offset=${offset}&isLiveActive=all`
           );
           return {
             items: page.items.map(toMemberStudent),
@@ -49,10 +50,20 @@ export function createHttpGatheringMemberGateway(
       return { classrooms, students };
     },
 
-    // 参加者の保存は送信方法・形式が未確定のため、まだ API を呼ばない。
-    // 呼び出し元は保存を試みず、画面上で未対応であることを案内する。
-    async saveMembers() {
-      throw new ClientError(MEMBER_SAVE_UNSUPPORTED);
+    async loadMembers(gatheringId) {
+      const response = await client.get<GatheringMemberResponseDto[]>(
+        `/api/v1/gatherings/${gatheringId}/members`
+      );
+      return toMemberUserIds(response);
+    },
+
+    // 参加者は 1 人ずつ追加・削除せず、選択内容全体を 1 回の PUT で置き換える。
+    async saveMembers(gatheringId, userIds) {
+      const response = await client.put<GatheringMemberResponseDto[]>(
+        `/api/v1/gatherings/${gatheringId}/members`,
+        toReplaceGatheringMembersRequest(userIds)
+      );
+      return toMemberUserIds(response);
     },
   };
 }

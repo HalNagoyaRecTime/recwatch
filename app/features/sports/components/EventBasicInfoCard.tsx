@@ -1,5 +1,6 @@
 import { Info } from "lucide-react";
 
+import { formatVenueNames } from "~/features/sports/model/competition-venue";
 import type { EventDetail } from "~/features/sports/model/event-detail";
 
 type EventBasicInfoCardProps = {
@@ -10,7 +11,7 @@ type EventBasicInfoCardProps = {
 export function EventBasicInfoCard({ event }: EventBasicInfoCardProps) {
   const rows: Array<{ label: string; value: string }> = [
     { label: "イベント名", value: event.name },
-    { label: "開催場所", value: event.venue },
+    { label: "開催場所", value: formatVenueNames(event.venues) },
     { label: "開始時間", value: event.startTime },
     { label: "終了時間", value: event.endTime },
     { label: "ルール・備考", value: event.rules ?? "未設定" },

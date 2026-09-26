@@ -6,7 +6,7 @@ import type { NotificationAudienceApi } from "~/features/notifications/api/contr
 import type {
   AdminNotificationDetail,
   NotificationPatchRequest,
-} from "~/features/notifications/model/admin-notification";
+} from "~/features/notifications/api/contracts/admin-notification-command-api";
 import type { NotificationAudienceOption } from "~/features/notifications/model/notification-audience";
 import {
   initialNotificationDraft,
@@ -30,6 +30,21 @@ type UseNotificationEditOptions = {
   reportFeedback?: NotificationFeedbackReporter;
 };
 
+type NotificationEditResult =
+  | {
+      api: AdminNotificationQueryApi;
+      notificationId: number;
+      status: "loaded";
+      notification: AdminNotificationDetail;
+      draft: NotificationDraft;
+    }
+  | {
+      api: AdminNotificationQueryApi;
+      notificationId: number;
+      status: "error";
+      error: string;
+    };
+
 export function useNotificationEdit({
   audienceApi,
   commandApi,
@@ -37,66 +52,100 @@ export function useNotificationEdit({
   notificationId,
   reportFeedback,
 }: UseNotificationEditOptions) {
-  const [notification, setNotification] =
-    useState<AdminNotificationDetail | null>(null);
-  const [draft, setDraft] = useState<NotificationDraft>(
-    initialNotificationDraft
-  );
+  const [notificationResult, setNotificationResult] =
+    useState<NotificationEditResult | null>(null);
   const [errors, setErrors] = useState<NotificationDraftErrors>({});
-  const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [loadError, setLoadError] = useState<string | null>(null);
   const [submissionError, setSubmissionError] = useState<string | null>(null);
-  const [audienceOptions, setAudienceOptions] = useState<
-    NotificationAudienceOption[]
-  >([]);
-  const [isAudienceLoading, setIsAudienceLoading] = useState(true);
-  const [audienceError, setAudienceError] = useState<string | null>(null);
   const [audienceReloadKey, setAudienceReloadKey] = useState(0);
+  const [audienceResult, setAudienceResult] = useState<{
+    api: NotificationAudienceApi;
+    reloadKey: number;
+    options: NotificationAudienceOption[];
+    error: string | null;
+  } | null>(null);
+
+  const isValidNotificationId =
+    Number.isSafeInteger(notificationId) && notificationId > 0;
+  const currentNotificationResult =
+    notificationResult?.api === queryApi &&
+    notificationResult.notificationId === notificationId
+      ? notificationResult
+      : null;
+  const notification =
+    currentNotificationResult?.status === "loaded"
+      ? currentNotificationResult.notification
+      : null;
+  const draft =
+    currentNotificationResult?.status === "loaded"
+      ? currentNotificationResult.draft
+      : initialNotificationDraft;
+  const isLoading = isValidNotificationId && currentNotificationResult === null;
+  const loadError = !isValidNotificationId
+    ? "通知IDが不正です。"
+    : currentNotificationResult?.status === "error"
+      ? currentNotificationResult.error
+      : null;
+  const hasCurrentAudienceResult =
+    audienceResult?.api === audienceApi &&
+    audienceResult.reloadKey === audienceReloadKey;
+  const audienceOptions = audienceResult?.options ?? [];
+  const isAudienceLoading = !hasCurrentAudienceResult;
+  const audienceError = hasCurrentAudienceResult ? audienceResult.error : null;
 
   useEffect(() => {
+    if (!isValidNotificationId) return;
+
     let active = true;
-    setIsLoading(true);
-    setLoadError(null);
 
     queryApi
       .getDetail(notificationId)
       .then((loadedNotification) => {
         if (!active) return;
-        setNotification(loadedNotification);
-        setDraft(toNotificationDraft(loadedNotification));
+        setNotificationResult({
+          api: queryApi,
+          notificationId,
+          status: "loaded",
+          notification: loadedNotification,
+          draft: toNotificationDraft(loadedNotification),
+        });
       })
       .catch((error: unknown) => {
         if (!active) return;
-        setNotification(null);
-        setLoadError(getErrorMessage(error));
-      })
-      .finally(() => {
-        if (active) setIsLoading(false);
+        setNotificationResult({
+          api: queryApi,
+          notificationId,
+          status: "error",
+          error: getErrorMessage(error),
+        });
       });
 
     return () => {
       active = false;
     };
-  }, [notificationId, queryApi]);
+  }, [isValidNotificationId, notificationId, queryApi]);
 
   useEffect(() => {
     let active = true;
-    setIsAudienceLoading(true);
-    setAudienceError(null);
-
     audienceApi
       .load()
       .then((options) => {
-        if (active) setAudienceOptions(options);
+        if (!active) return;
+        setAudienceResult({
+          api: audienceApi,
+          reloadKey: audienceReloadKey,
+          options,
+          error: null,
+        });
       })
       .catch((error: unknown) => {
         if (!active) return;
-        setAudienceOptions([]);
-        setAudienceError(getErrorMessage(error));
-      })
-      .finally(() => {
-        if (active) setIsAudienceLoading(false);
+        setAudienceResult({
+          api: audienceApi,
+          reloadKey: audienceReloadKey,
+          options: [],
+          error: getErrorMessage(error),
+        });
       });
 
     return () => {
@@ -105,7 +154,13 @@ export function useNotificationEdit({
   }, [audienceApi, audienceReloadKey]);
 
   function handleChange(nextDraft: NotificationDraft) {
-    setDraft(nextDraft);
+    setNotificationResult((current) =>
+      current?.api === queryApi &&
+      current.notificationId === notificationId &&
+      current.status === "loaded"
+        ? { ...current, draft: nextDraft }
+        : current
+    );
     setSubmissionError(null);
     setErrors((current) => ({
       ...current,
@@ -133,7 +188,13 @@ export function useNotificationEdit({
         notification.notificationId,
         request
       );
-      setNotification(updated);
+      setNotificationResult({
+        api: queryApi,
+        notificationId,
+        status: "loaded",
+        notification: updated,
+        draft: toNotificationDraft(updated),
+      });
       reportFeedback?.({
         kind: "action-success",
         title: "通知を更新しました",

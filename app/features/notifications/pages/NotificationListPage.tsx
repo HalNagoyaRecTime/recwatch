@@ -65,9 +65,16 @@ export function NotificationListPage({
   const loadCalendar = state.loadCalendar;
 
   useEffect(() => {
-    if (viewMode === "calendar") {
-      void loadCalendar(calendarRange);
-    }
+    if (viewMode !== "calendar") return;
+
+    let active = true;
+    void Promise.resolve().then(() => {
+      if (active) void loadCalendar(calendarRange);
+    });
+
+    return () => {
+      active = false;
+    };
   }, [calendarRange, loadCalendar, viewMode]);
 
   const isCalendar = viewMode === "calendar";

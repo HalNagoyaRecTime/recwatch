@@ -1,3 +1,16 @@
+export type NotificationDeliveryStatus = string | null;
+
+export type NotificationListItem = {
+  audience: string;
+  canModify: boolean;
+  competition: string;
+  deliveredAt: string;
+  id: string;
+  schedule: string;
+  sender: string;
+  status: NotificationDeliveryStatus;
+  title: string;
+};
 export const notificationListPageSize = 20;
 
 export const notificationSortableColumnIds = [

@@ -56,13 +56,25 @@ export function StudentsPage({
   userApi = userManagementApi,
 }: StudentsPageProps) {
   const [searchParams, setSearchParams] = useSearchParams();
-  const [students, setStudents] = useState<StudentRow[]>(initialStudents ?? []);
-  const [total, setTotal] = useState(initialTotal ?? 0);
+  const [apiStudents, setApiStudents] = useState<StudentRow[]>([]);
+  const [apiTotal, setApiTotal] = useState(0);
+  const [fetchState, setFetchState] = useState<{
+    api: StudentManagementApi;
+    queryKey: string;
+  } | null>(null);
+  const [loaderOverride, setLoaderOverride] = useState<{
+    sourceStudents: StudentRow[];
+    sourceTotal: number | undefined;
+    items: StudentRow[];
+    total: number;
+  } | null>(null);
   const [classRooms, setClassRooms] = useState<ClassRoom[]>([]);
-  const [searchInput, setSearchInput] = useState("");
+  const [searchDraft, setSearchDraft] = useState<{
+    query: string;
+    value: string;
+  } | null>(null);
   const [editingStudent, setEditingStudent] = useState<StudentRow | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(initialStudents === undefined);
   const [isMutating, setIsMutating] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -76,6 +88,25 @@ export function StudentsPage({
     isStaff,
     isLiveActive,
   } = parseStudentListUrl(searchParams);
+  const searchInput =
+    searchDraft?.query === search ? searchDraft.value : search;
+  const currentLoaderOverride =
+    initialStudents !== undefined &&
+    loaderOverride !== null &&
+    loaderOverride.sourceStudents === initialStudents &&
+    loaderOverride.sourceTotal === initialTotal
+      ? loaderOverride
+      : null;
+  const students =
+    initialStudents === undefined
+      ? apiStudents
+      : (currentLoaderOverride?.items ?? initialStudents);
+  const total =
+    initialStudents === undefined
+      ? apiTotal
+      : (currentLoaderOverride?.total ??
+        initialTotal ??
+        initialStudents.length);
   const limit = initialLimit ?? 50;
   const offset = initialOffset ?? (page - 1) * limit;
   const currentPage = Math.floor(offset / limit) + 1;
@@ -104,9 +135,12 @@ export function StudentsPage({
     ]
   );
 
-  useEffect(() => {
-    setSearchInput(search);
-  }, [search]);
+  const studentListQueryKey = JSON.stringify(buildStudentListQuery());
+  const hasCurrentStudentFetch =
+    fetchState !== null &&
+    fetchState.api === api &&
+    fetchState.queryKey === studentListQueryKey;
+  const isLoading = initialStudents === undefined && !hasCurrentStudentFetch;
 
   useEffect(() => {
     if (searchInput.trim() === search) return;
@@ -117,6 +151,7 @@ export function StudentsPage({
           search: searchInput,
         })
       );
+      setSearchDraft(null);
     }, 250);
     return () => window.clearTimeout(timer);
   }, [searchInput, search, searchParams, setSearchParams]);
@@ -142,51 +177,30 @@ export function StudentsPage({
   }, [loadClassRooms]);
 
   useEffect(() => {
-    if (initialStudents !== undefined) {
-      setStudents(initialStudents);
-      setTotal(initialTotal ?? initialStudents.length);
-      setIsLoading(false);
-      return;
-    }
+    if (initialStudents !== undefined) return;
 
     let isCurrent = true;
-    setIsLoading(true);
+    const query = buildStudentListQuery();
+    const queryKey = JSON.stringify(query);
     api
-      .getStudents(buildStudentListQuery())
+      .getStudents(query)
       .then((result) => {
         if (!isCurrent) return;
-        setStudents(result.items);
-        setTotal(result.total);
+        setApiStudents(result.items);
+        setApiTotal(result.total);
         setLoadError(null);
+        setFetchState({ api, queryKey });
       })
       .catch((error: unknown) => {
-        if (isCurrent) {
-          setLoadError(
-            getErrorMessage(error, "学生一覧の取得に失敗しました。")
-          );
-        }
-      })
-      .finally(() => {
-        if (isCurrent) setIsLoading(false);
+        if (!isCurrent) return;
+        setLoadError(getErrorMessage(error, "学生一覧の取得に失敗しました。"));
+        setFetchState({ api, queryKey });
       });
 
     return () => {
       isCurrent = false;
     };
-  }, [
-    api,
-    initialStudents,
-    initialTotal,
-    isLiveActive,
-    isStaff,
-    limit,
-    offset,
-    search,
-    classRoomId,
-    sortBy,
-    sortOrder,
-    buildStudentListQuery,
-  ]);
+  }, [api, initialStudents, buildStudentListQuery]);
 
   useEffect(() => {
     if (isLoading || currentPage <= pageCount) return;
@@ -260,9 +274,20 @@ export function StudentsPage({
       return;
     }
 
-    const refreshed = await api.getStudents(buildStudentListQuery());
-    setStudents(refreshed.items);
-    setTotal(refreshed.total);
+    const query = buildStudentListQuery();
+    const refreshed = await api.getStudents(query);
+    if (initialStudents !== undefined) {
+      setLoaderOverride({
+        sourceStudents: initialStudents,
+        sourceTotal: initialTotal,
+        items: refreshed.items,
+        total: refreshed.total,
+      });
+    } else {
+      setApiStudents(refreshed.items);
+      setApiTotal(refreshed.total);
+      setFetchState({ api, queryKey: JSON.stringify(query) });
+    }
     setLoadError(null);
   }
 
@@ -357,7 +382,7 @@ export function StudentsPage({
         <div className="min-w-60 flex-1">
           <SearchField
             ariaLabel="学生を検索"
-            onValueChange={setSearchInput}
+            onValueChange={(value) => setSearchDraft({ query: search, value })}
             placeholder="氏名・学籍番号・クラスで検索..."
             value={searchInput}
           />

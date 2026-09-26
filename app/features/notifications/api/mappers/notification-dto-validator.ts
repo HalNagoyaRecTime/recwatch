@@ -139,7 +139,7 @@ export function isNotificationAudienceItem(
   if (!isRecord(value)) return false;
 
   if (value.type === "all") {
-    return value.label === undefined || value.label === null;
+    return Object.keys(value).length === 1;
   }
 
   return (
@@ -147,8 +147,9 @@ export function isNotificationAudienceItem(
       value.type === "gathering" ||
       value.type === "event" ||
       value.type === "user") &&
+    Object.keys(value).length === 3 &&
     isPositiveInteger(value.targetId) &&
-    (value.label === undefined || isNullableString(value.label))
+    isNullableString(value.label)
   );
 }
 

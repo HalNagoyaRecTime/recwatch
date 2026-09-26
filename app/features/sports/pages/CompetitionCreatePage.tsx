@@ -8,6 +8,7 @@ import { httpCompetitionEditorApi } from "~/features/sports/api/http-competition
 import { CompetitionConfirmStep } from "~/features/sports/components/CompetitionConfirmStep";
 import { CompetitionCreatedStep } from "~/features/sports/components/CompetitionCreatedStep";
 import { CompetitionForm } from "~/features/sports/components/CompetitionForm";
+import { useCompetitionVenueOptions } from "~/features/sports/hooks/useCompetitionVenueOptions";
 import { getErrorMessage } from "~/lib/client-error";
 import type { CompetitionListOutletContext } from "~/features/sports/pages/CompetitionListPage";
 import {
@@ -40,6 +41,7 @@ export function CompetitionCreatePage({
   const outletContext = useOutletContext<
     CompetitionListOutletContext | undefined
   >();
+  const venueOptions = useCompetitionVenueOptions(api);
   const [step, setStep] = useState<Step>("form");
   const [form, setForm] = useState(emptyCompetitionForm);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -112,18 +114,24 @@ export function CompetitionCreatePage({
               onSubmit={() => void handleCreate()}
               submitError={submitError}
               value={form}
+              venueOptions={venueOptions.venues}
             />
           ) : (
             <CompetitionForm
-              isDisabled={isSubmitting}
+              isDisabled={
+                isSubmitting ||
+                venueOptions.isLoading ||
+                Boolean(venueOptions.loadError)
+              }
               isSubmitting={isSubmitting}
               onCancel={requestClose}
               onChange={setForm}
               onSubmit={handleConfirm}
-              submitError={submitError}
+              submitError={venueOptions.loadError ?? submitError}
               submitIcon={ArrowRight}
               submitLabel="確認へ"
               value={form}
+              venueOptions={venueOptions.venues}
             />
           )}
         </div>

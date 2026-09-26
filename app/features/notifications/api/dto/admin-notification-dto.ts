@@ -73,7 +73,7 @@ export type NotificationCreateResponseDto = {
   notificationScheduleId: number;
 };
 
-type NotificationContentPatchDto = {
+export type NotificationContentPatchDto = {
   push?: {
     title?: string;
     body?: string;

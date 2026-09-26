@@ -1,13 +1,17 @@
 import type {
   AdminNotificationDetail,
   NotificationCreateRequest,
+  NotificationCreateResponse,
   NotificationPatchRequest,
-} from "~/features/notifications/model/admin-notification";
+} from "~/features/notifications/api/contracts/admin-notification-types";
 
-export type NotificationCreateResponse = {
-  notificationId: number;
-  notificationScheduleId: number;
-};
+export type {
+  AdminNotificationDetail,
+  NotificationAudienceInputItem,
+  NotificationCreateRequest,
+  NotificationCreateResponse,
+  NotificationPatchRequest,
+} from "~/features/notifications/api/contracts/admin-notification-types";
 
 export interface AdminNotificationCommandApi {
   create(
