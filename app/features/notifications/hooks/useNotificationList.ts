@@ -85,7 +85,15 @@ export function useNotificationList({
   );
 
   useEffect(() => {
-    void load();
+    let active = true;
+    void Promise.resolve().then(() => {
+      if (active) void load();
+    });
+
+    return () => {
+      active = false;
+      requestSequence.current += 1;
+    };
   }, [load]);
 
   const reload = useCallback(() => {
