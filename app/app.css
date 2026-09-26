@@ -246,8 +246,14 @@
     padding-left: env(safe-area-inset-left, 0px);
   }
 
-  .mobile-safe-area-visual {
-    bottom: env(safe-area-inset-bottom, 0px);
+  .mobile-sidebar-dialog::backdrop {
+    background: rgb(0 0 0 / 30%);
+    opacity: 0;
+    transition: opacity 300ms;
+  }
+
+  .mobile-sidebar-dialog[data-active="true"]::backdrop {
+    opacity: 1;
   }
 
   .page-side-panel {

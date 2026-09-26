@@ -28,9 +28,6 @@ export const sidebarContainerStyle = cva(
   }
 );
 
-export const sidebarMobileContainerStyle =
-  "fixed inset-y-0 left-0 z-99 w-72 bg-transparent transition-transform " +
+export const sidebarMobileDialogStyle =
+  "mobile-sidebar-dialog fixed inset-y-0 left-0 right-auto z-99 m-0 flex h-screen h-dvh max-h-none w-72 flex-col overflow-hidden border-r border-border-subtle bg-surface-base p-0 text-text-base transition-transform " +
   SIDEBAR_DURATION;
-
-export const sidebarMobileSurfaceStyle =
-  "sidebar-mobile-surface mobile-safe-area-visual pointer-events-none absolute inset-x-0 top-0 border-r border-border-subtle bg-surface-base";

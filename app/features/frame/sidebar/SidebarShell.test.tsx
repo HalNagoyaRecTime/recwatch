@@ -1,6 +1,13 @@
 import { readFileSync } from "node:fs";
 
-import { act, fireEvent, render, screen, within } from "@testing-library/react";
+import {
+  act,
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  within,
+} from "@testing-library/react";
 import { MemoryRouter, useLocation } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -29,7 +36,9 @@ function renderShell() {
 
 function getMobileDrawer() {
   const drawer = document.getElementById("app-sidebar-mobile");
-  if (!drawer) throw new Error("モバイル Sidebar が見つかりません");
+  if (!(drawer instanceof HTMLDialogElement)) {
+    throw new Error("モバイル Sidebar dialog が見つかりません");
+  }
   return drawer;
 }
 
@@ -41,12 +50,6 @@ function getDesktopSidebar() {
 
 function getHamburger() {
   return screen.getByRole("button", { name: "Toggle navigation" });
-}
-
-function getMobileOverlay() {
-  const overlay = document.getElementById("mobile-nav-overlay");
-  if (!overlay) throw new Error("モバイル Overlay が見つかりません");
-  return overlay;
 }
 
 function getDesktopFooterToggle() {
@@ -81,8 +84,61 @@ function finishMobileClose() {
   if (drawer) fireEvent.transitionEnd(drawer, { propertyName: "transform" });
 }
 
+function cancelMobileDialog() {
+  const event = new Event("cancel", { bubbles: true, cancelable: true });
+  act(() => {
+    getMobileDrawer().dispatchEvent(event);
+  });
+  return event;
+}
+
+let originalShowModalDescriptor: PropertyDescriptor | undefined;
+let originalCloseDescriptor: PropertyDescriptor | undefined;
+let showModalMock: ReturnType<typeof vi.fn>;
+let closeMock: ReturnType<typeof vi.fn>;
+
+function installDialogMethodStubs() {
+  const prototype = HTMLDialogElement.prototype;
+  originalShowModalDescriptor = Object.getOwnPropertyDescriptor(
+    prototype,
+    "showModal"
+  );
+  originalCloseDescriptor = Object.getOwnPropertyDescriptor(prototype, "close");
+
+  showModalMock = vi.fn(function (this: HTMLDialogElement) {
+    this.setAttribute("open", "");
+  });
+  closeMock = vi.fn(function (this: HTMLDialogElement) {
+    this.removeAttribute("open");
+  });
+
+  Object.defineProperty(prototype, "showModal", {
+    configurable: true,
+    value: showModalMock,
+  });
+  Object.defineProperty(prototype, "close", {
+    configurable: true,
+    value: closeMock,
+  });
+}
+
+function restoreDialogMethodStubs() {
+  const prototype = HTMLDialogElement.prototype;
+  if (originalShowModalDescriptor) {
+    Object.defineProperty(prototype, "showModal", originalShowModalDescriptor);
+  } else {
+    Reflect.deleteProperty(prototype, "showModal");
+  }
+  if (originalCloseDescriptor) {
+    Object.defineProperty(prototype, "close", originalCloseDescriptor);
+  } else {
+    Reflect.deleteProperty(prototype, "close");
+  }
+}
+
 beforeEach(() => {
   sessionStorage.clear();
+  installDialogMethodStubs();
   document.body.style.removeProperty("overflow");
   document.body.style.removeProperty("overscroll-behavior");
   document.documentElement.style.removeProperty("overflow");
@@ -100,12 +156,14 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  cleanup();
   animationFrames.clear();
   vi.unstubAllGlobals();
+  restoreDialogMethodStubs();
 });
 
 describe("モバイル Drawer", () => {
-  it("初期状態では閉じた固定UIをDOMに残さない", () => {
+  it("初期状態では閉じたdialogや通常DOM overlayを残さない", () => {
     renderShell();
 
     expect(getHamburger()).toHaveAttribute("aria-expanded", "false");
@@ -115,21 +173,26 @@ describe("モバイル Drawer", () => {
     expect(
       document.getElementById("mobile-nav-overlay")
     ).not.toBeInTheDocument();
+    expect(screen.queryByTestId("mobile-nav-overlay-visual")).toBeNull();
     expect(
       document.getElementById("mobile-nav-backplate")
     ).not.toBeInTheDocument();
   });
 
-  it("Hamburgerで開き、Drawerへフォーカスを移す", () => {
+  it("Hamburgerでnative modal dialogを開き、dialogへフォーカスを移す", () => {
     renderShell();
 
     openMobileDrawer();
 
     expect(getHamburger()).toHaveAttribute("aria-expanded", "true");
+    expect(getMobileDrawer()).toBeInstanceOf(HTMLDialogElement);
+    expect(getMobileDrawer().open).toBe(true);
+    expect(showModalMock).toHaveBeenCalledTimes(1);
     expect(getMobileDrawer()).toHaveAttribute("aria-hidden", "false");
     expect(getMobileDrawer()).not.toHaveAttribute("inert");
-    expect(getMobileDrawer()).toHaveAttribute("aria-modal", "true");
+    expect(getMobileDrawer()).not.toHaveAttribute("aria-modal");
     expect(getMobileDrawer().className).toContain("translate-x-0");
+    expect(getMobileDrawer()).toHaveAttribute("data-active", "true");
     expect(document.activeElement).toBe(getMobileDrawer());
   });
 
@@ -140,7 +203,7 @@ describe("モバイル Drawer", () => {
     expect(getMobileDrawer()).toBeInTheDocument();
     expect(document.body.style.overflow).toBe("hidden");
 
-    fireEvent.keyDown(document, { key: "Escape" });
+    cancelMobileDialog();
 
     expect(
       document.getElementById("app-sidebar-mobile")
@@ -149,6 +212,8 @@ describe("モバイル Drawer", () => {
       document.getElementById("mobile-nav-overlay")
     ).not.toBeInTheDocument();
     expect(document.body.style.overflow).toBe("");
+    expect(closeMock).toHaveBeenCalledTimes(1);
+    expect(document.activeElement).toBe(getHamburger());
   });
 
   it("Drawerを開いている間は背面をロックし、Drawer内はスクロール可能にする", () => {
@@ -172,7 +237,7 @@ describe("モバイル Drawer", () => {
       "overscroll-y-none"
     );
 
-    fireEvent.keyDown(document, { key: "Escape" });
+    cancelMobileDialog();
 
     expect(document.body.style.overflow).toBe("auto");
     expect(document.body.style.overscrollBehavior).toBe("contain");
@@ -180,22 +245,23 @@ describe("モバイル Drawer", () => {
     expect(document.documentElement.style.overscrollBehavior).toBe("contain");
     const drawer = getMobileDrawer();
     expect(drawer).toBeInTheDocument();
+    expect(drawer.open).toBe(true);
     expect(drawer).toHaveClass("-translate-x-full");
-    expect(document.getElementById("mobile-nav-overlay")).toBeInTheDocument();
+    expect(drawer).toHaveAttribute("inert");
+    expect(closeMock).not.toHaveBeenCalled();
     finishMobileClose();
     expect(
       document.getElementById("app-sidebar-mobile")
     ).not.toBeInTheDocument();
-    expect(
-      document.getElementById("mobile-nav-overlay")
-    ).not.toBeInTheDocument();
+    expect(drawer.open).toBe(false);
+    expect(closeMock).toHaveBeenCalledTimes(1);
     expect(document.body.style.overflow).toBe("auto");
     expect(document.body.style.overscrollBehavior).toBe("contain");
     expect(document.documentElement.style.overflow).toBe("scroll");
     expect(document.documentElement.style.overscrollBehavior).toBe("contain");
   });
 
-  it("Mobile Drawerのsurfaceはbottom safe areaを空けたopaque面にする", () => {
+  it("dialog本体をsurfaceにしてbackdropだけで暗転し、content safe areaを維持する", () => {
     renderShell();
 
     expect(document.getElementById("mobile-nav-backplate")).toBeNull();
@@ -203,28 +269,26 @@ describe("モバイル Drawer", () => {
     openMobileDrawer();
 
     const drawer = getMobileDrawer();
-    const surface = drawer.querySelector(".sidebar-mobile-surface");
-
+    expect(document.getElementById("mobile-nav-overlay")).toBeNull();
+    expect(screen.queryByTestId("mobile-nav-overlay-visual")).toBeNull();
     expect(drawer).toHaveClass(
+      "mobile-sidebar-dialog",
       "fixed",
       "z-99",
-      "bg-transparent",
-      "translate-x-0"
-    );
-    expect(drawer).not.toHaveClass("bg-surface-base");
-    expect(surface).toHaveClass(
-      "pointer-events-none",
-      "absolute",
-      "mobile-safe-area-visual",
-      "inset-x-0",
-      "top-0",
+      "bg-surface-base",
       "border-r",
       "border-border-subtle",
-      "bg-surface-base"
+      "h-dvh",
+      "translate-x-0"
     );
-    expect(surface).not.toHaveClass("backdrop-blur-xl");
+    expect(drawer.querySelector(".sidebar-mobile-surface")).toBeNull();
+    expect(drawer.querySelector(".mobile-safe-area-visual")).toBeNull();
+    expect(normalizedCss).not.toContain(".mobile-safe-area-visual");
     expect(normalizedCss).toContain(
-      ".mobile-safe-area-visual { bottom: env(safe-area-inset-bottom, 0px); }"
+      ".mobile-sidebar-dialog::backdrop { background: rgb(0 0 0 / 30%); opacity: 0; transition: opacity 300ms; }"
+    );
+    expect(normalizedCss).toContain(
+      '.mobile-sidebar-dialog[data-active="true"]::backdrop { opacity: 1; }'
     );
     expect(
       drawer.querySelector(".sidebar-mobile-content-safe-area")
@@ -246,74 +310,103 @@ describe("モバイル Drawer", () => {
     );
   });
 
-  it("transform transitioncancelでもclose後のDrawerをunmountする", () => {
+  it("transform transitioncancelでdialogをcloseしてunmountする", () => {
     renderShell();
     openMobileDrawer();
 
-    fireEvent.keyDown(document, { key: "Escape" });
+    cancelMobileDialog();
 
     const drawer = getMobileDrawer();
     expect(document.body.style.overflow).toBe("");
     expect(drawer).toBeInTheDocument();
+    expect(drawer.open).toBe(true);
+
+    fireEvent.transitionEnd(drawer, { propertyName: "opacity" });
+    expect(drawer.open).toBe(true);
 
     fireEvent.transitionCancel(drawer, { propertyName: "transform" });
 
     expect(
       document.getElementById("app-sidebar-mobile")
     ).not.toBeInTheDocument();
-    expect(
-      document.getElementById("mobile-nav-overlay")
-    ).not.toBeInTheDocument();
+    expect(drawer.open).toBe(false);
+    expect(closeMock).toHaveBeenCalledTimes(1);
+    expect(document.activeElement).toBe(getHamburger());
   });
 
-  it("Overlay、Escape、Headerで閉じ、閉じた後はHamburgerへ戻る", () => {
+  it("native cancel eventをpreventしてexit transition後にcloseする", () => {
     renderShell();
 
     openMobileDrawer();
-    const overlay = getMobileOverlay();
-    const visualOverlay = screen.getByTestId("mobile-nav-overlay-visual");
-    expect(overlay).toHaveClass("fixed", "inset-0", "bg-transparent");
-    expect(overlay).not.toHaveClass("bg-black/30");
-    expect(visualOverlay).toHaveClass(
-      "pointer-events-none",
-      "absolute",
-      "mobile-safe-area-visual",
-      "inset-x-0",
-      "top-0",
-      "bg-black/30",
-      "opacity-100"
-    );
-    expect(visualOverlay).not.toHaveClass("inset-0", "bg-transparent");
+    const cancelEvent = cancelMobileDialog();
 
-    fireEvent.click(overlay);
+    expect(cancelEvent.defaultPrevented).toBe(true);
     expect(getHamburger()).toHaveAttribute("aria-expanded", "false");
-    expect(document.activeElement).toBe(getHamburger());
     expect(getMobileDrawer()).toHaveAttribute("aria-hidden", "true");
-    expect(overlay).toBeInTheDocument();
-    expect(visualOverlay).toHaveClass("opacity-0");
+    expect(getMobileDrawer().open).toBe(true);
+    expect(document.activeElement).not.toBe(getHamburger());
+    expect(closeMock).not.toHaveBeenCalled();
     finishMobileClose();
 
+    expect(
+      document.getElementById("app-sidebar-mobile")
+    ).not.toBeInTheDocument();
+    expect(closeMock).toHaveBeenCalledTimes(1);
+    expect(document.activeElement).toBe(getHamburger());
+  });
+
+  it("backdropはdialog矩形外でdownして外でclickした場合だけ閉じる", () => {
+    renderShell();
+
     openMobileDrawer();
-    fireEvent.keyDown(document, { key: "Escape" });
+    const drawer = getMobileDrawer();
+    vi.spyOn(drawer, "getBoundingClientRect").mockReturnValue({
+      x: 0,
+      y: 0,
+      left: 0,
+      top: 0,
+      right: 288,
+      bottom: 844,
+      width: 288,
+      height: 844,
+      toJSON: () => ({}),
+    });
+
+    fireEvent.pointerDown(drawer, { button: 0, clientX: 100, clientY: 100 });
+    fireEvent.click(drawer, { clientX: 100, clientY: 100 });
+    expect(drawer.open).toBe(true);
+
+    fireEvent.pointerDown(drawer, { button: 0, clientX: 400, clientY: 100 });
+    fireEvent.click(drawer, { clientX: 100, clientY: 100 });
+    expect(drawer.open).toBe(true);
+
+    fireEvent.pointerDown(drawer, { button: 0, clientX: 400, clientY: 100 });
+    fireEvent.click(drawer, { clientX: 400, clientY: 100 });
     expect(getHamburger()).toHaveAttribute("aria-expanded", "false");
+    expect(drawer.open).toBe(true);
+    expect(closeMock).not.toHaveBeenCalled();
     finishMobileClose();
+    expect(drawer.open).toBe(false);
+    expect(document.activeElement).toBe(getHamburger());
+  });
+
+  it("Header closeは同じexit lifecycleを通ってHamburgerへfocusを戻す", () => {
+    renderShell();
 
     openMobileDrawer();
-    const mobileCloseButton = within(getMobileDrawer()).getByRole("button", {
+    const drawer = getMobileDrawer();
+    const mobileCloseButton = within(drawer).getByRole("button", {
       name: "サイドメニューを閉じる",
     });
     fireEvent.click(mobileCloseButton);
     expect(getHamburger()).toHaveAttribute("aria-expanded", "false");
+    expect(drawer.open).toBe(true);
+    expect(closeMock).not.toHaveBeenCalled();
     finishMobileClose();
-    expect(
-      document.getElementById("mobile-nav-overlay")
-    ).not.toBeInTheDocument();
-    expect(
-      document.getElementById("mobile-nav-backplate")
-    ).not.toBeInTheDocument();
     expect(
       document.getElementById("app-sidebar-mobile")
     ).not.toBeInTheDocument();
+    expect(document.activeElement).toBe(getHamburger());
   });
 
   it("Footerを表示せず、Headerに閉じるボタンを表示する", () => {
@@ -328,17 +421,21 @@ describe("モバイル Drawer", () => {
     ).toBeInTheDocument();
   });
 
-  it("開いた Drawer 内でNavigation選択後に閉じる", () => {
+  it("開いた Drawer 内でNavigation選択後に同じclose lifecycleを通る", () => {
     renderShell();
 
     openMobileDrawer();
+    const drawer = getMobileDrawer();
     fireEvent.click(
-      within(getMobileDrawer()).getByRole("link", { name: "ダッシュボード" })
+      within(drawer).getByRole("link", { name: "ダッシュボード" })
     );
 
     expect(getHamburger()).toHaveAttribute("aria-expanded", "false");
     expect(screen.getByTestId("location")).toHaveTextContent("/dashboard");
+    expect(drawer.open).toBe(true);
     finishMobileClose();
+    expect(drawer.open).toBe(false);
+    expect(document.activeElement).toBe(getHamburger());
   });
 
   it("Drawer内のTab移動をループさせる", () => {
@@ -353,11 +450,11 @@ describe("モバイル Drawer", () => {
     const lastFocusable = focusables[focusables.length - 1];
 
     lastFocusable.focus();
-    fireEvent.keyDown(document, { key: "Tab" });
+    fireEvent.keyDown(lastFocusable, { key: "Tab" });
     expect(document.activeElement).toBe(firstFocusable);
 
     firstFocusable.focus();
-    fireEvent.keyDown(document, { key: "Tab", shiftKey: true });
+    fireEvent.keyDown(firstFocusable, { key: "Tab", shiftKey: true });
     expect(document.activeElement).toBe(lastFocusable);
   });
 
@@ -395,6 +492,8 @@ describe("モバイル Drawer", () => {
     expect(
       document.getElementById("app-sidebar-mobile")
     ).not.toBeInTheDocument();
+    expect(showModalMock).toHaveBeenCalledTimes(1);
+    expect(closeMock).toHaveBeenCalledTimes(1);
     expect(document.body.style.overflow).toBe("");
   });
 });

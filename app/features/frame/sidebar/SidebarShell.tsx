@@ -1,5 +1,10 @@
-import { useEffect, useRef, useState } from "react";
-import type { TransitionEvent as ReactTransitionEvent } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import type {
+  KeyboardEvent as ReactKeyboardEvent,
+  MouseEvent as ReactMouseEvent,
+  PointerEvent as ReactPointerEvent,
+  TransitionEvent as ReactTransitionEvent,
+} from "react";
 
 import { useDocumentScrollLock } from "~/hooks/useDocumentScrollLock";
 import { useSidebarState } from "~/hooks/useSidebarState";
@@ -12,8 +17,7 @@ import { useSidebarUI } from "~/features/frame/sidebar/hooks/useSidebarUI";
 import { SidebarHeader } from "~/features/frame/sidebar/components/SidebarHeader";
 import {
   sidebarContainerStyle,
-  sidebarMobileContainerStyle,
-  sidebarMobileSurfaceStyle,
+  sidebarMobileDialogStyle,
   sidebarPlaceholderStyle,
 } from "~/features/frame/sidebar/styles/sidebar-styles";
 
@@ -22,6 +26,143 @@ const DESKTOP_SIDEBAR_MEDIA_QUERY = "(min-width: 48rem)";
 const NON_MOUSE_CLICK_MAX_DELAY_MS = 1000;
 const MOBILE_DRAWER_FOCUSABLE_SELECTOR =
   'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
+function isOutsideDialog(
+  dialog: HTMLDialogElement,
+  clientX: number,
+  clientY: number
+) {
+  const rect = dialog.getBoundingClientRect();
+  return (
+    clientX < rect.left ||
+    clientX >= rect.right ||
+    clientY < rect.top ||
+    clientY >= rect.bottom
+  );
+}
+
+type MobileSidebarDialogProps = {
+  mobileOpen: boolean;
+  isActive: boolean;
+  closeForMobile: () => void;
+  onTransitionEnd: (event: ReactTransitionEvent<HTMLDialogElement>) => void;
+  onTransitionCancel: (event: ReactTransitionEvent<HTMLDialogElement>) => void;
+};
+
+function MobileSidebarDialog({
+  mobileOpen,
+  isActive,
+  closeForMobile,
+  onTransitionEnd,
+  onTransitionCancel,
+}: MobileSidebarDialogProps) {
+  const dialogRef = useRef<HTMLDialogElement>(null);
+  const backdropPointerDownRef = useRef(false);
+
+  useLayoutEffect(() => {
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+
+    if (!dialog.open) dialog.showModal();
+    dialog.focus();
+
+    return () => {
+      if (dialog.open) dialog.close();
+    };
+  }, []);
+
+  const handleKeyDown = (event: ReactKeyboardEvent<HTMLDialogElement>) => {
+    if (event.key !== "Tab") return;
+
+    const focusableElements = Array.from(
+      event.currentTarget.querySelectorAll<HTMLElement>(
+        MOBILE_DRAWER_FOCUSABLE_SELECTOR
+      )
+    ).filter((element) => {
+      const style = window.getComputedStyle(element);
+      return style.display !== "none" && style.visibility !== "hidden";
+    });
+
+    if (focusableElements.length === 0) {
+      event.preventDefault();
+      event.currentTarget.focus();
+      return;
+    }
+
+    const activeElement = document.activeElement as HTMLElement | null;
+    const activeIndex = activeElement
+      ? focusableElements.indexOf(activeElement)
+      : -1;
+
+    if (activeIndex === -1) {
+      event.preventDefault();
+      (event.shiftKey
+        ? focusableElements[focusableElements.length - 1]
+        : focusableElements[0]
+      ).focus();
+    } else if (event.shiftKey && activeIndex === 0) {
+      event.preventDefault();
+      focusableElements[focusableElements.length - 1].focus();
+    } else if (
+      !event.shiftKey &&
+      activeIndex === focusableElements.length - 1
+    ) {
+      event.preventDefault();
+      focusableElements[0].focus();
+    }
+  };
+
+  const handlePointerDown = (event: ReactPointerEvent<HTMLDialogElement>) => {
+    backdropPointerDownRef.current =
+      event.button === 0 &&
+      isOutsideDialog(event.currentTarget, event.clientX, event.clientY);
+  };
+
+  const handleClick = (event: ReactMouseEvent<HTMLDialogElement>) => {
+    const startedOutside = backdropPointerDownRef.current;
+    backdropPointerDownRef.current = false;
+
+    if (
+      startedOutside &&
+      isOutsideDialog(event.currentTarget, event.clientX, event.clientY)
+    ) {
+      closeForMobile();
+    }
+  };
+
+  return (
+    <dialog
+      ref={dialogRef}
+      id={MOBILE_SIDEBAR_ID}
+      aria-label="サイドメニュー"
+      aria-hidden={!mobileOpen}
+      inert={!mobileOpen}
+      tabIndex={-1}
+      data-active={isActive}
+      onCancel={(event) => {
+        event.preventDefault();
+        closeForMobile();
+      }}
+      onKeyDown={handleKeyDown}
+      onPointerDown={handlePointerDown}
+      onPointerCancel={() => {
+        backdropPointerDownRef.current = false;
+      }}
+      onClick={handleClick}
+      onTransitionEnd={onTransitionEnd}
+      onTransitionCancel={onTransitionCancel}
+      className={cn(
+        sidebarMobileDialogStyle,
+        isActive ? "translate-x-0" : "-translate-x-full"
+      )}
+    >
+      <SidebarHeader onClose={closeForMobile} safeArea />
+      <div className="sidebar-mobile-content-safe-area flex min-h-0 flex-1 flex-col overflow-hidden">
+        <AppSidebar overscrollBehavior="none" />
+      </div>
+    </dialog>
+  );
+}
 
 function DesktopSidebarContent() {
   const { sidebarPinnedOpen, pinOpen } = useSidebarState();
@@ -85,8 +226,7 @@ function DesktopSidebarContent() {
 function MobileSidebarContent() {
   const { mobileOpen, closeForMobile } = useSidebarState();
   const [hasEntered, setHasEntered] = useState(false);
-  const drawerRef = useRef<HTMLDivElement>(null);
-  const wasOpenRef = useRef(false);
+  const wasOpenedRef = useRef(false);
 
   useEffect(() => {
     if (typeof window.matchMedia !== "function") return;
@@ -120,139 +260,56 @@ function MobileSidebarContent() {
     return () => window.cancelAnimationFrame(frameId);
   }, [mobileOpen, hasEntered]);
 
-  useEffect(() => {
-    if (!mobileOpen) {
-      if (wasOpenRef.current) {
-        wasOpenRef.current = false;
-        document.getElementById("mobile-nav-trigger")?.focus();
-      }
+  const isActive = mobileOpen && hasEntered;
+  const shouldRender = mobileOpen || hasEntered;
+
+  useLayoutEffect(() => {
+    if (mobileOpen) {
+      wasOpenedRef.current = true;
       return;
     }
 
-    wasOpenRef.current = true;
-    drawerRef.current?.focus();
+    if (!shouldRender && wasOpenedRef.current) {
+      wasOpenedRef.current = false;
+      document.getElementById("mobile-nav-trigger")?.focus();
+    }
+  }, [mobileOpen, shouldRender]);
 
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        event.preventDefault();
-        closeForMobile();
-        return;
-      }
-
-      if (event.key !== "Tab" || !drawerRef.current) return;
-
-      const focusableElements = Array.from(
-        drawerRef.current.querySelectorAll<HTMLElement>(
-          MOBILE_DRAWER_FOCUSABLE_SELECTOR
-        )
-      ).filter((element) => {
-        const style = window.getComputedStyle(element);
-        return style.display !== "none" && style.visibility !== "hidden";
-      });
-
-      if (focusableElements.length === 0) {
-        event.preventDefault();
-        drawerRef.current.focus();
-        return;
-      }
-
-      const activeElement = document.activeElement as HTMLElement | null;
-      const activeIndex = activeElement
-        ? focusableElements.indexOf(activeElement)
-        : -1;
-
-      if (activeIndex === -1) {
-        event.preventDefault();
-        (event.shiftKey
-          ? focusableElements[focusableElements.length - 1]
-          : focusableElements[0]
-        ).focus();
-      } else if (event.shiftKey && activeIndex === 0) {
-        event.preventDefault();
-        focusableElements[focusableElements.length - 1].focus();
-      } else if (
-        !event.shiftKey &&
-        activeIndex === focusableElements.length - 1
-      ) {
-        event.preventDefault();
-        focusableElements[0].focus();
-      }
-    };
-
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [mobileOpen, closeForMobile]);
-
-  const completeDrawerClose = (event: ReactTransitionEvent<HTMLDivElement>) => {
+  const completeDrawerClose = (
+    event: ReactTransitionEvent<HTMLDialogElement>
+  ) => {
     if (event.target !== event.currentTarget || mobileOpen || !hasEntered) {
       return;
     }
 
+    event.currentTarget.close();
     setHasEntered(false);
   };
 
   const handleDrawerTransitionEnd = (
-    event: ReactTransitionEvent<HTMLDivElement>
+    event: ReactTransitionEvent<HTMLDialogElement>
   ) => {
     if (event.propertyName !== "transform") return;
     completeDrawerClose(event);
   };
 
-  const isActive = mobileOpen && hasEntered;
-  const shouldRender = mobileOpen || hasEntered;
+  const handleDrawerTransitionCancel = (
+    event: ReactTransitionEvent<HTMLDialogElement>
+  ) => {
+    if (event.propertyName && event.propertyName !== "transform") return;
+    completeDrawerClose(event);
+  };
 
   return (
     <div className="md:hidden">
       {shouldRender ? (
-        <>
-          <button
-            type="button"
-            id="mobile-nav-overlay"
-            aria-label="サイドメニューを閉じる"
-            aria-hidden={!mobileOpen}
-            tabIndex={mobileOpen ? 0 : -1}
-            disabled={!mobileOpen}
-            onClick={closeForMobile}
-            className={cn(
-              "fixed inset-0 z-90 bg-transparent",
-              isActive ? "pointer-events-auto" : "pointer-events-none"
-            )}
-          >
-            <span
-              data-testid="mobile-nav-overlay-visual"
-              aria-hidden="true"
-              className={cn(
-                "mobile-safe-area-visual pointer-events-none absolute inset-x-0 top-0 bg-black/30 transition-opacity duration-300",
-                isActive ? "opacity-100" : "opacity-0"
-              )}
-            />
-          </button>
-
-          <div
-            ref={drawerRef}
-            id={MOBILE_SIDEBAR_ID}
-            role="dialog"
-            aria-label="サイドメニュー"
-            aria-modal="true"
-            aria-hidden={!mobileOpen}
-            inert={!mobileOpen}
-            tabIndex={-1}
-            onTransitionEnd={handleDrawerTransitionEnd}
-            className={cn(
-              sidebarMobileContainerStyle,
-              isActive ? "translate-x-0" : "-translate-x-full"
-            )}
-            onTransitionCancel={completeDrawerClose}
-          >
-            <div aria-hidden="true" className={sidebarMobileSurfaceStyle} />
-            <div className="relative z-10 flex h-full w-full flex-col">
-              <SidebarHeader onClose={closeForMobile} safeArea />
-              <div className="sidebar-mobile-content-safe-area flex min-h-0 flex-1 flex-col overflow-hidden">
-                <AppSidebar overscrollBehavior="none" />
-              </div>
-            </div>
-          </div>
-        </>
+        <MobileSidebarDialog
+          mobileOpen={mobileOpen}
+          isActive={isActive}
+          closeForMobile={closeForMobile}
+          onTransitionEnd={handleDrawerTransitionEnd}
+          onTransitionCancel={handleDrawerTransitionCancel}
+        />
       ) : null}
     </div>
   );
