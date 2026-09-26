@@ -23,6 +23,7 @@ describe("buildSidebarMenu", () => {
         "/teams",
         "/ranking",
         "/gathering-spots",
+        "/venues",
       ])
     );
     expect(paths).not.toContain("/schedule");
@@ -50,6 +51,7 @@ describe("buildSidebarMenu", () => {
         "教官",
         "クラス",
         "集合場所管理",
+        "実施場所管理",
       ])
     );
     expect(labels).not.toContain("スケジュール");
@@ -77,6 +79,7 @@ describe("buildSidebarMenu", () => {
     );
     expect(deletionSection?.items.map((item) => item.label)).toEqual([
       "集合場所管理",
+      "実施場所管理",
     ]);
 
     const classRoomItem = buildSidebarMenu("admin")
