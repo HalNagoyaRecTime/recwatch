@@ -1,17 +1,13 @@
 import { useEffect, useState } from "react";
 
+import type { AdminNotificationCommandApi } from "~/features/notifications/api/contracts/admin-notification-command-api";
+import type { AdminNotificationQueryApi } from "~/features/notifications/api/contracts/admin-notification-query-api";
 import type { NotificationAudienceApi } from "~/features/notifications/api/contracts/notification-audience-api";
 import type {
-  NotificationManagementApi,
-  NotificationUpdate,
-  NotificationUpdateAudience,
-} from "~/features/notifications/api/contracts/notification-management-api";
-import { ClientErrors, getErrorMessage } from "~/lib/client-error";
+  AdminNotificationDetail,
+  NotificationPatchRequest,
+} from "~/features/notifications/api/contracts/admin-notification-command-api";
 import type { NotificationAudienceOption } from "~/features/notifications/model/notification-audience";
-import {
-  canModifyNotification,
-  type ManagedNotification,
-} from "~/features/notifications/model/notification";
 import {
   initialNotificationDraft,
   type NotificationDraft,
@@ -20,32 +16,41 @@ import {
   validateNotificationDraft,
   type NotificationDraftErrors,
 } from "~/features/notifications/model/notification-draft-validation";
+import { getErrorMessage } from "~/lib/client-error";
+import {
+  reportNotificationActionError,
+  type NotificationFeedbackReporter,
+} from "~/features/notifications/hooks/notification-feedback";
 
 type UseNotificationEditOptions = {
-  api: NotificationManagementApi;
   audienceApi: NotificationAudienceApi;
+  commandApi: AdminNotificationCommandApi;
+  queryApi: AdminNotificationQueryApi;
   notificationId: number;
+  reportFeedback?: NotificationFeedbackReporter;
 };
 
 type NotificationEditResult =
   | {
-      api: NotificationManagementApi;
+      api: AdminNotificationQueryApi;
       notificationId: number;
       status: "loaded";
-      notification: ManagedNotification;
+      notification: AdminNotificationDetail;
       draft: NotificationDraft;
     }
   | {
-      api: NotificationManagementApi;
+      api: AdminNotificationQueryApi;
       notificationId: number;
       status: "error";
       error: string;
     };
 
 export function useNotificationEdit({
-  api,
   audienceApi,
+  commandApi,
+  queryApi,
   notificationId,
+  reportFeedback,
 }: UseNotificationEditOptions) {
   const [notificationResult, setNotificationResult] =
     useState<NotificationEditResult | null>(null);
@@ -63,7 +68,7 @@ export function useNotificationEdit({
   const isValidNotificationId =
     Number.isSafeInteger(notificationId) && notificationId > 0;
   const currentNotificationResult =
-    notificationResult?.api === api &&
+    notificationResult?.api === queryApi &&
     notificationResult.notificationId === notificationId
       ? notificationResult
       : null;
@@ -93,13 +98,12 @@ export function useNotificationEdit({
 
     let active = true;
 
-    api
-      .getById(notificationId)
+    queryApi
+      .getDetail(notificationId)
       .then((loadedNotification) => {
         if (!active) return;
-
         setNotificationResult({
-          api,
+          api: queryApi,
           notificationId,
           status: "loaded",
           notification: loadedNotification,
@@ -108,44 +112,40 @@ export function useNotificationEdit({
       })
       .catch((error: unknown) => {
         if (!active) return;
-
         setNotificationResult({
-          api,
+          api: queryApi,
           notificationId,
           status: "error",
-          error: toManagementErrorMessage(error),
+          error: getErrorMessage(error),
         });
       });
 
     return () => {
       active = false;
     };
-  }, [api, isValidNotificationId, notificationId]);
+  }, [isValidNotificationId, notificationId, queryApi]);
 
   useEffect(() => {
     let active = true;
-
     audienceApi
       .load()
       .then((options) => {
-        if (active) {
-          setAudienceResult({
-            api: audienceApi,
-            reloadKey: audienceReloadKey,
-            options,
-            error: null,
-          });
-        }
+        if (!active) return;
+        setAudienceResult({
+          api: audienceApi,
+          reloadKey: audienceReloadKey,
+          options,
+          error: null,
+        });
       })
       .catch((error: unknown) => {
-        if (active) {
-          setAudienceResult({
-            api: audienceApi,
-            reloadKey: audienceReloadKey,
-            options: [],
-            error: toAudienceErrorMessage(error),
-          });
-        }
+        if (!active) return;
+        setAudienceResult({
+          api: audienceApi,
+          reloadKey: audienceReloadKey,
+          options: [],
+          error: getErrorMessage(error),
+        });
       });
 
     return () => {
@@ -155,7 +155,7 @@ export function useNotificationEdit({
 
   function handleChange(nextDraft: NotificationDraft) {
     setNotificationResult((current) =>
-      current?.api === api &&
+      current?.api === queryApi &&
       current.notificationId === notificationId &&
       current.status === "loaded"
         ? { ...current, draft: nextDraft }
@@ -172,48 +172,65 @@ export function useNotificationEdit({
   }
 
   async function submit() {
-    if (!notification || !canModifyNotification(notification) || isSubmitting) {
-      return false;
-    }
+    if (!notification || isSubmitting) return false;
 
     const nextErrors = validateNotificationDraft(draft);
     setErrors(nextErrors);
+    if (Object.keys(nextErrors).length > 0) return false;
 
-    if (Object.keys(nextErrors).length > 0) {
-      return false;
-    }
-
-    const update = toNotificationUpdate(
-      draft,
-      isAudienceEditableFor(notification)
-    );
-    if (!update) {
-      setSubmissionError(ClientErrors.INVALID_REQUEST.message);
-      return false;
-    }
+    const request = toNotificationPatchRequest(notification, draft);
+    if (!request) return false;
 
     setIsSubmitting(true);
     setSubmissionError(null);
-
     try {
-      await api.update(notification.id, update);
+      const updated = await commandApi.patch(
+        notification.notificationId,
+        request
+      );
+      setNotificationResult({
+        api: queryApi,
+        notificationId,
+        status: "loaded",
+        notification: updated,
+        draft: toNotificationDraft(updated),
+      });
+      reportFeedback?.({
+        kind: "action-success",
+        title: "通知を更新しました",
+        message: "通知の変更を保存しました。",
+      });
       return true;
     } catch (error) {
-      setSubmissionError(toManagementErrorMessage(error));
+      const message = getErrorMessage(error);
+      setSubmissionError(message);
+      reportNotificationActionError(reportFeedback, {
+        title: "通知を更新できませんでした",
+        message,
+        action: "notification.patch",
+        endpoint: `/api/v1/admin/notifications/${notification.notificationId}`,
+        error,
+      });
       return false;
     } finally {
       setIsSubmitting(false);
     }
   }
 
+  const canEditAudience = notification
+    ? notification.schedules.every(
+        (schedule) => schedule.status === "scheduled"
+      )
+    : false;
+
   return {
     audienceError,
     audienceOptions,
-    canEditAudience: notification ? isAudienceEditableFor(notification) : false,
+    canEditAudience,
     draft,
     errors,
     isAudienceLoading,
-    isEditable: notification ? canModifyNotification(notification) : false,
+    isEditable: Boolean(notification),
     isLoading,
     isSubmitting,
     loadError,
@@ -225,102 +242,69 @@ export function useNotificationEdit({
   };
 }
 
-function toManagementErrorMessage(error: unknown) {
-  return getErrorMessage(error);
-}
-
-function toAudienceErrorMessage(error: unknown) {
-  return getErrorMessage(error);
-}
-
 function toNotificationDraft(
-  notification: ManagedNotification
+  notification: AdminNotificationDetail
 ): NotificationDraft {
-  const audience =
-    notification.audience ??
-    (notification.relatedEventId
-      ? {
-          type: "event_participants" as const,
-          eventId: notification.relatedEventId,
-        }
-      : { type: "resolved_recipients" as const });
+  const schedule = notification.schedules[0];
+  const audience = schedule?.audience.items[0] ?? { type: "all" as const };
+  return {
+    title: notification.content.push.title,
+    body: notification.content.push.body,
+    audienceType: audience.type,
+    audienceId: audience.type === "all" ? "" : String(audience.targetId),
+    deliveryTiming: "scheduled",
+    scheduledAt: toDateTimeLocalValue(schedule?.sendAt),
+  };
+}
+
+function toNotificationPatchRequest(
+  notification: AdminNotificationDetail,
+  draft: NotificationDraft
+): NotificationPatchRequest | null {
+  const allSchedulesUnstarted = notification.schedules.every(
+    (schedule) => schedule.status === "scheduled"
+  );
+  if (!allSchedulesUnstarted) {
+    return { content: { detail: { title: draft.title, body: draft.body } } };
+  }
+
+  const schedule = notification.schedules[0];
+  if (!schedule) return null;
+
+  const targetId = Number(draft.audienceId);
+  const audienceItem =
+    draft.audienceType === "all"
+      ? ({ type: "all" } as const)
+      : Number.isSafeInteger(targetId) && targetId > 0
+        ? ({ type: draft.audienceType, targetId } as const)
+        : null;
+  if (!audienceItem) return null;
+
+  const sendAt = draft.scheduledAt
+    ? new Date(draft.scheduledAt).toISOString()
+    : null;
 
   return {
-    title: notification.title,
-    body: notification.body,
-    audienceType:
-      audience.type === "resolved_recipients" ? "all" : audience.type,
-    audienceId:
-      audience.type === "class_room"
-        ? String(audience.classRoomId)
-        : audience.type === "gathering"
-          ? String(audience.gatheringId)
-          : audience.type === "event_participants"
-            ? String(audience.eventId)
-            : "",
-    deliveryTiming: "scheduled",
-    scheduledAt: toDateTimeLocalValue(notification.scheduledAt),
+    content: {
+      push: { title: draft.title, body: draft.body },
+      detail: { title: draft.title, body: draft.body },
+    },
+    schedule: {
+      notificationScheduleId: schedule.notificationScheduleId,
+      audience: { items: [audienceItem] },
+      delivery:
+        draft.deliveryTiming === "scheduled" && sendAt
+          ? { type: "scheduled", sendAt }
+          : { type: "immediate", sendAt: null },
+    },
   };
 }
 
-function toDateTimeLocalValue(value: string) {
+function toDateTimeLocalValue(value: string | undefined) {
+  if (!value) return "";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "";
-
-  const localDate = new Date(
-    date.getTime() - date.getTimezoneOffset() * 60_000
-  );
-  return localDate.toISOString().slice(0, 16);
-}
-
-function isAudienceEditableFor(notification: ManagedNotification) {
-  return Boolean(
-    notification.audience &&
-    notification.audience.type !== "resolved_recipients"
-  );
-}
-
-function toNotificationUpdate(
-  draft: NotificationDraft,
-  includeAudience: boolean
-): NotificationUpdate | null {
-  const scheduledAt = draft.scheduledAt
-    ? new Date(draft.scheduledAt)
-    : undefined;
-
-  if (scheduledAt && Number.isNaN(scheduledAt.getTime())) {
-    return null;
-  }
-
-  const update: NotificationUpdate = {
-    body: draft.body,
-    scheduledAt: scheduledAt?.toISOString(),
-    title: draft.title,
-  };
-
-  if (includeAudience) {
-    const audience = toUpdateAudience(draft);
-    if (!audience) return null;
-    update.audience = audience;
-  }
-
-  return update;
-}
-
-function toUpdateAudience(draft: NotificationDraft) {
-  if (draft.audienceType === "all") {
-    return { type: "all" as const };
-  }
-
-  const id = Number(draft.audienceId);
-  if (!Number.isSafeInteger(id) || id <= 0) return null;
-
-  const audience: NotificationUpdateAudience =
-    draft.audienceType === "class_room"
-      ? { type: "class_room", classRoomId: id }
-      : draft.audienceType === "gathering"
-        ? { type: "gathering", gatheringId: id }
-        : { type: "event_participants", eventId: id };
-
-  return audience;
+  return new Date(date.getTime() - date.getTimezoneOffset() * 60_000)
+    .toISOString()
+    .slice(0, 16);
 }

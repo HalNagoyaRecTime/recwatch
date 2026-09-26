@@ -2,10 +2,10 @@ import { AlertTriangleIcon } from "lucide-react";
 import { useEffect } from "react";
 
 import { Button } from "~/components/ui/button/Button";
-import type { ManagedNotification } from "~/features/notifications/model/notification";
+import type { NotificationListItem } from "~/features/notifications/model/notification-list";
 
 type DeleteNotificationDialogProps = {
-  notification: ManagedNotification;
+  notification: NotificationListItem;
   isSubmitting: boolean;
   onClose: () => void;
   onConfirm: () => void;

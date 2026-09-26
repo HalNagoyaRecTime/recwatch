@@ -94,9 +94,18 @@ flowchart LR
 app/features/notifications/
 ├─ api/
 │  ├─ contracts/
-│  │  └─ errors/
+│  │  ├─ admin-notification-command-api.ts
+│  │  ├─ admin-notification-query-api.ts
+│  │  ├─ notification-config-api.ts
+│  │  ├─ notification-schedule-command-api.ts
+│  │  ├─ notification-schedule-query-api.ts
+│  │  └─ notification-push-delivery-api.ts
 │  ├─ http/
 │  ├─ dto/
+│  │  ├─ notification-common-dto.ts
+│  │  ├─ admin-notification-dto.ts
+│  │  ├─ notification-schedule-dto.ts
+│  │  └─ notification-error-dto.ts
 │  └─ mappers/
 ├─ mock/
 ├─ hooks/
@@ -104,7 +113,6 @@ app/features/notifications/
 │  ├─ useNotificationCreate.ts
 │  └─ useNotificationEdit.ts
 ├─ model/
-│  ├─ notification.ts
 │  ├─ notification-audience.ts
 │  ├─ notification-draft.ts
 │  ├─ notification-draft-validation.ts

@@ -75,7 +75,7 @@ export function toNotificationAudienceOptions(input: {
     ...input.events.map((event) => ({
       id: String(event.event_id),
       name: event.event_name,
-      type: "event_participants" as const,
+      type: "event" as const,
     })),
   ];
 }

@@ -1,6 +1,4 @@
-import type { ManagedNotificationStatus } from "~/features/notifications/model/notification";
-
-export type NotificationDeliveryStatus = ManagedNotificationStatus;
+export type NotificationDeliveryStatus = string | null;
 
 export type NotificationListItem = {
   audience: string;
