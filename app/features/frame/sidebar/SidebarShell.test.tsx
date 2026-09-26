@@ -155,15 +155,18 @@ describe("モバイル Drawer", () => {
     document.body.style.setProperty("overflow", "auto");
     document.body.style.setProperty("overscroll-behavior", "contain");
     document.documentElement.style.setProperty("overflow", "scroll");
-    document.documentElement.style.setProperty("overscroll-behavior", "none");
+    document.documentElement.style.setProperty(
+      "overscroll-behavior",
+      "contain"
+    );
     renderShell();
 
     openMobileDrawer();
 
     expect(document.body.style.overflow).toBe("hidden");
-    expect(document.body.style.overscrollBehavior).toBe("none");
-    expect(document.documentElement.style.overflow).toBe("hidden");
-    expect(document.documentElement.style.overscrollBehavior).toBe("none");
+    expect(document.body.style.overscrollBehavior).toBe("contain");
+    expect(document.documentElement.style.overflow).toBe("scroll");
+    expect(document.documentElement.style.overscrollBehavior).toBe("contain");
     expect(getMobileDrawer().querySelector(".scrollbar-none")).toHaveClass(
       "overflow-y-auto",
       "overscroll-y-none"
@@ -174,7 +177,7 @@ describe("モバイル Drawer", () => {
     expect(document.body.style.overflow).toBe("auto");
     expect(document.body.style.overscrollBehavior).toBe("contain");
     expect(document.documentElement.style.overflow).toBe("scroll");
-    expect(document.documentElement.style.overscrollBehavior).toBe("none");
+    expect(document.documentElement.style.overscrollBehavior).toBe("contain");
     const drawer = getMobileDrawer();
     expect(drawer).toBeInTheDocument();
     expect(drawer).toHaveClass("-translate-x-full");
@@ -189,7 +192,7 @@ describe("モバイル Drawer", () => {
     expect(document.body.style.overflow).toBe("auto");
     expect(document.body.style.overscrollBehavior).toBe("contain");
     expect(document.documentElement.style.overflow).toBe("scroll");
-    expect(document.documentElement.style.overscrollBehavior).toBe("none");
+    expect(document.documentElement.style.overscrollBehavior).toBe("contain");
   });
 
   it("Mobile Drawerのsurfaceはbottom safe areaを空けたopaque面にする", () => {

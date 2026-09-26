@@ -1,5 +1,7 @@
 import { useEffect } from "react";
 
+export type DocumentScrollLockMode = "document" | "body";
+
 type InlineStyleValue = {
   value: string;
   priority: string;
@@ -12,8 +14,10 @@ type DocumentScrollStyles = {
   documentOverscrollBehavior: InlineStyleValue;
 };
 
-let activeLocks = 0;
+let bodyOnlyLocks = 0;
+let documentLocks = 0;
 let originalStyles: DocumentScrollStyles | null = null;
+let appliedMode: DocumentScrollLockMode | null = null;
 
 function readInlineStyle(
   element: HTMLElement,
@@ -37,59 +41,114 @@ function restoreInlineStyle(
   }
 }
 
-function acquireDocumentScrollLock() {
-  if (typeof document === "undefined") return () => {};
+function restoreOriginalStyles() {
+  if (!originalStyles) return;
 
   const { body, documentElement } = document;
-  if (activeLocks === 0) {
-    originalStyles = {
-      bodyOverflow: readInlineStyle(body, "overflow"),
-      bodyOverscrollBehavior: readInlineStyle(body, "overscroll-behavior"),
-      documentOverflow: readInlineStyle(documentElement, "overflow"),
-      documentOverscrollBehavior: readInlineStyle(
-        documentElement,
-        "overscroll-behavior"
-      ),
-    };
+  restoreInlineStyle(body, "overflow", originalStyles.bodyOverflow);
+  restoreInlineStyle(
+    body,
+    "overscroll-behavior",
+    originalStyles.bodyOverscrollBehavior
+  );
+  restoreInlineStyle(
+    documentElement,
+    "overflow",
+    originalStyles.documentOverflow
+  );
+  restoreInlineStyle(
+    documentElement,
+    "overscroll-behavior",
+    originalStyles.documentOverscrollBehavior
+  );
+  originalStyles = null;
+  appliedMode = null;
+}
 
+function captureOriginalStyles() {
+  const { body, documentElement } = document;
+  originalStyles = {
+    bodyOverflow: readInlineStyle(body, "overflow"),
+    bodyOverscrollBehavior: readInlineStyle(body, "overscroll-behavior"),
+    documentOverflow: readInlineStyle(documentElement, "overflow"),
+    documentOverscrollBehavior: readInlineStyle(
+      documentElement,
+      "overscroll-behavior"
+    ),
+  };
+}
+
+function applyEffectiveLockMode() {
+  if (!originalStyles) return;
+
+  const nextMode =
+    documentLocks > 0 ? "document" : bodyOnlyLocks > 0 ? "body" : null;
+  if (nextMode === appliedMode) return;
+
+  const { body, documentElement } = document;
+  if (nextMode === "document") {
     body.style.setProperty("overflow", "hidden");
     body.style.setProperty("overscroll-behavior", "none");
     documentElement.style.setProperty("overflow", "hidden");
     documentElement.style.setProperty("overscroll-behavior", "none");
+  } else if (nextMode === "body") {
+    body.style.setProperty("overflow", "hidden");
+
+    if (appliedMode === "document") {
+      restoreInlineStyle(
+        body,
+        "overscroll-behavior",
+        originalStyles.bodyOverscrollBehavior
+      );
+      restoreInlineStyle(
+        documentElement,
+        "overflow",
+        originalStyles.documentOverflow
+      );
+      restoreInlineStyle(
+        documentElement,
+        "overscroll-behavior",
+        originalStyles.documentOverscrollBehavior
+      );
+    }
+  } else {
+    restoreOriginalStyles();
+    return;
   }
-  activeLocks += 1;
+
+  appliedMode = nextMode;
+}
+
+function acquireDocumentScrollLock(mode: DocumentScrollLockMode) {
+  if (typeof document === "undefined") return () => {};
+
+  if (!originalStyles) {
+    captureOriginalStyles();
+  }
+
+  if (mode === "document") documentLocks += 1;
+  else bodyOnlyLocks += 1;
+  applyEffectiveLockMode();
 
   let released = false;
   return () => {
     if (released) return;
     released = true;
-    activeLocks -= 1;
 
-    if (activeLocks > 0 || !originalStyles) return;
-
-    restoreInlineStyle(body, "overflow", originalStyles.bodyOverflow);
-    restoreInlineStyle(
-      body,
-      "overscroll-behavior",
-      originalStyles.bodyOverscrollBehavior
-    );
-    restoreInlineStyle(
-      documentElement,
-      "overflow",
-      originalStyles.documentOverflow
-    );
-    restoreInlineStyle(
-      documentElement,
-      "overscroll-behavior",
-      originalStyles.documentOverscrollBehavior
-    );
-    originalStyles = null;
+    if (mode === "document") documentLocks -= 1;
+    else bodyOnlyLocks -= 1;
+    applyEffectiveLockMode();
   };
 }
 
-export function useDocumentScrollLock(isLocked: boolean) {
+export function useDocumentScrollLock(
+  isLocked: boolean,
+  options: { mode?: DocumentScrollLockMode } = {}
+) {
+  const mode = options.mode ?? "document";
+
   useEffect(() => {
     if (!isLocked) return;
-    return acquireDocumentScrollLock();
-  }, [isLocked]);
+    return acquireDocumentScrollLock(mode);
+  }, [isLocked, mode]);
 }

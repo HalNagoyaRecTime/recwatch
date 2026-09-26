@@ -109,7 +109,7 @@ function MobileSidebarContent() {
     };
   }, [closeForMobile]);
 
-  useDocumentScrollLock(mobileOpen);
+  useDocumentScrollLock(mobileOpen, { mode: "body" });
 
   useEffect(() => {
     if (!mobileOpen || hasEntered) return;
