@@ -7,16 +7,23 @@ import { SIDEBAR_DURATION } from "~/features/frame/sidebar/styles/sidebar-styles
 
 type SidebarHeaderProps = {
   onClose?: () => void;
+  safeArea?: boolean;
 };
 
-export function SidebarHeader({ onClose }: SidebarHeaderProps) {
+export function SidebarHeader({
+  onClose,
+  safeArea = false,
+}: SidebarHeaderProps) {
   const { isExpanded } = useSidebarUI();
 
   return (
     <div
       className={cn(
-        "main-header-height border-border-subtle flex items-center gap-3 border-b pl-4",
-        onClose && "justify-between pr-3"
+        "main-header-height border-border-subtle flex items-center gap-3 border-b",
+        !safeArea && "pl-4",
+        safeArea && "sidebar-mobile-header-safe-area",
+        onClose && "justify-between",
+        onClose && !safeArea && "pr-3"
       )}
     >
       <a href="/" className="flex cursor-pointer items-center gap-2">

@@ -27,7 +27,10 @@ export function Layout({ children }: { children: ReactNode }) {
     <html lang="en" suppressHydrationWarning>
       <head>
         <meta charSet="utf-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta
+          name="viewport"
+          content="width=device-width, initial-scale=1, viewport-fit=cover"
+        />
         <Meta />
         <Links />
         <script
@@ -47,6 +50,7 @@ export function Layout({ children }: { children: ReactNode }) {
                 root.classList.toggle("dark", isDark);
                 root.dataset.theme = theme;
                 root.style.colorScheme = isDark ? "dark" : "light";
+                root.style.backgroundColor = isDark ? "#000000" : "#ffffff";
 
                 // sessionStorageはサーバーから読めないため、初回HTMLを分岐せず属性だけ先に付ける。
                 // SPAのroot fallbackを削除認証だけ切り替えるため、pendingはここでは消費しない。
@@ -58,6 +62,8 @@ export function Layout({ children }: { children: ReactNode }) {
                     ) === "1"
                   ) {
                     root.dataset.accountDeletionAuthCallback = "true";
+                    root.dataset.documentBackgroundOverride = "#ffffff";
+                    root.style.backgroundColor = "#ffffff";
                   }
                 } catch {
                   // sessionStorageが利用できない場合は通常のfallbackを表示する。
@@ -101,7 +107,7 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
   }
 
   return (
-    <main className="min-h-dvh p-6 md:p-8">
+    <main className="viewport-min-height p-6 md:p-8">
       <div className="shadow-soft border-border-subtle bg-surface-base mx-auto max-w-5xl rounded-3xl border p-6 md:p-8">
         <div className="text-brand-primary font-['DM_Mono'] text-xs tracking-[0.18em] uppercase">
           Failure Boundary
@@ -125,7 +131,7 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
 export function HydrateFallback() {
   // サーバーとクライアントのHydration対象DOMを揃えるため、表示はCSSで切り替える。
   return (
-    <div className="root-hydrate-fallback bg-surface-hover p-6">
+    <div className="root-hydrate-fallback viewport-min-height bg-surface-hover p-6">
       <span className="root-hydrate-fallback-default">読み込み中...</span>
       {/* アカウント削除ページ専用 */}
       <span className="root-hydrate-fallback-deletion">

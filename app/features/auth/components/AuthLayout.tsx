@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
 
 import { AuthBrand } from "~/features/auth/components/AuthBrand";
 import { AuthFooter } from "~/features/auth/components/AuthFooter";
@@ -13,7 +13,10 @@ export function AuthLayout({
   contentClassName = "w-full max-w-sm flex-1 flex flex-col justify-center",
 }: AuthLayoutProps) {
   return (
-    <main className="flex min-h-dvh flex-col items-center justify-center px-6 pt-10">
+    <main
+      className="viewport-min-height box-border flex flex-col items-center justify-center"
+      style={authLayoutStyle}
+    >
       <section className={contentClassName}>
         <AuthBrand />
         {children}
@@ -22,3 +25,10 @@ export function AuthLayout({
     </main>
   );
 }
+
+const authLayoutStyle = {
+  paddingTop: "calc(2.5rem + env(safe-area-inset-top, 0px))",
+  paddingRight: "calc(1.5rem + env(safe-area-inset-right, 0px))",
+  paddingBottom: "calc(2rem + env(safe-area-inset-bottom, 0px))",
+  paddingLeft: "calc(1.5rem + env(safe-area-inset-left, 0px))",
+} satisfies CSSProperties;

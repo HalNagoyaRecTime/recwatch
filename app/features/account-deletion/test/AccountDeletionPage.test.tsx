@@ -8,6 +8,7 @@ import {
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { MemoryRouter } from "react-router";
 import type { AccountDeletionGateway } from "../api/contracts/account-deletion-gateway";
+import { applyTheme } from "~/lib/theme";
 
 const mocks = vi.hoisted(() => ({
   startAccountDeletionAuth: vi.fn(),
@@ -22,6 +23,12 @@ import { AccountDeletionPage } from "../pages/AccountDeletionPage";
 
 afterEach(() => {
   cleanup();
+  document.documentElement.style.removeProperty("background-color");
+  document.body.style.removeProperty("background-color");
+  delete document.documentElement.dataset.documentBackgroundOverride;
+  delete document.documentElement.dataset.accountDeletionAuthCallback;
+  delete document.documentElement.dataset.theme;
+  document.documentElement.classList.remove("dark");
   document
     .querySelectorAll("link[data-test-account-deletion-favicon]")
     .forEach((link) => link.remove());
@@ -113,24 +120,46 @@ describe("AccountDeletionPage", () => {
     ).toBeInTheDocument();
   });
 
-  it("Safari向けのスクロール設定を表示中だけ適用し、終了時に戻す", () => {
+  it("表示中は白く保ち、unmount時に最新テーマの背景へ戻す", () => {
+    applyTheme("dark");
+    expect(document.documentElement.style.backgroundColor).toBe("rgb(0, 0, 0)");
+    expect(document.body.style.backgroundColor).toBe("rgb(0, 0, 0)");
     const { unmount } = renderPage();
 
     expect(screen.getByRole("main")).toHaveClass(
       "account-deletion-viewport",
-      "min-h-screen",
-      "min-h-dvh"
+      "viewport-min-height"
     );
-    expect(document.documentElement.style.background).toBe(
+    expect(
+      document.documentElement.style.getPropertyValue("background-color")
+    ).toBe("rgb(255, 255, 255)");
+    expect(document.body.style.backgroundColor).toBe("rgb(255, 255, 255)");
+    expect(document.documentElement.dataset.documentBackgroundOverride).toBe(
+      "#ffffff"
+    );
+
+    applyTheme("light");
+    expect(document.documentElement.style.backgroundColor).toBe(
       "rgb(255, 255, 255)"
     );
-    expect(document.body.style.height).toBe("auto");
-    expect(document.body.style.overflowY).toBe("auto");
-    expect(document.body.style.background).toBe("transparent");
+    expect(document.body.style.backgroundColor).toBe("rgb(255, 255, 255)");
+    applyTheme("dark");
+    expect(document.body.style.backgroundColor).toBe("rgb(255, 255, 255)");
+
+    expect(document.body.style.height).toBe("");
+    expect(document.body.style.overflowY).toBe("");
+    expect(document.body.style.background).toBe("");
 
     unmount();
 
-    expect(document.documentElement.style.background).toBe("");
+    expect(document.documentElement.style.backgroundColor).toBe("rgb(0, 0, 0)");
+    expect(document.body.style.backgroundColor).toBe("rgb(0, 0, 0)");
+    expect(document.documentElement.dataset.documentBackgroundOverride).toBe(
+      undefined
+    );
+    expect(document.documentElement.dataset.accountDeletionAuthCallback).toBe(
+      undefined
+    );
     expect(document.body.style.height).toBe("");
     expect(document.body.style.overflowY).toBe("");
     expect(document.body.style.background).toBe("");

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { useSearchBodyScrollLock } from "~/features/frame/main-header/search/hooks/useSearchBodyScrollLock";
+import { useDocumentScrollLock } from "~/hooks/useDocumentScrollLock";
 import { useSearchFrame } from "~/features/frame/main-header/search/hooks/useSearchFrame";
 import { useSearchGlobalShortcut } from "~/features/frame/main-header/search/hooks/useSearchGlobalShortcut";
 
@@ -38,7 +38,7 @@ export function useSearchTransition() {
     };
   }, [isOpen]);
 
-  useSearchBodyScrollLock({ isLocked: isOpen });
+  useDocumentScrollLock(isOpen);
   useSearchGlobalShortcut({ isOpen, onClose: close, onOpen: open });
 
   return {

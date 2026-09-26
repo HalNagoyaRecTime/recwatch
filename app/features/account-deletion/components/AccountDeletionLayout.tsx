@@ -3,6 +3,7 @@ import type { CSSProperties, ReactNode } from "react";
 
 import { AccountDeletionBrand } from "~/features/account-deletion/components/AccountDeletionBrand";
 import { AccountDeletionFooter } from "~/features/account-deletion/components/AccountDeletionFooter";
+import { applyTheme, isThemeMode } from "~/lib/theme";
 
 type AccountDeletionLayoutProps = {
   children: ReactNode;
@@ -61,69 +62,18 @@ function useAccountDeletionFavicon() {
   }, []);
 }
 
-function useAccountDeletionViewport() {
+function useAccountDeletionDocumentBackground() {
   useEffect(() => {
     const root = document.documentElement;
-    const body = document.body;
-    const app = document.getElementById("app");
-    const viewportMeta = document.querySelector<HTMLMetaElement>(
-      'meta[name="viewport"]'
-    );
-    const previousBodyStyle = {
-      height: body.style.height,
-      minHeight: body.style.minHeight,
-      overflowX: body.style.overflowX,
-      overflowY: body.style.overflowY,
-      overscrollBehaviorY: body.style.overscrollBehaviorY,
-      background: body.style.background,
-    };
-    const previousRootStyle = {
-      background: root.style.background,
-      backgroundColor: root.style.backgroundColor,
-    };
-    const previousAppStyle = app
-      ? {
-          height: app.style.height,
-          minHeight: app.style.minHeight,
-        }
-      : null;
-    const previousViewportContent = viewportMeta?.content ?? null;
-
-    root.style.background = "#ffffff";
-    body.style.height = "auto";
-    body.style.minHeight = "100%";
-    body.style.overflowX = "hidden";
-    body.style.overflowY = "auto";
-    body.style.overscrollBehaviorY = "auto";
-    body.style.background = "transparent";
-
-    if (app) {
-      app.style.height = "auto";
-      app.style.minHeight = "100%";
-    }
-
-    if (viewportMeta && !viewportMeta.content.includes("viewport-fit=cover")) {
-      viewportMeta.content = `${viewportMeta.content}, viewport-fit=cover`;
-    }
+    root.dataset.documentBackgroundOverride = "#ffffff";
+    root.style.setProperty("background-color", "#ffffff");
+    document.body.style.setProperty("background-color", "#ffffff");
 
     return () => {
-      root.style.background = previousRootStyle.background;
-      root.style.backgroundColor = previousRootStyle.backgroundColor;
-      body.style.height = previousBodyStyle.height;
-      body.style.minHeight = previousBodyStyle.minHeight;
-      body.style.overflowX = previousBodyStyle.overflowX;
-      body.style.overflowY = previousBodyStyle.overflowY;
-      body.style.overscrollBehaviorY = previousBodyStyle.overscrollBehaviorY;
-      body.style.background = previousBodyStyle.background;
-
-      if (app && previousAppStyle) {
-        app.style.height = previousAppStyle.height;
-        app.style.minHeight = previousAppStyle.minHeight;
-      }
-
-      if (viewportMeta && previousViewportContent !== null) {
-        viewportMeta.content = previousViewportContent;
-      }
+      delete root.dataset.documentBackgroundOverride;
+      delete root.dataset.accountDeletionAuthCallback;
+      const theme = root.dataset.theme ?? null;
+      applyTheme(isThemeMode(theme) ? theme : "system");
     };
   }, []);
 }
@@ -132,17 +82,17 @@ export function AccountDeletionLayout({
   children,
 }: AccountDeletionLayoutProps) {
   useAccountDeletionFavicon();
-  useAccountDeletionViewport();
+  useAccountDeletionDocumentBackground();
 
   return (
     <main
-      className="account-deletion-viewport flex min-h-dvh min-h-screen flex-col items-center justify-center-safe overflow-y-auto bg-white px-6 py-8 text-[#333333]"
+      className="account-deletion-viewport viewport-min-height box-border flex flex-col items-center justify-center-safe bg-white text-[#333333]"
       style={{
         ...accountDeletionThemeStyle,
-        background:
-          "linear-gradient(to bottom, #ffffff 0%, #ffffff calc(100% - env(safe-area-inset-bottom, 0px)), transparent calc(100% - env(safe-area-inset-bottom, 0px)), transparent 100%)",
         paddingTop: "calc(2rem + env(safe-area-inset-top, 0px))",
+        paddingRight: "calc(1.5rem + env(safe-area-inset-right, 0px))",
         paddingBottom: "calc(2rem + env(safe-area-inset-bottom, 0px))",
+        paddingLeft: "calc(1.5rem + env(safe-area-inset-left, 0px))",
       }}
     >
       <section className="flex w-full max-w-sm flex-1 flex-col justify-center gap-4">

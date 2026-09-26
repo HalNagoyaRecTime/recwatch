@@ -44,6 +44,9 @@
 }
 
 :root {
+  --main-header-height: 52px;
+  --main-footer-row-height: 42px;
+
   --bg-gradient-glow: rgba(56, 189, 248, 0.3);
 
   --surface-layout: rgba(255, 255, 255, 0.78);
@@ -120,19 +123,31 @@
 }
 
 @layer base {
+  html {
+    min-height: 100%;
+    background-color: #ffffff;
+  }
+
+  html.dark {
+    background-color: #000000;
+  }
+
+  html[data-account-deletion-auth-callback="true"] {
+    background-color: #ffffff;
+  }
+
   html,
   body {
     margin: 0;
-    height: 100%;
+    min-height: 100%;
     color: var(--text-base);
     font-family: Meiryo, system-ui, sans-serif;
   }
 
   body {
-    height: 100dvh;
-    overscroll-behavior-y: none;
-    overflow: hidden;
-    background-color: var(--surface-base);
+    min-height: 100vh;
+    overflow-x: hidden;
+    background-color: #ffffff;
     background-image: radial-gradient(
       circle at top right,
       var(--bg-gradient-glow),
@@ -140,9 +155,15 @@
     );
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    transition:
-      color 200ms cubic-bezier(0.4, 0, 0.2, 1),
-      background-color 200ms cubic-bezier(0.4, 0, 0.2, 1);
+    transition: color 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  html.dark body {
+    background-color: #000000;
+  }
+
+  html[data-document-background-override] body {
+    background-color: #ffffff;
   }
 
   a {
@@ -161,7 +182,14 @@
   }
 
   #app {
-    height: 100dvh;
+    min-height: 100vh;
+  }
+
+  @supports (min-height: 100dvh) {
+    body,
+    #app {
+      min-height: 100dvh;
+    }
   }
 
   ::selection {
@@ -170,12 +198,108 @@
 }
 
 @layer utilities {
+  .viewport-min-height {
+    min-height: 100vh;
+  }
+
+  @supports (min-height: 100dvh) {
+    .viewport-min-height {
+      min-height: 100dvh;
+    }
+  }
+
   .main-header-height {
-    height: 52px;
+    height: var(--main-header-height);
+  }
+
+  .main-header-row {
+    padding-top: 0.625rem;
+    padding-right: calc(0.75rem + env(safe-area-inset-right, 0px));
+    padding-bottom: 0.625rem;
+    padding-left: calc(0.75rem + env(safe-area-inset-left, 0px));
   }
 
   .main-footer-height {
-    height: 42px;
+    height: calc(
+      var(--main-footer-row-height) + env(safe-area-inset-bottom, 0px)
+    );
+  }
+
+  .main-footer-safe-area {
+    box-sizing: border-box;
+    padding-right: calc(0.75rem + env(safe-area-inset-right, 0px));
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    padding-left: calc(0.75rem + env(safe-area-inset-left, 0px));
+  }
+
+  .sidebar-mobile-header-safe-area {
+    box-sizing: border-box;
+    height: calc(var(--main-header-height) + env(safe-area-inset-top, 0px));
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-right: calc(0.75rem + env(safe-area-inset-right, 0px));
+    padding-left: calc(1rem + env(safe-area-inset-left, 0px));
+  }
+
+  .sidebar-mobile-content-safe-area {
+    padding-right: env(safe-area-inset-right, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    padding-left: env(safe-area-inset-left, 0px);
+  }
+
+  .mobile-sidebar-dialog::backdrop {
+    background: rgb(0 0 0 / 30%);
+    opacity: 0;
+    transition: opacity 300ms;
+  }
+
+  .mobile-sidebar-dialog[data-active="true"]::backdrop {
+    opacity: 1;
+  }
+
+  .page-side-panel {
+    position: sticky;
+    top: var(--main-header-height);
+    align-self: start;
+    height: calc(100vh - var(--main-header-height));
+    max-height: calc(100vh - var(--main-header-height));
+  }
+
+  @supports (height: 100dvh) {
+    .page-side-panel {
+      height: calc(100dvh - var(--main-header-height));
+      max-height: calc(100dvh - var(--main-header-height));
+    }
+  }
+
+  html[data-document-scrollbar="active"],
+  html[data-document-scrollbar="active"] body {
+    scrollbar-width: none;
+  }
+
+  html[data-document-scrollbar="active"]::-webkit-scrollbar,
+  html[data-document-scrollbar="active"] body::-webkit-scrollbar {
+    display: none;
+    width: 0;
+    height: 0;
+  }
+
+  @media (pointer: coarse) {
+    .document-scrollbar [data-scrollbar-track],
+    .document-scrollbar [data-scrollbar-thumb] {
+      pointer-events: none !important;
+    }
+  }
+
+  .page-padding {
+    padding: 1.5rem calc(1.25rem + env(safe-area-inset-right, 0px)) 1.5rem
+      calc(1.25rem + env(safe-area-inset-left, 0px));
+  }
+
+  @media (min-width: 48rem) {
+    .page-padding {
+      padding-right: calc(2.5rem + env(safe-area-inset-right, 0px));
+      padding-left: calc(2.5rem + env(safe-area-inset-left, 0px));
+    }
   }
 
   .app-rounded {
@@ -193,7 +317,6 @@
 
   html[data-account-deletion-auth-callback="true"] .root-hydrate-fallback {
     display: flex;
-    min-height: 100dvh;
     align-items: center;
     justify-content: center;
     background: #ffffff;
