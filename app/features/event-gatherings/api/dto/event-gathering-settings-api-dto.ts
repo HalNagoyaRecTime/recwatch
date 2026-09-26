@@ -1,10 +1,3 @@
-/** GET /api/v1/gatherings/:gatheringId/members の 1 件。参加者の user_id だけを使う。 */
-export type GatheringMemberResponseDto = {
-  gathering_group_member_id: number;
-  gathering_id: number;
-  user_id: number;
-};
-
 /** PUT /api/v1/events/:eventId/gatherings のリクエスト。 */
 export type GatheringSettingWriteRequestDto = {
   gathering_id?: number;

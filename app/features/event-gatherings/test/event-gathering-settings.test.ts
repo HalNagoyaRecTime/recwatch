@@ -18,15 +18,13 @@ const settings: EventGatheringSettings = {
           id: 101,
           time: "10:45",
           spot: { id: 1, name: "出入口①" },
-          memberUserIds: [1001, 1002],
           memberCount: 2,
         },
         {
           id: 102,
           time: "99:59",
           spot: { id: 2, name: "出入口②" },
-          memberUserIds: [],
-          memberCount: null,
+          memberCount: 0,
         },
       ],
     },
@@ -46,12 +44,10 @@ describe("toRoundDrafts", () => {
     expect(drafts[0].gatherings[1].time).toBe("");
   });
 
-  it("登録済みの参加者を選択状態と削除可否の判断に引き継ぐ", () => {
+  it("登録済みの参加人数を削除可否の判断に引き継ぐ", () => {
     const drafts = toRoundDrafts(settings);
 
-    expect(drafts[0].gatherings[0].memberUserIds).toEqual([1001, 1002]);
     expect(drafts[0].gatherings[0].savedMemberCount).toBe(2);
-    expect(drafts[0].gatherings[1].memberUserIds).toEqual([]);
     expect(drafts[0].gatherings[1].savedMemberCount).toBe(0);
   });
 

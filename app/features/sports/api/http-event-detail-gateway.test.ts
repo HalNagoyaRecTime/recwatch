@@ -47,7 +47,6 @@ describe("createHttpEventDetailGateway", () => {
               id: 101,
               time: "10:45",
               spot: { id: 1, name: "出入口①" },
-              memberUserIds: [],
               memberCount: 16,
             },
           ],

@@ -1,8 +1,5 @@
 import type { EventGatheringSettingsGateway } from "~/features/event-gatherings/api/contracts/event-gathering-settings-gateway";
-import type {
-  EventGatheringSettingsResponseDto,
-  GatheringMemberResponseDto,
-} from "~/features/event-gatherings/api/dto/event-gathering-settings-api-dto";
+import type { EventGatheringSettingsResponseDto } from "~/features/event-gatherings/api/dto/event-gathering-settings-api-dto";
 import {
   toEventGatheringSettings,
   toEventGatheringSettingsWriteRequest,
@@ -18,26 +15,12 @@ export function createHttpEventGatheringSettingsGateway(
 ): EventGatheringSettingsGateway {
   return {
     // Event 詳細が Round ごとの集合を人数付きで返すため、それを読み込み元にする。
-    // 詳細には参加者の ID までは含まれないため、ピッカーの初期選択用に
-    // 集合ごとの参加者一覧を読み足している。
+    // 参加者の ID は集合ごとに参加者ピッカーを開いたときに読むので、ここでは読み足さない。
     async load(eventId) {
       const response = await client.get<EventGatheringSettingsResponseDto>(
         `/api/v1/events/${eventId}`
       );
-      const gatheringIds = response.rounds.flatMap((round) =>
-        round.gatherings.map((gathering) => gathering.gathering_id)
-      );
-      const membersByGatheringId = new Map(
-        await Promise.all(
-          gatheringIds.map(async (gatheringId) => {
-            const members = await client.get<GatheringMemberResponseDto[]>(
-              `/api/v1/gatherings/${gatheringId}/members`
-            );
-            return [gatheringId, members] as const;
-          })
-        )
-      );
-      return toEventGatheringSettings(response, membersByGatheringId);
+      return toEventGatheringSettings(response);
     },
 
     async save(eventId, input) {

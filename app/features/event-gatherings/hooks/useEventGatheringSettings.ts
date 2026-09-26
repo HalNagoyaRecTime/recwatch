@@ -119,7 +119,9 @@ export function useEventGatheringSettings({
     (
       roundKey: string,
       gatheringKey: string,
-      patch: Partial<Pick<GatheringDraft, "time" | "spotId" | "memberUserIds">>
+      patch: Partial<
+        Pick<GatheringDraft, "time" | "spotId" | "savedMemberCount">
+      >
     ) => {
       updateRound(roundKey, (round) => ({
         ...round,
