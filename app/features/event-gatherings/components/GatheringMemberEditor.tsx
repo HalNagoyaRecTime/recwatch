@@ -38,6 +38,7 @@ export function GatheringMemberEditor({
   return (
     <GatheringMemberPicker
       candidates={candidates}
+      initialUserIds={members.initialUserIds}
       isLoading={isCandidatesLoading || members.isLoading}
       isSaving={members.isSaving}
       loadError={candidatesError ?? members.loadError}

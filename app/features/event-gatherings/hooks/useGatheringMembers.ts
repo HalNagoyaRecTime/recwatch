@@ -22,6 +22,9 @@ export function useGatheringMembers({
   gateway,
 }: UseGatheringMembersOptions) {
   const [selectedUserIds, setSelectedUserIds] = useState<number[]>([]);
+  // 停止中の学生を操作できるかの判定に使う。操作中の選択で判定すると、
+  // チェックを外した瞬間に対象から外れて戻せなくなるため、読み込み時点で固定する。
+  const [initialUserIds, setInitialUserIds] = useState<readonly number[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -35,7 +38,10 @@ export function useGatheringMembers({
       setLoadError(null);
       try {
         const userIds = await gateway.loadMembers(gatheringId);
-        if (isCurrent) setSelectedUserIds(userIds);
+        if (isCurrent) {
+          setSelectedUserIds(userIds);
+          setInitialUserIds(userIds);
+        }
       } catch (error) {
         if (isCurrent) setLoadError(getErrorMessage(error, LOAD_ERROR_MESSAGE));
       } finally {
@@ -64,6 +70,7 @@ export function useGatheringMembers({
   }, [gatheringId, gateway, selectedUserIds]);
 
   return {
+    initialUserIds,
     selectedUserIds,
     setSelectedUserIds,
     isLoading,

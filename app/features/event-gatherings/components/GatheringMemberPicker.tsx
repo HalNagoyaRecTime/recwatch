@@ -1,14 +1,22 @@
 import { Check, X } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { Button } from "~/components/ui/button/Button";
 import { SearchField } from "~/components/ui/form/SearchField";
 
 import { MAX_GATHERING_MEMBERS } from "~/features/event-gatherings/model/event-gathering-settings";
-import type { GatheringMemberCandidates } from "~/features/event-gatherings/model/gathering-member-candidate";
+import type {
+  GatheringMemberCandidates,
+  MemberStudent,
+} from "~/features/event-gatherings/model/gathering-member-candidate";
 
 type GatheringMemberPickerProps = {
   candidates: GatheringMemberCandidates | null;
+  /**
+   * 開いた時点で登録済みだった参加者。停止中の学生を操作できるかの判定に使う。
+   * 操作中の選択で判定すると、チェックを外した瞬間に判定が変わって戻せなくなる。
+   */
+  initialUserIds: readonly number[];
   /** 候補または登録済み参加者の読み込み中。どちらかが終わるまで一覧は出さない。 */
   isLoading: boolean;
   isSaving: boolean;
@@ -28,6 +36,7 @@ const ALL_CLASSROOMS = "all";
  */
 export function GatheringMemberPicker({
   candidates,
+  initialUserIds,
   isLoading,
   isSaving,
   loadError,
@@ -67,10 +76,6 @@ export function GatheringMemberPicker({
     const students = candidates?.students ?? [];
     const keyword = query.trim().toLowerCase();
     return students.filter((student) => {
-      // 停止中の学生は新しく追加させない。ただし登録済みの参加者は、外せるように残す。
-      if (!student.isLiveActive && !selectedUserIds.includes(student.userId)) {
-        return false;
-      }
       if (
         classroomId !== ALL_CLASSROOMS &&
         String(student.classroomId) !== classroomId
@@ -83,7 +88,19 @@ export function GatheringMemberPicker({
         (value) => value.toLowerCase().includes(keyword)
       );
     });
-  }, [candidates, classroomId, classroomNames, query, selectedUserIds]);
+  }, [candidates, classroomId, classroomNames, query]);
+
+  // 停止中の学生は新しく追加させない。ただし開いた時点で登録済みなら外せる必要がある。
+  const isSelectable = useCallback(
+    (student: MemberStudent) =>
+      student.isLiveActive || initialUserIds.includes(student.userId),
+    [initialUserIds]
+  );
+
+  const selectableVisibleStudents = useMemo(
+    () => visibleStudents.filter(isSelectable),
+    [isSelectable, visibleStudents]
+  );
 
   // 絞り込みで行数が変わるたびに、続きがあるかを取り直す
   useEffect(() => {
@@ -93,9 +110,10 @@ export function GatheringMemberPicker({
   // 一括選択で上限を超えることがあるため、黙って打ち切らず保存の手前で止める。
   const isOverLimit = selectedUserIds.length > MAX_GATHERING_MEMBERS;
 
+  // 一括選択の対象は操作できる行だけ。停止中の未登録者を巻き込まない。
   const isAllVisibleSelected =
-    visibleStudents.length > 0 &&
-    visibleStudents.every((student) =>
+    selectableVisibleStudents.length > 0 &&
+    selectableVisibleStudents.every((student) =>
       selectedUserIds.includes(student.userId)
     );
 
@@ -108,7 +126,9 @@ export function GatheringMemberPicker({
   }
 
   function toggleAllVisible() {
-    const visibleIds = visibleStudents.map((student) => student.userId);
+    const visibleIds = selectableVisibleStudents.map(
+      (student) => student.userId
+    );
     if (isAllVisibleSelected) {
       onChange(selectedUserIds.filter((id) => !visibleIds.includes(id)));
       return;
@@ -149,7 +169,7 @@ export function GatheringMemberPicker({
           />
         </div>
         <Button
-          disabled={visibleStudents.length === 0}
+          disabled={selectableVisibleStudents.length === 0}
           onClick={toggleAllVisible}
           size="sm"
           type="button"
@@ -225,7 +245,8 @@ export function GatheringMemberPicker({
                         <input
                           aria-label={`${student.name}を選択`}
                           checked={selectedUserIds.includes(student.userId)}
-                          className="accent-brand-primary size-4 align-middle"
+                          className="accent-brand-primary size-4 align-middle disabled:opacity-50"
+                          disabled={!isSelectable(student)}
                           onChange={() => toggle(student.userId)}
                           type="checkbox"
                         />
