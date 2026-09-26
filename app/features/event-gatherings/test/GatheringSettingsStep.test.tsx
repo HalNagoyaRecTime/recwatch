@@ -616,5 +616,13 @@ describe("GatheringSettingsStep", () => {
     });
     expect(pickerButtons[0]).toBeEnabled();
     expect(pickerButtons[1]).toBeDisabled();
+
+    // disabled なボタンは Chrome / Safari で title が出ないため、理由を本文で出す
+    const hint = screen.getByText(
+      "この集合を「集合設定を保存」で登録すると、参加者を選べます。"
+    );
+    expect(hint).toBeInTheDocument();
+    expect(pickerButtons[1]).toHaveAttribute("aria-describedby", hint.id);
+    expect(pickerButtons[0]).not.toHaveAttribute("aria-describedby");
   });
 });

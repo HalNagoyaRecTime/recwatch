@@ -1,4 +1,5 @@
 import { Users, X } from "lucide-react";
+import { useId } from "react";
 
 import { Button } from "~/components/ui/button/Button";
 import { cn } from "~/lib/cn";
@@ -40,6 +41,8 @@ export function GatheringRow({
   const isLockedByMembers = memberCount > 0;
   // 参加者は集合の ID 単位で保存するため、まだ保存していない新規行では選べない
   const isSavedGathering = value.gatheringId !== null;
+  // 同じ画面に複数行が並ぶため、固定文字列にすると id が重複する
+  const hintId = useId();
 
   return (
     <div className="space-y-2">
@@ -80,16 +83,12 @@ export function GatheringRow({
           参加者
           <div className="mt-1.5 flex items-center gap-2">
             <Button
+              aria-describedby={isSavedGathering ? undefined : hintId}
               aria-expanded={isPickerOpen}
               disabled={disabled || !isSavedGathering}
               icon={Users}
               onClick={onTogglePicker}
               size="sm"
-              title={
-                isSavedGathering
-                  ? undefined
-                  : "集合設定を保存すると参加者を選べます"
-              }
               type="button"
               variant={isPickerOpen ? "primary" : "secondary"}
             >
@@ -118,6 +117,13 @@ export function GatheringRow({
           />
         ) : null}
       </div>
+      {/* disabled なボタンは Chrome / Safari で title のツールチップが出ないため、
+          押せない理由は常に見えるテキストで出す */}
+      {isSavedGathering ? null : (
+        <p className="text-text-muted text-xs" id={hintId}>
+          この集合を「集合設定を保存」で登録すると、参加者を選べます。
+        </p>
+      )}
       {isLockedByMembers ? (
         <p className="text-text-muted text-xs">
           参加者が登録されているため、この集合は削除できません。
