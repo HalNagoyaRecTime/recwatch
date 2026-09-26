@@ -251,11 +251,12 @@ describe("モバイル Drawer", () => {
       "pointer-events-none",
       "absolute",
       "inset-0",
-      "bg-black/30",
+      "bg-transparent",
       "opacity-100"
     );
+    expect(visualOverlay).not.toHaveClass("bg-black/30");
 
-    fireEvent.click(visualOverlay);
+    fireEvent.click(overlay);
     expect(getHamburger()).toHaveAttribute("aria-expanded", "false");
     expect(document.activeElement).toBe(getHamburger());
     expect(getMobileDrawer()).toHaveAttribute("aria-hidden", "true");

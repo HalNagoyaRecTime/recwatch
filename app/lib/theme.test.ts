@@ -87,7 +87,7 @@ describe("applyTheme", () => {
     expect(document.body.style.backgroundColor).toBe("rgb(255, 255, 255)");
   });
 
-  it("ユーザー操作と同じイベント内でrootとbackgroundへ同期反映する", () => {
+  it("同期反映せずstate変更後のeffectでrootとbackgroundへ反映する", () => {
     window.localStorage.setItem(THEME_STORAGE_KEY, "light");
     const snapshots: ThemeSnapshot[] = [];
     render(
@@ -101,24 +101,31 @@ describe("applyTheme", () => {
     );
 
     fireEvent.click(screen.getByRole("button", { name: "dark" }));
+    expect(snapshots[0]).toEqual({
+      isDark: false,
+      theme: "light",
+      colorScheme: "light",
+      rootBackground: "rgb(255, 255, 255)",
+      bodyBackground: "rgb(255, 255, 255)",
+    });
+    expect(document.documentElement).toHaveClass("dark");
+    expect(document.documentElement.style.backgroundColor).toBe("rgb(0, 0, 0)");
+    expect(document.body.style.backgroundColor).toBe("rgb(0, 0, 0)");
+
     fireEvent.click(screen.getByRole("button", { name: "light" }));
 
-    expect(snapshots).toEqual([
-      {
-        isDark: true,
-        theme: "dark",
-        colorScheme: "dark",
-        rootBackground: "rgb(0, 0, 0)",
-        bodyBackground: "rgb(0, 0, 0)",
-      },
-      {
-        isDark: false,
-        theme: "light",
-        colorScheme: "light",
-        rootBackground: "rgb(255, 255, 255)",
-        bodyBackground: "rgb(255, 255, 255)",
-      },
-    ]);
+    expect(snapshots[1]).toEqual({
+      isDark: true,
+      theme: "dark",
+      colorScheme: "dark",
+      rootBackground: "rgb(0, 0, 0)",
+      bodyBackground: "rgb(0, 0, 0)",
+    });
+    expect(document.documentElement).not.toHaveClass("dark");
+    expect(document.documentElement.style.backgroundColor).toBe(
+      "rgb(255, 255, 255)"
+    );
+    expect(document.body.style.backgroundColor).toBe("rgb(255, 255, 255)");
   });
 
   it("systemテーマはmatchMediaの現在値から背景色を決める", () => {

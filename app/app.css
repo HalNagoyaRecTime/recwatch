@@ -220,11 +220,13 @@
   }
 
   .main-footer-height {
-    height: var(--main-footer-row-height);
+    height: calc(
+      var(--main-footer-row-height) + env(safe-area-inset-bottom, 0px)
+    );
   }
 
   .main-footer-safe-area {
-    box-sizing: content-box;
+    box-sizing: border-box;
     padding-right: calc(0.75rem + env(safe-area-inset-right, 0px));
     padding-bottom: env(safe-area-inset-bottom, 0px);
     padding-left: calc(0.75rem + env(safe-area-inset-left, 0px));

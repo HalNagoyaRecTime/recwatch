@@ -37,11 +37,13 @@ describe("MainHeader", () => {
     );
 
     const header = screen.getByRole("banner");
+    const content = header.querySelector(":scope > .relative.z-10");
     const row = header.querySelector(".main-header-row");
 
     expect(header).toHaveClass("main-header-height", "sticky", "top-0");
     expect(header).not.toHaveClass("main-header-safe-area");
     expect(header.style.paddingTop).toBe("");
+    expect(content).toHaveClass("h-full");
     expect(row).toBeInTheDocument();
     expect(row).toHaveClass("main-header-row", "h-full");
   });

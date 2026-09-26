@@ -74,6 +74,15 @@ describe("PageLayout", () => {
     );
   });
 
+  it("Footerはsafe areaを加えた外寸42pxをborder込みで確保する", () => {
+    expect(normalizedCss).toMatch(
+      /\.main-footer-height \{ height: calc\(\s*var\(--main-footer-row-height\)\s*\+\s*env\(safe-area-inset-bottom, 0px\)\s*\); \}/
+    );
+    expect(normalizedCss).toContain(
+      ".main-footer-safe-area { box-sizing: border-box;"
+    );
+  });
+
   it("top panelはborder込みの52px boxを使う", () => {
     const { container } = render(
       <PageLayout top={<div>top panel</div>}>
