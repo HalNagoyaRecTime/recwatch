@@ -23,6 +23,12 @@ type GatheringSettingsStepProps = {
   eventId: number;
   memberGateway?: GatheringMemberGateway;
   onBack: () => void;
+  /**
+   * 参加者だけを保存したとき。集合設定の保存とは別タイミングでサーバーの
+   * 人数が変わるため、呼び出し元の表示にも反映させる。
+   */
+  onMembersSaved?: () => void;
+  /** 集合設定を保存してステップを進めるとき。 */
   onSaved: (settings: EventGatheringSettings) => void;
   settingsGateway?: EventGatheringSettingsGateway;
   spotGateway?: GatheringSpotGateway;
@@ -37,6 +43,7 @@ export function GatheringSettingsStep({
   eventId,
   memberGateway = httpGatheringMemberGateway,
   onBack,
+  onMembersSaved,
   onSaved,
   settingsGateway = httpEventGatheringSettingsGateway,
   spotGateway = httpGatheringSpotGateway,
@@ -131,6 +138,8 @@ export function GatheringSettingsStep({
                         savedMemberCount: userIds.length,
                       });
                       setOpenPickerKey(null);
+                      // モーダルを閉じずに、呼び出し元が持つ人数も合わせる
+                      onMembersSaved?.();
                     }}
                   />
                 )

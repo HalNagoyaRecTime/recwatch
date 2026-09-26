@@ -70,6 +70,7 @@ export function EventGatheringSettingsPage({
             eventId={eventId}
             memberGateway={memberGateway}
             onBack={requestClose}
+            onMembersSaved={() => outletContext?.reload()}
             onSaved={(settings) => {
               outletContext?.reload();
               setSavedSettings(settings);
