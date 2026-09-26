@@ -1,5 +1,3 @@
-import { useEffect } from "react";
-
 import type { GatheringMemberGateway } from "~/features/event-gatherings/api/contracts/gathering-member-gateway";
 import { useGatheringMembers } from "~/features/event-gatherings/hooks/useGatheringMembers";
 import type { GatheringMemberCandidates } from "~/features/event-gatherings/model/gathering-member-candidate";
@@ -31,23 +29,6 @@ export function GatheringMemberEditor({
   onSaved,
 }: GatheringMemberEditorProps) {
   const members = useGatheringMembers({ gatheringId, gateway });
-  const { setSelectedUserIds } = members;
-
-  // 候補は学生から作るため、学生でない参加者には行が無く、チェックを外せない。
-  // 管理画面から staff にできるのは学生だけで、学生でない参加者は画面操作では
-  // 作れないため、保持せず選択から落として保存時に外れるようにする。
-  useEffect(() => {
-    if (!candidates) return;
-    const selectableUserIds = new Set(
-      candidates.students.map((student) => student.userId)
-    );
-    setSelectedUserIds((current) => {
-      const selectable = current.filter((userId) =>
-        selectableUserIds.has(userId)
-      );
-      return selectable.length === current.length ? current : selectable;
-    });
-  }, [candidates, setSelectedUserIds]);
 
   async function handleSave() {
     const saved = await members.save();

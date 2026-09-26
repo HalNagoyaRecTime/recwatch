@@ -433,9 +433,10 @@ describe("GatheringSettingsStep", () => {
     );
   });
 
-  it("学生でない参加者は選択から落とし、保存すると集合から外れる", async () => {
+  it("候補一覧に行が無い参加者も、保存時にそのまま送り返す", async () => {
     const memberGateway = createMemberGateway();
-    // user 9001 は学生でないため候補に現れない（管理画面では作れない状態）
+    // user 9001 は学生でないため候補に現れない。サーバー側では正常なデータのため、
+    // 画面に出せないからといって黙って外してはいけない。
     (memberGateway.loadMembers as Mock).mockResolvedValue([1001, 9001]);
     renderStep({
       memberGateway,
@@ -450,13 +451,13 @@ describe("GatheringSettingsStep", () => {
     await user.click(screen.getByRole("button", { name: "メンバーを選択" }));
 
     expect(await screen.findByLabelText("山田 太郎を選択")).toBeChecked();
-    // 行を出せない参加者は人数にも数えない
-    expect(screen.getByText(/選択中 1人/)).toBeInTheDocument();
+    // 実際に送る人数を出すため、行が無い参加者も数に含める
+    expect(screen.getByText(/選択中 2人/)).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "参加者を保存" }));
 
     await waitFor(() =>
-      expect(memberGateway.saveMembers).toHaveBeenCalledWith(101, [1001])
+      expect(memberGateway.saveMembers).toHaveBeenCalledWith(101, [1001, 9001])
     );
   });
 
