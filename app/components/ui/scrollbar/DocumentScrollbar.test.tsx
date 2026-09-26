@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+
 import {
   act,
   cleanup,
@@ -8,6 +10,8 @@ import {
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { DocumentScrollbar } from "./DocumentScrollbar";
+
+const normalizedCss = readFileSync("app/app.css", "utf8").replace(/\s+/g, " ");
 
 const resizeCallbacks: Array<() => void> = [];
 const originalDescriptors: Array<{
@@ -90,6 +94,15 @@ afterEach(() => {
 });
 
 describe("DocumentScrollbar", () => {
+  it("document scrollbar固有CSSでnative scrollbarを隠し、coarse pointerの操作を妨げない", () => {
+    expect(normalizedCss).toContain(
+      'html[data-document-scrollbar="active"] body { scrollbar-width: none; }'
+    );
+    expect(normalizedCss).toContain(
+      "@media (pointer: coarse) { .document-scrollbar [data-scrollbar-track], .document-scrollbar [data-scrollbar-thumb] { pointer-events: none !important; } }"
+    );
+  });
+
   it("document scroll metricsでthumbを描画し、native scroll ownershipを変えない", () => {
     const { unmount } = render(<DocumentScrollbar />);
     const track = setTrackSize();

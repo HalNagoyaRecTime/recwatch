@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+
 import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import { MemoryRouter, useLocation } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -5,6 +7,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { SidebarStateProvider } from "~/components/providers/SidebarStateProvider";
 import { MobileHamburgerMenuBtn } from "~/features/frame/main-header/components/MobileHamburgerMenuBtn";
 import { SidebarShell } from "~/features/frame/sidebar/SidebarShell";
+
+const normalizedCss = readFileSync("app/app.css", "utf8").replace(/\s+/g, " ");
 
 function LocationProbe() {
   const location = useLocation();
@@ -188,7 +192,7 @@ describe("モバイル Drawer", () => {
     expect(document.documentElement.style.overscrollBehavior).toBe("none");
   });
 
-  it("Mobile Drawerのfixed rootを透明にし、内側のsurfaceで背景を表示する", () => {
+  it("Mobile Drawerのsurfaceはbottom safe areaを空けたopaque面にする", () => {
     renderShell();
 
     expect(document.getElementById("mobile-nav-backplate")).toBeNull();
@@ -208,15 +212,35 @@ describe("モバイル Drawer", () => {
     expect(surface).toHaveClass(
       "pointer-events-none",
       "absolute",
-      "inset-0",
+      "mobile-safe-area-visual",
+      "inset-x-0",
+      "top-0",
       "border-r",
       "border-border-subtle",
-      "bg-surface-base",
-      "backdrop-blur-xl"
+      "bg-surface-base"
+    );
+    expect(surface).not.toHaveClass("backdrop-blur-xl");
+    expect(normalizedCss).toContain(
+      ".mobile-safe-area-visual { bottom: env(safe-area-inset-bottom, 0px); }"
+    );
+    expect(
+      drawer.querySelector(".sidebar-mobile-content-safe-area")
+    ).toBeInTheDocument();
+    expect(normalizedCss).toContain(
+      ".sidebar-mobile-content-safe-area { padding-right: env(safe-area-inset-right, 0px); padding-bottom: env(safe-area-inset-bottom, 0px);"
     );
     expect(
       document.getElementById("mobile-nav-backplate")
     ).not.toBeInTheDocument();
+  });
+
+  it("Mobile Sidebar headerはsafe area込みで52px + safe areaをborder込みで確保する", () => {
+    expect(normalizedCss).toContain(
+      ".sidebar-mobile-header-safe-area { box-sizing: border-box; height: calc(var(--main-header-height) + env(safe-area-inset-top, 0px)); padding-top: env(safe-area-inset-top, 0px);"
+    );
+    expect(normalizedCss).not.toContain(
+      ".sidebar-mobile-header-safe-area { box-sizing: content-box;"
+    );
   });
 
   it("transform transitioncancelでもclose後のDrawerをunmountする", () => {
@@ -250,11 +274,13 @@ describe("モバイル Drawer", () => {
     expect(visualOverlay).toHaveClass(
       "pointer-events-none",
       "absolute",
-      "inset-0",
-      "bg-transparent",
+      "mobile-safe-area-visual",
+      "inset-x-0",
+      "top-0",
+      "bg-black/30",
       "opacity-100"
     );
-    expect(visualOverlay).not.toHaveClass("bg-black/30");
+    expect(visualOverlay).not.toHaveClass("inset-0", "bg-transparent");
 
     fireEvent.click(overlay);
     expect(getHamburger()).toHaveAttribute("aria-expanded", "false");

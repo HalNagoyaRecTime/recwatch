@@ -222,7 +222,7 @@ function MobileSidebarContent() {
               data-testid="mobile-nav-overlay-visual"
               aria-hidden="true"
               className={cn(
-                "pointer-events-none absolute inset-0 bg-transparent transition-opacity duration-300",
+                "mobile-safe-area-visual pointer-events-none absolute inset-x-0 top-0 bg-black/30 transition-opacity duration-300",
                 isActive ? "opacity-100" : "opacity-0"
               )}
             />

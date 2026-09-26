@@ -33,4 +33,4 @@ export const sidebarMobileContainerStyle =
   SIDEBAR_DURATION;
 
 export const sidebarMobileSurfaceStyle =
-  "sidebar-mobile-surface pointer-events-none absolute inset-0 border-r border-border-subtle bg-surface-base backdrop-blur-xl";
+  "sidebar-mobile-surface mobile-safe-area-visual pointer-events-none absolute inset-x-0 top-0 border-r border-border-subtle bg-surface-base";

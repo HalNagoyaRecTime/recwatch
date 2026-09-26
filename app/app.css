@@ -233,7 +233,8 @@
   }
 
   .sidebar-mobile-header-safe-area {
-    box-sizing: content-box;
+    box-sizing: border-box;
+    height: calc(var(--main-header-height) + env(safe-area-inset-top, 0px));
     padding-top: env(safe-area-inset-top, 0px);
     padding-right: calc(0.75rem + env(safe-area-inset-right, 0px));
     padding-left: calc(1rem + env(safe-area-inset-left, 0px));
@@ -243,6 +244,10 @@
     padding-right: env(safe-area-inset-right, 0px);
     padding-bottom: env(safe-area-inset-bottom, 0px);
     padding-left: env(safe-area-inset-left, 0px);
+  }
+
+  .mobile-safe-area-visual {
+    bottom: env(safe-area-inset-bottom, 0px);
   }
 
   .page-side-panel {

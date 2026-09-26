@@ -66,12 +66,6 @@ describe("PageLayout", () => {
     expect(normalizedCss).toContain(
       "height: calc(100dvh - var(--main-header-height));"
     );
-    expect(normalizedCss).toContain(
-      'html[data-document-scrollbar="active"] body { scrollbar-width: none; }'
-    );
-    expect(normalizedCss).toContain(
-      "@media (pointer: coarse) { .document-scrollbar [data-scrollbar-track], .document-scrollbar [data-scrollbar-thumb] { pointer-events: none !important; } }"
-    );
   });
 
   it("Footerはsafe areaを加えた外寸42pxをborder込みで確保する", () => {
