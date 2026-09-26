@@ -6,7 +6,7 @@ import type { NotificationAudienceApi } from "~/features/notifications/api/contr
 import type {
   AdminNotificationDetail,
   NotificationPatchRequest,
-} from "~/features/notifications/model/admin-notification";
+} from "~/features/notifications/api/contracts/admin-notification-command-api";
 import type { NotificationAudienceOption } from "~/features/notifications/model/notification-audience";
 import {
   initialNotificationDraft,

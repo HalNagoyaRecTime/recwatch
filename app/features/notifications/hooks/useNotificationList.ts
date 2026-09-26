@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import type { AdminNotificationCommandApi } from "~/features/notifications/api/contracts/admin-notification-command-api";
 import type { AdminNotificationQueryApi } from "~/features/notifications/api/contracts/admin-notification-query-api";
-import type { AdminNotificationListItem } from "~/features/notifications/model/admin-notification";
+import type { AdminNotificationListItem } from "~/features/notifications/api/contracts/admin-notification-query-api";
 import { getErrorMessage } from "~/lib/client-error";
 import {
   getNextNotificationListSort,
@@ -46,18 +46,25 @@ export function useNotificationList({
   const load = useCallback(
     async (background = false) => {
       const requestId = ++requestSequence.current;
-      setIsLoading(true);
-      setErrorMessage(null);
-
       try {
-        const result = await queryApi.list();
+        const result = await Promise.resolve().then(() => queryApi.list());
         if (requestId !== requestSequence.current) return;
         setNotifications(result.items);
+        setCurrentPage((page) =>
+          Math.min(
+            page,
+            Math.max(
+              1,
+              Math.ceil(result.items.length / notificationListPageSize)
+            )
+          )
+        );
         setErrorMessage(null);
         setLoadedApi(queryApi);
       } catch (error) {
         if (requestId !== requestSequence.current) return;
         setNotifications([]);
+        setCurrentPage(1);
         const message = getErrorMessage(error);
         setErrorMessage(message);
         setLoadedApi(queryApi);
@@ -81,6 +88,12 @@ export function useNotificationList({
     void load();
   }, [load]);
 
+  const reload = useCallback(() => {
+    setIsLoading(true);
+    setErrorMessage(null);
+    return load(true);
+  }, [load]);
+
   const allItems = useMemo(
     () => sortItems(notifications.map(toListItem), sort),
     [notifications, sort]
@@ -89,14 +102,15 @@ export function useNotificationList({
     1,
     Math.ceil(allItems.length / notificationListPageSize)
   );
+  const validPage = Math.min(currentPage, pageCount);
   const items = allItems.slice(
-    (currentPage - 1) * notificationListPageSize,
-    currentPage * notificationListPageSize
+    (validPage - 1) * notificationListPageSize,
+    validPage * notificationListPageSize
   );
 
-  useEffect(() => {
-    if (currentPage > pageCount) setCurrentPage(pageCount);
-  }, [currentPage, pageCount]);
+  function handlePageChange(page: number) {
+    setCurrentPage(Math.min(Math.max(page, 1), pageCount));
+  }
 
   function handleSortChange(columnId: string) {
     if (!isNotificationSortableColumnId(columnId)) return;
@@ -115,7 +129,7 @@ export function useNotificationList({
     try {
       await commandApi.delete(Number(selectedNotification.id));
       setSelectedNotification(null);
-      await load(true);
+      await reload();
       reportFeedback?.({
         kind: "action-success",
         title: "通知を削除しました",
@@ -140,16 +154,16 @@ export function useNotificationList({
   return {
     closeDeleteDialog: () => setSelectedNotification(null),
     confirmDelete: handleDelete,
-    currentPage,
-    errorMessage,
+    currentPage: validPage,
+    errorMessage: loadedApi === queryApi ? errorMessage : null,
     isDeleting,
     isLoading: isLoading || loadedApi !== queryApi,
     items,
     onDeleteRequest: handleDeleteRequest,
-    onPageChange: setCurrentPage,
+    onPageChange: handlePageChange,
     onSortChange: handleSortChange,
     pageCount,
-    reload: () => load(true),
+    reload,
     selectedNotification,
     sort,
     totalItems: allItems.length,

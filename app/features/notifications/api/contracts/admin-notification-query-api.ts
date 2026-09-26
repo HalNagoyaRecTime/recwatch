@@ -1,14 +1,15 @@
 import type {
   AdminNotificationDetail,
+  AdminNotificationListQuery,
+  AdminNotificationListResponse,
+} from "~/features/notifications/api/contracts/admin-notification-types";
+
+export type {
+  AdminNotificationDetail,
   AdminNotificationListItem,
-} from "~/features/notifications/model/admin-notification";
-
-export type AdminNotificationListQuery =
-  { from?: undefined; to?: undefined } | { from: string; to: string };
-
-export type AdminNotificationListResponse = {
-  items: AdminNotificationListItem[];
-};
+  AdminNotificationListQuery,
+  AdminNotificationListResponse,
+} from "~/features/notifications/api/contracts/admin-notification-types";
 
 export interface AdminNotificationQueryApi {
   list(

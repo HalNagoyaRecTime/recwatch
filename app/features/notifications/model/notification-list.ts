@@ -1,6 +1,4 @@
-import type { NotificationScheduleStatus } from "~/features/notifications/model/admin-notification";
-
-export type NotificationDeliveryStatus = NotificationScheduleStatus | null;
+export type NotificationDeliveryStatus = string | null;
 
 export type NotificationListItem = {
   audience: string;

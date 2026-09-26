@@ -1,6 +1,15 @@
 import { describe, expect, expectTypeOf, it } from "vitest";
 
 import type {
+  AdminNotificationDetailDto,
+  AdminNotificationListItemDto,
+} from "~/features/notifications/api/dto/admin-notification-dto";
+import type {
+  AdminNotificationDetail,
+  AdminNotificationListItem,
+  NotificationAudienceItem,
+} from "~/features/notifications/api/contracts/admin-notification-types";
+import type {
   NotificationAudienceInputItemDto,
   NotificationAudienceItemDto,
   NotificationPushDeliveryStatusDto,
@@ -34,6 +43,24 @@ import {
 } from "~/features/notifications/mock/notification-fixtures";
 import { ClientError } from "~/lib/client-error";
 
+function parseListWithAudienceItem(audienceItem: unknown) {
+  const notification = adminNotificationListFixture.items[0];
+  const schedule = notification.schedules[0];
+  return parseAdminNotificationListResponse({
+    items: [
+      {
+        ...notification,
+        schedules: [
+          {
+            ...schedule,
+            audience: { ...schedule.audience, items: [audienceItem] },
+          },
+        ],
+      },
+    ],
+  });
+}
+
 describe("notification v2 contract", () => {
   it("ScheduleとDeliveryのstatusを分離する", () => {
     expectTypeOf<NotificationScheduleStatusDto>().toEqualTypeOf<
@@ -55,6 +82,39 @@ describe("notification v2 contract", () => {
       label: null,
     };
     expect(response.label).toBeNull();
+  });
+
+  it("Contract型はDTOのaliasを利用する", () => {
+    expectTypeOf<AdminNotificationDetail>().toEqualTypeOf<AdminNotificationDetailDto>();
+    expectTypeOf<AdminNotificationListItem>().toEqualTypeOf<AdminNotificationListItemDto>();
+    expectTypeOf<NotificationAudienceItem>().toEqualTypeOf<NotificationAudienceItemDto>();
+  });
+
+  it("Audience Responseのlabelとall itemをBackend契約通り検証する", () => {
+    expect(
+      parseListWithAudienceItem({
+        type: "gathering",
+        targetId: 51,
+        label: "表示名",
+      }).items[0].schedules[0].audience.items[0]
+    ).toEqual({ type: "gathering", targetId: 51, label: "表示名" });
+    expect(
+      parseListWithAudienceItem({
+        type: "gathering",
+        targetId: 51,
+        label: null,
+      }).items[0].schedules[0].audience.items[0]
+    ).toEqual({ type: "gathering", targetId: 51, label: null });
+    expect(() =>
+      parseListWithAudienceItem({ type: "gathering", targetId: 51 })
+    ).toThrow(ClientError);
+    expect(
+      parseListWithAudienceItem({ type: "all" }).items[0].schedules[0].audience
+        .items[0]
+    ).toEqual({ type: "all" });
+    expect(() =>
+      parseListWithAudienceItem({ type: "all", label: null })
+    ).toThrow(ClientError);
   });
 
   it("Figma準拠の各Responseを検証してshapeを保持する", () => {

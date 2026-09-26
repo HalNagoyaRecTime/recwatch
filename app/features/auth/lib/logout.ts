@@ -17,7 +17,8 @@ import { WEB_CLIENT_HEADERS } from "~/features/auth/lib/webClientHeaders";
 import { clearStoredAppNotifications } from "~/features/frame/feedback/model/app-notification";
 
 export type LogoutResult =
-  { status: "ok"; msLogoutUrl: string | null } | { status: "error" };
+  | { status: "ok"; msLogoutUrl: string | null }
+  | { status: "error" };
 
 export async function logout(userId?: string | null): Promise<LogoutResult> {
   clearAccountPhotoRefreshMarkers();

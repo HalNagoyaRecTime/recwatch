@@ -7,7 +7,7 @@ import type { NotificationAudienceApi } from "~/features/notifications/api/contr
 import { useNotificationEdit } from "~/features/notifications/hooks/useNotificationEdit";
 import { mockNotificationAudienceOptions } from "~/features/notifications/mock/notification-audience-api";
 import { adminNotificationDetailFixture } from "~/features/notifications/mock/notification-fixtures";
-import type { AdminNotificationDetail } from "~/features/notifications/model/admin-notification";
+import type { AdminNotificationDetail } from "~/features/notifications/api/contracts/admin-notification-command-api";
 import { ApiClientError } from "~/lib/api-client-error";
 
 function createNotification(
