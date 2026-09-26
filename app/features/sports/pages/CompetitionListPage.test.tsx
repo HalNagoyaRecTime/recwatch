@@ -10,7 +10,7 @@ const competition: CompetitionListItem = {
   id: 1,
   code: "001",
   name: "大縄跳び",
-  venue: "運動場",
+  venues: [{ id: 1, name: "第2体育館" }],
   startTime: "09:30",
   endTime: "10:00",
   gatheringSummary: {
@@ -26,6 +26,10 @@ const anotherCompetition: CompetitionListItem = {
   id: 2,
   code: "002",
   name: "リレー",
+  venues: [
+    { id: 2, name: "第1体育館" },
+    { id: 3, name: "中庭" },
+  ],
 };
 
 function LocationProbe() {
@@ -102,6 +106,55 @@ describe("CompetitionListPage", () => {
     );
     expect(within(table).getAllByRole("row")).toHaveLength(2);
     expect(within(table).getByText(competition.name)).toBeInTheDocument();
+  });
+
+  it("いずれかの実施場所に一致するイベントを検索できる", async () => {
+    const user = userEvent.setup();
+
+    render(
+      <MemoryRouter initialEntries={["/events"]}>
+        <CompetitionListPage
+          gateway={{
+            load: vi.fn().mockResolvedValue([competition, anotherCompetition]),
+            delete: vi.fn(),
+          }}
+        />
+      </MemoryRouter>
+    );
+
+    const table = await screen.findByRole("table", { name: "イベント一覧" });
+    expect(within(table).getByText("第1体育館、中庭")).toBeInTheDocument();
+
+    await user.type(
+      screen.getByRole("searchbox", { name: "イベントを検索" }),
+      "中庭"
+    );
+    expect(within(table).getAllByRole("row")).toHaveLength(2);
+    expect(
+      within(table).getByText(anotherCompetition.name)
+    ).toBeInTheDocument();
+  });
+
+  it("実施場所は先頭の実施場所で並び替える", async () => {
+    const user = userEvent.setup();
+
+    render(
+      <MemoryRouter initialEntries={["/events"]}>
+        <CompetitionListPage
+          gateway={{
+            load: vi.fn().mockResolvedValue([competition, anotherCompetition]),
+            delete: vi.fn(),
+          }}
+        />
+      </MemoryRouter>
+    );
+
+    const table = await screen.findByRole("table", { name: "イベント一覧" });
+    await user.click(screen.getByRole("button", { name: "実施場所" }));
+    expect(within(table).getAllByRole("row")[1]).toHaveTextContent("リレー");
+
+    await user.click(screen.getByRole("button", { name: "実施場所" }));
+    expect(within(table).getAllByRole("row")[1]).toHaveTextContent("大縄跳び");
   });
 
   it("イベントをソートし、行の削除ボタンから削除する", async () => {

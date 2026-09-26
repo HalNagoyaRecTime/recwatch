@@ -2,6 +2,7 @@ import type {
   GatheringSetting,
   RoundSetting,
 } from "~/features/event-gatherings/model/event-gathering-settings";
+import type { CompetitionVenue } from "~/features/sports/model/competition-venue";
 
 /**
  * Event 詳細画面で表示する Event。基本情報と Round ごとの集合を 1 つにまとめる。
@@ -10,7 +11,7 @@ import type {
 export type EventDetail = {
   id: number;
   name: string;
-  venue: string;
+  venues: CompetitionVenue[];
   /** "HH:mm"。 */
   startTime: string;
   endTime: string;

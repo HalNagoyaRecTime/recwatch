@@ -36,6 +36,9 @@ export function useNotificationList({
   const [selectedNotification, setSelectedNotification] =
     useState<NotificationListItem | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [loadedApi, setLoadedApi] = useState<AdminNotificationQueryApi | null>(
+    null
+  );
   const [isDeleting, setIsDeleting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const requestSequence = useRef(0);
@@ -50,11 +53,14 @@ export function useNotificationList({
         const result = await queryApi.list();
         if (requestId !== requestSequence.current) return;
         setNotifications(result.items);
+        setErrorMessage(null);
+        setLoadedApi(queryApi);
       } catch (error) {
         if (requestId !== requestSequence.current) return;
         setNotifications([]);
         const message = getErrorMessage(error);
         setErrorMessage(message);
+        setLoadedApi(queryApi);
         if (background) {
           reportNotificationBackgroundError(reportFeedback, {
             title: "通知一覧を更新できませんでした",
@@ -87,6 +93,10 @@ export function useNotificationList({
     (currentPage - 1) * notificationListPageSize,
     currentPage * notificationListPageSize
   );
+
+  useEffect(() => {
+    if (currentPage > pageCount) setCurrentPage(pageCount);
+  }, [currentPage, pageCount]);
 
   function handleSortChange(columnId: string) {
     if (!isNotificationSortableColumnId(columnId)) return;
@@ -133,7 +143,7 @@ export function useNotificationList({
     currentPage,
     errorMessage,
     isDeleting,
-    isLoading,
+    isLoading: isLoading || loadedApi !== queryApi,
     items,
     onDeleteRequest: handleDeleteRequest,
     onPageChange: setCurrentPage,

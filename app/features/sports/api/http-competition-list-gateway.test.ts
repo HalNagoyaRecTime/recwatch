@@ -18,7 +18,7 @@ describe("createHttpCompetitionListGateway", () => {
               event_id: 1,
               event_name: "リレー",
               rule_text: null,
-              venue: "グラウンド",
+              venues: [{ venue_id: 1, venue_name: "グラウンド" }],
               start_time: "0900",
               end_time: "1000",
               gathering_summary: gatheringSummary,
@@ -32,7 +32,7 @@ describe("createHttpCompetitionListGateway", () => {
               event_id: 2,
               event_name: "綱引き",
               rule_text: "ルール",
-              venue: "体育館",
+              venues: [{ venue_id: 2, venue_name: "体育館" }],
               start_time: "1030",
               end_time: "1100",
               gathering_summary: {
@@ -57,6 +57,7 @@ describe("createHttpCompetitionListGateway", () => {
     expect(items).toHaveLength(2);
     expect(items[0]).toMatchObject({
       id: 1,
+      venues: [{ id: 1, name: "グラウンド" }],
       startTime: "09:00",
       gatheringSummary: {
         gatheringCount: 2,
@@ -84,6 +85,29 @@ describe("createHttpCompetitionListGateway", () => {
     );
   });
 
+  it("実施場所が欠けたイベントはエラーにする", async () => {
+    const gateway = createHttpCompetitionListGateway({
+      delete: vi.fn(),
+      get: vi.fn().mockResolvedValue({
+        events: [
+          {
+            event_id: 1,
+            event_name: "リレー",
+            rule_text: null,
+            start_time: "0900",
+            end_time: "1000",
+            gathering_summary: gatheringSummary,
+          },
+        ],
+        total: 1,
+      }),
+    });
+
+    await expect(gateway.load()).rejects.toThrow(
+      "イベント一覧のレスポンス形式が正しくありません。"
+    );
+  });
+
   it("集合概要が欠けたイベントはエラーにする", async () => {
     const gateway = createHttpCompetitionListGateway({
       delete: vi.fn(),
@@ -93,7 +117,7 @@ describe("createHttpCompetitionListGateway", () => {
             event_id: 1,
             event_name: "リレー",
             rule_text: null,
-            venue: "グラウンド",
+            venues: [{ venue_id: 1, venue_name: "グラウンド" }],
             start_time: "0900",
             end_time: "1000",
           },

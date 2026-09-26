@@ -7,6 +7,7 @@ import type {
   DataTableSort,
 } from "~/components/ui/data-table/data-table-types";
 import type { CompetitionListItem } from "~/features/sports/model/competition-list-item";
+import { formatVenueNames } from "~/features/sports/model/competition-venue";
 
 type CompetitionTableProps = {
   emptyMessage: string;
@@ -50,7 +51,7 @@ export function CompetitionTable({
       id: "venue",
       sortable: true,
       width: { type: "fluid", min: 160, grow: 1 },
-      renderCell: (item) => item.venue,
+      renderCell: (item) => formatVenueNames(item.venues),
     },
     {
       header: "開催時間",

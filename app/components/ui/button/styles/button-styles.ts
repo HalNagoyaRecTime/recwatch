@@ -6,7 +6,7 @@ export const buttonStyle = cva(
     variants: {
       variant: {
         primary:
-          "app-rounded bg-[linear-gradient(135deg,var(--button-brand-gradient-start),var(--button-brand-gradient-end))] text-text-base-inverse font-semibold shadow-sm hover:brightness-105",
+          "app-rounded bg-[linear-gradient(135deg,var(--button-brand-gradient-start),var(--button-brand-gradient-end))] text-white font-semibold shadow-sm hover:brightness-105",
         secondary:
           "app-rounded border border-border-base bg-surface-base text-text-muted font-medium hover:border-border-strong hover:text-text-base",
         ghost:
