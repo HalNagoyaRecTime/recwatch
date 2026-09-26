@@ -11,19 +11,18 @@ export type NotificationListItem = {
   status: NotificationDeliveryStatus;
   title: string;
 };
-
 export const notificationListPageSize = 20;
 
 export const notificationSortableColumnIds = [
-  "id",
+  "notificationId",
   "title",
   "audience",
-  "deliveredAt",
-  "sender",
-  "competition",
-  "schedule",
+  "sendAt",
+  "creationMethod",
+  "creator",
+  "importance",
   "status",
-] as const satisfies readonly (keyof NotificationListItem)[];
+] as const;
 
 export type NotificationSortableColumnId =
   (typeof notificationSortableColumnIds)[number];
@@ -34,6 +33,8 @@ export type NotificationListSort = {
   columnId: NotificationSortableColumnId;
   direction: NotificationListSortDirection;
 };
+
+export type NotificationCreationMethodFilter = "all" | "manual" | "automatic";
 
 export function getNextNotificationListSort(
   current: NotificationListSort | undefined,

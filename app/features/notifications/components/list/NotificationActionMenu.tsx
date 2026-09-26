@@ -5,14 +5,16 @@ import { useNavigate } from "react-router";
 import { Button } from "~/components/ui/button/Button";
 import { Menu, type MenuItemType } from "~/components/ui/navigation/Menu";
 import { FloatingPanel } from "~/components/ui/panel/FloatingPanel";
-import type { NotificationListItem } from "~/features/notifications/model/notification-list";
+import type { AdminNotificationListItem } from "~/features/notifications/api/contracts/admin-notification-query-api";
 
 type NotificationActionMenuProps = {
-  notification: NotificationListItem;
-  onDelete?: (notification: NotificationListItem) => void;
+  canModify?: boolean;
+  notification: AdminNotificationListItem;
+  onDelete?: (notification: AdminNotificationListItem) => void;
 };
 
 export function NotificationActionMenu({
+  canModify = false,
   notification,
   onDelete,
 }: NotificationActionMenuProps) {
@@ -29,13 +31,13 @@ export function NotificationActionMenu({
     id: "details",
     label: "通知詳細",
     onClick: () =>
-      closeAnd(() => navigate(`/notifications/${notification.id}`)),
+      closeAnd(() => navigate(`/notifications/${notification.notificationId}`)),
     type: "action",
   };
 
   const items: MenuItemType[] = [
     detailsItem,
-    ...(notification.canModify
+    ...(canModify
       ? [
           {
             icon: Pencil,
@@ -43,7 +45,7 @@ export function NotificationActionMenu({
             label: "通知を編集",
             onClick: () =>
               closeAnd(() =>
-                navigate(`/notifications/${notification.id}/edit`)
+                navigate(`/notifications/${notification.notificationId}/edit`)
               ),
             type: "action" as const,
           },
@@ -68,7 +70,7 @@ export function NotificationActionMenu({
       scrollable
       trigger={
         <Button
-          aria-label={`${notification.title}のその他の操作`}
+          aria-label={`${notification.content.push.title}のその他の操作`}
           icon={Ellipsis}
           iconOnly
           size="sm"
