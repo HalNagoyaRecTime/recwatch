@@ -36,6 +36,7 @@ export default [
       route(":teacherId/edit", "routes/main/teachers.$teacherId.edit.tsx"),
     ]),
     route("gathering-spots", "routes/main/gatheringSpots.tsx"),
+    route("venues", "routes/main/venues.tsx"),
     route("*", "routes/main/legacy-redirect.tsx"),
   ]),
 ] satisfies RouteConfig;

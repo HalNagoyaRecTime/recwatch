@@ -57,6 +57,13 @@ export const NAVIGATION_SEARCH_RESULTS: readonly NavigationSearchResult[] = [
     keywords: ["集合", "場所"],
   },
   {
+    id: "venues",
+    title: "実施場所管理",
+    category: "イベント",
+    to: "/venues",
+    keywords: ["実施", "場所", "会場"],
+  },
+  {
     id: "notifications",
     title: "通知一覧",
     category: "通知",
