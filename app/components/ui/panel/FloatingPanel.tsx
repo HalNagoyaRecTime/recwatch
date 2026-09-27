@@ -154,7 +154,7 @@ export function FloatingPanel({
       size({
         padding: 8,
         apply({ availableHeight, availableWidth, elements }) {
-          // 位置決めwrapperはscrollportにせず、surfaceへ利用可能サイズを渡します。
+          // 位置決めwrapperはscrollportにせず、利用可能サイズをCSS変数で渡します。
           if (scrollable) {
             elements.floating.style.setProperty(
               "--floating-panel-available-height",
@@ -270,7 +270,11 @@ export function FloatingPanel({
         });
       }}
       data-floating-panel
-      className={cn("app-rounded z-140", className)}
+      className={cn(
+        "app-rounded z-140",
+        scrollable && "w-max max-w-(--floating-panel-available-width)",
+        className
+      )}
     >
       <FloatingPanelContext.Provider value={{ context, scrollable }}>
         {content}

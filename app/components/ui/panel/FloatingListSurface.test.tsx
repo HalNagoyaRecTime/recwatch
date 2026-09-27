@@ -13,10 +13,14 @@ describe("FloatingListSurface", () => {
 
     const surface = container.firstElementChild;
     expect(surface).toHaveClass("flex", "flex-col");
+    expect(surface).toHaveClass(
+      "max-h-[var(--floating-panel-available-height)]",
+      "max-w-[var(--floating-panel-available-width)]"
+    );
     expect(surface).not.toHaveClass("p-2");
     const scrollViewport = surface?.querySelector(".scrollbar-none");
     expect(scrollViewport).toBeInTheDocument();
-    expect(scrollViewport).toHaveClass("p-2");
+    expect(scrollViewport).toHaveClass("p-2", "min-w-0", "flex-1");
   });
 
   it("scrollableでないときはスクロール領域を追加しない", () => {
