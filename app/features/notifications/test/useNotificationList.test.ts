@@ -71,7 +71,7 @@ describe("useNotificationList", () => {
     );
 
     await waitFor(() => expect(result.current.isLoading).toBe(false));
-    expect(result.current.items[0]?.title).toBe("初回");
+    expect(result.current.items[0]?.content.push.title).toBe("初回");
 
     act(() => {
       void result.current.reload();
@@ -79,7 +79,7 @@ describe("useNotificationList", () => {
 
     await waitFor(() => expect(list).toHaveBeenCalledTimes(2));
     await waitFor(() =>
-      expect(result.current.items[0]?.title).toBe("再読込後")
+      expect(result.current.items[0]?.content.push.title).toBe("再読込後")
     );
   });
 
@@ -99,12 +99,12 @@ describe("useNotificationList", () => {
     );
 
     await waitFor(() => expect(result.current.isLoading).toBe(false));
-    expect(result.current.items[0]?.title).toBe("最初のAPI");
+    expect(result.current.items[0]?.content.push.title).toBe("最初のAPI");
 
     rerender({ queryApi: nextApi });
     await waitFor(() => expect(nextList).toHaveBeenCalledTimes(1));
     await waitFor(() =>
-      expect(result.current.items[0]?.title).toBe("新しいAPI")
+      expect(result.current.items[0]?.content.push.title).toBe("新しいAPI")
     );
     expect(firstList).toHaveBeenCalledTimes(1);
   });
@@ -127,7 +127,7 @@ describe("useNotificationList", () => {
     await waitFor(() => expect(result.current.isLoading).toBe(false));
     act(() => result.current.onPageChange(2));
     expect(result.current.currentPage).toBe(2);
-    expect(result.current.items[0]?.title).toBe("通知20");
+    expect(result.current.items[0]?.content.push.title).toBe("通知20");
 
     const itemToDelete = result.current.items[0];
     if (!itemToDelete) throw new Error("削除対象がありません");
@@ -140,7 +140,7 @@ describe("useNotificationList", () => {
     expect(list).toHaveBeenCalledTimes(2);
     expect(result.current.currentPage).toBe(1);
     expect(result.current.pageCount).toBe(1);
-    expect(result.current.items[0]?.title).toBe("残った通知0");
+    expect(result.current.items[0]?.content.push.title).toBe("残った通知0");
   });
 
   it("古いリクエストが後から返っても最新のレスポンスだけを反映する", async () => {
@@ -166,13 +166,13 @@ describe("useNotificationList", () => {
       await latestRequest.promise;
     });
     await waitFor(() =>
-      expect(result.current.items[0]?.title).toBe("最新の通知")
+      expect(result.current.items[0]?.content.push.title).toBe("最新の通知")
     );
 
     await act(async () => {
       firstRequest.resolve(createResponse("古い通知"));
       await firstRequest.promise;
     });
-    expect(result.current.items[0]?.title).toBe("最新の通知");
+    expect(result.current.items[0]?.content.push.title).toBe("最新の通知");
   });
 });

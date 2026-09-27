@@ -33,6 +33,18 @@ describe("notification v2 mock adapters", () => {
     expect(automatic).toBeDefined();
   });
 
+  it("期間指定時は該当Scheduleだけを同じ一覧契約で返す", async () => {
+    const response = await mockAdminNotificationQueryApi.list({
+      from: "2026-11-08T00:00:00+09:00",
+      to: "2026-11-08T23:59:59+09:00",
+    });
+
+    expect(response.items).toHaveLength(1);
+    expect(response.items[0].notificationId).toBe(101);
+    expect(response.items[0].schedules).toHaveLength(1);
+    expect(response.items[0].schedules[0].notificationScheduleId).toBe(601);
+  });
+
   it("TokenなしRecipientと1 User複数Deliveryを返す", async () => {
     const response = await mockNotificationScheduleQueryApi.getResults(503, {
       page: 1,

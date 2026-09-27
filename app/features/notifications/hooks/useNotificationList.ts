@@ -1,21 +1,28 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import type { AdminNotificationCommandApi } from "~/features/notifications/api/contracts/admin-notification-command-api";
-import type { AdminNotificationQueryApi } from "~/features/notifications/api/contracts/admin-notification-query-api";
-import type { AdminNotificationListItem } from "~/features/notifications/api/contracts/admin-notification-query-api";
-import { getErrorMessage } from "~/lib/client-error";
+import type {
+  AdminNotificationListItem,
+  AdminNotificationListQuery,
+  AdminNotificationQueryApi,
+} from "~/features/notifications/api/contracts/admin-notification-query-api";
 import {
-  getNextNotificationListSort,
-  isNotificationSortableColumnId,
-  notificationListPageSize,
-  type NotificationListItem,
-  type NotificationListSort,
-} from "~/features/notifications/model/notification-list";
+  filterNotificationList,
+  sortNotificationList,
+} from "~/features/notifications/hooks/notification-list-data";
 import {
   reportNotificationActionError,
   reportNotificationBackgroundError,
   type NotificationFeedbackReporter,
 } from "~/features/notifications/hooks/notification-feedback";
+import {
+  getNextNotificationListSort,
+  isNotificationSortableColumnId,
+  notificationListPageSize,
+  type NotificationCreationMethodFilter,
+  type NotificationListSort,
+} from "~/features/notifications/model/notification-list";
+import { getErrorMessage } from "~/lib/client-error";
 
 type UseNotificationListOptions = {
   commandApi: AdminNotificationCommandApi;
@@ -31,17 +38,27 @@ export function useNotificationList({
   const [notifications, setNotifications] = useState<
     AdminNotificationListItem[]
   >([]);
+  const [calendarNotifications, setCalendarNotifications] = useState<
+    AdminNotificationListItem[]
+  >([]);
   const [currentPage, setCurrentPage] = useState(1);
+  const [creationMethod, setCreationMethod] =
+    useState<NotificationCreationMethodFilter>("all");
   const [sort, setSort] = useState<NotificationListSort>();
   const [selectedNotification, setSelectedNotification] =
-    useState<NotificationListItem | null>(null);
+    useState<AdminNotificationListItem | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isCalendarLoading, setIsCalendarLoading] = useState(false);
   const [loadedApi, setLoadedApi] = useState<AdminNotificationQueryApi | null>(
     null
   );
   const [isDeleting, setIsDeleting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [calendarErrorMessage, setCalendarErrorMessage] = useState<
+    string | null
+  >(null);
   const requestSequence = useRef(0);
+  const calendarRequestSequence = useRef(0);
 
   const load = useCallback(
     async (background = false) => {
@@ -63,8 +80,10 @@ export function useNotificationList({
         setLoadedApi(queryApi);
       } catch (error) {
         if (requestId !== requestSequence.current) return;
-        setNotifications([]);
-        setCurrentPage(1);
+        if (!background) {
+          setNotifications([]);
+          setCurrentPage(1);
+        }
         const message = getErrorMessage(error);
         setErrorMessage(message);
         setLoadedApi(queryApi);
@@ -84,6 +103,39 @@ export function useNotificationList({
     [queryApi, reportFeedback]
   );
 
+  const loadCalendar = useCallback(
+    async (query: AdminNotificationListQuery, background = false) => {
+      const requestId = ++calendarRequestSequence.current;
+      setIsCalendarLoading(true);
+      setCalendarErrorMessage(null);
+
+      try {
+        const result = await queryApi.list(query);
+        if (requestId !== calendarRequestSequence.current) return;
+        setCalendarNotifications(result.items);
+      } catch (error) {
+        if (requestId !== calendarRequestSequence.current) return;
+        if (!background) setCalendarNotifications([]);
+        const message = getErrorMessage(error);
+        setCalendarErrorMessage(message);
+        if (background) {
+          reportNotificationBackgroundError(reportFeedback, {
+            title: "通知カレンダーを更新できませんでした",
+            message,
+            action: "notification.calendar.reload",
+            endpoint: "/api/v1/admin/notifications",
+            error,
+          });
+        }
+      } finally {
+        if (requestId === calendarRequestSequence.current) {
+          setIsCalendarLoading(false);
+        }
+      }
+    },
+    [queryApi, reportFeedback]
+  );
+
   useEffect(() => {
     let active = true;
     void Promise.resolve().then(() => {
@@ -93,6 +145,7 @@ export function useNotificationList({
     return () => {
       active = false;
       requestSequence.current += 1;
+      calendarRequestSequence.current += 1;
     };
   }, [load]);
 
@@ -102,9 +155,13 @@ export function useNotificationList({
     return load(true);
   }, [load]);
 
+  const filteredItems = useMemo(
+    () => filterNotificationList(notifications, creationMethod),
+    [creationMethod, notifications]
+  );
   const allItems = useMemo(
-    () => sortItems(notifications.map(toListItem), sort),
-    [notifications, sort]
+    () => sortNotificationList(filteredItems, sort),
+    [filteredItems, sort]
   );
   const pageCount = Math.max(
     1,
@@ -114,6 +171,10 @@ export function useNotificationList({
   const items = allItems.slice(
     (validPage - 1) * notificationListPageSize,
     validPage * notificationListPageSize
+  );
+  const calendarItems = useMemo(
+    () => filterNotificationList(calendarNotifications, creationMethod),
+    [calendarNotifications, creationMethod]
   );
 
   function handlePageChange(page: number) {
@@ -125,8 +186,13 @@ export function useNotificationList({
     setSort((current) => getNextNotificationListSort(current, columnId));
   }
 
-  function handleDeleteRequest(item: NotificationListItem) {
-    setSelectedNotification(item);
+  function handleCreationMethodChange(value: NotificationCreationMethodFilter) {
+    setCreationMethod(value);
+    setCurrentPage(1);
+  }
+
+  function handleDeleteRequest(notification: AdminNotificationListItem) {
+    setSelectedNotification(notification);
   }
 
   async function handleDelete() {
@@ -135,7 +201,7 @@ export function useNotificationList({
     setIsDeleting(true);
     setErrorMessage(null);
     try {
-      await commandApi.delete(Number(selectedNotification.id));
+      await commandApi.delete(selectedNotification.notificationId);
       setSelectedNotification(null);
       await reload();
       reportFeedback?.({
@@ -151,7 +217,7 @@ export function useNotificationList({
         title: "通知を削除できませんでした",
         message,
         action: "notification.delete",
-        endpoint: `/api/v1/admin/notifications/${selectedNotification.id}`,
+        endpoint: `/api/v1/admin/notifications/${selectedNotification.notificationId}`,
         error,
       });
     } finally {
@@ -160,13 +226,19 @@ export function useNotificationList({
   }
 
   return {
+    calendarErrorMessage,
+    calendarItems,
     closeDeleteDialog: () => setSelectedNotification(null),
     confirmDelete: handleDelete,
+    creationMethod,
     currentPage: validPage,
     errorMessage: loadedApi === queryApi ? errorMessage : null,
+    isCalendarLoading,
     isDeleting,
     isLoading: isLoading || loadedApi !== queryApi,
     items,
+    loadCalendar,
+    onCreationMethodChange: handleCreationMethodChange,
     onDeleteRequest: handleDeleteRequest,
     onPageChange: handlePageChange,
     onSortChange: handleSortChange,
@@ -176,69 +248,4 @@ export function useNotificationList({
     sort,
     totalItems: allItems.length,
   };
-}
-
-function formatDate(value: string | undefined) {
-  if (!value) return "—";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "—";
-
-  return new Intl.DateTimeFormat("ja-JP", {
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    month: "2-digit",
-    hour12: false,
-  }).format(date);
-}
-
-function toListItem(
-  notification: AdminNotificationListItem
-): NotificationListItem {
-  const schedule = notification.schedules[0];
-  const audienceLabels = schedule?.audience.items.map((item) => {
-    if (item.type === "all") return "全体";
-    return item.label ?? "削除済み";
-  });
-  const sourceLabel =
-    notification.creation.method === "automatic"
-      ? (notification.creation.source.label ?? "削除済み")
-      : "—";
-
-  return {
-    audience: audienceLabels?.join("、") || "—",
-    canModify:
-      notification.schedules.length > 0 &&
-      notification.schedules.every((item) => item.status === "scheduled"),
-    competition: sourceLabel,
-    deliveredAt: formatDate(schedule?.sendAt),
-    id: String(notification.notificationId),
-    schedule: formatDate(schedule?.sendAt),
-    sender:
-      notification.creation.method === "manual"
-        ? (notification.creation.user?.userName ?? "—")
-        : sourceLabel,
-    status: schedule?.status ?? null,
-    title: notification.content.push.title,
-  };
-}
-
-function sortItems(
-  items: readonly NotificationListItem[],
-  sort: NotificationListSort | undefined
-) {
-  if (!sort) return items;
-
-  const collator = new Intl.Collator("ja", {
-    numeric: true,
-    sensitivity: "base",
-  });
-
-  return [...items].sort((left, right) => {
-    const result = collator.compare(
-      String(left[sort.columnId] ?? ""),
-      String(right[sort.columnId] ?? "")
-    );
-    return sort.direction === "asc" ? result : -result;
-  });
 }
