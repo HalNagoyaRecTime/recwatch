@@ -1,6 +1,6 @@
 import { Plus } from "lucide-react";
 import { useEffect, useState } from "react";
-import { useLocation, useSearchParams } from "react-router";
+import { useLocation, useRevalidator, useSearchParams } from "react-router";
 
 import { ButtonLink } from "~/components/ui/button/ButtonLink";
 import { PageHeader } from "~/components/ui/layout/PageHeader";
@@ -40,19 +40,15 @@ type TeamPageProps = {
 
 export function TeamPage({ limit, offset, teams, total }: TeamPageProps) {
   const location = useLocation();
+  const revalidator = useRevalidator();
   const [searchParams, setSearchParams] = useSearchParams();
   const { search, sortBy, sortOrder } = parseTeamListUrl(searchParams);
-  const [removedTeamIds, setRemovedTeamIds] = useState<Set<number>>(
-    () => new Set()
-  );
   const [teamPendingDelete, setTeamPendingDelete] = useState<Team | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const currentPage = Math.floor(offset / limit) + 1;
-  const items = teams.filter((team) => !removedTeamIds.has(team.id));
-  const visibleTotal = Math.max(0, total - removedTeamIds.size);
-  const pageCount = Math.max(1, Math.ceil(visibleTotal / limit));
+  const pageCount = Math.max(1, Math.ceil(total / limit));
 
   useEffect(() => {
     if (currentPage <= pageCount) return;
@@ -62,7 +58,6 @@ export function TeamPage({ limit, offset, teams, total }: TeamPageProps) {
   }, [currentPage, pageCount, searchParams, setSearchParams]);
 
   function updateUrl(updates: Parameters<typeof updateTeamListUrl>[1]) {
-    setRemovedTeamIds(new Set());
     setSearchParams(updateTeamListUrl(searchParams, updates));
   }
 
@@ -89,11 +84,7 @@ export function TeamPage({ limit, offset, teams, total }: TeamPageProps) {
     setDeleteError(null);
     try {
       await TeamApi.deleteTeam(teamPendingDelete.id);
-      setRemovedTeamIds((current) => {
-        const next = new Set(current);
-        next.add(teamPendingDelete.id);
-        return next;
-      });
+      await revalidator.revalidate();
       setTeamPendingDelete(null);
     } catch (error) {
       setDeleteError(getErrorMessage(error));
@@ -125,7 +116,7 @@ export function TeamPage({ limit, offset, teams, total }: TeamPageProps) {
         value={search}
       />
       <TeamTable
-        items={items}
+        items={teams}
         onDeleteRequest={setTeamPendingDelete}
         onSortChange={handleSortChange}
         search={location.search}
@@ -140,7 +131,7 @@ export function TeamPage({ limit, offset, teams, total }: TeamPageProps) {
             onPageChange={(nextPage) => updateUrl({ page: nextPage })}
             pageCount={pageCount}
             pageSize={limit}
-            totalItems={visibleTotal}
+            totalItems={total}
           />
         }
       />
