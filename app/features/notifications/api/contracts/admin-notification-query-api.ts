@@ -8,6 +8,7 @@ export type {
   AdminNotificationDetail,
   AdminNotificationListItem,
   AdminNotificationListSchedule,
+  NotificationScheduleSummary,
   AdminNotificationListQuery,
   AdminNotificationListResponse,
 } from "~/features/notifications/api/contracts/admin-notification-types";
