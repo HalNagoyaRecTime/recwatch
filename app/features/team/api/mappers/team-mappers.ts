@@ -6,7 +6,7 @@ export function toTeam(dto: TeamDTO): Team {
     id: dto.team_id,
     name: dto.team_name,
     registeredClasses: dto.registered_classes,
-    scores: dto.scores,
+    score: dto.scores,
     registeredAt: dto.created_at,
     updatedAt: dto.updated_at,
   };

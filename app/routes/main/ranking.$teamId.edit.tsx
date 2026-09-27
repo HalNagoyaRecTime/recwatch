@@ -26,7 +26,7 @@ export async function clientLoader({
     rank: 0,
     teamId: team.id,
     teamName: team.name,
-    score: team.scores,
+    score: team.score,
   };
 
   return { ranking };

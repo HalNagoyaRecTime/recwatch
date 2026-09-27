@@ -17,7 +17,7 @@ describe("toTeam", () => {
       id: 3,
       name: "赤組",
       registeredClasses: ["1A", "1B"],
-      scores: 120,
+      score: 120,
       registeredAt: "2026-09-01T09:00:00Z",
       updatedAt: "2026-09-05T12:00:00Z",
     });
