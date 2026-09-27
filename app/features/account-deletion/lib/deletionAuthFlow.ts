@@ -1,8 +1,10 @@
-const PENDING_KEY = "rectime_deletion_auth_pending";
+import { DELETION_AUTH_PENDING_STORAGE_KEY } from "~/config/storageKeys";
+
 const RESULT_KEY = "rectime_deletion_auth_result";
 
 export type DeletionAuthResult =
-  { status: "confirmed"; token: string } | { status: "error"; message: string };
+  | { status: "confirmed"; token: string }
+  | { status: "error"; message: string };
 
 function hasSessionStorage(): boolean {
   return typeof window !== "undefined" && !!window.sessionStorage;
@@ -10,19 +12,21 @@ function hasSessionStorage(): boolean {
 
 export function markDeletionAuthPending(): void {
   if (!hasSessionStorage()) return;
-  window.sessionStorage.setItem(PENDING_KEY, "1");
+  window.sessionStorage.setItem(DELETION_AUTH_PENDING_STORAGE_KEY, "1");
 }
 
 export function consumeDeletionAuthPending(): boolean {
   if (!hasSessionStorage()) return false;
-  const value = window.sessionStorage.getItem(PENDING_KEY);
-  window.sessionStorage.removeItem(PENDING_KEY);
+  const value = window.sessionStorage.getItem(
+    DELETION_AUTH_PENDING_STORAGE_KEY
+  );
+  window.sessionStorage.removeItem(DELETION_AUTH_PENDING_STORAGE_KEY);
   return value === "1";
 }
 
 export function clearDeletionAuthPending(): void {
   if (!hasSessionStorage()) return;
-  window.sessionStorage.removeItem(PENDING_KEY);
+  window.sessionStorage.removeItem(DELETION_AUTH_PENDING_STORAGE_KEY);
 }
 
 export function saveDeletionAuthResult(result: DeletionAuthResult): void {

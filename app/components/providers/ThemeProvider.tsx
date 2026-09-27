@@ -1,4 +1,9 @@
-import { createContext, useEffect, useState, type ReactNode } from "react";
+import {
+  createContext,
+  useLayoutEffect,
+  useState,
+  type ReactNode,
+} from "react";
 import {
   applyTheme,
   getPreferredTheme,
@@ -17,10 +22,19 @@ export const ThemeContext = createContext<ThemeContextType | undefined>(
   undefined
 );
 
-export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setThemeState] = useState<ThemeMode>(() => getPreferredTheme());
+export function ThemeProvider({
+  children,
+  forcedTheme,
+}: {
+  children: ReactNode;
+  forcedTheme?: ThemeMode;
+}) {
+  const [preferredTheme, setPreferredTheme] = useState<ThemeMode | null>(() =>
+    forcedTheme ? null : getPreferredTheme()
+  );
+  const theme = forcedTheme ?? preferredTheme ?? getPreferredTheme();
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     applyTheme(theme);
 
     if (theme === "system") {
@@ -32,7 +46,11 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   }, [theme]);
 
   const setTheme = (nextTheme: ThemeMode) => {
-    setThemeState(nextTheme);
+    if (forcedTheme) {
+      return;
+    }
+
+    setPreferredTheme(nextTheme);
     window.localStorage.setItem(THEME_STORAGE_KEY, nextTheme);
   };
 

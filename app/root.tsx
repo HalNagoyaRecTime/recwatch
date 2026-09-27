@@ -5,11 +5,16 @@ import {
   Outlet,
   Scripts,
   ScrollRestoration,
+  useLocation,
 } from "react-router";
-import type { ReactNode } from "react";
+import { useLayoutEffect, type ReactNode } from "react";
 
 import type { Route } from "./+types/root";
-import { THEME_STORAGE_KEY } from "./lib/theme";
+import {
+  createAppSurfaceBootstrapScript,
+  getCurrentAppSurface,
+  synchronizeAppSurfaceDocument,
+} from "./lib/appSurface";
 import { ThemeProvider } from "~/components/providers/ThemeProvider";
 import "./app.css";
 
@@ -23,48 +28,17 @@ export const links: Route.LinksFunction = () => [
 ];
 
 export function Layout({ children }: { children: ReactNode }) {
+  const appSurfaceBootstrapScript = createAppSurfaceBootstrapScript();
+
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" data-app-surface="recwatch" suppressHydrationWarning>
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <Meta />
         <Links />
         <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              (function() {
-                var storageKey = ${JSON.stringify(THEME_STORAGE_KEY)};
-                var storedTheme = window.localStorage.getItem(storageKey);
-                var theme = ["light", "dark", "system"].includes(storedTheme)
-                  ? storedTheme
-                  : "system";
-                var root = document.documentElement;
-                var isDark =
-                  theme === "dark" ||
-                  (theme === "system" &&
-                    window.matchMedia("(prefers-color-scheme: dark)").matches);
-                root.classList.toggle("dark", isDark);
-                root.dataset.theme = theme;
-                root.style.colorScheme = isDark ? "dark" : "light";
-
-                // sessionStorageはサーバーから読めないため、初回HTMLを分岐せず属性だけ先に付ける。
-                // SPAのroot fallbackを削除認証だけ切り替えるため、pendingはここでは消費しない。
-                try {
-                  if (
-                    window.location.pathname === "/auth/callback" &&
-                    window.sessionStorage.getItem(
-                      "rectime_deletion_auth_pending"
-                    ) === "1"
-                  ) {
-                    root.dataset.accountDeletionAuthCallback = "true";
-                  }
-                } catch {
-                  // sessionStorageが利用できない場合は通常のfallbackを表示する。
-                }
-              })();
-            `,
-          }}
+          dangerouslySetInnerHTML={{ __html: appSurfaceBootstrapScript }}
         />
       </head>
       <body>
@@ -77,8 +51,17 @@ export function Layout({ children }: { children: ReactNode }) {
 }
 
 export default function App() {
+  const { pathname } = useLocation();
+  const surface = getCurrentAppSurface(pathname);
+
+  useLayoutEffect(() => {
+    synchronizeAppSurfaceDocument(pathname, surface);
+  }, [pathname, surface]);
+
   return (
-    <ThemeProvider>
+    <ThemeProvider
+      forcedTheme={surface === "account-deletion" ? "light" : undefined}
+    >
       <Outlet />
     </ThemeProvider>
   );
@@ -123,15 +106,12 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
 }
 
 export function HydrateFallback() {
-  // サーバーとクライアントのHydration対象DOMを揃えるため、表示はCSSで切り替える。
   return (
     <div className="root-hydrate-fallback bg-surface-hover p-6">
       <span className="root-hydrate-fallback-default">読み込み中...</span>
-      {/* アカウント削除ページ専用 */}
-      <span className="root-hydrate-fallback-deletion">
+      <span className="root-hydrate-fallback-context">
         <span>認証情報を確認しています...</span>
       </span>
-      {/* アカウント削除ページ専用 */}
     </div>
   );
 }

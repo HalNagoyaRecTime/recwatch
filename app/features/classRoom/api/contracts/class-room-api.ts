@@ -5,7 +5,11 @@ import type {
 } from "~/features/classRoom/model/classRoom";
 
 export type ClassRoomListSortBy =
-  "classRoomId" | "classCode" | "className" | "teacherName" | "studentCount";
+  | "classRoomId"
+  | "classCode"
+  | "className"
+  | "teacherName"
+  | "studentCount";
 
 export type ClassRoomListSortOrder = "asc" | "desc";
 

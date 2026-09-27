@@ -186,33 +186,6 @@
     font-size: 14px;
   }
 
-  /* 削除認証の属性があるときだけ切り替え、通常画面のfallbackには影響させない。 */
-  .root-hydrate-fallback-deletion {
-    display: none;
-  }
-
-  html[data-account-deletion-auth-callback="true"] .root-hydrate-fallback {
-    display: flex;
-    min-height: 100dvh;
-    align-items: center;
-    justify-content: center;
-    background: #ffffff;
-    color: #808080;
-    text-align: center;
-  }
-
-  html[data-account-deletion-auth-callback="true"]
-    .root-hydrate-fallback-default {
-    display: none;
-  }
-
-  html[data-account-deletion-auth-callback="true"]
-    .root-hydrate-fallback-deletion {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-  }
-
   @keyframes feedback-toast-enter {
     from {
       opacity: 1;
@@ -272,4 +245,57 @@
   &::-webkit-scrollbar {
     display: none;
   }
+}
+
+html[data-app-surface="account-deletion"] {
+  color-scheme: light;
+  background: #fff;
+}
+
+html[data-app-surface="account-deletion"] body {
+  height: auto;
+  min-height: 100dvh;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior-y: auto;
+  background: #fff;
+}
+
+html[data-app-surface="account-deletion"] #app {
+  height: auto;
+  min-height: 100dvh;
+}
+
+.root-hydrate-fallback {
+  min-height: 100dvh;
+}
+
+html[data-app-surface="account-deletion"] .root-hydrate-fallback {
+  display: flex;
+  box-sizing: border-box;
+  min-height: 100dvh;
+  align-items: center;
+  justify-content: center;
+  color: #808080;
+  background: #fff;
+  text-align: center;
+}
+.root-hydrate-fallback-default {
+  display: block;
+}
+
+.root-hydrate-fallback-context {
+  display: none;
+}
+
+html[data-app-loading-context="account-deletion-auth"]
+  .root-hydrate-fallback-default {
+  display: none;
+}
+
+html[data-app-loading-context="account-deletion-auth"]
+  .root-hydrate-fallback-context {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
 }

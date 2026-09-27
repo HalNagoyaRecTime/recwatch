@@ -25,6 +25,9 @@ afterEach(() => {
   document
     .querySelectorAll("link[data-test-account-deletion-favicon]")
     .forEach((link) => link.remove());
+  document
+    .querySelectorAll("meta[data-test-account-deletion-viewport]")
+    .forEach((meta) => meta.remove());
   mocks.startAccountDeletionAuth.mockReset();
 });
 
@@ -41,7 +44,7 @@ function addDefaultFavicon() {
   favicon.rel = "icon";
   favicon.href = "/recwatch-logo.svg";
   favicon.type = "image/svg+xml";
-  favicon.sizes = "any";
+  favicon.setAttribute("sizes", "any");
   favicon.dataset.testAccountDeletionFavicon = "true";
   document.head.append(favicon);
   return favicon;
@@ -113,40 +116,36 @@ describe("AccountDeletionPage", () => {
     ).toBeInTheDocument();
   });
 
-  it("Safari向けのスクロール設定を表示中だけ適用し、終了時に戻す", () => {
-    const { unmount } = renderPage();
-
-    expect(screen.getByRole("main")).toHaveClass(
-      "account-deletion-viewport",
-      "min-h-screen",
-      "min-h-dvh"
-    );
-    expect(document.documentElement.style.background).toBe(
-      "rgb(255, 255, 255)"
-    );
-    expect(document.body.style.height).toBe("auto");
-    expect(document.body.style.overflowY).toBe("auto");
-    expect(document.body.style.background).toBe("transparent");
-
-    unmount();
-
-    expect(document.documentElement.style.background).toBe("");
-    expect(document.body.style.height).toBe("");
-    expect(document.body.style.overflowY).toBe("");
-    expect(document.body.style.background).toBe("");
-  });
-
-  it("表示中だけfaviconをRE:CREATIONへ切り替え、終了時に戻す", () => {
+  it("shellのfavicon・viewport・styleを変更しない", () => {
     const favicon = addDefaultFavicon();
+    const viewport = document.createElement("meta");
+    viewport.name = "viewport";
+    viewport.content = "width=device-width, initial-scale=1";
+    viewport.dataset.testAccountDeletionViewport = "true";
+    document.head.append(viewport);
+
+    const rootStyle = document.documentElement.getAttribute("style");
+    const bodyStyle = document.body.getAttribute("style");
+    const appStyle = document.getElementById("app")?.getAttribute("style");
     const { unmount } = renderPage();
 
-    expect(favicon.getAttribute("href")).toBe("/recreation-favicon.png");
+    expect(favicon.getAttribute("href")).toBe("/recwatch-logo.svg");
+    expect(favicon.getAttribute("type")).toBe("image/svg+xml");
+    expect(favicon.getAttribute("sizes")).toBe("any");
+    expect(viewport.content).toBe("width=device-width, initial-scale=1");
+    expect(document.documentElement.getAttribute("style")).toBe(rootStyle);
+    expect(document.body.getAttribute("style")).toBe(bodyStyle);
+    expect(document.getElementById("app")?.getAttribute("style")).toBe(
+      appStyle
+    );
 
     unmount();
 
     expect(favicon.getAttribute("href")).toBe("/recwatch-logo.svg");
+    expect(viewport.content).toBe("width=device-width, initial-scale=1");
+    expect(document.documentElement.getAttribute("style")).toBe(rootStyle);
+    expect(document.body.getAttribute("style")).toBe(bodyStyle);
   });
-
   it("dark祖先でもライトテーマの背景を維持する", () => {
     render(
       <div className="dark">
