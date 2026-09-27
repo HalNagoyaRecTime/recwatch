@@ -9,6 +9,7 @@ import { mockNotificationAudienceOptions } from "~/features/notifications/mock/n
 import { adminNotificationDetailFixture } from "~/features/notifications/mock/notification-fixtures";
 import type { AdminNotificationDetail } from "~/features/notifications/api/contracts/admin-notification-command-api";
 import { ApiClientError } from "~/lib/api-client-error";
+import { mockNotificationConfigApi } from "~/features/notifications/mock/notification-config-api";
 
 function createNotification(
   notificationId: number,
@@ -50,6 +51,7 @@ describe("useNotificationEdit", () => {
         useNotificationEdit({
           audienceApi,
           commandApi,
+          configApi: mockNotificationConfigApi,
           queryApi,
           notificationId,
         }),
@@ -91,6 +93,7 @@ describe("useNotificationEdit", () => {
       useNotificationEdit({
         audienceApi,
         commandApi,
+        configApi: mockNotificationConfigApi,
         queryApi,
         notificationId: 99,
       })
@@ -110,6 +113,7 @@ describe("useNotificationEdit", () => {
       useNotificationEdit({
         audienceApi,
         commandApi,
+        configApi: mockNotificationConfigApi,
         queryApi,
         notificationId: 0,
       })
@@ -136,6 +140,7 @@ describe("useNotificationEdit", () => {
       useNotificationEdit({
         audienceApi,
         commandApi,
+        configApi: mockNotificationConfigApi,
         queryApi,
         notificationId: 1,
       })

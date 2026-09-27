@@ -10,8 +10,10 @@ function createScheduledDraft(scheduledAt: string): NotificationDraft {
   return {
     title: "タイトル",
     body: "本文",
-    audienceType: "all",
-    audienceId: "",
+    detailTitle: "詳細タイトル",
+    detailBody: "詳細本文",
+    importance: "normal",
+    audiences: [{ key: "audience-1", type: "all", targetId: "" }],
     deliveryTiming: "scheduled",
     scheduledAt,
   };

@@ -14,8 +14,12 @@ describe("toNotificationCreateRequest", () => {
     const draft: NotificationDraft = {
       title: " タイトル ",
       body: " 本文 ",
-      audienceType,
-      audienceId,
+      detailTitle: " 詳細タイトル ",
+      detailBody: " 詳細本文 ",
+      importance: "normal",
+      audiences: [
+        { key: "audience-1", type: audienceType, targetId: audienceId },
+      ],
       deliveryTiming: "scheduled",
       scheduledAt: "2026-11-07T15:35",
     };
@@ -25,7 +29,7 @@ describe("toNotificationCreateRequest", () => {
     expect(request).toMatchObject({
       content: {
         push: { title: "タイトル", body: "本文" },
-        detail: { title: "タイトル", body: "本文" },
+        detail: { title: "詳細タイトル", body: "詳細本文" },
       },
       audience: { items: [expected] },
       delivery: { type: "scheduled" },
@@ -41,8 +45,10 @@ describe("toNotificationCreateRequest", () => {
       toNotificationCreateRequest({
         title: "タイトル",
         body: "本文",
-        audienceType: "all",
-        audienceId: "",
+        detailTitle: "詳細タイトル",
+        detailBody: "詳細本文",
+        importance: "normal",
+        audiences: [{ key: "audience-1", type: "all", targetId: "" }],
         deliveryTiming: "now",
       }).delivery
     ).toEqual({ type: "immediate", sendAt: null });
