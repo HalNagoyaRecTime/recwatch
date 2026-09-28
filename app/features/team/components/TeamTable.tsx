@@ -13,6 +13,7 @@ import { formatDisplayDateTime } from "~/lib/format-display-date-time";
 type TeamTableProps = {
   footer?: ReactNode;
   items: readonly Team[];
+  onDeleteRequest: (team: Team) => void;
   onSortChange: (columnId: string) => void;
   search: string;
   sort?: DataTableSort;
@@ -21,6 +22,7 @@ type TeamTableProps = {
 export function TeamTable({
   footer,
   items,
+  onDeleteRequest,
   onSortChange,
   search,
   sort,
@@ -29,7 +31,6 @@ export function TeamTable({
     {
       header: "id",
       id: "team-id",
-      sortable: true,
       width: { type: "fixed", value: 120 },
       renderCell: (team) => team.id,
     },
@@ -57,6 +58,19 @@ export function TeamTable({
           : "-",
     },
     {
+      header: "得点",
+      id: "scores",
+      width: { type: "fixed", value: 100 },
+      renderCell: (team) => `${team.scores}pt`,
+    },
+    {
+      header: "登録日",
+      id: "registered-at",
+      sortable: true,
+      width: { type: "fluid", min: 180, grow: 1 },
+      renderCell: (team) => formatDisplayDateTime(team.registeredAt),
+    },
+    {
       header: "更新日時",
       id: "updated-at",
       sortable: true,
@@ -69,7 +83,13 @@ export function TeamTable({
       header: "",
       id: "actions",
       width: { type: "fixed", value: 64 },
-      renderCell: (team) => <TeamActionMenu search={search} team={team} />,
+      renderCell: (team) => (
+        <TeamActionMenu
+          onDeleteRequest={onDeleteRequest}
+          search={search}
+          team={team}
+        />
+      ),
     },
   ];
 

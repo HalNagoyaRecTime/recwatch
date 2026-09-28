@@ -8,10 +8,13 @@ export function rankingListTarget(search: string): RankingNavigationTarget {
 }
 
 export function rankingEditTarget(
-  rank: number,
+  teamId: number,
   search: string
 ): RankingNavigationTarget {
-  return { pathname: `/ranking/${rank}/edit`, search: normalizeSearch(search) };
+  return {
+    pathname: `/ranking/${teamId}/edit`,
+    search: normalizeSearch(search),
+  };
 }
 
 function normalizeSearch(search: string) {
