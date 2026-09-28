@@ -61,6 +61,10 @@ export function TeamForm({
       setValidationError("チーム名を入力してください。");
       return;
     }
+    if (registeredClasses.length === 0) {
+      setValidationError("登録クラスを1つ以上選択してください。");
+      return;
+    }
 
     setValidationError(null);
     void onSubmit({ name: normalizedName, registeredClasses });
