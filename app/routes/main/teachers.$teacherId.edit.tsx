@@ -1,12 +1,12 @@
-import { useLoaderData } from "react-router";
+import { useLoaderData, useRouteLoaderData } from "react-router";
 
 import { createPageTitle } from "~/lib/page-title";
-import { getClassRoomData } from "~/features/classRoom/application/class-room-options";
 import { TeacherApi } from "~/features/teachers/api";
-import { toTeacherRow } from "~/features/teachers/api/mappers/teacher-mappers";
 import { parseTeacherId } from "~/features/teachers/application/teacher-loaders";
 import { TeacherEditPage } from "~/features/teachers/pages/TeacherEditPage";
-import type { ClassRoomOption } from "~/features/teachers/model/teacher";
+import { managementRouteIds } from "~/routes/main/management-route-ids";
+import { useManagementModalReturn } from "~/routes/main/useManagementModalNavigation";
+import type { clientLoader as parentClientLoader } from "./teachers";
 
 export function meta() {
   return [{ title: createPageTitle("教官情報の編集") }];
@@ -18,24 +18,22 @@ export async function clientLoader({
   params: { teacherId?: string };
 }) {
   const teacherId = parseTeacherId(params.teacherId);
-  const [teacherDto, classRooms] = await Promise.all([
-    TeacherApi.getTeacherById(teacherId),
-    getClassRoomData(),
-  ]);
-
-  const classRoomOptions: ClassRoomOption[] = classRooms.map((classRoom) => ({
-    classRoomId: classRoom.classRoomId,
-    classCode: classRoom.classCode,
-    className: classRoom.className,
-  }));
-
-  return {
-    classRooms: classRoomOptions,
-    teacher: toTeacherRow(teacherDto),
-  };
+  return { teacher: await TeacherApi.getTeacherById(teacherId) };
 }
 
 export default function TeacherEditRoute() {
-  const { classRooms, teacher } = useLoaderData<typeof clientLoader>();
-  return <TeacherEditPage classRooms={classRooms} teacher={teacher} />;
+  const { teacher } = useLoaderData<typeof clientLoader>();
+  const { classRooms } = useRouteLoaderData<typeof parentClientLoader>(
+    managementRouteIds.teachers
+  )!;
+  const closeModal = useManagementModalReturn();
+  return (
+    <TeacherEditPage
+      api={TeacherApi}
+      classRooms={classRooms}
+      onClose={() => closeModal()}
+      onSaved={() => closeModal(true)}
+      teacher={teacher}
+    />
+  );
 }

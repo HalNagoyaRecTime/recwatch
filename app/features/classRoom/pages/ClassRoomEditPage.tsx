@@ -1,4 +1,5 @@
 import { useState } from "react";
+
 import { FormModal } from "~/components/ui/modal/FormModal";
 import type { ClassRoomMutationApi } from "~/features/classRoom/api/contracts/class-room-api";
 import {
@@ -6,44 +7,46 @@ import {
   type ClassRoomTeacherOption,
 } from "~/features/classRoom/components/ClassRoomForm";
 import { useClassRoomMutation } from "~/features/classRoom/hooks/useClassRoomMutation";
-import { emptyClassRoomForm } from "~/features/classRoom/model/classRoom-form";
-import type { ClassRoomWriteInput } from "~/features/classRoom/model/classRoom";
+import type {
+  ClassRoom,
+  ClassRoomWriteInput,
+} from "~/features/classRoom/model/classRoom";
 
-type ClassRoomCreatePageProps = {
+type ClassRoomEditPageProps = {
   api: ClassRoomMutationApi;
+  classRoom: ClassRoom;
   onClose: () => void | Promise<void>;
   onSaved: () => Promise<void>;
   teacherOptions: readonly ClassRoomTeacherOption[];
 };
 
-export function ClassRoomCreatePage({
+export function ClassRoomEditPage({
   api,
+  classRoom,
   onClose,
   onSaved,
   teacherOptions,
-}: ClassRoomCreatePageProps) {
-  const [form, setForm] = useState<ClassRoomWriteInput>(emptyClassRoomForm);
+}: ClassRoomEditPageProps) {
+  const [form, setForm] = useState<ClassRoomWriteInput>(() => ({
+    classCode: classRoom.classCode,
+    className: classRoom.className,
+    teacherId: classRoom.teacher?.teacherId ?? null,
+  }));
   const {
-    clearError,
-    create,
     error: submitError,
     isMutating: isSubmitting,
+    update,
   } = useClassRoomMutation({ api });
 
   async function handleSubmit(input: ClassRoomWriteInput) {
-    if (await create(input)) {
-      await onSaved();
-    }
+    if (await update(classRoom.classRoomId, input)) await onSaved();
   }
 
   return (
     <FormModal
-      description="クラスコード、クラス名、担当教官を入力します"
-      onClose={() => {
-        clearError();
-        void onClose();
-      }}
-      title="クラスの新規登録"
+      description={`クラスID: ${classRoom.classRoomId}`}
+      onClose={onClose}
+      title="クラスを編集"
     >
       <ClassRoomForm
         form={form}

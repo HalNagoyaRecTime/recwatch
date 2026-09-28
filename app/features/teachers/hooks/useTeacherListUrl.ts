@@ -1,15 +1,18 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "react-router";
 
-import type { ClassRoomListSortBy } from "~/features/classRoom/api/contracts/class-room-api";
+import type {
+  TeacherBooleanFilter,
+  TeacherListSortBy,
+} from "~/features/teachers/api/contracts/teacher-api";
 import {
-  parseClassRoomListUrl,
-  updateClassRoomListUrl,
-} from "~/features/classRoom/application/class-room-list-url";
+  parseTeacherListUrl,
+  updateTeacherListUrl,
+} from "~/features/teachers/application/teacher-list-url";
 
-export function useClassRoomListUrl() {
+export function useTeacherListUrl() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const state = parseClassRoomListUrl(searchParams);
+  const state = parseTeacherListUrl(searchParams);
   const [searchDraft, setSearchDraft] = useState<{
     search: string;
     value: string;
@@ -29,7 +32,7 @@ export function useClassRoomListUrl() {
     if (searchInput.trim() === state.search) return;
     const timer = window.setTimeout(() => {
       setSearchParams((currentSearchParams) =>
-        updateClassRoomListUrl(currentSearchParams, {
+        updateTeacherListUrl(currentSearchParams, {
           page: 1,
           search: searchInput,
         })
@@ -43,13 +46,10 @@ export function useClassRoomListUrl() {
   }
 
   const updateSearchParams = useCallback(
-    (
-      updates: Parameters<typeof updateClassRoomListUrl>[1],
-      replace = false
-    ) => {
+    (updates: Parameters<typeof updateTeacherListUrl>[1], replace = false) => {
       setSearchParams(
         (currentSearchParams) =>
-          updateClassRoomListUrl(currentSearchParams, updates),
+          updateTeacherListUrl(currentSearchParams, updates),
         { replace }
       );
     },
@@ -57,23 +57,24 @@ export function useClassRoomListUrl() {
   );
 
   function handleSortChange(columnId: string) {
-    const sortColumns: Record<string, ClassRoomListSortBy> = {
-      "class-room-id": "classRoomId",
-      "class-room-code": "classCode",
-      "class-room-name": "className",
-      "student-count": "studentCount",
-      "teacher-name": "teacherName",
+    const sortColumns: Record<string, TeacherListSortBy> = {
+      "teacher-id": "teacherId",
+      "display-name": "displayName",
+      staff: "isStaff",
+      active: "isLiveActive",
+      "class-code": "classCode",
+      "class-name": "className",
     };
     const nextSortBy = sortColumns[columnId];
     if (!nextSortBy) return;
 
     setSearchParams((currentSearchParams) => {
-      const currentState = parseClassRoomListUrl(currentSearchParams);
+      const currentState = parseTeacherListUrl(currentSearchParams);
       const nextSortOrder =
         currentState.sortBy === nextSortBy && currentState.sortOrder === "asc"
           ? "desc"
           : "asc";
-      return updateClassRoomListUrl(currentSearchParams, {
+      return updateTeacherListUrl(currentSearchParams, {
         page: 1,
         sortBy: nextSortBy,
         sortOrder: nextSortOrder,
@@ -81,8 +82,16 @@ export function useClassRoomListUrl() {
     });
   }
 
+  function handleFilterChange(
+    key: "isStaff" | "isLiveActive",
+    value: TeacherBooleanFilter
+  ) {
+    updateSearchParams({ page: 1, [key]: value });
+  }
+
   return {
     ...state,
+    handleFilterChange,
     handleSortChange,
     searchInput,
     setSearchInput,
