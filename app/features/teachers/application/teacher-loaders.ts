@@ -1,4 +1,3 @@
-import { getClassRoomData } from "~/features/classRoom/application/class-room-options";
 import { TeacherApi, type TeacherListQuery } from "~/features/teachers/api";
 import { toTeacherRow } from "~/features/teachers/api/mappers/teacher-mappers";
 
@@ -17,34 +16,6 @@ export async function loadTeacherListPage(query: TeacherListQuery) {
     offset: page.offset,
     teachers: page.items.map(toTeacherRow),
     total: page.total,
-  };
-}
-
-export async function loadTeacherAssignment(teacherId: number) {
-  const [selectedTeacherDto, teacherPage, classRooms] = await Promise.all([
-    teacherId > 0
-      ? TeacherApi.getTeacherById(teacherId)
-      : Promise.resolve(null),
-    TeacherApi.getActiveTeachers(),
-    getClassRoomData(),
-  ]);
-
-  const teachers = teacherPage.items.map(toTeacherRow);
-  if (
-    selectedTeacherDto &&
-    !teachers.some((teacher) => teacher.teacherId === teacherId)
-  ) {
-    teachers.unshift(toTeacherRow(selectedTeacherDto));
-  }
-
-  return {
-    teachers,
-    classRooms: classRooms.map((classRoom) => ({
-      classRoomId: classRoom.classRoomId,
-      classCode: classRoom.classCode,
-      className: classRoom.className,
-    })),
-    selectedTeacherId: teacherId,
   };
 }
 
