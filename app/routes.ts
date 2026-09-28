@@ -25,12 +25,19 @@ export default [
       "notifications/:notificationId",
       "routes/main/notifications.$notificationId.tsx"
     ),
-    route("students", "routes/main/students.tsx"),
-    route("students/import", "routes/main/students.import.tsx"),
+    route("students", "routes/main/students.tsx", [
+      route("new", "routes/main/students.new.tsx"),
+      route("import", "routes/main/students.import.tsx"),
+      route(":studentId/edit", "routes/main/students.$studentId.edit.tsx"),
+    ]),
     route("teams", "routes/main/teams.tsx"),
     route("ranking", "routes/main/ranking.tsx"),
     route("classrooms", "routes/main/classrooms.tsx", [
       route("new", "routes/main/classrooms.new.tsx"),
+      route(
+        ":classRoomId/edit",
+        "routes/main/classrooms.$classRoomId.edit.tsx"
+      ),
     ]),
     route("teachers", "routes/main/teachers.tsx", [
       route("new", "routes/main/teachers.new.tsx"),

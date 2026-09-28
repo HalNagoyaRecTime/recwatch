@@ -1,27 +1,30 @@
 import { useRouteLoaderData } from "react-router";
 
+import { StudentApi } from "~/features/students/api";
+import { StudentCreatePage } from "~/features/students/pages/StudentCreatePage";
+import { userManagementApi } from "~/features/user-management/api";
 import { createPageTitle } from "~/lib/page-title";
-import { TeacherApi } from "~/features/teachers/api";
-import { TeacherCreatePage } from "~/features/teachers/pages/TeacherCreatePage";
 import { managementRouteIds } from "~/routes/main/management-route-ids";
 import { useManagementModalReturn } from "~/routes/main/useManagementModalNavigation";
-import type { clientLoader as parentClientLoader } from "./teachers";
+import type { clientLoader as parentClientLoader } from "./students";
 
 export function meta() {
-  return [{ title: createPageTitle("教官の新規登録") }];
+  return [{ title: createPageTitle("学生の新規登録") }];
 }
 
-export default function TeacherCreateRoute() {
+export default function StudentCreateRoute() {
   const { classRooms } = useRouteLoaderData<typeof parentClientLoader>(
-    managementRouteIds.teachers
+    managementRouteIds.students
   )!;
   const closeModal = useManagementModalReturn();
+
   return (
-    <TeacherCreatePage
-      api={TeacherApi}
+    <StudentCreatePage
+      api={StudentApi}
       classRooms={classRooms}
       onClose={() => closeModal()}
       onSaved={() => closeModal(true)}
+      userApi={userManagementApi}
     />
   );
 }
