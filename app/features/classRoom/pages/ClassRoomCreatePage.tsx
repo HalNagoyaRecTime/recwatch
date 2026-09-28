@@ -1,8 +1,6 @@
 import { useState } from "react";
-import { useLocation, useNavigate } from "react-router";
-
 import { FormModal } from "~/components/ui/modal/FormModal";
-import type { ClassRoomManagementApi } from "~/features/classRoom/api/contracts/class-room-api";
+import type { ClassRoomMutationApi } from "~/features/classRoom/api/contracts/class-room-api";
 import {
   ClassRoomForm,
   type ClassRoomTeacherOption,
@@ -12,39 +10,29 @@ import { emptyClassRoomForm } from "~/features/classRoom/model/classRoom-form";
 import type { ClassRoomWriteInput } from "~/features/classRoom/model/classRoom";
 
 type ClassRoomCreatePageProps = {
-  api: ClassRoomManagementApi;
-  onRevalidate?: () => Promise<void> | void;
+  api: ClassRoomMutationApi;
+  onClose: () => void | Promise<void>;
+  onSaved: () => Promise<void>;
   teacherOptions: readonly ClassRoomTeacherOption[];
 };
 
 export function ClassRoomCreatePage({
   api,
-  onRevalidate,
+  onClose,
+  onSaved,
   teacherOptions,
 }: ClassRoomCreatePageProps) {
-  const location = useLocation();
-  const navigate = useNavigate();
   const [form, setForm] = useState<ClassRoomWriteInput>(emptyClassRoomForm);
   const {
     clearError,
     create,
     error: submitError,
     isMutating: isSubmitting,
-  } = useClassRoomMutation({
-    api,
-    refresh: async () => {
-      await onRevalidate?.();
-      return null;
-    },
-  });
-
-  function navigateToList() {
-    navigate(`/classrooms${location.search}`, { replace: true });
-  }
+  } = useClassRoomMutation({ api });
 
   async function handleSubmit(input: ClassRoomWriteInput) {
     if (await create(input)) {
-      navigateToList();
+      await onSaved();
     }
   }
 
@@ -53,14 +41,14 @@ export function ClassRoomCreatePage({
       description="クラスコード、クラス名、担当教官を入力します"
       onClose={() => {
         clearError();
-        navigateToList();
+        void onClose();
       }}
       title="クラスの新規登録"
     >
       <ClassRoomForm
         form={form}
         isSubmitting={isSubmitting}
-        onCancel={navigateToList}
+        onCancel={onClose}
         onChange={setForm}
         onSubmit={handleSubmit}
         submitError={submitError}

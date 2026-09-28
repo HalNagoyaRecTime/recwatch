@@ -1,26 +1,27 @@
-import { useLoaderData } from "react-router";
+import { useRouteLoaderData } from "react-router";
 
 import { createPageTitle } from "~/lib/page-title";
-import { getClassRoomData } from "~/features/classRoom/application/class-room-options";
-import type { ClassRoomOption } from "~/features/teachers/model/teacher";
+import { TeacherApi } from "~/features/teachers/api";
 import { TeacherCreatePage } from "~/features/teachers/pages/TeacherCreatePage";
+import { managementRouteIds } from "~/routes/main/management-route-ids";
+import { useManagementModalReturn } from "~/routes/main/useManagementModalNavigation";
+import type { clientLoader as parentClientLoader } from "./teachers";
 
 export function meta() {
   return [{ title: createPageTitle("教官の新規登録") }];
 }
 
-export async function clientLoader() {
-  const classRooms = await getClassRoomData();
-  const options: ClassRoomOption[] = classRooms.map((classRoom) => ({
-    classRoomId: classRoom.classRoomId,
-    classCode: classRoom.classCode,
-    className: classRoom.className,
-  }));
-
-  return { classRooms: options };
-}
-
 export default function TeacherCreateRoute() {
-  const { classRooms } = useLoaderData<typeof clientLoader>();
-  return <TeacherCreatePage classRooms={classRooms} />;
+  const { classRooms } = useRouteLoaderData<typeof parentClientLoader>(
+    managementRouteIds.teachers
+  )!;
+  const closeModal = useManagementModalReturn();
+  return (
+    <TeacherCreatePage
+      api={TeacherApi}
+      classRooms={classRooms}
+      onClose={() => closeModal()}
+      onSaved={() => closeModal(true)}
+    />
+  );
 }

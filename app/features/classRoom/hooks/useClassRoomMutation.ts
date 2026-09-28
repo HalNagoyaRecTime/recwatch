@@ -1,76 +1,65 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 
-import type { ClassRoomManagementApi } from "~/features/classRoom/api/contracts/class-room-api";
-import type {
-  ClassRoomPage,
-  ClassRoomWriteInput,
-} from "~/features/classRoom/model/classRoom";
+import type { ClassRoomMutationApi } from "~/features/classRoom/api/contracts/class-room-api";
+import type { ClassRoomWriteInput } from "~/features/classRoom/model/classRoom";
 import { getErrorMessage } from "~/lib/client-error";
 
 type UseClassRoomMutationOptions = {
-  api: ClassRoomManagementApi;
-  refresh?: () => Promise<ClassRoomPage | null>;
+  api: ClassRoomMutationApi;
+  onRevalidate?: () => Promise<void> | void;
 };
 
 export function useClassRoomMutation({
   api,
-  refresh,
+  onRevalidate,
 }: UseClassRoomMutationOptions) {
+  const mutationLock = useRef(false);
   const [isMutating, setIsMutating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function refreshAfterMutation() {
-    await refresh?.();
-  }
+  async function runMutation(
+    operation: () => Promise<unknown>,
+    fallbackMessage: string,
+    shouldRevalidate = false
+  ) {
+    if (mutationLock.current) return false;
 
-  async function create(input: ClassRoomWriteInput) {
-    if (isMutating) return false;
-
+    mutationLock.current = true;
     setIsMutating(true);
     setError(null);
     try {
-      await api.createClassRoom(input);
-      await refreshAfterMutation();
+      await operation();
+      if (shouldRevalidate) await onRevalidate?.();
       return true;
     } catch (reason) {
-      setError(getErrorMessage(reason, "クラスの登録に失敗しました。"));
+      setError(getErrorMessage(reason, fallbackMessage));
       return false;
     } finally {
+      mutationLock.current = false;
       setIsMutating(false);
     }
   }
 
-  async function update(classRoomId: number, input: ClassRoomWriteInput) {
-    if (isMutating) return false;
-
-    setIsMutating(true);
-    setError(null);
-    try {
-      await api.updateClassRoom(classRoomId, input);
-      await refreshAfterMutation();
-      return true;
-    } catch (reason) {
-      setError(getErrorMessage(reason, "クラスを保存できませんでした。"));
-      return false;
-    } finally {
-      setIsMutating(false);
-    }
+  function create(input: ClassRoomWriteInput) {
+    return runMutation(
+      () => api.createClassRoom(input),
+      "クラスの登録に失敗しました。"
+    );
   }
 
-  async function remove(classRoomId: number) {
-    if (isMutating) return null;
+  function update(classRoomId: number, input: ClassRoomWriteInput) {
+    return runMutation(
+      () => api.updateClassRoom(classRoomId, input),
+      "クラスを保存できませんでした。"
+    );
+  }
 
-    setIsMutating(true);
-    setError(null);
-    try {
-      await api.deleteClassRoom(classRoomId);
-      return await refresh?.();
-    } catch (reason) {
-      setError(getErrorMessage(reason, "クラスを削除できませんでした。"));
-      return null;
-    } finally {
-      setIsMutating(false);
-    }
+  function remove(classRoomId: number) {
+    return runMutation(
+      () => api.deleteClassRoom(classRoomId),
+      "クラスを削除できませんでした。",
+      true
+    );
   }
 
   return {

@@ -29,9 +29,21 @@ export type StudentListQuery = {
 
 export interface StudentManagementApi {
   getStudents(query?: StudentListQuery): Promise<StudentPage>;
+  getStudentById(studentId: number): Promise<StudentRow>;
   createStudent(input: StudentWriteInput): Promise<StudentRow>;
   updateStudent(
     studentId: number,
     input: StudentWriteInput
   ): Promise<StudentRow>;
+}
+
+export type StudentMutationApi = Pick<
+  StudentManagementApi,
+  "createStudent" | "updateStudent"
+>;
+
+export interface StudentAccessMutationApi {
+  updateUserStatus(userId: number, isLiveActive: boolean): Promise<void>;
+  grantStaff(userId: number): Promise<void>;
+  revokeStaff(userId: number): Promise<void>;
 }

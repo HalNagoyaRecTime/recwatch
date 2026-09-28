@@ -1,28 +1,26 @@
-import { useLoaderData, useRevalidator } from "react-router";
+import { useRouteLoaderData } from "react-router";
 
 import { ClassRoomApi } from "~/features/classRoom/api";
 import { ClassRoomCreatePage } from "~/features/classRoom/pages/ClassRoomCreatePage";
-import { loadActiveTeacherOptions } from "~/features/teachers/application/teacher-loaders";
 import { createPageTitle } from "~/lib/page-title";
+import { managementRouteIds } from "~/routes/main/management-route-ids";
+import { useManagementModalReturn } from "~/routes/main/useManagementModalNavigation";
+import type { clientLoader as parentClientLoader } from "./classrooms";
 
 export function meta() {
   return [{ title: createPageTitle("クラスの新規登録") }];
 }
 
-export async function clientLoader() {
-  const teacherOptions = await loadActiveTeacherOptions();
-  return {
-    teacherOptions,
-  };
-}
-
 export default function ClassRoomCreateRoute() {
-  const { teacherOptions } = useLoaderData<typeof clientLoader>();
-  const revalidator = useRevalidator();
+  const { teacherOptions } = useRouteLoaderData<typeof parentClientLoader>(
+    managementRouteIds.classrooms
+  )!;
+  const closeModal = useManagementModalReturn();
   return (
     <ClassRoomCreatePage
       api={ClassRoomApi}
-      onRevalidate={() => revalidator.revalidate()}
+      onClose={() => closeModal()}
+      onSaved={() => closeModal(true)}
       teacherOptions={teacherOptions}
     />
   );

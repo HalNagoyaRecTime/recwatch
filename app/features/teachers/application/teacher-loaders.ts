@@ -1,25 +1,26 @@
-import { TeacherApi, type TeacherListQuery } from "~/features/teachers/api";
-import { toTeacherRow } from "~/features/teachers/api/mappers/teacher-mappers";
+import {
+  TeacherApi,
+  type TeacherListQuery,
+  type TeacherQueryApi,
+} from "~/features/teachers/api";
 
-export async function loadActiveTeacherOptions() {
-  const page = await TeacherApi.getActiveTeachers();
-  return page.items.map((teacher) => {
-    const row = toTeacherRow(teacher);
-    return { displayName: row.displayName, teacherId: row.teacherId };
-  });
-}
-
-export async function loadTeacherListPage(query: TeacherListQuery) {
-  const page = await TeacherApi.getTeacherList(query);
+export async function loadTeacherListPage(
+  query: TeacherListQuery,
+  api: Pick<TeacherQueryApi, "getTeacherList"> = TeacherApi
+) {
+  const page = await api.getTeacherList(query);
   return {
     limit: page.limit,
     offset: page.offset,
-    teachers: page.items.map(toTeacherRow),
+    teachers: page.items,
     total: page.total,
   };
 }
 
-export function parseTeacherId(value: string | undefined) {
+export function parseTeacherId(value: string | undefined): number {
   const teacherId = Number(value);
-  return Number.isInteger(teacherId) && teacherId > 0 ? teacherId : 0;
+  if (!Number.isInteger(teacherId) || teacherId <= 0) {
+    throw new Response("教官が見つかりません。", { status: 404 });
+  }
+  return teacherId;
 }

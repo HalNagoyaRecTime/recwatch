@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "react-router";
 
 import type { ClassRoomListSortBy } from "~/features/classRoom/api/contracts/class-room-api";
@@ -10,10 +10,18 @@ import {
 export function useClassRoomListUrl() {
   const [searchParams, setSearchParams] = useSearchParams();
   const state = parseClassRoomListUrl(searchParams);
-  const [searchInput, setSearchInput] = useState(state.search);
+  const [searchDraft, setSearchDraft] = useState<{
+    search: string;
+    value: string;
+  } | null>(null);
+  const searchInput =
+    searchDraft?.search === state.search ? searchDraft.value : state.search;
+  const previousSearch = useRef(state.search);
 
   useEffect(() => {
-    const timer = window.setTimeout(() => setSearchInput(state.search), 0);
+    if (previousSearch.current === state.search) return;
+    previousSearch.current = state.search;
+    const timer = window.setTimeout(() => setSearchDraft(null), 0);
     return () => window.clearTimeout(timer);
   }, [state.search]);
 
@@ -30,16 +38,22 @@ export function useClassRoomListUrl() {
     return () => window.clearTimeout(timer);
   }, [searchInput, setSearchParams, state.search]);
 
+  function setSearchInput(value: string) {
+    setSearchDraft({ search: state.search, value });
+  }
+
   const updateSearchParams = useCallback(
     (
       updates: Parameters<typeof updateClassRoomListUrl>[1],
       replace = false
     ) => {
-      setSearchParams(updateClassRoomListUrl(searchParams, updates), {
-        replace,
-      });
+      setSearchParams(
+        (currentSearchParams) =>
+          updateClassRoomListUrl(currentSearchParams, updates),
+        { replace }
+      );
     },
-    [searchParams, setSearchParams]
+    [setSearchParams]
   );
 
   function handleSortChange(columnId: string) {
@@ -71,9 +85,7 @@ export function useClassRoomListUrl() {
     ...state,
     handleSortChange,
     searchInput,
-    searchParams,
     setSearchInput,
-    setSearchParams,
     updateSearchParams,
   };
 }

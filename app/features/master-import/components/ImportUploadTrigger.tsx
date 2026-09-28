@@ -1,6 +1,6 @@
 import { Loader2, Upload } from "lucide-react";
 import { type ChangeEvent, type ReactNode, useRef, useState } from "react";
-import { useNavigate } from "react-router";
+import { useLocation, useNavigate } from "react-router";
 
 import {
   buttonIconStyle,
@@ -25,6 +25,7 @@ export function ImportUploadTrigger({
 }: ImportUploadTriggerProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
+  const location = useLocation();
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -37,9 +38,9 @@ export function ImportUploadTrigger({
     setError(null);
     try {
       const session = await masterImportApi.create(type, file);
-      navigate(
-        `${MASTER_IMPORT_CONFIRMATION_PATH[type]}?importId=${encodeURIComponent(session.importId)}`
-      );
+      const params = new URLSearchParams(location.search);
+      params.set("importId", session.importId);
+      navigate(`${MASTER_IMPORT_CONFIRMATION_PATH[type]}?${params.toString()}`);
     } catch (err) {
       setError(getErrorMessage(err, "ファイルの取り込みに失敗しました。"));
     } finally {

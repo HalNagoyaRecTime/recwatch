@@ -31,6 +31,8 @@ export function MasterImportConfirmationPage({
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const importId = searchParams.get("importId");
+  const listSearchParams = new URLSearchParams(searchParams);
+  listSearchParams.delete("importId");
   const [session, setSession] = useState<MasterImportSession | null>(null);
   const [offset, setOffset] = useState(0);
   const [isLoading, setIsLoading] = useState(Boolean(importId));
@@ -67,9 +69,11 @@ export function MasterImportConfirmationPage({
     const firstRow = session?.rows[0];
     return firstRow ? Object.keys(firstRow) : [];
   }, [session]);
-  const listPath = session
+  const listBasePath = session
     ? MASTER_IMPORT_LIST_PATH[session.type]
     : fallbackListPath;
+  const listSearch = listSearchParams.toString();
+  const listPath = listSearch ? `${listBasePath}?${listSearch}` : listBasePath;
   const isSessionLoading =
     Boolean(importId) && (isLoading || session?.importId !== importId);
 

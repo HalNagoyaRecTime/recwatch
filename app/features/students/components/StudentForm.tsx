@@ -2,14 +2,14 @@ import { Check, X } from "lucide-react";
 import { useState } from "react";
 
 import { Button } from "~/components/ui/button/Button";
-import type { ClassRoom } from "~/features/classRoom/model/classRoom";
 import type {
+  StudentClassRoomOption,
   StudentRow,
   StudentWriteInput,
 } from "~/features/students/model/student";
 
 type StudentFormProps = {
-  classRooms: readonly ClassRoom[];
+  classRooms: readonly StudentClassRoomOption[];
   initialStudent?: StudentRow;
   isSubmitting: boolean;
   onCancel: () => void;

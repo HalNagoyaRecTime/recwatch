@@ -4,6 +4,8 @@ export type StudentClassRoomRow = {
   className: string;
 };
 
+export type StudentClassRoomOption = StudentClassRoomRow;
+
 export type StudentRow = {
   studentId: number;
   userId: number;

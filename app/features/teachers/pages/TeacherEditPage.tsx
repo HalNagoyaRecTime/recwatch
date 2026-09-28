@@ -1,8 +1,5 @@
-import { useState } from "react";
-import { useLocation, useNavigate, useRevalidator } from "react-router";
-
-import { TeacherApi } from "~/features/teachers/api";
-import { teacherListTarget } from "~/features/teachers/application/teacher-navigation";
+import type { TeacherMutationApi } from "~/features/teachers/api/contracts/teacher-api";
+import { useTeacherMutation } from "~/features/teachers/hooks/useTeacherMutation";
 import {
   TeacherForm,
   type TeacherFormInput,
@@ -12,42 +9,36 @@ import type {
   ClassRoomOption,
   TeacherRow,
 } from "~/features/teachers/model/teacher";
-import { getErrorMessage } from "~/lib/client-error";
 
 export function TeacherEditPage({
+  api,
   classRooms,
+  onClose,
+  onSaved,
   teacher,
 }: {
+  api: TeacherMutationApi;
   classRooms: readonly ClassRoomOption[];
+  onClose: () => void | Promise<void>;
+  onSaved: () => Promise<void>;
   teacher: TeacherRow;
 }) {
-  const navigate = useNavigate();
-  const location = useLocation();
-  const revalidator = useRevalidator();
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitError, setSubmitError] = useState<string | null>(null);
+  const {
+    error: submitError,
+    isMutating: isSubmitting,
+    save,
+  } = useTeacherMutation({ api });
 
   async function handleSubmit(input: TeacherFormInput) {
-    setIsSubmitting(true);
-    setSubmitError(null);
-    try {
-      await TeacherApi.updateTeacher(teacher.teacherId, input);
-      await revalidator.revalidate();
-      close();
-    } catch (error) {
-      setSubmitError(getErrorMessage(error, "教官情報の更新に失敗しました。"));
-      setIsSubmitting(false);
+    if (await save(teacher.teacherId, input)) {
+      await onSaved();
     }
-  }
-
-  function close() {
-    navigate(teacherListTarget(location.search));
   }
 
   return (
     <TeacherFormModal
       description={`教官ID: ${teacher.teacherId}`}
-      onClose={close}
+      onClose={onClose}
       title="教官情報を編集"
     >
       {(requestClose) => (
