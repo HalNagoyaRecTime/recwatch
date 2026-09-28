@@ -7,9 +7,10 @@ import {
   type TeamFormInput,
 } from "~/features/team/components/TeamForm";
 import { teamListTarget } from "~/features/team/application/team-navigation";
-import { updateTeam } from "~/features/team/mock/team-store";
-import type { TeamClassOption } from "~/features/team/mock/team-class-data";
+import { TeamApi } from "~/features/team/api";
+import type { TeamClassOption } from "~/features/team/model/team-class-option";
 import type { Team } from "~/features/team/model/team";
+import { getErrorMessage } from "~/lib/client-error";
 
 export function TeamEditPage({
   availableClasses,
@@ -31,11 +32,15 @@ export function TeamEditPage({
     setIsSubmitting(true);
     setSubmitError(null);
     try {
-      const updated = updateTeam(team.id, input);
-      if (!updated) throw new Error("team not found");
+      await TeamApi.updateTeam(team.id, {
+        teamName: input.name,
+        classCodes: [...input.registeredClasses],
+      });
       close();
-    } catch {
-      setSubmitError("チーム情報の更新に失敗しました。");
+    } catch (error) {
+      setSubmitError(
+        getErrorMessage(error, "チーム情報の更新に失敗しました。")
+      );
       setIsSubmitting(false);
     }
   }

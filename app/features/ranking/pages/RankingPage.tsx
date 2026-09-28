@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useEffect } from "react";
 import { useSearchParams } from "react-router";
 
 import { PageHeader } from "~/components/ui/layout/PageHeader";
@@ -11,32 +11,31 @@ import {
 import { RankingTable } from "~/features/ranking/components/RankingTable";
 import type { Ranking } from "~/features/ranking/model/ranking";
 
-const PAGE_SIZE = 10;
+type RankingPageProps = {
+  limit: number;
+  offset: number;
+  rankings: readonly Ranking[];
+  total: number;
+};
 
-export function RankingPage({ rankings }: { rankings: readonly Ranking[] }) {
+export function RankingPage({
+  limit,
+  offset,
+  rankings,
+  total,
+}: RankingPageProps) {
   const [searchParams, setSearchParams] = useSearchParams();
-  const { page, search } = parseRankingListUrl(searchParams);
-  const filteredRankings = useMemo(() => {
-    const normalizedSearch = search.toLocaleLowerCase();
-    return rankings.filter(
-      (ranking) =>
-        !normalizedSearch ||
-        ranking.teamName.toLocaleLowerCase().includes(normalizedSearch)
-    );
-  }, [rankings, search]);
-  const pageCount = Math.max(1, Math.ceil(filteredRankings.length / PAGE_SIZE));
-  const currentPage = Math.min(page, pageCount);
-  const visibleRankings = filteredRankings.slice(
-    (currentPage - 1) * PAGE_SIZE,
-    currentPage * PAGE_SIZE
-  );
+  const { search } = parseRankingListUrl(searchParams);
+
+  const currentPage = Math.floor(offset / limit) + 1;
+  const pageCount = Math.max(1, Math.ceil(total / limit));
 
   useEffect(() => {
-    if (page <= pageCount) return;
+    if (currentPage <= pageCount) return;
     setSearchParams(updateRankingListUrl(searchParams, { page: pageCount }), {
       replace: true,
     });
-  }, [page, pageCount, searchParams, setSearchParams]);
+  }, [currentPage, pageCount, searchParams, setSearchParams]);
 
   function updateUrl(updates: Parameters<typeof updateRankingListUrl>[1]) {
     setSearchParams(updateRankingListUrl(searchParams, updates));
@@ -55,14 +54,14 @@ export function RankingPage({ rankings }: { rankings: readonly Ranking[] }) {
         value={search}
       />
       <RankingTable
-        items={visibleRankings}
+        items={rankings}
         footer={
           <Pagination
             currentPage={currentPage}
             onPageChange={(nextPage) => updateUrl({ page: nextPage })}
             pageCount={pageCount}
-            pageSize={PAGE_SIZE}
-            totalItems={filteredRankings.length}
+            pageSize={limit}
+            totalItems={total}
           />
         }
       />

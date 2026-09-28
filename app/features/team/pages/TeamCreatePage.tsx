@@ -7,8 +7,9 @@ import {
   type TeamFormInput,
 } from "~/features/team/components/TeamForm";
 import { teamListTarget } from "~/features/team/application/team-navigation";
-import { createTeam } from "~/features/team/mock/team-store";
-import type { TeamClassOption } from "~/features/team/mock/team-class-data";
+import { TeamApi } from "~/features/team/api";
+import type { TeamClassOption } from "~/features/team/model/team-class-option";
+import { getErrorMessage } from "~/lib/client-error";
 
 export function TeamCreatePage({
   availableClasses,
@@ -28,10 +29,13 @@ export function TeamCreatePage({
     setIsSubmitting(true);
     setSubmitError(null);
     try {
-      createTeam(input);
+      await TeamApi.createTeam({
+        teamName: input.name,
+        classCodes: [...input.registeredClasses],
+      });
       close();
-    } catch {
-      setSubmitError("チームの登録に失敗しました。");
+    } catch (error) {
+      setSubmitError(getErrorMessage(error, "チームの登録に失敗しました。"));
       setIsSubmitting(false);
     }
   }

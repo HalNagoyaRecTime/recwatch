@@ -24,7 +24,6 @@ export default [
       route("new", "routes/main/teachers.new.tsx"),
       route(":teacherId/edit", "routes/main/teachers.$teacherId.edit.tsx"),
     ]),
-    route("team", "routes/main/team.tsx"),
     route("teams", "routes/main/teams.tsx", [
       route("new", "routes/main/teams.new.tsx"),
       route(":id", "routes/main/teams.$id.tsx"),

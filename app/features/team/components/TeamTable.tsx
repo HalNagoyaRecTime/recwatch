@@ -61,7 +61,7 @@ export function TeamTable({
       header: "得点",
       id: "scores",
       width: { type: "fixed", value: 100 },
-      renderCell: (team) => `${team.scores}pt`,
+      renderCell: (team) => `${team.score}pt`,
     },
     {
       header: "登録日",

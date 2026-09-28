@@ -2,7 +2,7 @@ export type Team = {
   id: number;
   name: string;
   registeredClasses: readonly string[];
-  scores: number;
+  score: number;
   registeredAt: string;
   updatedAt: string;
 };
