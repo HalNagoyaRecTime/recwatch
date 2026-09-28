@@ -29,6 +29,7 @@ const navigationGroups: NavigationGroup[] = [
     items: [
       { label: "イベント登録一覧", to: "/events" },
       { label: "集合場所管理", to: "/gathering-spots" },
+      { label: "実施場所管理", to: "/venues" },
     ],
     title: "イベント管理",
   },

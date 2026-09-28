@@ -154,6 +154,12 @@ export const sidebarSections = [
         to: "/gathering-spots",
         roles: ["admin"],
       },
+      {
+        id: "venues",
+        label: "実施場所管理",
+        to: "/venues",
+        roles: ["admin"],
+      },
     ],
   },
 ] satisfies SidebarSectionConfig[];

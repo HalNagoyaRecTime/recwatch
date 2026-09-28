@@ -39,6 +39,9 @@ describe("navigation search results", () => {
     expect(NAVIGATION_SEARCH_RESULTS).toContainEqual(
       expect.objectContaining({ title: "集合場所管理", to: "/gathering-spots" })
     );
+    expect(NAVIGATION_SEARCH_RESULTS).toContainEqual(
+      expect.objectContaining({ title: "実施場所管理", to: "/venues" })
+    );
     expect(filterNavigationSearchResults("参加者設定")).toEqual([]);
     expect(filterNavigationSearchResults("出場メンバー管理")).toEqual([]);
   });

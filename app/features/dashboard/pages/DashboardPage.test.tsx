@@ -47,6 +47,10 @@ describe("DashboardPage", () => {
       "href",
       "/gathering-spots"
     );
+    expect(screen.getByRole("link", { name: "実施場所管理" })).toHaveAttribute(
+      "href",
+      "/venues"
+    );
     expect(
       screen.queryByRole("heading", { level: 2, name: "クイック操作" })
     ).not.toBeInTheDocument();
