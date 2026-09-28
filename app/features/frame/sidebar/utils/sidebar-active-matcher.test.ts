@@ -14,6 +14,17 @@ function item(overrides: Partial<SidebarItemDef>): SidebarItemDef {
 }
 
 describe("isSidebarItemActive", () => {
+  it("クラス管理は複数形の一覧URLで選択される", () => {
+    const classrooms = item({
+      id: "classrooms",
+      label: "クラス管理",
+      to: "/classrooms",
+    });
+
+    expect(isSidebarItemActive(classrooms, "/classrooms")).toBe(true);
+    expect(isSidebarItemActive(classrooms, "/classroom")).toBe(false);
+  });
+
   it("通常リンクは未指定の親パスを前方一致で選択しない", () => {
     expect(isSidebarItemActive(item({}), "/notifications/new")).toBe(false);
   });

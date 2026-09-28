@@ -32,7 +32,7 @@ function UrlProbe() {
       <button onClick={() => handleSortChange("class-room-code")} type="button">
         ソート
       </button>
-      <button onClick={() => navigate("/classroom")} type="button">
+      <button onClick={() => navigate("/classrooms")} type="button">
         検索条件を消去
       </button>
       <output data-testid="location-search">{location.search}</output>
@@ -44,7 +44,7 @@ describe("useClassRoomListUrl", () => {
   it("検索のdebounce中にソートしても最新のQueryを保持する", () => {
     vi.useFakeTimers();
     render(
-      <MemoryRouter initialEntries={["/classroom"]}>
+      <MemoryRouter initialEntries={["/classrooms"]}>
         <UrlProbe />
       </MemoryRouter>
     );
@@ -66,7 +66,7 @@ describe("useClassRoomListUrl", () => {
 
   it("URLの検索条件が変わったら入力値を同期する", async () => {
     render(
-      <MemoryRouter initialEntries={["/classroom?search=IH13A"]}>
+      <MemoryRouter initialEntries={["/classrooms?search=IH13A"]}>
         <UrlProbe />
       </MemoryRouter>
     );

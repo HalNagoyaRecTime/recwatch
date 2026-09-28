@@ -52,7 +52,7 @@ function LocationProbe() {
 describe("ClassRoomPage", () => {
   it("一覧、検索、ページネーションを表示する", () => {
     render(
-      <MemoryRouter initialEntries={["/classroom"]}>
+      <MemoryRouter initialEntries={["/classrooms"]}>
         <ClassRoomPage
           api={createApi()}
           items={[firstClassRoom]}
@@ -73,7 +73,7 @@ describe("ClassRoomPage", () => {
     ).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "新規登録" })).toHaveAttribute(
       "href",
-      "/classroom/new"
+      "/classrooms/new"
     );
     expect(
       screen.getByRole("button", { name: "ID列の幅を変更" })
@@ -87,7 +87,7 @@ describe("ClassRoomPage", () => {
   it("検索とソートをURLへ反映する", async () => {
     const user = userEvent.setup();
     render(
-      <MemoryRouter initialEntries={["/classroom"]}>
+      <MemoryRouter initialEntries={["/classrooms"]}>
         <ClassRoomPage
           api={createApi()}
           items={[firstClassRoom]}
@@ -117,7 +117,7 @@ describe("ClassRoomPage", () => {
 
   it("新規登録リンクは現在の一覧条件を維持する", () => {
     render(
-      <MemoryRouter initialEntries={["/classroom?search=1A&page=2"]}>
+      <MemoryRouter initialEntries={["/classrooms?search=1A&page=2"]}>
         <ClassRoomPage
           api={createApi()}
           items={[]}
@@ -129,7 +129,7 @@ describe("ClassRoomPage", () => {
 
     expect(screen.getByRole("link", { name: "新規登録" })).toHaveAttribute(
       "href",
-      "/classroom/new?search=1A&page=2"
+      "/classrooms/new?search=1A&page=2"
     );
   });
 
