@@ -3,8 +3,7 @@ import { DELETION_AUTH_PENDING_STORAGE_KEY } from "~/config/storageKeys";
 const RESULT_KEY = "rectime_deletion_auth_result";
 
 export type DeletionAuthResult =
-  | { status: "confirmed"; token: string }
-  | { status: "error"; message: string };
+  { status: "confirmed"; token: string } | { status: "error"; message: string };
 
 function hasSessionStorage(): boolean {
   if (typeof window === "undefined") return false;
