@@ -7,8 +7,10 @@ import { SearchField } from "~/components/ui/form/SearchField";
 import { MAX_GATHERING_MEMBERS } from "~/features/event-gatherings/model/event-gathering-settings";
 import type {
   GatheringMemberCandidates,
+  MemberNonStudent,
   MemberStudent,
 } from "~/features/event-gatherings/model/gathering-member-candidate";
+import { GatheringNonStudentMembers } from "./GatheringNonStudentMembers";
 
 type GatheringMemberPickerProps = {
   candidates: GatheringMemberCandidates | null;
@@ -101,6 +103,28 @@ export function GatheringMemberPicker({
     () => visibleStudents.filter(isSelectable),
     [isSelectable, visibleStudents]
   );
+
+  // 候補の表に行が無い登録済みの参加者。開いた時点の登録内容で判定し、
+  // チェックを外しても別枠から消えず付け直せるようにする。
+  const nonStudentMembers = useMemo(() => {
+    const named: MemberNonStudent[] = [];
+    let unnamedCount = 0;
+    if (!candidates) return { named, unnamedCount };
+
+    const studentUserIds = new Set(
+      candidates.students.map((student) => student.userId)
+    );
+    for (const userId of initialUserIds) {
+      if (studentUserIds.has(userId)) continue;
+      const member = candidates.nonStudents.get(userId);
+      if (member === undefined) {
+        unnamedCount += 1;
+      } else {
+        named.push(member);
+      }
+    }
+    return { named, unnamedCount };
+  }, [candidates, initialUserIds]);
 
   // 絞り込みで行数が変わるたびに、続きがあるかを取り直す
   useEffect(() => {
@@ -279,6 +303,15 @@ export function GatheringMemberPicker({
           ) : null}
         </div>
       )}
+
+      {!loadError && !isLoading && candidates ? (
+        <GatheringNonStudentMembers
+          members={nonStudentMembers.named}
+          onToggle={toggle}
+          selectedUserIds={selectedUserIds}
+          unnamedCount={nonStudentMembers.unnamedCount}
+        />
+      ) : null}
 
       {isOverLimit ? (
         <p className="text-tone-danger-text text-sm" role="alert">

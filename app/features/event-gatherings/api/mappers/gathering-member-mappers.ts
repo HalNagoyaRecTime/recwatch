@@ -3,9 +3,11 @@ import type {
   GatheringMemberResponseDto,
   ReplaceGatheringMembersRequestDto,
   StudentResponseDto,
+  TeacherResponseDto,
 } from "~/features/event-gatherings/api/dto/gathering-member-api-dto";
 import type {
   MemberClassroom,
+  MemberNonStudent,
   MemberStudent,
 } from "~/features/event-gatherings/model/gathering-member-candidate";
 
@@ -23,6 +25,16 @@ export function toMemberStudent(response: StudentResponseDto): MemberStudent {
     classroomId: response.class_room.class_room_id,
     attendanceNumber: response.attendance_number,
     studentNumber: response.student_id_number,
+    isLiveActive: response.is_live_active,
+  };
+}
+
+export function toMemberNonStudent(
+  response: TeacherResponseDto
+): MemberNonStudent {
+  return {
+    userId: response.user_id,
+    name: response.display_name,
     isLiveActive: response.is_live_active,
   };
 }

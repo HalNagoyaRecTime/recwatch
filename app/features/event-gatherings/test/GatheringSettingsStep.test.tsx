@@ -104,6 +104,7 @@ function createMemberGateway(): GatheringMemberGateway {
           isLiveActive: true,
         },
       ],
+      nonStudents: new Map(),
     }),
     loadMembers: vi.fn().mockResolvedValue([]),
     saveMembers: vi
@@ -404,6 +405,7 @@ describe("GatheringSettingsStep", () => {
           isLiveActive: false,
         },
       ],
+      nonStudents: new Map(),
     });
     // 山田だけが停止前から参加者として登録されている
     (memberGateway.loadMembers as Mock).mockResolvedValue([1001]);
@@ -457,6 +459,7 @@ describe("GatheringSettingsStep", () => {
           isLiveActive: false,
         },
       ],
+      nonStudents: new Map(),
     });
     (memberGateway.loadMembers as Mock).mockResolvedValue([1001]);
     renderStep({
@@ -507,11 +510,84 @@ describe("GatheringSettingsStep", () => {
     expect(await screen.findByLabelText("山田 太郎を選択")).toBeChecked();
     // 実際に送る人数を出すため、行が無い参加者も数に含める
     expect(screen.getByText(/選択中 2人/)).toBeInTheDocument();
+    // 氏名が分からない参加者は操作させず、件数だけ知らせる
+    expect(
+      screen.getByText(/氏名を確認できない参加者が1人います/)
+    ).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "参加者を保存" }));
 
     await waitFor(() =>
       expect(memberGateway.saveMembers).toHaveBeenCalledWith(101, [1001, 9001])
+    );
+  });
+
+  it("学生以外の参加者は表の外に氏名付きで出し、チェックを外して参加者から外せる", async () => {
+    const memberGateway = createMemberGateway();
+    (memberGateway.loadCandidates as Mock).mockResolvedValue({
+      classrooms: [{ id: 1, name: "HAL1A" }],
+      students: [
+        {
+          id: 10,
+          userId: 1001,
+          name: "山田 太郎",
+          classroomId: 1,
+          attendanceNumber: 1,
+          studentNumber: "2026001",
+          isLiveActive: true,
+        },
+      ],
+      nonStudents: new Map([
+        [2001, { userId: 2001, name: "田中 先生", isLiveActive: true }],
+        [2002, { userId: 2002, name: "高橋 先生", isLiveActive: false }],
+      ]),
+    });
+    (memberGateway.loadMembers as Mock).mockResolvedValue([1001, 2001, 2002]);
+    renderStep({
+      memberGateway,
+      settingsGateway: {
+        load: vi.fn().mockResolvedValue(existingSettings),
+        save: vi.fn(),
+      },
+    });
+    const user = userEvent.setup();
+
+    await screen.findByRole("region", { name: "Round 1" });
+    await user.click(screen.getByRole("button", { name: "メンバーを選択" }));
+
+    const table = await screen.findByRole("table", {
+      name: "参加者候補の学生一覧",
+    });
+    const outside = screen.getByRole("region", { name: "学生以外の参加者" });
+    expect(within(table).queryByText("田中 先生")).not.toBeInTheDocument();
+    const checkbox = within(outside).getByLabelText("田中 先生を選択");
+    expect(checkbox).toBeChecked();
+    // 停止中かどうかは学生の行と同じバッジで示す
+    expect(within(outside).getAllByText("停止中")).toHaveLength(1);
+    expect(
+      within(outside).getByText("高橋 先生").closest("tr")
+    ).toHaveTextContent("停止中");
+    expect(
+      screen.queryByText(/氏名を確認できない参加者/)
+    ).not.toBeInTheDocument();
+
+    // 表の一括解除は表の行だけを対象にし、別枠の参加者は巻き込まない
+    await user.click(
+      screen.getByRole("button", { name: "表示中の選択を解除" })
+    );
+    expect(checkbox).toBeChecked();
+
+    // 外しても開いた時点の登録内容で判定するため、別枠から消えず付け直せる
+    await user.click(checkbox);
+    expect(checkbox).not.toBeChecked();
+    await user.click(checkbox);
+    expect(checkbox).toBeChecked();
+    await user.click(checkbox);
+
+    await user.click(screen.getByRole("button", { name: "参加者を保存" }));
+
+    await waitFor(() =>
+      expect(memberGateway.saveMembers).toHaveBeenCalledWith(101, [2002])
     );
   });
 
@@ -528,6 +604,7 @@ describe("GatheringSettingsStep", () => {
         studentNumber: `2026${String(index + 1).padStart(3, "0")}`,
         isLiveActive: true,
       })),
+      nonStudents: new Map(),
     });
     renderStep({
       memberGateway,

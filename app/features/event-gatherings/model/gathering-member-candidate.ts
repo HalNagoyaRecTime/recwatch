@@ -15,7 +15,19 @@ export type MemberStudent = {
   isLiveActive: boolean;
 };
 
+/** 選択候補には出さず、登録済みの参加者の氏名を引くためだけに使う学生以外の利用者。 */
+export type MemberNonStudent = {
+  userId: number;
+  name: string;
+  isLiveActive: boolean;
+};
+
 export type GatheringMemberCandidates = {
   classrooms: MemberClassroom[];
   students: MemberStudent[];
+  /**
+   * 学生以外の利用者を user_id から引く表。参加者は学生に限られないため、
+   * 候補一覧に行が無い登録済みの参加者を名前付きで表示するのに使う。
+   */
+  nonStudents: ReadonlyMap<number, MemberNonStudent>;
 };

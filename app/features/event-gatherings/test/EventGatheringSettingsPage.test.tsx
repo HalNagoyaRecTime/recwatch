@@ -76,6 +76,7 @@ function renderPageInEventDetail(reload: () => void) {
           isLiveActive: true,
         },
       ],
+      nonStudents: new Map(),
     }),
     loadMembers: vi.fn().mockResolvedValue([]),
     saveMembers: vi.fn().mockResolvedValue([1001]),
