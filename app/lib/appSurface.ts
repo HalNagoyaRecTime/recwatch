@@ -12,6 +12,8 @@ const RECWATCH_FAVICON_TYPE = "image/svg+xml";
 const ACCOUNT_DELETION_FAVICON_TYPE = "image/png";
 const RECWATCH_FAVICON_SIZES = "any";
 const ACCOUNT_DELETION_FAVICON_SIZES = "512x512";
+const ACCOUNT_DELETION_THEME_COLOR = "#ffffff";
+const APP_SURFACE_THEME_COLOR_ATTRIBUTE = "data-app-surface-theme-color";
 
 export function getAppSurface(
   pathname: string,
@@ -69,6 +71,30 @@ export function getDocumentAppSurface(): AppSurface {
   return surface === "account-deletion" ? surface : "recwatch";
 }
 
+function synchronizeThemeColor(surface: AppSurface): void {
+  const themeColorMeta = document.querySelector<HTMLMetaElement>(
+    'meta[name="theme-color"]'
+  );
+
+  if (surface === "account-deletion") {
+    const meta = themeColorMeta ?? document.createElement("meta");
+    meta.setAttribute("name", "theme-color");
+    meta.setAttribute("content", ACCOUNT_DELETION_THEME_COLOR);
+    meta.setAttribute(APP_SURFACE_THEME_COLOR_ATTRIBUTE, "true");
+
+    if (!themeColorMeta) {
+      document.head.append(meta);
+    }
+    return;
+  }
+
+  document
+    .querySelectorAll<HTMLMetaElement>(
+      `meta[name="theme-color"][${APP_SURFACE_THEME_COLOR_ATTRIBUTE}="true"]`
+    )
+    .forEach((meta) => meta.remove());
+}
+
 export function synchronizeAppSurfaceDocument(
   pathname: string,
   surface: AppSurface
@@ -98,6 +124,7 @@ export function synchronizeAppSurfaceDocument(
 
   const theme = surface === "account-deletion" ? "light" : getPreferredTheme();
   applyTheme(theme);
+  synchronizeThemeColor(surface);
 
   const favicon = document.querySelector<HTMLLinkElement>('link[rel="icon"]');
   if (favicon) {
@@ -183,6 +210,25 @@ export function createAppSurfaceBootstrapScript(): string {
       favicon.setAttribute("sizes", surface === "account-deletion"
         ? ${JSON.stringify(ACCOUNT_DELETION_FAVICON_SIZES)}
         : ${JSON.stringify(RECWATCH_FAVICON_SIZES)});
+    }
+
+    var themeColorMeta = document.querySelector('meta[name="theme-color"]');
+    if (surface === "account-deletion") {
+      var themeColorMetaWasMissing = !themeColorMeta;
+      if (themeColorMetaWasMissing) {
+        themeColorMeta = document.createElement("meta");
+      }
+
+      themeColorMeta.setAttribute("name", "theme-color");
+      themeColorMeta.setAttribute("content", ${JSON.stringify(ACCOUNT_DELETION_THEME_COLOR)});
+      themeColorMeta.setAttribute(${JSON.stringify(APP_SURFACE_THEME_COLOR_ATTRIBUTE)}, "true");
+      if (themeColorMetaWasMissing) {
+        document.head.appendChild(themeColorMeta);
+      }
+    } else {
+      document.querySelectorAll('meta[name="theme-color"][${APP_SURFACE_THEME_COLOR_ATTRIBUTE}="true"]').forEach(function(meta) {
+        meta.remove();
+      });
     }
   })();`;
 }

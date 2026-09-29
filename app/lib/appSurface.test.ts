@@ -27,6 +27,7 @@ describe("AppSurface", () => {
       <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
       <link rel="icon" href="/recwatch-logo.svg" type="image/svg+xml" sizes="any" />
     `;
+    window.history.replaceState({}, "", "/");
     window.localStorage.clear();
     window.sessionStorage.clear();
   });
@@ -87,6 +88,10 @@ describe("AppSurface", () => {
       "sizes",
       "512x512"
     );
+    expect(document.querySelector('meta[name="theme-color"]')).toHaveAttribute(
+      "content",
+      "#ffffff"
+    );
     expect(document.querySelector('meta[name="viewport"]')).toHaveAttribute(
       "content",
       "width=device-width, initial-scale=1, viewport-fit=cover"
@@ -99,7 +104,19 @@ describe("AppSurface", () => {
     expect(document.documentElement.dataset.appLoadingContext).toBeUndefined();
     expect(document.documentElement.classList.contains("dark")).toBe(true);
     expect(document.documentElement.dataset.theme).toBe("dark");
+    expect(document.querySelector('meta[name="theme-color"]')).toBeNull();
   });
+
+  it.each(["/account-deletion", "/account-deletion/callback"])(
+    "%sはSurface同期で白いtheme-colorになる",
+    (pathname) => {
+      synchronizeAppSurfaceDocument(pathname, getAppSurface(pathname));
+
+      expect(
+        document.querySelector('meta[name="theme-color"]')
+      ).toHaveAttribute("content", "#ffffff");
+    }
+  );
 
   it("削除Surfaceを離れると保存済みテーマへ戻し、設定値は変更しない", () => {
     window.localStorage.setItem("recwatch-theme", "dark");
@@ -116,6 +133,10 @@ describe("AppSurface", () => {
       "rgb(255, 255, 255)"
     );
     expect(document.body.style.backgroundColor).toBe("rgb(255, 255, 255)");
+    expect(document.querySelector('meta[name="theme-color"]')).toHaveAttribute(
+      "content",
+      "#ffffff"
+    );
     expect(window.localStorage.getItem("recwatch-theme")).toBe("dark");
     expect(document.querySelector('link[rel="icon"]')).toHaveAttribute(
       "href",
@@ -141,6 +162,7 @@ describe("AppSurface", () => {
     expect(document.documentElement.dataset.theme).toBe("dark");
     expect(document.documentElement.style.backgroundColor).toBe("rgb(0, 0, 0)");
     expect(document.body.style.backgroundColor).toBe("rgb(0, 0, 0)");
+    expect(document.querySelector('meta[name="theme-color"]')).toBeNull();
     expect(window.localStorage.getItem("recwatch-theme")).toBe("dark");
     expect(document.querySelector('link[rel="icon"]')).toHaveAttribute(
       "href",

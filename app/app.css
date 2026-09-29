@@ -418,13 +418,6 @@ html[data-app-surface="account-deletion"] #app {
   min-height: 100vh;
 }
 
-@supports (min-height: 100dvh) {
-  .root-hydrate-fallback,
-  html[data-app-surface="account-deletion"] .root-hydrate-fallback {
-    min-height: 100dvh;
-  }
-}
-
 html[data-app-surface="account-deletion"] .root-hydrate-fallback {
   display: flex;
   box-sizing: border-box;
@@ -435,6 +428,14 @@ html[data-app-surface="account-deletion"] .root-hydrate-fallback {
   background: #fff;
   text-align: center;
 }
+
+@supports (min-height: 100dvh) {
+  .root-hydrate-fallback,
+  html[data-app-surface="account-deletion"] .root-hydrate-fallback {
+    min-height: 100dvh;
+  }
+}
+
 .root-hydrate-fallback-default {
   display: block;
 }

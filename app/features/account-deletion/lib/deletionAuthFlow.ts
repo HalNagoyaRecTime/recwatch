@@ -5,44 +5,86 @@ const RESULT_KEY = "rectime_deletion_auth_result";
 export type DeletionAuthResult =
   { status: "confirmed"; token: string } | { status: "error"; message: string };
 
-function hasSessionStorage(): boolean {
-  if (typeof window === "undefined") return false;
+function getSessionStorage(): Storage | null {
+  if (typeof window === "undefined") return null;
 
   try {
-    return !!window.sessionStorage;
+    return window.sessionStorage;
   } catch {
-    return false;
+    return null;
   }
 }
 
 export function markDeletionAuthPending(): void {
-  if (!hasSessionStorage()) return;
-  window.sessionStorage.setItem(DELETION_AUTH_PENDING_STORAGE_KEY, "1");
+  const storage = getSessionStorage();
+  if (!storage) return;
+
+  try {
+    storage.setItem(DELETION_AUTH_PENDING_STORAGE_KEY, "1");
+  } catch {
+    // 利用できないstorageでは削除認証のpendingを保持しない。
+  }
 }
 
 export function consumeDeletionAuthPending(): boolean {
-  if (!hasSessionStorage()) return false;
-  const value = window.sessionStorage.getItem(
-    DELETION_AUTH_PENDING_STORAGE_KEY
-  );
-  window.sessionStorage.removeItem(DELETION_AUTH_PENDING_STORAGE_KEY);
+  const storage = getSessionStorage();
+  if (!storage) return false;
+
+  let value: string | null;
+  try {
+    value = storage.getItem(DELETION_AUTH_PENDING_STORAGE_KEY);
+  } catch {
+    return false;
+  }
+
+  try {
+    storage.removeItem(DELETION_AUTH_PENDING_STORAGE_KEY);
+  } catch {
+    // 読み取り結果だけでcallbackのSurfaceを判定できるようにする。
+  }
+
   return value === "1";
 }
 
 export function clearDeletionAuthPending(): void {
-  if (!hasSessionStorage()) return;
-  window.sessionStorage.removeItem(DELETION_AUTH_PENDING_STORAGE_KEY);
+  const storage = getSessionStorage();
+  if (!storage) return;
+
+  try {
+    storage.removeItem(DELETION_AUTH_PENDING_STORAGE_KEY);
+  } catch {
+    // 利用できないstorageでは何もしない。
+  }
 }
 
 export function saveDeletionAuthResult(result: DeletionAuthResult): void {
-  if (!hasSessionStorage()) return;
-  window.sessionStorage.setItem(RESULT_KEY, JSON.stringify(result));
+  const storage = getSessionStorage();
+  if (!storage) return;
+
+  try {
+    storage.setItem(RESULT_KEY, JSON.stringify(result));
+  } catch {
+    // 利用できないstorageでは認証結果を保存しない。
+  }
 }
 
 export function consumeDeletionAuthResult(): DeletionAuthResult | null {
-  if (!hasSessionStorage()) return null;
-  const raw = window.sessionStorage.getItem(RESULT_KEY);
-  window.sessionStorage.removeItem(RESULT_KEY);
+  const storage = getSessionStorage();
+  if (!storage) return null;
+
+  let raw: string | null;
+  try {
+    raw = storage.getItem(RESULT_KEY);
+  } catch {
+    return null;
+  }
+
+  try {
+    storage.removeItem(RESULT_KEY);
+  } catch {
+    // 読み取り結果だけでcallbackを処理できるようにする。
+  }
+
   if (!raw) return null;
 
   try {
@@ -55,8 +97,14 @@ export function consumeDeletionAuthResult(): DeletionAuthResult | null {
 }
 
 export function clearDeletionAuthResult(): void {
-  if (!hasSessionStorage()) return;
-  window.sessionStorage.removeItem(RESULT_KEY);
+  const storage = getSessionStorage();
+  if (!storage) return;
+
+  try {
+    storage.removeItem(RESULT_KEY);
+  } catch {
+    // 利用できないstorageでは何もしない。
+  }
 }
 
 function isDeletionAuthResult(value: unknown): value is DeletionAuthResult {
