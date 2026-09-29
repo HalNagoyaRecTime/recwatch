@@ -54,7 +54,7 @@ export function ScrollbarArea({
       <div
         ref={setScrollElement}
         className={cn(
-          "min-w-0 flex-1 scrollbar-none",
+          "scrollbar-none min-w-0 flex-1",
           orientation === "vertical" && "overflow-x-hidden overflow-y-auto",
           orientation === "horizontal" && "overflow-x-auto overflow-y-hidden",
           orientation === "both" && "overflow-auto",

@@ -4,6 +4,7 @@ import {
   useRevalidator,
   useRouteError,
 } from "react-router";
+import { useCallback } from "react";
 
 import { ClassRoomApi } from "~/features/classRoom/api";
 import { loadClassRoomListPage } from "~/features/classRoom/application/class-room-loaders";
@@ -12,7 +13,9 @@ import { ClassRoomPage } from "~/features/classRoom/pages/classRoomPage";
 import { PagePadding } from "~/features/frame/page-layout/PagePadding";
 import { PageLayout } from "~/features/frame/page-layout/PageLayout";
 import { TeacherApi } from "~/features/teachers/api";
+import { getActiveTeacherOptions } from "~/features/teachers/application/teacher-options";
 import { createPageTitle } from "~/lib/page-title";
+import { useManagementOptions } from "~/hooks/useManagementOptions";
 import { getManagementRouteErrorMessage } from "~/routes/main/management-route-error";
 import { useManagementModalNavigation } from "~/routes/main/useManagementModalNavigation";
 
@@ -22,27 +25,13 @@ export async function clientLoader({ request }: { request: Request }) {
   const searchParams = new URL(request.url).searchParams;
   const { page, search, sortBy, sortOrder } =
     parseClassRoomListUrl(searchParams);
-  const [classRoomPage, activeTeachers] = await Promise.all([
-    loadClassRoomListPage(ClassRoomApi, {
-      limit: CLASS_ROOM_LIST_LIMIT,
-      offset: (page - 1) * CLASS_ROOM_LIST_LIMIT,
-      search: search || undefined,
-      sortBy: sortBy ?? undefined,
-      sortOrder: sortOrder ?? undefined,
-    }),
-    TeacherApi.getActiveTeachers(),
-  ]);
-
-  return {
-    items: classRoomPage.items,
-    limit: classRoomPage.limit,
-    offset: classRoomPage.offset,
-    teacherOptions: activeTeachers.items.map(({ displayName, teacherId }) => ({
-      displayName,
-      teacherId,
-    })),
-    total: classRoomPage.total,
-  };
+  return loadClassRoomListPage(ClassRoomApi, {
+    limit: CLASS_ROOM_LIST_LIMIT,
+    offset: (page - 1) * CLASS_ROOM_LIST_LIMIT,
+    search: search || undefined,
+    sortBy: sortBy ?? undefined,
+    sortOrder: sortOrder ?? undefined,
+  });
 }
 
 export function meta() {
@@ -66,6 +55,14 @@ export default function ClassRoomRoute() {
   const page = useLoaderData<typeof clientLoader>();
   const revalidator = useRevalidator();
   const closeModal = useManagementModalNavigation("/classrooms");
+  const loadTeacherOptions = useCallback(
+    () => getActiveTeacherOptions(TeacherApi),
+    []
+  );
+  const teacherOptions = useManagementOptions(
+    loadTeacherOptions,
+    "担当教官候補を取得できませんでした。"
+  );
 
   return (
     <>
@@ -81,7 +78,7 @@ export default function ClassRoomRoute() {
           />
         </PagePadding>
       </PageLayout>
-      <Outlet context={closeModal} />
+      <Outlet context={{ closeModal, options: teacherOptions }} />
     </>
   );
 }

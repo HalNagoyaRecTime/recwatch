@@ -1,8 +1,10 @@
 import { Plus } from "lucide-react";
 import { useEffect } from "react";
+import type { ReactElement } from "react";
 import { useLocation, useNavigate } from "react-router";
 
 import { Button } from "~/components/ui/button/Button";
+import { ManagementOptionFeedback } from "~/components/management/ManagementOptionFeedback";
 import { SearchField } from "~/components/ui/form/SearchField";
 import { Select } from "~/components/ui/form/Select";
 import { PageHeader } from "~/components/ui/layout/PageHeader";
@@ -15,7 +17,9 @@ import type {
 } from "~/features/students/api/contracts/student-api";
 import { useStudentMutation } from "~/features/students/hooks/useStudentMutation";
 import { StudentTable } from "~/features/students/components/StudentTable";
+import { StudentsImportPage } from "~/features/students/pages/StudentsImportPage";
 import { useStudentListUrl } from "~/features/students/hooks/useStudentListUrl";
+import type { ManagementOptionState } from "~/hooks/useManagementOptions";
 import type {
   StudentClassRoomOption,
   StudentRow,
@@ -24,6 +28,7 @@ import type {
 type StudentsPageProps = {
   api: StudentMutationApi;
   classRooms: readonly StudentClassRoomOption[];
+  classRoomOptions?: ManagementOptionState<StudentClassRoomOption>;
   limit: number;
   onRevalidate: () => Promise<void> | void;
   offset: number;
@@ -32,8 +37,19 @@ type StudentsPageProps = {
   userApi: StudentAccessMutationApi;
 };
 
-export function StudentsPage({
+export function StudentsPage(): ReactElement;
+export function StudentsPage(props: StudentsPageProps): ReactElement;
+export function StudentsPage(props?: StudentsPageProps) {
+  if (!props || Object.keys(props).length === 0) {
+    return <StudentsImportPage />;
+  }
+
+  return <ManagedStudentsPage {...props} />;
+}
+
+function ManagedStudentsPage({
   api,
+  classRoomOptions,
   classRooms,
   limit,
   onRevalidate,
@@ -42,6 +58,7 @@ export function StudentsPage({
   total,
   userApi,
 }: StudentsPageProps) {
+  const classRoomOptionState = classRoomOptions ?? readyOptions(classRooms);
   const location = useLocation();
   const navigate = useNavigate();
   const {
@@ -116,6 +133,10 @@ export function StudentsPage({
         </div>
         <Select
           ariaLabel="担当クラスフィルター"
+          disabled={
+            classRoomOptionState.isLoading ||
+            Boolean(classRoomOptionState.error)
+          }
           onValueChange={(value) =>
             updateSearchParams({
               page: 1,
@@ -123,8 +144,13 @@ export function StudentsPage({
             })
           }
           options={[
-            { label: "クラス:すべて", value: "all" },
-            ...classRooms.map((classRoom) => ({
+            {
+              label: classRoomOptionState.isLoading
+                ? "クラス:読み込み中..."
+                : "クラス:すべて",
+              value: "all",
+            },
+            ...classRoomOptionState.items.map((classRoom) => ({
               label: `${classRoom.classCode} ${classRoom.className}`,
               value: String(classRoom.classRoomId),
             })),
@@ -144,6 +170,11 @@ export function StudentsPage({
           value={isLiveActive}
         />
       </div>
+
+      <ManagementOptionFeedback
+        label="クラス候補"
+        state={classRoomOptionState}
+      />
 
       {submitError ? (
         <p className="text-tone-danger-text text-sm" role="alert">
@@ -204,4 +235,8 @@ function booleanFilterOptions(label: string) {
     { label: `${label}:はい`, value: "true" as const },
     { label: `${label}:いいえ`, value: "false" as const },
   ];
+}
+
+function readyOptions<T>(items: readonly T[]): ManagementOptionState<T> {
+  return { error: null, isLoading: false, items };
 }

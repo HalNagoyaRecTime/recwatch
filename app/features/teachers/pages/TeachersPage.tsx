@@ -2,6 +2,7 @@ import { Plus } from "lucide-react";
 import { useEffect } from "react";
 import { useLocation, useNavigate } from "react-router";
 import { Button } from "~/components/ui/button/Button";
+import { ManagementOptionFeedback } from "~/components/management/ManagementOptionFeedback";
 import { PageHeader } from "~/components/ui/layout/PageHeader";
 import { SearchField } from "~/components/ui/form/SearchField";
 import { Pagination } from "~/components/ui/navigation/Pagination";
@@ -17,10 +18,12 @@ import type { TeacherMutationApi } from "~/features/teachers/api/contracts/teach
 import { useTeacherMutation } from "~/features/teachers/hooks/useTeacherMutation";
 import { useTeacherListUrl } from "~/features/teachers/hooks/useTeacherListUrl";
 import type { ClassRoomOption } from "~/features/teachers/model/teacher";
+import type { ManagementOptionState } from "~/hooks/useManagementOptions";
 
 type TeachersPageProps = {
   api: TeacherMutationApi;
   classRooms: readonly ClassRoomOption[];
+  classRoomOptions?: ManagementOptionState<ClassRoomOption>;
   limit: number;
   offset: number;
   onRevalidate: () => Promise<void> | void;
@@ -30,6 +33,7 @@ type TeachersPageProps = {
 
 export function TeachersPage({
   api,
+  classRoomOptions,
   classRooms,
   limit,
   offset,
@@ -37,6 +41,7 @@ export function TeachersPage({
   teachers,
   total,
 }: TeachersPageProps) {
+  const classRoomOptionState = classRoomOptions ?? readyOptions(classRooms);
   const navigate = useNavigate();
   const location = useLocation();
   const { clearError, error, isMutating, updateActive, updateStaff } =
@@ -91,6 +96,10 @@ export function TeachersPage({
         </div>
         <Select
           ariaLabel="担当クラスフィルター"
+          disabled={
+            classRoomOptionState.isLoading ||
+            Boolean(classRoomOptionState.error)
+          }
           onValueChange={(value) =>
             updateSearchParams({
               page: 1,
@@ -98,8 +107,13 @@ export function TeachersPage({
             })
           }
           options={[
-            { label: "クラス:すべて", value: "all" },
-            ...classRooms.map((classRoom) => ({
+            {
+              label: classRoomOptionState.isLoading
+                ? "クラス:読み込み中..."
+                : "クラス:すべて",
+              value: "all",
+            },
+            ...classRoomOptionState.items.map((classRoom) => ({
               label: classRoom.classCode
                 ? `${classRoom.classCode} ${classRoom.className}`
                 : classRoom.className,
@@ -121,6 +135,10 @@ export function TeachersPage({
           value={isLiveActive}
         />
       </div>
+      <ManagementOptionFeedback
+        label="クラス候補"
+        state={classRoomOptionState}
+      />
       <TeacherTable
         items={teachers}
         isMutating={isMutating}
@@ -179,4 +197,8 @@ function booleanFilterOptions(label: string) {
     { label: `${label}:はい`, value: "true" as const },
     { label: `${label}:いいえ`, value: "false" as const },
   ];
+}
+
+function readyOptions<T>(items: readonly T[]): ManagementOptionState<T> {
+  return { error: null, isLoading: false, items };
 }

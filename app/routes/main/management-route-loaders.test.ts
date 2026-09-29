@@ -2,9 +2,11 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { ClassRoomApi } from "~/features/classRoom/api";
 import type { ClassRoom } from "~/features/classRoom/model/classRoom";
+import { StudentApi } from "~/features/students/api";
 import { TeacherApi } from "~/features/teachers/api";
 import type { TeacherRow } from "~/features/teachers/model/teacher";
 import { clientLoader as classRoomEditLoader } from "~/routes/main/classrooms.$classRoomId.edit";
+import { clientLoader as studentEditLoader } from "~/routes/main/students.$studentId.edit";
 import { clientLoader as teacherEditLoader } from "~/routes/main/teachers.$teacherId.edit";
 
 const teacher: TeacherRow = {
@@ -44,14 +46,29 @@ describe("management edit clientLoaders", () => {
     expect(getTeacherById).toHaveBeenCalledWith(7);
   });
 
-  it("不正な教官IDは404として扱い、APIを呼ばない", async () => {
-    const getTeacherById = vi.spyOn(TeacherApi, "getTeacherById");
+  it.each(["0", "-1", "abc", "1.5", "", undefined])(
+    "不正な学生ID(%s)は404として扱い、APIを呼ばない",
+    async (studentId) => {
+      const getStudentById = vi.spyOn(StudentApi, "getStudentById");
 
-    await expect(
-      teacherEditLoader({ params: { teacherId: "0" } })
-    ).rejects.toMatchObject({ status: 404 });
-    expect(getTeacherById).not.toHaveBeenCalled();
-  });
+      await expect(
+        studentEditLoader({ params: { studentId } })
+      ).rejects.toMatchObject({ status: 404 });
+      expect(getStudentById).not.toHaveBeenCalled();
+    }
+  );
+
+  it.each(["0", "-1", "abc", "1.5", "", undefined])(
+    "不正な教官ID(%s)は404として扱い、APIを呼ばない",
+    async (teacherId) => {
+      const getTeacherById = vi.spyOn(TeacherApi, "getTeacherById");
+
+      await expect(
+        teacherEditLoader({ params: { teacherId } })
+      ).rejects.toMatchObject({ status: 404 });
+      expect(getTeacherById).not.toHaveBeenCalled();
+    }
+  );
 
   it("直接開いたクラス編集RouteはClassRoomApiから単体取得する", async () => {
     const getClassRoomById = vi
@@ -65,12 +82,15 @@ describe("management edit clientLoaders", () => {
     expect(getClassRoomById).toHaveBeenCalledWith(12);
   });
 
-  it("不正なクラスIDは404として扱い、APIを呼ばない", async () => {
-    const getClassRoomById = vi.spyOn(ClassRoomApi, "getClassRoomById");
+  it.each(["0", "-1", "abc", "1.5", "", undefined])(
+    "不正なクラスID(%s)は404として扱い、APIを呼ばない",
+    async (classRoomId) => {
+      const getClassRoomById = vi.spyOn(ClassRoomApi, "getClassRoomById");
 
-    await expect(
-      classRoomEditLoader({ params: { classRoomId: "not-a-number" } })
-    ).rejects.toMatchObject({ status: 404 });
-    expect(getClassRoomById).not.toHaveBeenCalled();
-  });
+      await expect(
+        classRoomEditLoader({ params: { classRoomId } })
+      ).rejects.toMatchObject({ status: 404 });
+      expect(getClassRoomById).not.toHaveBeenCalled();
+    }
+  );
 });
