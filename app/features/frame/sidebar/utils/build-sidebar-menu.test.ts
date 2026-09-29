@@ -15,7 +15,7 @@ describe("buildSidebarMenu", () => {
       expect.arrayContaining([
         "/dashboard",
         "/students",
-        "/classroom",
+        "/classrooms",
         "/teachers",
         "/events",
         "/events/today",
@@ -84,7 +84,7 @@ describe("buildSidebarMenu", () => {
 
     const classRoomItem = buildSidebarMenu("admin")
       .flatMap((section) => section.items)
-      .find((item) => item.to === "/classroom");
+      .find((item) => item.to === "/classrooms");
     expect(classRoomItem?.icon).toBeDefined();
   });
 

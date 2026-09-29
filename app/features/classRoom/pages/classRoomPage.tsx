@@ -155,7 +155,7 @@ export function ClassRoomPage({
             <ButtonLink
               icon={Plus}
               size="lg"
-              to={{ pathname: "/classroom/new", search: location.search }}
+              to={{ pathname: "/classrooms/new", search: location.search }}
               variant="primary"
             >
               新規登録

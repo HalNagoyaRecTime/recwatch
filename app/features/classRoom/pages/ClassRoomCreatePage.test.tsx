@@ -41,13 +41,13 @@ function ClassRoomListRoute() {
 
 function renderCreatePage(
   page: React.ReactElement,
-  initialEntries = ["/classroom/new?search=1A&page=2"]
+  initialEntries = ["/classrooms/new?search=1A&page=2"]
 ) {
   const listLoader = vi.fn().mockResolvedValue(null);
   const router = createMemoryRouter(
     [
       {
-        path: "/classroom",
+        path: "/classrooms",
         element: <ClassRoomListRoute />,
         loader: listLoader,
         children: [{ path: "new", element: page }],
@@ -104,7 +104,7 @@ describe("ClassRoomCreatePage", () => {
         .mockRejectedValue(new Error("登録に失敗しました。")),
     });
     renderCreatePage(<ClassRoomCreatePage api={api} teacherOptions={[]} />, [
-      "/classroom/new",
+      "/classrooms/new",
     ]);
 
     await user.type(
@@ -127,19 +127,19 @@ describe("ClassRoomCreatePage", () => {
     const user = userEvent.setup();
     const { router } = renderCreatePage(
       <ClassRoomCreatePage api={createApi()} teacherOptions={[]} />,
-      ["/classroom?search=1A&page=2", "/classroom/new?search=1A&page=2"]
+      ["/classrooms?search=1A&page=2", "/classrooms/new?search=1A&page=2"]
     );
 
     await user.click(await screen.findByRole("button", { name: "キャンセル" }));
     await waitFor(() =>
-      expect(router.state.location.pathname).toBe("/classroom")
+      expect(router.state.location.pathname).toBe("/classrooms")
     );
 
     await act(async () => {
       await router.navigate(-1);
     });
 
-    expect(router.state.location.pathname).toBe("/classroom");
+    expect(router.state.location.pathname).toBe("/classrooms");
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 });

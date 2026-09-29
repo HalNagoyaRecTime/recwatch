@@ -11,6 +11,9 @@ describe("navigation search results", () => {
       expect.objectContaining({ title: "教官管理", to: "/teachers" })
     );
     expect(NAVIGATION_SEARCH_RESULTS).toContainEqual(
+      expect.objectContaining({ title: "クラス管理", to: "/classrooms" })
+    );
+    expect(NAVIGATION_SEARCH_RESULTS).toContainEqual(
       expect.objectContaining({ title: "ダッシュボード", to: "/dashboard" })
     );
     expect(NAVIGATION_SEARCH_RESULTS).toContainEqual(

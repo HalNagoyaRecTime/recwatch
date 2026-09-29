@@ -140,7 +140,7 @@ export const sidebarSections = [
         id: "classroom",
         label: "クラス",
         icon: "classRoom",
-        to: "/classroom",
+        to: "/classrooms",
         roles: ["admin"],
       },
     ],
