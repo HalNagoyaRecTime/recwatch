@@ -5,7 +5,6 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { StudentApi } from "~/features/students/api";
 import type { StudentRow } from "~/features/students/model/student";
-import StudentsImportRoute from "~/routes/main/students.import";
 import StudentCreateRoute from "~/routes/main/students.new";
 import StudentEditRoute, {
   clientLoader as studentEditLoader,
@@ -21,14 +20,6 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock("~/features/classRoom/application/class-room-options", () => ({
   getClassRoomData: mocks.getClassRoomData,
-}));
-
-vi.mock("~/features/master-import/pages/MasterImportConfirmationPage", () => ({
-  MasterImportConfirmationPage: ({
-    fallbackListPath,
-  }: {
-    fallbackListPath: string;
-  }) => <div data-testid="import-confirmation">{fallbackListPath}</div>,
 }));
 
 const classRoom = {
@@ -83,7 +74,6 @@ function renderStudentsRouter(initialEntry: string) {
         element: <StudentsRouteWithLocation />,
         children: [
           { path: "new", element: <StudentCreateRoute /> },
-          { path: "import", element: <StudentsImportRoute /> },
           {
             path: ":studentId/edit",
             loader: ({ params }) => studentEditLoader({ params }),
@@ -201,20 +191,5 @@ describe("student management nested routes", () => {
     await waitFor(() =>
       expect(screen.queryByRole("dialog")).not.toBeInTheDocument()
     );
-  });
-
-  it("取込確認Routeは親一覧を一度だけ表示する", async () => {
-    const getStudents = mockStudentList();
-    mocks.getClassRoomData.mockResolvedValue([classRoom]);
-
-    renderStudentsRouter("/students/import?search=keep&importId=123");
-
-    expect(await screen.findByTestId("import-confirmation")).toHaveTextContent(
-      "/students"
-    );
-    expect(screen.getAllByRole("heading", { name: "学生管理" })).toHaveLength(
-      1
-    );
-    expect(getStudents).toHaveBeenCalledOnce();
   });
 });

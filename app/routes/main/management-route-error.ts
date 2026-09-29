@@ -4,13 +4,14 @@ import { ApiClientError } from "~/lib/api-client-error";
 
 export function getManagementRouteErrorMessage(error: unknown): string {
   if (
-    (error instanceof ApiClientError || isRouteErrorResponse(error)) &&
+    (error instanceof ApiClientError ||
+      isManagementRouteErrorResponse(error)) &&
     error.status === 401
   ) {
     return "認証が必要です。再ログインしてください。";
   }
 
-  if (isRouteErrorResponse(error)) {
+  if (isManagementRouteErrorResponse(error)) {
     return `エラー${error.status}:${error.data || error.statusText}`;
   }
 
@@ -19,4 +20,13 @@ export function getManagementRouteErrorMessage(error: unknown): string {
   }
 
   return "予期しないエラーが発生しました。";
+}
+
+function isManagementRouteErrorResponse(
+  error: unknown
+): error is { data: unknown; status: number; statusText: string } {
+  if (isRouteErrorResponse(error)) return true;
+  if (typeof error !== "object" || error === null) return false;
+  if (!("status" in error) || typeof error.status !== "number") return false;
+  return "data" in error || "statusText" in error;
 }

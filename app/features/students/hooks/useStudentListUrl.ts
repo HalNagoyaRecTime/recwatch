@@ -1,6 +1,7 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback } from "react";
 import { useSearchParams } from "react-router";
 
+import { useDebouncedUrlSearch } from "~/hooks/useDebouncedUrlSearch";
 import type {
   StudentBooleanFilter,
   StudentListSortBy,
@@ -13,37 +14,19 @@ import {
 export function useStudentListUrl() {
   const [searchParams, setSearchParams] = useSearchParams();
   const state = parseStudentListUrl(searchParams);
-  const [searchDraft, setSearchDraft] = useState<{
-    search: string;
-    value: string;
-  } | null>(null);
-  const searchInput =
-    searchDraft?.search === state.search ? searchDraft.value : state.search;
-  const previousSearch = useRef(state.search);
-
-  useEffect(() => {
-    if (previousSearch.current === state.search) return;
-    previousSearch.current = state.search;
-    const timer = window.setTimeout(() => setSearchDraft(null), 0);
-    return () => window.clearTimeout(timer);
-  }, [state.search]);
-
-  useEffect(() => {
-    if (searchInput.trim() === state.search) return;
-    const timer = window.setTimeout(() => {
-      setSearchParams((currentSearchParams) =>
-        updateStudentListUrl(currentSearchParams, {
-          page: 1,
-          search: searchInput,
-        })
-      );
-    }, 250);
-    return () => window.clearTimeout(timer);
-  }, [searchInput, setSearchParams, state.search]);
-
-  function setSearchInput(value: string) {
-    setSearchDraft({ search: state.search, value });
-  }
+  const updateSearch = useCallback(
+    (currentSearchParams: URLSearchParams, value: string) =>
+      updateStudentListUrl(currentSearchParams, {
+        page: 1,
+        search: value,
+      }),
+    []
+  );
+  const { searchInput, setSearchInput } = useDebouncedUrlSearch({
+    search: state.search,
+    setSearchParams,
+    updateSearch,
+  });
 
   const updateSearchParams = useCallback(
     (updates: Parameters<typeof updateStudentListUrl>[1], replace = false) => {

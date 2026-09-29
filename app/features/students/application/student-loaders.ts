@@ -4,6 +4,7 @@ import type {
 } from "~/features/students/api/contracts/student-api";
 import { parseStudentListUrl } from "~/features/students/application/student-list-url";
 import type { StudentRow } from "~/features/students/model/student";
+import { parsePositiveIntegerRouteParam } from "~/lib/parse-positive-integer-route-param";
 
 export type StudentManagementPageData = {
   limit: number;
@@ -49,8 +50,8 @@ export async function loadStudentManagementPage(
 }
 
 export function parseStudentId(value: string | undefined): number {
-  const studentId = Number(value);
-  if (!Number.isInteger(studentId) || studentId <= 0) {
+  const studentId = parsePositiveIntegerRouteParam(value);
+  if (studentId === null) {
     throw new Response("学生が見つかりません。", { status: 404 });
   }
   return studentId;

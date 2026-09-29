@@ -1,12 +1,15 @@
-import { useLoaderData, useRouteLoaderData } from "react-router";
+import { useLoaderData, useRouteError } from "react-router";
 
 import { createPageTitle } from "~/lib/page-title";
 import { TeacherApi } from "~/features/teachers/api";
 import { parseTeacherId } from "~/features/teachers/application/teacher-loaders";
 import { TeacherEditPage } from "~/features/teachers/pages/TeacherEditPage";
-import { managementRouteIds } from "~/routes/main/management-route-ids";
-import { useManagementModalReturn } from "~/routes/main/useManagementModalNavigation";
-import type { clientLoader as parentClientLoader } from "./teachers";
+import type { ClassRoomOption } from "~/features/teachers/model/teacher";
+import { ManagementModalRouteError } from "~/routes/main/management-modal-route-error";
+import {
+  useManagementModalReturn,
+  useManagementRouteOptions,
+} from "~/routes/main/useManagementModalNavigation";
 
 export function meta() {
   return [{ title: createPageTitle("教官情報の編集") }];
@@ -21,16 +24,26 @@ export async function clientLoader({
   return { teacher: await TeacherApi.getTeacherById(teacherId) };
 }
 
+export function ErrorBoundary() {
+  const closeModal = useManagementModalReturn();
+  return (
+    <ManagementModalRouteError
+      error={useRouteError()}
+      onClose={closeModal}
+      title="教官情報を読み込めません"
+    />
+  );
+}
+
 export default function TeacherEditRoute() {
   const { teacher } = useLoaderData<typeof clientLoader>();
-  const { classRooms } = useRouteLoaderData<typeof parentClientLoader>(
-    managementRouteIds.teachers
-  )!;
+  const classRoomOptions = useManagementRouteOptions<ClassRoomOption>();
   const closeModal = useManagementModalReturn();
   return (
     <TeacherEditPage
       api={TeacherApi}
-      classRooms={classRooms}
+      classRoomOptions={classRoomOptions}
+      classRooms={classRoomOptions.items}
       onClose={() => closeModal()}
       onSaved={() => closeModal(true)}
       teacher={teacher}
