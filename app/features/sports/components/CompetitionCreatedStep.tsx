@@ -1,15 +1,16 @@
-import { Check } from "lucide-react";
+import { ArrowRight, Check } from "lucide-react";
+
+import { Button } from "~/components/ui/button/Button";
 
 type CompetitionCreatedStepProps = {
   competitionName: string;
   onClose: () => void;
-  onConfigureGatherings: () => void;
 };
 
+/** イベント本体の作成完了を示し、集合設定を行うイベント詳細へ送る。 */
 export function CompetitionCreatedStep({
   competitionName,
   onClose,
-  onConfigureGatherings,
 }: CompetitionCreatedStepProps) {
   return (
     <div className="flex flex-col items-center gap-5 py-8 text-center">
@@ -22,42 +23,18 @@ export function CompetitionCreatedStep({
         </p>
         <p className="text-text-muted text-base">
           「{competitionName}
-          」を登録しました。続けて集合設定を行うか、あとから設定できます。
+          」を登録しました。イベント詳細から集合設定を行えます。
         </p>
       </div>
-      <div className="grid w-full max-w-xl gap-3 sm:grid-cols-2">
-        <ChoiceButton
-          description="イベント一覧へ戻ります。"
-          label="あとで設定する"
-          onClick={onClose}
-        />
-        <ChoiceButton
-          description="Roundごとの集合設定へ進みます。"
-          label="集合を設定する"
-          onClick={onConfigureGatherings}
-        />
-      </div>
+      <Button
+        icon={ArrowRight}
+        onClick={onClose}
+        size="lg"
+        type="button"
+        variant="primary"
+      >
+        イベント詳細へ進む
+      </Button>
     </div>
-  );
-}
-
-function ChoiceButton({
-  description,
-  label,
-  onClick,
-}: {
-  description: string;
-  label: string;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      className="border-border-base hover:border-border-strong hover:bg-surface-hover app-rounded flex flex-col items-start gap-1 border px-4 py-3 text-left transition-colors"
-      onClick={onClick}
-      type="button"
-    >
-      <span className="text-text-base text-base font-semibold">{label}</span>
-      <span className="text-text-muted text-sm">{description}</span>
-    </button>
   );
 }

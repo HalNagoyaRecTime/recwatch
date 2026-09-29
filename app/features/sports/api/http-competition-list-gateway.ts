@@ -3,6 +3,7 @@ import type {
   CompetitionGatheringSummary,
   CompetitionListItem,
 } from "~/features/sports/model/competition-list-item";
+import type { CompetitionVenue } from "~/features/sports/model/competition-venue";
 import { apiClient } from "~/lib/api-client";
 import { loadAllPages } from "~/lib/load-all-pages";
 
@@ -17,11 +18,16 @@ type GatheringSummaryDto = {
   first_gathering_time: string | null;
 };
 
+type VenueDto = {
+  venue_id: number;
+  venue_name: string;
+};
+
 type EventDto = {
   event_id: number;
   event_name: string;
   rule_text: string | null;
-  venue: string;
+  venues: VenueDto[];
   start_time: string;
   end_time: string;
   gathering_summary: GatheringSummaryDto;
@@ -50,10 +56,19 @@ function isEventDto(value: unknown): value is EventDto {
     Number(value.event_id) > 0 &&
     typeof value.event_name === "string" &&
     (value.rule_text === null || typeof value.rule_text === "string") &&
-    typeof value.venue === "string" &&
+    Array.isArray(value.venues) &&
+    value.venues.every(isVenueDto) &&
     typeof value.start_time === "string" &&
     typeof value.end_time === "string" &&
     isGatheringSummaryDto(value.gathering_summary)
+  );
+}
+
+function isVenueDto(value: unknown): value is VenueDto {
+  return (
+    isRecord(value) &&
+    Number.isSafeInteger(value.venue_id) &&
+    typeof value.venue_name === "string"
   );
 }
 
@@ -89,12 +104,16 @@ function mapGatheringSummary(
   };
 }
 
+function mapVenue(venue: VenueDto): CompetitionVenue {
+  return { id: venue.venue_id, name: venue.venue_name };
+}
+
 function mapCompetition(event: EventDto): CompetitionListItem {
   return {
     id: event.event_id,
     code: String(event.event_id).padStart(3, "0"),
     name: event.event_name,
-    venue: event.venue,
+    venues: event.venues.map(mapVenue),
     startTime: formatTime(event.start_time),
     endTime: formatTime(event.end_time),
     gatheringSummary: mapGatheringSummary(event.gathering_summary),

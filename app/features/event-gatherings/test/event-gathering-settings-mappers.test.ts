@@ -15,39 +15,26 @@ function gatheringResponse(gatheringId: number, time: string) {
 }
 
 describe("toEventGatheringSettings", () => {
-  it("集合ごとに読んだ参加者を対応する集合へ含める", () => {
-    const settings = toEventGatheringSettings(
-      {
-        event_id: 12,
-        rounds: [
-          {
-            round: 1,
-            gatherings: [
-              { ...gatheringResponse(1, "10:45"), member_count: 2 },
-              gatheringResponse(2, "10:55"),
-            ],
-          },
-        ],
-      },
-      new Map([
-        [
-          1,
-          [
-            { gathering_group_member_id: 1, gathering_id: 1, user_id: 1001 },
-            { gathering_group_member_id: 2, gathering_id: 1, user_id: 1002 },
+  it("Event 詳細の集合を参加人数付きで変換する", () => {
+    const settings = toEventGatheringSettings({
+      event_id: 12,
+      rounds: [
+        {
+          round: 1,
+          gatherings: [
+            { ...gatheringResponse(1, "10:45"), member_count: 2 },
+            gatheringResponse(2, "10:55"),
           ],
-        ],
-      ])
-    );
+        },
+      ],
+    });
 
     expect(settings.rounds[0].gatherings[0]).toEqual({
       id: 1,
       time: "10:45",
       spot: { id: 1, name: "出入口①" },
-      memberUserIds: [1001, 1002],
       memberCount: 2,
     });
-    expect(settings.rounds[0].gatherings[1].memberUserIds).toEqual([]);
     expect(settings.rounds[0].gatherings[1].memberCount).toBe(0);
   });
 
@@ -89,7 +76,6 @@ describe("toEventGatheringSettings", () => {
               id: 101,
               time: "10:45",
               spot: { id: 1, name: "出入口①" },
-              memberUserIds: [],
               memberCount: 16,
             },
           ],

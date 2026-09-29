@@ -1,4 +1,5 @@
 import { Users, X } from "lucide-react";
+import { useId } from "react";
 
 import { Button } from "~/components/ui/button/Button";
 import { cn } from "~/lib/cn";
@@ -35,9 +36,13 @@ export function GatheringRow({
   spots,
   value,
 }: GatheringRowProps) {
-  const selectedCount = value.memberUserIds.length;
-  const memberLabel = `${selectedCount}人選択`;
-  const isLockedByMembers = value.savedMemberCount > 0;
+  const memberCount = value.savedMemberCount;
+  const memberLabel = `${memberCount}人登録済み`;
+  const isLockedByMembers = memberCount > 0;
+  // 参加者は集合の ID 単位で保存するため、まだ保存していない新規行では選べない
+  const isSavedGathering = value.gatheringId !== null;
+  // 同じ画面に複数行が並ぶため、固定文字列にすると id が重複する
+  const hintId = useId();
 
   return (
     <div className="space-y-2">
@@ -78,8 +83,9 @@ export function GatheringRow({
           参加者
           <div className="mt-1.5 flex items-center gap-2">
             <Button
+              aria-describedby={isSavedGathering ? undefined : hintId}
               aria-expanded={isPickerOpen}
-              disabled={disabled}
+              disabled={disabled || !isSavedGathering}
               icon={Users}
               onClick={onTogglePicker}
               size="sm"
@@ -91,7 +97,7 @@ export function GatheringRow({
             <span
               className={cn(
                 "app-rounded bg-surface-muted text-text-muted px-2 py-1 text-xs font-medium whitespace-nowrap",
-                selectedCount > 0 && "bg-tone-success-bg text-tone-success-text"
+                memberCount > 0 && "bg-tone-success-bg text-tone-success-text"
               )}
             >
               {memberLabel}
@@ -111,6 +117,13 @@ export function GatheringRow({
           />
         ) : null}
       </div>
+      {/* disabled なボタンは Chrome / Safari で title のツールチップが出ないため、
+          押せない理由は常に見えるテキストで出す */}
+      {isSavedGathering ? null : (
+        <p className="text-text-muted text-xs" id={hintId}>
+          この集合を「集合設定を保存」で登録すると、参加者を選べます。
+        </p>
+      )}
       {isLockedByMembers ? (
         <p className="text-text-muted text-xs">
           参加者が登録されているため、この集合は削除できません。

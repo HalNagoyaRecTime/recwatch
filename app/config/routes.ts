@@ -62,8 +62,12 @@ export const sidebarSections = [
             activePatterns: [
               "/events",
               "/events/new",
+              "/events/:competitionId",
               "/events/:competitionId/edit",
+              "/events/:competitionId/gatherings",
             ],
+            // `/events/:competitionId` は固定パスの画面にも一致するため、別項目のものを除外する
+            activeExclusions: ["/events/today", "/events/assignments"],
             roles: ["admin"],
           },
           {
@@ -136,7 +140,7 @@ export const sidebarSections = [
         id: "classroom",
         label: "クラス",
         icon: "classRoom",
-        to: "/classroom",
+        to: "/classrooms",
         roles: ["admin"],
       },
     ],
@@ -151,9 +155,9 @@ export const sidebarSections = [
         roles: ["admin"],
       },
       {
-        id: "legacy-members",
-        label: "旧学生管理",
-        to: "/members",
+        id: "venues",
+        label: "実施場所管理",
+        to: "/venues",
         roles: ["admin"],
       },
     ],

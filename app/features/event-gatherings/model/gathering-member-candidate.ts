@@ -11,6 +11,8 @@ export type MemberStudent = {
   classroomId: number;
   attendanceNumber: number;
   studentNumber: string;
+  /** 利用中かどうか。停止中の学生は新しく参加者に加えられない。 */
+  isLiveActive: boolean;
 };
 
 export type GatheringMemberCandidates = {

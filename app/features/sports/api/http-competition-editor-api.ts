@@ -1,11 +1,16 @@
 import type { CompetitionEditorApi } from "~/features/sports/api/competition-editor-api";
 import { apiClient } from "~/lib/api-client";
 
+type VenueDto = {
+  venue_id: number;
+  venue_name: string;
+};
+
 type EventDto = {
   event_id: number;
   event_name: string;
   rule_text: string | null;
-  venue: string;
+  venues: VenueDto[];
   start_time: string;
   end_time: string;
 };
@@ -20,7 +25,7 @@ function toRequest(input: Parameters<CompetitionEditorApi["create"]>[0]) {
   return {
     event_name: input.name,
     rule_text: input.rules,
-    venue: input.venue,
+    venue_ids: input.venueIds,
     start_time: input.startTime.replace(":", ""),
     end_time: input.endTime.replace(":", ""),
   };
@@ -41,8 +46,15 @@ export const httpCompetitionEditorApi: CompetitionEditorApi = {
       name: response.event_name,
       rules: response.rule_text ?? "",
       startTime: formatTimeForDisplay(response.start_time),
-      venue: response.venue,
+      venueIds: response.venues.map((venue) => venue.venue_id),
     };
+  },
+  async listVenues() {
+    const response = await apiClient.get<VenueDto[]>("/api/v1/venues");
+    return response.map((venue) => ({
+      id: venue.venue_id,
+      name: venue.venue_name,
+    }));
   },
   async update(eventId, input) {
     await apiClient.put(`/api/v1/events/${eventId}`, toRequest(input));

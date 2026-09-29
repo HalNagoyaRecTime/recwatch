@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
@@ -8,7 +8,7 @@ import {
 } from "~/components/providers/ThemeProvider";
 import { AccountBtn } from "../components/AccountBtn";
 import { AccountMenuPanel } from "../components/AccountMenuPanel";
-import { getAccountBtnData } from "../model/account-btn-data";
+import { getAccountBtnData, type AccountUser } from "../model/account-btn-data";
 
 const themeContext: ThemeContextType = {
   theme: "light",
@@ -16,15 +16,43 @@ const themeContext: ThemeContextType = {
   toggleTheme: vi.fn(),
 };
 
-function renderAccountButton() {
+function renderAccountButton(user?: AccountUser) {
   return render(
     <ThemeContext.Provider value={themeContext}>
-      <AccountBtn onLogout={vi.fn()} />
+      <AccountBtn user={user} onLogout={vi.fn()} />
     </ThemeContext.Provider>
   );
 }
 
 describe("AccountMenu", () => {
+  it("長いプロフィール名でも内容幅を基準に利用可能幅で制限する", async () => {
+    const user = userEvent.setup();
+    const longName = "長いアカウント名".repeat(20);
+    renderAccountButton({
+      id: "account-1",
+      email: "user@example.com",
+      display_name: longName,
+    });
+
+    await user.click(
+      screen.getByRole("button", { name: "アカウントメニュー" })
+    );
+
+    const panel = screen.getByRole("dialog");
+    const surface = panel.firstElementChild;
+    const profileName = within(panel).getByText(longName);
+
+    expect(panel).toHaveClass(
+      "w-max",
+      "max-w-(--floating-panel-available-width)"
+    );
+    expect(surface).toHaveClass(
+      "max-h-[var(--floating-panel-available-height)]",
+      "max-w-[var(--floating-panel-available-width)]"
+    );
+    expect(profileName).toHaveClass("min-w-0", "max-w-full", "truncate");
+  }, 10000);
+
   it("開いた直後はトリガーにfocusを残し、Tabでメニューへ移動する", async () => {
     const user = userEvent.setup();
     renderAccountButton();

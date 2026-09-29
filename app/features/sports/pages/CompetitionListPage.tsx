@@ -72,9 +72,11 @@ export function CompetitionListPage({
     if (!normalizedQuery) return competitions;
 
     return competitions.filter((competition) =>
-      [competition.name, competition.venue].some((value) =>
-        value.toLocaleLowerCase("ja").includes(normalizedQuery)
-      )
+      [
+        competition.name,
+        competition.code,
+        ...competition.venues.map((venue) => venue.name),
+      ].some((value) => value.toLocaleLowerCase("ja").includes(normalizedQuery))
     );
   }, [competitions, query]);
 
@@ -90,7 +92,7 @@ export function CompetitionListPage({
             case "event-name":
               return competition.name;
             case "venue":
-              return competition.venue;
+              return competition.venues[0]?.name;
             case "event-time":
               return `${competition.startTime}-${competition.endTime}`;
             case "gathering":
@@ -129,15 +131,22 @@ export function CompetitionListPage({
 
   return (
     <div className="min-h-full space-y-5">
-      <PageHeader
-        actions={
-          <ButtonLink icon={Plus} size="lg" to="/events/new" variant="primary">
-            新規登録
-          </ButtonLink>
-        }
-        description="イベント情報の登録・編集・確認ができます"
-        title="イベント登録一覧"
-      />
+      <div className="space-y-1">
+        <p className="text-text-muted text-xs font-medium">イベント管理</p>
+        <PageHeader
+          actions={
+            <ButtonLink
+              icon={Plus}
+              size="lg"
+              to="/events/new"
+              variant="primary"
+            >
+              新規登録
+            </ButtonLink>
+          }
+          title="イベント一覧"
+        />
+      </div>
 
       {loadError || actionError ? (
         <p className="text-tone-danger-text text-sm" role="alert">
@@ -148,7 +157,7 @@ export function CompetitionListPage({
       <SearchField
         ariaLabel="イベントを検索"
         onValueChange={setQuery}
-        placeholder="イベント名・実施場所で検索..."
+        placeholder="イベント名・実施場所・IDで検索"
         value={query}
       />
 
@@ -163,10 +172,7 @@ export function CompetitionListPage({
         isMutating={isDeleting}
         items={visibleCompetitions}
         onDelete={(competition) => void deleteCompetition(competition)}
-        onEdit={(competition) => navigate(`/events/${competition.id}/edit`)}
-        onOpenGatherings={(competition) =>
-          navigate(`/events/${competition.id}/gatherings`)
-        }
+        onOpenDetail={(competition) => navigate(`/events/${competition.id}`)}
         onSortChange={(columnId) =>
           setSort((current) => getNextManagementTableSort(current, columnId))
         }

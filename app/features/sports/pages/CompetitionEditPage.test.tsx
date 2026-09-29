@@ -24,6 +24,7 @@ function renderPage(api: CompetitionEditorApi, path = "/events/7/edit") {
           }
         />
         <Route path="/events" element={<LocationProbe />} />
+        <Route path="/events/:competitionId" element={<LocationProbe />} />
       </Routes>
     </MemoryRouter>
   );
@@ -39,8 +40,12 @@ describe("CompetitionEditPage", () => {
         name: "大縄跳び",
         rules: "旧ルール",
         startTime: "09:30",
-        venue: "運動場",
+        venueIds: [1],
       }),
+      listVenues: vi.fn().mockResolvedValue([
+        { id: 1, name: "運動場" },
+        { id: 2, name: "体育館" },
+      ]),
       update,
     };
     const user = userEvent.setup();
@@ -48,12 +53,17 @@ describe("CompetitionEditPage", () => {
 
     expect(await screen.findByLabelText("イベント名*")).toHaveValue("大縄跳び");
     expect(screen.getByLabelText("イベントルール")).toHaveValue("旧ルール");
-    expect(screen.getByLabelText("実施場所*")).toHaveValue("運動場");
+    expect(
+      await screen.findByRole("checkbox", { name: "運動場" })
+    ).toBeChecked();
+    expect(screen.getByRole("checkbox", { name: "体育館" })).not.toBeChecked();
     expect(screen.getByLabelText("開始時間*")).toHaveValue("09:30");
     expect(screen.getByLabelText("終了時間*")).toHaveValue("10:00");
 
     await user.clear(screen.getByLabelText("イベント名*"));
     await user.type(screen.getByLabelText("イベント名*"), "大縄跳び決勝");
+    await user.click(screen.getByRole("checkbox", { name: "運動場" }));
+    await user.click(screen.getByRole("checkbox", { name: "体育館" }));
     await user.click(screen.getByRole("button", { name: "変更を保存する" }));
 
     await waitFor(() =>
@@ -62,16 +72,20 @@ describe("CompetitionEditPage", () => {
         name: "大縄跳び決勝",
         rules: "旧ルール",
         startTime: "09:30",
-        venue: "運動場",
+        venueIds: [2],
       })
     );
-    expect(screen.getByTestId("location")).toHaveTextContent("/events");
+    // 編集はイベント詳細から開くため、保存後は詳細へ戻る
+    await waitFor(() =>
+      expect(screen.getByTestId("location")).toHaveTextContent(/^\/events\/7$/)
+    );
   });
 
   it("読み込み失敗を表示してフォームを無効化する", async () => {
     const api: CompetitionEditorApi = {
       create: vi.fn(),
       get: vi.fn().mockRejectedValue(new Error("イベントが見つかりません")),
+      listVenues: vi.fn().mockResolvedValue([]),
       update: vi.fn(),
     };
     renderPage(api);
@@ -90,6 +104,7 @@ describe("CompetitionEditPage", () => {
     const api: CompetitionEditorApi = {
       create: vi.fn(),
       get: vi.fn(),
+      listVenues: vi.fn().mockResolvedValue([]),
       update: vi.fn(),
     };
     renderPage(api, "/events/not-a-number/edit");

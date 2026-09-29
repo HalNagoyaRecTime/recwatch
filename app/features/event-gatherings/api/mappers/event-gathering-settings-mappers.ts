@@ -1,27 +1,19 @@
 import type {
   EventGatheringSettingsResponseDto,
   EventGatheringSettingsWriteRequestDto,
-  GatheringMemberResponseDto,
 } from "~/features/event-gatherings/api/dto/event-gathering-settings-api-dto";
 import type {
   EventGatheringSettings,
   EventGatheringSettingsWriteInput,
 } from "~/features/event-gatherings/model/event-gathering-settings";
 
-const NO_MEMBERS: ReadonlyMap<number, readonly GatheringMemberResponseDto[]> =
-  new Map();
-
 /**
  * Round ごとにまとまったレスポンスを集合設定へ変換する。
- * レスポンス自体は人数だけを返し参加者の ID までは含まないため、
- * 集合ごとに別途読んだ参加者があれば `membersByGatheringId` で受け取る。
+ * レスポンスは参加人数だけを返し、参加者の ID は含まない。
+ * 参加者は集合ごとに参加者ピッカーを開いたときに別途読み込む。
  */
 export function toEventGatheringSettings(
-  response: EventGatheringSettingsResponseDto,
-  membersByGatheringId: ReadonlyMap<
-    number,
-    readonly GatheringMemberResponseDto[]
-  > = NO_MEMBERS
+  response: EventGatheringSettingsResponseDto
 ): EventGatheringSettings {
   return {
     eventId: response.event_id,
@@ -34,9 +26,6 @@ export function toEventGatheringSettings(
           id: gathering.gathering_spot.gathering_spot_id,
           name: gathering.gathering_spot.gathering_spot_name,
         },
-        memberUserIds: (
-          membersByGatheringId.get(gathering.gathering_id) ?? []
-        ).map((member) => member.user_id),
         memberCount: gathering.member_count,
       })),
     })),

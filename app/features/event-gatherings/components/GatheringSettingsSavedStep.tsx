@@ -9,7 +9,7 @@ type GatheringSettingsSavedStepProps = {
   settings: EventGatheringSettings;
 };
 
-/** 集合設定の保存が完了したことを示し、一覧へ戻す。 */
+/** 集合設定の保存が完了したことを示し、イベント詳細へ戻す。 */
 export function GatheringSettingsSavedStep({
   onClose,
   settings,
@@ -34,7 +34,7 @@ export function GatheringSettingsSavedStep({
         </p>
       </div>
       <Button onClick={onClose} size="lg" variant="primary">
-        一覧へ戻る
+        イベント詳細へ戻る
       </Button>
     </div>
   );

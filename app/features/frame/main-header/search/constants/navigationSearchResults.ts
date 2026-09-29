@@ -15,17 +15,17 @@ export const NAVIGATION_SEARCH_RESULTS: readonly NavigationSearchResult[] = [
     keywords: ["home", "トップ"],
   },
   {
-    id: "members",
+    id: "students",
     title: "学生管理",
     category: "管理",
-    to: "/members",
-    keywords: ["生徒", "メンバー", "CSV", "名簿"],
+    to: "/students",
+    keywords: ["学生", "Student", "CSV", "名簿", "学籍番号"],
   },
   {
     id: "classrooms",
     title: "クラス管理",
     category: "管理",
-    to: "/classroom",
+    to: "/classrooms",
     keywords: ["教室", "クラス"],
   },
   {
@@ -55,6 +55,13 @@ export const NAVIGATION_SEARCH_RESULTS: readonly NavigationSearchResult[] = [
     category: "イベント",
     to: "/gathering-spots",
     keywords: ["集合", "場所"],
+  },
+  {
+    id: "venues",
+    title: "実施場所管理",
+    category: "イベント",
+    to: "/venues",
+    keywords: ["実施", "場所", "会場"],
   },
   {
     id: "notifications",

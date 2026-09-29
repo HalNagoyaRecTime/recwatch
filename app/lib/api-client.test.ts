@@ -233,4 +233,25 @@ describe("apiClient", () => {
       }
     );
   });
+
+  it("本文なしのPUTを204レスポンスとして処理する", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(new Response(null, { status: 204 }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(
+      apiClient.put("/admin/users/11/staff")
+    ).resolves.toBeUndefined();
+    expect(fetchMock).toHaveBeenCalledWith(
+      "https://api.example.com/admin/users/11/staff",
+      {
+        method: "PUT",
+        headers: {
+          Accept: "application/json",
+          "X-Client-Type": "web",
+        },
+      }
+    );
+  });
 });

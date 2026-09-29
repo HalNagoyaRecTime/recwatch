@@ -3,7 +3,27 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter, useLocation } from "react-router";
 import { describe, expect, it, vi } from "vitest";
 
+import type { CompetitionEditorApi } from "~/features/sports/api/competition-editor-api";
 import { CompetitionCreatePage } from "./CompetitionCreatePage";
+
+function createApi(
+  overrides: Partial<CompetitionEditorApi> = {}
+): CompetitionEditorApi {
+  return {
+    create: vi.fn(),
+    get: vi.fn(),
+    listVenues: vi.fn().mockResolvedValue([
+      { id: 1, name: "運動場" },
+      { id: 2, name: "体育館" },
+    ]),
+    update: vi.fn(),
+    ...overrides,
+  };
+}
+
+async function waitForVenueOptions() {
+  await screen.findByRole("checkbox", { name: "運動場" });
+}
 
 function LocationProbe() {
   return <output data-testid="location">{useLocation().pathname}</output>;
@@ -16,18 +36,18 @@ describe("CompetitionCreatePage", () => {
 
     render(
       <MemoryRouter initialEntries={["/events/new"]}>
-        <CompetitionCreatePage
-          api={{ create, get: vi.fn(), update: vi.fn() }}
-        />
+        <CompetitionCreatePage api={createApi({ create })} />
         <LocationProbe />
       </MemoryRouter>
     );
+    await waitForVenueOptions();
 
     expect(
       screen.getByRole("heading", { name: "イベントを新規作成" })
     ).toBeInTheDocument();
     await user.type(screen.getByLabelText("イベント名*"), "大縄跳び");
-    await user.type(screen.getByLabelText("実施場所*"), "運動場");
+    await user.click(screen.getByRole("checkbox", { name: "運動場" }));
+    await user.click(screen.getByRole("checkbox", { name: "体育館" }));
     await user.type(screen.getByLabelText("開始時間*"), "09:30");
     await user.type(screen.getByLabelText("終了時間*"), "10:00");
 
@@ -35,7 +55,7 @@ describe("CompetitionCreatePage", () => {
     await user.click(screen.getByRole("button", { name: "確認へ" }));
     expect(create).not.toHaveBeenCalled();
     expect(screen.getByText("大縄跳び")).toBeInTheDocument();
-    expect(screen.getByText("運動場")).toBeInTheDocument();
+    expect(screen.getByText("運動場、体育館")).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "イベントを作成" }));
 
@@ -45,84 +65,26 @@ describe("CompetitionCreatePage", () => {
         name: "大縄跳び",
         rules: null,
         startTime: "09:30",
-        venue: "運動場",
+        venueIds: [1, 2],
       })
     );
 
-    // 完了ステップは同じモーダル内に出て、閉じるまで一覧へは戻らない
+    // 完了ステップは同じモーダル内に出て、閉じると作成したイベントの詳細へ移動する
     expect(
       await screen.findByText("イベントを作成しました")
     ).toBeInTheDocument();
     expect(screen.getByTestId("location")).toHaveTextContent(/^\/events\/new$/);
 
-    await user.click(screen.getByRole("button", { name: /あとで設定する/ }));
-    await waitFor(() =>
-      expect(screen.getByTestId("location")).toHaveTextContent(/^\/events$/)
-    );
-  });
-
-  it("作成後に集合設定ステップへ進み、作成したイベントの ID で保存する", async () => {
-    const create = vi.fn().mockResolvedValue({ id: 42 });
-    const load = vi.fn().mockResolvedValue({ eventId: 42, rounds: [] });
-    const save = vi.fn().mockResolvedValue({ eventId: 42, rounds: [] });
-    const user = userEvent.setup();
-
-    render(
-      <MemoryRouter initialEntries={["/events/new"]}>
-        <CompetitionCreatePage
-          api={{ create, get: vi.fn(), update: vi.fn() }}
-          gatheringMemberGateway={{
-            loadCandidates: vi.fn(),
-            saveMembers: vi.fn(),
-          }}
-          gatheringSettingsGateway={{ load, save }}
-          gatheringSpotGateway={{
-            list: vi.fn().mockResolvedValue({
-              items: [],
-              total: 0,
-              limit: 0,
-              offset: 0,
-            }),
-            getById: vi.fn(),
-            create: vi.fn(),
-            update: vi.fn(),
-            delete: vi.fn(),
-          }}
-        />
-        <LocationProbe />
-      </MemoryRouter>
-    );
-
-    await user.type(screen.getByLabelText("イベント名*"), "リレー");
-    await user.type(screen.getByLabelText("実施場所*"), "メインコート");
-    await user.type(screen.getByLabelText("開始時間*"), "11:00");
-    await user.type(screen.getByLabelText("終了時間*"), "12:30");
-    await user.click(screen.getByRole("button", { name: "確認へ" }));
-    await user.click(screen.getByRole("button", { name: "イベントを作成" }));
-    await screen.findByText("イベントを作成しました");
-
-    await user.click(screen.getByRole("button", { name: /集合を設定する/ }));
-
-    // 集合設定ステップは同じモーダル内に出て、作成済みイベントの設定を読み込む
+    // 集合設定はイベント詳細から行うため、このモーダルでは扱わない
     expect(
-      await screen.findByRole("heading", { name: "集合設定" })
-    ).toBeInTheDocument();
-    await waitFor(() => expect(load).toHaveBeenCalledWith(42));
-    expect(screen.getByTestId("location")).toHaveTextContent(/^\/events\/new$/);
+      screen.queryByRole("heading", { name: "集合設定" })
+    ).not.toBeInTheDocument();
 
     await user.click(
-      await screen.findByRole("button", { name: "集合設定を保存" })
+      screen.getByRole("button", { name: "イベント詳細へ進む" })
     );
-    await waitFor(() => expect(save).toHaveBeenCalledWith(42, { rounds: [] }));
-
-    // 保存後は完了画面を挟み、「一覧へ戻る」で閉じる
-    expect(
-      await screen.findByText("集合設定を保存しました")
-    ).toBeInTheDocument();
-    expect(screen.getByTestId("location")).toHaveTextContent(/^\/events\/new$/);
-    await user.click(screen.getByRole("button", { name: "一覧へ戻る" }));
     await waitFor(() =>
-      expect(screen.getByTestId("location")).toHaveTextContent(/^\/events$/)
+      expect(screen.getByTestId("location")).toHaveTextContent(/^\/events\/1$/)
     );
   });
 
@@ -132,18 +94,17 @@ describe("CompetitionCreatePage", () => {
 
     render(
       <MemoryRouter initialEntries={["/events/new"]}>
-        <CompetitionCreatePage
-          api={{ create, get: vi.fn(), update: vi.fn() }}
-        />
+        <CompetitionCreatePage api={createApi({ create })} />
       </MemoryRouter>
     );
+    await waitForVenueOptions();
 
     await user.type(screen.getByLabelText("イベント名*"), "大縄跳び");
     await user.click(screen.getByRole("button", { name: "確認へ" }));
 
     expect(create).not.toHaveBeenCalled();
     expect(screen.getByRole("alert")).toHaveTextContent(
-      "イベント名および実施場所を入力してください。"
+      "イベント名を入力し、実施場所を選択してください。"
     );
     expect(screen.getByLabelText("イベント名*")).toBeInTheDocument();
   });
@@ -154,14 +115,13 @@ describe("CompetitionCreatePage", () => {
 
     render(
       <MemoryRouter initialEntries={["/events/new"]}>
-        <CompetitionCreatePage
-          api={{ create, get: vi.fn(), update: vi.fn() }}
-        />
+        <CompetitionCreatePage api={createApi({ create })} />
       </MemoryRouter>
     );
+    await waitForVenueOptions();
 
     await user.type(screen.getByLabelText("イベント名*"), "大縄跳び");
-    await user.type(screen.getByLabelText("実施場所*"), "運動場");
+    await user.click(screen.getByRole("checkbox", { name: "運動場" }));
     await user.type(screen.getByLabelText("開始時間*"), "09:30");
     await user.type(screen.getByLabelText("終了時間*"), "10:00");
     await user.click(screen.getByRole("button", { name: "確認へ" }));
@@ -169,5 +129,56 @@ describe("CompetitionCreatePage", () => {
 
     expect(create).not.toHaveBeenCalled();
     expect(screen.getByLabelText("イベント名*")).toHaveValue("大縄跳び");
+    expect(screen.getByRole("checkbox", { name: "運動場" })).toBeChecked();
+  });
+
+  it("実施場所を上限まで選ぶと残りの実施場所を選べなくする", async () => {
+    const user = userEvent.setup();
+
+    render(
+      <MemoryRouter initialEntries={["/events/new"]}>
+        <CompetitionCreatePage
+          api={createApi({
+            listVenues: vi.fn().mockResolvedValue(
+              Array.from({ length: 21 }, (_, index) => ({
+                id: index + 1,
+                name: `実施場所${index + 1}`,
+              }))
+            ),
+          })}
+        />
+      </MemoryRouter>
+    );
+
+    await screen.findByRole("checkbox", { name: "実施場所1" });
+    for (let index = 1; index <= 20; index += 1) {
+      await user.click(
+        screen.getByRole("checkbox", { name: `実施場所${index}` })
+      );
+    }
+
+    expect(screen.getByRole("checkbox", { name: "実施場所21" })).toBeDisabled();
+    expect(screen.getByRole("checkbox", { name: "実施場所20" })).toBeEnabled();
+    expect(
+      screen.getByText("実施場所は20件まで選択できます。")
+    ).toBeInTheDocument();
+  });
+
+  it("実施場所の一覧を取得できなければフォームを無効化する", async () => {
+    render(
+      <MemoryRouter initialEntries={["/events/new"]}>
+        <CompetitionCreatePage
+          api={createApi({
+            listVenues: vi.fn().mockRejectedValue(new Error("failed")),
+          })}
+        />
+      </MemoryRouter>
+    );
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "実施場所の一覧を取得できませんでした。"
+    );
+    expect(screen.getByRole("group", { name: /実施場所/ })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "確認へ" })).toBeDisabled();
   });
 });

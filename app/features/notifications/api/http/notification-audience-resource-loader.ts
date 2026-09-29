@@ -26,9 +26,9 @@ export async function loadAllClassrooms(
         `/api/v1/classrooms?limit=${PAGE_SIZE}&offset=${classrooms.length}`
       )
     );
-    classrooms.push(...page.classrooms);
+    classrooms.push(...page.items);
 
-    if (classrooms.length >= page.total || page.classrooms.length === 0) {
+    if (classrooms.length >= page.total || page.items.length === 0) {
       return classrooms;
     }
   }

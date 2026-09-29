@@ -11,6 +11,9 @@ describe("navigation search results", () => {
       expect.objectContaining({ title: "教官管理", to: "/teachers" })
     );
     expect(NAVIGATION_SEARCH_RESULTS).toContainEqual(
+      expect.objectContaining({ title: "クラス管理", to: "/classrooms" })
+    );
+    expect(NAVIGATION_SEARCH_RESULTS).toContainEqual(
       expect.objectContaining({ title: "ダッシュボード", to: "/dashboard" })
     );
     expect(NAVIGATION_SEARCH_RESULTS).toContainEqual(
@@ -39,6 +42,9 @@ describe("navigation search results", () => {
     expect(NAVIGATION_SEARCH_RESULTS).toContainEqual(
       expect.objectContaining({ title: "集合場所管理", to: "/gathering-spots" })
     );
+    expect(NAVIGATION_SEARCH_RESULTS).toContainEqual(
+      expect.objectContaining({ title: "実施場所管理", to: "/venues" })
+    );
     expect(filterNavigationSearchResults("参加者設定")).toEqual([]);
     expect(filterNavigationSearchResults("出場メンバー管理")).toEqual([]);
   });
@@ -49,7 +55,7 @@ describe("navigation search results", () => {
     );
 
     expect(filterNavigationSearchResults("CSV")).toEqual([
-      expect.objectContaining({ title: "学生管理", to: "/members" }),
+      expect.objectContaining({ title: "学生管理", to: "/students" }),
     ]);
   });
 

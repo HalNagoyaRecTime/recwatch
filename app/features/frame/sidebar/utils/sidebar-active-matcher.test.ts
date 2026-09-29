@@ -14,6 +14,17 @@ function item(overrides: Partial<SidebarItemDef>): SidebarItemDef {
 }
 
 describe("isSidebarItemActive", () => {
+  it("クラス管理は複数形の一覧URLで選択される", () => {
+    const classrooms = item({
+      id: "classrooms",
+      label: "クラス管理",
+      to: "/classrooms",
+    });
+
+    expect(isSidebarItemActive(classrooms, "/classrooms")).toBe(true);
+    expect(isSidebarItemActive(classrooms, "/classroom")).toBe(false);
+  });
+
   it("通常リンクは未指定の親パスを前方一致で選択しない", () => {
     expect(isSidebarItemActive(item({}), "/notifications/new")).toBe(false);
   });
@@ -39,33 +50,28 @@ describe("isSidebarItemActive", () => {
     ).toBe(true);
   });
 
-  it("イベント登録一覧の派生ページだけを明示パターンで選択する", () => {
+  it("イベント一覧は現在のRouteを選択し、別項目の固定パスでは選択しない", () => {
     const eventsList = item({
       id: "events-list",
-      label: "イベント登録一覧",
+      label: "イベント一覧",
       to: "/events",
       activePatterns: [
         "/events",
         "/events/new",
-        "/events/active",
-        "/events/past",
-        "/events/tournament",
-        "/events/scoring",
+        "/events/:competitionId",
         "/events/:competitionId/edit",
+        "/events/:competitionId/gatherings",
       ],
+      activeExclusions: ["/events/today", "/events/assignments"],
     });
 
-    for (const pathname of [
-      "/events/active",
-      "/events/past",
-      "/events/tournament",
-      "/events/scoring",
-      "/events/competition-1/edit",
-    ]) {
-      expect(isSidebarItemActive(eventsList, pathname)).toBe(true);
-    }
-
+    expect(isSidebarItemActive(eventsList, "/events")).toBe(true);
     expect(isSidebarItemActive(eventsList, "/events/new")).toBe(true);
+    expect(isSidebarItemActive(eventsList, "/events/12")).toBe(true);
+    expect(isSidebarItemActive(eventsList, "/events/12/edit")).toBe(true);
+    expect(isSidebarItemActive(eventsList, "/events/12/gatherings")).toBe(true);
+    // `:competitionId` に一致してしまう固定パスは除外で弾く
+    expect(isSidebarItemActive(eventsList, "/events/today")).toBe(false);
     expect(isSidebarItemActive(eventsList, "/events/assignments")).toBe(false);
   });
 
@@ -88,25 +94,25 @@ describe("isSidebarItemActive", () => {
     expect(isSidebarItemActive(events, "/events/123/edit")).toBe(true);
   });
 
-  it("表示されないインポート画面はユーザー親をフォールバック選択する", () => {
-    const members = item({
-      id: "members",
-      label: "ユーザー",
+  it("表示されないインポート画面はユーザー管理親をフォールバック選択する", () => {
+    const userManagement = item({
+      id: "user-management",
+      label: "ユーザー管理",
       to: undefined,
-      activePatterns: ["/members/import"],
+      activePatterns: ["/students/import"],
       children: [
         item({
-          id: "members-list",
+          id: "students-list",
           label: "学生管理",
-          to: "/members",
+          to: "/students",
         }),
       ],
     });
 
-    expect(isSidebarItemActive(members, "/members/import")).toBe(true);
-    expect(isSidebarItemActive(members.children![0], "/members/import")).toBe(
-      false
-    );
+    expect(isSidebarItemActive(userManagement, "/students/import")).toBe(true);
+    expect(
+      isSidebarItemActive(userManagement.children![0], "/students/import")
+    ).toBe(false);
   });
 
   it("子ページがactiveなら親フォルダをactiveにする", () => {

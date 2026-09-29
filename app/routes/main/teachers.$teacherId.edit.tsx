@@ -1,7 +1,7 @@
 import { useLoaderData } from "react-router";
 
 import { createPageTitle } from "~/lib/page-title";
-import { getClassRoomData } from "~/features/classRoom/model/classRoom-data";
+import { getClassRoomData } from "~/features/classRoom/application/class-room-options";
 import { TeacherApi } from "~/features/teachers/api";
 import { toTeacherRow } from "~/features/teachers/api/mappers/teacher-mappers";
 import { parseTeacherId } from "~/features/teachers/application/teacher-loaders";
@@ -25,7 +25,8 @@ export async function clientLoader({
 
   const classRoomOptions: ClassRoomOption[] = classRooms.map((classRoom) => ({
     classRoomId: classRoom.classRoomId,
-    className: classRoom.classRoomName,
+    classCode: classRoom.classCode,
+    className: classRoom.className,
   }));
 
   return {

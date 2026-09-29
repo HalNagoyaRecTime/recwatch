@@ -11,10 +11,8 @@ export type GatheringSetting = {
   id: number;
   time: string;
   spot: GatheringSpotSummary;
-  /** 登録済みの参加者の user_id。読み込み元に含まれない場合は空。 */
-  memberUserIds: number[];
-  /** 登録済みの参加人数。読み込み元に含まれない場合は null。 */
-  memberCount: number | null;
+  /** 登録済みの参加人数。参加者の ID は含まず、集合ごとに参加者ピッカーで別途読み込む。 */
+  memberCount: number;
 };
 
 export type RoundSetting = {
@@ -38,11 +36,10 @@ export type GatheringDraft = {
   /** "HH:mm"。未入力は空文字。 */
   time: string;
   spotId: number | null;
-  /** 参加者ピッカーで選択中の user_id。登録済みの参加者で初期化する。保存の送信は未対応。 */
-  memberUserIds: number[];
   /**
    * サーバーに登録済みの参加人数。参加者がいる集合は保存 API が削除を拒否するため、
    * 画面でも削除できないようにする判断に使う。
+   * 参加者はこの下書きとは別に集合ごとの参加者ピッカーで保存し、保存後に人数だけ反映する。
    */
   savedMemberCount: number;
 };
@@ -75,6 +72,13 @@ export const UNSET_GATHERING_TIME = "99:59";
 export const MIN_ROUND = 1;
 export const MAX_ROUND = 99;
 
+/**
+ * PUT /gatherings/:gatheringId/members の user_ids は 30 件が上限。
+ * D1 のバインド変数（1 人あたり 2 個・1 クエリ 100 個まで）に由来するため、
+ * 保存して 400 を受け取る前に画面側でも同じ値で止める。
+ */
+export const MAX_GATHERING_MEMBERS = 30;
+
 let draftKeySequence = 0;
 
 export function createDraftKey(): string {
@@ -88,7 +92,6 @@ export function createEmptyGatheringDraft(): GatheringDraft {
     gatheringId: null,
     time: "",
     spotId: null,
-    memberUserIds: [],
     savedMemberCount: 0,
   };
 }
@@ -117,8 +120,7 @@ export function toRoundDrafts(settings: EventGatheringSettings): RoundDraft[] {
       gatheringId: gathering.id,
       time: gathering.time === UNSET_GATHERING_TIME ? "" : gathering.time,
       spotId: gathering.spot.id,
-      memberUserIds: gathering.memberUserIds,
-      savedMemberCount: gathering.memberCount ?? gathering.memberUserIds.length,
+      savedMemberCount: gathering.memberCount,
     })),
   }));
 }

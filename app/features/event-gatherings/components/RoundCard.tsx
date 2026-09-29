@@ -30,7 +30,6 @@ type RoundCardProps = {
   onRemoveGathering: (gatheringKey: string) => void;
   onTogglePicker: (gatheringKey: string) => void;
   openPickerKey: string | null;
-  position: number;
   renderPicker: (gathering: GatheringDraft) => ReactNode;
   spots: readonly GatheringSpot[];
   value: RoundDraft;
@@ -46,7 +45,6 @@ export function RoundCard({
   onRemoveGathering,
   onTogglePicker,
   openPickerKey,
-  position,
   renderPicker,
   spots,
   value,
@@ -60,14 +58,9 @@ export function RoundCard({
       className="border-border-base app-rounded space-y-4 border p-4"
     >
       <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2.5">
-          <span className="bg-brand-primary text-text-base-inverse inline-flex size-7 items-center justify-center rounded-full text-sm font-semibold">
-            {position}
-          </span>
-          <h3 className="text-text-base text-base font-semibold">
-            Round {value.round}
-          </h3>
-        </div>
+        <h3 className="text-text-base text-base font-semibold">
+          Round {value.round}
+        </h3>
         <Button
           disabled={disabled || !isRoundRemovable}
           icon={Trash2}

@@ -1,3 +1,5 @@
+import type { CompetitionVenue } from "~/features/sports/model/competition-venue";
+
 /** Event 一覧 API が Event ごとに返す集合の概要。集合場所や Round の内訳は含まない。 */
 export type CompetitionGatheringSummary = {
   /** Event に紐づく集合の総数。 */
@@ -12,7 +14,7 @@ export type CompetitionListItem = {
   id: number;
   code: string;
   name: string;
-  venue: string;
+  venues: CompetitionVenue[];
   startTime: string;
   endTime: string;
   gatheringSummary: CompetitionGatheringSummary;

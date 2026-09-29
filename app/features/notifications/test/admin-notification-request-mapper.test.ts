@@ -1,32 +1,50 @@
 import { describe, expect, it } from "vitest";
 
+import { toNotificationCreateRequest } from "~/features/notifications/api/mappers/admin-notification-request-mapper";
 import type { NotificationDraft } from "~/features/notifications/model/notification-draft";
-import { toCreateAdminNotificationRequest } from "~/features/notifications/api/mappers/admin-notification-request-mapper";
 
-const scheduledAt = new Date("2026-11-07T09:00:00+09:00");
-
-describe("toCreateAdminNotificationRequest", () => {
+describe("toNotificationCreateRequest", () => {
   it.each([
     ["all", "", { type: "all" }],
-    ["class_room", "12", { type: "class_room", classRoomId: 12 }],
-    ["gathering", "23", { type: "gathering", gatheringId: 23 }],
-    ["event_participants", "34", { type: "event_participants", eventId: 34 }],
-  ] as const)(
-    "%s の通知対象をAPI Requestへ変換する",
-    (audienceType, audienceId, audience) => {
-      const draft: NotificationDraft = {
-        title: "  タイトル  ",
-        body: "  本文  ",
-        audienceType,
-        audienceId,
-      };
+    ["class_room", "12", { type: "class_room", targetId: 12 }],
+    ["gathering", "23", { type: "gathering", targetId: 23 }],
+    ["event", "34", { type: "event", targetId: 34 }],
+    ["user", "45", { type: "user", targetId: 45 }],
+  ] as const)("%sの対象DTOを作成する", (audienceType, audienceId, expected) => {
+    const draft: NotificationDraft = {
+      title: " タイトル ",
+      body: " 本文 ",
+      audienceType,
+      audienceId,
+      deliveryTiming: "scheduled",
+      scheduledAt: "2026-11-07T15:35",
+    };
 
-      expect(toCreateAdminNotificationRequest(draft, scheduledAt)).toEqual({
+    const request = toNotificationCreateRequest(draft);
+
+    expect(request).toMatchObject({
+      content: {
+        push: { title: "タイトル", body: "本文" },
+        detail: { title: "タイトル", body: "本文" },
+      },
+      audience: { items: [expected] },
+      delivery: { type: "scheduled" },
+      importance: "normal",
+    });
+    expect(request.delivery.sendAt).toMatch(
+      /^2026-11-07T15:35:00[+-]\d{2}:\d{2}$/
+    );
+  });
+
+  it("即時配信ではsendAtをnullにする", () => {
+    expect(
+      toNotificationCreateRequest({
         title: "タイトル",
         body: "本文",
-        audience,
-        scheduledAt: "2026-11-07T00:00:00.000Z",
-      });
-    }
-  );
+        audienceType: "all",
+        audienceId: "",
+        deliveryTiming: "now",
+      }).delivery
+    ).toEqual({ type: "immediate", sendAt: null });
+  });
 });
