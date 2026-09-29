@@ -19,11 +19,14 @@ import { NotificationListPage } from "~/features/notifications/pages/Notificatio
 
 afterEach(cleanup);
 
-function createCommandApi(): AdminNotificationCommandApi {
+function createCommandApi(
+  overrides: Partial<AdminNotificationCommandApi> = {}
+): AdminNotificationCommandApi {
   return {
     create: vi.fn(),
     patch: vi.fn(),
     delete: vi.fn(),
+    ...overrides,
   };
 }
 
@@ -40,12 +43,13 @@ function createQueryApi(
 
 function renderPage(
   queryApi: AdminNotificationQueryApi,
-  initialCalendarMonth = new Date(2026, 10, 1)
+  initialCalendarMonth = new Date(2026, 10, 1),
+  commandApi = createCommandApi()
 ) {
   return render(
     <MemoryRouter>
       <NotificationListPage
-        commandApi={createCommandApi()}
+        commandApi={commandApi}
         initialCalendarMonth={initialCalendarMonth}
         queryApi={queryApi}
       />
@@ -248,5 +252,49 @@ describe("NotificationListPage", () => {
     );
     expect(await screen.findByRole("alert")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "再試行" })).toBeInTheDocument();
+  });
+
+  it("削除dialog表示中はdocumentをlockし、削除完了後に元へ戻す", async () => {
+    let resolveDeletion!: () => void;
+    const deleteNotification = vi.fn(
+      () =>
+        new Promise<void>((resolve) => {
+          resolveDeletion = resolve;
+        })
+    );
+    const commandApi = createCommandApi({ delete: deleteNotification });
+    const originalDocumentOverflow =
+      document.documentElement.style.getPropertyValue("overflow");
+    const originalBodyOverflow =
+      document.body.style.getPropertyValue("overflow");
+    const user = userEvent.setup();
+    renderPage(createQueryApi(), new Date(2026, 10, 1), commandApi);
+
+    await screen.findByText("通知101");
+    await user.click(
+      screen.getByRole("button", { name: "通知101のその他の操作" })
+    );
+    await user.click(screen.getByRole("button", { name: "通知を削除" }));
+
+    expect(screen.getByRole("alertdialog")).toBeInTheDocument();
+    expect(document.documentElement.style.overflow).toBe("hidden");
+    expect(document.body.style.overflow).toBe("hidden");
+
+    await user.click(screen.getByRole("button", { name: "削除する" }));
+    await waitFor(() => expect(deleteNotification).toHaveBeenCalledWith(101));
+    expect(screen.getByRole("alertdialog")).toBeInTheDocument();
+    expect(document.documentElement.style.overflow).toBe("hidden");
+    expect(document.body.style.overflow).toBe("hidden");
+
+    await act(async () => {
+      resolveDeletion();
+    });
+    await waitFor(() =>
+      expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument()
+    );
+    expect(document.documentElement.style.overflow).toBe(
+      originalDocumentOverflow
+    );
+    expect(document.body.style.overflow).toBe(originalBodyOverflow);
   });
 });

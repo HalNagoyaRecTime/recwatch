@@ -1,7 +1,9 @@
-import type { ReactNode, CSSProperties } from "react";
-import { cn } from "~/lib/cn";
-import { useScrollbar } from "~/components/ui/scrollbar/useScrollbar";
+import { useMemo, useState, type CSSProperties, type ReactNode } from "react";
+
 import { Scrollbar } from "~/components/ui/scrollbar/Scrollbar";
+import { createElementScrollbarTarget } from "~/components/ui/scrollbar/scrollbar-target";
+import { useScrollbar } from "~/components/ui/scrollbar/useScrollbar";
+import { cn } from "~/lib/cn";
 
 type ScrollbarAreaProps = {
   children: ReactNode;
@@ -15,13 +17,7 @@ type ScrollbarAreaProps = {
   scrollTabIndex?: number;
 };
 
-/**
- * カスタムスクロールバー付きのスクロール領域。
- * - useScrollbar でロジックを管理
- * - Scrollbar で見た目を描画
- * - ネイティブスクロールバーは非表示
- * - キーボード操作はフォーカス可能な子要素があることを前提とする
- */
+/** 独立したlocal scroll領域に共通Scrollbarを付けます。 */
 export function ScrollbarArea({
   children,
   className,
@@ -30,32 +26,22 @@ export function ScrollbarArea({
   verticalTrackInsetBottom = 0,
   scrollTabIndex,
 }: ScrollbarAreaProps) {
+  const [scrollElement, setScrollElement] = useState<HTMLDivElement | null>(
+    null
+  );
+  const target = useMemo(
+    () => createElementScrollbarTarget(() => scrollElement),
+    [scrollElement]
+  );
   const {
-    scrollRef,
     verticalTrackRef,
     horizontalTrackRef,
-    verticalThumbHeight,
-    verticalThumbTop,
-    verticalIsDragging,
-    onVerticalThumbPointerDown,
-    onVerticalThumbPointerMove,
-    onVerticalThumbPointerUp,
-    onVerticalThumbPointerCancel,
-    onVerticalTrackPointerDown,
-    horizontalThumbWidth,
-    horizontalThumbLeft,
-    horizontalIsDragging,
-    onHorizontalThumbPointerDown,
-    onHorizontalThumbPointerMove,
-    onHorizontalThumbPointerUp,
-    onHorizontalThumbPointerCancel,
-    onHorizontalTrackPointerDown,
+    vertical,
+    horizontal,
     isVisible,
-    onScroll,
     onMouseEnter,
     onMouseLeave,
-  } = useScrollbar({ orientation });
-
+  } = useScrollbar({ orientation, target });
   const showVertical = orientation === "vertical" || orientation === "both";
   const showHorizontal = orientation === "horizontal" || orientation === "both";
 
@@ -65,10 +51,8 @@ export function ScrollbarArea({
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
     >
-      {/* スクロール領域（ネイティブバー非表示） */}
       <div
-        ref={scrollRef}
-        onScroll={onScroll}
+        ref={setScrollElement}
         className={cn(
           "min-w-0 flex-1 scrollbar-none",
           orientation === "vertical" && "overflow-x-hidden overflow-y-auto",
@@ -82,38 +66,22 @@ export function ScrollbarArea({
         {children}
       </div>
 
-      {/* 縦方向カスタムスクロールバー */}
       {showVertical && (
         <Scrollbar
           orientation="vertical"
+          axis={vertical}
           trackRef={verticalTrackRef}
-          thumbSize={verticalThumbHeight}
-          thumbOffset={verticalThumbTop}
           isVisible={isVisible}
-          isDragging={verticalIsDragging}
           verticalTrackInsetBottom={verticalTrackInsetBottom}
-          onThumbPointerDown={onVerticalThumbPointerDown}
-          onThumbPointerMove={onVerticalThumbPointerMove}
-          onThumbPointerUp={onVerticalThumbPointerUp}
-          onThumbPointerCancel={onVerticalThumbPointerCancel}
-          onTrackPointerDown={onVerticalTrackPointerDown}
         />
       )}
 
-      {/* 横方向カスタムスクロールバー */}
       {showHorizontal && (
         <Scrollbar
           orientation="horizontal"
+          axis={horizontal}
           trackRef={horizontalTrackRef}
-          thumbSize={horizontalThumbWidth}
-          thumbOffset={horizontalThumbLeft}
           isVisible={isVisible}
-          isDragging={horizontalIsDragging}
-          onThumbPointerDown={onHorizontalThumbPointerDown}
-          onThumbPointerMove={onHorizontalThumbPointerMove}
-          onThumbPointerUp={onHorizontalThumbPointerUp}
-          onThumbPointerCancel={onHorizontalThumbPointerCancel}
-          onTrackPointerDown={onHorizontalTrackPointerDown}
         />
       )}
     </div>
