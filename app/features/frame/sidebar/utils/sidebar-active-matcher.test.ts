@@ -39,50 +39,25 @@ describe("isSidebarItemActive", () => {
     ).toBe(true);
   });
 
-  it("イベント登録一覧の派生ページだけを明示パターンで選択する", () => {
-    const eventsList = item({
-      id: "events-list",
-      label: "イベント登録一覧",
-      to: "/events",
-      activePatterns: [
-        "/events",
-        "/events/new",
-        "/events/active",
-        "/events/past",
-        "/events/tournament",
-        "/events/scoring",
-        "/events/:competitionId/edit",
-      ],
-    });
-
-    for (const pathname of [
-      "/events/active",
-      "/events/past",
-      "/events/tournament",
-      "/events/scoring",
-      "/events/competition-1/edit",
-    ]) {
-      expect(isSidebarItemActive(eventsList, pathname)).toBe(true);
-    }
-
-    expect(isSidebarItemActive(eventsList, "/events/new")).toBe(true);
-    expect(isSidebarItemActive(eventsList, "/events/assignments")).toBe(false);
-  });
-
-  it("イベント一覧は詳細・集合設定でも選択し、除外した固定パスでは選択しない", () => {
+  it("イベント一覧は現在のRouteを選択し、別項目の固定パスでは選択しない", () => {
     const eventsList = item({
       id: "events-list",
       label: "イベント一覧",
       to: "/events",
       activePatterns: [
         "/events",
+        "/events/new",
         "/events/:competitionId",
+        "/events/:competitionId/edit",
         "/events/:competitionId/gatherings",
       ],
       activeExclusions: ["/events/today", "/events/assignments"],
     });
 
+    expect(isSidebarItemActive(eventsList, "/events")).toBe(true);
+    expect(isSidebarItemActive(eventsList, "/events/new")).toBe(true);
     expect(isSidebarItemActive(eventsList, "/events/12")).toBe(true);
+    expect(isSidebarItemActive(eventsList, "/events/12/edit")).toBe(true);
     expect(isSidebarItemActive(eventsList, "/events/12/gatherings")).toBe(true);
     // `:competitionId` に一致してしまう固定パスは除外で弾く
     expect(isSidebarItemActive(eventsList, "/events/today")).toBe(false);
