@@ -1,18 +1,8 @@
 export type NotificationScheduleStatusDto =
-  | "scheduled"
-  | "resolving"
-  | "sending"
-  | "completed"
-  | "failed"
-  | "stopped";
+  "scheduled" | "resolving" | "sending" | "completed" | "failed" | "stopped";
 
 export type NotificationPushDeliveryStatusDto =
-  | "pending"
-  | "sending"
-  | "retry_wait"
-  | "sent"
-  | "failed"
-  | "stopped";
+  "pending" | "sending" | "retry_wait" | "sent" | "failed" | "stopped";
 
 export type NotificationImportanceDto = "low" | "normal" | "high";
 
@@ -64,8 +54,7 @@ export type NotificationAudienceDto = {
 };
 
 export type NotificationDeliveryInputDto =
-  | { type: "immediate"; sendAt: null }
-  | { type: "scheduled"; sendAt: string };
+  { type: "immediate"; sendAt: null } | { type: "scheduled"; sendAt: string };
 
 export type NotificationCreationDto =
   | {
@@ -97,5 +86,4 @@ export type NotificationRecipientPushSummaryDto = {
 };
 
 export type NotificationDateRangeQueryDto =
-  | { from?: undefined; to?: undefined }
-  | { from: string; to: string };
+  { from?: undefined; to?: undefined } | { from: string; to: string };
