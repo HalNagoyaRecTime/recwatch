@@ -1,4 +1,5 @@
 import {
+  act,
   cleanup,
   fireEvent,
   render,
@@ -62,6 +63,10 @@ function confirmDeletion() {
 
 describe("AccountDeletionCallbackPage", () => {
   it("本人確認後に最終確認を表示し、削除送信中は多重送信を防ぐ", async () => {
+    const originalDocumentOverflow =
+      document.documentElement.style.getPropertyValue("overflow");
+    const originalBodyOverflow =
+      document.body.style.getPropertyValue("overflow");
     let resolveDeletion: (value: { status: "done" }) => void = () => {};
     mocks.confirmAccountDeletion.mockReturnValue(
       new Promise((resolve) => {
@@ -91,6 +96,8 @@ describe("AccountDeletionCallbackPage", () => {
     ).toBeInTheDocument();
 
     const { confirmButton, dialog } = confirmDeletion();
+    expect(document.documentElement.style.overflow).toBe("hidden");
+    expect(document.body.style.overflow).toBe("hidden");
     fireEvent.click(confirmButton);
 
     expect(mocks.confirmAccountDeletion).toHaveBeenCalledTimes(1);
@@ -102,28 +109,46 @@ describe("AccountDeletionCallbackPage", () => {
       })
     ).toBeInTheDocument();
 
-    resolveDeletion({ status: "done" });
+    await act(async () => {
+      resolveDeletion({ status: "done" });
+    });
 
     await waitFor(() =>
       expect(
         screen.getByRole("heading", { name: "削除が完了しました" })
       ).toBeInTheDocument()
     );
+    await waitFor(() => {
+      expect(document.documentElement.style.overflow).toBe(
+        originalDocumentOverflow
+      );
+      expect(document.body.style.overflow).toBe(originalBodyOverflow);
+    });
     expect(
       screen.queryByText("このアカウントでは利用できません。")
     ).not.toBeInTheDocument();
   });
 
   it("確認モーダルでキャンセルすると削除APIを呼ばない", () => {
+    const originalDocumentOverflow =
+      document.documentElement.style.getPropertyValue("overflow");
+    const originalBodyOverflow =
+      document.body.style.getPropertyValue("overflow");
     renderPage();
     fireEvent.click(
       screen.getByRole("button", { name: "アカウントを削除する" })
     );
 
     const dialog = screen.getByRole("dialog");
+    expect(document.documentElement.style.overflow).toBe("hidden");
+    expect(document.body.style.overflow).toBe("hidden");
     fireEvent.click(within(dialog).getByRole("button", { name: "とじる" }));
 
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(document.documentElement.style.overflow).toBe(
+      originalDocumentOverflow
+    );
+    expect(document.body.style.overflow).toBe(originalBodyOverflow);
     expect(mocks.confirmAccountDeletion).not.toHaveBeenCalled();
   });
 

@@ -134,7 +134,7 @@ export default function FrameRoute() {
 
 function BackendErrorScreen({ message }: { message: string }) {
   return (
-    <main className="flex min-h-dvh items-center justify-center p-6">
+    <main className="viewport-min-height flex items-center justify-center p-6">
       <section className="border-border-subtle bg-surface-base shadow-soft w-full max-w-md rounded-2xl border p-6">
         <div className="text-brand-primary font-['DM_Mono'] text-xs tracking-[0.18em] uppercase">
           Backend unavailable

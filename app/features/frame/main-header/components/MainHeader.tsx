@@ -33,16 +33,26 @@ export function MainHeader({ user }: MainHeaderProps) {
     navigate("/login", { replace: true });
   }
 
+  // SafariのブラウザUI向けに外枠は単色にし、safe-area下の操作行だけを透過・blurする。
   return (
-    <header className="main-header-height border-border-subtle bg-surface-layout/95 sticky top-0 z-30 flex items-center justify-between border-b px-3 py-2.5 backdrop-blur-xl">
-      <div className="flex h-full min-w-0 flex-1">
-        <MobileHamburgerMenuBtn />
-      </div>
+    <header className="main-header-safe-area sticky top-0 z-30 bg-white dark:bg-black">
+      <div
+        aria-hidden="true"
+        data-testid="main-header-visual"
+        className="bg-surface-base md:bg-surface-layout/95 pointer-events-none absolute inset-0 backdrop-blur-xl"
+      />
+      <div className="relative z-10 flex h-full flex-col">
+        <div className="main-header-row main-header-height border-border-subtle flex items-center justify-between border-b py-2.5">
+          <div className="flex h-full min-w-0 flex-1">
+            <MobileHamburgerMenuBtn />
+          </div>
 
-      <div className="flex h-full shrink-0 gap-1 md:min-w-0 md:shrink">
-        <SearchBtn />
-        <NoticeBtn />
-        <AccountBtn user={user} onLogout={() => void handleLogout()} />
+          <div className="flex h-full shrink-0 gap-1 md:min-w-0 md:shrink">
+            <SearchBtn />
+            <NoticeBtn />
+            <AccountBtn user={user} onLogout={() => void handleLogout()} />
+          </div>
+        </div>
       </div>
     </header>
   );
