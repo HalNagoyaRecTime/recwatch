@@ -2,51 +2,60 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import { useDocumentScrollLock } from "~/hooks/useDocumentScrollLock";
 import { useSearchFrame } from "~/features/frame/main-header/search/hooks/useSearchFrame";
-import { useSearchGlobalShortcut } from "~/features/frame/main-header/search/hooks/useSearchGlobalShortcut";
-
-const SEARCH_OPEN_FOCUS_DELAY_MS = 220;
 
 export function useSearchTransition() {
   const [isOpen, setIsOpen] = useState(false);
   const [query, setQuery] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
-  const { anchorRef, frame, transitionFrame } = useSearchFrame({ isOpen });
+  const {
+    anchorRef,
+    finishTransition,
+    frame,
+    geometryReady,
+    geometryTransitionEnabled,
+    positionRef,
+    transitionFrame,
+  } = useSearchFrame();
 
   const open = useCallback(() => {
+    if (isOpen) return;
     transitionFrame(true);
     setIsOpen(true);
-  }, [transitionFrame]);
+  }, [isOpen, transitionFrame]);
 
   const close = useCallback(() => {
+    if (!isOpen) return;
     transitionFrame(false);
     setIsOpen(false);
     setQuery("");
-  }, [transitionFrame]);
+  }, [isOpen, transitionFrame]);
 
   useEffect(() => {
     if (!isOpen) {
       return;
     }
 
-    const timeoutId = window.setTimeout(
-      () => inputRef.current?.focus(),
-      SEARCH_OPEN_FOCUS_DELAY_MS
-    );
+    const frameId = window.requestAnimationFrame(() => {
+      inputRef.current?.focus();
+    });
 
     return () => {
-      window.clearTimeout(timeoutId);
+      window.cancelAnimationFrame(frameId);
     };
-  }, [isOpen]);
+  }, [geometryReady, isOpen]);
 
   useDocumentScrollLock(isOpen);
-  useSearchGlobalShortcut({ isOpen, onClose: close, onOpen: open });
 
   return {
     anchorRef,
     close,
+    finishTransition,
     frame,
+    geometryReady,
+    geometryTransitionEnabled,
     inputRef,
     isOpen,
+    positionRef,
     query,
     setQuery,
     open,

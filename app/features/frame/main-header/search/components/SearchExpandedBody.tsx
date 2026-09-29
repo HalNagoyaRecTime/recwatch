@@ -16,9 +16,9 @@ export function SearchExpandedBody({
       aria-hidden={isOpen ? undefined : true}
       inert={!isOpen}
       className={cn(
-        "grid min-h-0 overflow-hidden transition-[grid-template-rows,opacity,margin-top] duration-400 ease-in-out",
+        "grid min-h-0 overflow-hidden transition-[grid-template-rows,opacity,margin-top] duration-400 ease-in-out motion-reduce:transition-none",
         isOpen
-          ? "mt-2 grid-rows-[1fr] opacity-100"
+          ? "mt-3 flex-1 grid-rows-[1fr] opacity-100"
           : "mt-0 grid-rows-[0fr] opacity-0"
       )}
     >

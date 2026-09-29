@@ -1,165 +1,145 @@
+import { autoUpdate } from "@floating-ui/react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
-type SearchFrame = {
-  height: number;
-  right: number;
-  top: number | string;
-  width: number;
-  transform: string;
-};
+import {
+  calculateSearchFrame,
+  getSearchViewport,
+  isSameSearchFrame,
+  type SearchFrame,
+} from "~/features/frame/main-header/search/model/search-geometry";
 
-const SEARCH_OPEN_MAX_WIDTH = 720;
-const SEARCH_VIEWPORT_GUTTER = 32;
-const SEARCH_OPEN_HEIGHT_RATIO = 0.8;
-
-function createDefaultFrame(): SearchFrame {
-  return {
-    height: 0,
-    width: 0,
-    right: 0,
-    top: 0,
-    transform: "translate3d(0,0,0)",
-  };
+function measureFrame(anchor: HTMLDivElement, isOpen: boolean): SearchFrame {
+  return calculateSearchFrame(
+    anchor.getBoundingClientRect(),
+    getSearchViewport(window),
+    isOpen
+  );
 }
 
-type UseSearchFrameParams = {
-  isOpen: boolean;
-};
+function prefersReducedMotion() {
+  return (
+    typeof window.matchMedia === "function" &&
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches
+  );
+}
 
-export function useSearchFrame({ isOpen }: UseSearchFrameParams) {
-  const [frame, setFrame] = useState<SearchFrame>(createDefaultFrame);
+export function useSearchFrame() {
+  const [frame, setFrame] = useState<SearchFrame | null>(null);
+  const [geometryReady, setGeometryReady] = useState(false);
+  const [geometryTransitionEnabled, setGeometryTransitionEnabled] =
+    useState(false);
   const anchorElementRef = useRef<HTMLDivElement | null>(null);
-  const frameRef = useRef<number | null>(null);
+  const positionElementRef = useRef<HTMLDivElement | null>(null);
+  const frameRef = useRef<SearchFrame | null>(null);
+  const isOpenRef = useRef(false);
 
-  const clearPendingFrames = useCallback(() => {
-    if (frameRef.current !== null) {
-      window.cancelAnimationFrame(frameRef.current);
-      frameRef.current = null;
-    }
-  }, []);
-
-  const getOpenWidth = useCallback((viewportWidth: number) => {
-    return Math.min(
-      viewportWidth - SEARCH_VIEWPORT_GUTTER,
-      SEARCH_OPEN_MAX_WIDTH
-    );
-  }, []);
-
-  const updateFrame = useCallback(
-    (nextIsOpen: boolean) => {
-      const anchor = anchorElementRef.current;
-
-      if (!anchor || typeof window === "undefined") {
-        return;
+  const writeFrame = useCallback(
+    (nextFrame: SearchFrame, allowTransition: boolean) => {
+      if (isSameSearchFrame(frameRef.current, nextFrame)) {
+        setGeometryTransitionEnabled(false);
+        return false;
       }
 
-      const rect = anchor.getBoundingClientRect();
-      const openWidth = getOpenWidth(window.innerWidth);
-      const openHeight = window.innerHeight * SEARCH_OPEN_HEIGHT_RATIO;
-      const openRight = (window.innerWidth - openWidth) / 2;
-      const closedRight = window.innerWidth - rect.right;
-
-      setFrame({
-        height: nextIsOpen ? openHeight : rect.height,
-        right: nextIsOpen ? openRight : closedRight,
-        top: nextIsOpen ? "50%" : rect.top,
-        width: nextIsOpen ? openWidth : rect.width,
-        transform: nextIsOpen ? "translate3d(0,-50%,0)" : "translate3d(0,0,0)",
-      });
+      frameRef.current = nextFrame;
+      setFrame(nextFrame);
+      setGeometryTransitionEnabled(allowTransition);
+      return true;
     },
-    [getOpenWidth]
+    []
   );
 
   const anchorRef = useCallback(
     (node: HTMLDivElement | null) => {
       anchorElementRef.current = node;
 
-      if (!node || typeof window === "undefined") {
+      if (!node) {
+        frameRef.current = null;
+        setFrame(null);
+        setGeometryReady(false);
+        setGeometryTransitionEnabled(false);
         return;
       }
 
-      setFrame((currentFrame) => {
-        const rect = node.getBoundingClientRect();
-        const openWidth = getOpenWidth(window.innerWidth);
-        const openHeight = window.innerHeight * SEARCH_OPEN_HEIGHT_RATIO;
-        const openRight = (window.innerWidth - openWidth) / 2;
-        const closedRight = window.innerWidth - rect.right;
-        const nextIsOpen = currentFrame.top === "50%";
-
-        return {
-          height: nextIsOpen ? openHeight : rect.height,
-          right: nextIsOpen ? openRight : closedRight,
-          top: nextIsOpen ? "50%" : rect.top,
-          width: nextIsOpen ? openWidth : rect.width,
-          transform: nextIsOpen
-            ? "translate3d(0,-50%,0)"
-            : "translate3d(0,0,0)",
-        };
-      });
+      writeFrame(measureFrame(node, false), false);
+      setGeometryReady(true);
     },
-    [getOpenWidth]
+    [writeFrame]
   );
 
-  const scheduleFrameUpdate = useCallback(() => {
-    if (frameRef.current !== null) {
+  const positionRef = useCallback((node: HTMLDivElement | null) => {
+    positionElementRef.current = node;
+  }, []);
+
+  const synchronizeFrame = useCallback(() => {
+    const anchor = anchorElementRef.current;
+
+    if (!anchor || !frameRef.current) {
       return;
     }
 
-    frameRef.current = window.requestAnimationFrame(() => {
-      updateFrame(isOpen);
-      frameRef.current = null;
-    });
-  }, [isOpen, updateFrame]);
+    writeFrame(measureFrame(anchor, isOpenRef.current), false);
+  }, [writeFrame]);
 
   const transitionFrame = useCallback(
     (nextIsOpen: boolean) => {
-      clearPendingFrames();
-      updateFrame(nextIsOpen);
-      frameRef.current = window.requestAnimationFrame(() => {
-        updateFrame(nextIsOpen);
-        frameRef.current = null;
-      });
+      isOpenRef.current = nextIsOpen;
+      const anchor = anchorElementRef.current;
+
+      if (!anchor) {
+        setGeometryTransitionEnabled(false);
+        return;
+      }
+
+      writeFrame(measureFrame(anchor, nextIsOpen), !prefersReducedMotion());
     },
-    [clearPendingFrames, updateFrame]
+    [writeFrame]
   );
 
-  useEffect(() => {
-    function handleResize() {
-      scheduleFrameUpdate();
-    }
-
-    window.addEventListener("resize", handleResize);
-
-    return () => {
-      window.removeEventListener("resize", handleResize);
-    };
-  }, [scheduleFrameUpdate]);
+  const finishTransition = useCallback(() => {
+    setGeometryTransitionEnabled(false);
+  }, []);
 
   useEffect(() => {
-    if (isOpen) {
+    const anchor = anchorElementRef.current;
+    const position = positionElementRef.current;
+
+    if (!geometryReady || !anchor || !position) {
       return;
     }
 
-    function handleScroll() {
-      scheduleFrameUpdate();
-    }
+    const stopAutoUpdate = autoUpdate(anchor, position, synchronizeFrame, {
+      elementResize: false,
+    });
+    const header = anchor.closest("header");
+    const resizeObserver =
+      typeof ResizeObserver === "undefined"
+        ? null
+        : new ResizeObserver(synchronizeFrame);
 
-    window.addEventListener("scroll", handleScroll, { passive: true });
+    resizeObserver?.observe(anchor);
+    if (header) resizeObserver?.observe(header);
+
+    const visualViewport = window.visualViewport;
+    window.addEventListener("orientationchange", synchronizeFrame);
+    visualViewport?.addEventListener("resize", synchronizeFrame);
+    visualViewport?.addEventListener("scroll", synchronizeFrame);
 
     return () => {
-      window.removeEventListener("scroll", handleScroll);
+      stopAutoUpdate();
+      resizeObserver?.disconnect();
+      window.removeEventListener("orientationchange", synchronizeFrame);
+      visualViewport?.removeEventListener("resize", synchronizeFrame);
+      visualViewport?.removeEventListener("scroll", synchronizeFrame);
     };
-  }, [isOpen, scheduleFrameUpdate]);
-
-  useEffect(() => {
-    return () => {
-      clearPendingFrames();
-    };
-  }, [clearPendingFrames]);
+  }, [geometryReady, synchronizeFrame]);
 
   return {
     anchorRef,
     frame,
+    geometryReady,
+    geometryTransitionEnabled,
+    positionRef,
     transitionFrame,
+    finishTransition,
   };
 }
