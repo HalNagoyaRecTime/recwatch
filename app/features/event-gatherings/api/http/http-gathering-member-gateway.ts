@@ -5,9 +5,11 @@ import type {
   ClassroomPageResponseDto,
   GatheringMemberResponseDto,
   StudentPageResponseDto,
+  TeacherPageResponseDto,
 } from "~/features/event-gatherings/api/dto/gathering-member-api-dto";
 import {
   toMemberClassroom,
+  toMemberNonStudent,
   toMemberStudent,
   toMemberUserIds,
   toReplaceGatheringMembersRequest,
@@ -23,7 +25,7 @@ export function createHttpGatheringMemberGateway(
 ): GatheringMemberGateway {
   return {
     async loadCandidates() {
-      const [classrooms, students] = await Promise.all([
+      const [classrooms, students, teachers] = await Promise.all([
         loadAllPages(async (offset, limit) => {
           const page = await client.get<ClassroomPageResponseDto>(
             `/api/v1/classrooms?limit=${limit}&offset=${offset}`
@@ -45,9 +47,23 @@ export function createHttpGatheringMemberGateway(
             total: page.total,
           };
         }),
+        // 教員は選択候補に出さず、学生以外の参加者の氏名を引くためだけに取得する。
+        // 登録後に停止された教員も参加者に残るため、停止中も含める。
+        loadAllPages(async (offset, limit) => {
+          const page = await client.get<TeacherPageResponseDto>(
+            `/api/v1/teachers?limit=${limit}&offset=${offset}&isLiveActive=all`
+          );
+          return {
+            items: page.items.map(toMemberNonStudent),
+            total: page.total,
+          };
+        }),
       ]);
 
-      return { classrooms, students };
+      const nonStudents = new Map(
+        teachers.map((teacher) => [teacher.userId, teacher])
+      );
+      return { classrooms, students, nonStudents };
     },
 
     async loadMembers(gatheringId) {

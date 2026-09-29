@@ -28,6 +28,18 @@ export type StudentPageResponseDto = {
   total: number;
 };
 
+/** GET /api/v1/teachers のページ応答。参加者の氏名を引くのに使う項目だけを持つ。 */
+export type TeacherResponseDto = {
+  user_id: number;
+  display_name: string;
+  is_live_active: boolean;
+};
+
+export type TeacherPageResponseDto = {
+  items: TeacherResponseDto[];
+  total: number;
+};
+
 /**
  * GET / PUT /api/v1/gatherings/:gatheringId/members の 1 件。
  * どちらも配列で返し、参加者の user_id だけを使う。
