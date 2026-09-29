@@ -3,6 +3,7 @@ import {
   type TeacherListQuery,
   type TeacherQueryApi,
 } from "~/features/teachers/api";
+import { parsePositiveIntegerRouteParam } from "~/lib/parse-positive-integer-route-param";
 
 export async function loadTeacherListPage(
   query: TeacherListQuery,
@@ -18,8 +19,8 @@ export async function loadTeacherListPage(
 }
 
 export function parseTeacherId(value: string | undefined): number {
-  const teacherId = Number(value);
-  if (!Number.isInteger(teacherId) || teacherId <= 0) {
+  const teacherId = parsePositiveIntegerRouteParam(value);
+  if (teacherId === null) {
     throw new Response("教官が見つかりません。", { status: 404 });
   }
   return teacherId;

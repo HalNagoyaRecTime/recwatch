@@ -1,13 +1,16 @@
-import { useLoaderData, useRouteLoaderData } from "react-router";
+import { useLoaderData, useRouteError } from "react-router";
 
 import { StudentApi } from "~/features/students/api";
 import { parseStudentId } from "~/features/students/application/student-loaders";
 import { StudentEditPage } from "~/features/students/pages/StudentEditPage";
+import type { StudentClassRoomOption } from "~/features/students/model/student";
 import { createPageTitle } from "~/lib/page-title";
-import { managementRouteIds } from "~/routes/main/management-route-ids";
-import { useManagementModalReturn } from "~/routes/main/useManagementModalNavigation";
+import { ManagementModalRouteError } from "~/routes/main/management-modal-route-error";
+import {
+  useManagementModalReturn,
+  useManagementRouteOptions,
+} from "~/routes/main/useManagementModalNavigation";
 import { userManagementApi } from "~/features/user-management/api";
-import type { clientLoader as parentClientLoader } from "./students";
 
 export function meta() {
   return [{ title: createPageTitle("学生情報の編集") }];
@@ -22,17 +25,27 @@ export async function clientLoader({
   return { student: await StudentApi.getStudentById(studentId) };
 }
 
+export function ErrorBoundary() {
+  const closeModal = useManagementModalReturn();
+  return (
+    <ManagementModalRouteError
+      error={useRouteError()}
+      onClose={closeModal}
+      title="学生情報を読み込めません"
+    />
+  );
+}
+
 export default function StudentEditRoute() {
   const { student } = useLoaderData<typeof clientLoader>();
-  const { classRooms } = useRouteLoaderData<typeof parentClientLoader>(
-    managementRouteIds.students
-  )!;
+  const classRoomOptions = useManagementRouteOptions<StudentClassRoomOption>();
   const closeModal = useManagementModalReturn();
 
   return (
     <StudentEditPage
       api={StudentApi}
-      classRooms={classRooms}
+      classRoomOptions={classRoomOptions}
+      classRooms={classRoomOptions.items}
       onClose={() => closeModal()}
       onSaved={() => closeModal(true)}
       student={student}

@@ -1,8 +1,6 @@
-import { useRef, useState } from "react";
-
+import { useManagementMutation } from "~/hooks/useManagementMutation";
 import type { ClassRoomMutationApi } from "~/features/classRoom/api/contracts/class-room-api";
 import type { ClassRoomWriteInput } from "~/features/classRoom/model/classRoom";
-import { getErrorMessage } from "~/lib/client-error";
 
 type UseClassRoomMutationOptions = {
   api: ClassRoomMutationApi;
@@ -13,49 +11,26 @@ export function useClassRoomMutation({
   api,
   onRevalidate,
 }: UseClassRoomMutationOptions) {
-  const mutationLock = useRef(false);
-  const [isMutating, setIsMutating] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  async function runMutation(
-    operation: () => Promise<unknown>,
-    fallbackMessage: string,
-    shouldRevalidate = false
-  ) {
-    if (mutationLock.current) return false;
-
-    mutationLock.current = true;
-    setIsMutating(true);
-    setError(null);
-    try {
-      await operation();
-      if (shouldRevalidate) await onRevalidate?.();
-      return true;
-    } catch (reason) {
-      setError(getErrorMessage(reason, fallbackMessage));
-      return false;
-    } finally {
-      mutationLock.current = false;
-      setIsMutating(false);
-    }
-  }
+  const { clearError, error, isMutating, run } = useManagementMutation({
+    onRevalidate,
+  });
 
   function create(input: ClassRoomWriteInput) {
-    return runMutation(
+    return run(
       () => api.createClassRoom(input),
       "クラスの登録に失敗しました。"
     );
   }
 
   function update(classRoomId: number, input: ClassRoomWriteInput) {
-    return runMutation(
+    return run(
       () => api.updateClassRoom(classRoomId, input),
       "クラスを保存できませんでした。"
     );
   }
 
   function remove(classRoomId: number) {
-    return runMutation(
+    return run(
       () => api.deleteClassRoom(classRoomId),
       "クラスを削除できませんでした。",
       true
@@ -63,7 +38,7 @@ export function useClassRoomMutation({
   }
 
   return {
-    clearError: () => setError(null),
+    clearError,
     create,
     error,
     isMutating,

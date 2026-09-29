@@ -1,5 +1,4 @@
-import { useRef, useState } from "react";
-
+import { useManagementMutation } from "~/hooks/useManagementMutation";
 import type {
   StudentAccessMutationApi,
   StudentMutationApi,
@@ -8,12 +7,11 @@ import type {
   StudentRow,
   StudentWriteInput,
 } from "~/features/students/model/student";
-import { getErrorMessage } from "~/lib/client-error";
 
 type UseStudentMutationOptions = {
   api: StudentMutationApi;
   onRevalidate?: () => Promise<void> | void;
-  userApi: StudentAccessMutationApi;
+  userApi?: StudentAccessMutationApi;
 };
 
 export function useStudentMutation({
@@ -21,35 +19,12 @@ export function useStudentMutation({
   onRevalidate,
   userApi,
 }: UseStudentMutationOptions) {
-  const mutationLock = useRef(false);
-  const [isMutating, setIsMutating] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  async function runMutation(
-    operation: () => Promise<unknown>,
-    fallbackMessage: string,
-    shouldRevalidate = false
-  ) {
-    if (mutationLock.current) return false;
-
-    mutationLock.current = true;
-    setIsMutating(true);
-    setError(null);
-    try {
-      await operation();
-      if (shouldRevalidate) await onRevalidate?.();
-      return true;
-    } catch (reason) {
-      setError(getErrorMessage(reason, fallbackMessage));
-      return false;
-    } finally {
-      mutationLock.current = false;
-      setIsMutating(false);
-    }
-  }
+  const { clearError, error, isMutating, run } = useManagementMutation({
+    onRevalidate,
+  });
 
   function save(studentId: number | null, input: StudentWriteInput) {
-    return runMutation(
+    return run(
       () =>
         studentId === null
           ? api.createStudent(input)
@@ -59,26 +34,32 @@ export function useStudentMutation({
   }
 
   function updateActive(student: StudentRow, isLiveActive: boolean) {
-    return runMutation(
-      () => userApi.updateUserStatus(student.userId, isLiveActive),
+    return run(
+      () =>
+        userApi?.updateUserStatus(student.userId, isLiveActive) ??
+        Promise.reject(new Error("学生の有効状態を更新できませんでした。")),
       "学生の有効状態を更新できませんでした。",
       true
     );
   }
 
   function updateStaff(student: StudentRow, isStaff: boolean) {
-    return runMutation(
+    return run(
       () =>
-        isStaff
-          ? userApi.grantStaff(student.userId)
-          : userApi.revokeStaff(student.userId),
+        userApi
+          ? isStaff
+            ? userApi.grantStaff(student.userId)
+            : userApi.revokeStaff(student.userId)
+          : Promise.reject(
+              new Error("学生のstaff状態を更新できませんでした。")
+            ),
       "学生のstaff状態を更新できませんでした。",
       true
     );
   }
 
   return {
-    clearError: () => setError(null),
+    clearError,
     error,
     isMutating,
     save,

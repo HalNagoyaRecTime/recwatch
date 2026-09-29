@@ -30,9 +30,9 @@ export default [
     ),
     route("students", "routes/main/students.tsx", [
       route("new", "routes/main/students.new.tsx"),
-      route("import", "routes/main/students.import.tsx"),
       route(":studentId/edit", "routes/main/students.$studentId.edit.tsx"),
     ]),
+    route("students/import", "routes/main/students.import.tsx"),
     route("teams", "routes/main/teams.tsx"),
     route("ranking", "routes/main/ranking.tsx"),
     route("classrooms", "routes/main/classrooms.tsx", [
