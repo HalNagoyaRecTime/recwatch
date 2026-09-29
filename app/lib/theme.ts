@@ -29,9 +29,22 @@ export function applyTheme(theme: ThemeMode) {
   const isDark =
     theme === "dark" ||
     (theme === "system" &&
+      typeof window !== "undefined" &&
+      typeof window.matchMedia === "function" &&
       window.matchMedia("(prefers-color-scheme: dark)").matches);
 
   root.classList.toggle("dark", isDark);
   root.dataset.theme = theme;
   root.style.colorScheme = isDark ? "dark" : "light";
+  // iOS Safariの上下UIをreloadなしで追従させるため、rootとbodyの背景色も同期する。
+  const backgroundColor =
+    root.dataset.appSurface === "account-deletion"
+      ? "#ffffff"
+      : isDark
+        ? "#000000"
+        : "#ffffff";
+  root.style.backgroundColor = backgroundColor;
+  if (document.body) {
+    document.body.style.backgroundColor = backgroundColor;
+  }
 }

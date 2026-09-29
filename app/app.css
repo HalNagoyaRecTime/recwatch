@@ -44,6 +44,12 @@
 }
 
 :root {
+  --main-header-height: 52px;
+  --main-header-total-height: calc(
+    var(--main-header-height) + env(safe-area-inset-top, 0px)
+  );
+  --main-footer-row-height: 42px;
+
   --bg-gradient-glow: rgba(56, 189, 248, 0.3);
 
   --surface-layout: rgba(255, 255, 255, 0.78);
@@ -120,19 +126,29 @@
 }
 
 @layer base {
+  /* iOS SafariのブラウザUIが参照する背景色を安定させるため、html/bodyの背景色は単色にする。
+     画面のグラデーションはbodyのbackground-imageで重ねて維持する。 */
+  html {
+    min-height: 100%;
+    background-color: #ffffff;
+  }
+
+  html.dark {
+    background-color: #000000;
+  }
+
   html,
   body {
     margin: 0;
-    height: 100%;
+    min-height: 100%;
     color: var(--text-base);
     font-family: Meiryo, system-ui, sans-serif;
   }
 
   body {
-    height: 100dvh;
-    overscroll-behavior-y: none;
-    overflow: hidden;
-    background-color: var(--surface-base);
+    min-height: 100vh;
+    overflow-x: hidden;
+    background-color: #ffffff;
     background-image: radial-gradient(
       circle at top right,
       var(--bg-gradient-glow),
@@ -140,9 +156,12 @@
     );
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    transition:
-      color 200ms cubic-bezier(0.4, 0, 0.2, 1),
-      background-color 200ms cubic-bezier(0.4, 0, 0.2, 1);
+    /* テーマ切替時にSafariのUI色とずれないよう、背景色は遷移させない。 */
+    transition: color 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  html.dark body {
+    background-color: #000000;
   }
 
   a {
@@ -161,7 +180,14 @@
   }
 
   #app {
-    height: 100dvh;
+    min-height: 100vh;
+  }
+
+  @supports (min-height: 100dvh) {
+    body,
+    #app {
+      min-height: 100dvh;
+    }
   }
 
   ::selection {
@@ -170,12 +196,126 @@
 }
 
 @layer utilities {
-  .main-header-height {
-    height: 52px;
+  .viewport-min-height {
+    min-height: 100vh;
   }
 
+  @supports (min-height: 100dvh) {
+    .viewport-min-height {
+      min-height: 100dvh;
+    }
+  }
+
+  /* Safariのアドレスバー伸縮に合わせてSidebarを可視領域の高さにする。
+     100vhはdvh非対応環境向けのfallback。 */
+  .sidebar-viewport-height {
+    height: 100vh;
+  }
+
+  @supports (height: 100dvh) {
+    .sidebar-viewport-height {
+      height: 100dvh;
+    }
+  }
+
+  .main-header-height {
+    height: var(--main-header-height);
+  }
+
+  /* 画面上端のsafe-areaはsolidな外枠で覆い、操作行は52pxのまま保つ。 */
+  .main-header-safe-area {
+    box-sizing: border-box;
+    height: var(--main-header-total-height);
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+
+  /* 左右はsafe-areaの値が異なるため個別計算する。Mobile本文も同じ0.75remを基準にする。 */
+  .main-header-row {
+    padding-right: calc(0.75rem + env(safe-area-inset-right, 0px));
+    padding-left: calc(0.75rem + env(safe-area-inset-left, 0px));
+  }
+
+  /* 下safe-areaを高さに一度だけ足し、見えるFooter行の高さは維持する。 */
   .main-footer-height {
-    height: 42px;
+    height: calc(
+      var(--main-footer-row-height) + env(safe-area-inset-bottom, 0px)
+    );
+  }
+
+  .main-footer-safe-area {
+    box-sizing: border-box;
+    padding-right: calc(0.75rem + env(safe-area-inset-right, 0px));
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    padding-left: calc(0.75rem + env(safe-area-inset-left, 0px));
+  }
+
+  /* Mobile SidebarもMainHeaderと同じ総高さtokenで上safe-areaを確保する。 */
+  .sidebar-mobile-header-safe-area {
+    box-sizing: border-box;
+    height: var(--main-header-total-height);
+    padding-right: calc(0.75rem + env(safe-area-inset-right, 0px));
+    padding-left: calc(1rem + env(safe-area-inset-left, 0px));
+  }
+
+  /* 面の塗りを止める位置とは別に、メニュー項目がsafe-areaへ入らないよう余白を取る。 */
+  .sidebar-mobile-content-safe-area {
+    padding-right: env(safe-area-inset-right, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    padding-left: env(safe-area-inset-left, 0px);
+  }
+
+  /* Sidebar本体と暗転面の塗りを下safe-area手前で止める。
+     クリック領域は全画面のままにし、Safari下部UIへの色の回り込みを抑える。 */
+  .mobile-safe-area-visual {
+    bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  /* Headerの操作行とsafe-areaを含む総高さをSidePanelのsticky offsetに使う。 */
+  .page-side-panel {
+    position: sticky;
+    top: var(--main-header-total-height);
+    align-self: start;
+    height: calc(100vh - var(--main-header-total-height));
+    max-height: calc(100vh - var(--main-header-total-height));
+  }
+
+  @supports (height: 100dvh) {
+    .page-side-panel {
+      height: calc(100dvh - var(--main-header-total-height));
+      max-height: calc(100dvh - var(--main-header-total-height));
+    }
+  }
+
+  html[data-document-scrollbar="active"],
+  html[data-document-scrollbar="active"] body {
+    scrollbar-width: none;
+  }
+
+  html[data-document-scrollbar="active"]::-webkit-scrollbar,
+  html[data-document-scrollbar="active"] body::-webkit-scrollbar {
+    display: none;
+    width: 0;
+    height: 0;
+  }
+
+  /* タッチ端末では装飾用のScrollbarがスワイプを奪わないようにする。 */
+  @media (pointer: coarse) {
+    .document-scrollbar [data-scrollbar-track],
+    .document-scrollbar [data-scrollbar-thumb] {
+      pointer-events: none !important;
+    }
+  }
+
+  .page-padding {
+    padding-right: calc(0.75rem + env(safe-area-inset-right, 0px));
+    padding-left: calc(0.75rem + env(safe-area-inset-left, 0px));
+  }
+
+  @media (min-width: 48rem) {
+    .page-padding {
+      padding-right: calc(2.5rem + env(safe-area-inset-right, 0px));
+      padding-left: calc(2.5rem + env(safe-area-inset-left, 0px));
+    }
   }
 
   .app-rounded {
@@ -249,31 +389,46 @@
 
 html[data-app-surface="account-deletion"] {
   color-scheme: light;
-  background: #fff;
+  background-color: #fff;
 }
 
 html[data-app-surface="account-deletion"] body {
   height: auto;
-  min-height: 100dvh;
+  min-height: 100vh;
   overflow-x: hidden;
   overflow-y: auto;
   overscroll-behavior-y: auto;
-  background: #fff;
+  background-color: #fff;
+  background-image: none;
 }
 
 html[data-app-surface="account-deletion"] #app {
   height: auto;
-  min-height: 100dvh;
+  min-height: 100vh;
+}
+
+@supports (min-height: 100dvh) {
+  html[data-app-surface="account-deletion"] body,
+  html[data-app-surface="account-deletion"] #app {
+    min-height: 100dvh;
+  }
 }
 
 .root-hydrate-fallback {
-  min-height: 100dvh;
+  min-height: 100vh;
+}
+
+@supports (min-height: 100dvh) {
+  .root-hydrate-fallback,
+  html[data-app-surface="account-deletion"] .root-hydrate-fallback {
+    min-height: 100dvh;
+  }
 }
 
 html[data-app-surface="account-deletion"] .root-hydrate-fallback {
   display: flex;
   box-sizing: border-box;
-  min-height: 100dvh;
+  min-height: 100vh;
   align-items: center;
   justify-content: center;
   color: #808080;

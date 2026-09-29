@@ -22,6 +22,13 @@ import { AccountDeletionPage } from "../pages/AccountDeletionPage";
 
 afterEach(() => {
   cleanup();
+  document.documentElement.style.removeProperty("background-color");
+  document.body.style.removeProperty("background-color");
+  delete document.documentElement.dataset.appSurface;
+  delete document.documentElement.dataset.documentBackgroundOverride;
+  delete document.documentElement.dataset.accountDeletionAuthCallback;
+  delete document.documentElement.dataset.theme;
+  document.documentElement.classList.remove("dark");
   document
     .querySelectorAll("link[data-test-account-deletion-favicon]")
     .forEach((link) => link.remove());
@@ -120,7 +127,8 @@ describe("AccountDeletionPage", () => {
     const favicon = addDefaultFavicon();
     const viewport = document.createElement("meta");
     viewport.name = "viewport";
-    viewport.content = "width=device-width, initial-scale=1";
+    viewport.content =
+      "width=device-width, initial-scale=1, viewport-fit=cover";
     viewport.dataset.testAccountDeletionViewport = "true";
     document.head.append(viewport);
 
@@ -132,7 +140,9 @@ describe("AccountDeletionPage", () => {
     expect(favicon.getAttribute("href")).toBe("/recwatch-logo.svg");
     expect(favicon.getAttribute("type")).toBe("image/svg+xml");
     expect(favicon.getAttribute("sizes")).toBe("any");
-    expect(viewport.content).toBe("width=device-width, initial-scale=1");
+    expect(viewport.content).toBe(
+      "width=device-width, initial-scale=1, viewport-fit=cover"
+    );
     expect(document.documentElement.getAttribute("style")).toBe(rootStyle);
     expect(document.body.getAttribute("style")).toBe(bodyStyle);
     expect(document.getElementById("app")?.getAttribute("style")).toBe(
@@ -142,9 +152,26 @@ describe("AccountDeletionPage", () => {
     unmount();
 
     expect(favicon.getAttribute("href")).toBe("/recwatch-logo.svg");
-    expect(viewport.content).toBe("width=device-width, initial-scale=1");
+    expect(viewport.content).toBe(
+      "width=device-width, initial-scale=1, viewport-fit=cover"
+    );
     expect(document.documentElement.getAttribute("style")).toBe(rootStyle);
     expect(document.body.getAttribute("style")).toBe(bodyStyle);
+  });
+
+  it("PR #366のsafe-areaレイアウトとviewport fallbackを維持する", () => {
+    renderPage();
+
+    const main = screen.getByRole("main");
+    expect(main).toHaveClass(
+      "account-deletion-viewport",
+      "viewport-min-height",
+      "box-border"
+    );
+    expect(main.style.paddingTop).toContain("safe-area-inset-top");
+    expect(main.style.paddingRight).toContain("safe-area-inset-right");
+    expect(main.style.paddingBottom).toContain("safe-area-inset-bottom");
+    expect(main.style.paddingLeft).toContain("safe-area-inset-left");
   });
   it("dark祖先でもライトテーマの背景を維持する", () => {
     render(

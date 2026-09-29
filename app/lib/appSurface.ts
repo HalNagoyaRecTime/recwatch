@@ -8,9 +8,10 @@ export const ACCOUNT_DELETION_AUTH_LOADING_CONTEXT = "account-deletion-auth";
 const AUTH_CALLBACK_PATH = "/auth/callback";
 const RECWATCH_FAVICON_HREF = "/recwatch-logo.svg";
 const ACCOUNT_DELETION_FAVICON_HREF = "/recreation-favicon.png";
-const RECWATCH_VIEWPORT_CONTENT = "width=device-width, initial-scale=1";
-const ACCOUNT_DELETION_VIEWPORT_CONTENT =
-  "width=device-width, initial-scale=1, viewport-fit=cover";
+const RECWATCH_FAVICON_TYPE = "image/svg+xml";
+const ACCOUNT_DELETION_FAVICON_TYPE = "image/png";
+const RECWATCH_FAVICON_SIZES = "any";
+const ACCOUNT_DELETION_FAVICON_SIZES = "512x512";
 
 export function getAppSurface(
   pathname: string,
@@ -83,6 +84,8 @@ export function synchronizeAppSurfaceDocument(
     root.dataset.appLoadingContext === ACCOUNT_DELETION_AUTH_LOADING_CONTEXT;
 
   root.dataset.appSurface = surface;
+  delete root.dataset.accountDeletionAuthCallback;
+  delete root.dataset.documentBackgroundOverride;
 
   if (
     isDeletionAuthCallback &&
@@ -98,22 +101,24 @@ export function synchronizeAppSurfaceDocument(
 
   const favicon = document.querySelector<HTMLLinkElement>('link[rel="icon"]');
   if (favicon) {
-    favicon.href =
+    favicon.setAttribute(
+      "href",
       surface === "account-deletion"
         ? ACCOUNT_DELETION_FAVICON_HREF
-        : RECWATCH_FAVICON_HREF;
-    favicon.type =
-      surface === "account-deletion" ? "image/png" : "image/svg+xml";
-  }
-
-  const viewport = document.querySelector<HTMLMetaElement>(
-    'meta[name="viewport"]'
-  );
-  if (viewport) {
-    viewport.content =
+        : RECWATCH_FAVICON_HREF
+    );
+    favicon.setAttribute(
+      "type",
       surface === "account-deletion"
-        ? ACCOUNT_DELETION_VIEWPORT_CONTENT
-        : RECWATCH_VIEWPORT_CONTENT;
+        ? ACCOUNT_DELETION_FAVICON_TYPE
+        : RECWATCH_FAVICON_TYPE
+    );
+    favicon.setAttribute(
+      "sizes",
+      surface === "account-deletion"
+        ? ACCOUNT_DELETION_FAVICON_SIZES
+        : RECWATCH_FAVICON_SIZES
+    );
   }
 }
 
@@ -139,6 +144,9 @@ export function createAppSurfaceBootstrapScript(): string {
       delete root.dataset.appLoadingContext;
     }
 
+    delete root.dataset.accountDeletionAuthCallback;
+    delete root.dataset.documentBackgroundOverride;
+
     var theme = "light";
     if (surface === "recwatch") {
       var storedTheme = null;
@@ -148,25 +156,33 @@ export function createAppSurfaceBootstrapScript(): string {
       theme = ["light", "dark", "system"].includes(storedTheme) ? storedTheme : "system";
     }
 
-    var isDark = theme === "dark" ||
-      (theme === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches);
+    var isDark = theme === "dark";
+    if (!isDark && theme === "system") {
+      try {
+        isDark = typeof window.matchMedia === "function" &&
+          window.matchMedia("(prefers-color-scheme: dark)").matches;
+      } catch {}
+    }
     root.classList.toggle("dark", isDark);
     root.dataset.theme = theme;
     root.style.colorScheme = isDark ? "dark" : "light";
+    var backgroundColor = isDark ? "#000000" : "#ffffff";
+    root.style.backgroundColor = backgroundColor;
+    if (document.body) {
+      document.body.style.backgroundColor = backgroundColor;
+    }
 
     var favicon = document.querySelector('link[rel="icon"]');
     if (favicon) {
-      favicon.href = surface === "account-deletion"
+      favicon.setAttribute("href", surface === "account-deletion"
         ? ${JSON.stringify(ACCOUNT_DELETION_FAVICON_HREF)}
-        : ${JSON.stringify(RECWATCH_FAVICON_HREF)};
-      favicon.type = surface === "account-deletion" ? "image/png" : "image/svg+xml";
-    }
-
-    var viewport = document.querySelector('meta[name="viewport"]');
-    if (viewport) {
-      viewport.content = surface === "account-deletion"
-        ? ${JSON.stringify(ACCOUNT_DELETION_VIEWPORT_CONTENT)}
-        : ${JSON.stringify(RECWATCH_VIEWPORT_CONTENT)};
+        : ${JSON.stringify(RECWATCH_FAVICON_HREF)});
+      favicon.setAttribute("type", surface === "account-deletion"
+        ? ${JSON.stringify(ACCOUNT_DELETION_FAVICON_TYPE)}
+        : ${JSON.stringify(RECWATCH_FAVICON_TYPE)});
+      favicon.setAttribute("sizes", surface === "account-deletion"
+        ? ${JSON.stringify(ACCOUNT_DELETION_FAVICON_SIZES)}
+        : ${JSON.stringify(RECWATCH_FAVICON_SIZES)});
     }
   })();`;
 }

@@ -3,6 +3,7 @@ import { useEffect } from "react";
 
 import { Button } from "~/components/ui/button/Button";
 import type { AdminNotificationListItem } from "~/features/notifications/api/contracts/admin-notification-query-api";
+import { useDocumentScrollLock } from "~/hooks/useDocumentScrollLock";
 
 type DeleteNotificationDialogProps = {
   notification: AdminNotificationListItem;
@@ -17,6 +18,8 @@ export function DeleteNotificationDialog({
   onClose,
   onConfirm,
 }: DeleteNotificationDialogProps) {
+  useDocumentScrollLock(true);
+
   useEffect(() => {
     function handleEscape(event: KeyboardEvent) {
       if (event.key === "Escape" && !isSubmitting) {

@@ -1,8 +1,9 @@
 import { fireEvent, render, screen } from "@testing-library/react";
-import type { ReactNode } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
 
-import { useScrollbar } from "./useScrollbar";
+import { createElementScrollbarTarget } from "./scrollbar-target";
+import { calculateThumbMetrics, useScrollbar } from "./useScrollbar";
 
 function ScrollbarHarness({
   children,
@@ -11,63 +12,59 @@ function ScrollbarHarness({
   children?: ReactNode;
   orientation?: "vertical" | "horizontal" | "both";
 }) {
-  const {
-    scrollRef,
-    verticalTrackRef,
-    onScroll,
-    onVerticalTrackPointerDown,
-    onVerticalThumbPointerDown,
-    onVerticalThumbPointerMove,
-    onVerticalThumbPointerUp,
-    onVerticalThumbPointerCancel,
-    horizontalTrackRef,
-    onHorizontalTrackPointerDown,
-    onHorizontalThumbPointerDown,
-    onHorizontalThumbPointerMove,
-    onHorizontalThumbPointerUp,
-    onHorizontalThumbPointerCancel,
-    verticalIsDragging,
-    horizontalIsDragging,
-  } = useScrollbar({ orientation });
+  const [scrollElement, setScrollElement] = useState<HTMLDivElement | null>(
+    null
+  );
+  const target = useMemo(
+    () => createElementScrollbarTarget(() => scrollElement),
+    [scrollElement]
+  );
+  const scrollbar = useScrollbar({ orientation, target });
+  const { verticalTrackRef, horizontalTrackRef, vertical, horizontal } =
+    scrollbar;
 
   return (
-    <>
-      <div ref={scrollRef} data-testid="scroll" onScroll={onScroll}>
+    <div
+      data-testid="scrollbar-root"
+      onMouseEnter={scrollbar.onMouseEnter}
+      onMouseLeave={scrollbar.onMouseLeave}
+    >
+      <div ref={setScrollElement} data-testid="scroll">
         {children}
       </div>
       <div
         ref={verticalTrackRef}
         data-testid="vertical-track"
-        onPointerDown={onVerticalTrackPointerDown}
+        onPointerDown={vertical.onTrackPointerDown}
       >
         <button
           data-testid="vertical-thumb"
-          onPointerDown={onVerticalThumbPointerDown}
-          onPointerMove={onVerticalThumbPointerMove}
-          onPointerUp={onVerticalThumbPointerUp}
-          onPointerCancel={onVerticalThumbPointerCancel}
+          onPointerDown={vertical.onThumbPointerDown}
+          onPointerMove={vertical.onThumbPointerMove}
+          onPointerUp={vertical.onThumbPointerUp}
+          onPointerCancel={vertical.onThumbPointerCancel}
         />
       </div>
       <div
         ref={horizontalTrackRef}
         data-testid="horizontal-track"
-        onPointerDown={onHorizontalTrackPointerDown}
+        onPointerDown={horizontal.onTrackPointerDown}
       >
         <button
           data-testid="horizontal-thumb"
-          onPointerDown={onHorizontalThumbPointerDown}
-          onPointerMove={onHorizontalThumbPointerMove}
-          onPointerUp={onHorizontalThumbPointerUp}
-          onPointerCancel={onHorizontalThumbPointerCancel}
+          onPointerDown={horizontal.onThumbPointerDown}
+          onPointerMove={horizontal.onThumbPointerMove}
+          onPointerUp={horizontal.onThumbPointerUp}
+          onPointerCancel={horizontal.onThumbPointerCancel}
         />
       </div>
       <output data-testid="vertical-dragging">
-        {String(verticalIsDragging)}
+        {String(vertical.isDragging)}
       </output>
       <output data-testid="horizontal-dragging">
-        {String(horizontalIsDragging)}
+        {String(horizontal.isDragging)}
       </output>
-    </>
+    </div>
   );
 }
 
@@ -112,7 +109,7 @@ function prepareVerticalScroll() {
 }
 
 describe("useScrollbar", () => {
-  it("thumbのpointerdownからpointermoveでscrollTopを更新する", () => {
+  it("thumbのdragでelement targetのscrollTopを更新する", () => {
     render(<ScrollbarHarness />);
     const { scroll, thumb } = prepareVerticalScroll();
     const setPointerCapture = vi.fn();
@@ -130,7 +127,7 @@ describe("useScrollbar", () => {
   });
 
   it.each(["pointerup", "pointercancel"] as const)(
-    "%sでドラッグを終了し、pointer captureを解放する",
+    "%sでdragを終了しpointer captureを解放する",
     (eventName) => {
       render(<ScrollbarHarness />);
       const { thumb } = prepareVerticalScroll();
@@ -160,7 +157,7 @@ describe("useScrollbar", () => {
     }
   );
 
-  it("trackのpointerdownでクリック位置へscrollTopを移動する", () => {
+  it("track clickでelement targetをクリック位置へ移動する", () => {
     render(<ScrollbarHarness />);
     const { scroll, track } = prepareVerticalScroll();
 
@@ -169,7 +166,7 @@ describe("useScrollbar", () => {
     expect(scroll.scrollTop).toBe(400);
   });
 
-  it("横方向でもthumbのドラッグでscrollLeftを更新する", () => {
+  it("horizontal axisも同じdrag logicでscrollLeftを更新する", () => {
     render(<ScrollbarHarness orientation="horizontal" />);
     const scroll = screen.getByTestId("scroll") as HTMLDivElement;
     const track = screen.getByTestId("horizontal-track") as HTMLDivElement;
@@ -187,5 +184,13 @@ describe("useScrollbar", () => {
     fireEvent.pointerMove(thumb, { clientX: 30, pointerId: 1 });
 
     expect(scroll.scrollLeft).toBe(100);
+  });
+
+  it("contentがviewport以下ならthumbを表示しない", () => {
+    expect(calculateThumbMetrics(200, 200, 200, 0)).toEqual({
+      size: 0,
+      offset: 0,
+    });
+    expect(calculateThumbMetrics(1000, 200, 10, 500).size).toBe(10);
   });
 });

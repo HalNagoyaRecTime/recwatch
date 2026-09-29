@@ -15,7 +15,10 @@ afterEach(() => {
   window.localStorage.clear();
   document.documentElement.className = "";
   document.documentElement.removeAttribute("data-theme");
+  document.documentElement.removeAttribute("data-app-surface");
   document.documentElement.style.removeProperty("color-scheme");
+  document.documentElement.style.removeProperty("background-color");
+  document.body.style.removeProperty("background-color");
 });
 
 describe("ThemeProvider forcedTheme", () => {
@@ -32,6 +35,9 @@ describe("ThemeProvider forcedTheme", () => {
     expect(screen.getByRole("button")).toHaveTextContent("light");
     expect(document.documentElement.classList.contains("dark")).toBe(false);
     expect(document.documentElement.dataset.theme).toBe("light");
+    expect(document.documentElement.style.backgroundColor).toBe(
+      "rgb(255, 255, 255)"
+    );
     expect(getItem).not.toHaveBeenCalled();
 
     fireEvent.click(screen.getByRole("button"));

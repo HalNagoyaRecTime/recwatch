@@ -34,7 +34,10 @@ export function Layout({ children }: { children: ReactNode }) {
     <html lang="en" data-app-surface="recwatch" suppressHydrationWarning>
       <head>
         <meta charSet="utf-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta
+          name="viewport"
+          content="width=device-width, initial-scale=1, viewport-fit=cover"
+        />
         <Meta />
         <Links />
         <script
@@ -84,7 +87,7 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
   }
 
   return (
-    <main className="min-h-dvh p-6 md:p-8">
+    <main className="viewport-min-height p-6 md:p-8">
       <div className="shadow-soft border-border-subtle bg-surface-base mx-auto max-w-5xl rounded-3xl border p-6 md:p-8">
         <div className="text-brand-primary font-['DM_Mono'] text-xs tracking-[0.18em] uppercase">
           Failure Boundary
@@ -107,7 +110,7 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
 
 export function HydrateFallback() {
   return (
-    <div className="root-hydrate-fallback bg-surface-hover p-6">
+    <div className="root-hydrate-fallback viewport-min-height bg-surface-hover p-6">
       <span className="root-hydrate-fallback-default">読み込み中...</span>
       <span className="root-hydrate-fallback-context">
         <span>認証情報を確認しています...</span>

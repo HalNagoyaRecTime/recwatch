@@ -13,6 +13,7 @@ import {
   clearDeletionAuthPending,
   clearDeletionAuthResult,
 } from "~/features/account-deletion/lib/deletionAuthFlow";
+import { useDocumentScrollLock } from "~/hooks/useDocumentScrollLock";
 
 export type AccountDeletionCallbackData =
   | { status: "confirm"; deletionConfirmationToken: string }
@@ -198,6 +199,8 @@ function DeleteConfirmationModal({
   onClose: () => void;
   onConfirm: () => void;
 }) {
+  useDocumentScrollLock(true);
+
   const titleId = useId();
   const descriptionId = useId();
 

@@ -16,10 +16,16 @@ describe("AppSurface", () => {
     document.documentElement.className = "";
     document.documentElement.removeAttribute("data-app-surface");
     document.documentElement.removeAttribute("data-app-loading-context");
+    document.documentElement.removeAttribute(
+      "data-account-deletion-auth-callback"
+    );
+    document.documentElement.removeAttribute(
+      "data-document-background-override"
+    );
     document.documentElement.style.removeProperty("color-scheme");
     document.head.innerHTML = `
-      <meta name="viewport" content="width=device-width, initial-scale=1" />
-      <link rel="icon" href="/recwatch-logo.svg" type="image/svg+xml" />
+      <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+      <link rel="icon" href="/recwatch-logo.svg" type="image/svg+xml" sizes="any" />
     `;
     window.localStorage.clear();
     window.sessionStorage.clear();
@@ -66,9 +72,20 @@ describe("AppSurface", () => {
     expect(document.documentElement.classList.contains("dark")).toBe(false);
     expect(document.documentElement.dataset.theme).toBe("light");
     expect(window.localStorage.getItem("recwatch-theme")).toBe("dark");
+    expect(
+      window.sessionStorage.getItem(DELETION_AUTH_PENDING_STORAGE_KEY)
+    ).toBe("1");
     expect(document.querySelector('link[rel="icon"]')).toHaveAttribute(
       "href",
       "/recreation-favicon.png"
+    );
+    expect(document.querySelector('link[rel="icon"]')).toHaveAttribute(
+      "type",
+      "image/png"
+    );
+    expect(document.querySelector('link[rel="icon"]')).toHaveAttribute(
+      "sizes",
+      "512x512"
     );
     expect(document.querySelector('meta[name="viewport"]')).toHaveAttribute(
       "content",
@@ -95,10 +112,22 @@ describe("AppSurface", () => {
     expect(document.documentElement.classList.contains("dark")).toBe(false);
     expect(document.documentElement.dataset.theme).toBe("light");
     expect(document.documentElement.style.colorScheme).toBe("light");
+    expect(document.documentElement.style.backgroundColor).toBe(
+      "rgb(255, 255, 255)"
+    );
+    expect(document.body.style.backgroundColor).toBe("rgb(255, 255, 255)");
     expect(window.localStorage.getItem("recwatch-theme")).toBe("dark");
     expect(document.querySelector('link[rel="icon"]')).toHaveAttribute(
       "href",
       "/recreation-favicon.png"
+    );
+    expect(document.querySelector('link[rel="icon"]')).toHaveAttribute(
+      "type",
+      "image/png"
+    );
+    expect(document.querySelector('link[rel="icon"]')).toHaveAttribute(
+      "sizes",
+      "512x512"
     );
     expect(document.querySelector('meta[name="viewport"]')).toHaveAttribute(
       "content",
@@ -110,14 +139,24 @@ describe("AppSurface", () => {
     expect(document.documentElement.dataset.appSurface).toBe("recwatch");
     expect(document.documentElement.classList.contains("dark")).toBe(true);
     expect(document.documentElement.dataset.theme).toBe("dark");
+    expect(document.documentElement.style.backgroundColor).toBe("rgb(0, 0, 0)");
+    expect(document.body.style.backgroundColor).toBe("rgb(0, 0, 0)");
     expect(window.localStorage.getItem("recwatch-theme")).toBe("dark");
     expect(document.querySelector('link[rel="icon"]')).toHaveAttribute(
       "href",
       "/recwatch-logo.svg"
     );
+    expect(document.querySelector('link[rel="icon"]')).toHaveAttribute(
+      "type",
+      "image/svg+xml"
+    );
+    expect(document.querySelector('link[rel="icon"]')).toHaveAttribute(
+      "sizes",
+      "any"
+    );
     expect(document.querySelector('meta[name="viewport"]')).toHaveAttribute(
       "content",
-      "width=device-width, initial-scale=1"
+      "width=device-width, initial-scale=1, viewport-fit=cover"
     );
   });
 
@@ -138,5 +177,30 @@ describe("AppSurface", () => {
     expect(document.documentElement.dataset.appLoadingContext).toBe(
       ACCOUNT_DELETION_AUTH_LOADING_CONTEXT
     );
+  });
+
+  it("sessionStorageが利用できなくても安全にrecwatchへ戻す", () => {
+    const descriptor = Object.getOwnPropertyDescriptor(
+      window,
+      "sessionStorage"
+    );
+    Object.defineProperty(window, "sessionStorage", {
+      configurable: true,
+      get() {
+        throw new Error("sessionStorage is unavailable");
+      },
+    });
+
+    try {
+      expect(getCurrentAppSurface("/auth/callback")).toBe("recwatch");
+      expect(() =>
+        runInNewContext(createAppSurfaceBootstrapScript(), { window, document })
+      ).not.toThrow();
+      expect(document.documentElement.dataset.appSurface).toBe("recwatch");
+    } finally {
+      if (descriptor) {
+        Object.defineProperty(window, "sessionStorage", descriptor);
+      }
+    }
   });
 });

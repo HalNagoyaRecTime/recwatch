@@ -28,13 +28,13 @@ export function AccountDeletionLayout({
 }: AccountDeletionLayoutProps) {
   return (
     <main
-      className="account-deletion-viewport flex min-h-dvh min-h-screen flex-col items-center justify-center-safe overflow-y-auto bg-white px-6 py-8 text-[#333333]"
+      className="account-deletion-viewport viewport-min-height box-border flex flex-col items-center justify-center-safe bg-white text-[#333333]"
       style={{
         ...accountDeletionThemeStyle,
-        background:
-          "linear-gradient(to bottom, #ffffff 0%, #ffffff calc(100% - env(safe-area-inset-bottom, 0px)), transparent calc(100% - env(safe-area-inset-bottom, 0px)), transparent 100%)",
         paddingTop: "calc(2rem + env(safe-area-inset-top, 0px))",
+        paddingRight: "calc(1.5rem + env(safe-area-inset-right, 0px))",
         paddingBottom: "calc(2rem + env(safe-area-inset-bottom, 0px))",
+        paddingLeft: "calc(1.5rem + env(safe-area-inset-left, 0px))",
       }}
     >
       <section className="flex w-full max-w-sm flex-1 flex-col justify-center gap-4">
