@@ -86,6 +86,46 @@ flowchart LR
 - `components/`内の`list/`や`form/`などの分割は、画面上の役割が明確になる場合に採用する。
 - 共通UIは`app/components/ui/`に置く。Feature固有のUI構成やdirectory名は、責務が明確ならFeatureに合わせて決める。
 
+#### Events Feature
+
+イベント領域は`events` Featureに集約する。`Event`本体、`Round`、`Gathering`、
+`Gathering Member`と、イベント一覧・作成・編集・詳細・集合設定を同じFeatureで扱う。
+
+```text
+app/features/
+├─ events/
+│  ├─ api/       # Event、集合設定、参加者のcontracts・DTO・mapper・HTTP adapter
+│  ├─ hooks/     # 一覧、編集、集合設定、参加者のApplication logic
+│  ├─ model/     # Event / Round / Gathering / MemberのDomain modelとvalidation
+│  ├─ components/
+│  ├─ pages/
+│  └─ test/
+├─ venues/       # Event以外からも使う実施場所Master
+└─ gathering-spots/ # Event以外からも使う集合場所Master
+```
+
+`venues`と`gathering-spots`は独立したMaster Featureであり、`events`へ移動しない。
+Eventsが必要とする選択肢は、それぞれのFeature rootが公開する読み取り境界だけを利用する。
+
+```text
+events → venues/public.ts → VenueReader / VenueOption
+events → gathering-spots/public.ts → GatheringSpotReader / GatheringSpotOption
+```
+
+管理用gateway、管理画面、HTTP DTO、mapper、hookなどのFeature内部fileを、Eventsから直接参照しない。
+HTTP adapterの選択はRouteのcomposition rootで行い、Page/Componentへcontractを注入する。
+Routeはmeta、params、依存関係の組み立て、Page呼び出しに限定し、business logicを持たない。
+
+Event APIのsnake_caseは`events/api/dto`と`events/api/mappers`の境界に閉じ込める。
+`EventQueryGateway`は一覧・詳細の読み取りを担当し、`EventCommandGateway`は作成・更新・削除を担当する。
+`GET /api/v1/events/:eventId`の`EventDetailResponseDto`はEvent Detailと編集の共通契約とし、
+同じresponse schemaを複数adapterで重複定義しない。Event一覧は`gathering_summary`を含む
+`GET /api/v1/events`のpagination responseだけを利用し、一覧表示のために全Gatheringを追加取得しない。
+
+Domain / Presentationへは`event_id`や`venue_ids`などの外部名を持ち込まず、
+Backendの`HHMM`時刻は共通Event mapperで`HH:mm`へ変換する。`99:59`、Roundの範囲、
+参加者上限、参加者付きGathering / Roundの削除制限などの業務ルールはEventsのmodelで維持する。
+
 #### 通知Featureでの適用例
 
 通知Featureでは、標準構成を次のように具体化している。

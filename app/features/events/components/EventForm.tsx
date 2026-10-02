@@ -1,0 +1,212 @@
+import { Check, type LucideIcon } from "lucide-react";
+
+import { Button } from "~/components/ui/button/Button";
+import { PageHeader } from "~/components/ui/layout/PageHeader";
+import { cn } from "~/lib/cn";
+import type { EventFormValue } from "~/features/events/model/event-form";
+import { maxVenueSelection } from "~/features/events/model/event-form";
+import type { VenueOption } from "~/features/venues/public";
+
+type EventFormProps = {
+  isDisabled: boolean;
+  isSubmitting: boolean;
+  onCancel: () => void;
+  onChange: (value: EventFormValue) => void;
+  onSubmit: () => void;
+  submitError: string | null;
+  submitIcon?: LucideIcon;
+  submitLabel: string;
+  /** 省略するとページ見出しを描画しない。モーダル内など、外側が見出しを持つ場合に使う。 */
+  title?: string;
+  value: EventFormValue;
+  venueOptions: readonly VenueOption[];
+};
+
+export function EventForm({
+  isDisabled,
+  isSubmitting,
+  onCancel,
+  onChange,
+  onSubmit,
+  submitError,
+  submitIcon = Check,
+  submitLabel,
+  title,
+  value,
+  venueOptions,
+}: EventFormProps) {
+  const isModal = !title;
+  const labelClass = isModal ? modalLabelClassName : labelClassName;
+  const inputClass = isModal ? modalInputClassName : inputClassName;
+
+  function update(
+    field: Exclude<keyof EventFormValue, "venueIds">,
+    nextValue: string
+  ) {
+    onChange({ ...value, [field]: nextValue });
+  }
+
+  const isVenueSelectionFull = value.venueIds.length >= maxVenueSelection;
+
+  function toggleVenue(venueId: number) {
+    onChange({
+      ...value,
+      venueIds: value.venueIds.includes(venueId)
+        ? value.venueIds.filter((id) => id !== venueId)
+        : [...value.venueIds, venueId],
+    });
+  }
+
+  return (
+    <div className={cn("space-y-6", title && "min-h-full")}>
+      {title ? (
+        <PageHeader
+          description="登録内容はイベント登録一覧へ反映されます"
+          title={title}
+        />
+      ) : null}
+
+      <form
+        className={cn("space-y-4", title && "max-w-2xl")}
+        onSubmit={(event) => {
+          event.preventDefault();
+          onSubmit();
+        }}
+      >
+        <label className={labelClass}>
+          イベント名 <span className="text-tone-danger-text">*</span>
+          <input
+            aria-label="イベント名*"
+            className={inputClass}
+            disabled={isDisabled}
+            maxLength={100}
+            onChange={(event) => update("name", event.currentTarget.value)}
+            placeholder="例：大縄跳び"
+            value={value.name}
+          />
+        </label>
+        <label className={labelClass}>
+          イベントルール
+          <textarea
+            aria-label="イベントルール"
+            className={`${inputClass} resize-y py-2 ${isModal ? "min-h-32" : "min-h-24"}`}
+            disabled={isDisabled}
+            maxLength={1000}
+            onChange={(event) => update("rules", event.currentTarget.value)}
+            placeholder="ルールの詳細を入力"
+            value={value.rules}
+          />
+        </label>
+        <fieldset disabled={isDisabled}>
+          <legend className={labelClass}>
+            実施場所 <span className="text-tone-danger-text">*</span>
+          </legend>
+          <div
+            className={cn(
+              "border-border-base app-rounded max-h-64 space-y-1 overflow-y-auto border p-2",
+              isModal ? "mt-2" : "mt-1.5",
+              isDisabled && "opacity-50"
+            )}
+          >
+            {venueOptions.map((venue) => (
+              <label
+                className={cn(
+                  "hover:bg-surface-hover text-text-base flex items-center gap-2 rounded px-2 py-2",
+                  isModal ? "text-base" : "text-sm"
+                )}
+                key={venue.id}
+              >
+                <input
+                  checked={value.venueIds.includes(venue.id)}
+                  disabled={
+                    isVenueSelectionFull && !value.venueIds.includes(venue.id)
+                  }
+                  onChange={() => toggleVenue(venue.id)}
+                  type="checkbox"
+                />
+                {venue.name}
+              </label>
+            ))}
+            {venueOptions.length === 0 ? (
+              <p className="text-text-muted px-2 py-2 text-sm">
+                登録済みの実施場所はありません。
+              </p>
+            ) : null}
+          </div>
+          <p className="text-text-subtle mt-1.5 text-xs">
+            {isVenueSelectionFull
+              ? `実施場所は${maxVenueSelection}件まで選択できます。`
+              : `${value.venueIds.length}／${maxVenueSelection}件を選択中`}
+          </p>
+        </fieldset>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <label className={labelClass}>
+            開始時間 <span className="text-tone-danger-text">*</span>
+            <input
+              aria-label="開始時間*"
+              className={inputClass}
+              disabled={isDisabled}
+              onChange={(event) =>
+                update("startTime", event.currentTarget.value)
+              }
+              type="time"
+              value={value.startTime}
+            />
+          </label>
+          <label className={labelClass}>
+            終了時間 <span className="text-tone-danger-text">*</span>
+            <input
+              aria-label="終了時間*"
+              className={inputClass}
+              disabled={isDisabled}
+              onChange={(event) => update("endTime", event.currentTarget.value)}
+              type="time"
+              value={value.endTime}
+            />
+          </label>
+        </div>
+
+        {submitError ? (
+          <p
+            className={cn(
+              "text-tone-danger-text",
+              isModal ? "text-base" : "text-sm"
+            )}
+            role="alert"
+          >
+            {submitError}
+          </p>
+        ) : null}
+
+        <div className="flex justify-end gap-3 pt-2">
+          <Button
+            onClick={onCancel}
+            size={isModal ? "lg" : "md"}
+            type="button"
+            variant="secondary"
+          >
+            キャンセル
+          </Button>
+          <Button
+            disabled={isDisabled}
+            icon={submitIcon}
+            size={isModal ? "lg" : "md"}
+            type="submit"
+            variant="primary"
+          >
+            {isSubmitting ? "保存中..." : submitLabel}
+          </Button>
+        </div>
+      </form>
+    </div>
+  );
+}
+
+const labelClassName = "text-text-base block text-sm font-medium";
+const inputClassName =
+  "app-rounded border-border-base bg-surface-base text-text-base focus:border-border-strong mt-1.5 h-10 w-full border px-3 text-sm outline-none disabled:opacity-50";
+
+// モーダル内はページ見出しが無く表示領域も広いため、一段大きい文字送りにする。
+const modalLabelClassName = "text-text-base block text-base font-medium";
+const modalInputClassName =
+  "app-rounded border-border-base bg-surface-base text-text-base focus:border-border-strong mt-2 h-12 w-full border px-3.5 text-base outline-none disabled:opacity-50";
