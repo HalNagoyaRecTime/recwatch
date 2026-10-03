@@ -30,8 +30,14 @@ export default [
     ),
     route("students", "routes/main/students.tsx"),
     route("students/import", "routes/main/students.import.tsx"),
-    route("teams", "routes/main/teams.tsx"),
-    route("ranking", "routes/main/ranking.tsx"),
+    route("teams", "routes/main/teams.tsx", [
+      route("new", "routes/main/teams.new.tsx"),
+      route(":id", "routes/main/teams.$id.tsx"),
+      route(":id/edit", "routes/main/teams.$id.edit.tsx"),
+    ]),
+    route("ranking", "routes/main/ranking.tsx", [
+      route(":teamId/edit", "routes/main/ranking.$teamId.edit.tsx"),
+    ]),
     route("classrooms", "routes/main/classrooms.tsx", [
       route("new", "routes/main/classrooms.new.tsx"),
     ]),

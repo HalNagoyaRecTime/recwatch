@@ -8,15 +8,23 @@ import {
   getAppNotificationStorageKey,
   type AppNotification,
 } from "../model/app-notification";
-import { useFeedback } from "../hooks/useFeedback";
+import { useFeedback, type FeedbackInput } from "~/features/frame/feedback";
 import { FeedbackToastHost } from "./FeedbackToastHost";
 import { FeedbackProvider } from "./FeedbackProvider";
 
 function FeedbackProbe() {
   const { notifications, toasts, unreadCount, report } = useFeedback();
+  const validationFeedback: FeedbackInput = {
+    kind: "validation",
+    title: "入力エラー",
+    message: "入力内容を確認してください",
+  };
 
   return (
     <>
+      <button type="button" onClick={() => report(validationFeedback)}>
+        validation
+      </button>
       <button
         type="button"
         onClick={() =>
@@ -186,6 +194,24 @@ describe("FeedbackProvider", () => {
     expect(screen.getByTestId("history-count")).toHaveTextContent("0");
     expect(screen.getByTestId("toast-count")).toHaveTextContent("1");
     expect(screen.getByText("保存完了")).toBeInTheDocument();
+  });
+
+  it("公開境界から報告したvalidationはToastにも履歴にも追加しない", async () => {
+    const user = userEvent.setup();
+    renderProbe();
+
+    await user.click(screen.getByRole("button", { name: "validation" }));
+
+    expect(screen.getByTestId("history-count")).toHaveTextContent("0");
+    expect(screen.getByTestId("toast-count")).toHaveTextContent("0");
+    expect(screen.queryByText("入力エラー")).not.toBeInTheDocument();
+    expect(
+      JSON.parse(
+        window.localStorage.getItem(
+          getAppNotificationStorageKey("test-user")
+        ) ?? "[]"
+      )
+    ).toHaveLength(0);
   });
 
   it("background-errorを履歴へ保存する", async () => {
