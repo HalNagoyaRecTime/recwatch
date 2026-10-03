@@ -3,21 +3,22 @@ import { useCallback, useState } from "react";
 import { useNavigate, useOutletContext } from "react-router";
 
 import { FormModal } from "~/components/ui/modal/FormModal";
-import type { EventEditorApi } from "~/features/events/api/event-editor-api";
-import { httpEventEditorApi } from "~/features/events/api/http-event-editor-api";
+import type { EventCommandGateway } from "~/features/events/api/contracts/event-command-gateway";
 import { EventConfirmStep } from "~/features/events/components/EventConfirmStep";
 import { EventCreatedStep } from "~/features/events/components/EventCreatedStep";
 import { EventForm } from "~/features/events/components/EventForm";
-import { useEventVenueOptions } from "~/features/events/hooks/useEventVenueOptions";
+import { useVenueOptions } from "~/features/events/hooks/useVenueOptions";
 import { getErrorMessage } from "~/lib/client-error";
-import type { EventListOutletContext } from "~/features/events/pages/EventListPage";
 import {
   emptyEventForm,
   validateEventForm,
 } from "~/features/events/model/event-form";
+import type { VenueReader } from "~/features/venues/public";
+import type { EventListOutletContext } from "~/features/events/routes/outlet-context";
 
 type EventCreatePageProps = {
-  api?: EventEditorApi;
+  commandGateway: EventCommandGateway;
+  venueReader: VenueReader;
 };
 
 type Step = "form" | "confirm" | "done";
@@ -34,12 +35,13 @@ const stepDescription: Record<Step, string> = {
  * 集合設定は作成後のイベント詳細から行うため、このモーダルでは扱わない。
  */
 export function EventCreatePage({
-  api = httpEventEditorApi,
+  commandGateway,
+  venueReader,
 }: EventCreatePageProps) {
   const navigate = useNavigate();
   // 一覧の子ルートとして開かれた場合のみ受け取れる。テストなど単体描画時は undefined。
   const outletContext = useOutletContext<EventListOutletContext | undefined>();
-  const venueOptions = useEventVenueOptions(api);
+  const venueOptions = useVenueOptions(venueReader);
   const [step, setStep] = useState<Step>("form");
   const [form, setForm] = useState(emptyEventForm);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -69,7 +71,7 @@ export function EventCreatePage({
     setIsSubmitting(true);
     setSubmitError(null);
     try {
-      const created = await api.create(result.input);
+      const created = await commandGateway.create(result.input);
       setCreatedEventId(created.id);
       outletContext?.reload();
       setStep("done");
