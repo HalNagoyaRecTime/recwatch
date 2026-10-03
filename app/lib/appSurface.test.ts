@@ -1,0 +1,228 @@
+import { runInNewContext } from "node:vm";
+import { beforeEach, describe, expect, it } from "vitest";
+
+import {
+  ACCOUNT_DELETION_AUTH_LOADING_CONTEXT,
+  createAppSurfaceBootstrapScript,
+  getDocumentAppSurface,
+  getAppSurface,
+  getCurrentAppSurface,
+  synchronizeAppSurfaceDocument,
+} from "./appSurface";
+import { DELETION_AUTH_PENDING_STORAGE_KEY } from "~/config/storageKeys";
+
+describe("AppSurface", () => {
+  beforeEach(() => {
+    document.documentElement.className = "";
+    document.documentElement.removeAttribute("data-app-surface");
+    document.documentElement.removeAttribute("data-app-loading-context");
+    document.documentElement.removeAttribute(
+      "data-account-deletion-auth-callback"
+    );
+    document.documentElement.removeAttribute(
+      "data-document-background-override"
+    );
+    document.documentElement.style.removeProperty("color-scheme");
+    document.head.innerHTML = `
+      <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+      <link rel="icon" href="/recwatch-logo.svg" type="image/svg+xml" sizes="any" />
+    `;
+    window.history.replaceState({}, "", "/");
+    window.localStorage.clear();
+    window.sessionStorage.clear();
+  });
+
+  it("通常Routeはrecwatch Surfaceになる", () => {
+    expect(getAppSurface("/dashboard")).toBe("recwatch");
+  });
+
+  it("HydrateFallback用にdocument上のSurfaceを読み取る", () => {
+    document.documentElement.dataset.appSurface = "account-deletion";
+    expect(getDocumentAppSurface()).toBe("account-deletion");
+
+    document.documentElement.dataset.appSurface = "recwatch";
+    expect(getDocumentAppSurface()).toBe("recwatch");
+  });
+
+  it("account-deletion以下はaccount-deletion Surfaceになる", () => {
+    expect(getAppSurface("/account-deletion")).toBe("account-deletion");
+    expect(getAppSurface("/account-deletion/callback")).toBe(
+      "account-deletion"
+    );
+    expect(getAppSurface("/account-deletionish")).toBe("recwatch");
+  });
+
+  it("削除認証pendingがあるcallbackだけaccount-deletionになる", () => {
+    expect(getAppSurface("/auth/callback", true)).toBe("account-deletion");
+    expect(getAppSurface("/auth/callback", false)).toBe("recwatch");
+  });
+
+  it("pre-hydration scriptは削除callbackをlightで初期化し通常callbackをrecwatchにする", () => {
+    window.localStorage.setItem("recwatch-theme", "dark");
+    window.sessionStorage.setItem(DELETION_AUTH_PENDING_STORAGE_KEY, "1");
+    window.history.replaceState({}, "", "/auth/callback");
+
+    runInNewContext(createAppSurfaceBootstrapScript(), { window, document });
+
+    expect(document.documentElement.dataset.appSurface).toBe(
+      "account-deletion"
+    );
+    expect(document.documentElement.dataset.appLoadingContext).toBe(
+      ACCOUNT_DELETION_AUTH_LOADING_CONTEXT
+    );
+    expect(document.documentElement.classList.contains("dark")).toBe(false);
+    expect(document.documentElement.dataset.theme).toBe("light");
+    expect(window.localStorage.getItem("recwatch-theme")).toBe("dark");
+    expect(
+      window.sessionStorage.getItem(DELETION_AUTH_PENDING_STORAGE_KEY)
+    ).toBe("1");
+    expect(document.querySelector('link[rel="icon"]')).toHaveAttribute(
+      "href",
+      "/recreation-favicon.png"
+    );
+    expect(document.querySelector('link[rel="icon"]')).toHaveAttribute(
+      "type",
+      "image/png"
+    );
+    expect(document.querySelector('link[rel="icon"]')).toHaveAttribute(
+      "sizes",
+      "512x512"
+    );
+    expect(document.querySelector('meta[name="theme-color"]')).toHaveAttribute(
+      "content",
+      "#ffffff"
+    );
+    expect(document.querySelector('meta[name="viewport"]')).toHaveAttribute(
+      "content",
+      "width=device-width, initial-scale=1, viewport-fit=cover"
+    );
+
+    window.sessionStorage.removeItem(DELETION_AUTH_PENDING_STORAGE_KEY);
+    runInNewContext(createAppSurfaceBootstrapScript(), { window, document });
+
+    expect(document.documentElement.dataset.appSurface).toBe("recwatch");
+    expect(document.documentElement.dataset.appLoadingContext).toBeUndefined();
+    expect(document.documentElement.classList.contains("dark")).toBe(true);
+    expect(document.documentElement.dataset.theme).toBe("dark");
+    expect(document.querySelector('meta[name="theme-color"]')).toBeNull();
+  });
+
+  it.each(["/account-deletion", "/account-deletion/callback"])(
+    "%sはSurface同期で白いtheme-colorになる",
+    (pathname) => {
+      synchronizeAppSurfaceDocument(pathname, getAppSurface(pathname));
+
+      expect(
+        document.querySelector('meta[name="theme-color"]')
+      ).toHaveAttribute("content", "#ffffff");
+    }
+  );
+
+  it("削除Surfaceを離れると保存済みテーマへ戻し、設定値は変更しない", () => {
+    window.localStorage.setItem("recwatch-theme", "dark");
+
+    synchronizeAppSurfaceDocument("/account-deletion", "account-deletion");
+
+    expect(document.documentElement.dataset.appSurface).toBe(
+      "account-deletion"
+    );
+    expect(document.documentElement.classList.contains("dark")).toBe(false);
+    expect(document.documentElement.dataset.theme).toBe("light");
+    expect(document.documentElement.style.colorScheme).toBe("light");
+    expect(document.documentElement.style.backgroundColor).toBe(
+      "rgb(255, 255, 255)"
+    );
+    expect(document.body.style.backgroundColor).toBe("rgb(255, 255, 255)");
+    expect(document.querySelector('meta[name="theme-color"]')).toHaveAttribute(
+      "content",
+      "#ffffff"
+    );
+    expect(window.localStorage.getItem("recwatch-theme")).toBe("dark");
+    expect(document.querySelector('link[rel="icon"]')).toHaveAttribute(
+      "href",
+      "/recreation-favicon.png"
+    );
+    expect(document.querySelector('link[rel="icon"]')).toHaveAttribute(
+      "type",
+      "image/png"
+    );
+    expect(document.querySelector('link[rel="icon"]')).toHaveAttribute(
+      "sizes",
+      "512x512"
+    );
+    expect(document.querySelector('meta[name="viewport"]')).toHaveAttribute(
+      "content",
+      "width=device-width, initial-scale=1, viewport-fit=cover"
+    );
+
+    synchronizeAppSurfaceDocument("/dashboard", "recwatch");
+
+    expect(document.documentElement.dataset.appSurface).toBe("recwatch");
+    expect(document.documentElement.classList.contains("dark")).toBe(true);
+    expect(document.documentElement.dataset.theme).toBe("dark");
+    expect(document.documentElement.style.backgroundColor).toBe("rgb(0, 0, 0)");
+    expect(document.body.style.backgroundColor).toBe("rgb(0, 0, 0)");
+    expect(document.querySelector('meta[name="theme-color"]')).toBeNull();
+    expect(window.localStorage.getItem("recwatch-theme")).toBe("dark");
+    expect(document.querySelector('link[rel="icon"]')).toHaveAttribute(
+      "href",
+      "/recwatch-logo.svg"
+    );
+    expect(document.querySelector('link[rel="icon"]')).toHaveAttribute(
+      "type",
+      "image/svg+xml"
+    );
+    expect(document.querySelector('link[rel="icon"]')).toHaveAttribute(
+      "sizes",
+      "any"
+    );
+    expect(document.querySelector('meta[name="viewport"]')).toHaveAttribute(
+      "content",
+      "width=device-width, initial-scale=1, viewport-fit=cover"
+    );
+  });
+
+  it("loaderがpendingを消費した後も初回削除callback Surfaceを保持する", () => {
+    document.documentElement.dataset.appSurface = "account-deletion";
+    document.documentElement.dataset.appLoadingContext =
+      ACCOUNT_DELETION_AUTH_LOADING_CONTEXT;
+    window.sessionStorage.setItem(DELETION_AUTH_PENDING_STORAGE_KEY, "1");
+
+    expect(getCurrentAppSurface("/auth/callback")).toBe("account-deletion");
+
+    window.sessionStorage.removeItem(DELETION_AUTH_PENDING_STORAGE_KEY);
+    synchronizeAppSurfaceDocument("/auth/callback", "account-deletion");
+
+    expect(document.documentElement.dataset.appSurface).toBe(
+      "account-deletion"
+    );
+    expect(document.documentElement.dataset.appLoadingContext).toBe(
+      ACCOUNT_DELETION_AUTH_LOADING_CONTEXT
+    );
+  });
+
+  it("sessionStorageが利用できなくても安全にrecwatchへ戻す", () => {
+    const descriptor = Object.getOwnPropertyDescriptor(
+      window,
+      "sessionStorage"
+    );
+    Object.defineProperty(window, "sessionStorage", {
+      configurable: true,
+      get() {
+        throw new Error("sessionStorage is unavailable");
+      },
+    });
+
+    try {
+      expect(getCurrentAppSurface("/auth/callback")).toBe("recwatch");
+      expect(() =>
+        runInNewContext(createAppSurfaceBootstrapScript(), { window, document })
+      ).not.toThrow();
+      expect(document.documentElement.dataset.appSurface).toBe("recwatch");
+    } finally {
+      if (descriptor) {
+        Object.defineProperty(window, "sessionStorage", descriptor);
+      }
+    }
+  });
+});
