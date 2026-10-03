@@ -2,6 +2,7 @@ import { createPageTitle } from "~/lib/page-title";
 import { NotificationCreatePage } from "~/features/notifications/pages/NotificationCreatePage";
 import { httpNotificationAudienceApi } from "~/features/notifications/api/http/notification-audience-api";
 import { httpAdminNotificationCommandApi } from "~/features/notifications/api/http/admin-notification-command-api";
+import { httpNotificationConfigApi } from "~/features/notifications/api/http/notification-config-api";
 import { useFeedback } from "~/features/frame/feedback/hooks/useFeedback";
 
 export function meta() {
@@ -14,6 +15,7 @@ export default function NotificationsNewRoute() {
     <NotificationCreatePage
       api={httpAdminNotificationCommandApi}
       audienceApi={httpNotificationAudienceApi}
+      configApi={httpNotificationConfigApi}
       reportFeedback={report}
     />
   );

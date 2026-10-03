@@ -1,7 +1,7 @@
 import type { NotificationDraft } from "~/features/notifications/model/notification-draft";
 
 export type NotificationDraftErrors = Partial<
-  Record<keyof NotificationDraft, string>
+  Record<keyof NotificationDraft | `audiences.${number}`, string>
 >;
 
 export function validateNotificationDraft(
@@ -18,8 +18,28 @@ export function validateNotificationDraft(
     errors.body = "本文を入力してください";
   }
 
-  if (draft.audienceType !== "all" && !draft.audienceId) {
-    errors.audienceId = "通知対象を選択してください";
+  if (!draft.detailTitle.trim()) {
+    errors.detailTitle = "詳細タイトルを入力してください";
+  }
+
+  if (!draft.detailBody.trim()) {
+    errors.detailBody = "詳細本文を入力してください";
+  }
+
+  if (draft.audiences.length === 0) {
+    errors.audiences = "通知対象を1件以上指定してください";
+  }
+  draft.audiences.forEach((audience, index) => {
+    if (audience.type !== "all" && !audience.targetId) {
+      errors[`audiences.${index}`] = "通知対象を選択してください";
+    }
+  });
+
+  if (
+    draft.audiences.some((audience) => audience.type === "all") &&
+    draft.audiences.length > 1
+  ) {
+    errors.audiences = "全体は他の通知対象と同時に指定できません";
   }
 
   if (draft.deliveryTiming === "scheduled") {
