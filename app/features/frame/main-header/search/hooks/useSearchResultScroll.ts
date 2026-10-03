@@ -7,10 +7,10 @@ type UseSearchResultScrollParams = {
 export function useSearchResultScroll({
   selectedIndex,
 }: UseSearchResultScrollParams) {
-  const itemRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  const itemRefs = useRef<(HTMLLIElement | null)[]>([]);
 
   useEffect(() => {
-    itemRefs.current[selectedIndex]?.scrollIntoView({ block: "nearest" });
+    itemRefs.current[selectedIndex]?.scrollIntoView?.({ block: "nearest" });
   }, [selectedIndex]);
 
   return {

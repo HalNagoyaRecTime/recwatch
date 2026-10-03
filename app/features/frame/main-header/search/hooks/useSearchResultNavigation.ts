@@ -1,4 +1,4 @@
-import type { RefObject } from "react";
+import type { RefObject, SetStateAction } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 const SEARCH_RESULT_KEY_DOWN = "ArrowDown";
@@ -22,12 +22,38 @@ export function useSearchResultNavigation({
   const selectedIndexRef = useRef(0);
 
   const resetSelection = useCallback(() => {
+    selectedIndexRef.current = 0;
     setSelectedIndex(0);
   }, []);
+
+  const selectIndex = useCallback(
+    (nextIndex: SetStateAction<number>) => {
+      setSelectedIndex((current) => {
+        const next =
+          typeof nextIndex === "function" ? nextIndex(current) : nextIndex;
+        const bounded =
+          resultCount === 0 ? 0 : Math.min(Math.max(next, 0), resultCount - 1);
+        selectedIndexRef.current = bounded;
+        return bounded;
+      });
+    },
+    [resultCount]
+  );
+
+  const moveSelection = useCallback(
+    (nextIndex: (current: number) => number) => {
+      selectIndex(nextIndex);
+    },
+    [selectIndex]
+  );
 
   useEffect(() => {
     selectedIndexRef.current = selectedIndex;
   }, [selectedIndex]);
+
+  useEffect(() => {
+    selectIndex(selectedIndexRef.current);
+  }, [resultCount, selectIndex]);
 
   useEffect(() => {
     if (!isOpen || resultCount === 0) {
@@ -37,6 +63,7 @@ export function useSearchResultNavigation({
     function handleKeyDown(event: KeyboardEvent) {
       const shouldIgnoreKeyboardEvent =
         event.isComposing ||
+        event.keyCode === 229 ||
         event.defaultPrevented ||
         event.altKey ||
         event.ctrlKey ||
@@ -46,23 +73,25 @@ export function useSearchResultNavigation({
         return;
       }
 
-      const target = event.target as Node | null;
+      const target = event.target;
       const scopeElement = scopeRef?.current;
 
-      if (scopeElement && target && !scopeElement.contains(target)) {
+      if (
+        scopeElement &&
+        target instanceof Node &&
+        !scopeElement.contains(target)
+      ) {
         return;
       }
 
       if (event.key === SEARCH_RESULT_KEY_DOWN) {
         event.preventDefault();
-        setSelectedIndex((current) => (current + 1) % resultCount);
+        moveSelection((current) => (current + 1) % resultCount);
       }
 
       if (event.key === SEARCH_RESULT_KEY_UP) {
         event.preventDefault();
-        setSelectedIndex(
-          (current) => (current - 1 + resultCount) % resultCount
-        );
+        moveSelection((current) => (current - 1 + resultCount) % resultCount);
       }
 
       if (event.key === SEARCH_RESULT_KEY_CONFIRM) {
@@ -76,11 +105,11 @@ export function useSearchResultNavigation({
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [isOpen, onConfirmIndex, resultCount, scopeRef]);
+  }, [isOpen, moveSelection, onConfirmIndex, resultCount, scopeRef]);
 
   return {
     resetSelection,
     selectedIndex,
-    setSelectedIndex,
+    setSelectedIndex: selectIndex,
   };
 }

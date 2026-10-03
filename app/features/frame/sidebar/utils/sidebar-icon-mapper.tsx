@@ -13,11 +13,11 @@ import {
   UserRoundIcon,
 } from "lucide-react";
 import type { ReactNode } from "react";
-import type { SidebarIconKey } from "~/config/routes";
+import type { NavigationIconKey } from "~/config/navigation";
 
 const iconSize = 15;
 
-export const sidebarIconMap: Record<SidebarIconKey, ReactNode> = {
+export const sidebarIconMap: Record<NavigationIconKey, ReactNode> = {
   calendar: <CalendarIcon size={iconSize} strokeWidth={1.8} />,
   clock: <Clock3Icon size={iconSize} strokeWidth={1.8} />,
   dashboard: <LayoutDashboardIcon size={iconSize} strokeWidth={1.8} />,
