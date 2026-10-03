@@ -29,3 +29,22 @@ export type EventAudiencePageApiDto = {
   limit: number;
   offset: number;
 };
+
+export type EventAudienceDetailApiDto = {
+  rounds: EventAudienceRoundApiDto[];
+};
+
+export type EventAudienceRoundApiDto = {
+  round: number;
+  gatherings: EventAudienceGatheringApiDto[];
+};
+
+export type EventAudienceGatheringApiDto = {
+  gathering_id: number;
+  gathering_time: string;
+  gathering_spot: {
+    gathering_spot_id: number;
+    gathering_spot_name: string;
+  };
+  member_count: number;
+};
