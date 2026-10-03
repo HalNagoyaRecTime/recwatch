@@ -1,4 +1,7 @@
-import { maxVenueSelection } from "~/features/events/model/event-venue";
+import type { EventDetail } from "~/features/events/model/event-detail";
+
+/** 1件のEventに登録できる実施場所の上限。 */
+export const maxVenueSelection = 20;
 
 export type EventFormValue = {
   endTime: string;
@@ -23,6 +26,16 @@ export const emptyEventForm: EventFormValue = {
   startTime: "",
   venueIds: [],
 };
+
+export function toEventFormValue(event: EventDetail): EventFormValue {
+  return {
+    endTime: event.endTime,
+    name: event.name,
+    rules: event.rules ?? "",
+    startTime: event.startTime,
+    venueIds: event.venues.map((venue) => venue.id),
+  };
+}
 
 export function validateEventForm(
   value: EventFormValue

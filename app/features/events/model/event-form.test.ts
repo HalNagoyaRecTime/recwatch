@@ -2,9 +2,9 @@ import { describe, expect, it } from "vitest";
 
 import {
   emptyEventForm,
+  maxVenueSelection,
   validateEventForm,
 } from "~/features/events/model/event-form";
-import { maxVenueSelection } from "~/features/events/model/event-venue";
 
 const filledForm = {
   ...emptyEventForm,

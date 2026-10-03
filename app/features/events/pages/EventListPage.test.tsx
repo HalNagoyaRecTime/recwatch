@@ -3,6 +3,8 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter, useLocation } from "react-router";
 import { describe, expect, it, vi } from "vitest";
 
+import type { EventCommandGateway } from "~/features/events/api/contracts/event-command-gateway";
+import type { EventQueryGateway } from "~/features/events/api/contracts/event-query-gateway";
 import type { EventListItem } from "~/features/events/model/event-list-item";
 import { EventListPage } from "./EventListPage";
 
@@ -36,6 +38,21 @@ function LocationProbe() {
   return <output data-testid="location">{useLocation().pathname}</output>;
 }
 
+function commandGateway(
+  overrides: Partial<EventCommandGateway> = {}
+): EventCommandGateway {
+  return {
+    create: vi.fn(),
+    update: vi.fn(),
+    delete: vi.fn(),
+    ...overrides,
+  };
+}
+
+function queryGateway(items: EventListItem[]): EventQueryGateway {
+  return { list: vi.fn().mockResolvedValue(items), get: vi.fn() };
+}
+
 describe("EventListPage", () => {
   it("uses shared page, search, button, and table components", async () => {
     const user = userEvent.setup();
@@ -43,10 +60,8 @@ describe("EventListPage", () => {
     render(
       <MemoryRouter initialEntries={["/events"]}>
         <EventListPage
-          gateway={{
-            load: vi.fn().mockResolvedValue([event]),
-            delete: vi.fn(),
-          }}
+          commandGateway={commandGateway()}
+          queryGateway={queryGateway([event])}
         />
         <LocationProbe />
       </MemoryRouter>
@@ -91,10 +106,8 @@ describe("EventListPage", () => {
     render(
       <MemoryRouter initialEntries={["/events"]}>
         <EventListPage
-          gateway={{
-            load: vi.fn().mockResolvedValue([anotherEvent, event]),
-            delete: vi.fn(),
-          }}
+          commandGateway={commandGateway()}
+          queryGateway={queryGateway([anotherEvent, event])}
         />
       </MemoryRouter>
     );
@@ -114,10 +127,8 @@ describe("EventListPage", () => {
     render(
       <MemoryRouter initialEntries={["/events"]}>
         <EventListPage
-          gateway={{
-            load: vi.fn().mockResolvedValue([event, anotherEvent]),
-            delete: vi.fn(),
-          }}
+          commandGateway={commandGateway()}
+          queryGateway={queryGateway([event, anotherEvent])}
         />
       </MemoryRouter>
     );
@@ -139,10 +150,8 @@ describe("EventListPage", () => {
     render(
       <MemoryRouter initialEntries={["/events"]}>
         <EventListPage
-          gateway={{
-            load: vi.fn().mockResolvedValue([event, anotherEvent]),
-            delete: vi.fn(),
-          }}
+          commandGateway={commandGateway()}
+          queryGateway={queryGateway([event, anotherEvent])}
         />
       </MemoryRouter>
     );
@@ -163,10 +172,8 @@ describe("EventListPage", () => {
     render(
       <MemoryRouter>
         <EventListPage
-          gateway={{
-            load: vi.fn().mockResolvedValue([anotherEvent, event]),
-            delete: deleteEvent,
-          }}
+          commandGateway={commandGateway({ delete: deleteEvent })}
+          queryGateway={queryGateway([anotherEvent, event])}
         />
       </MemoryRouter>
     );
