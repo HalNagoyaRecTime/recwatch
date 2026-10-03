@@ -5,28 +5,21 @@ import { Outlet, useParams } from "react-router";
 import { ButtonLink } from "~/components/ui/button/ButtonLink";
 import { PageHeader } from "~/components/ui/layout/PageHeader";
 import { getErrorMessage } from "~/lib/client-error";
-import type { EventDetailGateway } from "~/features/events/api/event-detail-gateway";
-import { httpEventDetailGateway } from "~/features/events/api/http-event-detail-gateway";
+import type { EventQueryGateway } from "~/features/events/api/contracts/event-query-gateway";
 import { EventBasicInfoCard } from "~/features/events/components/EventBasicInfoCard";
 import { EventGatheringRounds } from "~/features/events/components/EventGatheringRounds";
 import type { EventDetail } from "~/features/events/model/event-detail";
+import type { EventDetailOutletContext } from "~/features/events/routes/outlet-context";
 
 type EventDetailPageProps = {
-  gateway?: EventDetailGateway;
-};
-
-/** 子ルート（集合設定モーダル）から詳細の再取得を依頼するための受け渡し口。 */
-export type EventDetailOutletContext = {
-  reload: () => void;
+  queryGateway: EventQueryGateway;
 };
 
 /**
  * Event 1 件の確認と、集合設定へ進むためのハブ。
  * 集合設定モーダルはこのページの子ルートとして開き、閉じるとここへ戻る。
  */
-export function EventDetailPage({
-  gateway = httpEventDetailGateway,
-}: EventDetailPageProps) {
+export function EventDetailPage({ queryGateway }: EventDetailPageProps) {
   const { eventId: eventIdParam } = useParams();
   const eventId = Number(eventIdParam);
   const isValidEventId = Number.isInteger(eventId) && eventId > 0;
@@ -54,7 +47,7 @@ export function EventDetailPage({
       }
 
       try {
-        const value = await gateway.load(eventId);
+        const value = await queryGateway.get(eventId);
         if (isCurrent) setEvent(value);
       } catch (error) {
         if (!isCurrent) return;
@@ -69,7 +62,7 @@ export function EventDetailPage({
     return () => {
       isCurrent = false;
     };
-  }, [eventId, gateway, isValidEventId, reloadToken]);
+  }, [eventId, isValidEventId, queryGateway, reloadToken]);
 
   const gatheringSettingsPath = `/events/${eventId}/gatherings`;
 

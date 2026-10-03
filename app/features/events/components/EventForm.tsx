@@ -4,10 +4,8 @@ import { Button } from "~/components/ui/button/Button";
 import { PageHeader } from "~/components/ui/layout/PageHeader";
 import { cn } from "~/lib/cn";
 import type { EventFormValue } from "~/features/events/model/event-form";
-import {
-  maxVenueSelection,
-  type EventVenue,
-} from "~/features/events/model/event-venue";
+import { maxVenueSelection } from "~/features/events/model/event-form";
+import type { VenueOption } from "~/features/venues/public";
 
 type EventFormProps = {
   isDisabled: boolean;
@@ -21,7 +19,7 @@ type EventFormProps = {
   /** 省略するとページ見出しを描画しない。モーダル内など、外側が見出しを持つ場合に使う。 */
   title?: string;
   value: EventFormValue;
-  venueOptions: readonly EventVenue[];
+  venueOptions: readonly VenueOption[];
 };
 
 export function EventForm({

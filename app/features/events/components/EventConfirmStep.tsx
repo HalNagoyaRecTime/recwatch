@@ -2,10 +2,8 @@ import { ArrowLeft, Check } from "lucide-react";
 
 import { Button } from "~/components/ui/button/Button";
 import type { EventFormValue } from "~/features/events/model/event-form";
-import {
-  formatVenueNames,
-  type EventVenue,
-} from "~/features/events/model/event-venue";
+import type { VenueOption } from "~/features/venues/public";
+import { formatVenueNames } from "~/features/events/model/event-display";
 
 type EventConfirmStepProps = {
   isSubmitting: boolean;
@@ -13,7 +11,7 @@ type EventConfirmStepProps = {
   onSubmit: () => void;
   submitError: string | null;
   value: EventFormValue;
-  venueOptions: readonly EventVenue[];
+  venueOptions: readonly VenueOption[];
 };
 
 export function EventConfirmStep({

@@ -1,6 +1,6 @@
 import { Info } from "lucide-react";
 
-import { formatVenueNames } from "~/features/events/model/event-venue";
+import { formatVenueNames } from "~/features/events/model/event-display";
 import type { EventDetail } from "~/features/events/model/event-detail";
 
 type EventBasicInfoCardProps = {
