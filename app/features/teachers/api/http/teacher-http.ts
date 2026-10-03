@@ -3,7 +3,7 @@ import type {
   TeacherCreateRequest,
   TeacherListQuery,
   TeacherUpdateRequest,
-  UserStatusUpdateRequest,
+  UserStatusUpdateInput,
 } from "../contracts/teacher-api";
 import type {
   TeacherDTO,
@@ -34,8 +34,11 @@ export const teacherHttpApi = {
     apiClient.get<TeacherDTO>(`/api/v1/teachers/${teacherId}`),
   updateTeacher: (teacherId: number, body: TeacherUpdateRequest) =>
     apiClient.put<TeacherDTO>(`/api/v1/teachers/${teacherId}`, body),
-  updateUserStatus: (userId: number, body: UserStatusUpdateRequest) =>
-    apiClient.patch<UserStatusDTO>(`/api/v1/admin/users/${userId}`, body),
+  updateUserStatus: async (userId: number, body: UserStatusUpdateInput) => {
+    await apiClient.patch<UserStatusDTO>(`/api/v1/admin/users/${userId}`, {
+      is_live_active: body.isLiveActive,
+    });
+  },
   assignStaff: (userId: number) =>
     apiClient.put<void>(`/api/v1/admin/users/${userId}/staff`),
   revokeStaff: (userId: number) =>

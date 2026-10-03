@@ -1,6 +1,7 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback } from "react";
 import { useSearchParams } from "react-router";
 
+import { useDebouncedUrlSearch } from "~/hooks/useDebouncedUrlSearch";
 import type { ClassRoomListSortBy } from "~/features/classRoom/api/contracts/class-room-api";
 import {
   parseClassRoomListUrl,
@@ -10,36 +11,32 @@ import {
 export function useClassRoomListUrl() {
   const [searchParams, setSearchParams] = useSearchParams();
   const state = parseClassRoomListUrl(searchParams);
-  const [searchInput, setSearchInput] = useState(state.search);
-
-  useEffect(() => {
-    const timer = window.setTimeout(() => setSearchInput(state.search), 0);
-    return () => window.clearTimeout(timer);
-  }, [state.search]);
-
-  useEffect(() => {
-    if (searchInput.trim() === state.search) return;
-    const timer = window.setTimeout(() => {
-      setSearchParams((currentSearchParams) =>
-        updateClassRoomListUrl(currentSearchParams, {
-          page: 1,
-          search: searchInput,
-        })
-      );
-    }, 250);
-    return () => window.clearTimeout(timer);
-  }, [searchInput, setSearchParams, state.search]);
+  const updateSearch = useCallback(
+    (currentSearchParams: URLSearchParams, value: string) =>
+      updateClassRoomListUrl(currentSearchParams, {
+        page: 1,
+        search: value,
+      }),
+    []
+  );
+  const { searchInput, setSearchInput } = useDebouncedUrlSearch({
+    search: state.search,
+    setSearchParams,
+    updateSearch,
+  });
 
   const updateSearchParams = useCallback(
     (
       updates: Parameters<typeof updateClassRoomListUrl>[1],
       replace = false
     ) => {
-      setSearchParams(updateClassRoomListUrl(searchParams, updates), {
-        replace,
-      });
+      setSearchParams(
+        (currentSearchParams) =>
+          updateClassRoomListUrl(currentSearchParams, updates),
+        { replace }
+      );
     },
-    [searchParams, setSearchParams]
+    [setSearchParams]
   );
 
   function handleSortChange(columnId: string) {
@@ -71,9 +68,7 @@ export function useClassRoomListUrl() {
     ...state,
     handleSortChange,
     searchInput,
-    searchParams,
     setSearchInput,
-    setSearchParams,
     updateSearchParams,
   };
 }
