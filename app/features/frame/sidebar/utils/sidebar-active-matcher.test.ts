@@ -58,9 +58,9 @@ describe("isSidebarItemActive", () => {
       activePatterns: [
         "/events",
         "/events/new",
-        "/events/:competitionId",
-        "/events/:competitionId/edit",
-        "/events/:competitionId/gatherings",
+        "/events/:eventId",
+        "/events/:eventId/edit",
+        "/events/:eventId/gatherings",
       ],
       activeExclusions: ["/events/today", "/events/assignments"],
     });
@@ -70,7 +70,7 @@ describe("isSidebarItemActive", () => {
     expect(isSidebarItemActive(eventsList, "/events/12")).toBe(true);
     expect(isSidebarItemActive(eventsList, "/events/12/edit")).toBe(true);
     expect(isSidebarItemActive(eventsList, "/events/12/gatherings")).toBe(true);
-    // `:competitionId` に一致してしまう固定パスは除外で弾く
+    // `:eventId` に一致してしまう固定パスは除外で弾く
     expect(isSidebarItemActive(eventsList, "/events/today")).toBe(false);
     expect(isSidebarItemActive(eventsList, "/events/assignments")).toBe(false);
   });
@@ -80,7 +80,7 @@ describe("isSidebarItemActive", () => {
       id: "events",
       label: "イベント",
       to: "/events",
-      activePatterns: ["/events", "/events/new", "/events/:competitionId/edit"],
+      activePatterns: ["/events", "/events/new", "/events/:eventId/edit"],
       children: [
         item({
           id: "notification-management",

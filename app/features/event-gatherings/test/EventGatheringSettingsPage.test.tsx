@@ -36,7 +36,7 @@ function renderPage(path: string, load = vi.fn(), save = vi.fn()) {
               }}
             />
           }
-          path="/events/:competitionId/gatherings"
+          path="/events/:eventId/gatherings"
         />
       </Routes>
       <LocationProbe />
@@ -87,7 +87,7 @@ function renderPageInEventDetail(reload: () => void) {
       <Routes>
         <Route
           element={<Outlet context={{ reload }} />}
-          path="/events/:competitionId"
+          path="/events/:eventId"
         >
           <Route
             element={
