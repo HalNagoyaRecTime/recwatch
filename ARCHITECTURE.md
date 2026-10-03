@@ -146,6 +146,8 @@ Feature外にはRouteの境界、複数Featureで使うコード、技術的な�
 - アプリケーションコード間のimportは原則`~/`aliasを使う（生成型・同一ディレクトリの相対importは除く）。
 - 1fileに1つの責務を持たせる。
 - Feature間で内部fileを直接参照しない。
+- 通知管理からFeedbackを利用する場合は`~/features/frame/feedback`の公開entrypointを使う。公開APIは`useFeedback`、`FeedbackInput`、`FeedbackKind`に限定し、Provider、Storage、Centerの内部実装は公開しない。
+- FeedbackのNotification Centerは管理画面の操作・background処理・system警告の履歴を扱う。Backendのユーザー向け通知履歴は複製しない。
 - 循環依存を作らない。
 - Secret、DB client、Node.js専用APIを含めない。
 - 公開できない値を`VITE_`環境変数へ設定しない。
