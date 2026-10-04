@@ -1,4 +1,4 @@
-import { useLoaderData, useRouteError } from "react-router";
+import { useLoaderData, useRevalidator, useRouteError } from "react-router";
 
 import { ClassRoomApi } from "~/features/classRoom/api";
 import type { ClassRoomTeacherOption } from "~/features/classRoom/components/ClassRoomForm";
@@ -88,6 +88,7 @@ export default function ClassRoomEditRoute() {
     searchInput,
     setSearchInput,
   } = useClassRoomMembershipUrl();
+  const revalidator = useRevalidator();
 
   return (
     <ClassRoomEditPage
@@ -99,9 +100,16 @@ export default function ClassRoomEditRoute() {
       teacherOptions={teacherOptions.items}
     >
       <StudentClassRoomMembershipPanel
+        api={StudentApi}
+        classRoom={{
+          classRoomId: classRoom.classRoomId,
+          classCode: classRoom.classCode,
+          className: classRoom.className,
+        }}
         classRoomId={classRoom.classRoomId}
         memberPage={memberPage}
         onMemberPageChange={changeMemberPage}
+        onRevalidate={() => revalidator.revalidate()}
         onSearchChange={setSearchInput}
         onSearchPageChange={changeStudentSearchPage}
         search={search}
