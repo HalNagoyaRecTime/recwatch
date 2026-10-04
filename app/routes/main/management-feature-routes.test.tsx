@@ -59,7 +59,8 @@ function renderManagementRouter(
 
 function TeacherParentDataProbe() {
   const data = useRouteLoaderData(managementRouteIds.teachers) as
-    { total?: number } | undefined;
+    | { total?: number }
+    | undefined;
   return <output data-testid="teacher-parent-total">{data?.total}</output>;
 }
 
@@ -141,6 +142,12 @@ describe("management route integration wiring", () => {
         offset: 0,
         total: 1,
       });
+    vi.spyOn(StudentApi, "getStudents").mockResolvedValue({
+      items: [],
+      limit: 10,
+      offset: 0,
+      total: 0,
+    });
 
     renderManagementRouter(
       [
