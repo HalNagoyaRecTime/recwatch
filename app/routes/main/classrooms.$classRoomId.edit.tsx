@@ -2,6 +2,7 @@ import {
   useLoaderData,
   useLocation,
   useNavigate,
+  useRevalidator,
   useRouteError,
 } from "react-router";
 
@@ -86,6 +87,7 @@ export default function ClassRoomEditRoute() {
   const closeModal = useManagementModalReturn();
   const location = useLocation();
   const navigate = useNavigate();
+  const revalidator = useRevalidator();
 
   function updateMemberQuery(updates: {
     memberPage?: number;
@@ -114,9 +116,16 @@ export default function ClassRoomEditRoute() {
       teacherOptions={teacherOptions.items}
     >
       <StudentClassRoomMembershipPanel
+        api={StudentApi}
+        classRoom={{
+          classRoomId: classRoom.classRoomId,
+          classCode: classRoom.classCode,
+          className: classRoom.className,
+        }}
         classRoomId={classRoom.classRoomId}
         memberPage={memberPage}
         onMemberPageChange={(page) => updateMemberQuery({ memberPage: page })}
+        onRevalidate={() => revalidator.revalidate()}
         onSearchChange={(value) => updateMemberQuery({ studentSearch: value })}
         search={search}
         searchPage={searchResults}

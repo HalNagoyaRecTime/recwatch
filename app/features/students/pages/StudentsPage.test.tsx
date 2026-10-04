@@ -67,6 +67,7 @@ function createApi(
     getStudents: getStudents as StudentManagementApi["getStudents"],
     getStudentById: vi.fn(),
     updateStudent: vi.fn(),
+    updateStudentClassRoom: vi.fn(),
     ...overrides,
   };
 }
