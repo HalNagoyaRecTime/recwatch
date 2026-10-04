@@ -1,6 +1,7 @@
 import type {
   StudentPage,
   StudentRow,
+  StudentClassRoomAssignmentInput,
   StudentWriteInput,
 } from "~/features/students/model/student";
 
@@ -35,11 +36,15 @@ export interface StudentManagementApi {
     studentId: number,
     input: StudentWriteInput
   ): Promise<StudentRow>;
+  updateStudentClassRoom(
+    studentId: number,
+    input: StudentClassRoomAssignmentInput
+  ): Promise<StudentRow>;
 }
 
 export type StudentMutationApi = Pick<
   StudentManagementApi,
-  "createStudent" | "updateStudent"
+  "createStudent" | "updateStudent" | "updateStudentClassRoom"
 >;
 
 export interface StudentAccessMutationApi {

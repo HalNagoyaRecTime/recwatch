@@ -18,6 +18,7 @@ import { toStudentPage, toStudentRow } from "./mappers/student-mappers";
 import type {
   StudentPage,
   StudentRow,
+  StudentClassRoomAssignmentInput,
   StudentWriteInput,
 } from "~/features/students/model/student";
 
@@ -37,6 +38,14 @@ export const StudentApi: StudentManagementApi = {
   ): Promise<StudentRow> {
     return toStudentRow(await studentHttpApi.updateStudent(studentId, input));
   },
+  async updateStudentClassRoom(
+    studentId: number,
+    input: StudentClassRoomAssignmentInput
+  ): Promise<StudentRow> {
+    return toStudentRow(
+      await studentHttpApi.updateStudentClassRoom(studentId, input)
+    );
+  },
 };
 
 export type {
@@ -54,4 +63,9 @@ export type {
   StudentManagementDTO,
   StudentPageDTO,
 };
-export type { StudentPage, StudentRow, StudentWriteInput };
+export type {
+  StudentClassRoomAssignmentInput,
+  StudentPage,
+  StudentRow,
+  StudentWriteInput,
+};

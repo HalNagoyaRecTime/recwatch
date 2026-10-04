@@ -6,11 +6,13 @@ import type {
   StudentWriteDTO,
 } from "~/features/students/api/dto/student-dto";
 import type { StudentWriteInput } from "~/features/students/model/student";
+import type { StudentClassRoomAssignmentInput } from "~/features/students/model/student";
 
 export type StudentHttpClient = {
   get<T>(path: string): Promise<T>;
   post<T>(path: string, body: unknown): Promise<T>;
   put<T>(path: string, body: unknown): Promise<T>;
+  patch<T>(path: string, body: unknown): Promise<T>;
 };
 
 export function createStudentHttpApi(client: StudentHttpClient = apiClient): {
@@ -20,6 +22,10 @@ export function createStudentHttpApi(client: StudentHttpClient = apiClient): {
   updateStudent(
     studentId: number,
     input: StudentWriteInput
+  ): Promise<StudentDTO>;
+  updateStudentClassRoom(
+    studentId: number,
+    input: StudentClassRoomAssignmentInput
   ): Promise<StudentDTO>;
 } {
   return {
@@ -55,6 +61,15 @@ export function createStudentHttpApi(client: StudentHttpClient = apiClient): {
       return client.put<StudentDTO>(
         `/api/v1/students/${studentId}`,
         toStudentWriteDTO(input)
+      );
+    },
+    updateStudentClassRoom(studentId, input) {
+      return client.patch<StudentDTO>(
+        `/api/v1/students/${studentId}/classroom`,
+        {
+          attendance_number: input.attendanceNumber,
+          class_room_id: input.classRoomId,
+        }
       );
     },
   };
