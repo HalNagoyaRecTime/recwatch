@@ -4,8 +4,18 @@ import { ApiClientError } from "~/lib/api-client-error";
 import { ClientError, ClientErrors } from "~/lib/client-error";
 import { createHttpNotificationAudienceApi } from "~/features/notifications/api/http/notification-audience-api";
 
+const gatheringResponse = {
+  gathering_id: 1,
+  gathering_time: "0850",
+  gathering_spot: {
+    gathering_spot_id: 1,
+    gathering_spot_name: "体育館前",
+  },
+  member_count: 0,
+};
+
 describe("http notification audience loader", () => {
-  it("classroomsとeventsを最後のページまで取得する", async () => {
+  it("全ページのclassroomsとeventsを取得し、各競技の全roundsから集合を読み込む", async () => {
     const firstClassrooms = Array.from({ length: 100 }, (_, index) => ({
       class_room_id: index + 1,
       class_code: `${index + 1}A`,
@@ -33,8 +43,6 @@ describe("http notification audience loader", () => {
             limit: 100,
             offset: 100,
           };
-        case "/api/v1/gatherings":
-          return [];
         case "/api/v1/events?limit=100&offset=0":
           return {
             events: firstEvents,
@@ -49,14 +57,31 @@ describe("http notification audience loader", () => {
             limit: 100,
             offset: 100,
           };
-        default:
+        default: {
+          const match = path.match(/^\/api\/v1\/events\/(\d+)$/);
+          if (match) {
+            const eventId = Number(match[1]);
+            const rounds = eventId === 1 ? [1, 2] : eventId === 101 ? [1] : [];
+            return {
+              rounds: rounds.map((round) => ({
+                round,
+                gatherings: [
+                  {
+                    ...gatheringResponse,
+                    gathering_id: eventId * 100 + round,
+                  },
+                ],
+              })),
+            };
+          }
           throw new Error(`Unexpected path: ${path}`);
+        }
       }
     });
 
     const options = await createHttpNotificationAudienceApi({ get }).load();
 
-    expect(options).toHaveLength(202);
+    expect(options).toHaveLength(205);
     expect(options).toContainEqual({
       id: "101",
       name: "101A 101組",
@@ -67,7 +92,109 @@ describe("http notification audience loader", () => {
       name: "競技101",
       type: "event",
     });
+    expect(options.filter((option) => option.type === "gathering")).toEqual([
+      { id: "101", name: "競技1 / 体育館前 (08:50)", type: "gathering" },
+      { id: "102", name: "競技1 / 体育館前 (08:50)", type: "gathering" },
+      { id: "10101", name: "競技101 / 体育館前 (08:50)", type: "gathering" },
+    ]);
+    expect(
+      get.mock.calls.filter(([path]) => /^\/api\/v1\/events\/\d+$/.test(path))
+    ).toHaveLength(101);
+    expect(get).not.toHaveBeenCalledWith("/api/v1/gatherings");
   });
+
+  it.each([
+    ["本文がnull", null],
+    ["roundsが欠落", {}],
+    ["roundsが配列ではない", { rounds: {} }],
+    ["roundがnull", { rounds: [null] }],
+    ["round番号が不正", { rounds: [{ round: 0, gatherings: [] }] }],
+    ["gatheringsが欠落", { rounds: [{ round: 1 }] }],
+    ["gatheringsが配列ではない", { rounds: [{ round: 1, gatherings: {} }] }],
+    ...(
+      [
+        ["集合がnull", null],
+        ["集合IDが不正", { ...gatheringResponse, gathering_id: "1" }],
+        ["集合時刻が不正", { ...gatheringResponse, gathering_time: "" }],
+        ["集合場所がnull", { ...gatheringResponse, gathering_spot: null }],
+        [
+          "集合場所IDが不正",
+          {
+            ...gatheringResponse,
+            gathering_spot: {
+              gathering_spot_id: 0,
+              gathering_spot_name: "体育館前",
+            },
+          },
+        ],
+        [
+          "集合場所名が不正",
+          {
+            ...gatheringResponse,
+            gathering_spot: { gathering_spot_id: 1, gathering_spot_name: "" },
+          },
+        ],
+        ["人数が不正", { ...gatheringResponse, member_count: -1 }],
+      ] as const
+    ).map(
+      ([label, gathering]) =>
+        [label, { rounds: [{ round: 1, gatherings: [gathering] }] }] as const
+    ),
+  ] as const)(
+    "Event詳細の%sはレスポンス解析エラーになる",
+    async (_, detail) => {
+      const get = createSingleEventGet(() => detail);
+      const result = createHttpNotificationAudienceApi({ get }).load();
+
+      await expect(result).rejects.toBeInstanceOf(ClientError);
+      await expect(result).rejects.toEqual(
+        new ClientError(ClientErrors.RESPONSE_PARSE_ERROR)
+      );
+      expect(get).toHaveBeenCalledWith("/api/v1/events/1");
+    }
+  );
+
+  it.each([{ rounds: [] }, { rounds: [{ round: 1, gatherings: [] }] }])(
+    "集合が空の場合も競技を通知対象として返す: %j",
+    async (detail) => {
+      const get = createSingleEventGet(() => detail);
+
+      await expect(
+        createHttpNotificationAudienceApi({ get }).load()
+      ).resolves.toEqual([{ id: "1", name: "競技1", type: "event" }]);
+    }
+  );
+
+  it("競技がない場合はEvent詳細を取得しない", async () => {
+    const get = vi.fn(async (path: string) => {
+      if (path === "/api/v1/classrooms?limit=100&offset=0") {
+        return { items: [], total: 0, limit: 100, offset: 0 };
+      }
+      if (path === "/api/v1/events?limit=100&offset=0") {
+        return { events: [], total: 0, limit: 100, offset: 0 };
+      }
+      throw new Error(`想定外の取得先: ${path}`);
+    });
+
+    await expect(
+      createHttpNotificationAudienceApi({ get }).load()
+    ).resolves.toEqual([]);
+    expect(get).toHaveBeenCalledTimes(2);
+  });
+
+  it.each([401, 403, 404, 500])(
+    "Event詳細のHTTP %sエラーをそのまま伝播する",
+    async (status) => {
+      const error = new ApiClientError(status, "取得失敗");
+      const get = createSingleEventGet(() => {
+        throw error;
+      });
+
+      await expect(
+        createHttpNotificationAudienceApi({ get }).load()
+      ).rejects.toBe(error);
+    }
+  );
 
   it.each([
     [401, "authentication_required"],
@@ -118,9 +245,6 @@ describe("http notification audience loader", () => {
             ? { items: [], total: 0, limit: 100, offset: 0 }
             : { events: [], total: 0, limit: 100, offset: 0 };
         }
-        if (path === "/api/v1/gatherings") {
-          return [];
-        }
         throw new Error(`Unexpected path: ${path}`);
       });
 
@@ -134,3 +258,23 @@ describe("http notification audience loader", () => {
     }
   );
 });
+
+function createSingleEventGet(loadDetail: () => unknown) {
+  return vi.fn(async (path: string) => {
+    switch (path) {
+      case "/api/v1/classrooms?limit=100&offset=0":
+        return { items: [], total: 0, limit: 100, offset: 0 };
+      case "/api/v1/events?limit=100&offset=0":
+        return {
+          events: [{ event_id: 1, event_name: "競技1" }],
+          total: 1,
+          limit: 100,
+          offset: 0,
+        };
+      case "/api/v1/events/1":
+        return loadDetail();
+      default:
+        throw new Error(`想定外の取得先: ${path}`);
+    }
+  });
+}
