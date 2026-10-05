@@ -16,11 +16,13 @@ export function toStudentRow(dto: StudentDTO): StudentRow {
     attendanceNumber: dto.attendance_number,
     isLiveActive: dto.is_live_active,
     isStaff: dto.is_staff,
-    classRoom: {
-      classRoomId: dto.class_room.class_room_id,
-      classCode: dto.class_room.class_code,
-      className: dto.class_room.class_name,
-    },
+    classRoom: dto.class_room
+      ? {
+          classRoomId: dto.class_room.class_room_id,
+          classCode: dto.class_room.class_code,
+          className: dto.class_room.class_name,
+        }
+      : null,
   };
 }
 

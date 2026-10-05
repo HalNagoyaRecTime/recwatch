@@ -141,6 +141,12 @@ describe("management route integration wiring", () => {
         offset: 0,
         total: 1,
       });
+    vi.spyOn(StudentApi, "getStudents").mockResolvedValue({
+      items: [],
+      limit: 10,
+      offset: 0,
+      total: 0,
+    });
 
     renderManagementRouter(
       [

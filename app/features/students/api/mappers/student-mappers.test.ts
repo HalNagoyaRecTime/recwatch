@@ -34,4 +34,23 @@ describe("toStudentRow", () => {
       },
     });
   });
+
+  it("未所属のStudentはクラスと出席番号をnullのまま変換する", () => {
+    expect(
+      toStudentRow({
+        student_id: 8,
+        user_id: 12,
+        display_name: "未所属 太郎",
+        student_id_number: "S008",
+        attendance_number: null,
+        is_live_active: true,
+        is_staff: false,
+        class_room: null,
+      })
+    ).toMatchObject({
+      attendanceNumber: null,
+      classRoom: null,
+      studentId: 8,
+    });
+  });
 });
