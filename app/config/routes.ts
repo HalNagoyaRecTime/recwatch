@@ -86,6 +86,7 @@ export const sidebarSections = [
         activePatterns: [
           "/notifications",
           "/notifications/new",
+          "/notifications/monitor",
           "/notifications/:notificationId",
           "/notifications/:notificationId/edit",
         ],
