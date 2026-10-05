@@ -166,9 +166,13 @@ describe("配信モニター", () => {
   it("フローの高さ変更をReact Flowに通知する", async () => {
     const { unmount } = renderPage();
     await screen.findByRole("article", { name: "配信 #503" });
-    const observer = observers.find(
-      (item) => item.element?.getAttribute("aria-label") === "配信 #503"
-    )!;
+    const observer = await waitFor(() => {
+      const observer = observers.find(
+        (item) => item.element?.getAttribute("aria-label") === "配信 #503"
+      );
+      expect(observer).toBeDefined();
+      return observer!;
+    });
     act(() =>
       observer.callback(
         [
