@@ -372,3 +372,36 @@
     height: 380px;
   }
 }
+
+.monitor-view-switch {
+  display: flex;
+  gap: 8px;
+}
+.monitor-view-switch button[aria-pressed="true"] {
+  color: var(--text-base);
+  border-color: var(--border-strong);
+  background: var(--surface-muted);
+}
+.monitor-overview {
+  height: 680px;
+  border: 1px solid var(--border-base);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.monitor-overview-column {
+  display: flex;
+  justify-content: space-between;
+  border: 1px solid var(--border-base);
+  background: var(--surface-muted);
+  border-radius: 8px;
+  padding: 16px;
+  font-size: 14px;
+  color: var(--text-base);
+}
+.monitor-overview-card {
+  background: var(--surface-base);
+  color: var(--text-base);
+  border: 1px solid var(--border-base);
+  border-radius: 10px;
+  padding: 16px;
+}

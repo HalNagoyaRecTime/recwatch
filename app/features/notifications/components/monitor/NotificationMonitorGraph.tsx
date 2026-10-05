@@ -73,6 +73,9 @@ export function NotificationMonitorGraph({
       <ReactFlow<ScheduleFlowNode>
         key={item.summary.notificationScheduleId}
         onInit={setInstance}
+        onNodeClick={(_, node) =>
+          onOpen(node.data.item.summary.notificationScheduleId)
+        }
         nodes={nodes}
         nodeTypes={nodeTypes}
         edges={[]}

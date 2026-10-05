@@ -186,6 +186,66 @@ describe("配信モニター", () => {
     expect(observer.disconnect).toHaveBeenCalled();
   });
 
+  it("状態別一覧に全Scheduleを配置し、再取得したDB状態で列を移動する", async () => {
+    const fixtures = createNotificationMonitorFixtures(now());
+    const user = userEvent.setup();
+    renderPage(createMockNotificationMonitorApi(fixtures));
+    await screen.findByRole("article", { name: "配信 #503" });
+    await user.click(screen.getByRole("button", { name: "状態別一覧" }));
+    expect(screen.getAllByRole("article")).toHaveLength(7);
+    expect(
+      graph.props?.nodes?.filter((node) => node.type === "scheduleOverview")
+    ).toHaveLength(7);
+    expect(
+      graph.props?.nodes?.find((node) => node.id === "503")?.position.x
+    ).toBe(704);
+    expect(graph.props?.nodesDraggable).toBe(false);
+    const card = screen.getByRole("article", { name: "状態別配信 #503" });
+    expect(within(card).getByText("40人")).toBeInTheDocument();
+    expect(within(card).getByText("42件")).toBeInTheDocument();
+    fixtures.find((item) => item.notificationScheduleId === 503)!.status =
+      "completed";
+    await user.click(screen.getByRole("button", { name: "再読み込み" }));
+    await waitFor(() =>
+      expect(
+        graph.props?.nodes?.find((node) => node.id === "503")?.position.x
+      ).toBe(1056)
+    );
+    await user.click(within(card).getByRole("button"));
+    expect(
+      await screen.findByRole("dialog", { name: "配信詳細" })
+    ).toBeInTheDocument();
+  });
+
+  it("状態別カードの高さが変わると同じ列の後続Nodeをずらす", async () => {
+    renderPage();
+    await screen.findByRole("article", { name: "配信 #503" });
+    await userEvent
+      .setup()
+      .click(screen.getByRole("button", { name: "状態別一覧" }));
+    const before = graph.props?.nodes?.find((node) => node.id === "601")
+      ?.position.y;
+    const observer = observers.find(
+      (entry) => entry.element?.getAttribute("aria-label") === "状態別配信 #501"
+    )!;
+    act(() =>
+      observer.callback(
+        [
+          {
+            borderBoxSize: [{ blockSize: 600 }],
+          } as unknown as ResizeObserverEntry,
+        ],
+        {} as ResizeObserver
+      )
+    );
+    await waitFor(() =>
+      expect(
+        graph.props?.nodes?.find((node) => node.id === "601")?.position.y
+      ).toBe((before ?? 0) + 260)
+    );
+    expect(graph.updateInternals).toHaveBeenCalledWith("501");
+  });
+
   it("空状態と読み込み中を区別する", async () => {
     renderPage(createMockNotificationMonitorApi([]));
     expect(screen.getByRole("status")).toHaveTextContent("読み込み中");

@@ -147,7 +147,7 @@ Feature外にはRouteの境界、複数Featureで使うコード、技術的な�
 - 1fileに1つの責務を持たせる。
 - Feature間で内部fileを直接参照しない。
 - 通知の配信モニターは`/notifications/monitor`に配置し、RouteでSchedule Read APIと既存Feedbackの公開entrypointを組み立てる。
-- モニターのHookは取得・更新・部分エラーを調整し、React FlowのComponentは選択したScheduleを1Nodeとして扱い、その内部に処理段階を表示する。Schedule statusとRecipient / Delivery集計はAPI契約の値をそのまま使う。
+- モニターのHookは取得・更新・部分エラーを調整し、React FlowのComponentは選択したScheduleを1Nodeとして扱い、その内部に処理段階を表示する。状態別一覧は同じScheduleをDB状態の列へ配置し、実測高さに応じて後続Nodeをずらす。Schedule statusとRecipient / Delivery集計はAPI契約の値をそのまま使う。
 - 循環依存を作らない。
 - Secret、DB client、Node.js専用APIを含めない。
 - 公開できない値を`VITE_`環境変数へ設定しない。

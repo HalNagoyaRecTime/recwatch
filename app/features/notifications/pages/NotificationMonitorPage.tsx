@@ -5,6 +5,7 @@ import { ButtonLink } from "~/components/ui/button/ButtonLink";
 import { PageHeader } from "~/components/ui/layout/PageHeader";
 import type { NotificationScheduleQueryApi } from "~/features/notifications/api/contracts/notification-schedule-query-api";
 import { NotificationMonitorDetail } from "~/features/notifications/components/monitor/NotificationMonitorDetail";
+import { NotificationMonitorOverview } from "~/features/notifications/components/monitor/NotificationMonitorOverview";
 import { NotificationMonitorGraph } from "~/features/notifications/components/monitor/NotificationMonitorGraph";
 import { NotificationStatusBadge } from "~/features/notifications/components/list/NotificationStatusBadge";
 import { formatNotificationDateTime } from "~/features/notifications/components/list/notification-display";
@@ -30,6 +31,7 @@ const statusLabels = {
 
 export function NotificationMonitorPage(props: Props) {
   const state = useNotificationMonitor(props);
+  const [overview, setOverview] = useState(false);
   const [viewId, setViewId] = useState<number | null>(null);
   const item =
     state.items.find(
@@ -118,6 +120,24 @@ export function NotificationMonitorPage(props: Props) {
         <span aria-current="page">配信モニター</span>
         <ButtonLink to="/notifications?view=calendar">カレンダー</ButtonLink>
       </nav>
+      <div
+        className="monitor-view-switch"
+        role="group"
+        aria-label="モニター表示"
+      >
+        <Button aria-pressed={!overview} onClick={() => setOverview(false)}>
+          選択した配信
+        </Button>
+        <Button aria-pressed={overview} onClick={() => setOverview(true)}>
+          状態別一覧
+        </Button>
+      </div>
+      {overview && state.items.length > 0 && (
+        <NotificationMonitorOverview
+          items={state.items}
+          onOpen={state.selectSchedule}
+        />
+      )}
       {state.errorMessage && (
         <div
           role="alert"
@@ -137,7 +157,7 @@ export function NotificationMonitorPage(props: Props) {
           表示対象の配信はありません。
         </p>
       )}
-      {schedule && item && (
+      {!overview && schedule && item && (
         <>
           <div className="monitor-metrics">
             {metrics.map(([label, value, caption]) => (
