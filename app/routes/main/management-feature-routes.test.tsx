@@ -59,8 +59,7 @@ function renderManagementRouter(
 
 function TeacherParentDataProbe() {
   const data = useRouteLoaderData(managementRouteIds.teachers) as
-    | { total?: number }
-    | undefined;
+    { total?: number } | undefined;
   return <output data-testid="teacher-parent-total">{data?.total}</output>;
 }
 
