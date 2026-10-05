@@ -85,7 +85,10 @@ export function GatheringMemberPicker({
         return false;
       }
       if (!keyword) return true;
-      const classroomName = classroomNames.get(student.classroomId) ?? "";
+      const classroomName =
+        student.classroomId === null
+          ? ""
+          : (classroomNames.get(student.classroomId) ?? "");
       return [student.name, student.studentNumber, classroomName].some(
         (value) => value.toLowerCase().includes(keyword)
       );
@@ -284,7 +287,9 @@ export function GatheringMemberPicker({
                         )}
                       </td>
                       <td className="text-text-base truncate px-3 py-2">
-                        {classroomNames.get(student.classroomId) ?? "—"}
+                        {student.classroomId === null
+                          ? "—"
+                          : (classroomNames.get(student.classroomId) ?? "—")}
                       </td>
                       <td className="text-text-base truncate px-3 py-2">
                         {student.studentNumber}

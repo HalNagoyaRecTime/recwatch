@@ -162,8 +162,17 @@ describe("createHttpGatheringMemberGateway", () => {
               is_live_active: false,
               class_room: { class_room_id: 1, class_name: "HAL1A" },
             },
+            {
+              student_id: 12,
+              user_id: 1003,
+              display_name: "鈴木 次郎",
+              attendance_number: null,
+              student_id_number: "2026003",
+              is_live_active: true,
+              class_room: null,
+            },
           ],
-          total: 2,
+          total: 3,
         };
       }
       if (path.startsWith("/api/v1/teachers")) {
@@ -193,6 +202,15 @@ describe("createHttpGatheringMemberGateway", () => {
           attendanceNumber: 2,
           studentNumber: "2026002",
           isLiveActive: false,
+        },
+        {
+          id: 12,
+          userId: 1003,
+          name: "鈴木 次郎",
+          classroomId: null,
+          attendanceNumber: null,
+          studentNumber: "2026003",
+          isLiveActive: true,
         },
       ],
       nonStudents: new Map(),

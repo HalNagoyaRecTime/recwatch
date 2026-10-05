@@ -22,7 +22,7 @@ export function toMemberStudent(response: StudentResponseDto): MemberStudent {
     id: response.student_id,
     userId: response.user_id,
     name: response.display_name,
-    classroomId: response.class_room.class_room_id,
+    classroomId: response.class_room?.class_room_id ?? null,
     attendanceNumber: response.attendance_number,
     studentNumber: response.student_id_number,
     isLiveActive: response.is_live_active,
