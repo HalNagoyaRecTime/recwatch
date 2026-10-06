@@ -10,6 +10,7 @@ import type {
 
 type StudentFormProps = {
   classRooms: readonly StudentClassRoomOption[];
+  fixedClassRoom?: StudentClassRoomOption;
   initialStudent?: StudentRow;
   isSubmitting: boolean;
   onCancel: () => void;
@@ -19,6 +20,7 @@ type StudentFormProps = {
 
 export function StudentForm({
   classRooms,
+  fixedClassRoom,
   initialStudent,
   isSubmitting,
   onCancel,
@@ -37,13 +39,15 @@ export function StudentForm({
       : ""
   );
   const [classRoomId, setClassRoomId] = useState(
-    initialStudent?.classRoom &&
-      classRooms.some(
-        (classRoom) =>
-          classRoom.classRoomId === initialStudent.classRoom?.classRoomId
-      )
-      ? String(initialStudent.classRoom.classRoomId)
-      : ""
+    fixedClassRoom
+      ? String(fixedClassRoom.classRoomId)
+      : initialStudent?.classRoom &&
+          classRooms.some(
+            (classRoom) =>
+              classRoom.classRoomId === initialStudent.classRoom?.classRoomId
+          )
+        ? String(initialStudent.classRoom.classRoomId)
+        : ""
   );
   const [validationError, setValidationError] = useState<string | null>(null);
 
@@ -136,23 +140,29 @@ export function StudentForm({
           />
         </label>
       </div>
-      <label className={labelClassName}>
-        クラス <span className="text-tone-danger-text">*</span>
-        <select
-          aria-label="クラス*"
-          className={inputClassName}
-          disabled={isSubmitting}
-          onChange={(event) => setClassRoomId(event.currentTarget.value)}
-          value={classRoomId}
-        >
-          <option value="">クラスを選択</option>
-          {classRooms.map((classRoom) => (
-            <option key={classRoom.classRoomId} value={classRoom.classRoomId}>
-              {classRoom.classCode} — {classRoom.className}
-            </option>
-          ))}
-        </select>
-      </label>
+      {fixedClassRoom ? (
+        <p className="text-text-base text-sm">
+          クラス: {fixedClassRoom.classCode} — {fixedClassRoom.className}
+        </p>
+      ) : (
+        <label className={labelClassName}>
+          クラス <span className="text-tone-danger-text">*</span>
+          <select
+            aria-label="クラス*"
+            className={inputClassName}
+            disabled={isSubmitting}
+            onChange={(event) => setClassRoomId(event.currentTarget.value)}
+            value={classRoomId}
+          >
+            <option value="">クラスを選択</option>
+            {classRooms.map((classRoom) => (
+              <option key={classRoom.classRoomId} value={classRoom.classRoomId}>
+                {classRoom.classCode} — {classRoom.className}
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
 
       {validationError || submitError ? (
         <p className="text-tone-danger-text text-sm" role="alert">

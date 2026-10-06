@@ -30,3 +30,8 @@ export type StudentWriteInput = {
   displayName: string;
   studentIdNumber: string;
 };
+
+export type StudentClassRoomAssignmentInput = {
+  attendanceNumber: number | null;
+  classRoomId: number | null;
+};

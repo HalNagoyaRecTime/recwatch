@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
   get: vi.fn(),
+  patch: vi.fn(),
   post: vi.fn(),
   put: vi.fn(),
 }));
@@ -9,6 +10,7 @@ const mocks = vi.hoisted(() => ({
 vi.mock("~/lib/api-client", () => ({
   apiClient: {
     get: mocks.get,
+    patch: mocks.patch,
     post: mocks.post,
     put: mocks.put,
   },
@@ -172,6 +174,30 @@ describe("studentHttpApi", () => {
     );
     expect(JSON.stringify(mocks.post.mock.calls[0][1])).not.toContain(
       "isLiveActive"
+    );
+  });
+
+  it("所属・移動と未所属化を専用PATCH endpointへ送信する", async () => {
+    mocks.patch.mockResolvedValue(makeStudentDTO(3));
+
+    await studentHttpApi.updateStudentClassRoom(3, {
+      attendanceNumber: 5,
+      classRoomId: 12,
+    });
+    await studentHttpApi.updateStudentClassRoom(3, {
+      attendanceNumber: null,
+      classRoomId: null,
+    });
+
+    expect(mocks.patch).toHaveBeenNthCalledWith(
+      1,
+      "/api/v1/students/3/classroom",
+      { attendance_number: 5, class_room_id: 12 }
+    );
+    expect(mocks.patch).toHaveBeenNthCalledWith(
+      2,
+      "/api/v1/students/3/classroom",
+      { attendance_number: null, class_room_id: null }
     );
   });
 });

@@ -23,6 +23,7 @@ function createApi(): StudentMutationApi {
   return {
     createStudent: vi.fn(),
     updateStudent: vi.fn(),
+    updateStudentClassRoom: vi.fn(),
   };
 }
 
