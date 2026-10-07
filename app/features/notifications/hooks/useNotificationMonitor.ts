@@ -7,6 +7,7 @@ import {
 } from "~/features/notifications/hooks/notification-feedback";
 import {
   getMonitorSchedule,
+  getMonitorWindow,
   isMonitorScheduleVisible,
   type MonitorSchedule,
 } from "~/features/notifications/hooks/notification-monitor-data";
@@ -43,6 +44,7 @@ export function useNotificationMonitor({
   });
   const generation = useRef(0);
   const loading = useRef(false);
+  const reportedFailure = useRef(false);
   const [selectedScheduleId, selectSchedule] = useState<number | null>(null);
 
   const load = useCallback(
@@ -56,10 +58,14 @@ export function useNotificationMonitor({
         errorMessage: null,
       }));
       try {
-        // 期間外の進行中Scheduleを落とさないため、一覧は期間指定なしで取得します。
-        const response = await api.list();
-        if (generation.current !== requestId) return;
         const at = now();
+        const range = getMonitorWindow(at);
+        // 期間未指定ではJST当日だけになるため、前後24時間を明示します。
+        const response = await api.list({
+          from: new Date(range.from).toISOString(),
+          to: new Date(range.to).toISOString(),
+        });
+        if (generation.current !== requestId) return;
         const summaries = response.items.filter((item) =>
           isMonitorScheduleVisible(item, at)
         );
@@ -100,7 +106,8 @@ export function useNotificationMonitor({
           errorMessage: null,
           updatedAt: at,
         });
-        if (background && failures.length > 0) {
+        if (background && failures.length > 0 && !reportedFailure.current) {
+          reportedFailure.current = true;
           reportNotificationBackgroundError(reportFeedback, {
             title: "配信集計を更新できませんでした",
             message:
@@ -109,6 +116,8 @@ export function useNotificationMonitor({
             endpoint: "/api/v1/admin/notifications/schedules",
             error: failures[0],
           });
+        } else if (failures.length === 0) {
+          reportedFailure.current = false;
         }
       } catch (error) {
         if (generation.current !== requestId) return;
@@ -117,7 +126,8 @@ export function useNotificationMonitor({
           isLoading: false,
           errorMessage: "配信モニターを読み込めませんでした。",
         }));
-        if (background) {
+        if (background && !reportedFailure.current) {
+          reportedFailure.current = true;
           reportNotificationBackgroundError(reportFeedback, {
             title: "配信モニターを更新できませんでした",
             message: "前回の表示を保持しています。再読み込みしてください。",

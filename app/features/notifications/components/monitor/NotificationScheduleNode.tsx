@@ -32,6 +32,19 @@ export function NotificationScheduleNode({
   const delivery = detail?.deliveryProgress;
   const started = schedule.status !== "scheduled";
   const resolved = detail?.recipientProgress.status === "resolved";
+  const fcmState = !delivery
+    ? { badge: "集計取得失敗", tone: "attention" }
+    : delivery.totalCount === 0
+      ? { badge: "配送なし", tone: "waiting" }
+      : delivery.failedCount > 0 || delivery.retryWaitCount > 0
+        ? { badge: "要確認", tone: "attention" }
+        : delivery.stoppedCount > 0
+          ? { badge: "停止あり", tone: "attention" }
+          : delivery.pendingCount > 0 || delivery.sendingCount > 0
+            ? { badge: "未送信あり", tone: "waiting" }
+            : delivery.sentCount === delivery.totalCount
+              ? { badge: "受付成功", tone: "done" }
+              : { badge: "未送信あり", tone: "waiting" };
   const stages = [
     {
       label: "NOTIFICATION",
@@ -83,14 +96,8 @@ export function NotificationScheduleNode({
       caption: delivery
         ? `Retry ${delivery.retryWaitCount} / Failed ${delivery.failedCount}`
         : "集計を取得できません",
-      badge:
-        delivery && (delivery.retryWaitCount > 0 || delivery.failedCount > 0)
-          ? "要確認"
-          : "受付成功",
-      tone:
-        delivery && (delivery.retryWaitCount > 0 || delivery.failedCount > 0)
-          ? "attention"
-          : "done",
+      badge: fcmState.badge,
+      tone: fcmState.tone,
     },
   ];
   useEffect(() => {

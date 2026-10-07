@@ -337,7 +337,7 @@ export function NotificationMonitorPage(props: Props) {
       )}
       <footer className="monitor-footer">
         <p>
-          配信待ちは次の24時間、処理終了は配信時刻が過去24時間を表示します。FCM受付成功は端末での表示・既読を示しません。
+          進行中を含め前後24時間の配信を取得し、配信待ちは次の24時間、処理終了は配信時刻が過去24時間を表示します。FCM受付成功は端末での表示・既読を示しません。
         </p>
         <Button
           icon={RefreshCw}

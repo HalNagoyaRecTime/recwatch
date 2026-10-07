@@ -327,4 +327,53 @@ describe("配信モニター", () => {
       expect.objectContaining({ kind: "background-error" })
     );
   });
+  it.each([
+    ["配送なし", { totalCount: 0, sentCount: 0 }],
+    ["未送信あり", { sentCount: 0, pendingCount: 42 }],
+    ["未送信あり", { sentCount: 40, sendingCount: 2 }],
+    ["要確認", { sentCount: 40, retryWaitCount: 2 }],
+    ["要確認", { sentCount: 40, failedCount: 2 }],
+    ["停止あり", { sentCount: 40, stoppedCount: 2 }],
+    ["受付成功", { sentCount: 42 }],
+  ])(
+    "FCMを%sとして表示し、全配送sentの場合だけ成功にする",
+    async (badge, counts) => {
+      const fixtures = createNotificationMonitorFixtures(now());
+      const selected = fixtures.find(
+        (item) => item.notificationScheduleId === 503
+      )!;
+      selected.deliveryProgress = {
+        totalCount: 42,
+        pendingCount: 0,
+        sendingCount: 0,
+        retryWaitCount: 0,
+        failedCount: 0,
+        stoppedCount: 0,
+        ...counts,
+      };
+      renderPage(createMockNotificationMonitorApi(fixtures));
+      const card = await screen.findByRole("article", { name: "配信 #503" });
+      const fcm = within(card).getByRole("button", {
+        name: `${selected.content.push.title}のFCM配信詳細`,
+      });
+      expect(within(fcm).getByText(badge)).toBeInTheDocument();
+      if (badge !== "受付成功")
+        expect(within(fcm).queryByText("受付成功")).not.toBeInTheDocument();
+    }
+  );
+
+  it("集計取得失敗時はFCM受付成功と表示しない", async () => {
+    const api = createMockNotificationMonitorApi(
+      createNotificationMonitorFixtures(now())
+    );
+    const original = api.getDetail;
+    vi.spyOn(api, "getDetail").mockImplementation((id) =>
+      id === 503 ? Promise.reject(new Error("集計取得失敗")) : original(id)
+    );
+    renderPage(api);
+    const card = await screen.findByRole("article", { name: "配信 #503" });
+    const fcm = within(card).getByRole("button", { name: /のFCM配信詳細/ });
+    expect(within(fcm).getByText("集計取得失敗")).toBeInTheDocument();
+    expect(within(fcm).queryByText("受付成功")).not.toBeInTheDocument();
+  });
 });

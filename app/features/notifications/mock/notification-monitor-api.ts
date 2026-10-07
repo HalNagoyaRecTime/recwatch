@@ -53,18 +53,32 @@ export function createMockNotificationMonitorApi(
   fixtures = createNotificationMonitorFixtures()
 ): NotificationScheduleQueryApi {
   return {
-    async list() {
+    async list(query) {
+      const at = Date.now();
+      const jstDayStart =
+        Math.floor((at + 9 * 60 * 60 * 1000) / 86_400_000) * 86_400_000 -
+        9 * 60 * 60 * 1000;
+      const from =
+        query?.from && query?.to ? Date.parse(query.from) : jstDayStart;
+      const to = query?.to
+        ? Date.parse(query.to)
+        : jstDayStart + 86_400_000 - 1;
       return {
-        items: fixtures.map((item) => ({
-          notificationId: item.notificationId,
-          notificationScheduleId: item.notificationScheduleId,
-          content: cloneFixture(item.content),
-          importance: item.importance,
-          sendAt: item.sendAt,
-          status: item.status,
-          stop: cloneFixture(item.stop),
-          creation: cloneFixture(item.creation),
-        })),
+        items: fixtures
+          .filter((item) => {
+            const sendAt = Date.parse(item.sendAt);
+            return sendAt >= from && sendAt <= to;
+          })
+          .map((item) => ({
+            notificationId: item.notificationId,
+            notificationScheduleId: item.notificationScheduleId,
+            content: cloneFixture(item.content),
+            importance: item.importance,
+            sendAt: item.sendAt,
+            status: item.status,
+            stop: cloneFixture(item.stop),
+            creation: cloneFixture(item.creation),
+          })),
       };
     },
     async getDetail(id) {

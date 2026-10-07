@@ -21,17 +21,21 @@ function deferred<T>() {
 afterEach(() => vi.restoreAllMocks());
 
 describe("useNotificationMonitor", () => {
-  it("期間外の進行中Scheduleも取得し、Recipient数とDelivery数を維持する", async () => {
+  it("前後24時間を明示し、日付をまたぐ配信とAPI集計を取得する", async () => {
     const fixtures = createNotificationMonitorFixtures(now());
+    fixtures[0].sendAt = new Date(now() + 23 * 60 * 60 * 1000).toISOString();
     const sending = fixtures.find((item) => item.status === "sending")!;
-    sending.sendAt = "2020-01-01T00:00:00Z";
+    sending.sendAt = new Date(now() - 23 * 60 * 60 * 1000).toISOString();
     const api = createMockNotificationMonitorApi(fixtures);
     const list = vi.spyOn(api, "list");
     const { result } = renderHook(() =>
       useNotificationMonitor({ api, ...options })
     );
     await waitFor(() => expect(result.current.isLoading).toBe(false));
-    expect(list).toHaveBeenCalledWith();
+    expect(list).toHaveBeenCalledWith({
+      from: new Date(now() - 86_400_000).toISOString(),
+      to: new Date(now() + 86_400_000).toISOString(),
+    });
     expect(result.current.items).toHaveLength(fixtures.length);
     const detail = result.current.items.find(
       (item) => item.detail?.status === "sending"
@@ -208,4 +212,31 @@ describe("useNotificationMonitor", () => {
     unmount();
     expect(clear).toHaveBeenCalledWith(123);
   });
+  it.each(["list", "detail"] as const)(
+    "%sの連続失敗を1回だけ報告し、全件回復後に再報告する",
+    async (target) => {
+      const api = createMockNotificationMonitorApi(
+        createNotificationMonitorFixtures(now())
+      );
+      const reportFeedback = vi.fn();
+      const { result } = renderHook(() =>
+        useNotificationMonitor({ api, reportFeedback, ...options })
+      );
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+      const spy = vi.spyOn(api, target === "list" ? "list" : "getDetail");
+      spy.mockRejectedValue(new Error("通信失敗"));
+      await act(() => result.current.reload());
+      await act(() => result.current.reload());
+      await act(() => result.current.reload());
+      expect(reportFeedback).toHaveBeenCalledTimes(1);
+      spy.mockRestore();
+      await act(() => result.current.reload());
+      expect(reportFeedback).toHaveBeenCalledTimes(1);
+      vi.spyOn(api, target === "list" ? "list" : "getDetail").mockRejectedValue(
+        new Error("再度失敗")
+      );
+      await act(() => result.current.reload());
+      expect(reportFeedback).toHaveBeenCalledTimes(2);
+    }
+  );
 });
