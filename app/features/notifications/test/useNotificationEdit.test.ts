@@ -38,6 +38,28 @@ const commandApi: AdminNotificationCommandApi = {
 };
 
 describe("useNotificationEdit", () => {
+  it("編集時にPushと詳細を分けて詳細本文の空白を復元する", async () => {
+    const notification = createNotification(1, "タイトル");
+    const body = "\n    code\n本文  \n次の行  ";
+    notification.content.detail.body = body;
+    const queryApi = createQueryApi(vi.fn().mockResolvedValue(notification));
+    const audienceApi = {
+      load: vi.fn().mockResolvedValue(mockNotificationAudienceOptions),
+    };
+    const { result } = renderHook(() =>
+      useNotificationEdit({
+        notificationId: 1,
+        configApi: mockNotificationConfigApi,
+        commandApi,
+        queryApi,
+        audienceApi,
+      })
+    );
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    expect(result.current.draft.detailBody).toBe(body);
+    expect(result.current.draft.body).toBe(notification.content.push.body);
+  });
+
   it("通知本体とAudienceを初回取得し、ID変更時にdraftを切り替える", async () => {
     const getDetail = vi
       .fn<AdminNotificationQueryApi["getDetail"]>()

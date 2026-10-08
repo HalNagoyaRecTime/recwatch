@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { toNotificationCreateRequest } from "~/features/notifications/api/mappers/admin-notification-request-mapper";
+import { initialNotificationDraft } from "~/features/notifications/model/notification-draft";
 import type { NotificationDraft } from "~/features/notifications/model/notification-draft";
 
 describe("toNotificationCreateRequest", () => {
@@ -29,7 +30,7 @@ describe("toNotificationCreateRequest", () => {
     expect(request).toMatchObject({
       content: {
         push: { title: "タイトル", body: "本文" },
-        detail: { title: "詳細タイトル", body: "詳細本文" },
+        detail: { title: "詳細タイトル", body: " 詳細本文 " },
       },
       audience: { items: [expected] },
       delivery: { type: "scheduled" },
@@ -53,4 +54,17 @@ describe("toNotificationCreateRequest", () => {
       }).delivery
     ).toEqual({ type: "immediate", sendAt: null });
   });
+});
+
+it("詳細本文の字下げと行末空白を保持しPush本文だけtrimする", () => {
+  const detailBody = "\n    code\n本文  \n次の行  ";
+  const request = toNotificationCreateRequest({
+    ...initialNotificationDraft,
+    title: "タイトル",
+    body: " プッシュ本文 ",
+    detailTitle: "詳細タイトル",
+    detailBody,
+  });
+  expect(request.content.detail.body).toBe(detailBody);
+  expect(request.content.push.body).toBe("プッシュ本文");
 });
