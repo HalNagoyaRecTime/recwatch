@@ -38,6 +38,7 @@ const notificationDisplayOptions = [
 type NotificationListPageProps = {
   commandApi: AdminNotificationCommandApi;
   initialCalendarMonth?: Date;
+  initialViewMode?: NotificationViewMode;
   queryApi: AdminNotificationQueryApi;
   reportFeedback?: NotificationFeedbackReporter;
 };
@@ -45,11 +46,13 @@ type NotificationListPageProps = {
 export function NotificationListPage({
   commandApi,
   initialCalendarMonth = new Date(),
+  initialViewMode = "list",
   queryApi,
   reportFeedback,
 }: NotificationListPageProps) {
   const state = useNotificationList({ commandApi, queryApi, reportFeedback });
-  const [viewMode, setViewMode] = useState<NotificationViewMode>("list");
+  const [viewMode, setViewMode] =
+    useState<NotificationViewMode>(initialViewMode);
   const [calendarMonth, setCalendarMonth] = useState(
     () =>
       new Date(
@@ -107,14 +110,17 @@ export function NotificationListPage({
           title="通知一覧"
           description="通知の配信予定と処理状況を一覧・カレンダーで確認できます"
           actions={
-            <ButtonLink
-              icon={Plus}
-              to="/notifications/new"
-              variant="primary"
-              size="lg"
-            >
-              通知を作成
-            </ButtonLink>
+            <div className="flex flex-wrap gap-2">
+              <ButtonLink to="/notifications/monitor">配信モニター</ButtonLink>
+              <ButtonLink
+                icon={Plus}
+                to="/notifications/new"
+                variant="primary"
+                size="lg"
+              >
+                通知を作成
+              </ButtonLink>
+            </div>
           }
         />
 

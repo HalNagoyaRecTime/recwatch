@@ -20,6 +20,7 @@ export default [
       route("gatherings", "routes/main/events.$eventId.gatherings.tsx"),
     ]),
     route("notifications", "routes/main/notifications.tsx"),
+    route("notifications/monitor", "routes/main/notifications.monitor.tsx"),
     route("notifications/new", "routes/main/notifications.new.tsx"),
     route(
       "notifications/:notificationId",
