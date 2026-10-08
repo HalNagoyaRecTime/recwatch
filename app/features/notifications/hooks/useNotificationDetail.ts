@@ -54,6 +54,8 @@ export function useNotificationDetail({
   const [selectedDeliveryId, setSelectedDeliveryId] = useState<number | null>(
     null
   );
+  const selectedSchedule = useRef<number | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
   const notificationRequestId = useRef(0);
   const scheduleRequestId = useRef(0);
   const resultsRequestId = useRef(0);
@@ -63,6 +65,7 @@ export function useNotificationDetail({
     scheduleRequestId.current += 1;
     resultsRequestId.current += 1;
     deliveryRequestId.current += 1;
+    selectedSchedule.current = scheduleId;
     setSelectedScheduleId(scheduleId);
     setSchedule(emptySection());
     setResults(emptySection());
@@ -89,7 +92,13 @@ export function useNotificationDetail({
       const data = await queryApi.getDetail(notificationId);
       if (requestId !== notificationRequestId.current) return;
       setNotification({ data, errorMessage: null, isLoading: false });
-      selectSchedule(data.schedules[0]?.notificationScheduleId ?? null);
+      const next = data.schedules.some(
+        (item) => item.notificationScheduleId === selectedSchedule.current
+      )
+        ? selectedSchedule.current
+        : (data.schedules[0]?.notificationScheduleId ?? null);
+      if (next !== selectedSchedule.current) selectSchedule(next);
+      else setRefreshKey((current) => current + 1);
     } catch (error) {
       if (requestId !== notificationRequestId.current) return;
       setNotification({
@@ -148,7 +157,7 @@ export function useNotificationDetail({
       active = false;
       scheduleRequestId.current += 1;
     };
-  }, [loadSchedule, selectedScheduleId]);
+  }, [loadSchedule, selectedScheduleId, refreshKey]);
 
   const loadResults = useCallback(
     async (page = 1) => {
@@ -214,6 +223,7 @@ export function useNotificationDetail({
   }, []);
 
   return {
+    refreshKey,
     closeDelivery,
     delivery,
     loadNotification,

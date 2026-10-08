@@ -8,12 +8,14 @@ import { useDocumentScrollLock } from "~/hooks/useDocumentScrollLock";
 type DeleteNotificationDialogProps = {
   notification: AdminNotificationListItem;
   isSubmitting: boolean;
+  scheduleId?: number;
   onClose: () => void;
   onConfirm: () => void;
 };
 
 export function DeleteNotificationDialog({
   notification,
+  scheduleId,
   isSubmitting,
   onClose,
   onConfirm,
@@ -54,14 +56,19 @@ export function DeleteNotificationDialog({
           </span>
           <div className="min-w-0">
             <h2 id="delete-notification-title" className="font-semibold">
-              この未送信通知を削除しますか？
+              {scheduleId
+                ? "配信予約をキャンセルしますか？"
+                : "この未送信通知を削除しますか？"}
             </h2>
             <p
               id="delete-notification-description"
               className="text-text-muted mt-2 text-sm leading-6"
             >
-              「{notification.content.push.title}
-              」は配信されず、一覧から削除されます。この操作は元に戻せません。
+              通知 #{notification.notificationId}「
+              {notification.content.push.title}」
+              {scheduleId
+                ? `のSchedule #${scheduleId}の配信予約を取り消します。通知本体は削除しません。`
+                : "を削除します。この操作は元に戻せません。"}
             </p>
           </div>
         </div>
@@ -81,7 +88,11 @@ export function DeleteNotificationDialog({
             size="md"
             variant="danger"
           >
-            {isSubmitting ? "削除中..." : "削除する"}
+            {isSubmitting
+              ? "処理中..."
+              : scheduleId
+                ? "配信予約をキャンセル"
+                : "削除する"}
           </Button>
         </div>
       </div>

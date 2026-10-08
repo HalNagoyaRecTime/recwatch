@@ -1,3 +1,4 @@
+import { canDeleteNotification } from "~/features/notifications/hooks/notification-list-data";
 import { Ellipsis, Eye, Pencil, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router";
@@ -49,6 +50,10 @@ export function NotificationActionMenu({
               ),
             type: "action" as const,
           },
+        ]
+      : []),
+    ...(onDelete && canDeleteNotification(notification)
+      ? [
           { id: "actions-divider", type: "divider" as const },
           {
             danger: true,

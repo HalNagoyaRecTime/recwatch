@@ -86,3 +86,10 @@ function getSortValue(
       return schedule?.status ?? "";
   }
 }
+
+export function canDeleteNotification(notification: AdminNotificationListItem) {
+  return (
+    notification.creation.method === "manual" &&
+    notification.schedules.every((schedule) => schedule.status === "scheduled")
+  );
+}
