@@ -4,6 +4,7 @@
   "type": "module",
   "scripts": {
     "build": "react-router build",
+    "postbuild": "node scripts/verify-legal-build.mjs",
     "dev": "react-router dev",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
