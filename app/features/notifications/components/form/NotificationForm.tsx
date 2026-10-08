@@ -1,3 +1,4 @@
+import { MarkdownPreview } from "~/components/ui/markdown/MarkdownPreview";
 import { CalendarClock, Plus, Send, Trash2 } from "lucide-react";
 
 import { Button } from "~/components/ui/button/Button";
@@ -223,6 +224,8 @@ export function NotificationForm({
               </span>
             ) : null}
           </label>
+
+          <MarkdownPreview content={draft.detailBody} />
 
           <fieldset disabled={isFullEditDisabled}>
             <p className="text-text-base mb-2 text-sm font-medium">重要度</p>
