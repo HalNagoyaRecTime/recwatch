@@ -1,6 +1,6 @@
 import { ChevronLeft, RefreshCw } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 
 import { Button } from "~/components/ui/button/Button";
 import { Pagination } from "~/components/ui/navigation/Pagination";
@@ -27,10 +27,18 @@ import {
   scheduleStatusLabel,
 } from "~/features/notifications/components/detail/notification-detail-display";
 import { NotificationStatusBadge } from "~/features/notifications/components/list/NotificationStatusBadge";
+import type { AdminNotificationCommandApi } from "~/features/notifications/api/contracts/admin-notification-command-api";
+import type { NotificationScheduleCommandApi } from "~/features/notifications/api/contracts/notification-schedule-command-api";
+import type { NotificationFeedbackReporter } from "~/features/notifications/hooks/notification-feedback";
+import { useNotificationRemoval } from "~/features/notifications/hooks/useNotificationRemoval";
+import { DeleteNotificationDialog } from "~/features/notifications/components/list/DeleteNotificationDialog";
 import { useNotificationDetail } from "~/features/notifications/hooks/useNotificationDetail";
 import { cn } from "~/lib/cn";
 
 type NotificationDetailPageProps = {
+  commandApi?: AdminNotificationCommandApi;
+  scheduleCommandApi?: NotificationScheduleCommandApi;
+  reportFeedback?: NotificationFeedbackReporter;
   notificationId: number;
   pushDeliveryApi: NotificationPushDeliveryApi;
   queryApi: AdminNotificationQueryApi;
@@ -46,6 +54,9 @@ const tabs = [
 ] as const;
 
 export function NotificationDetailPage({
+  commandApi,
+  scheduleCommandApi,
+  reportFeedback,
   notificationId,
   pushDeliveryApi,
   queryApi,
@@ -56,6 +67,15 @@ export function NotificationDetailPage({
     pushDeliveryApi,
     queryApi,
     scheduleQueryApi,
+  });
+  const navigate = useNavigate();
+  const removal = useNotificationRemoval({
+    notification: state.notification.data,
+    commandApi,
+    scheduleCommandApi,
+    reportFeedback,
+    reload: state.loadNotification,
+    onDeleted: () => navigate("/notifications"),
   });
   const [tab, setTab] = useState<DetailTab>("overview");
   const selectedSchedule = useMemo(
@@ -74,7 +94,7 @@ export function NotificationDetailPage({
     if (tab === "results" && selectedScheduleId !== null) {
       void loadResults();
     }
-  }, [loadResults, selectedScheduleId, tab]);
+  }, [loadResults, selectedScheduleId, tab, state.refreshKey]);
 
   if (state.notification.isLoading && !state.notification.data) {
     return <PageState role="status" message="通知詳細を読み込み中です" />;
@@ -131,6 +151,51 @@ export function NotificationDetailPage({
           />
         </div>
       </div>
+
+      <div className="flex flex-wrap gap-2">
+        {removal.canDelete && (
+          <Button
+            variant="danger"
+            disabled={removal.isSubmitting || state.notification.isLoading}
+            onClick={() => removal.request({ type: "notification" })}
+          >
+            通知を削除
+          </Button>
+        )}
+        {selectedSchedule &&
+          removal.canCancel(selectedSchedule.notificationScheduleId) &&
+          (!state.schedule.data ||
+            state.schedule.data.status === "scheduled") && (
+            <Button
+              variant="secondary"
+              disabled={removal.isSubmitting || state.notification.isLoading}
+              onClick={() =>
+                removal.request({
+                  type: "schedule",
+                  id: selectedSchedule.notificationScheduleId,
+                })
+              }
+            >
+              配信予約をキャンセル
+            </Button>
+          )}
+      </div>
+      {removal.errorMessage && (
+        <p role="alert" className="text-tone-danger-text">
+          {removal.errorMessage}
+        </p>
+      )}
+      {removal.target && (
+        <DeleteNotificationDialog
+          notification={notification}
+          scheduleId={
+            removal.target.type === "schedule" ? removal.target.id : undefined
+          }
+          isSubmitting={removal.isSubmitting}
+          onClose={removal.close}
+          onConfirm={() => void removal.confirm()}
+        />
+      )}
 
       <nav
         aria-label="通知詳細"
