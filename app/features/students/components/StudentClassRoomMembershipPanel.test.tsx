@@ -24,7 +24,9 @@ describe("StudentClassRoomMembershipPanel", () => {
         memberPage={{ items: [member], limit: 10, offset: 0, total: 1 }}
         onMemberPageChange={vi.fn()}
         onSearchChange={vi.fn()}
+        onSearchPageChange={vi.fn()}
         search=""
+        searchInput=""
         searchPage={null}
       />
     );
@@ -56,7 +58,9 @@ describe("StudentClassRoomMembershipPanel", () => {
         memberPage={{ items: [], limit: 10, offset: 0, total: 0 }}
         onMemberPageChange={vi.fn()}
         onSearchChange={vi.fn()}
+        onSearchPageChange={vi.fn()}
         search="生徒"
+        searchInput="生徒"
         searchPage={{
           items: [unassigned, otherClass, member],
           limit: 10,
@@ -77,13 +81,16 @@ describe("StudentClassRoomMembershipPanel", () => {
   it("検索入力と所属一覧のページ変更をRouteへ通知する", async () => {
     const onMemberPageChange = vi.fn();
     const onSearchChange = vi.fn();
+    const onSearchPageChange = vi.fn();
     render(
       <StudentClassRoomMembershipPanel
         classRoomId={12}
         memberPage={{ items: [member], limit: 1, offset: 0, total: 2 }}
         onMemberPageChange={onMemberPageChange}
         onSearchChange={onSearchChange}
+        onSearchPageChange={onSearchPageChange}
         search=""
+        searchInput=""
         searchPage={null}
       />
     );
@@ -96,5 +103,26 @@ describe("StudentClassRoomMembershipPanel", () => {
     expect(onSearchChange).toHaveBeenCalledWith("山");
     await user.click(screen.getByRole("button", { name: "次のページ" }));
     expect(onMemberPageChange).toHaveBeenCalledWith(2);
+  });
+
+  it("11件以上の検索結果をページ送りできる", async () => {
+    const onSearchPageChange = vi.fn();
+    render(
+      <StudentClassRoomMembershipPanel
+        classRoomId={12}
+        memberPage={{ items: [], limit: 10, offset: 0, total: 0 }}
+        onMemberPageChange={vi.fn()}
+        onSearchChange={vi.fn()}
+        onSearchPageChange={onSearchPageChange}
+        search="山田"
+        searchInput="山田"
+        searchPage={{ items: [member], limit: 10, offset: 0, total: 11 }}
+      />
+    );
+
+    await userEvent
+      .setup()
+      .click(screen.getByRole("button", { name: "次のページ" }));
+    expect(onSearchPageChange).toHaveBeenCalledWith(2);
   });
 });
