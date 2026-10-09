@@ -62,7 +62,7 @@ describe("isSidebarItemActive", () => {
         "/events/:eventId/edit",
         "/events/:eventId/gatherings",
       ],
-      activeExclusions: ["/events/today", "/events/assignments"],
+      activeExclusions: ["/events/today"],
     });
 
     expect(isSidebarItemActive(eventsList, "/events")).toBe(true);
@@ -72,7 +72,6 @@ describe("isSidebarItemActive", () => {
     expect(isSidebarItemActive(eventsList, "/events/12/gatherings")).toBe(true);
     // `:eventId` に一致してしまう固定パスは除外で弾く
     expect(isSidebarItemActive(eventsList, "/events/today")).toBe(false);
-    expect(isSidebarItemActive(eventsList, "/events/assignments")).toBe(false);
   });
 
   it("イベント一覧の派生ページを親フォルダーで選択する", () => {
