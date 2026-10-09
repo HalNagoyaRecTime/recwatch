@@ -113,7 +113,7 @@ describe("student management nested routes", () => {
     const router = renderStudentsRouter("/students/new?search=keep&page=2");
 
     expect(await screen.findByRole("dialog")).toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: "キャンセル" }));
+    await user.click(await screen.findByRole("button", { name: "キャンセル" }));
     await waitFor(() =>
       expect(router.state.location.pathname).toBe("/students")
     );
@@ -135,8 +135,8 @@ describe("student management nested routes", () => {
 
     await user.type(await screen.findByLabelText("氏名*"), "新規学生");
     await user.type(screen.getByLabelText("学籍番号*"), "S008");
-    await user.type(screen.getByLabelText("出席番号*"), "8");
-    await user.selectOptions(screen.getByLabelText("クラス*"), "1");
+    await user.type(screen.getByLabelText("出席番号"), "8");
+    await user.selectOptions(screen.getByLabelText("クラス"), "1");
     await user.click(screen.getByRole("button", { name: "保存する" }));
 
     await waitFor(() =>
@@ -190,6 +190,39 @@ describe("student management nested routes", () => {
     expect(getStudentById).toHaveBeenCalledOnce();
     await waitFor(() =>
       expect(screen.queryByRole("dialog")).not.toBeInTheDocument()
+    );
+  });
+
+  it("未所属の学生はクラスと出席番号を空欄のまま編集保存できる", async () => {
+    const user = userEvent.setup();
+    mockStudentList();
+    const unassignedStudent: StudentRow = {
+      ...student,
+      attendanceNumber: null,
+      classRoom: null,
+    };
+    vi.spyOn(StudentApi, "getStudentById").mockResolvedValue(unassignedStudent);
+    const updateStudent = vi
+      .spyOn(StudentApi, "updateStudent")
+      .mockResolvedValue(unassignedStudent);
+    mocks.getClassRoomData.mockResolvedValue([classRoom]);
+
+    renderStudentsRouter("/students/7/edit");
+
+    const name = await screen.findByLabelText("氏名*");
+    await user.clear(name);
+    await user.type(name, "山田 花子");
+    expect(screen.getByLabelText("出席番号")).toHaveValue(null);
+    expect(screen.getByLabelText("クラス")).toHaveValue("");
+    await user.click(screen.getByRole("button", { name: "保存する" }));
+
+    await waitFor(() =>
+      expect(updateStudent).toHaveBeenCalledWith(7, {
+        attendanceNumber: null,
+        classRoomId: null,
+        displayName: "山田 花子",
+        studentIdNumber: "S007",
+      })
     );
   });
 });
