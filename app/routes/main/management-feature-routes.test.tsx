@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import {
   createMemoryRouter,
@@ -39,6 +39,14 @@ const classRoom = {
   className: "1年A組",
   studentCount: 2,
   teacher: null,
+};
+
+const secondClassRoom = {
+  ...classRoom,
+  classRoomId: 13,
+  classCode: "1B",
+  className: "1年B組",
+  studentCount: 5,
 };
 
 afterEach(() => {
@@ -171,6 +179,97 @@ describe("management route integration wiring", () => {
     expect(getClassRoomById).toHaveBeenCalledOnce();
     expect(getClassRoomById).toHaveBeenCalledWith(12);
     expect(getActiveTeachers).toHaveBeenCalledOnce();
+  });
+
+  it("Aクラスのページ番号と検索文字を閉じた後にBクラスへ引き継がない", async () => {
+    const user = userEvent.setup();
+    vi.spyOn(ClassRoomApi, "getClassRoomList").mockResolvedValue({
+      items: [classRoom, secondClassRoom],
+      limit: 50,
+      offset: 0,
+      total: 2,
+    });
+    vi.spyOn(ClassRoomApi, "getClassRoomById").mockImplementation(
+      async (classRoomId) =>
+        classRoomId === secondClassRoom.classRoomId
+          ? secondClassRoom
+          : classRoom
+    );
+    vi.spyOn(TeacherApi, "getActiveTeachers").mockResolvedValue({
+      items: [],
+      limit: 50,
+      offset: 0,
+      total: 0,
+    });
+    const getStudents = vi
+      .spyOn(StudentApi, "getStudents")
+      .mockImplementation(async (query = {}) => ({
+        items: [],
+        limit: query.limit ?? 10,
+        offset: query.offset ?? 0,
+        total: query.classRoomId === classRoom.classRoomId ? 25 : 5,
+      }));
+
+    const router = renderManagementRouter(
+      [
+        {
+          id: managementRouteIds.classrooms,
+          path: "/classrooms",
+          loader: ({ request }) => classRoomsLoader({ request }),
+          element: <ClassRoomRoute />,
+          children: [
+            {
+              path: ":classRoomId/edit",
+              loader: ({ params, request }) =>
+                classRoomEditLoader({ params, request }),
+              element: <ClassRoomEditRoute />,
+            },
+          ],
+        },
+      ],
+      "/classrooms"
+    );
+
+    await user.click(
+      await screen.findByRole("button", { name: "1年A組の操作" })
+    );
+    await user.click(screen.getByRole("button", { name: "クラスを編集する" }));
+    const firstDialog = await screen.findByRole("dialog");
+    await user.click(
+      within(firstDialog).getByRole("button", { name: "次のページ" })
+    );
+    await waitFor(() =>
+      expect(router.state.location.search).toContain("memberPage=2")
+    );
+    await user.type(
+      within(firstDialog).getByRole("searchbox", {
+        name: "追加する生徒を検索",
+      }),
+      "山田"
+    );
+    await waitFor(() =>
+      expect(router.state.location.search).toContain(
+        "studentSearch=%E5%B1%B1%E7%94%B0"
+      )
+    );
+    await user.click(
+      within(firstDialog).getByRole("button", { name: "キャンセル" })
+    );
+    await waitFor(() =>
+      expect(router.state.location.pathname).toBe("/classrooms")
+    );
+
+    await user.click(screen.getByRole("button", { name: "1年B組の操作" }));
+    await user.click(screen.getByRole("button", { name: "クラスを編集する" }));
+
+    await waitFor(() =>
+      expect(router.state.location.pathname).toBe("/classrooms/13/edit")
+    );
+    expect(router.state.location.search).not.toContain("memberPage");
+    expect(router.state.location.search).not.toContain("studentSearch");
+    expect(getStudents).toHaveBeenCalledWith(
+      expect.objectContaining({ classRoomId: 13, offset: 0 })
+    );
   });
 
   it("Student list query変更は固定ClassRoom optionを再取得しない", async () => {

@@ -172,6 +172,40 @@ describe("ClassRoomPage", () => {
     );
   });
 
+  it("別のクラスを開くときは前のクラスのページ番号と検索文字を引き継がない", async () => {
+    const user = userEvent.setup();
+    render(
+      <MemoryRouter
+        initialEntries={[
+          "/classrooms?search=1A&page=2&memberPage=3&studentSearch=%E5%B1%B1%E7%94%B0&studentSearchPage=2",
+        ]}
+      >
+        <ClassRoomPage
+          api={createApi()}
+          items={[firstClassRoom]}
+          limit={50}
+          offset={50}
+          onRevalidate={vi.fn()}
+          total={100}
+        />
+        <LocationProbe />
+      </MemoryRouter>
+    );
+
+    await user.click(screen.getByRole("button", { name: "1年A組の操作" }));
+    await user.click(screen.getByRole("button", { name: "クラスを編集する" }));
+
+    expect(screen.getByTestId("location-search")).toHaveTextContent(
+      "search=1A&page=2"
+    );
+    expect(screen.getByTestId("location-search")).not.toHaveTextContent(
+      "memberPage"
+    );
+    expect(screen.getByTestId("location-search")).not.toHaveTextContent(
+      "studentSearch"
+    );
+  });
+
   it("クラス削除後にRoute loaderを再検証し、空になった最終ページから戻る", async () => {
     const user = userEvent.setup();
     const confirm = vi.spyOn(window, "confirm").mockReturnValue(true);

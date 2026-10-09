@@ -14,6 +14,7 @@ import { ClassRoomTable } from "~/features/classRoom/components/classRoomTable";
 import { useClassRoomMutation } from "~/features/classRoom/hooks/useClassRoomMutation";
 import { useClassRoomListUrl } from "~/features/classRoom/hooks/useClassRoomListUrl";
 import type { ClassRoom } from "~/features/classRoom/model/classRoom";
+import { clearClassRoomMembershipUrl } from "~/features/students/application/class-room-membership-url";
 import { ImportUploadTrigger } from "~/features/master-import/components/ImportUploadTrigger";
 
 type ClassRoomPageProps = {
@@ -120,7 +121,7 @@ export function ClassRoomPage({
         onEdit={(classRoom) =>
           navigate({
             pathname: `/classrooms/${classRoom.classRoomId}/edit`,
-            search: location.search,
+            search: clearClassRoomMembershipUrl(location.search),
           })
         }
         onSortChange={handleSortChange}
