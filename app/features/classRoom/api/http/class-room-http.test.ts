@@ -72,6 +72,23 @@ describe("ClassRoom HTTP API", () => {
     );
   });
 
+  it("単体取得でclassRoomをDomain modelへ変換する", async () => {
+    const get = vi.fn().mockResolvedValue(classRoom);
+    const api = createClassRoomHttpApi({
+      get,
+      post: vi.fn(),
+      put: vi.fn(),
+      delete: vi.fn(),
+    });
+
+    await expect(api.getClassRoomById(3)).resolves.toMatchObject({
+      classRoomId: 3,
+      classCode: "IH13A",
+      className: "高度情報学科",
+    });
+    expect(get).toHaveBeenCalledWith("/api/v1/classrooms/3");
+  });
+
   it("作成・更新はcamelCaseの入力だけを送る", async () => {
     const post = vi.fn().mockResolvedValue(classRoom);
     const put = vi.fn().mockResolvedValue(classRoom);

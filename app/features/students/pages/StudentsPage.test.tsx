@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter, useLocation, useNavigate } from "react-router";
 import { describe, expect, it, vi } from "vitest";
 
+import type { ClassRoom } from "~/features/classRoom/model/classRoom";
 import type { StudentManagementApi } from "~/features/students/api";
 import type { StudentRow } from "~/features/students/model/student";
 import type { UserManagementApi } from "~/features/user-management/api";
@@ -40,7 +41,12 @@ function makeStudent(
 
 function LocationProbe() {
   const location = useLocation();
-  return <output data-testid="location-search">{location.search}</output>;
+  return (
+    <>
+      <output data-testid="location-pathname">{location.pathname}</output>
+      <output data-testid="location-search">{location.search}</output>
+    </>
+  );
 }
 
 function HistoryBackButton() {
@@ -59,6 +65,7 @@ function createApi(
   return {
     createStudent: vi.fn(),
     getStudents: getStudents as StudentManagementApi["getStudents"],
+    getStudentById: vi.fn(),
     updateStudent: vi.fn(),
     ...overrides,
   };
@@ -67,14 +74,36 @@ function createApi(
 function renderPage(
   api: StudentManagementApi,
   initialEntry = "/students",
-  userApi?: UserManagementApi
+  userApi?: UserManagementApi,
+  data: {
+    classRooms?: ClassRoom[];
+    offset?: number;
+    onRevalidate?: () => Promise<void> | void;
+    students?: StudentRow[];
+    total?: number;
+  } = {}
 ) {
+  const queryString = initialEntry.split("?")[1] ?? "";
+  const page = Number(new URLSearchParams(queryString).get("page")) || 1;
+  const students = data.students ?? [];
+
   return render(
     <MemoryRouter initialEntries={[initialEntry]}>
       <StudentsPage
         api={api}
-        loadClassRooms={vi.fn().mockResolvedValue([classRoom])}
-        userApi={userApi}
+        classRooms={data.classRooms ?? [classRoom]}
+        limit={50}
+        offset={data.offset ?? (page - 1) * 50}
+        onRevalidate={data.onRevalidate ?? vi.fn().mockResolvedValue(undefined)}
+        students={students}
+        total={data.total ?? students.length}
+        userApi={
+          userApi ?? {
+            grantStaff: vi.fn(),
+            revokeStaff: vi.fn(),
+            updateUserStatus: vi.fn(),
+          }
+        }
       />
       <LocationProbe />
     </MemoryRouter>
@@ -83,13 +112,23 @@ function renderPage(
 
 describe("StudentsPage", () => {
   it("loaderから新しい学生一覧が渡されると表示を更新する", async () => {
-    const loadClassRooms = vi.fn().mockResolvedValue([classRoom]);
+    const api = createApi(vi.fn());
+    const userApi: UserManagementApi = {
+      grantStaff: vi.fn(),
+      revokeStaff: vi.fn(),
+      updateUserStatus: vi.fn(),
+    };
     const { rerender } = render(
       <MemoryRouter initialEntries={["/students"]}>
         <StudentsPage
-          loadClassRooms={loadClassRooms}
+          api={api}
+          classRooms={[classRoom]}
+          limit={50}
+          offset={0}
+          onRevalidate={vi.fn()}
           students={[makeStudent(1, "初回データ")]}
           total={1}
+          userApi={userApi}
         />
       </MemoryRouter>
     );
@@ -99,9 +138,14 @@ describe("StudentsPage", () => {
     rerender(
       <MemoryRouter initialEntries={["/students"]}>
         <StudentsPage
-          loadClassRooms={loadClassRooms}
+          api={api}
+          classRooms={[classRoom]}
+          limit={50}
+          offset={0}
+          onRevalidate={vi.fn()}
           students={[makeStudent(2, "再検証後データ")]}
           total={1}
+          userApi={userApi}
         />
       </MemoryRouter>
     );
@@ -115,9 +159,18 @@ describe("StudentsPage", () => {
     render(
       <MemoryRouter initialEntries={["/students?search=%E5%88%9D%E6%9C%9F"]}>
         <StudentsPage
-          loadClassRooms={vi.fn().mockResolvedValue([classRoom])}
+          api={createApi(vi.fn())}
+          classRooms={[classRoom]}
+          limit={50}
+          offset={0}
+          onRevalidate={vi.fn()}
           students={[]}
           total={0}
+          userApi={{
+            grantStaff: vi.fn(),
+            revokeStaff: vi.fn(),
+            updateUserStatus: vi.fn(),
+          }}
         />
         <LocationProbe />
         <HistoryBackButton />
@@ -140,13 +193,8 @@ describe("StudentsPage", () => {
     await waitFor(() => expect(search).toHaveValue("初期"));
   });
 
-  it("一覧未指定時はstaffがすべて・activeが有効で、検索をサーバーへ渡す", async () => {
-    const getStudents = vi.fn().mockResolvedValue({
-      items: [makeStudent(1, "山田太郎")],
-      total: 1,
-      limit: 50,
-      offset: 0,
-    });
+  it("一覧URLの既定filterを表示し、検索条件をURLへ反映する", async () => {
+    const getStudents = vi.fn();
     const user = userEvent.setup();
 
     renderPage(createApi(getStudents));
@@ -167,30 +215,24 @@ describe("StudentsPage", () => {
     );
 
     await waitFor(() =>
-      expect(getStudents).toHaveBeenLastCalledWith(
-        expect.objectContaining({
-          search: "山田",
-          classRoomId: undefined,
-          isStaff: "all",
-          isLiveActive: "true",
-          limit: 50,
-          offset: 0,
-        })
-      )
+      expect(
+        new URLSearchParams(
+          screen.getByTestId("location-search").textContent ?? ""
+        ).get("search")
+      ).toBe("山田")
     );
+    expect(getStudents).not.toHaveBeenCalled();
     expect(screen.getByRole("table", { name: "学生一覧" })).toBeInTheDocument();
   });
 
   it("classRoom・staff・active filterをURLへ反映する", async () => {
-    const getStudents = vi.fn().mockResolvedValue({
-      items: [makeStudent(1)],
-      total: 1,
-      limit: 50,
-      offset: 0,
-    });
+    const getStudents = vi.fn();
     const user = userEvent.setup();
 
-    renderPage(createApi(getStudents));
+    renderPage(createApi(getStudents), "/students", undefined, {
+      students: [makeStudent(1)],
+      total: 1,
+    });
 
     await screen.findByRole("table", { name: "学生一覧" });
     await user.click(
@@ -209,30 +251,19 @@ describe("StudentsPage", () => {
         "classRoomId=1&isStaff=true&isLiveActive=false"
       )
     );
-    await waitFor(() =>
-      expect(getStudents).toHaveBeenLastCalledWith(
-        expect.objectContaining({
-          classRoomId: 1,
-          isStaff: "true",
-          isLiveActive: "false",
-          offset: 0,
-        })
-      )
-    );
+    expect(getStudents).not.toHaveBeenCalled();
   });
 
-  it("8種類のsortをURL経由でAPI契約へ渡し、staff・activeを表示する", async () => {
-    const getStudents = vi.fn().mockResolvedValue({
-      items: [
+  it("8種類のsortをURLへ反映し、staff・activeを表示する", async () => {
+    const getStudents = vi.fn();
+    const user = userEvent.setup();
+
+    renderPage(createApi(getStudents), "/students", undefined, {
+      students: [
         makeStudent(1, "山田太郎", { isStaff: true, isLiveActive: false }),
       ],
       total: 1,
-      limit: 50,
-      offset: 0,
     });
-    const user = userEvent.setup();
-
-    renderPage(createApi(getStudents));
 
     const table = await screen.findByRole("table", { name: "学生一覧" });
     expect(within(table).getAllByText("staff").length).toBeGreaterThanOrEqual(
@@ -252,24 +283,29 @@ describe("StudentsPage", () => {
     ] as const) {
       await user.click(screen.getByRole("button", { name: column }));
       await waitFor(() =>
-        expect(getStudents).toHaveBeenLastCalledWith(
-          expect.objectContaining({ sortBy, sortOrder: "asc", offset: 0 })
-        )
+        expect(
+          new URLSearchParams(
+            screen.getByTestId("location-search").textContent ?? ""
+          ).get("sortBy")
+        ).toBe(sortBy)
       );
+      expect(
+        new URLSearchParams(
+          screen.getByTestId("location-search").textContent ?? ""
+        ).get("sortOrder")
+      ).toBe("asc");
     }
+    expect(getStudents).not.toHaveBeenCalled();
   });
 
   it("操作メニューに編集・staff・有効状態変更を表示し、削除を表示しない", async () => {
     const student = makeStudent(1, "山田太郎", { isStaff: true });
-    const getStudents = vi.fn().mockResolvedValue({
-      items: [student],
-      total: 1,
-      limit: 50,
-      offset: 0,
-    });
     const user = userEvent.setup();
 
-    renderPage(createApi(getStudents));
+    renderPage(createApi(vi.fn()), "/students", undefined, {
+      students: [student],
+      total: 1,
+    });
 
     const table = await screen.findByRole("table", { name: "学生一覧" });
     await user.click(
@@ -290,15 +326,11 @@ describe("StudentsPage", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("active変更はstudent.userIdへPATCHし、現在条件の一覧を再取得する", async () => {
+  it("active変更はstudent.userIdへPATCHし、Route loaderを再検証する", async () => {
     const student = makeStudent(1, "山田太郎");
-    const getStudents = vi.fn().mockResolvedValue({
-      items: [student],
-      total: 100,
-      limit: 50,
-      offset: 50,
-    });
+    const getStudents = vi.fn();
     const updateUserStatus = vi.fn().mockResolvedValue(undefined);
+    const onRevalidate = vi.fn().mockResolvedValue(undefined);
     const confirm = vi.fn().mockReturnValue(true);
     const user = userEvent.setup();
     vi.stubGlobal("confirm", confirm);
@@ -310,17 +342,16 @@ describe("StudentsPage", () => {
         grantStaff: vi.fn(),
         revokeStaff: vi.fn(),
         updateUserStatus,
+      },
+      {
+        students: [student],
+        total: 100,
+        offset: 50,
+        onRevalidate,
       }
     );
 
     const table = await screen.findByRole("table", { name: "学生一覧" });
-    getStudents.mockClear();
-    getStudents.mockResolvedValueOnce({
-      items: [{ ...student, isLiveActive: false }],
-      total: 100,
-      limit: 50,
-      offset: 50,
-    });
     await user.click(
       within(table).getByRole("button", { name: "山田太郎の操作" })
     );
@@ -329,31 +360,18 @@ describe("StudentsPage", () => {
     await waitFor(() =>
       expect(updateUserStatus).toHaveBeenCalledWith(101, false)
     );
-    await waitFor(() => expect(getStudents).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(onRevalidate).toHaveBeenCalledOnce());
+    expect(getStudents).not.toHaveBeenCalled();
     expect(confirm).toHaveBeenCalledWith(
       "「山田太郎」を無効化します。よろしいですか？"
     );
-    expect(getStudents).toHaveBeenLastCalledWith({
-      classRoomId: undefined,
-      isLiveActive: "true",
-      isStaff: "true",
-      limit: 50,
-      offset: 50,
-      search: "山田",
-      sortBy: "isStaff",
-      sortOrder: "desc",
-    });
   });
 
-  it("staff変更はstudent.userIdへPUTし、取消時はAPIを呼ばない", async () => {
+  it("staff変更はstudent.userIdへPUTし、Route loaderを再検証する", async () => {
     const student = makeStudent(1, "山田太郎");
-    const getStudents = vi.fn().mockResolvedValue({
-      items: [student],
-      total: 1,
-      limit: 50,
-      offset: 0,
-    });
+    const getStudents = vi.fn();
     const grantStaff = vi.fn().mockResolvedValue(undefined);
+    const onRevalidate = vi.fn().mockResolvedValue(undefined);
     const confirm = vi
       .fn()
       .mockReturnValueOnce(false)
@@ -361,20 +379,22 @@ describe("StudentsPage", () => {
     const user = userEvent.setup();
     vi.stubGlobal("confirm", confirm);
 
-    renderPage(createApi(getStudents), "/students", {
-      grantStaff,
-      revokeStaff: vi.fn(),
-      updateUserStatus: vi.fn(),
-    });
+    renderPage(
+      createApi(getStudents),
+      "/students",
+      {
+        grantStaff,
+        revokeStaff: vi.fn(),
+        updateUserStatus: vi.fn(),
+      },
+      {
+        students: [student],
+        total: 1,
+        onRevalidate,
+      }
+    );
 
     const table = await screen.findByRole("table", { name: "学生一覧" });
-    getStudents.mockClear();
-    getStudents.mockResolvedValueOnce({
-      items: [{ ...student, isStaff: true }],
-      total: 1,
-      limit: 50,
-      offset: 0,
-    });
     await user.click(
       within(table).getByRole("button", { name: "山田太郎の操作" })
     );
@@ -383,78 +403,45 @@ describe("StudentsPage", () => {
 
     await user.click(screen.getByRole("button", { name: "staffを付与する" }));
     await waitFor(() => expect(grantStaff).toHaveBeenCalledWith(101));
-    await waitFor(() => expect(getStudents).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(onRevalidate).toHaveBeenCalledOnce());
+    expect(getStudents).not.toHaveBeenCalled();
   });
 
-  it("作成成功後は現在条件で再取得し、レスポンスを一覧へ直接追加しない", async () => {
-    const saved = makeStudent(10, "佐藤花子");
-    const getStudents = vi
-      .fn()
-      .mockResolvedValueOnce({ items: [], total: 0, limit: 50, offset: 0 })
-      .mockResolvedValueOnce({ items: [], total: 0, limit: 50, offset: 0 });
-    const createStudent = vi.fn().mockResolvedValue(saved);
+  it("新規登録と編集を検索条件つきのnested Routeへ遷移する", async () => {
     const user = userEvent.setup();
-
-    renderPage(createApi(getStudents, { createStudent }));
+    const student = makeStudent(1, "山田太郎");
+    renderPage(
+      createApi(vi.fn()),
+      "/students?search=%E5%B1%B1%E7%94%B0&isStaff=true&page=2",
+      undefined,
+      { students: [student], total: 100, offset: 50 }
+    );
 
     await screen.findByRole("table", { name: "学生一覧" });
     await user.click(screen.getByRole("button", { name: "新規登録" }));
-    await user.type(screen.getByLabelText("氏名*"), "佐藤花子");
-    await user.type(screen.getByLabelText("学籍番号*"), "S010");
-    await user.type(screen.getByLabelText("出席番号*"), "5");
-    await user.selectOptions(screen.getByLabelText("クラス*"), "1");
-    await user.click(screen.getByRole("button", { name: "保存する" }));
-
-    await waitFor(() => expect(createStudent).toHaveBeenCalled());
-    await waitFor(() => expect(getStudents).toHaveBeenCalledTimes(2));
-    expect(screen.queryByText("佐藤花子")).not.toBeInTheDocument();
-    expect(getStudents).toHaveBeenLastCalledWith(
-      expect.objectContaining({
-        isStaff: "all",
-        isLiveActive: "true",
-        offset: 0,
-      })
+    await waitFor(() =>
+      expect(screen.getByTestId("location-pathname")).toHaveTextContent(
+        "/students/new"
+      )
     );
-  });
-
-  it("更新成功後も現在の検索・filter・sort・ページ条件で再取得する", async () => {
-    const student = makeStudent(1, "山田太郎");
-    const getStudents = vi
-      .fn()
-      .mockResolvedValueOnce({
-        items: [student],
-        total: 1,
-        limit: 50,
-        offset: 0,
-      })
-      .mockResolvedValueOnce({ items: [], total: 0, limit: 50, offset: 0 });
-    const updateStudent = vi.fn().mockResolvedValue(student);
-    const user = userEvent.setup();
-
-    renderPage(
-      createApi(getStudents, { updateStudent }),
-      "/students?search=%E5%B1%B1%E7%94%B0&isStaff=true&sortBy=isStaff&sortOrder=desc"
+    expect(screen.getByTestId("location-search")).toHaveTextContent(
+      "search=%E5%B1%B1%E7%94%B0&isStaff=true&page=2"
     );
 
-    const table = await screen.findByRole("table", { name: "学生一覧" });
     await user.click(
-      within(table).getByRole("button", { name: "山田太郎の操作" })
+      within(screen.getByRole("table", { name: "学生一覧" })).getByRole(
+        "button",
+        { name: "山田太郎の操作" }
+      )
     );
     await user.click(screen.getByRole("button", { name: "学生を編集する" }));
-    await user.click(screen.getByRole("button", { name: "保存する" }));
-
     await waitFor(() =>
-      expect(updateStudent).toHaveBeenCalledWith(1, expect.anything())
+      expect(screen.getByTestId("location-pathname")).toHaveTextContent(
+        "/students/1/edit"
+      )
     );
-    await waitFor(() => expect(getStudents).toHaveBeenCalledTimes(2));
-    expect(getStudents).toHaveBeenLastCalledWith(
-      expect.objectContaining({
-        search: "山田",
-        isStaff: "true",
-        sortBy: "isStaff",
-        sortOrder: "desc",
-        offset: 0,
-      })
+    expect(screen.getByTestId("location-search")).toHaveTextContent(
+      "search=%E5%B1%B1%E7%94%B0&isStaff=true&page=2"
     );
   });
 });

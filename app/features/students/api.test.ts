@@ -70,6 +70,27 @@ describe("studentHttpApi", () => {
     );
   });
 
+  it("単体取得をstudentIdのHTTP endpointへ送り、DTOをStudentRowへ変換する", async () => {
+    mocks.get.mockResolvedValueOnce(makeStudentDTO(8));
+
+    await expect(StudentApi.getStudentById(8)).resolves.toEqual({
+      studentId: 8,
+      userId: 108,
+      displayName: "学生8",
+      studentIdNumber: "8",
+      attendanceNumber: 8,
+      isLiveActive: true,
+      isStaff: false,
+      classRoom: {
+        classRoomId: 1,
+        classCode: "1A",
+        className: "クラスA",
+      },
+    });
+
+    expect(mocks.get).toHaveBeenCalledWith("/api/v1/students/8");
+  });
+
   it("一覧条件未指定時はstaff=all・active=trueを既定値にする", async () => {
     mocks.get.mockResolvedValueOnce(makePage());
 

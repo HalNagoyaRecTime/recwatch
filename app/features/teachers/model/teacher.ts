@@ -19,3 +19,10 @@ export type TeacherRow = {
   isStaff: boolean;
   classRooms: TeacherClassRoomRow[];
 };
+
+export type TeacherPage = {
+  items: TeacherRow[];
+  total: number;
+  limit: number;
+  offset: number;
+};
