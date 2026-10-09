@@ -27,6 +27,9 @@ describe("http notification audience loader", () => {
     }));
     const get = vi.fn(async (path: string) => {
       switch (path) {
+        case "/api/v1/students?limit=100&offset=0&isStaff=all&isLiveActive=true":
+        case "/api/v1/teachers?limit=100&offset=0&isStaff=all&isLiveActive=true":
+          return { items: [], total: 0, limit: 100, offset: 0 };
         case "/api/v1/classrooms?limit=100&offset=0":
           return {
             items: firstClassrooms,
@@ -103,6 +106,69 @@ describe("http notification audience loader", () => {
     expect(get).not.toHaveBeenCalledWith("/api/v1/gatherings");
   });
 
+  it("学生・教員を全ページ取得し、学生IDではなくuser_idで重複なく返す", async () => {
+    const get = vi.fn(async (path: string) => {
+      const query = new URL(path, "http://localhost");
+      const offset = Number(query.searchParams.get("offset"));
+      if (query.pathname === "/api/v1/students")
+        return {
+          items: [
+            {
+              student_id: offset + 1,
+              user_id: offset + 901,
+              display_name: `学生${offset + 1}`,
+            },
+          ],
+          total: 2,
+          limit: 100,
+          offset,
+        };
+      if (query.pathname === "/api/v1/teachers")
+        return {
+          items: [
+            { teacher_id: 1, user_id: 903, display_name: "教員1" },
+            { user_id: 901, display_name: "学生1" },
+          ],
+          total: 2,
+          limit: 100,
+          offset,
+        };
+      return query.pathname === "/api/v1/events"
+        ? { events: [], total: 0, limit: 100, offset: 0 }
+        : { items: [], total: 0, limit: 100, offset: 0 };
+    });
+    const options = await createHttpNotificationAudienceApi({ get }).load();
+    expect(options).toEqual([
+      { id: "901", name: "学生1", type: "user" },
+      { id: "902", name: "学生2", type: "user" },
+      { id: "903", name: "教員1", type: "user" },
+    ]);
+    expect(get).toHaveBeenCalledWith(
+      "/api/v1/students?limit=100&offset=1&isStaff=all&isLiveActive=true"
+    );
+  });
+
+  it.each([0, "901", undefined])(
+    "不正なuser_id %sを拒否する",
+    async (userId) => {
+      const get = vi.fn(async (path: string) =>
+        path.startsWith("/api/v1/events?")
+          ? { events: [], total: 0, limit: 100, offset: 0 }
+          : {
+              items: path.startsWith("/api/v1/students?")
+                ? [{ user_id: userId, display_name: "学生" }]
+                : [],
+              total: 1,
+              limit: 100,
+              offset: 0,
+            }
+      );
+      await expect(
+        createHttpNotificationAudienceApi({ get }).load()
+      ).rejects.toEqual(new ClientError(ClientErrors.RESPONSE_PARSE_ERROR));
+    }
+  );
+
   it.each([
     ["本文がnull", null],
     ["roundsが欠落", {}],
@@ -167,6 +233,11 @@ describe("http notification audience loader", () => {
 
   it("競技がない場合はEvent詳細を取得しない", async () => {
     const get = vi.fn(async (path: string) => {
+      if (
+        path.startsWith("/api/v1/students?") ||
+        path.startsWith("/api/v1/teachers?")
+      )
+        return { items: [], total: 0, limit: 100, offset: 0 };
       if (path === "/api/v1/classrooms?limit=100&offset=0") {
         return { items: [], total: 0, limit: 100, offset: 0 };
       }
@@ -179,7 +250,7 @@ describe("http notification audience loader", () => {
     await expect(
       createHttpNotificationAudienceApi({ get }).load()
     ).resolves.toEqual([]);
-    expect(get).toHaveBeenCalledTimes(2);
+    expect(get).toHaveBeenCalledTimes(4);
   });
 
   it.each([401, 403, 404, 500])(
@@ -218,6 +289,11 @@ describe("http notification audience loader", () => {
     "%sのページネーションが上限に達した場合は読み込みを中止する",
     async (_, loopingPath, completedPath) => {
       const get = vi.fn(async (path: string) => {
+        if (
+          path.startsWith("/api/v1/students?") ||
+          path.startsWith("/api/v1/teachers?")
+        )
+          return { items: [], total: 0, limit: 100, offset: 0 };
         if (path.startsWith(loopingPath)) {
           const isClassroom = loopingPath.endsWith("classrooms");
           return isClassroom
@@ -262,6 +338,9 @@ describe("http notification audience loader", () => {
 function createSingleEventGet(loadDetail: () => unknown) {
   return vi.fn(async (path: string) => {
     switch (path) {
+      case "/api/v1/students?limit=100&offset=0&isStaff=all&isLiveActive=true":
+      case "/api/v1/teachers?limit=100&offset=0&isStaff=all&isLiveActive=true":
+        return { items: [], total: 0, limit: 100, offset: 0 };
       case "/api/v1/classrooms?limit=100&offset=0":
         return { items: [], total: 0, limit: 100, offset: 0 };
       case "/api/v1/events?limit=100&offset=0":

@@ -6,6 +6,11 @@ import {
   waitFor,
 } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import userEvent from "@testing-library/user-event";
+import { httpNotificationAudienceApi } from "~/features/notifications/api/http/notification-audience-api";
+import { httpAdminNotificationCommandApi } from "~/features/notifications/api/http/admin-notification-command-api";
+import { httpNotificationConfigApi } from "~/features/notifications/api/http/notification-config-api";
+import { notificationConfigFixture } from "~/features/notifications/mock/notification-fixtures";
 import { MemoryRouter } from "react-router";
 
 import type { AdminNotificationCommandApi } from "~/features/notifications/api/contracts/admin-notification-command-api";
@@ -20,7 +25,10 @@ import {
   adminNotificationListFixture,
 } from "~/features/notifications/mock/notification-fixtures";
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  vi.unstubAllGlobals();
+});
 
 function createCommandApi(
   overrides: Partial<AdminNotificationCommandApi> = {}
@@ -106,6 +114,75 @@ describe("notification pages", () => {
       importance: "normal",
     });
   });
+  it("HTTP adapterと共通apiClientでユーザー候補取得から作成まで送信する", async () => {
+    const fetchMock = vi.fn(async (input: string, init?: RequestInit) => {
+      const path = new URL(input).pathname;
+      let body: unknown;
+      if (path === "/api/v1/students")
+        body = {
+          items: [{ student_id: 7, user_id: 901, display_name: "テスト学生" }],
+          total: 1,
+          limit: 100,
+          offset: 0,
+        };
+      else if (path === "/api/v1/teachers" || path === "/api/v1/classrooms")
+        body = { items: [], total: 0, limit: 100, offset: 0 };
+      else if (path === "/api/v1/events")
+        body = { events: [], total: 0, limit: 100, offset: 0 };
+      else if (path.endsWith("/config")) body = notificationConfigFixture;
+      else if (path.endsWith("/audience-count")) body = { recipientCount: 1 };
+      else if (
+        path === "/api/v1/admin/notifications" &&
+        init?.method === "POST"
+      )
+        body = { notificationId: 108, notificationScheduleId: 508 };
+      else throw new Error(`想定外の取得先: ${path}`);
+      return new Response(JSON.stringify(body), { status: 200 });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    const user = userEvent.setup();
+    render(
+      <MemoryRouter>
+        <NotificationCreatePage
+          api={httpAdminNotificationCommandApi}
+          audienceApi={httpNotificationAudienceApi}
+          configApi={httpNotificationConfigApi}
+        />
+      </MemoryRouter>
+    );
+    await user.click(screen.getByRole("combobox", { name: "通知対象 1" }));
+    await user.click(screen.getByRole("option", { name: "ユーザー" }));
+    await screen.findByRole("option", { name: "テスト学生" });
+    await user.selectOptions(
+      screen.getByRole("combobox", { name: "対象 1" }),
+      "901"
+    );
+    for (const label of ["タイトル*", "本文*", "詳細タイトル*", "詳細本文*"])
+      fireEvent.change(screen.getByLabelText(label), {
+        target: { value: "テスト通知" },
+      });
+    const button = screen.getByRole("button", { name: "通知を配信" });
+    await waitFor(() => expect(button).toBeEnabled());
+    await user.click(button);
+    await waitFor(() =>
+      expect(
+        fetchMock.mock.calls.filter(
+          ([url, init]) =>
+            new URL(url).pathname === "/api/v1/admin/notifications" &&
+            init?.method === "POST"
+        )
+      ).toHaveLength(1)
+    );
+    const request = fetchMock.mock.calls.find(
+      ([url, init]) =>
+        new URL(url).pathname === "/api/v1/admin/notifications" &&
+        init?.method === "POST"
+    );
+    expect(JSON.parse(String(request?.[1]?.body)).audience).toEqual({
+      items: [{ type: "user", targetId: 901 }],
+    });
+  });
+
   it("開始済み通知はconfigやAudience取得失敗でも詳細を保存できる", async () => {
     const notification = {
       ...adminNotificationDetailFixture,
