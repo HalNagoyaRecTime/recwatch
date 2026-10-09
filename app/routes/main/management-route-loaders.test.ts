@@ -93,6 +93,7 @@ describe("management edit clientLoaders", () => {
     expect(getClassRoomById).toHaveBeenCalledWith(12);
     expect(getStudents).toHaveBeenCalledWith({
       classRoomId: 12,
+      isLiveActive: "all",
       limit: 10,
       offset: 0,
       sortBy: "attendanceNumber",
@@ -113,12 +114,13 @@ describe("management edit clientLoaders", () => {
     await classRoomEditLoader({
       params: { classRoomId: "12" },
       request: new Request(
-        "https://example.test/classrooms/12/edit?memberPage=3&studentSearch=%E5%B1%B1%E7%94%B0"
+        "https://example.test/classrooms/12/edit?memberPage=3&studentSearch=%E5%B1%B1%E7%94%B0&studentSearchPage=2"
       ),
     });
 
     expect(getStudents).toHaveBeenNthCalledWith(1, {
       classRoomId: 12,
+      isLiveActive: "all",
       limit: 10,
       offset: 20,
       sortBy: "attendanceNumber",
@@ -126,7 +128,7 @@ describe("management edit clientLoaders", () => {
     });
     expect(getStudents).toHaveBeenNthCalledWith(2, {
       limit: 10,
-      offset: 0,
+      offset: 10,
       search: "山田",
       sortBy: "displayName",
       sortOrder: "asc",

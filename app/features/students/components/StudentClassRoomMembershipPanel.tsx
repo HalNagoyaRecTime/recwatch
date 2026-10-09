@@ -10,7 +10,9 @@ type StudentClassRoomMembershipPanelProps = {
   memberPage: StudentPage;
   onMemberPageChange: (page: number) => void;
   onSearchChange: (search: string) => void;
+  onSearchPageChange: (page: number) => void;
   search: string;
+  searchInput: string;
   searchPage: StudentPage | null;
 };
 
@@ -19,7 +21,9 @@ export function StudentClassRoomMembershipPanel({
   memberPage,
   onMemberPageChange,
   onSearchChange,
+  onSearchPageChange,
   search,
+  searchInput,
   searchPage,
 }: StudentClassRoomMembershipPanelProps) {
   const currentPage = Math.floor(memberPage.offset / memberPage.limit) + 1;
@@ -44,13 +48,29 @@ export function StudentClassRoomMembershipPanel({
           ariaLabel="追加する生徒を検索"
           onValueChange={onSearchChange}
           placeholder="氏名・学籍番号・クラスで検索..."
-          value={search}
+          value={searchInput}
         />
         {search ? (
-          <StudentSearchResults
-            classRoomId={classRoomId}
-            items={searchPage?.items ?? []}
-          />
+          <div className="space-y-3">
+            <StudentSearchResults
+              classRoomId={classRoomId}
+              items={searchPage?.items ?? []}
+            />
+            {searchPage && searchPage.total > searchPage.limit ? (
+              <Pagination
+                currentPage={
+                  Math.floor(searchPage.offset / searchPage.limit) + 1
+                }
+                onPageChange={onSearchPageChange}
+                pageCount={Math.max(
+                  1,
+                  Math.ceil(searchPage.total / searchPage.limit)
+                )}
+                pageSize={searchPage.limit}
+                totalItems={searchPage.total}
+              />
+            ) : null}
+          </div>
         ) : null}
       </div>
 
