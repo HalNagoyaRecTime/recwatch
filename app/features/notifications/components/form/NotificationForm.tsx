@@ -1,4 +1,4 @@
-import { CalendarClock, Send } from "lucide-react";
+import { CalendarClock, Plus, Send, Trash2 } from "lucide-react";
 
 import { Button } from "~/components/ui/button/Button";
 import { ButtonLink } from "~/components/ui/button/ButtonLink";
@@ -15,6 +15,7 @@ import type {
   NotificationDraft,
 } from "~/features/notifications/model/notification-draft";
 import type { NotificationDraftErrors } from "~/features/notifications/model/notification-draft-validation";
+import type { NotificationImportanceDto } from "~/features/notifications/api/dto/notification-common-dto";
 
 type NotificationFormProps = {
   draft: NotificationDraft;
@@ -22,9 +23,15 @@ type NotificationFormProps = {
   audienceOptions: NotificationAudienceOption[];
   isAudienceLoading?: boolean;
   audienceError?: string | null;
+  configError?: string | null;
+  importanceOptions?: NotificationImportanceDto[];
+  recipientCount?: number | null;
+  recipientCountError?: string | null;
+  isRecipientCountLoading?: boolean;
   isSubmissionDisabled?: boolean;
   isSubmitting: boolean;
   isAudienceDisabled?: boolean;
+  isFullEditDisabled?: boolean;
   submitLabel?: string;
   cancelTo?: string;
   onChange: (draft: NotificationDraft) => void;
@@ -52,15 +59,27 @@ const deliveryTimingOptions = [
   { label: "予約配信", value: "scheduled" },
 ] as const;
 
+const importanceLabels: Record<NotificationImportanceDto, string> = {
+  low: "低",
+  normal: "通常",
+  high: "高",
+};
+
 export function NotificationForm({
   draft,
   errors,
   audienceOptions,
   isAudienceLoading = false,
   audienceError = null,
+  configError = null,
+  importanceOptions = [],
+  recipientCount = null,
+  recipientCountError = null,
+  isRecipientCountLoading = false,
   isSubmissionDisabled = false,
   isSubmitting,
   isAudienceDisabled = false,
+  isFullEditDisabled = false,
   submitLabel,
   cancelTo = "/notifications",
   onChange,
@@ -70,14 +89,19 @@ export function NotificationForm({
   const deliveryTiming: NotificationDeliveryTiming =
     draft.deliveryTiming ?? "now";
   const canSubmit =
-    draft.title.trim().length > 0 &&
-    draft.body.trim().length > 0 &&
-    (draft.audienceType === "all" || draft.audienceId.length > 0) &&
-    (deliveryTiming === "now" || Boolean(draft.scheduledAt));
-  const filteredAudienceOptions = audienceOptions.filter(
-    (option) => option.type === draft.audienceType
+    draft.detailTitle.trim().length > 0 &&
+    draft.detailBody.trim().length > 0 &&
+    (isFullEditDisabled ||
+      (draft.title.trim().length > 0 &&
+        draft.body.trim().length > 0 &&
+        draft.audiences.length > 0 &&
+        draft.audiences.every(
+          (item) => item.type === "all" || item.targetId.length > 0
+        ) &&
+        (deliveryTiming === "now" || Boolean(draft.scheduledAt))));
+  const requiresAudienceOption = draft.audiences.some(
+    (item) => item.type !== "all"
   );
-  const requiresAudienceOption = draft.audienceType !== "all";
   const minimumScheduledAt = getMinimumScheduledAt();
 
   return (
@@ -103,6 +127,7 @@ export function NotificationForm({
               }
               aria-invalid={Boolean(errors.title)}
               className={inputClassName}
+              disabled={isFullEditDisabled}
               maxLength={50}
               onChange={(event) =>
                 onChange({ ...draft, title: event.currentTarget.value })
@@ -135,6 +160,7 @@ export function NotificationForm({
               }
               aria-invalid={Boolean(errors.body)}
               className={`${inputClassName} min-h-24 resize-y py-2`}
+              disabled={isFullEditDisabled}
               maxLength={200}
               onChange={(event) =>
                 onChange({ ...draft, body: event.currentTarget.value })
@@ -156,89 +182,231 @@ export function NotificationForm({
             ) : null}
           </label>
 
-          <div>
-            <p className="text-text-base mb-2 text-sm font-medium">
-              通知対象 <span className="text-tone-danger-text">*</span>
-            </p>
-            <Select
-              ariaLabel="通知対象"
-              disabled={isAudienceDisabled}
-              onValueChange={(audienceType) =>
-                onChange({ ...draft, audienceType, audienceId: "" })
+          <label className="block">
+            <span className="text-text-base mb-2 block text-sm font-medium">
+              詳細タイトル <span className="text-tone-danger-text">*</span>
+            </span>
+            <input
+              aria-label="詳細タイトル*"
+              aria-invalid={Boolean(errors.detailTitle)}
+              className={inputClassName}
+              maxLength={100}
+              onChange={(event) =>
+                onChange({ ...draft, detailTitle: event.currentTarget.value })
               }
-              options={audienceTypeOptions}
-              value={draft.audienceType}
+              value={draft.detailTitle}
             />
-            <p className="text-text-subtle mt-1.5 text-xs">
-              全体 / クラス / 集合 / 競技参加者 / ユーザー
-            </p>
-          </div>
+            {errors.detailTitle ? (
+              <span className="text-tone-danger-text mt-1 block text-xs">
+                {errors.detailTitle}
+              </span>
+            ) : null}
+          </label>
 
-          {draft.audienceType !== "all" ? (
-            <div>
-              <label
-                htmlFor="notification-audience-target"
-                className="text-text-base mb-2 block text-sm font-medium"
-              >
-                対象 <span className="text-tone-danger-text">*</span>
-              </label>
-              <select
-                id="notification-audience-target"
-                className={`${inputClassName} h-9 appearance-auto`}
-                value={draft.audienceId}
+          <label className="block">
+            <span className="text-text-base mb-2 block text-sm font-medium">
+              詳細本文 <span className="text-tone-danger-text">*</span>
+            </span>
+            <textarea
+              aria-label="詳細本文*"
+              aria-invalid={Boolean(errors.detailBody)}
+              className={`${inputClassName} min-h-28 resize-y py-2`}
+              maxLength={2000}
+              onChange={(event) =>
+                onChange({ ...draft, detailBody: event.currentTarget.value })
+              }
+              value={draft.detailBody}
+            />
+            {errors.detailBody ? (
+              <span className="text-tone-danger-text mt-1 block text-xs">
+                {errors.detailBody}
+              </span>
+            ) : null}
+          </label>
+
+          <fieldset disabled={isFullEditDisabled}>
+            <p className="text-text-base mb-2 text-sm font-medium">重要度</p>
+            <Select
+              ariaLabel="重要度"
+              disabled={importanceOptions.length === 0 || isFullEditDisabled}
+              onValueChange={(importance) => onChange({ ...draft, importance })}
+              options={importanceOptions.map((value) => ({
+                value,
+                label: importanceLabels[value],
+              }))}
+              value={draft.importance}
+            />
+            {configError ? (
+              <p className="text-tone-danger-text mt-1.5 text-xs">
+                {configError}
+              </p>
+            ) : null}
+          </fieldset>
+
+          <fieldset disabled={isFullEditDisabled}>
+            <div className="mb-2 flex items-center justify-between gap-3">
+              <p className="text-text-base text-sm font-medium">
+                通知対象 <span className="text-tone-danger-text">*</span>
+              </p>
+              <Button
                 disabled={
                   isAudienceDisabled ||
-                  isAudienceLoading ||
-                  Boolean(audienceError)
+                  draft.audiences.some((item) => item.type === "all")
                 }
-                aria-invalid={Boolean(errors.audienceId)}
-                onChange={(event) =>
-                  onChange({ ...draft, audienceId: event.currentTarget.value })
+                icon={Plus}
+                onClick={() =>
+                  onChange({
+                    ...draft,
+                    audiences: [
+                      ...draft.audiences,
+                      {
+                        key: `audience-${Date.now()}`,
+                        type: "class_room",
+                        targetId: "",
+                      },
+                    ],
+                  })
                 }
+                size="sm"
+                type="button"
+                variant="secondary"
               >
-                <option value="">対象を選択</option>
-                {filteredAudienceOptions.map((option) => (
-                  <option key={option.id} value={option.id}>
-                    {option.name}
-                  </option>
-                ))}
-              </select>
-              {isAudienceLoading ? (
-                <p className="text-text-subtle mt-1.5 text-xs">
-                  通知対象を読み込み中...
-                </p>
-              ) : audienceError ? (
-                <div className="mt-1.5 flex items-center gap-3">
-                  <p className="text-tone-danger-text text-xs">
-                    {audienceError}
-                  </p>
-                  {onAudienceReload ? (
-                    <button
-                      type="button"
-                      className="text-brand-primary text-xs font-semibold underline underline-offset-2"
-                      onClick={onAudienceReload}
-                    >
-                      再試行
-                    </button>
-                  ) : null}
-                </div>
-              ) : filteredAudienceOptions.length === 0 ? (
-                <p className="text-text-subtle mt-1.5 text-xs">
-                  選択できる対象がありません。
-                </p>
-              ) : null}
-              {errors.audienceId ? (
-                <p className="text-tone-danger-text mt-1.5 text-xs">
-                  {errors.audienceId}
-                </p>
-              ) : null}
+                対象を追加
+              </Button>
             </div>
-          ) : null}
-
-          <div>
-            <p className="text-text-base mb-2 text-sm font-medium">
-              配信タイミング <span className="text-tone-danger-text">*</span>
+            <div className="space-y-3">
+              {draft.audiences.map((audience, index) => {
+                const filteredAudienceOptions = audienceOptions.filter(
+                  (option) => option.type === audience.type
+                );
+                return (
+                  <div
+                    key={audience.key}
+                    className="border-border-base rounded-md border p-3"
+                  >
+                    <div className="flex items-center gap-2">
+                      <div className="grid min-w-0 flex-1 gap-2 sm:grid-cols-2">
+                        <Select
+                          ariaLabel={`通知対象 ${index + 1}`}
+                          disabled={isAudienceDisabled}
+                          onValueChange={(type) =>
+                            onChange({
+                              ...draft,
+                              audiences:
+                                type === "all"
+                                  ? [{ ...audience, type, targetId: "" }]
+                                  : draft.audiences.map((item) =>
+                                      item.key === audience.key
+                                        ? { ...item, type, targetId: "" }
+                                        : item
+                                    ),
+                            })
+                          }
+                          options={audienceTypeOptions}
+                          value={audience.type}
+                        />
+                        {audience.type !== "all" ? (
+                          <select
+                            aria-label={`対象 ${index + 1}`}
+                            className={`${inputClassName} appearance-auto`}
+                            value={audience.targetId}
+                            disabled={
+                              isAudienceDisabled ||
+                              isAudienceLoading ||
+                              Boolean(audienceError)
+                            }
+                            onChange={(event) =>
+                              onChange({
+                                ...draft,
+                                audiences: draft.audiences.map((item) =>
+                                  item.key === audience.key
+                                    ? {
+                                        ...item,
+                                        targetId: event.currentTarget.value,
+                                      }
+                                    : item
+                                ),
+                              })
+                            }
+                          >
+                            <option value="">対象を選択</option>
+                            {filteredAudienceOptions.map((option) => (
+                              <option
+                                key={`${option.type}-${option.id}`}
+                                value={option.id}
+                              >
+                                {option.name}
+                              </option>
+                            ))}
+                          </select>
+                        ) : null}
+                      </div>
+                      {draft.audiences.length > 1 ? (
+                        <Button
+                          aria-label={`通知対象 ${index + 1}を削除`}
+                          icon={Trash2}
+                          iconOnly
+                          onClick={() =>
+                            onChange({
+                              ...draft,
+                              audiences: draft.audiences.filter(
+                                (item) => item.key !== audience.key
+                              ),
+                            })
+                          }
+                          size="sm"
+                          type="button"
+                          variant="ghost"
+                        />
+                      ) : null}
+                    </div>
+                    {errors[`audiences.${index}`] ? (
+                      <p className="text-tone-danger-text mt-1.5 text-xs">
+                        {errors[`audiences.${index}`]}
+                      </p>
+                    ) : null}
+                  </div>
+                );
+              })}
+            </div>
+            {errors.audiences ? (
+              <p className="text-tone-danger-text mt-1.5 text-xs">
+                {errors.audiences}
+              </p>
+            ) : null}
+            {isAudienceLoading ? (
+              <p className="text-text-subtle mt-1.5 text-xs">
+                通知対象を読み込み中...
+              </p>
+            ) : audienceError ? (
+              <div className="mt-1.5 flex items-center gap-3">
+                <p className="text-tone-danger-text text-xs">{audienceError}</p>
+                {onAudienceReload ? (
+                  <button
+                    type="button"
+                    className="text-brand-primary text-xs font-semibold underline underline-offset-2"
+                    onClick={onAudienceReload}
+                  >
+                    再試行
+                  </button>
+                ) : null}
+              </div>
+            ) : null}
+            <p className="text-text-subtle mt-2 text-xs" aria-live="polite">
+              {isRecipientCountLoading
+                ? "対象人数を確認中..."
+                : recipientCountError
+                  ? `対象人数を取得できませんでした: ${recipientCountError}`
+                  : recipientCount === null
+                    ? null
+                    : `対象候補 ${recipientCount.toLocaleString("ja-JP")}人`}
             </p>
+          </fieldset>
+
+          <fieldset disabled={isFullEditDisabled}>
+            <legend className="text-text-base mb-2 text-sm font-medium">
+              配信タイミング <span className="text-tone-danger-text">*</span>
+            </legend>
             <SegmentedControl
               ariaLabel="配信タイミング"
               behavior="selection"
@@ -287,7 +455,7 @@ export function NotificationForm({
                 作成後、対象ユーザーへすぐにプッシュ通知を送信します。
               </p>
             )}
-          </div>
+          </fieldset>
         </div>
       </LayeredPanel>
 
@@ -300,8 +468,11 @@ export function NotificationForm({
             !canSubmit ||
             isSubmissionDisabled ||
             isSubmitting ||
-            (requiresAudienceOption &&
-              (isAudienceLoading || Boolean(audienceError)))
+            (!isFullEditDisabled &&
+              (Boolean(configError) ||
+                importanceOptions.length === 0 ||
+                (requiresAudienceOption &&
+                  (isAudienceLoading || Boolean(audienceError)))))
           }
           icon={deliveryTiming === "now" ? Send : CalendarClock}
           size="lg"

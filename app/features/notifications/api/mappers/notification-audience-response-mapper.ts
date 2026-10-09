@@ -2,6 +2,8 @@ import { ClientError, ClientErrors } from "~/lib/client-error";
 import type { NotificationAudienceOption } from "~/features/notifications/model/notification-audience";
 import type {
   ClassRoomAudienceApiDto,
+  UserAudienceApiDto,
+  UserAudiencePageApiDto,
   ClassRoomAudiencePageApiDto,
   EventAudienceApiDto,
   EventAudiencePageApiDto,
@@ -9,6 +11,7 @@ import type {
 } from "~/features/notifications/api/dto/notification-audience-api-dto";
 import {
   isClassRoomAudiencePageResponse,
+  isUserAudienceResponse,
   isClassRoomAudienceResponse,
   isEventAudienceDetailResponse,
   isEventAudiencePageResponse,
@@ -81,6 +84,7 @@ export function toNotificationAudienceOptions(input: {
   classrooms: ClassRoomAudienceApiDto[];
   gatherings: GatheringAudienceApiDto[];
   events: EventAudienceApiDto[];
+  users?: UserAudienceApiDto[];
 }): NotificationAudienceOption[] {
   return [
     ...input.classrooms.map((classroom) => ({
@@ -92,6 +96,11 @@ export function toNotificationAudienceOptions(input: {
       id: String(gathering.gathering_id),
       name: formatGatheringName(gathering),
       type: "gathering" as const,
+    })),
+    ...(input.users ?? []).map((user) => ({
+      id: String(user.user_id),
+      name: user.display_name,
+      type: "user" as const,
     })),
     ...input.events.map((event) => ({
       id: String(event.event_id),
@@ -147,4 +156,22 @@ function formatGatheringName(gathering: GatheringAudienceApiDto) {
 
 function unexpectedResponse() {
   return new ClientError(ClientErrors.RESPONSE_PARSE_ERROR);
+}
+
+export function toUserAudiencePage(response: unknown): UserAudiencePageApiDto {
+  if (
+    !isClassRoomAudiencePageResponse(response) ||
+    !response.items.every(isUserAudienceResponse)
+  ) {
+    throw unexpectedResponse();
+  }
+  return {
+    items: response.items.map((user) => ({
+      user_id: user.user_id,
+      display_name: user.display_name,
+    })),
+    total: response.total,
+    limit: response.limit,
+    offset: response.offset,
+  };
 }
