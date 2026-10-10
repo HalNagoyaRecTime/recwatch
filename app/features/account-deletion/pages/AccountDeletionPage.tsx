@@ -45,13 +45,10 @@ export function AccountDeletionPage({
 
   return (
     <AccountDeletionLayout>
-      <header className="space-y-2 text-center">
-        <h1 className="text-2xl font-semibold tracking-tight text-[#333333] sm:text-3xl">
-          アカウントを削除
+      <header className="text-center">
+        <h1 className="text-sm leading-7 font-normal text-black">
+          アカウントの削除手続き
         </h1>
-        <p className="text-text-muted mx-auto w-full max-w-md text-center text-sm leading-7">
-          アカウントの削除手続きを行います。
-        </p>
       </header>
 
       <section className="space-y-2">
@@ -59,9 +56,7 @@ export function AccountDeletionPage({
           onClick={handleStartDeletion}
           isLoading={isSubmitting}
         >
-          {isSubmitting
-            ? "Microsoft アカウントで認証する..."
-            : "Microsoft アカウントで認証する"}
+          Microsoft アカウントで認証する
         </AccountDeletionMicrosoftButton>
         <AccountDeletionErrorMessage>
           {errorMessage}

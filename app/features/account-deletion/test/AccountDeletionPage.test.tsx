@@ -61,20 +61,16 @@ describe("AccountDeletionPage", () => {
     expect(
       screen.getByRole("heading", {
         level: 1,
-        name: "アカウントを削除",
+        name: "アカウントの削除手続き",
       })
     ).toBeInTheDocument();
     expect(screen.getByText("RE:CREATION")).toBeInTheDocument();
     expect(
       screen.getByRole("heading", {
         level: 1,
-        name: "アカウントを削除",
+        name: "アカウントの削除手続き",
       })
-    ).toHaveClass("text-[#333333]");
-    expect(screen.getByText("アカウントの削除手続きを行います。")).toHaveClass(
-      "max-w-md",
-      "text-center"
-    );
+    ).toHaveClass("text-black");
     expect(screen.queryByText(/recwatch/i)).not.toBeInTheDocument();
     expect(screen.getByText("Produced by HAL Nagoya")).toBeInTheDocument();
     expect(
@@ -186,8 +182,8 @@ describe("AccountDeletionPage", () => {
     const main = screen.getByRole("main");
     expect(main).toHaveClass("bg-white");
     expect(
-      screen.getByRole("heading", { name: "アカウントを削除" })
-    ).toHaveClass("text-[#333333]");
+      screen.getByRole("heading", { name: "アカウントの削除手続き" })
+    ).toHaveClass("text-black");
   });
 
   it("URLのuserIdやメールアドレスに依存せず表示する", () => {
@@ -205,7 +201,7 @@ describe("AccountDeletionPage", () => {
     expect(
       screen.getByRole("heading", {
         level: 1,
-        name: "アカウントを削除",
+        name: "アカウントの削除手続き",
       })
     ).toBeInTheDocument();
   });

@@ -90,9 +90,9 @@ export function AccountDeletionLayout({
       className="account-deletion-viewport viewport-min-height box-border flex flex-col items-center bg-white text-[#333333]"
       style={accountDeletionThemeStyle}
     >
-      <section className="flex w-full max-w-90 flex-col gap-6">
+      <section className="flex w-full max-w-90 flex-col gap-2">
         <AccountDeletionBrand />
-        {children}
+        <div className="flex flex-col gap-6">{children}</div>
       </section>
       <AccountDeletionFooter />
     </main>
