@@ -61,14 +61,14 @@ describe("AccountDeletionPage", () => {
     expect(
       screen.getByRole("heading", {
         level: 1,
-        name: "アカウントを削除",
+        name: "アカウント削除",
       })
     ).toBeInTheDocument();
     expect(screen.getByText("RE:CREATION")).toBeInTheDocument();
     expect(
       screen.getByRole("heading", {
         level: 1,
-        name: "アカウントを削除",
+        name: "アカウント削除",
       })
     ).toHaveClass("text-[#333333]");
     expect(screen.getByText("アカウントの削除手続きを行います。")).toHaveClass(
@@ -78,7 +78,7 @@ describe("AccountDeletionPage", () => {
     expect(screen.queryByText(/recwatch/i)).not.toBeInTheDocument();
     expect(screen.getByText("Produced by HAL Nagoya")).toBeInTheDocument();
     expect(
-      screen.getByText("Developed by RE:CREATION Development Team")
+      screen.getByText("Developed by RE:CREATION App Team")
     ).toBeInTheDocument();
     expect(
       screen.queryByText("Microsoft アカウントが削除されることはありません。")
@@ -91,7 +91,7 @@ describe("AccountDeletionPage", () => {
     });
     expect(microsoftButton).toBeInTheDocument();
     expect(microsoftButton).toHaveClass(
-      "h-12",
+      "min-h-12",
       "bg-[#333333]",
       "font-medium",
       "rounded-sm"
@@ -185,9 +185,9 @@ describe("AccountDeletionPage", () => {
 
     const main = screen.getByRole("main");
     expect(main).toHaveClass("bg-white");
-    expect(
-      screen.getByRole("heading", { name: "アカウントを削除" })
-    ).toHaveClass("text-[#333333]");
+    expect(screen.getByRole("heading", { name: "アカウント削除" })).toHaveClass(
+      "text-[#333333]"
+    );
   });
 
   it("URLのuserIdやメールアドレスに依存せず表示する", () => {
@@ -205,7 +205,7 @@ describe("AccountDeletionPage", () => {
     expect(
       screen.getByRole("heading", {
         level: 1,
-        name: "アカウントを削除",
+        name: "アカウント削除",
       })
     ).toBeInTheDocument();
   });

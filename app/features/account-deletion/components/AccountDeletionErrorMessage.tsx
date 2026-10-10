@@ -6,7 +6,15 @@ export function AccountDeletionErrorMessage({
   children: ReactNode;
 }) {
   return (
-    <div className="border-tone-danger-border bg-tone-danger-bg text-tone-danger-text flex min-h-10 items-center justify-center rounded-sm border px-4 py-3 text-sm leading-5">
+    <div
+      role={children ? "alert" : undefined}
+      aria-atomic="true"
+      className={
+        children
+          ? "flex min-h-12 items-center justify-center rounded-sm bg-[#B51F32] p-4 text-center text-sm leading-5 font-normal wrap-anywhere text-white"
+          : "min-h-12"
+      }
+    >
       {children}
     </div>
   );

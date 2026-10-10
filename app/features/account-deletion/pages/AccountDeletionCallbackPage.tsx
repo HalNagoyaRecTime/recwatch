@@ -123,8 +123,8 @@ function ConfirmationView({
   return (
     <div className="space-y-5">
       <header className="text-center">
-        <h1 className="text-2xl font-semibold tracking-tight text-[#333333] sm:text-3xl">
-          アカウントを削除
+        <h1 className="text-xl leading-tight font-semibold text-[#333333]">
+          アカウント削除
         </h1>
       </header>
 

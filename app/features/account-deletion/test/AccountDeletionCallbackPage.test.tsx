@@ -79,11 +79,11 @@ describe("AccountDeletionCallbackPage", () => {
     expect(screen.queryByText(/recwatch/i)).not.toBeInTheDocument();
     expect(screen.getByText("Produced by HAL Nagoya")).toBeInTheDocument();
     expect(
-      screen.getByText("Developed by RE:CREATION Development Team")
+      screen.getByText("Developed by RE:CREATION App Team")
     ).toBeInTheDocument();
     expect(
       screen.getByRole("heading", {
-        name: "アカウントを削除",
+        name: "アカウント削除",
       })
     ).toBeInTheDocument();
     expect(screen.getByText("確認事項")).toBeInTheDocument();

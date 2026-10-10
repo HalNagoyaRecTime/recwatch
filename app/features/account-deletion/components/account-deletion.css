@@ -1,0 +1,56 @@
+@font-face {
+  font-family: "Account Deletion Noto Sans JP";
+  src: url("/fonts/account-deletion/noto-sans-jp-regular.woff2") format("woff2");
+  font-weight: 400;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Account Deletion Noto Sans JP";
+  src: url("/fonts/account-deletion/noto-sans-jp-medium.woff2") format("woff2");
+  font-weight: 500 700;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Account Deletion Noto Sans JP";
+  src: url("/fonts/account-deletion/noto-sans-jp-black.woff2") format("woff2");
+  font-weight: 800 900;
+  font-display: swap;
+}
+
+.account-deletion-viewport {
+  --deletion-viewport-height: 100vh;
+  --deletion-logo-size: min(220px, 57vw);
+  --deletion-title-size: min(24px, 6.25vw);
+  font-family: "Account Deletion Noto Sans JP", sans-serif;
+  padding-top: max(
+    calc(env(safe-area-inset-top, 0px) + 16px),
+    calc(
+      var(--deletion-viewport-height) * 0.36 - var(--deletion-logo-size) / 2 +
+        24px
+    )
+  );
+  padding-right: calc(16px + env(safe-area-inset-right, 0px));
+  padding-left: calc(16px + env(safe-area-inset-left, 0px));
+}
+
+@supports (height: 100dvh) {
+  .account-deletion-viewport {
+    --deletion-viewport-height: 100dvh;
+  }
+}
+
+@media (min-width: 600px) {
+  .account-deletion-viewport {
+    padding-right: calc(24px + env(safe-area-inset-right, 0px));
+    padding-left: calc(24px + env(safe-area-inset-left, 0px));
+  }
+}
+
+@media (min-width: 840px) {
+  .account-deletion-viewport {
+    padding-right: calc(32px + env(safe-area-inset-right, 0px));
+    padding-left: calc(32px + env(safe-area-inset-left, 0px));
+  }
+}

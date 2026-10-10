@@ -4,6 +4,7 @@ import type { CSSProperties, ReactNode } from "react";
 import { AccountDeletionBrand } from "~/features/account-deletion/components/AccountDeletionBrand";
 import { AccountDeletionFooter } from "~/features/account-deletion/components/AccountDeletionFooter";
 import { applyTheme, isThemeMode } from "~/lib/theme";
+import "~/features/account-deletion/components/account-deletion.css";
 
 type AccountDeletionLayoutProps = {
   children: ReactNode;
@@ -86,16 +87,10 @@ export function AccountDeletionLayout({
 
   return (
     <main
-      className="account-deletion-viewport viewport-min-height box-border flex flex-col items-center justify-center-safe bg-white text-[#333333]"
-      style={{
-        ...accountDeletionThemeStyle,
-        paddingTop: "calc(2rem + env(safe-area-inset-top, 0px))",
-        paddingRight: "calc(1.5rem + env(safe-area-inset-right, 0px))",
-        paddingBottom: "calc(2rem + env(safe-area-inset-bottom, 0px))",
-        paddingLeft: "calc(1.5rem + env(safe-area-inset-left, 0px))",
-      }}
+      className="account-deletion-viewport viewport-min-height box-border flex flex-col items-center bg-white text-[#333333]"
+      style={accountDeletionThemeStyle}
     >
-      <section className="flex w-full max-w-sm flex-1 flex-col justify-center gap-4">
+      <section className="flex w-full max-w-90 flex-col gap-6">
         <AccountDeletionBrand />
         {children}
       </section>
