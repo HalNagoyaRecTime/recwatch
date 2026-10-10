@@ -17,7 +17,7 @@ export function toNotificationCreateRequest(
       push: { title, body },
       detail: {
         title: draft.detailTitle.trim(),
-        body: draft.detailBody.trim(),
+        body: draft.detailBody,
       },
     },
     audience: toNotificationAudienceInput(draft.audiences),

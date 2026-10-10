@@ -45,6 +45,31 @@ function createCommandApi(
 }
 
 describe("notification pages", () => {
+  it("MarkdownプレビューにはPushではなく詳細本文を表示する", () => {
+    render(
+      <MemoryRouter>
+        <NotificationCreatePage
+          api={createCommandApi()}
+          audienceApi={{ load: vi.fn().mockResolvedValue([]) }}
+          configApi={mockNotificationConfigApi}
+        />
+      </MemoryRouter>
+    );
+    fireEvent.change(screen.getByLabelText("本文*"), {
+      target: { value: "# Push本文" },
+    });
+    fireEvent.change(screen.getByLabelText("詳細本文*"), {
+      target: { value: "# 詳細本文" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "本文のプレビュー" }));
+    expect(
+      screen.getByRole("heading", { name: "詳細本文" })
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("heading", { name: "Push本文" })
+    ).not.toBeInTheDocument();
+  });
+
   it("v2一覧Responseを表示する", async () => {
     const queryApi: AdminNotificationQueryApi = {
       list: vi.fn().mockResolvedValue(adminNotificationListFixture),
