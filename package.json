@@ -4,6 +4,7 @@
   "type": "module",
   "scripts": {
     "build": "react-router build",
+    "postbuild": "node scripts/verify-legal-build.mjs",
     "dev": "react-router dev",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
@@ -13,7 +14,8 @@
     "preview": "vite preview --host 0.0.0.0",
     "test": "vitest run",
     "typecheck": "react-router typegen && tsc",
-    "typecheck:quick": "tsc --noEmit --pretty false"
+    "typecheck:quick": "tsc --noEmit --pretty false",
+    "verify:legal:http": "node scripts/verify-legal-http.mjs"
   },
   "dependencies": {
     "@floating-ui/react": "^0.27.19",
