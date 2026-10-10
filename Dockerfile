@@ -1,4 +1,4 @@
-FROM node:22-bookworm-slim AS build-env
+FROM node:22-alpine AS build-env
 WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci

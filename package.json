@@ -2,15 +2,9 @@
   "name": "recwatch",
   "private": true,
   "type": "module",
-  "overrides": {
-    "miniflare@5.20261006.0-alpha": {
-      "sharp": "0.35.5"
-    },
-    "source-map-js": "1.2.2"
-  },
   "scripts": {
     "build": "react-router build",
-    "postbuild": "node scripts/verify-legal-build.mjs && node scripts/verify-legal-http.mjs",
+    "postbuild": "node scripts/verify-legal-build.mjs",
     "dev": "react-router dev",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
@@ -20,7 +14,8 @@
     "preview": "vite preview --host 0.0.0.0",
     "test": "vitest run",
     "typecheck": "react-router typegen && tsc",
-    "typecheck:quick": "tsc --noEmit --pretty false"
+    "typecheck:quick": "tsc --noEmit --pretty false",
+    "verify:legal:http": "node scripts/verify-legal-http.mjs"
   },
   "dependencies": {
     "@floating-ui/react": "^0.27.19",
@@ -58,7 +53,6 @@
     "typescript-eslint": "^8.70.1",
     "vite": "^7.3.6",
     "vite-tsconfig-paths": "^6.1.1",
-    "vitest": "^4.1.11",
-    "wrangler": "4.148.0"
+    "vitest": "^4.1.11"
   }
 }
