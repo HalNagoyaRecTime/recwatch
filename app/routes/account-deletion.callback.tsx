@@ -10,7 +10,7 @@ import {
 
 export function meta() {
   return [
-    { title: "アカウント削除 | RE:CREATION" },
+    { title: "RE:CREATION | アカウント削除" },
     { name: "theme-color", content: "#ffffff" },
     { name: "color-scheme", content: "light" },
   ];

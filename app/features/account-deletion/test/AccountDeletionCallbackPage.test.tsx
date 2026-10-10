@@ -83,7 +83,7 @@ describe("AccountDeletionCallbackPage", () => {
     ).toBeInTheDocument();
     expect(
       screen.getByRole("heading", {
-        name: "アカウント削除",
+        name: "アカウントを削除",
       })
     ).toBeInTheDocument();
     expect(screen.getByText("確認事項")).toBeInTheDocument();

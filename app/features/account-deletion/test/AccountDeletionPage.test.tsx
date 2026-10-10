@@ -61,14 +61,14 @@ describe("AccountDeletionPage", () => {
     expect(
       screen.getByRole("heading", {
         level: 1,
-        name: "アカウント削除",
+        name: "アカウントを削除",
       })
     ).toBeInTheDocument();
     expect(screen.getByText("RE:CREATION")).toBeInTheDocument();
     expect(
       screen.getByRole("heading", {
         level: 1,
-        name: "アカウント削除",
+        name: "アカウントを削除",
       })
     ).toHaveClass("text-[#333333]");
     expect(screen.getByText("アカウントの削除手続きを行います。")).toHaveClass(
@@ -185,9 +185,9 @@ describe("AccountDeletionPage", () => {
 
     const main = screen.getByRole("main");
     expect(main).toHaveClass("bg-white");
-    expect(screen.getByRole("heading", { name: "アカウント削除" })).toHaveClass(
-      "text-[#333333]"
-    );
+    expect(
+      screen.getByRole("heading", { name: "アカウントを削除" })
+    ).toHaveClass("text-[#333333]");
   });
 
   it("URLのuserIdやメールアドレスに依存せず表示する", () => {
@@ -205,7 +205,7 @@ describe("AccountDeletionPage", () => {
     expect(
       screen.getByRole("heading", {
         level: 1,
-        name: "アカウント削除",
+        name: "アカウントを削除",
       })
     ).toBeInTheDocument();
   });
