@@ -9,7 +9,7 @@ import { GatheringSettingsSavedStep } from "~/features/event-gatherings/componen
 import { GatheringSettingsStep } from "~/features/event-gatherings/components/GatheringSettingsStep";
 import type { EventGatheringSettings } from "~/features/event-gatherings/model/event-gathering-settings";
 import type { GatheringSpotGateway } from "~/features/gathering-spots/api/contracts/gathering-spot-gateway";
-import type { EventDetailOutletContext } from "~/features/sports/pages/EventDetailPage";
+import type { EventDetailOutletContext } from "~/features/events/pages/EventDetailPage";
 
 type EventGatheringSettingsPageProps = {
   memberGateway?: GatheringMemberGateway;
@@ -25,7 +25,7 @@ export function EventGatheringSettingsPage({
   settingsGateway,
   spotGateway,
 }: EventGatheringSettingsPageProps) {
-  const { competitionId } = useParams();
+  const { eventId: eventIdParam } = useParams();
   const navigate = useNavigate();
   // 詳細の子ルートとして開かれた場合のみ受け取れる。テストなど単体描画時は undefined。
   const outletContext = useOutletContext<
@@ -33,7 +33,7 @@ export function EventGatheringSettingsPage({
   >();
   const [savedSettings, setSavedSettings] =
     useState<EventGatheringSettings | null>(null);
-  const eventId = Number(competitionId);
+  const eventId = Number(eventIdParam);
   const isValidEventId = Number.isInteger(eventId) && eventId > 0;
   // ID が不正なら詳細も表示できないため一覧へ戻す。
   // モーダルは閉じるアニメーション中に onClose が変わると閉じ直すため、関数を固定しておく。

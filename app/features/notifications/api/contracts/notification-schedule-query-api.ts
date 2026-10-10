@@ -1,5 +1,6 @@
 import type {
   NotificationScheduleDetailDto,
+  NotificationScheduleListItemDto,
   NotificationScheduleListQueryDto,
   NotificationScheduleListResponseDto,
   NotificationResultDeliveryDto,
@@ -9,6 +10,9 @@ import type {
 
 export type NotificationResultDelivery = NotificationResultDeliveryDto;
 export type NotificationScheduleDetail = NotificationScheduleDetailDto;
+export type NotificationScheduleListItem = NotificationScheduleListItemDto;
+export type NotificationDeliveryProgress =
+  NotificationScheduleDetailDto["deliveryProgress"];
 export type NotificationScheduleResults = NotificationScheduleResultsDto;
 
 export interface NotificationScheduleQueryApi {

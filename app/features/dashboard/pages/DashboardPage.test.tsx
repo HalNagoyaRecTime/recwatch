@@ -37,6 +37,10 @@ describe("DashboardPage", () => {
       "href",
       "/teachers"
     );
+    expect(screen.getByRole("link", { name: "クラス管理" })).toHaveAttribute(
+      "href",
+      "/classrooms"
+    );
     expect(
       screen.queryByRole("link", { name: "出場メンバー管理" })
     ).not.toBeInTheDocument();

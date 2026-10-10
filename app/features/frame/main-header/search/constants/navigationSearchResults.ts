@@ -25,7 +25,7 @@ export const NAVIGATION_SEARCH_RESULTS: readonly NavigationSearchResult[] = [
     id: "classrooms",
     title: "クラス管理",
     category: "管理",
-    to: "/classroom",
+    to: "/classrooms",
     keywords: ["教室", "クラス"],
   },
   {

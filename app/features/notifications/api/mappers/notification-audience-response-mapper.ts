@@ -10,6 +10,7 @@ import type {
 import {
   isClassRoomAudiencePageResponse,
   isClassRoomAudienceResponse,
+  isEventAudienceDetailResponse,
   isEventAudiencePageResponse,
   isEventAudienceResponse,
   isGatheringAudienceItemResponse,
@@ -54,6 +55,26 @@ export function toGatheringAudienceDtos(
   }
 
   return response.map(toGatheringDto);
+}
+
+export function toEventGatheringAudienceDtos(
+  response: unknown,
+  event: EventAudienceApiDto
+): GatheringAudienceApiDto[] {
+  if (!isEventAudienceDetailResponse(response)) {
+    throw unexpectedResponse();
+  }
+
+  return response.rounds.flatMap((round) =>
+    round.gatherings.map((gathering) =>
+      toGatheringDto({
+        gathering_id: gathering.gathering_id,
+        event_name: event.event_name,
+        gathering_spot_name: gathering.gathering_spot.gathering_spot_name,
+        gathering_time: gathering.gathering_time,
+      })
+    )
+  );
 }
 
 export function toNotificationAudienceOptions(input: {
