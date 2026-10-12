@@ -10,21 +10,16 @@ const maxAttempts = 10;
 const initialRetryDelayMs = 1_000;
 const maxRetryDelayMs = 5_000;
 
+const legal = JSON.parse(
+  await readFile(new URL("./legal-pages.json", import.meta.url), "utf8")
+);
 const pages = await Promise.all(
-  [
-    {
-      path: "/legal/terms.html",
-      source: resolve(buildRoot, "legal/terms.html"),
-      title: "RE:CREATION 利用規約",
-    },
-    {
-      path: "/legal/privacy.html",
-      source: resolve(buildRoot, "legal/privacy.html"),
-      title: "RE:CREATION プライバシーポリシー",
-    },
-  ].map(async (page) => ({
+  legal.pages.map(async (page) => ({
     ...page,
-    expectedHtml: await readFile(page.source, "utf8"),
+    expectedHtml: await readFile(
+      resolve(buildRoot, "legal", page.fileName),
+      "utf8"
+    ),
   }))
 );
 

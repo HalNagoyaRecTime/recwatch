@@ -1,0 +1,30 @@
+{
+  "operator": "HAL名古屋",
+  "representative": "校長 荒井洋行",
+  "address": "愛知県名古屋市中村区名駅4-27-1",
+  "contactEmail": "takahashi.masa@nh.hal.ac.jp",
+  "accountDeletionPath": "/account-deletion",
+  "externalPrivacyLinks": [
+    "https://privacy.microsoft.com/ja-jp/privacystatement",
+    "https://policies.google.com/privacy?hl=ja",
+    "https://www.cloudflare.com/ja-jp/privacypolicy/"
+  ],
+  "enactedAt": {
+    "datetime": "2026-10-08",
+    "label": "2026年10月8日"
+  },
+  "pages": [
+    {
+      "path": "/legal/terms.html",
+      "fileName": "terms.html",
+      "title": "RE:CREATION 利用規約",
+      "headingCount": 11
+    },
+    {
+      "path": "/legal/privacy.html",
+      "fileName": "privacy.html",
+      "title": "RE:CREATION プライバシーポリシー",
+      "headingCount": 9
+    }
+  ]
+}
