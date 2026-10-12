@@ -16,6 +16,7 @@ const relay: EventDetail = {
   rounds: [
     {
       round: 1,
+      startTime: null,
       gatherings: [
         {
           id: 101,
@@ -33,6 +34,7 @@ const relay: EventDetail = {
     },
     {
       round: 2,
+      startTime: null,
       gatherings: [
         {
           id: 103,

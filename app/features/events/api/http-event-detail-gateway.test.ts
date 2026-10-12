@@ -42,6 +42,7 @@ describe("createHttpEventDetailGateway", () => {
       rounds: [
         {
           round: 1,
+          startTime: null,
           gatherings: [
             {
               id: 101,

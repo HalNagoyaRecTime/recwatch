@@ -49,6 +49,7 @@ describe("createHttpEventGatheringSettingsGateway", () => {
       rounds: [
         {
           round: 1,
+          startTime: null,
           gatherings: [
             {
               id: 101,
@@ -105,6 +106,7 @@ describe("createHttpEventGatheringSettingsGateway", () => {
       rounds: [
         {
           round: 1,
+          startTime: null,
           gatherings: [
             { gatheringId: 101, time: "10:45", spotId: 1 },
             { gatheringId: null, time: "10:55", spotId: 2 },
@@ -117,6 +119,7 @@ describe("createHttpEventGatheringSettingsGateway", () => {
       rounds: [
         {
           round: 1,
+          start_time: null,
           gatherings: [
             {
               gathering_id: 101,

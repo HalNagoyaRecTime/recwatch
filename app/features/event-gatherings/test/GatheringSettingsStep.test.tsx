@@ -1,4 +1,10 @@
-import { render, screen, waitFor, within } from "@testing-library/react";
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi, type Mock } from "vitest";
 
@@ -15,6 +21,7 @@ const existingSettings: EventGatheringSettings = {
   rounds: [
     {
       round: 1,
+      startTime: null,
       gatherings: [
         {
           id: 101,
@@ -32,6 +39,7 @@ const settingsWithMembers: EventGatheringSettings = {
   rounds: [
     {
       round: 1,
+      startTime: null,
       gatherings: [
         {
           id: 101,
@@ -139,6 +147,53 @@ function renderStep({
 }
 
 describe("GatheringSettingsStep", () => {
+  it("開始時刻を変更・解除しても集合を維持して保存する", async () => {
+    const save = vi.fn().mockResolvedValue(existingSettings);
+    renderStep({
+      settingsGateway: {
+        load: vi.fn().mockResolvedValue({
+          ...existingSettings,
+          rounds: existingSettings.rounds.map((round) => ({
+            ...round,
+            startTime: "11:00",
+          })),
+        }),
+        save,
+      },
+    });
+    const input = await screen.findByLabelText("Round 1 の開始時刻");
+    expect(input).toHaveValue("11:00");
+    fireEvent.change(input, { target: { value: "11:10" } });
+    const user = userEvent.setup();
+    await user.click(screen.getByRole("button", { name: "集合設定を保存" }));
+    await waitFor(() =>
+      expect(save).toHaveBeenLastCalledWith(12, {
+        rounds: [
+          {
+            round: 1,
+            startTime: "11:10",
+            gatherings: [{ gatheringId: 101, time: "10:45", spotId: 1 }],
+          },
+        ],
+      })
+    );
+    fireEvent.change(screen.getByLabelText("Round 1 の開始時刻"), {
+      target: { value: "" },
+    });
+    await user.click(screen.getByRole("button", { name: "集合設定を保存" }));
+    await waitFor(() =>
+      expect(save).toHaveBeenLastCalledWith(12, {
+        rounds: [
+          {
+            round: 1,
+            startTime: null,
+            gatherings: [{ gatheringId: 101, time: "10:45", spotId: 1 }],
+          },
+        ],
+      })
+    );
+  });
+
   it("既存の集合設定を読み込んで Round ごとに表示する", async () => {
     renderStep({
       settingsGateway: {
@@ -160,6 +215,7 @@ describe("GatheringSettingsStep", () => {
       rounds: [
         {
           round: 1,
+          startTime: null,
           gatherings: [
             {
               id: 101,
@@ -171,6 +227,7 @@ describe("GatheringSettingsStep", () => {
         },
         {
           round: 2,
+          startTime: null,
           gatherings: [
             {
               id: 102,
@@ -206,10 +263,12 @@ describe("GatheringSettingsStep", () => {
         rounds: [
           {
             round: 1,
+            startTime: null,
             gatherings: [{ gatheringId: 101, time: "10:45", spotId: 1 }],
           },
           {
             round: 2,
+            startTime: null,
             gatherings: [{ gatheringId: null, time: "11:00", spotId: 2 }],
           },
         ],

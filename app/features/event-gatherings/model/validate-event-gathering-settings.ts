@@ -52,6 +52,13 @@ export function validateEventGatheringSettings(
     }
     seenRounds.add(round.round);
 
+    if (round.startTime !== "" && !TIME_PATTERN.test(round.startTime)) {
+      errors.push({
+        roundKey: round.key,
+        message: "開始時刻は時刻形式で入力してください。",
+      });
+    }
+
     if (round.gatherings.length === 0) {
       errors.push({
         roundKey: round.key,
@@ -83,7 +90,11 @@ export function validateEventGatheringSettings(
       });
     }
 
-    roundInputs.push({ round: round.round, gatherings: gatheringInputs });
+    roundInputs.push({
+      round: round.round,
+      startTime: round.startTime || null,
+      gatherings: gatheringInputs,
+    });
   }
 
   if (errors.length > 0) return { errors };
