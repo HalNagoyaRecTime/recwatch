@@ -96,7 +96,6 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          wranglerVersion: "4.148.0"
           command: >-
             pages deploy build/client --project-name=recwatch
             --branch=${{ steps.target.outputs.pages_branch }}
