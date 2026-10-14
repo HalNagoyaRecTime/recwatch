@@ -224,6 +224,82 @@ describe("StudentClassRoomMembershipPanel", () => {
     });
   });
 
+  it("所属解除後に現在のページが範囲外になったら最終ページへ戻す", () => {
+    const onMemberPageChange = vi.fn();
+    render(
+      <StudentClassRoomMembershipPanel
+        api={api}
+        classRoom={member.classRoom!}
+        classRoomId={12}
+        memberPage={{ items: [], limit: 10, offset: 10, total: 10 }}
+        onMemberPageChange={onMemberPageChange}
+        onRevalidate={vi.fn()}
+        onSearchChange={vi.fn()}
+        onSearchPageChange={vi.fn()}
+        search=""
+        searchInput=""
+        searchPage={null}
+      />
+    );
+
+    expect(onMemberPageChange).toHaveBeenCalledWith(1);
+  });
+
+  it("操作を切り替えると以前のエラーを消して表示を重複させない", async () => {
+    api.updateStudentClassRoom.mockRejectedValueOnce(
+      new Error("所属変更に失敗しました。")
+    );
+    api.createStudent.mockRejectedValueOnce(new Error("登録に失敗しました。"));
+    render(
+      <StudentClassRoomMembershipPanel
+        api={api}
+        classRoom={member.classRoom!}
+        classRoomId={12}
+        memberPage={{ items: [], limit: 10, offset: 0, total: 0 }}
+        onMemberPageChange={vi.fn()}
+        onRevalidate={vi.fn()}
+        onSearchChange={vi.fn()}
+        onSearchPageChange={vi.fn()}
+        search="未所属"
+        searchInput="未所属"
+        searchPage={{
+          items: [{ ...member, attendanceNumber: null, classRoom: null }],
+          limit: 10,
+          offset: 0,
+          total: 1,
+        }}
+      />
+    );
+
+    const user = userEvent.setup();
+    await user.type(
+      screen.getByRole("spinbutton", {
+        name: "山田 花子の新しい出席番号",
+      }),
+      "5"
+    );
+    await user.click(screen.getByRole("button", { name: "このクラスに追加" }));
+    expect(screen.getAllByRole("alert")).toHaveLength(1);
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "学生の所属を変更できませんでした。"
+    );
+
+    await user.click(screen.getByRole("button", { name: "新しい生徒を登録" }));
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+
+    await user.type(screen.getByLabelText("氏名*"), "新規 太郎");
+    await user.type(screen.getByLabelText("学籍番号*"), "S100");
+    await user.type(screen.getByLabelText("出席番号*"), "10");
+    await user.click(screen.getByRole("button", { name: "保存する" }));
+    expect(screen.getAllByRole("alert")).toHaveLength(1);
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "学生を登録できませんでした。"
+    );
+
+    await user.click(screen.getByRole("button", { name: "キャンセル" }));
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
   it("対象クラスを固定して新しいStudentを登録する", async () => {
     api.createStudent.mockResolvedValue(member);
     render(
