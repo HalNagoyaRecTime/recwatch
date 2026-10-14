@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { Button } from "~/components/ui/button/Button";
 import { SearchField } from "~/components/ui/form/SearchField";
@@ -40,10 +40,25 @@ export function StudentClassRoomMembershipPanel({
   searchPage,
 }: StudentClassRoomMembershipPanelProps) {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
-  const { createStudent, error, isMutating, updateClassRoom } =
+  const { clearError, createStudent, error, isMutating, updateClassRoom } =
     useStudentClassRoomMembership({ api, onRevalidate });
   const currentPage = Math.floor(memberPage.offset / memberPage.limit) + 1;
   const pageCount = Math.max(1, Math.ceil(memberPage.total / memberPage.limit));
+
+  useEffect(() => {
+    if (currentPage <= pageCount) return;
+    onMemberPageChange(pageCount);
+  }, [currentPage, onMemberPageChange, pageCount]);
+
+  function openCreateForm() {
+    clearError();
+    setIsCreateOpen(true);
+  }
+
+  function closeCreateForm() {
+    clearError();
+    setIsCreateOpen(false);
+  }
 
   return (
     <section aria-labelledby="classroom-members-heading" className="space-y-5">
@@ -55,6 +70,12 @@ export function StudentClassRoomMembershipPanel({
           所属メンバー {memberPage.total}人
         </h3>
       </div>
+
+      {error && !isCreateOpen ? (
+        <p className="text-tone-danger-text text-sm" role="alert">
+          {error}
+        </p>
+      ) : null}
 
       <div className="space-y-2">
         <SearchField
@@ -131,28 +152,22 @@ export function StudentClassRoomMembershipPanel({
         ) : null}
       </div>
 
-      {error ? (
-        <p className="text-tone-danger-text text-sm" role="alert">
-          {error}
-        </p>
-      ) : null}
-
       <div className="border-border-base border-t pt-4">
         {isCreateOpen ? (
           <StudentForm
             classRooms={[classRoom]}
             fixedClassRoom={classRoom}
             isSubmitting={isMutating}
-            onCancel={() => setIsCreateOpen(false)}
+            onCancel={closeCreateForm}
             onSubmit={async (input) => {
-              if (await createStudent(input)) setIsCreateOpen(false);
+              if (await createStudent(input)) closeCreateForm();
             }}
             submitError={error}
           />
         ) : (
           <Button
             disabled={isMutating}
-            onClick={() => setIsCreateOpen(true)}
+            onClick={openCreateForm}
             type="button"
             variant="secondary"
           >

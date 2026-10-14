@@ -135,8 +135,11 @@ export function StudentForm({
         </label>
         <label className={labelClassName}>
           出席番号
+          {fixedClassRoom ? (
+            <span className="text-tone-danger-text"> *</span>
+          ) : null}
           <input
-            aria-label="出席番号"
+            aria-label={fixedClassRoom ? "出席番号*" : "出席番号"}
             className={inputClassName}
             disabled={isSubmitting}
             min={1}
