@@ -37,25 +37,25 @@ export function NotificationActionMenu({
 
   const items: MenuItemType[] = [
     detailsItem,
-    ...(canModify
+    {
+      icon: Pencil,
+      id: "edit",
+      label: "通知を編集",
+      onClick: () =>
+        closeAnd(() =>
+          navigate(`/notifications/${notification.notificationId}/edit`)
+        ),
+      type: "action",
+    },
+    ...(canModify && notification.creation.method === "manual" && onDelete
       ? [
-          {
-            icon: Pencil,
-            id: "edit",
-            label: "通知を編集",
-            onClick: () =>
-              closeAnd(() =>
-                navigate(`/notifications/${notification.notificationId}/edit`)
-              ),
-            type: "action" as const,
-          },
           { id: "actions-divider", type: "divider" as const },
           {
             danger: true,
             icon: Trash2,
             id: "delete",
             label: "通知を削除",
-            onClick: () => closeAnd(() => onDelete?.(notification)),
+            onClick: () => closeAnd(() => onDelete(notification)),
             type: "action" as const,
           },
         ]

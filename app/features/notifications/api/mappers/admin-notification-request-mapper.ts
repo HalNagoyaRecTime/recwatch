@@ -2,6 +2,7 @@ import type {
   NotificationAudienceInputItem,
   NotificationCreateRequest,
 } from "~/features/notifications/api/contracts/admin-notification-command-api";
+import type { NotificationAudienceInputDto } from "~/features/notifications/api/dto/notification-common-dto";
 import type { NotificationDraft } from "~/features/notifications/model/notification-draft";
 import { ClientError, ClientErrors } from "~/lib/client-error";
 
@@ -14,27 +15,36 @@ export function toNotificationCreateRequest(
   return {
     content: {
       push: { title, body },
-      detail: { title, body },
+      detail: {
+        title: draft.detailTitle.trim(),
+        body: draft.detailBody.trim(),
+      },
     },
-    audience: { items: [toAudienceInputItem(draft)] },
+    audience: toNotificationAudienceInput(draft.audiences),
     delivery:
       draft.deliveryTiming === "scheduled" && draft.scheduledAt
         ? { type: "scheduled", sendAt: toOffsetIsoString(draft.scheduledAt) }
         : { type: "immediate", sendAt: null },
-    importance: "normal",
+    importance: draft.importance,
   };
 }
 
-function toAudienceInputItem(
-  draft: NotificationDraft
-): NotificationAudienceInputItem {
-  if (draft.audienceType === "all") return { type: "all" };
+export function toNotificationAudienceInput(
+  audiences: NotificationDraft["audiences"]
+): NotificationAudienceInputDto {
+  return { items: audiences.map(toAudienceInputItem) };
+}
 
-  const targetId = Number(draft.audienceId);
+function toAudienceInputItem(
+  audience: NotificationDraft["audiences"][number]
+): NotificationAudienceInputItem {
+  if (audience.type === "all") return { type: "all" };
+
+  const targetId = Number(audience.targetId);
   if (!Number.isSafeInteger(targetId) || targetId <= 0) {
     throw new ClientError(ClientErrors.INVALID_REQUEST);
   }
-  return { type: draft.audienceType, targetId };
+  return { type: audience.type, targetId };
 }
 
 function toOffsetIsoString(value: string) {

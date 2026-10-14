@@ -9,6 +9,7 @@ import { mockNotificationAudienceOptions } from "~/features/notifications/mock/n
 import { adminNotificationDetailFixture } from "~/features/notifications/mock/notification-fixtures";
 import type { AdminNotificationDetail } from "~/features/notifications/api/contracts/admin-notification-command-api";
 import { ApiClientError } from "~/lib/api-client-error";
+import { mockNotificationConfigApi } from "~/features/notifications/mock/notification-config-api";
 
 function createNotification(
   notificationId: number,
@@ -50,6 +51,7 @@ describe("useNotificationEdit", () => {
         useNotificationEdit({
           audienceApi,
           commandApi,
+          configApi: mockNotificationConfigApi,
           queryApi,
           notificationId,
         }),
@@ -91,6 +93,7 @@ describe("useNotificationEdit", () => {
       useNotificationEdit({
         audienceApi,
         commandApi,
+        configApi: mockNotificationConfigApi,
         queryApi,
         notificationId: 99,
       })
@@ -110,6 +113,7 @@ describe("useNotificationEdit", () => {
       useNotificationEdit({
         audienceApi,
         commandApi,
+        configApi: mockNotificationConfigApi,
         queryApi,
         notificationId: 0,
       })
@@ -136,6 +140,7 @@ describe("useNotificationEdit", () => {
       useNotificationEdit({
         audienceApi,
         commandApi,
+        configApi: mockNotificationConfigApi,
         queryApi,
         notificationId: 1,
       })
@@ -155,4 +160,94 @@ describe("useNotificationEdit", () => {
     );
     expect(result.current.audienceError).toBeNull();
   });
+  it("配信開始後は過去の配信日時を検証せず詳細だけ保存する", async () => {
+    const notification = createNotification(1, "通知");
+    notification.schedules = notification.schedules.map((schedule) => ({
+      ...schedule,
+      status: "sending",
+      sendAt: "2020-01-01T00:00:00Z",
+    }));
+    const patch = vi.fn().mockResolvedValue(notification);
+    const audienceApi = { load: vi.fn().mockResolvedValue([]) };
+    const queryApi = createQueryApi(vi.fn().mockResolvedValue(notification));
+    const { result } = renderHook(() =>
+      useNotificationEdit({
+        audienceApi,
+        commandApi: { ...commandApi, patch },
+        configApi: mockNotificationConfigApi,
+        queryApi,
+        notificationId: 1,
+      })
+    );
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    act(() =>
+      result.current.onChange({
+        ...result.current.draft,
+        detailTitle: "更新詳細",
+      })
+    );
+    await act(async () => expect(await result.current.submit()).toBe(true));
+    expect(patch).toHaveBeenCalledWith(1, {
+      content: {
+        detail: { title: "更新詳細", body: notification.content.detail.body },
+      },
+    });
+  });
+
+  it.each([400, 409, 500])(
+    "%iエラーでdraftを保持し、validationはFeedbackへ保存しない",
+    async (status) => {
+      const notification = createNotification(1, "通知");
+      notification.schedules = notification.schedules.map((schedule) => ({
+        ...schedule,
+        status: "sending",
+      }));
+      const error = new ApiClientError(
+        status,
+        "保存失敗",
+        status === 400 ? "VALIDATION_ERROR" : "CONFLICT",
+        status === 400
+          ? {
+              fieldErrors: {
+                "content.detail.title": ["詳細を確認してください"],
+              },
+              formErrors: [],
+            }
+          : undefined
+      );
+      const patch = vi.fn().mockRejectedValue(error);
+      const reportFeedback = vi.fn();
+      const audienceApi = { load: vi.fn().mockResolvedValue([]) };
+      const queryApi = createQueryApi(vi.fn().mockResolvedValue(notification));
+      const { result } = renderHook(() =>
+        useNotificationEdit({
+          audienceApi,
+          commandApi: { ...commandApi, patch },
+          configApi: mockNotificationConfigApi,
+          queryApi,
+          notificationId: 1,
+          reportFeedback,
+        })
+      );
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+      act(() =>
+        result.current.onChange({
+          ...result.current.draft,
+          detailTitle: "保持する入力",
+        })
+      );
+      await act(async () => expect(await result.current.submit()).toBe(false));
+      expect(result.current.draft.detailTitle).toBe("保持する入力");
+      if (status === 400) {
+        expect(result.current.errors.detailTitle).toBe(
+          "詳細を確認してください"
+        );
+        expect(reportFeedback).not.toHaveBeenCalled();
+      } else {
+        expect(reportFeedback).toHaveBeenCalledWith(
+          expect.objectContaining({ kind: "action-error" })
+        );
+      }
+    }
+  );
 });

@@ -7,6 +7,7 @@ import {
 import {
   loadAllClassrooms,
   loadAllEvents,
+  loadAllUsers,
   type NotificationAudienceHttpClient,
 } from "./notification-audience-resource-loader";
 
@@ -15,9 +16,10 @@ export function createHttpNotificationAudienceApi(
 ): NotificationAudienceApi {
   return {
     async load() {
-      const [classrooms, events] = await Promise.all([
+      const [classrooms, events, users] = await Promise.all([
         loadAllClassrooms(client),
         loadAllEvents(client),
+        loadAllUsers(client),
       ]);
 
       const gatheringsByEvent = await Promise.all(
@@ -31,6 +33,7 @@ export function createHttpNotificationAudienceApi(
 
       return toNotificationAudienceOptions({
         classrooms,
+        users,
         gatherings: gatheringsByEvent.flat(),
         events,
       });
