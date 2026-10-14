@@ -1,3 +1,4 @@
+import { MarkdownContent } from "~/components/ui/markdown/MarkdownContent";
 import { ChevronLeft, RefreshCw } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router";
@@ -263,7 +264,9 @@ function OverviewTab({
           </div>
           <ContentBox
             label="通知詳細"
-            value={`${notification.content.detail.title}\n\n${notification.content.detail.body}`}
+            title={notification.content.detail.title}
+            value={notification.content.detail.body}
+            markdown
           />
         </Card>
         {schedule ? <RecipientSummary schedule={schedule} /> : null}
@@ -566,13 +569,24 @@ function Card({
   );
 }
 
-function ContentBox({ label, value }: { label: string; value: string }) {
+function ContentBox({
+  label,
+  value,
+  title,
+  markdown = false,
+}: {
+  label: string;
+  value: string;
+  title?: string;
+  markdown?: boolean;
+}) {
   return (
     <div className="border-border-subtle bg-surface-muted app-rounded border px-4 py-3">
       <p className="text-text-muted text-xs">{label}</p>
-      <p className="text-text-base mt-1 font-medium whitespace-pre-wrap">
-        {value}
-      </p>
+      <div className="text-text-base mt-1 font-medium whitespace-pre-wrap">
+        {title ? <p>{title}</p> : null}
+        {markdown ? <MarkdownContent content={value} /> : value}
+      </div>
     </div>
   );
 }
