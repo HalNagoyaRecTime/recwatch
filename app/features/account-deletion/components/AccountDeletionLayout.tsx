@@ -1,9 +1,7 @@
-import { useEffect } from "react";
 import type { CSSProperties, ReactNode } from "react";
 
 import { AccountDeletionBrand } from "~/features/account-deletion/components/AccountDeletionBrand";
 import { AccountDeletionFooter } from "~/features/account-deletion/components/AccountDeletionFooter";
-import { applyTheme, isThemeMode } from "~/lib/theme";
 
 type AccountDeletionLayoutProps = {
   children: ReactNode;
@@ -25,65 +23,9 @@ const accountDeletionThemeStyle = {
   "--tone-warning-text": "#d97706",
 } as CSSProperties;
 
-function useAccountDeletionFavicon() {
-  useEffect(() => {
-    const favicon =
-      document.querySelector<HTMLLinkElement>('link[rel~="icon"]');
-
-    if (!favicon) return;
-
-    const previousHref = favicon.getAttribute("href");
-    const previousType = favicon.getAttribute("type");
-    const previousSizes = favicon.getAttribute("sizes");
-
-    favicon.setAttribute("href", "/recreation-favicon.png");
-    favicon.setAttribute("type", "image/png");
-    favicon.setAttribute("sizes", "512x512");
-
-    return () => {
-      if (previousHref === null) {
-        favicon.removeAttribute("href");
-      } else {
-        favicon.setAttribute("href", previousHref);
-      }
-
-      if (previousType === null) {
-        favicon.removeAttribute("type");
-      } else {
-        favicon.setAttribute("type", previousType);
-      }
-
-      if (previousSizes === null) {
-        favicon.removeAttribute("sizes");
-      } else {
-        favicon.setAttribute("sizes", previousSizes);
-      }
-    };
-  }, []);
-}
-
-function useAccountDeletionDocumentBackground() {
-  useEffect(() => {
-    const root = document.documentElement;
-    root.dataset.documentBackgroundOverride = "#ffffff";
-    root.style.setProperty("background-color", "#ffffff");
-    document.body.style.setProperty("background-color", "#ffffff");
-
-    return () => {
-      delete root.dataset.documentBackgroundOverride;
-      delete root.dataset.accountDeletionAuthCallback;
-      const theme = root.dataset.theme ?? null;
-      applyTheme(isThemeMode(theme) ? theme : "system");
-    };
-  }, []);
-}
-
 export function AccountDeletionLayout({
   children,
 }: AccountDeletionLayoutProps) {
-  useAccountDeletionFavicon();
-  useAccountDeletionDocumentBackground();
-
   return (
     <main
       className="account-deletion-viewport viewport-min-height box-border flex flex-col items-center justify-center-safe bg-white text-[#333333]"

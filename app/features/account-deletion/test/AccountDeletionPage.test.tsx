@@ -8,7 +8,6 @@ import {
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { MemoryRouter } from "react-router";
 import type { AccountDeletionGateway } from "../api/contracts/account-deletion-gateway";
-import { applyTheme } from "~/lib/theme";
 
 const mocks = vi.hoisted(() => ({
   startAccountDeletionAuth: vi.fn(),
@@ -25,6 +24,7 @@ afterEach(() => {
   cleanup();
   document.documentElement.style.removeProperty("background-color");
   document.body.style.removeProperty("background-color");
+  delete document.documentElement.dataset.appSurface;
   delete document.documentElement.dataset.documentBackgroundOverride;
   delete document.documentElement.dataset.accountDeletionAuthCallback;
   delete document.documentElement.dataset.theme;
@@ -32,6 +32,9 @@ afterEach(() => {
   document
     .querySelectorAll("link[data-test-account-deletion-favicon]")
     .forEach((link) => link.remove());
+  document
+    .querySelectorAll("meta[data-test-account-deletion-viewport]")
+    .forEach((meta) => meta.remove());
   mocks.startAccountDeletionAuth.mockReset();
 });
 
@@ -48,7 +51,7 @@ function addDefaultFavicon() {
   favicon.rel = "icon";
   favicon.href = "/recwatch-logo.svg";
   favicon.type = "image/svg+xml";
-  favicon.sizes = "any";
+  favicon.setAttribute("sizes", "any");
   favicon.dataset.testAccountDeletionFavicon = "true";
   document.head.append(favicon);
   return favicon;
@@ -120,62 +123,56 @@ describe("AccountDeletionPage", () => {
     ).toBeInTheDocument();
   });
 
-  it("表示中は白く保ち、unmount時に最新テーマの背景へ戻す", () => {
-    applyTheme("dark");
-    expect(document.documentElement.style.backgroundColor).toBe("rgb(0, 0, 0)");
-    expect(document.body.style.backgroundColor).toBe("rgb(0, 0, 0)");
-    const { unmount } = renderPage();
-
-    expect(screen.getByRole("main")).toHaveClass(
-      "account-deletion-viewport",
-      "viewport-min-height"
-    );
-    expect(
-      document.documentElement.style.getPropertyValue("background-color")
-    ).toBe("rgb(255, 255, 255)");
-    expect(document.body.style.backgroundColor).toBe("rgb(255, 255, 255)");
-    expect(document.documentElement.dataset.documentBackgroundOverride).toBe(
-      "#ffffff"
-    );
-
-    applyTheme("light");
-    expect(document.documentElement.style.backgroundColor).toBe(
-      "rgb(255, 255, 255)"
-    );
-    expect(document.body.style.backgroundColor).toBe("rgb(255, 255, 255)");
-    applyTheme("dark");
-    expect(document.body.style.backgroundColor).toBe("rgb(255, 255, 255)");
-
-    expect(document.body.style.height).toBe("");
-    expect(document.body.style.overflowY).toBe("");
-    expect(document.body.style.background).toBe("");
-
-    unmount();
-
-    expect(document.documentElement.style.backgroundColor).toBe("rgb(0, 0, 0)");
-    expect(document.body.style.backgroundColor).toBe("rgb(0, 0, 0)");
-    expect(document.documentElement.dataset.documentBackgroundOverride).toBe(
-      undefined
-    );
-    expect(document.documentElement.dataset.accountDeletionAuthCallback).toBe(
-      undefined
-    );
-    expect(document.body.style.height).toBe("");
-    expect(document.body.style.overflowY).toBe("");
-    expect(document.body.style.background).toBe("");
-  });
-
-  it("表示中だけfaviconをRE:CREATIONへ切り替え、終了時に戻す", () => {
+  it("shellのfavicon・viewport・styleを変更しない", () => {
     const favicon = addDefaultFavicon();
+    const viewport = document.createElement("meta");
+    viewport.name = "viewport";
+    viewport.content =
+      "width=device-width, initial-scale=1, viewport-fit=cover";
+    viewport.dataset.testAccountDeletionViewport = "true";
+    document.head.append(viewport);
+
+    const rootStyle = document.documentElement.getAttribute("style");
+    const bodyStyle = document.body.getAttribute("style");
+    const appStyle = document.getElementById("app")?.getAttribute("style");
     const { unmount } = renderPage();
 
-    expect(favicon.getAttribute("href")).toBe("/recreation-favicon.png");
+    expect(favicon.getAttribute("href")).toBe("/recwatch-logo.svg");
+    expect(favicon.getAttribute("type")).toBe("image/svg+xml");
+    expect(favicon.getAttribute("sizes")).toBe("any");
+    expect(viewport.content).toBe(
+      "width=device-width, initial-scale=1, viewport-fit=cover"
+    );
+    expect(document.documentElement.getAttribute("style")).toBe(rootStyle);
+    expect(document.body.getAttribute("style")).toBe(bodyStyle);
+    expect(document.getElementById("app")?.getAttribute("style")).toBe(
+      appStyle
+    );
 
     unmount();
 
     expect(favicon.getAttribute("href")).toBe("/recwatch-logo.svg");
+    expect(viewport.content).toBe(
+      "width=device-width, initial-scale=1, viewport-fit=cover"
+    );
+    expect(document.documentElement.getAttribute("style")).toBe(rootStyle);
+    expect(document.body.getAttribute("style")).toBe(bodyStyle);
   });
 
+  it("PR #366のsafe-areaレイアウトとviewport fallbackを維持する", () => {
+    renderPage();
+
+    const main = screen.getByRole("main");
+    expect(main).toHaveClass(
+      "account-deletion-viewport",
+      "viewport-min-height",
+      "box-border"
+    );
+    expect(main.style.paddingTop).toContain("safe-area-inset-top");
+    expect(main.style.paddingRight).toContain("safe-area-inset-right");
+    expect(main.style.paddingBottom).toContain("safe-area-inset-bottom");
+    expect(main.style.paddingLeft).toContain("safe-area-inset-left");
+  });
   it("dark祖先でもライトテーマの背景を維持する", () => {
     render(
       <div className="dark">

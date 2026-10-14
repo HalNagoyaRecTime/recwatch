@@ -55,7 +55,7 @@ describe("applyTheme", () => {
     const root = document.documentElement;
     root.className = "";
     root.removeAttribute("data-theme");
-    root.removeAttribute("data-document-background-override");
+    root.removeAttribute("data-app-surface");
     root.style.removeProperty("color-scheme");
     root.style.removeProperty("background-color");
     document.body.style.removeProperty("background-color");
@@ -84,6 +84,19 @@ describe("applyTheme", () => {
       "rgb(255, 255, 255)"
     );
     expect(document.documentElement).not.toHaveClass("dark");
+    expect(document.body.style.backgroundColor).toBe("rgb(255, 255, 255)");
+  });
+
+  it("account-deletion Surfaceはテーマ引数に関係なく白い背景を使う", () => {
+    document.documentElement.dataset.appSurface = "account-deletion";
+
+    applyTheme("dark");
+
+    expect(document.documentElement).toHaveClass("dark");
+    expect(document.documentElement.style.colorScheme).toBe("dark");
+    expect(document.documentElement.style.backgroundColor).toBe(
+      "rgb(255, 255, 255)"
+    );
     expect(document.body.style.backgroundColor).toBe("rgb(255, 255, 255)");
   });
 
