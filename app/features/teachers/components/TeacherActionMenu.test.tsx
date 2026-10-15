@@ -1,15 +1,6 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter } from "react-router";
 import { describe, expect, it, vi } from "vitest";
-
-const mocks = vi.hoisted(() => ({
-  assignStaff: vi.fn(),
-  revokeStaff: vi.fn(),
-  updateUserStatus: vi.fn(),
-}));
-
-vi.mock("~/features/teachers/api", () => ({ TeacherApi: mocks }));
 
 import { TeacherActionMenu } from "~/features/teachers/components/TeacherActionMenu";
 import type { TeacherRow } from "~/features/teachers/model/teacher";
@@ -25,58 +16,45 @@ const teacher: TeacherRow = {
 };
 
 function renderMenu(overrides: Partial<TeacherRow> = {}) {
-  return render(
-    <MemoryRouter initialEntries={["/teachers?isLiveActive=all&page=2"]}>
-      <TeacherActionMenu teacher={{ ...teacher, ...overrides }} />
-    </MemoryRouter>
+  const callbacks = {
+    onChangeActive: vi.fn(),
+    onChangeStaff: vi.fn(),
+    onClearError: vi.fn(),
+    onEdit: vi.fn(),
+  };
+  render(
+    <TeacherActionMenu {...callbacks} teacher={{ ...teacher, ...overrides }} />
   );
+  return callbacks;
 }
 
 describe("TeacherActionMenu", () => {
-  it("userIdを使って有効状態を変更し、成功後にメニューを閉じる", async () => {
-    mocks.updateUserStatus.mockResolvedValueOnce({
-      user_id: 11,
-      is_live_active: false,
-    });
+  it("有効状態を変更する操作をPageへ通知してメニューを閉じる", async () => {
+    const callbacks = renderMenu();
     const user = userEvent.setup();
 
-    renderMenu();
     await user.click(screen.getByRole("button", { name: "佐橋 晴斗の操作" }));
     await user.click(screen.getByRole("button", { name: "教官を無効化する" }));
 
-    await waitFor(() =>
-      expect(mocks.updateUserStatus).toHaveBeenCalledWith(11, {
-        is_live_active: false,
-      })
-    );
+    expect(callbacks.onChangeActive).toHaveBeenCalledOnce();
     expect(
       screen.queryByRole("button", { name: "教官を無効化する" })
     ).not.toBeInTheDocument();
   });
 
-  it("staff付与・解除を専用APIへ送り、失敗時はエラーを表示する", async () => {
-    mocks.assignStaff.mockResolvedValueOnce(undefined);
-    mocks.revokeStaff.mockRejectedValueOnce(new Error("staff変更失敗"));
+  it("staff権限の変更と編集操作をPageへ通知する", async () => {
+    const callbacks = renderMenu();
     const user = userEvent.setup();
 
-    renderMenu();
     await user.click(screen.getByRole("button", { name: "佐橋 晴斗の操作" }));
     await user.click(
       screen.getByRole("button", { name: "staff権限を付与する" })
     );
-    await waitFor(() => expect(mocks.assignStaff).toHaveBeenCalledWith(11));
+    expect(callbacks.onChangeStaff).toHaveBeenCalledOnce();
 
-    renderMenu({ isStaff: true });
-    await user.click(
-      screen.getAllByRole("button", { name: "佐橋 晴斗の操作" })[1]
-    );
-    await user.click(
-      screen.getByRole("button", { name: "staff権限を解除する" })
-    );
-
-    await waitFor(() => expect(mocks.revokeStaff).toHaveBeenCalledWith(11));
-    expect(screen.getByRole("alert")).toHaveTextContent(
-      "教官の状態変更に失敗しました。"
-    );
+    await user.click(screen.getByRole("button", { name: "佐橋 晴斗の操作" }));
+    await user.click(screen.getByRole("button", { name: "教官を編集する" }));
+    expect(callbacks.onEdit).toHaveBeenCalledOnce();
+    expect(callbacks.onClearError).toHaveBeenCalled();
   });
 });
