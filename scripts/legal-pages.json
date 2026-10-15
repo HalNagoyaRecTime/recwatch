@@ -4,6 +4,7 @@
   "address": "愛知県名古屋市中村区名駅4-27-1",
   "contactEmail": "takahashi.masa@nh.hal.ac.jp",
   "accountDeletionPath": "/account-deletion",
+  "commonRequiredText": ["学校のMicrosoft 365アカウント自体は削除されません"],
   "externalPrivacyLinks": [
     "https://privacy.microsoft.com/ja-jp/privacystatement",
     "https://policies.google.com/privacy?hl=ja",
@@ -18,13 +19,17 @@
       "path": "/legal/terms.html",
       "fileName": "terms.html",
       "title": "RE:CREATION 利用規約",
-      "headingCount": 11
+      "headingCount": 11,
+      "requiredText": ["RE:CREATIONのアカウント削除を申請できます"]
     },
     {
       "path": "/legal/privacy.html",
       "fileName": "privacy.html",
       "title": "RE:CREATION プライバシーポリシー",
-      "headingCount": 9
+      "headingCount": 9,
+      "requiredText": [
+        "不要となった情報は合理的な期間内に削除または匿名化します"
+      ]
     }
   ]
 }

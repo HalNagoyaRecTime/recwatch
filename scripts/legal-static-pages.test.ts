@@ -17,9 +17,11 @@ function readDocument(fileName: string) {
 describe("法務静的ページ", () => {
   it.each(legal.pages)(
     "$fileNameはJavaScriptなしで単独表示できる",
-    ({ fileName, title, headingCount }) => {
+    ({ fileName, title, headingCount, requiredText }) => {
       const { document, html } = readDocument(fileName);
+      const bodyText = document.body.textContent?.replace(/\s+/g, " ") ?? "";
 
+      expect(document.doctype?.name).toBe("html");
       expect(document.documentElement.lang).toBe("ja");
       expect(document.title).toBe(title);
       expect(document.querySelectorAll("h1")).toHaveLength(1);
@@ -28,6 +30,30 @@ describe("法務静的ページ", () => {
       expect(document.querySelector('meta[charset="UTF-8"]')).not.toBeNull();
       expect(document.querySelector('meta[name="viewport"]')).not.toBeNull();
       expect(document.querySelectorAll("script")).toHaveLength(0);
+      expect(
+        document.querySelector(
+          'link[rel="stylesheet"][href="/legal/legal.css"]'
+        )
+      ).not.toBeNull();
+      expect(document.querySelectorAll('[aria-current="page"]')).toHaveLength(
+        1
+      );
+
+      for (const element of document.querySelectorAll("*")) {
+        for (const attribute of element.getAttributeNames()) {
+          expect(attribute).not.toMatch(/^on/i);
+        }
+      }
+
+      for (const link of document.querySelectorAll("a")) {
+        expect(link.getAttribute("href")).toBeTruthy();
+        expect(link.textContent?.trim()).toBeTruthy();
+      }
+
+      for (const text of [...legal.commonRequiredText, ...requiredText]) {
+        expect(bodyText).toContain(text);
+      }
+
       expect(html).not.toMatch(/TODO|TBD|PLACEHOLDER|仮値|未確定|要確認/i);
     }
   );
@@ -89,5 +115,20 @@ describe("法務静的ページ", () => {
         ({ path }) => `${path} ${path.replace(/\.html$/, "")} 200`
       )
     );
+  });
+
+  it("Cloudflare Pagesで法務HTMLにContent-Typeを付ける", () => {
+    const headers = readFileSync(publicPath("_headers"), "utf8").replace(
+      /\r\n/g,
+      "\n"
+    );
+
+    for (const { path } of legal.pages) {
+      for (const headerPath of [path, path.replace(/\.html$/, "")]) {
+        expect(headers).toContain(
+          `${headerPath}\n  Content-Type: text/html; charset=utf-8\n`
+        );
+      }
+    }
   });
 });
