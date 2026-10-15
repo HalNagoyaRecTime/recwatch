@@ -122,7 +122,7 @@ describe("teacherHttpApi", () => {
     mocks.putMock.mockResolvedValueOnce(undefined);
     mocks.deleteMock.mockResolvedValueOnce(undefined);
 
-    await teacherHttpApi.updateUserStatus(11, { is_live_active: false });
+    await teacherHttpApi.updateUserStatus(11, { isLiveActive: false });
     await teacherHttpApi.assignStaff(11);
     await teacherHttpApi.revokeStaff(11);
 

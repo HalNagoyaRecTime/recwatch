@@ -93,6 +93,13 @@ export function useEventGatheringSettings({
     [updateRound]
   );
 
+  const updateRoundStartTime = useCallback(
+    (roundKey: string, startTime: string) => {
+      updateRound(roundKey, (round) => ({ ...round, startTime }));
+    },
+    [updateRound]
+  );
+
   const addGathering = useCallback(
     (roundKey: string) => {
       updateRound(roundKey, (round) => ({
@@ -166,6 +173,7 @@ export function useEventGatheringSettings({
     addRound,
     removeRound,
     updateRoundNumber,
+    updateRoundStartTime,
     addGathering,
     removeGathering,
     updateGathering,

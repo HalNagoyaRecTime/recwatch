@@ -3,6 +3,8 @@ import type {
   StudentListQuery,
   StudentListSortBy,
   StudentListSortOrder,
+  StudentMutationApi,
+  StudentAccessMutationApi,
   StudentManagementApi,
 } from "./contracts/student-api";
 import type {
@@ -23,6 +25,9 @@ export const StudentApi: StudentManagementApi = {
   async getStudents(query = {}): Promise<StudentPage> {
     return toStudentPage(await studentHttpApi.getStudents(query));
   },
+  async getStudentById(studentId: number): Promise<StudentRow> {
+    return toStudentRow(await studentHttpApi.getStudentById(studentId));
+  },
   async createStudent(input: StudentWriteInput): Promise<StudentRow> {
     return toStudentRow(await studentHttpApi.createStudent(input));
   },
@@ -40,6 +45,8 @@ export type {
   StudentListSortBy,
   StudentListSortOrder,
   StudentManagementApi,
+  StudentMutationApi,
+  StudentAccessMutationApi,
 };
 export type {
   StudentClassRoomDTO,

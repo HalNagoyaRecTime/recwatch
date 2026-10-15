@@ -15,6 +15,7 @@ export type StudentHttpClient = {
 
 export function createStudentHttpApi(client: StudentHttpClient = apiClient): {
   getStudents(query?: StudentListQuery): Promise<StudentPageDTO>;
+  getStudentById(studentId: number): Promise<StudentDTO>;
   createStudent(input: StudentWriteInput): Promise<StudentDTO>;
   updateStudent(
     studentId: number,
@@ -40,6 +41,9 @@ export function createStudentHttpApi(client: StudentHttpClient = apiClient): {
       return client.get<StudentPageDTO>(
         `/api/v1/students?${params.toString()}`
       );
+    },
+    getStudentById(studentId) {
+      return client.get<StudentDTO>(`/api/v1/students/${studentId}`);
     },
     createStudent(input) {
       return client.post<StudentDTO>(

@@ -102,6 +102,9 @@ export function GatheringSettingsStep({
               onChangeGathering={(gatheringKey, patch) =>
                 settings.updateGathering(round.key, gatheringKey, patch)
               }
+              onChangeRoundStartTime={(startTime) =>
+                settings.updateRoundStartTime(round.key, startTime)
+              }
               onChangeRoundNumber={(roundNumber) =>
                 settings.updateRoundNumber(round.key, roundNumber)
               }

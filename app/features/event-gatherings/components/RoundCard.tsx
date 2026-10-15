@@ -26,6 +26,7 @@ type RoundCardProps = {
     patch: Partial<Pick<GatheringDraft, "time" | "spotId">>
   ) => void;
   onChangeRoundNumber: (roundNumber: number) => void;
+  onChangeRoundStartTime: (startTime: string) => void;
   onRemove: () => void;
   onRemoveGathering: (gatheringKey: string) => void;
   onTogglePicker: (gatheringKey: string) => void;
@@ -41,6 +42,7 @@ export function RoundCard({
   onAddGathering,
   onChangeGathering,
   onChangeRoundNumber,
+  onChangeRoundStartTime,
   onRemove,
   onRemoveGathering,
   onTogglePicker,
@@ -91,6 +93,19 @@ export function RoundCard({
           }
           type="number"
           value={Number.isNaN(value.round) ? "" : value.round}
+        />
+      </label>
+      <label className="text-text-base block text-sm font-medium">
+        開始時刻（任意）
+        <input
+          aria-label={`Round ${value.round} の開始時刻`}
+          className="app-rounded border-border-base bg-surface-base text-text-base focus:border-border-strong mt-1.5 h-9 border px-3 text-sm outline-none disabled:opacity-50"
+          disabled={disabled}
+          type="time"
+          value={value.startTime}
+          onChange={(event) =>
+            onChangeRoundStartTime(event.currentTarget.value)
+          }
         />
       </label>
       {roundErrors.length > 0 ? (

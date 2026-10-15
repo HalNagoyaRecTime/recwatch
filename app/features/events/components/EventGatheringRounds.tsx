@@ -55,6 +55,11 @@ export function EventGatheringRounds({
               <div className="flex items-center justify-between gap-3">
                 <h3 className="text-text-base text-sm font-semibold">
                   Round {round.round}
+                  {round.startTime ? (
+                    <span className="ml-3 text-sm font-normal">
+                      開始 {round.startTime}
+                    </span>
+                  ) : null}
                 </h3>
                 <span className="app-rounded bg-surface-base text-text-muted px-2 py-1 text-xs font-medium whitespace-nowrap">
                   合計 {sumRoundMemberCount(round.gatherings)}名
