@@ -101,12 +101,6 @@ jobs:
             --branch=${{ steps.target.outputs.pages_branch }}
           gitHubToken: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Verify deployed legal pages
-        if: steps.target.outputs.mode != 'skip'
-        env:
-          LEGAL_BASE_URL: ${{ steps.target.outputs.verify_url }}
-        run: npm run verify:legal:http
-
       - name: Comment preview URL on PR
         if: steps.target.outputs.mode == 'pr-preview'
         uses: actions/github-script@v9
@@ -144,3 +138,10 @@ jobs:
                 body,
               });
             }
+
+      - name: Verify deployed legal pages
+        if: steps.target.outputs.mode != 'skip'
+        env:
+          LEGAL_BASE_URL: ${{ steps.target.outputs.verify_url }}
+        # develop未取り込みの既存PRには検証scriptがないため、存在する場合のみ実行する。
+        run: npm run verify:legal:http --if-present
