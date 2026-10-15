@@ -113,7 +113,7 @@ describe("student management nested routes", () => {
     const router = renderStudentsRouter("/students/new?search=keep&page=2");
 
     expect(await screen.findByRole("dialog")).toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: "キャンセル" }));
+    await user.click(await screen.findByRole("button", { name: "キャンセル" }));
     await waitFor(() =>
       expect(router.state.location.pathname).toBe("/students")
     );
