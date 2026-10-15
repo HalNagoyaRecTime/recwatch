@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import {
   cleanup,
   fireEvent,
@@ -64,24 +66,20 @@ describe("AccountDeletionPage", () => {
     expect(
       screen.getByRole("heading", {
         level: 1,
-        name: "アカウントを削除",
+        name: "アカウントの削除手続き",
       })
     ).toBeInTheDocument();
     expect(screen.getByText("RE:CREATION")).toBeInTheDocument();
     expect(
       screen.getByRole("heading", {
         level: 1,
-        name: "アカウントを削除",
+        name: "アカウントの削除手続き",
       })
-    ).toHaveClass("text-[#333333]");
-    expect(screen.getByText("アカウントの削除手続きを行います。")).toHaveClass(
-      "max-w-md",
-      "text-center"
-    );
+    ).toHaveClass("text-black");
     expect(screen.queryByText(/recwatch/i)).not.toBeInTheDocument();
     expect(screen.getByText("Produced by HAL Nagoya")).toBeInTheDocument();
     expect(
-      screen.getByText("Developed by RE:CREATION Development Team")
+      screen.getByText("Developed by RE:CREATION App Team")
     ).toBeInTheDocument();
     expect(
       screen.queryByText("Microsoft アカウントが削除されることはありません。")
@@ -94,7 +92,7 @@ describe("AccountDeletionPage", () => {
     });
     expect(microsoftButton).toBeInTheDocument();
     expect(microsoftButton).toHaveClass(
-      "h-12",
+      "min-h-12",
       "bg-[#333333]",
       "font-medium",
       "rounded-sm"
@@ -159,7 +157,7 @@ describe("AccountDeletionPage", () => {
     expect(document.body.getAttribute("style")).toBe(bodyStyle);
   });
 
-  it("PR #366のsafe-areaレイアウトとviewport fallbackを維持する", () => {
+  it("デザイン用CSSのsafe-areaとviewport fallbackを維持する", () => {
     renderPage();
 
     const main = screen.getByRole("main");
@@ -168,10 +166,23 @@ describe("AccountDeletionPage", () => {
       "viewport-min-height",
       "box-border"
     );
-    expect(main.style.paddingTop).toContain("safe-area-inset-top");
-    expect(main.style.paddingRight).toContain("safe-area-inset-right");
-    expect(main.style.paddingBottom).toContain("safe-area-inset-bottom");
-    expect(main.style.paddingLeft).toContain("safe-area-inset-left");
+    // 余白はmainのinline styleではなく専用CSS、下端はfooterが担当する。
+    const css = readFileSync(
+      resolve(
+        process.cwd(),
+        "app/features/account-deletion/components/account-deletion.css"
+      ),
+      "utf8"
+    );
+    for (const edge of ["top", "right", "left"]) {
+      expect(css).toContain(`env(safe-area-inset-${edge}, 0px)`);
+    }
+    expect(css).toContain("--deletion-viewport-height: 100vh;");
+    expect(css).toContain("@supports (height: 100dvh)");
+    expect(css).toContain("--deletion-viewport-height: 100dvh;");
+    expect(screen.getByRole("contentinfo").className).toContain(
+      "env(safe-area-inset-bottom,0px)"
+    );
   });
   it("dark祖先でもライトテーマの背景を維持する", () => {
     render(
@@ -183,8 +194,8 @@ describe("AccountDeletionPage", () => {
     const main = screen.getByRole("main");
     expect(main).toHaveClass("bg-white");
     expect(
-      screen.getByRole("heading", { name: "アカウントを削除" })
-    ).toHaveClass("text-[#333333]");
+      screen.getByRole("heading", { name: "アカウントの削除手続き" })
+    ).toHaveClass("text-black");
   });
 
   it("URLのuserIdやメールアドレスに依存せず表示する", () => {
@@ -202,7 +213,7 @@ describe("AccountDeletionPage", () => {
     expect(
       screen.getByRole("heading", {
         level: 1,
-        name: "アカウントを削除",
+        name: "アカウントの削除手続き",
       })
     ).toBeInTheDocument();
   });
