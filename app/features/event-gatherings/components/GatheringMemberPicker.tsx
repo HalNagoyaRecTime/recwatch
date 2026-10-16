@@ -1,5 +1,5 @@
 import { Check, X } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { Button } from "~/components/ui/button/Button";
 import { SearchField } from "~/components/ui/form/SearchField";
@@ -8,15 +8,13 @@ import { MAX_GATHERING_MEMBERS } from "~/features/event-gatherings/model/event-g
 import type {
   GatheringMemberCandidates,
   MemberNonStudent,
-  MemberStudent,
 } from "~/features/event-gatherings/model/gathering-member-candidate";
 import { GatheringNonStudentMembers } from "./GatheringNonStudentMembers";
 
 type GatheringMemberPickerProps = {
   candidates: GatheringMemberCandidates | null;
   /**
-   * 開いた時点で登録済みだった参加者。停止中の学生を操作できるかの判定に使う。
-   * 操作中の選択で判定すると、チェックを外した瞬間に判定が変わって戻せなくなる。
+   * 開いた時点で登録済みだった参加者。候補表にいない参加者の表示判定に使う。
    */
   initialUserIds: readonly number[];
   /** 候補または登録済み参加者の読み込み中。どちらかが終わるまで一覧は出さない。 */
@@ -78,6 +76,7 @@ export function GatheringMemberPicker({
     const students = candidates?.students ?? [];
     const keyword = query.trim().toLowerCase();
     return students.filter((student) => {
+      if (!student.isLiveActive) return false;
       if (
         classroomId !== ALL_CLASSROOMS &&
         String(student.classroomId) !== classroomId
@@ -91,18 +90,6 @@ export function GatheringMemberPicker({
       );
     });
   }, [candidates, classroomId, classroomNames, query]);
-
-  // 停止中の学生は新しく追加させない。ただし開いた時点で登録済みなら外せる必要がある。
-  const isSelectable = useCallback(
-    (student: MemberStudent) =>
-      student.isLiveActive || initialUserIds.includes(student.userId),
-    [initialUserIds]
-  );
-
-  const selectableVisibleStudents = useMemo(
-    () => visibleStudents.filter(isSelectable),
-    [isSelectable, visibleStudents]
-  );
 
   // 候補の表に行が無い登録済みの参加者。開いた時点の登録内容で判定し、
   // チェックを外しても別枠から消えず付け直せるようにする。
@@ -134,10 +121,9 @@ export function GatheringMemberPicker({
   // 一括選択で上限を超えることがあるため、黙って打ち切らず保存の手前で止める。
   const isOverLimit = selectedUserIds.length > MAX_GATHERING_MEMBERS;
 
-  // 一括選択の対象は操作できる行だけ。停止中の未登録者を巻き込まない。
   const isAllVisibleSelected =
-    selectableVisibleStudents.length > 0 &&
-    selectableVisibleStudents.every((student) =>
+    visibleStudents.length > 0 &&
+    visibleStudents.every((student) =>
       selectedUserIds.includes(student.userId)
     );
 
@@ -150,9 +136,7 @@ export function GatheringMemberPicker({
   }
 
   function toggleAllVisible() {
-    const visibleIds = selectableVisibleStudents.map(
-      (student) => student.userId
-    );
+    const visibleIds = visibleStudents.map((student) => student.userId);
     if (isAllVisibleSelected) {
       onChange(selectedUserIds.filter((id) => !visibleIds.includes(id)));
       return;
@@ -193,7 +177,7 @@ export function GatheringMemberPicker({
           />
         </div>
         <Button
-          disabled={selectableVisibleStudents.length === 0}
+          disabled={visibleStudents.length === 0}
           onClick={toggleAllVisible}
           size="sm"
           type="button"
@@ -269,19 +253,13 @@ export function GatheringMemberPicker({
                         <input
                           aria-label={`${student.name}を選択`}
                           checked={selectedUserIds.includes(student.userId)}
-                          className="accent-brand-primary size-4 align-middle disabled:opacity-50"
-                          disabled={!isSelectable(student)}
+                          className="accent-brand-primary size-4 align-middle"
                           onChange={() => toggle(student.userId)}
                           type="checkbox"
                         />
                       </td>
                       <td className="text-text-base truncate px-3 py-2 font-semibold">
                         {student.name}
-                        {student.isLiveActive ? null : (
-                          <span className="app-rounded bg-surface-muted text-text-muted ml-2 px-1.5 py-0.5 text-xs font-medium">
-                            停止中
-                          </span>
-                        )}
                       </td>
                       <td className="text-text-base truncate px-3 py-2">
                         {classroomNames.get(student.classroomId) ?? "—"}
