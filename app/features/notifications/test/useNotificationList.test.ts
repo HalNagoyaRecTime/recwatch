@@ -6,6 +6,7 @@ import type {
   AdminNotificationListResponse,
   AdminNotificationQueryApi,
 } from "~/features/notifications/api/contracts/admin-notification-query-api";
+import { ApiClientError } from "~/lib/api-client-error";
 import { useNotificationList } from "~/features/notifications/hooks/useNotificationList";
 import { adminNotificationListFixture } from "~/features/notifications/mock/notification-fixtures";
 
@@ -175,4 +176,36 @@ describe("useNotificationList", () => {
     });
     expect(result.current.items[0]?.content.push.title).toBe("最新の通知");
   });
+  it.each([404, 409])(
+    "削除%i後に一覧を再取得しエラーを維持する",
+    async (status) => {
+      const list = vi
+        .fn()
+        .mockResolvedValueOnce(createResponse("初回"))
+        .mockResolvedValue(createResponse("最新"));
+      const reportFeedback = vi.fn();
+      const queryApi = createQueryApi(list);
+      const { result } = renderHook(() =>
+        useNotificationList({
+          commandApi: {
+            ...commandApi,
+            delete: vi
+              .fn()
+              .mockRejectedValue(new ApiClientError(status, "削除不可")),
+          },
+          queryApi,
+          reportFeedback,
+        })
+      );
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+      act(() => result.current.onDeleteRequest(result.current.items[0]));
+      await act(() => result.current.confirmDelete());
+      expect(list).toHaveBeenCalledTimes(2);
+      expect(result.current.items[0].content.push.title).toBe("最新");
+      expect(result.current.errorMessage).toBe("削除不可");
+      expect(reportFeedback).toHaveBeenCalledWith(
+        expect.objectContaining({ kind: "action-error" })
+      );
+    }
+  );
 });
