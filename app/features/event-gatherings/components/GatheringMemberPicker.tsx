@@ -74,6 +74,17 @@ export function GatheringMemberPicker({
     [candidates]
   );
 
+  const classroomCodes = useMemo(
+    () =>
+      new Map(
+        (candidates?.classrooms ?? []).map((classroom) => [
+          classroom.id,
+          classroom.code,
+        ])
+      ),
+    [candidates]
+  );
+
   const visibleStudents = useMemo(() => {
     const students = candidates?.students ?? [];
     const keyword = query.trim().toLowerCase();
@@ -86,11 +97,15 @@ export function GatheringMemberPicker({
       }
       if (!keyword) return true;
       const classroomName = classroomNames.get(student.classroomId) ?? "";
-      return [student.name, student.studentNumber, classroomName].some(
-        (value) => value.toLowerCase().includes(keyword)
-      );
+      const classroomCode = classroomCodes.get(student.classroomId) ?? "";
+      return [
+        student.name,
+        student.studentNumber,
+        classroomCode,
+        classroomName,
+      ].some((value) => value.toLowerCase().includes(keyword));
     });
-  }, [candidates, classroomId, classroomNames, query]);
+  }, [candidates, classroomCodes, classroomId, classroomNames, query]);
 
   // 停止中の学生は新しく追加させない。ただし開いた時点で登録済みなら外せる必要がある。
   const isSelectable = useCallback(
@@ -180,7 +195,7 @@ export function GatheringMemberPicker({
           <option value={ALL_CLASSROOMS}>すべてのクラス</option>
           {(candidates?.classrooms ?? []).map((classroom) => (
             <option key={classroom.id} value={classroom.id}>
-              {classroom.name}
+              {classroom.code}
             </option>
           ))}
         </select>

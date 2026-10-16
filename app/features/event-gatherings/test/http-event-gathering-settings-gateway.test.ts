@@ -136,11 +136,17 @@ describe("createHttpEventGatheringSettingsGateway", () => {
 });
 
 describe("createHttpGatheringMemberGateway", () => {
-  it("クラスと学生を全ページ読み込み、停止中の学生も候補に含める", async () => {
+  it("クラスコードと学生を全ページ読み込み、停止中の学生も候補に含める", async () => {
     const get = vi.fn().mockImplementation(async (path: string) => {
       if (path.startsWith("/api/v1/classrooms")) {
         return {
-          items: [{ class_room_id: 1, class_name: "HAL1A" }],
+          items: [
+            {
+              class_room_id: 1,
+              class_code: "HAL1A",
+              class_name: "1年Aクラス",
+            },
+          ],
           total: 1,
         };
       }
@@ -177,7 +183,7 @@ describe("createHttpGatheringMemberGateway", () => {
     const gateway = createHttpGatheringMemberGateway(createClient({ get }));
 
     await expect(gateway.loadCandidates()).resolves.toEqual({
-      classrooms: [{ id: 1, name: "HAL1A" }],
+      classrooms: [{ id: 1, code: "HAL1A", name: "1年Aクラス" }],
       students: [
         {
           id: 10,

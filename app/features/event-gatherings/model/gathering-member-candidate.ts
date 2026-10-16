@@ -1,6 +1,7 @@
 /** 参加者ピッカーで選択候補になる学生とクラス。 */
 export type MemberClassroom = {
   id: number;
+  code: string;
   name: string;
 };
 

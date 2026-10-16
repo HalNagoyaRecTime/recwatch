@@ -64,7 +64,7 @@ function renderPageInEventDetail(reload: () => void) {
   };
   const memberGateway = {
     loadCandidates: vi.fn().mockResolvedValue({
-      classrooms: [{ id: 1, name: "HAL1A" }],
+      classrooms: [{ id: 1, code: "HAL1A", name: "1年Aクラス" }],
       students: [
         {
           id: 10,
