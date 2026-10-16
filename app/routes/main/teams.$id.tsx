@@ -1,24 +1,39 @@
-import { useLoaderData } from "react-router";
+import { useLoaderData, useRouteError } from "react-router";
 
-import { TeamDetailPage } from "~/features/team/pages/TeamDetailPage";
 import { TeamApi } from "~/features/team/api";
+import { TeamDetailPage } from "~/features/team/pages/TeamDetailPage";
 import { createPageTitle } from "~/lib/page-title";
+import { parsePositiveIntegerRouteParam } from "~/lib/parse-positive-integer-route-param";
+import { ManagementModalRouteError } from "~/routes/main/management-modal-route-error";
+import { useManagementModalReturn } from "~/routes/main/useManagementModalNavigation";
 
 export function meta() {
   return [{ title: createPageTitle("チーム詳細") }];
 }
 
 export async function clientLoader({ params }: { params: { id?: string } }) {
-  const id = Number(params.id);
-  if (!Number.isInteger(id)) {
-    throw new Response("Not Found", { status: 404 });
+  const teamId = parsePositiveIntegerRouteParam(params.id);
+  if (teamId === null) {
+    throw new Response("チームが見つかりません。", { status: 404 });
   }
 
-  const team = await TeamApi.getTeamById(id);
-  return { team };
+  return { team: await TeamApi.getTeamById(teamId) };
+}
+
+export function ErrorBoundary() {
+  const closeModal = useManagementModalReturn();
+  return (
+    <ManagementModalRouteError
+      error={useRouteError()}
+      onClose={() => closeModal()}
+      title="チーム情報を読み込めません"
+    />
+  );
 }
 
 export default function TeamDetailRoute() {
   const { team } = useLoaderData<typeof clientLoader>();
-  return <TeamDetailPage team={team} />;
+  const closeModal = useManagementModalReturn();
+
+  return <TeamDetailPage onClose={() => closeModal()} team={team} />;
 }

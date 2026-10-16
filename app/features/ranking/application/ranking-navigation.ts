@@ -3,10 +3,6 @@ export type RankingNavigationTarget = {
   search: string;
 };
 
-export function rankingListTarget(search: string): RankingNavigationTarget {
-  return { pathname: "/ranking", search: normalizeSearch(search) };
-}
-
 export function rankingEditTarget(
   teamId: number,
   search: string
