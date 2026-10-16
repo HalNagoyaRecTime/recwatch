@@ -80,8 +80,8 @@ function createMemberGateway(): GatheringMemberGateway {
   return {
     loadCandidates: vi.fn().mockResolvedValue({
       classrooms: [
-        { id: 1, name: "HAL1A" },
-        { id: 2, name: "HAL1B" },
+        { id: 1, code: "HAL1A", name: "1年Aクラス" },
+        { id: 2, code: "HAL1B", name: "1年Bクラス" },
       ],
       students: [
         {
@@ -412,10 +412,17 @@ describe("GatheringSettingsStep", () => {
     await screen.findByLabelText("山田 太郎を選択");
     expect(memberGateway.loadCandidates).toHaveBeenCalledTimes(1);
 
-    await user.selectOptions(
-      screen.getByRole("combobox", { name: "クラスで絞り込み" }),
-      "HAL1A"
-    );
+    const classroomFilter = screen.getByRole("combobox", {
+      name: "クラスで絞り込み",
+    });
+    expect(
+      within(classroomFilter).getByRole("option", { name: "HAL1A" })
+    ).toBeInTheDocument();
+    expect(
+      within(classroomFilter).queryByRole("option", { name: "1年Aクラス" })
+    ).not.toBeInTheDocument();
+
+    await user.selectOptions(classroomFilter, "HAL1A");
     expect(screen.queryByLabelText("鈴木 次郎を選択")).not.toBeInTheDocument();
 
     await user.click(
@@ -443,7 +450,7 @@ describe("GatheringSettingsStep", () => {
   it("停止中の学生は登録済みなら外せるが、新しくは追加できない", async () => {
     const memberGateway = createMemberGateway();
     (memberGateway.loadCandidates as Mock).mockResolvedValue({
-      classrooms: [{ id: 1, name: "HAL1A" }],
+      classrooms: [{ id: 1, code: "HAL1A", name: "1年Aクラス" }],
       students: [
         {
           id: 10,
@@ -506,7 +513,7 @@ describe("GatheringSettingsStep", () => {
   it("停止中の登録済み学生はチェックを外しても行が残り、付け直せる", async () => {
     const memberGateway = createMemberGateway();
     (memberGateway.loadCandidates as Mock).mockResolvedValue({
-      classrooms: [{ id: 1, name: "HAL1A" }],
+      classrooms: [{ id: 1, code: "HAL1A", name: "1年Aクラス" }],
       students: [
         {
           id: 10,
@@ -584,7 +591,7 @@ describe("GatheringSettingsStep", () => {
   it("学生以外の参加者は表の外に氏名付きで出し、チェックを外して参加者から外せる", async () => {
     const memberGateway = createMemberGateway();
     (memberGateway.loadCandidates as Mock).mockResolvedValue({
-      classrooms: [{ id: 1, name: "HAL1A" }],
+      classrooms: [{ id: 1, code: "HAL1A", name: "1年Aクラス" }],
       students: [
         {
           id: 10,
@@ -653,7 +660,7 @@ describe("GatheringSettingsStep", () => {
   it("上限を超えて選ぶと不足人数を案内し、保存できない", async () => {
     const memberGateway = createMemberGateway();
     (memberGateway.loadCandidates as Mock).mockResolvedValue({
-      classrooms: [{ id: 1, name: "HAL1A" }],
+      classrooms: [{ id: 1, code: "HAL1A", name: "1年Aクラス" }],
       students: Array.from({ length: 31 }, (_, index) => ({
         id: 10 + index,
         userId: 1001 + index,
