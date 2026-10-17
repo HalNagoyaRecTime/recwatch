@@ -102,6 +102,12 @@ export const sidebarSections = [
         label: "チーム",
         icon: "team",
         to: "/teams",
+        activePatterns: [
+          "/teams",
+          "/teams/new",
+          "/teams/:id",
+          "/teams/:id/edit",
+        ],
         roles: ["admin"],
       },
       {
@@ -109,6 +115,7 @@ export const sidebarSections = [
         label: "ランキング",
         icon: "trophy",
         to: "/ranking",
+        activePatterns: ["/ranking", "/ranking/:teamId/edit"],
         roles: ["admin"],
       },
     ],
