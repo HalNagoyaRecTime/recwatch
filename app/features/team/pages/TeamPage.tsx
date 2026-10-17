@@ -1,6 +1,6 @@
 import { Plus } from "lucide-react";
 import { useEffect, useState } from "react";
-import { useLocation, useRevalidator, useSearchParams } from "react-router";
+import { useLocation, useSearchParams } from "react-router";
 
 import { ButtonLink } from "~/components/ui/button/ButtonLink";
 import { PageHeader } from "~/components/ui/layout/PageHeader";
@@ -34,13 +34,19 @@ const columnIdToSortBy: Record<string, TeamListSortBy> = {
 type TeamPageProps = {
   limit: number;
   offset: number;
+  onRevalidate: () => Promise<void> | void;
   teams: readonly Team[];
   total: number;
 };
 
-export function TeamPage({ limit, offset, teams, total }: TeamPageProps) {
+export function TeamPage({
+  limit,
+  offset,
+  onRevalidate,
+  teams,
+  total,
+}: TeamPageProps) {
   const location = useLocation();
-  const revalidator = useRevalidator();
   const [searchParams, setSearchParams] = useSearchParams();
   const { search, sortBy, sortOrder } = parseTeamListUrl(searchParams);
   const [teamPendingDelete, setTeamPendingDelete] = useState<Team | null>(null);
@@ -84,7 +90,7 @@ export function TeamPage({ limit, offset, teams, total }: TeamPageProps) {
     setDeleteError(null);
     try {
       await TeamApi.deleteTeam(teamPendingDelete.id);
-      await revalidator.revalidate();
+      await onRevalidate();
       setTeamPendingDelete(null);
     } catch (error) {
       setDeleteError(getErrorMessage(error));

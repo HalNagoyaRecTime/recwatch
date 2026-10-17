@@ -1,42 +1,27 @@
 import {
-  ClassRoomApi,
   TeacherApi,
   type TeacherListQuery,
+  type TeacherQueryApi,
 } from "~/features/teachers/api";
-import { toTeacherRow } from "~/features/teachers/api/mappers/teacher-mappers";
+import { parsePositiveIntegerRouteParam } from "~/lib/parse-positive-integer-route-param";
 
-export async function loadTeacherList() {
-  const page = await TeacherApi.getTeachers();
-  return { teachers: page.items.map(toTeacherRow) };
-}
-
-export async function loadTeacherListPage(query: TeacherListQuery) {
-  const page = await TeacherApi.getTeacherList(query);
+export async function loadTeacherListPage(
+  query: TeacherListQuery,
+  api: Pick<TeacherQueryApi, "getTeacherList"> = TeacherApi
+) {
+  const page = await api.getTeacherList(query);
   return {
     limit: page.limit,
     offset: page.offset,
-    teachers: page.items.map(toTeacherRow),
+    teachers: page.items,
     total: page.total,
   };
 }
 
-export async function loadTeacherAssignment(teacherId: number) {
-  const [teacherPage, classRoomPage] = await Promise.all([
-    TeacherApi.getTeachers(),
-    ClassRoomApi.getClassRooms(),
-  ]);
-
-  return {
-    teachers: teacherPage.items.map(toTeacherRow),
-    classRooms: classRoomPage.classrooms.map((classRoom) => ({
-      classRoomId: classRoom.class_room_id,
-      className: classRoom.class_name,
-    })),
-    selectedTeacherId: teacherId,
-  };
-}
-
-export function parseTeacherId(value: string | undefined) {
-  const teacherId = Number(value);
-  return Number.isInteger(teacherId) && teacherId > 0 ? teacherId : 0;
+export function parseTeacherId(value: string | undefined): number {
+  const teacherId = parsePositiveIntegerRouteParam(value);
+  if (teacherId === null) {
+    throw new Response("教官が見つかりません。", { status: 404 });
+  }
+  return teacherId;
 }

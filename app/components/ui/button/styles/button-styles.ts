@@ -6,13 +6,13 @@ export const buttonStyle = cva(
     variants: {
       variant: {
         primary:
-          "app-rounded bg-[linear-gradient(135deg,var(--button-brand-gradient-start),var(--button-brand-gradient-end))] text-text-base-inverse font-semibold shadow-sm hover:brightness-105",
+          "app-rounded bg-[linear-gradient(135deg,var(--button-brand-gradient-start),var(--button-brand-gradient-end))] text-white font-semibold shadow-sm hover:brightness-105",
         secondary:
           "app-rounded border border-border-base bg-surface-base text-text-muted font-medium hover:border-border-strong hover:text-text-base",
         ghost:
           "app-rounded bg-transparent text-text-muted font-medium hover:bg-surface-hover hover:text-text-base",
         danger:
-          "app-rounded bg-tone-danger-surface text-tone-danger-text font-medium hover:brightness-95",
+          "app-rounded bg-tone-danger-bg text-tone-danger-text font-medium hover:brightness-95",
         success:
           "app-rounded border border-tone-success-border bg-tone-success-bg text-tone-success-text font-semibold shadow-sm hover:bg-tone-success-bg-hover",
       },

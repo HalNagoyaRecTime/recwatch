@@ -37,9 +37,24 @@ describe("DashboardPage", () => {
       "href",
       "/teachers"
     );
+    expect(screen.getByRole("link", { name: "クラス管理" })).toHaveAttribute(
+      "href",
+      "/classrooms"
+    );
     expect(
-      screen.getByRole("link", { name: "出場メンバー管理" })
-    ).toHaveAttribute("href", "/participants");
+      screen.queryByRole("link", { name: "出場メンバー管理" })
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", { name: "参加者設定" })
+    ).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "集合場所管理" })).toHaveAttribute(
+      "href",
+      "/gathering-spots"
+    );
+    expect(screen.getByRole("link", { name: "実施場所管理" })).toHaveAttribute(
+      "href",
+      "/venues"
+    );
     expect(
       screen.queryByRole("heading", { level: 2, name: "クイック操作" })
     ).not.toBeInTheDocument();

@@ -14,8 +14,11 @@ describe("teacher list URL state", () => {
     ).toEqual({
       search: "佐橋",
       page: 3,
+      classRoomId: null,
       sortBy: "displayName",
       sortOrder: "desc",
+      isStaff: "all",
+      isLiveActive: "true",
     });
   });
 
@@ -25,8 +28,11 @@ describe("teacher list URL state", () => {
     ).toEqual({
       search: "",
       page: 1,
+      classRoomId: null,
       sortBy: null,
       sortOrder: null,
+      isStaff: "all",
+      isLiveActive: "true",
     });
   });
 
@@ -49,5 +55,25 @@ describe("teacher list URL state", () => {
         sortOrder: "asc",
       })
     ).toBe("search=%E4%BD%90%E6%A9%8B&page=2&sortBy=displayName&sortOrder=asc");
+  });
+
+  it("activeフィルターは未指定をtrue、すべてを明示的に保持する", () => {
+    expect(parseTeacherListUrl("").isLiveActive).toBe("true");
+    expect(parseTeacherListUrl("isLiveActive=false").isLiveActive).toBe(
+      "false"
+    );
+    expect(parseTeacherListUrl("isLiveActive=all").isLiveActive).toBe("all");
+    expect(updateTeacherListUrl("", { isLiveActive: "all" })).toBe(
+      "isLiveActive=all"
+    );
+  });
+
+  it("staff・activeのソート値を受け付ける", () => {
+    expect(parseTeacherListUrl("sortBy=isStaff&sortOrder=desc").sortBy).toBe(
+      "isStaff"
+    );
+    expect(
+      parseTeacherListUrl("sortBy=isLiveActive&sortOrder=asc").sortBy
+    ).toBe("isLiveActive");
   });
 });

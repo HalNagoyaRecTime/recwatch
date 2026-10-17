@@ -1,12 +1,26 @@
 import {
   createElement,
   forwardRef,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
   type ComponentType,
   type ComponentPropsWithoutRef,
+  type KeyboardEventHandler,
+  type MutableRefObject,
+  type Ref,
   type ReactNode,
   type ElementType,
 } from "react";
+import {
+  useListNavigation,
+  useInteractions,
+  type FloatingRootContext,
+  type UseInteractionsReturn,
+} from "@floating-ui/react";
 import { FloatingListSurface } from "~/components/ui/panel/FloatingListSurface";
+import { FloatingPanelContext } from "~/components/ui/panel/FloatingPanelContext";
 import { cn } from "~/lib/cn";
 import { floatingListActionItemStyle } from "~/components/ui/panel/styles/floating-list-styles";
 
@@ -31,7 +45,9 @@ export type MenuItemType =
       endIcon?: MenuIconComponent | ReactNode;
       danger?: boolean;
       disabled?: boolean;
+      ref?: Ref<HTMLButtonElement>;
       onClick?: () => void;
+      onKeyDown?: KeyboardEventHandler<HTMLButtonElement>;
     }
   | {
       /** 区切り線 */
@@ -50,15 +66,139 @@ export type MenuItemType =
 
 type MenuProps = {
   items: MenuItemType[];
+  /** Floating UIのリストナビゲーションを有効にします。 */
+  listNavigation?: boolean;
+  /** 表示時または切り替え時に指定したaction項目へフォーカスします。 */
+  focusActionIndex?: number;
+  /** 同じ項目へ再度フォーカスするための要求番号です。 */
+  focusActionRequest?: number;
+  /** 親のリストと接続したネストナビゲーションを有効にします。 */
+  nested?: boolean;
+  /** 配置方向が左向きのときはRTLとして左右キーを反転します。 */
+  rtl?: boolean;
+  onKeyDown?: KeyboardEventHandler<HTMLElement>;
 };
 
 /**
  * 1階層のシンプルなリスト（メニュー）を描画する汎用コンポーネントです。
  * 項目は配列（items）として渡し、データ駆動で描画します。
  */
-export function Menu({ items }: MenuProps) {
+export function Menu({
+  items,
+  listNavigation = false,
+  focusActionIndex,
+  focusActionRequest,
+  nested = false,
+  rtl = false,
+  onKeyDown,
+}: MenuProps) {
+  const panelContext = useContext(FloatingPanelContext);
+  const context = panelContext?.context ?? null;
+  const scrollable = panelContext?.scrollable ?? false;
+
+  if (listNavigation && context) {
+    return (
+      <NavigatedMenu
+        context={context}
+        scrollable={scrollable}
+        focusActionIndex={focusActionIndex}
+        focusActionRequest={focusActionRequest}
+        nested={nested}
+        rtl={rtl}
+        items={items}
+        onKeyDown={onKeyDown}
+      />
+    );
+  }
+
   return (
-    <FloatingListSurface>
+    <MenuContent items={items} onKeyDown={onKeyDown} scrollable={scrollable} />
+  );
+}
+
+type NavigatedMenuProps = MenuProps & {
+  context: FloatingRootContext;
+  scrollable: boolean;
+};
+
+function NavigatedMenu({
+  context,
+  scrollable,
+  focusActionIndex,
+  focusActionRequest,
+  nested,
+  rtl,
+  items,
+  onKeyDown,
+}: NavigatedMenuProps) {
+  const listRef = useRef<Array<HTMLElement | null>>([]);
+  const [activeIndex, setActiveIndex] = useState<number | null>(null);
+  const navigation = useListNavigation(context, {
+    activeIndex,
+    focusItemOnOpen: focusActionIndex !== undefined ? true : "auto",
+    listRef,
+    loop: true,
+    nested,
+    onNavigate: setActiveIndex,
+    rtl,
+    selectedIndex: focusActionIndex ?? null,
+  });
+
+  const interactions = useInteractions([navigation]);
+
+  useEffect(() => {
+    if (focusActionIndex === undefined) {
+      return;
+    }
+
+    listRef.current[focusActionIndex]?.focus();
+  }, [focusActionIndex, focusActionRequest]);
+
+  return (
+    <MenuContent
+      items={items}
+      listRef={listRef}
+      interactions={interactions}
+      scrollable={scrollable}
+      onKeyDown={onKeyDown}
+    />
+  );
+}
+
+type MenuContentProps = Pick<MenuProps, "items" | "onKeyDown"> & {
+  scrollable?: boolean;
+  listRef?: MutableRefObject<Array<HTMLElement | null>>;
+  interactions?: Pick<
+    UseInteractionsReturn,
+    "getFloatingProps" | "getItemProps"
+  >;
+};
+
+function MenuContent({
+  items,
+  listRef,
+  interactions,
+  scrollable = false,
+  onKeyDown,
+}: MenuContentProps) {
+  const actionItems = items.filter(
+    (item) => item.type === "action" && !item.disabled
+  );
+
+  const floatingProps = interactions?.getFloatingProps({
+    onKeyDown: (event) => {
+      if (!event.defaultPrevented) {
+        onKeyDown?.(event);
+      }
+    },
+  });
+
+  return (
+    <FloatingListSurface
+      {...floatingProps}
+      {...(!floatingProps && { onKeyDown })}
+      scrollable={scrollable}
+    >
       {items.map((item) => {
         if (item.type === "custom") {
           return <div key={item.id}>{item.content}</div>;
@@ -70,20 +210,50 @@ export function Menu({ items }: MenuProps) {
           );
         }
 
+        const currentActionIndex = listRef
+          ? actionItems.indexOf(item)
+          : undefined;
+        const itemProps = interactions
+          ? interactions.getItemProps({
+              onClick: () => item.onClick?.(),
+              onKeyDown: item.onKeyDown,
+            })
+          : {
+              onClick: () => item.onClick?.(),
+              onKeyDown: item.onKeyDown,
+            };
         return (
           <MenuActionItem
+            {...itemProps}
             key={item.id}
             label={item.label}
             icon={item.icon}
             endIcon={item.endIcon}
             danger={item.danger}
             disabled={item.disabled}
-            onClick={item.onClick}
+            data-menu-item-id={item.id}
+            ref={(element) => {
+              if (listRef && currentActionIndex !== undefined) {
+                listRef.current[currentActionIndex] = element;
+              }
+              assignRef(item.ref, element);
+            }}
+            className={
+              interactions ? "focus-visible:bg-surface-hover" : undefined
+            }
           />
         );
       })}
     </FloatingListSurface>
   );
+}
+
+function assignRef<T>(ref: Ref<T> | undefined, value: T | null) {
+  if (typeof ref === "function") {
+    ref(value);
+  } else if (ref) {
+    ref.current = value;
+  }
 }
 
 type MenuActionItemProps = Omit<
@@ -94,7 +264,7 @@ type MenuActionItemProps = Omit<
   icon?: ElementType;
   endIcon?: MenuIconComponent | ReactNode;
   danger?: boolean;
-  onClick?: () => void;
+  onClick?: ComponentPropsWithoutRef<"button">["onClick"];
 };
 
 /**

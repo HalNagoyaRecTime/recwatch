@@ -3,10 +3,6 @@ export type TeamNavigationTarget = {
   search: string;
 };
 
-export function teamListTarget(search: string): TeamNavigationTarget {
-  return { pathname: "/teams", search: normalizeSearch(search) };
-}
-
 export function teamCreateTarget(search: string): TeamNavigationTarget {
   return { pathname: "/teams/new", search: normalizeSearch(search) };
 }

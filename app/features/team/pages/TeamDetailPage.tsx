@@ -2,25 +2,23 @@ import { useLocation, useNavigate } from "react-router";
 
 import { Button } from "~/components/ui/button/Button";
 import { FormModal } from "~/components/ui/modal/FormModal";
-import {
-  teamEditTarget,
-  teamListTarget,
-} from "~/features/team/application/team-navigation";
+import { teamEditTarget } from "~/features/team/application/team-navigation";
 import type { Team } from "~/features/team/model/team";
 import { formatDisplayDateTime } from "~/lib/format-display-date-time";
 
-export function TeamDetailPage({ team }: { team: Team }) {
+type TeamDetailPageProps = {
+  onClose: () => void | Promise<void>;
+  team: Team;
+};
+
+export function TeamDetailPage({ onClose, team }: TeamDetailPageProps) {
   const navigate = useNavigate();
   const location = useLocation();
-
-  function close() {
-    navigate(teamListTarget(location.search));
-  }
 
   return (
     <FormModal
       description={`id: ${team.id}`}
-      onClose={close}
+      onClose={() => void onClose()}
       title="チーム詳細"
     >
       <dl className="space-y-4 text-sm">
@@ -54,7 +52,11 @@ export function TeamDetailPage({ team }: { team: Team }) {
         </div>
       </dl>
       <div className="mt-6 flex justify-end gap-2">
-        <Button onClick={close} type="button" variant="secondary">
+        <Button
+          onClick={() => void onClose()}
+          type="button"
+          variant="secondary"
+        >
           閉じる
         </Button>
         <Button

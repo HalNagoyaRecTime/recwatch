@@ -1,32 +1,32 @@
 import { useState } from "react";
-import { useLocation, useNavigate } from "react-router";
 
+import { ManagementOptionFeedback } from "~/components/management/ManagementOptionFeedback";
 import { FormModal } from "~/components/ui/modal/FormModal";
 import {
   TeamForm,
   type TeamFormInput,
 } from "~/features/team/components/TeamForm";
-import { teamListTarget } from "~/features/team/application/team-navigation";
 import { TeamApi } from "~/features/team/api";
 import type { TeamClassOption } from "~/features/team/model/team-class-option";
 import type { Team } from "~/features/team/model/team";
+import type { ManagementOptionState } from "~/hooks/useManagementOptions";
 import { getErrorMessage } from "~/lib/client-error";
 
-export function TeamEditPage({
-  availableClasses,
-  team,
-}: {
-  availableClasses: readonly TeamClassOption[];
+type TeamEditPageProps = {
+  classOptionState: ManagementOptionState<TeamClassOption>;
+  onClose: () => void | Promise<void>;
+  onSaved: () => Promise<void>;
   team: Team;
-}) {
-  const navigate = useNavigate();
-  const location = useLocation();
+};
+
+export function TeamEditPage({
+  classOptionState,
+  onClose,
+  onSaved,
+  team,
+}: TeamEditPageProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
-
-  function close() {
-    navigate(teamListTarget(location.search));
-  }
 
   async function handleSubmit(input: TeamFormInput) {
     setIsSubmitting(true);
@@ -36,30 +36,39 @@ export function TeamEditPage({
         teamName: input.name,
         classCodes: [...input.registeredClasses],
       });
-      close();
     } catch (error) {
       setSubmitError(
         getErrorMessage(error, "チーム情報の更新に失敗しました。")
       );
       setIsSubmitting(false);
+      return;
     }
+    await onSaved();
   }
 
   return (
     <FormModal
       description={`id: ${team.id}`}
-      onClose={close}
+      onClose={() => void onClose()}
       title="チーム情報を編集"
     >
       {(requestClose) => (
-        <TeamForm
-          availableClasses={availableClasses}
-          initialTeam={team}
-          isSubmitting={isSubmitting}
-          onCancel={requestClose}
-          onSubmit={handleSubmit}
-          submitError={submitError}
-        />
+        <>
+          <ManagementOptionFeedback
+            label="登録クラス候補"
+            state={classOptionState}
+          />
+          {!classOptionState.isLoading && !classOptionState.error ? (
+            <TeamForm
+              availableClasses={classOptionState.items}
+              initialTeam={team}
+              isSubmitting={isSubmitting}
+              onCancel={requestClose}
+              onSubmit={handleSubmit}
+              submitError={submitError}
+            />
+          ) : null}
+        </>
       )}
     </FormModal>
   );

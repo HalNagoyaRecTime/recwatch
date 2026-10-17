@@ -1,14 +1,27 @@
 import type { TeacherRow } from "../../model/teacher";
-import type { TeacherDTO } from "../dto/teacher-dto";
+import type { TeacherDTO, TeacherListPageDTO } from "../dto/teacher-dto";
 
 export function toTeacherRow(dto: TeacherDTO): TeacherRow {
   return {
     teacherId: dto.teacher_id,
+    userId: dto.user_id,
     displayName: dto.display_name,
+    email: dto.email,
     isLiveActive: dto.is_live_active,
+    isStaff: dto.is_staff,
     classRooms: dto.class_rooms.map((classRoom) => ({
       classRoomId: classRoom.class_room_id,
+      classCode: classRoom.class_code,
       className: classRoom.class_name,
     })),
+  };
+}
+
+export function toTeacherPage(dto: TeacherListPageDTO) {
+  return {
+    items: dto.items.map(toTeacherRow),
+    total: dto.total,
+    limit: dto.limit,
+    offset: dto.offset,
   };
 }
