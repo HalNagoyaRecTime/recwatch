@@ -32,13 +32,15 @@ export function StudentForm({
     initialStudent?.studentIdNumber ?? ""
   );
   const [attendanceNumber, setAttendanceNumber] = useState(
-    initialStudent ? String(initialStudent.attendanceNumber) : ""
+    initialStudent?.attendanceNumber
+      ? String(initialStudent.attendanceNumber)
+      : ""
   );
   const [classRoomId, setClassRoomId] = useState(
-    initialStudent &&
+    initialStudent?.classRoom &&
       classRooms.some(
         (classRoom) =>
-          classRoom.classRoomId === initialStudent.classRoom.classRoomId
+          classRoom.classRoomId === initialStudent.classRoom?.classRoomId
       )
       ? String(initialStudent.classRoom.classRoomId)
       : ""
@@ -47,18 +49,24 @@ export function StudentForm({
 
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const parsedAttendanceNumber = Number(attendanceNumber);
-    const parsedClassRoomId = Number(classRoomId);
+    const hasAttendanceNumber = attendanceNumber.trim() !== "";
+    const hasClassRoomId = classRoomId !== "";
+    const parsedAttendanceNumber = hasAttendanceNumber
+      ? Number(attendanceNumber)
+      : null;
+    const parsedClassRoomId = hasClassRoomId ? Number(classRoomId) : null;
     const normalizedName = displayName.trim();
     const normalizedStudentId = studentIdNumber.trim();
 
     if (
       !normalizedName ||
       !normalizedStudentId ||
-      !Number.isInteger(parsedAttendanceNumber) ||
-      parsedAttendanceNumber <= 0 ||
-      !Number.isInteger(parsedClassRoomId) ||
-      parsedClassRoomId <= 0
+      hasAttendanceNumber !== hasClassRoomId ||
+      (parsedAttendanceNumber !== null &&
+        (!Number.isInteger(parsedAttendanceNumber) ||
+          parsedAttendanceNumber <= 0)) ||
+      (parsedClassRoomId !== null &&
+        (!Number.isInteger(parsedClassRoomId) || parsedClassRoomId <= 0))
     ) {
       setValidationError("必須項目を正しく入力してください。");
       return;
@@ -122,9 +130,9 @@ export function StudentForm({
           />
         </label>
         <label className={labelClassName}>
-          出席番号 <span className="text-tone-danger-text">*</span>
+          出席番号
           <input
-            aria-label="出席番号*"
+            aria-label="出席番号"
             className={inputClassName}
             disabled={isSubmitting}
             min={1}
@@ -135,9 +143,9 @@ export function StudentForm({
         </label>
       </div>
       <label className={labelClassName}>
-        クラス <span className="text-tone-danger-text">*</span>
+        クラス
         <select
-          aria-label="クラス*"
+          aria-label="クラス"
           className={inputClassName}
           disabled={isSubmitting}
           onChange={(event) => setClassRoomId(event.currentTarget.value)}
