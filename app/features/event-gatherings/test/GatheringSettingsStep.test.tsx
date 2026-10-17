@@ -440,7 +440,7 @@ describe("GatheringSettingsStep", () => {
     ).toBeInTheDocument();
   });
 
-  it("停止中の学生は登録済みなら外せるが、新しくは追加できない", async () => {
+  it("停止中の学生を候補に表示せず、登録済みのIDは保存時に維持する", async () => {
     const memberGateway = createMemberGateway();
     (memberGateway.loadCandidates as Mock).mockResolvedValue({
       classrooms: [{ id: 1, name: "HAL1A" }],
@@ -461,7 +461,7 @@ describe("GatheringSettingsStep", () => {
           classroomId: 1,
           attendanceNumber: 2,
           studentNumber: "2026002",
-          isLiveActive: false,
+          isLiveActive: true,
         },
       ],
       nonStudents: new Map(),
@@ -480,67 +480,11 @@ describe("GatheringSettingsStep", () => {
     await screen.findByRole("region", { name: "Round 1" });
     await user.click(screen.getByRole("button", { name: "メンバーを選択" }));
 
-    // 登録済みの停止中学生は操作でき、チェックを外せる
-    expect(await screen.findByLabelText("山田 太郎を選択")).toBeChecked();
-    expect(screen.getByLabelText("山田 太郎を選択")).toBeEnabled();
-    expect(screen.getAllByText("停止中")).toHaveLength(2);
-    // 未登録の停止中学生は行は出すが選べない
-    const notRegistered = screen.getByLabelText("佐藤 花子を選択");
-    expect(notRegistered).toBeDisabled();
-    expect(notRegistered).not.toBeChecked();
-
-    // 一括選択は操作できる行だけを対象にする
-    await user.click(
-      screen.getByRole("button", { name: "表示中の選択を解除" })
-    );
-    expect(screen.getByLabelText("山田 太郎を選択")).not.toBeChecked();
-    expect(notRegistered).not.toBeChecked();
-
-    await user.click(screen.getByRole("button", { name: "参加者を保存" }));
-
-    await waitFor(() =>
-      expect(memberGateway.saveMembers).toHaveBeenCalledWith(101, [])
-    );
-  });
-
-  it("停止中の登録済み学生はチェックを外しても行が残り、付け直せる", async () => {
-    const memberGateway = createMemberGateway();
-    (memberGateway.loadCandidates as Mock).mockResolvedValue({
-      classrooms: [{ id: 1, name: "HAL1A" }],
-      students: [
-        {
-          id: 10,
-          userId: 1001,
-          name: "山田 太郎",
-          classroomId: 1,
-          attendanceNumber: 1,
-          studentNumber: "2026001",
-          isLiveActive: false,
-        },
-      ],
-      nonStudents: new Map(),
-    });
-    (memberGateway.loadMembers as Mock).mockResolvedValue([1001]);
-    renderStep({
-      memberGateway,
-      settingsGateway: {
-        load: vi.fn().mockResolvedValue(existingSettings),
-        save: vi.fn(),
-      },
-    });
-    const user = userEvent.setup();
-
-    await screen.findByRole("region", { name: "Round 1" });
-    await user.click(screen.getByRole("button", { name: "メンバーを選択" }));
-
-    const checkbox = await screen.findByLabelText("山田 太郎を選択");
-    await user.click(checkbox);
-    expect(checkbox).not.toBeChecked();
-    // 外した瞬間に行が消えると付け直せなくなるため、判定は開いた時点の登録内容で固定する
-    expect(checkbox).toBeEnabled();
-
-    await user.click(checkbox);
-    expect(checkbox).toBeChecked();
+    expect(await screen.findByLabelText("佐藤 花子を選択")).toBeEnabled();
+    expect(screen.queryByText("山田 太郎")).not.toBeInTheDocument();
+    expect(screen.queryByText("停止中")).not.toBeInTheDocument();
+    expect(screen.getByText(/1人を表示中/)).toBeInTheDocument();
+    expect(screen.getByText(/選択中 1人/)).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "参加者を保存" }));
 

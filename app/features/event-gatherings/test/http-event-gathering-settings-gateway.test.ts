@@ -136,7 +136,7 @@ describe("createHttpEventGatheringSettingsGateway", () => {
 });
 
 describe("createHttpGatheringMemberGateway", () => {
-  it("クラスと学生を全ページ読み込み、停止中の学生も候補に含める", async () => {
+  it("クラスと学生を全ページ読み込み、停止中の学生も判別用に保持する", async () => {
     const get = vi.fn().mockImplementation(async (path: string) => {
       if (path.startsWith("/api/v1/classrooms")) {
         return {
@@ -201,7 +201,7 @@ describe("createHttpGatheringMemberGateway", () => {
       nonStudents: new Map(),
     });
     expect(get).toHaveBeenCalledWith("/api/v1/classrooms?limit=100&offset=0");
-    // 登録済みの参加者が停止されても外せるよう、停止中を含めて取得する
+    // 登録済みの停止中学生を学生以外の参加者と誤認しないよう、停止中も取得する
     expect(get).toHaveBeenCalledWith(
       "/api/v1/students?limit=100&offset=0&isLiveActive=all"
     );
