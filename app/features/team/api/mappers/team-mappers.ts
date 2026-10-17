@@ -1,3 +1,5 @@
+import { toUtcIsoDateTime } from "~/lib/api-date-time";
+
 import type { Team } from "../../model/team";
 import type { TeamDTO } from "../dto/team-dto";
 
@@ -7,7 +9,7 @@ export function toTeam(dto: TeamDTO): Team {
     name: dto.team_name,
     registeredClasses: dto.registered_classes,
     score: dto.scores,
-    registeredAt: dto.created_at,
-    updatedAt: dto.updated_at,
+    registeredAt: toUtcIsoDateTime(dto.created_at),
+    updatedAt: toUtcIsoDateTime(dto.updated_at),
   };
 }
