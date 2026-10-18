@@ -727,11 +727,34 @@ describe("GatheringSettingsStep", () => {
     expect(screen.getByText("1人登録済み")).toBeInTheDocument();
   });
 
-  it("キャンセルで閉じると選択は保存されず、未保存の新規集合では参加者を選べない", async () => {
+  it("キャンセルで選択を破棄し、新規集合では保存前に参加者を選んで集合保存時に登録する", async () => {
+    const save = vi.fn().mockResolvedValue({
+      eventId: 12,
+      rounds: [
+        {
+          round: 1,
+          startTime: null,
+          gatherings: [
+            {
+              id: 101,
+              time: "10:45",
+              spot: { id: 1, name: "出入口①" },
+              memberCount: 0,
+            },
+            {
+              id: 102,
+              time: "11:00",
+              spot: { id: 2, name: "出入口②" },
+              memberCount: 1,
+            },
+          ],
+        },
+      ],
+    });
     const { memberGateway } = renderStep({
       settingsGateway: {
         load: vi.fn().mockResolvedValue(existingSettings),
-        save: vi.fn(),
+        save,
       },
     });
     const user = userEvent.setup();
@@ -745,20 +768,105 @@ describe("GatheringSettingsStep", () => {
     expect(memberGateway.saveMembers).not.toHaveBeenCalled();
     expect(screen.getByText("0人登録済み")).toBeInTheDocument();
 
-    // 新規行は集合の ID がまだ無いため、参加者の GET / PUT ができない
+    // 集合を保存する前の参加者選択は画面内に保持する
     await user.click(screen.getByRole("button", { name: "集合場所を追加" }));
     const pickerButtons = screen.getAllByRole("button", {
       name: "メンバーを選択",
     });
     expect(pickerButtons[0]).toBeEnabled();
-    expect(pickerButtons[1]).toBeDisabled();
-
-    // disabled なボタンは Chrome / Safari で title が出ないため、理由を本文で出す
-    const hint = screen.getByText(
-      "この集合を「集合設定を保存」で登録すると、参加者を選べます。"
-    );
-    expect(hint).toBeInTheDocument();
+    expect(pickerButtons[1]).toBeEnabled();
+    const hint = screen.getByText("参加者は集合設定の保存後に登録されます。");
     expect(pickerButtons[1]).toHaveAttribute("aria-describedby", hint.id);
-    expect(pickerButtons[0]).not.toHaveAttribute("aria-describedby");
+
+    await user.click(pickerButtons[1]);
+    await user.click(await screen.findByLabelText("山田 太郎を選択"));
+    await user.click(screen.getByRole("button", { name: "選択を確定" }));
+    expect(screen.getByText("1人選択中")).toBeInTheDocument();
+    expect(memberGateway.saveMembers).not.toHaveBeenCalled();
+
+    const gatheringTimes = screen.getAllByLabelText("集合時間");
+    await user.type(gatheringTimes[1], "11:00");
+    const spots = screen.getAllByRole("combobox", { name: "集合場所" });
+    await user.selectOptions(spots[1], "2");
+    await user.click(screen.getByRole("button", { name: "集合設定を保存" }));
+
+    await waitFor(() =>
+      expect(save).toHaveBeenCalledWith(12, {
+        rounds: [
+          {
+            round: 1,
+            startTime: null,
+            gatherings: [
+              { gatheringId: 101, time: "10:45", spotId: 1 },
+              { gatheringId: null, time: "11:00", spotId: 2 },
+            ],
+          },
+        ],
+      })
+    );
+    await waitFor(() =>
+      expect(memberGateway.saveMembers).toHaveBeenCalledWith(102, [1001])
+    );
+    expect(screen.getByText("1人登録済み")).toBeInTheDocument();
+  });
+
+  it("集合保存後の参加者登録に失敗したら選択を保持し、集合保存から再試行できる", async () => {
+    const memberGateway = createMemberGateway();
+    (memberGateway.saveMembers as Mock).mockRejectedValueOnce(
+      new Error("通信に失敗しました。")
+    );
+    const savedSettings: EventGatheringSettings = {
+      eventId: 12,
+      rounds: [
+        {
+          round: 1,
+          startTime: null,
+          gatherings: [
+            {
+              id: 201,
+              time: "11:00",
+              spot: { id: 2, name: "出入口②" },
+              memberCount: 0,
+            },
+          ],
+        },
+      ],
+    };
+    const user = userEvent.setup();
+    renderStep({
+      memberGateway,
+      settingsGateway: {
+        load: vi.fn().mockResolvedValue({ eventId: 12, rounds: [] }),
+        save: vi.fn().mockResolvedValue(savedSettings),
+      },
+    });
+
+    await user.click(
+      await screen.findByRole("button", { name: "Roundを追加" })
+    );
+    await user.click(screen.getByRole("button", { name: "メンバーを選択" }));
+    await user.click(await screen.findByLabelText("山田 太郎を選択"));
+    await user.click(screen.getByRole("button", { name: "選択を確定" }));
+    await user.type(screen.getByLabelText("集合時間"), "11:00");
+    await user.selectOptions(
+      screen.getByRole("combobox", { name: "集合場所" }),
+      "2"
+    );
+    await user.click(screen.getByRole("button", { name: "集合設定を保存" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "参加者の登録に失敗しました。集合設定を保存して再試行してください。"
+    );
+    expect(screen.getByText("1人選択中")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "集合設定を保存" })
+    ).toBeEnabled();
+
+    await user.click(screen.getByRole("button", { name: "集合設定を保存" }));
+    await waitFor(() =>
+      expect(memberGateway.saveMembers).toHaveBeenCalledTimes(2)
+    );
+    expect(memberGateway.saveMembers).toHaveBeenLastCalledWith(201, [1001]);
+    expect(screen.getByText("1人登録済み")).toBeInTheDocument();
   });
 });

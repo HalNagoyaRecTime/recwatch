@@ -2,6 +2,7 @@ import { ArrowLeft, Check, Plus } from "lucide-react";
 import { useState } from "react";
 
 import { Button } from "~/components/ui/button/Button";
+import { getErrorMessage } from "~/lib/client-error";
 
 import type { EventGatheringSettingsGateway } from "~/features/event-gatherings/api/contracts/event-gathering-settings-gateway";
 import type { GatheringMemberGateway } from "~/features/event-gatherings/api/contracts/gathering-member-gateway";
@@ -16,6 +17,7 @@ import type { GatheringSpotGateway } from "~/features/gathering-spots/api/contra
 import { httpGatheringSpotGateway } from "~/features/gathering-spots/api/http/gathering-spot-dependencies";
 import { useGatheringSpots } from "~/features/gathering-spots/hooks/useGatheringSpots";
 import { GatheringMemberEditor } from "./GatheringMemberEditor";
+import { GatheringPendingMemberEditor } from "./GatheringPendingMemberEditor";
 import { RoundCard } from "./RoundCard";
 
 type GatheringSettingsStepProps = {
@@ -61,6 +63,11 @@ export function GatheringSettingsStep({
   });
   const [openPickerKey, setOpenPickerKey] = useState<string | null>(null);
   const [hasSaved, setHasSaved] = useState(false);
+  const [hasCreatedGatherings, setHasCreatedGatherings] = useState(false);
+  const [pendingMembers, setPendingMembers] = useState<
+    Record<string, number[]>
+  >({});
+  const [memberSaveError, setMemberSaveError] = useState<string | null>(null);
 
   const loadError = settings.loadError ?? spotList.loadError;
   const isBusy = settings.isLoading || spotList.isLoading || settings.isSaving;
@@ -77,12 +84,70 @@ export function GatheringSettingsStep({
     const hasNewGatherings = settings.rounds.some((round) =>
       round.gatherings.some((gathering) => gathering.gatheringId === null)
     );
+    const pendingAssignments = settings.rounds.flatMap((round) =>
+      round.gatherings.flatMap((gathering, index) =>
+        Object.hasOwn(pendingMembers, gathering.key)
+          ? [
+              {
+                key: gathering.key,
+                round: round.round,
+                index,
+                userIds: pendingMembers[gathering.key],
+              },
+            ]
+          : []
+      )
+    );
     const saved = await settings.save();
-    if (saved) {
-      setOpenPickerKey(null);
-      setHasSaved(true);
-      onSaved(saved, hasNewGatherings);
+    if (!saved) return;
+
+    const shouldKeepEditing = hasNewGatherings || hasCreatedGatherings;
+    if (hasNewGatherings) setHasCreatedGatherings(true);
+    onSaved(saved, shouldKeepEditing);
+    setMemberSaveError(null);
+
+    for (const assignment of pendingAssignments) {
+      const round = saved.rounds.find(
+        (savedRound) => savedRound.round === assignment.round
+      );
+      const gathering = round?.gatherings[assignment.index];
+      if (!round || !gathering) {
+        setMemberSaveError(
+          "集合の保存結果を確認できず、参加者を登録できませんでした。集合設定を再読み込みしてください。"
+        );
+        return;
+      }
+
+      try {
+        const userIds = assignment.userIds.length
+          ? await memberGateway.saveMembers(gathering.id, assignment.userIds)
+          : [];
+        const draftRound = settings.rounds.find(
+          (currentRound) => currentRound.round === assignment.round
+        );
+        if (draftRound) {
+          settings.updateGathering(draftRound.key, assignment.key, {
+            savedMemberCount: userIds.length,
+          });
+        }
+        setPendingMembers((current) => {
+          const next = { ...current };
+          delete next[assignment.key];
+          return next;
+        });
+      } catch (error) {
+        setMemberSaveError(
+          getErrorMessage(
+            error,
+            "参加者の登録に失敗しました。集合設定を保存して再試行してください。"
+          )
+        );
+        return;
+      }
     }
+
+    setOpenPickerKey(null);
+    setHasSaved(true);
   }
 
   return (
@@ -97,6 +162,11 @@ export function GatheringSettingsStep({
       {hasSaved ? (
         <p className="text-tone-success-text text-sm" role="status">
           集合設定を保存しました。続けて参加者を設定できます。
+        </p>
+      ) : null}
+      {memberSaveError ? (
+        <p className="text-tone-danger-text text-base" role="alert">
+          {memberSaveError}
         </p>
       ) : null}
 
@@ -133,6 +203,13 @@ export function GatheringSettingsStep({
               }}
               onRemove={() => {
                 setHasSaved(false);
+                setPendingMembers((current) => {
+                  const next = { ...current };
+                  for (const gathering of round.gatherings) {
+                    delete next[gathering.key];
+                  }
+                  return next;
+                });
                 if (
                   round.gatherings.some(
                     (gathering) => gathering.key === openPickerKey
@@ -144,14 +221,41 @@ export function GatheringSettingsStep({
               }}
               onRemoveGathering={(gatheringKey) => {
                 setHasSaved(false);
+                setPendingMembers((current) => {
+                  const next = { ...current };
+                  delete next[gatheringKey];
+                  return next;
+                });
                 if (openPickerKey === gatheringKey) setOpenPickerKey(null);
                 settings.removeGathering(round.key, gatheringKey);
               }}
               onTogglePicker={togglePicker}
               openPickerKey={openPickerKey}
+              pendingMemberCounts={Object.fromEntries(
+                Object.entries(pendingMembers).map(([key, userIds]) => [
+                  key,
+                  userIds.length,
+                ])
+              )}
               renderPicker={(gathering) =>
-                // 未保存の新規行はボタン側で開けないようにしているため、通常ここには来ない
-                gathering.gatheringId === null ? null : (
+                gathering.gatheringId === null ||
+                Object.hasOwn(pendingMembers, gathering.key) ? (
+                  <GatheringPendingMemberEditor
+                    candidates={memberCandidates.candidates}
+                    candidatesError={memberCandidates.loadError}
+                    initialUserIds={pendingMembers[gathering.key] ?? []}
+                    isCandidatesLoading={memberCandidates.isLoading}
+                    onCancel={() => setOpenPickerKey(null)}
+                    onConfirm={(userIds) => {
+                      setPendingMembers((current) => ({
+                        ...current,
+                        [gathering.key]: userIds,
+                      }));
+                      setHasSaved(false);
+                      setOpenPickerKey(null);
+                    }}
+                  />
+                ) : (
                   <GatheringMemberEditor
                     key={gathering.gatheringId}
                     candidates={memberCandidates.candidates}

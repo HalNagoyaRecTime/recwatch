@@ -174,6 +174,14 @@ describe("EventGatheringSettingsPage", () => {
       await screen.findByRole("button", { name: "Roundを追加" })
     );
     const round = screen.getByRole("region", { name: "Round 1" });
+    await user.click(
+      within(round).getByRole("button", { name: "メンバーを選択" })
+    );
+    await user.click(await screen.findByLabelText("山田 太郎を選択"));
+    await user.click(screen.getByRole("button", { name: "選択を確定" }));
+    expect(screen.getByText("1人選択中")).toBeInTheDocument();
+    expect(memberGateway.saveMembers).not.toHaveBeenCalled();
+
     await user.type(within(round).getByLabelText("集合時間"), "10:45");
     await user.selectOptions(
       within(round).getByRole("combobox", { name: "集合場所" }),
@@ -200,10 +208,6 @@ describe("EventGatheringSettingsPage", () => {
     expect(screen.getByTestId("location")).toHaveTextContent(
       /^\/events\/7\/gatherings$/
     );
-
-    await user.click(screen.getByRole("button", { name: "メンバーを選択" }));
-    await user.click(await screen.findByLabelText("山田 太郎を選択"));
-    await user.click(screen.getByRole("button", { name: "参加者を保存" }));
     await waitFor(() =>
       expect(memberGateway.saveMembers).toHaveBeenCalledWith(101, [1001])
     );
