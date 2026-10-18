@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Outlet, Route, Routes, useLocation } from "react-router";
 import { describe, expect, it, vi } from "vitest";
@@ -10,23 +10,41 @@ function LocationProbe() {
 }
 
 function renderPage(path: string, load = vi.fn(), save = vi.fn()) {
+  const memberGateway = {
+    loadCandidates: vi.fn().mockResolvedValue({
+      classrooms: [{ id: 1, name: "HAL1A" }],
+      students: [
+        {
+          id: 10,
+          userId: 1001,
+          name: "山田 太郎",
+          classroomId: 1,
+          attendanceNumber: 1,
+          studentNumber: "2026001",
+          isLiveActive: true,
+        },
+      ],
+      nonStudents: new Map(),
+    }),
+    loadMembers: vi.fn().mockResolvedValue([]),
+    saveMembers: vi.fn().mockResolvedValue([1001]),
+  };
+
   render(
     <MemoryRouter initialEntries={[path]}>
       <Routes>
         <Route
           element={
             <EventGatheringSettingsPage
-              memberGateway={{
-                loadCandidates: vi.fn(),
-                loadMembers: vi.fn(),
-                saveMembers: vi.fn(),
-              }}
+              memberGateway={memberGateway}
               settingsGateway={{ load, save }}
               spotGateway={{
                 list: vi.fn().mockResolvedValue({
-                  items: [],
-                  total: 0,
-                  limit: 0,
+                  items: [
+                    { id: 1, name: "出入口①", createdAt: "", updatedAt: "" },
+                  ],
+                  total: 1,
+                  limit: 1,
                   offset: 0,
                 }),
                 getById: vi.fn(),
@@ -42,6 +60,7 @@ function renderPage(path: string, load = vi.fn(), save = vi.fn()) {
       <LocationProbe />
     </MemoryRouter>
   );
+  return { memberGateway };
 }
 
 /** イベント詳細の子ルートとして開き、詳細の再読み込みを受け取れる状態で描画する。 */
@@ -124,11 +143,27 @@ function renderPageInEventDetail(reload: () => void) {
 }
 
 describe("EventGatheringSettingsPage", () => {
-  it("URL のイベント ID で集合設定を読み込み、保存後にイベント詳細へ戻る", async () => {
+  it("新しい集合を保存した後、そのまま参加者を設定してイベント詳細へ戻る", async () => {
     const load = vi.fn().mockResolvedValue({ eventId: 7, rounds: [] });
-    const save = vi.fn().mockResolvedValue({ eventId: 7, rounds: [] });
+    const save = vi.fn().mockResolvedValue({
+      eventId: 7,
+      rounds: [
+        {
+          round: 1,
+          startTime: null,
+          gatherings: [
+            {
+              id: 101,
+              time: "10:45",
+              spot: { id: 1, name: "出入口①" },
+              memberCount: 0,
+            },
+          ],
+        },
+      ],
+    });
     const user = userEvent.setup();
-    renderPage("/events/7/gatherings", load, save);
+    const { memberGateway } = renderPage("/events/7/gatherings", load, save);
 
     expect(
       screen.getByRole("heading", { name: "集合設定", level: 2 })
@@ -136,22 +171,87 @@ describe("EventGatheringSettingsPage", () => {
     await waitFor(() => expect(load).toHaveBeenCalledWith(7));
 
     await user.click(
-      await screen.findByRole("button", { name: "集合設定を保存" })
+      await screen.findByRole("button", { name: "Roundを追加" })
     );
-    await waitFor(() => expect(save).toHaveBeenCalledWith(7, { rounds: [] }));
+    const round = screen.getByRole("region", { name: "Round 1" });
+    await user.type(within(round).getByLabelText("集合時間"), "10:45");
+    await user.selectOptions(
+      within(round).getByRole("combobox", { name: "集合場所" }),
+      "1"
+    );
+    await user.click(screen.getByRole("button", { name: "集合設定を保存" }));
+    await waitFor(() =>
+      expect(save).toHaveBeenCalledWith(7, {
+        rounds: [
+          {
+            round: 1,
+            startTime: null,
+            gatherings: [{ gatheringId: null, time: "10:45", spotId: 1 }],
+          },
+        ],
+      })
+    );
 
-    // 完了画面は同じモーダル内に出て、「イベント詳細へ戻る」で閉じると詳細へ戻る
     expect(
-      await screen.findByText("集合設定を保存しました")
+      await screen.findByText(
+        "集合設定を保存しました。続けて参加者を設定できます。"
+      )
     ).toBeInTheDocument();
     expect(screen.getByTestId("location")).toHaveTextContent(
       /^\/events\/7\/gatherings$/
     );
+
+    await user.click(screen.getByRole("button", { name: "メンバーを選択" }));
+    await user.click(await screen.findByLabelText("山田 太郎を選択"));
+    await user.click(screen.getByRole("button", { name: "参加者を保存" }));
+    await waitFor(() =>
+      expect(memberGateway.saveMembers).toHaveBeenCalledWith(101, [1001])
+    );
+    expect(screen.getByText("1人登録済み")).toBeInTheDocument();
+
     await user.click(
       screen.getByRole("button", { name: "イベント詳細へ戻る" })
     );
     await waitFor(() =>
       expect(screen.getByTestId("location")).toHaveTextContent(/^\/events\/7$/)
+    );
+  });
+
+  it("既存集合の編集を保存すると、従来どおり保存完了画面へ進む", async () => {
+    const settings = {
+      eventId: 7,
+      rounds: [
+        {
+          round: 1,
+          startTime: null,
+          gatherings: [
+            {
+              id: 101,
+              time: "10:45",
+              spot: { id: 1, name: "出入口①" },
+              memberCount: 0,
+            },
+          ],
+        },
+      ],
+    };
+    const load = vi.fn().mockResolvedValue(settings);
+    const save = vi.fn().mockResolvedValue(settings);
+    const user = userEvent.setup();
+    renderPage("/events/7/gatherings", load, save);
+
+    const startTime = await screen.findByLabelText("Round 1 の開始時刻");
+    await user.type(startTime, "11:00");
+    await user.click(screen.getByRole("button", { name: "集合設定を保存" }));
+
+    expect(
+      await screen.findByText("集合設定を保存しました")
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "メンバーを選択" })
+    ).not.toBeInTheDocument();
+    expect(screen.getByTestId("location")).toHaveTextContent(
+      /^\/events\/7\/gatherings$/
     );
   });
 
@@ -172,7 +272,7 @@ describe("EventGatheringSettingsPage", () => {
     // 集合設定を保存していなくても、サーバーの人数が変わったので詳細を読み直す
     expect(reload).toHaveBeenCalledTimes(1);
     expect(
-      screen.queryByText("集合設定を保存しました")
+      screen.queryByText("集合設定を保存しました。続けて参加者を設定できます。")
     ).not.toBeInTheDocument();
   });
 

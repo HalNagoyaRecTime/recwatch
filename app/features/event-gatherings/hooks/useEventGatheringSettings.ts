@@ -154,7 +154,9 @@ export function useEventGatheringSettings({
     setIsSaving(true);
     setSaveError(null);
     try {
-      return await gateway.save(eventId, result.input);
+      const saved = await gateway.save(eventId, result.input);
+      setRounds(toRoundDrafts(saved));
+      return saved;
     } catch (error) {
       setSaveError(toSaveErrorMessage(error));
       return null;

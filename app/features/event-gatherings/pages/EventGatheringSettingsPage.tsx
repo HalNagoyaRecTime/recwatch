@@ -71,9 +71,9 @@ export function EventGatheringSettingsPage({
             memberGateway={memberGateway}
             onBack={requestClose}
             onMembersSaved={() => outletContext?.reload()}
-            onSaved={(settings) => {
+            onSaved={(settings, hasNewGatherings) => {
               outletContext?.reload();
-              setSavedSettings(settings);
+              if (!hasNewGatherings) setSavedSettings(settings);
             }}
             settingsGateway={settingsGateway}
             spotGateway={spotGateway}

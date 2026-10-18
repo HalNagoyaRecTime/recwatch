@@ -29,7 +29,10 @@ type GatheringSettingsStepProps = {
    */
   onMembersSaved?: () => void;
   /** 集合設定を保存してステップを進めるとき。 */
-  onSaved: (settings: EventGatheringSettings) => void;
+  onSaved: (
+    settings: EventGatheringSettings,
+    hasNewGatherings: boolean
+  ) => void;
   settingsGateway?: EventGatheringSettingsGateway;
   spotGateway?: GatheringSpotGateway;
 };
@@ -57,6 +60,7 @@ export function GatheringSettingsStep({
     gateway: memberGateway,
   });
   const [openPickerKey, setOpenPickerKey] = useState<string | null>(null);
+  const [hasSaved, setHasSaved] = useState(false);
 
   const loadError = settings.loadError ?? spotList.loadError;
   const isBusy = settings.isLoading || spotList.isLoading || settings.isSaving;
@@ -70,8 +74,15 @@ export function GatheringSettingsStep({
   }
 
   async function handleSave() {
+    const hasNewGatherings = settings.rounds.some((round) =>
+      round.gatherings.some((gathering) => gathering.gatheringId === null)
+    );
     const saved = await settings.save();
-    if (saved) onSaved(saved);
+    if (saved) {
+      setOpenPickerKey(null);
+      setHasSaved(true);
+      onSaved(saved, hasNewGatherings);
+    }
   }
 
   return (
@@ -82,6 +93,12 @@ export function GatheringSettingsStep({
           Roundごとに集合時間・集合場所・参加者を設定します。
         </p>
       </div>
+
+      {hasSaved ? (
+        <p className="text-tone-success-text text-sm" role="status">
+          集合設定を保存しました。続けて参加者を設定できます。
+        </p>
+      ) : null}
 
       {loadError ? (
         <p className="text-tone-danger-text text-base" role="alert">
@@ -98,17 +115,24 @@ export function GatheringSettingsStep({
               errors={settings.validationErrors.filter(
                 (error) => error.roundKey === round.key
               )}
-              onAddGathering={() => settings.addGathering(round.key)}
-              onChangeGathering={(gatheringKey, patch) =>
-                settings.updateGathering(round.key, gatheringKey, patch)
-              }
-              onChangeRoundStartTime={(startTime) =>
-                settings.updateRoundStartTime(round.key, startTime)
-              }
-              onChangeRoundNumber={(roundNumber) =>
-                settings.updateRoundNumber(round.key, roundNumber)
-              }
+              onAddGathering={() => {
+                setHasSaved(false);
+                settings.addGathering(round.key);
+              }}
+              onChangeGathering={(gatheringKey, patch) => {
+                setHasSaved(false);
+                settings.updateGathering(round.key, gatheringKey, patch);
+              }}
+              onChangeRoundStartTime={(startTime) => {
+                setHasSaved(false);
+                settings.updateRoundStartTime(round.key, startTime);
+              }}
+              onChangeRoundNumber={(roundNumber) => {
+                setHasSaved(false);
+                settings.updateRoundNumber(round.key, roundNumber);
+              }}
               onRemove={() => {
+                setHasSaved(false);
                 if (
                   round.gatherings.some(
                     (gathering) => gathering.key === openPickerKey
@@ -119,6 +143,7 @@ export function GatheringSettingsStep({
                 settings.removeRound(round.key);
               }}
               onRemoveGathering={(gatheringKey) => {
+                setHasSaved(false);
                 if (openPickerKey === gatheringKey) setOpenPickerKey(null);
                 settings.removeGathering(round.key, gatheringKey);
               }}
@@ -159,7 +184,10 @@ export function GatheringSettingsStep({
           <Button
             disabled={isDisabled}
             icon={Plus}
-            onClick={settings.addRound}
+            onClick={() => {
+              setHasSaved(false);
+              settings.addRound();
+            }}
             size="md"
             type="button"
             variant="secondary"
@@ -184,7 +212,7 @@ export function GatheringSettingsStep({
           type="button"
           variant="secondary"
         >
-          {backLabel}
+          {hasSaved ? "イベント詳細へ戻る" : backLabel}
         </Button>
         <Button
           disabled={isDisabled}
