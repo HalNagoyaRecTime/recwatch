@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 
 import { ManagementOptionFeedback } from "~/components/management/ManagementOptionFeedback";
 import { FormModal } from "~/components/ui/modal/FormModal";
@@ -16,6 +16,7 @@ import type { ManagementOptionState } from "~/hooks/useManagementOptions";
 
 type ClassRoomEditPageProps = {
   api: ClassRoomMutationApi;
+  children?: ReactNode;
   classRoom: ClassRoom;
   onClose: () => void | Promise<void>;
   onSaved: () => Promise<void>;
@@ -25,6 +26,7 @@ type ClassRoomEditPageProps = {
 
 export function ClassRoomEditPage({
   api,
+  children,
   classRoom,
   onClose,
   onSaved,
@@ -56,6 +58,7 @@ export function ClassRoomEditPage({
       description={`クラスID: ${classRoom.classRoomId}`}
       onClose={onClose}
       title="クラスを編集"
+      size="xl"
     >
       <ManagementOptionFeedback
         label="担当教官候補"
@@ -71,6 +74,9 @@ export function ClassRoomEditPage({
           submitError={submitError}
           teacherOptions={teacherOptionsState.items}
         />
+      ) : null}
+      {children ? (
+        <div className="border-border-base mt-6 border-t pt-6">{children}</div>
       ) : null}
     </FormModal>
   );
