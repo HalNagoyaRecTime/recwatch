@@ -1,11 +1,13 @@
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import { useNavigate, useOutletContext, useParams } from "react-router";
 
 import { FormModal } from "~/components/ui/modal/FormModal";
 
 import type { EventGatheringSettingsGateway } from "~/features/event-gatherings/api/contracts/event-gathering-settings-gateway";
 import type { GatheringMemberGateway } from "~/features/event-gatherings/api/contracts/gathering-member-gateway";
+import { GatheringSettingsSavedStep } from "~/features/event-gatherings/components/GatheringSettingsSavedStep";
 import { GatheringSettingsStep } from "~/features/event-gatherings/components/GatheringSettingsStep";
+import type { EventGatheringSettings } from "~/features/event-gatherings/model/event-gathering-settings";
 import type { GatheringSpotGateway } from "~/features/gathering-spots/api/contracts/gathering-spot-gateway";
 import type { EventDetailOutletContext } from "~/features/events/pages/EventDetailPage";
 
@@ -29,6 +31,8 @@ export function EventGatheringSettingsPage({
   const outletContext = useOutletContext<
     EventDetailOutletContext | undefined
   >();
+  const [savedSettings, setSavedSettings] =
+    useState<EventGatheringSettings | null>(null);
   const eventId = Number(eventIdParam);
   const isValidEventId = Number.isInteger(eventId) && eventId > 0;
   // ID が不正なら詳細も表示できないため一覧へ戻す。
@@ -41,7 +45,11 @@ export function EventGatheringSettingsPage({
 
   return (
     <FormModal
-      description="Roundごとの集合時間・集合場所を編集します。"
+      description={
+        savedSettings
+          ? "集合設定の保存が完了しました。"
+          : "Roundごとの集合時間・集合場所を編集します。"
+      }
       onClose={handleClose}
       size="xl"
       title="集合設定"
@@ -51,6 +59,11 @@ export function EventGatheringSettingsPage({
           <p className="text-tone-danger-text text-base" role="alert">
             イベントIDが不正です。
           </p>
+        ) : savedSettings ? (
+          <GatheringSettingsSavedStep
+            onClose={requestClose}
+            settings={savedSettings}
+          />
         ) : (
           <GatheringSettingsStep
             backLabel="キャンセル"
@@ -58,9 +71,13 @@ export function EventGatheringSettingsPage({
             memberGateway={memberGateway}
             onBack={requestClose}
             onMembersSaved={() => outletContext?.reload()}
-            onSaved={() => {
+            onSaved={(settings, hasNewGatherings) => {
               outletContext?.reload();
-              requestClose();
+              if (hasNewGatherings) {
+                requestClose();
+              } else {
+                setSavedSettings(settings);
+              }
             }}
             settingsGateway={settingsGateway}
             spotGateway={spotGateway}

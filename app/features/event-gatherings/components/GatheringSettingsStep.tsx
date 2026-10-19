@@ -31,7 +31,10 @@ type GatheringSettingsStepProps = {
    */
   onMembersSaved?: () => void;
   /** 集合設定と参加者の保存が完了したとき。 */
-  onSaved: (settings: EventGatheringSettings) => void;
+  onSaved: (
+    settings: EventGatheringSettings,
+    hasNewGatherings: boolean
+  ) => void;
   settingsGateway?: EventGatheringSettingsGateway;
   spotGateway?: GatheringSpotGateway;
 };
@@ -76,6 +79,9 @@ export function GatheringSettingsStep({
   }
 
   async function handleSave() {
+    const hasNewGatherings = settings.rounds.some((round) =>
+      round.gatherings.some((gathering) => gathering.gatheringId === null)
+    );
     const pendingAssignments = settings.rounds.flatMap((round) =>
       round.gatherings.flatMap((gathering, index) =>
         Object.hasOwn(pendingMembers, gathering.key)
@@ -137,7 +143,7 @@ export function GatheringSettingsStep({
       }
     }
 
-    onSaved(saved);
+    onSaved(saved, hasNewGatherings);
   }
 
   return (

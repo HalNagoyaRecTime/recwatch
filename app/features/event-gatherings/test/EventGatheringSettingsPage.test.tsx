@@ -211,7 +211,7 @@ describe("EventGatheringSettingsPage", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("既存集合の編集を保存すると、モーダルを閉じる", async () => {
+  it("既存集合の編集を保存すると、完了画面を表示してからモーダルを閉じる", async () => {
     const settings = {
       eventId: 7,
       rounds: [
@@ -238,6 +238,17 @@ describe("EventGatheringSettingsPage", () => {
     await user.type(startTime, "11:00");
     await user.click(screen.getByRole("button", { name: "集合設定を保存" }));
 
+    expect(
+      await screen.findByText("集合設定を保存しました")
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("1Round・1件の集合を登録しました。")
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("dialog", { name: "集合設定" })
+    ).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "一覧へ戻る" }));
     await waitFor(() =>
       expect(screen.getByTestId("location")).toHaveTextContent(/^\/events\/7$/)
     );
