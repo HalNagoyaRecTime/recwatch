@@ -447,6 +447,78 @@ describe("GatheringSettingsStep", () => {
     ).toBeInTheDocument();
   });
 
+  it("未所属学生を含む候補でクラスコード・クラス名・氏名・学籍番号を検索できる", async () => {
+    const memberGateway = createMemberGateway();
+    (memberGateway.loadCandidates as Mock).mockResolvedValue({
+      classrooms: [{ id: 1, code: "HAL1A", name: "1年Aクラス" }],
+      students: [
+        {
+          id: 10,
+          userId: 1001,
+          name: "山田 太郎",
+          classroomId: 1,
+          attendanceNumber: 1,
+          studentNumber: "2026001",
+          isLiveActive: true,
+        },
+        {
+          id: 12,
+          userId: 1003,
+          name: "鈴木 次郎",
+          classroomId: null,
+          attendanceNumber: null,
+          studentNumber: "2026003",
+          isLiveActive: true,
+        },
+      ],
+      nonStudents: new Map(),
+    });
+    renderStep({
+      memberGateway,
+      settingsGateway: {
+        load: vi.fn().mockResolvedValue(existingSettings),
+        save: vi.fn(),
+      },
+    });
+    const user = userEvent.setup();
+
+    await screen.findByRole("region", { name: "Round 1" });
+    await user.click(screen.getByRole("button", { name: "メンバーを選択" }));
+    const unassignedStudent = await screen.findByRole("row", {
+      name: /鈴木 次郎/,
+    });
+    expect(within(unassignedStudent).getByText("—")).toBeInTheDocument();
+
+    const search = screen.getByRole("searchbox", { name: "参加者を検索" });
+    for (const keyword of ["hal1a", "1年Aクラス"]) {
+      await user.clear(search);
+      await user.type(search, keyword);
+      expect(screen.getByLabelText("山田 太郎を選択")).toBeInTheDocument();
+      expect(
+        screen.queryByLabelText("鈴木 次郎を選択")
+      ).not.toBeInTheDocument();
+    }
+    for (const keyword of ["鈴木", "2026003"]) {
+      await user.clear(search);
+      await user.type(search, keyword);
+      expect(screen.getByLabelText("鈴木 次郎を選択")).toBeInTheDocument();
+      expect(
+        screen.queryByLabelText("山田 太郎を選択")
+      ).not.toBeInTheDocument();
+    }
+
+    await user.clear(search);
+    const classroomFilter = screen.getByRole("combobox", {
+      name: "クラスで絞り込み",
+    });
+    await user.selectOptions(classroomFilter, "HAL1A");
+    expect(classroomFilter).toHaveValue("1");
+    expect(screen.getByLabelText("山田 太郎を選択")).toBeInTheDocument();
+    expect(screen.queryByLabelText("鈴木 次郎を選択")).not.toBeInTheDocument();
+    await user.selectOptions(classroomFilter, "すべてのクラス");
+    expect(screen.getByLabelText("鈴木 次郎を選択")).toBeInTheDocument();
+  });
+
   it("停止中の学生は登録済みなら外せるが、新しくは追加できない", async () => {
     const memberGateway = createMemberGateway();
     (memberGateway.loadCandidates as Mock).mockResolvedValue({

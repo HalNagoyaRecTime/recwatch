@@ -96,8 +96,14 @@ export function GatheringMemberPicker({
         return false;
       }
       if (!keyword) return true;
-      const classroomName = classroomNames.get(student.classroomId) ?? "";
-      const classroomCode = classroomCodes.get(student.classroomId) ?? "";
+      const classroomName =
+        student.classroomId === null
+          ? ""
+          : (classroomNames.get(student.classroomId) ?? "");
+      const classroomCode =
+        student.classroomId === null
+          ? ""
+          : (classroomCodes.get(student.classroomId) ?? "");
       return [
         student.name,
         student.studentNumber,
@@ -299,7 +305,9 @@ export function GatheringMemberPicker({
                         )}
                       </td>
                       <td className="text-text-base truncate px-3 py-2">
-                        {classroomNames.get(student.classroomId) ?? "—"}
+                        {student.classroomId === null
+                          ? "—"
+                          : (classroomNames.get(student.classroomId) ?? "—")}
                       </td>
                       <td className="text-text-base truncate px-3 py-2">
                         {student.studentNumber}
