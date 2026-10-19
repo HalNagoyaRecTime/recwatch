@@ -126,10 +126,12 @@ function createMemberGateway(): GatheringMemberGateway {
 function renderStep({
   settingsGateway,
   memberGateway = createMemberGateway(),
+  onMembersSaved = vi.fn(),
   onSaved = vi.fn(),
 }: {
   settingsGateway: EventGatheringSettingsGateway;
   memberGateway?: GatheringMemberGateway;
+  onMembersSaved?: () => void;
   onSaved?: (settings: EventGatheringSettings) => void;
 }) {
   render(
@@ -138,12 +140,13 @@ function renderStep({
       eventId={12}
       memberGateway={memberGateway}
       onBack={vi.fn()}
+      onMembersSaved={onMembersSaved}
       onSaved={onSaved}
       settingsGateway={settingsGateway}
       spotGateway={createSpotGateway()}
     />
   );
-  return { memberGateway, onSaved };
+  return { memberGateway, onMembersSaved, onSaved };
 }
 
 describe("GatheringSettingsStep", () => {
@@ -812,28 +815,28 @@ describe("GatheringSettingsStep", () => {
 
   it("集合保存後の参加者登録に失敗したら選択を保持し、集合保存から再試行できる", async () => {
     const memberGateway = createMemberGateway();
-    (memberGateway.saveMembers as Mock).mockRejectedValueOnce(
-      new Error("通信に失敗しました。")
-    );
+    (memberGateway.saveMembers as Mock)
+      .mockImplementationOnce(
+        async (_gatheringId: number, userIds: number[]) => [...userIds]
+      )
+      .mockRejectedValueOnce(new Error("通信に失敗しました。"));
     const savedSettings: EventGatheringSettings = {
       eventId: 12,
       rounds: [
         {
           round: 1,
           startTime: null,
-          gatherings: [
-            {
-              id: 201,
-              time: "11:00",
-              spot: { id: 2, name: "出入口②" },
-              memberCount: 0,
-            },
-          ],
+          gatherings: [201, 202].map((id) => ({
+            id,
+            time: "11:00",
+            spot: { id: 2, name: "出入口②" },
+            memberCount: 0,
+          })),
         },
       ],
     };
     const user = userEvent.setup();
-    renderStep({
+    const { onMembersSaved } = renderStep({
       memberGateway,
       settingsGateway: {
         load: vi.fn().mockResolvedValue({ eventId: 12, rounds: [] }),
@@ -844,19 +847,31 @@ describe("GatheringSettingsStep", () => {
     await user.click(
       await screen.findByRole("button", { name: "Roundを追加" })
     );
-    await user.click(screen.getByRole("button", { name: "メンバーを選択" }));
+    await user.click(screen.getByRole("button", { name: "集合場所を追加" }));
+    const pickerButtons = screen.getAllByRole("button", {
+      name: "メンバーを選択",
+    });
+    await user.click(pickerButtons[0]);
     await user.click(await screen.findByLabelText("山田 太郎を選択"));
     await user.click(screen.getByRole("button", { name: "選択を確定" }));
-    await user.type(screen.getByLabelText("集合時間"), "11:00");
-    await user.selectOptions(
-      screen.getByRole("combobox", { name: "集合場所" }),
-      "2"
-    );
+    await user.click(pickerButtons[1]);
+    await user.click(await screen.findByLabelText("佐藤 花子を選択"));
+    await user.click(screen.getByRole("button", { name: "選択を確定" }));
+
+    const gatheringTimes = screen.getAllByLabelText("集合時間");
+    await user.type(gatheringTimes[0], "11:00");
+    await user.type(gatheringTimes[1], "11:00");
+    const spots = screen.getAllByRole("combobox", { name: "集合場所" });
+    await user.selectOptions(spots[0], "2");
+    await user.selectOptions(spots[1], "2");
     await user.click(screen.getByRole("button", { name: "集合設定を保存" }));
 
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "参加者の登録に失敗しました。集合設定を保存して再試行してください。"
     );
+    expect(memberGateway.saveMembers).toHaveBeenNthCalledWith(1, 201, [1001]);
+    expect(memberGateway.saveMembers).toHaveBeenNthCalledWith(2, 202, [1002]);
+    expect(onMembersSaved).toHaveBeenCalledTimes(1);
     expect(screen.getByText("1人選択中")).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: "集合設定を保存" })
@@ -864,9 +879,9 @@ describe("GatheringSettingsStep", () => {
 
     await user.click(screen.getByRole("button", { name: "集合設定を保存" }));
     await waitFor(() =>
-      expect(memberGateway.saveMembers).toHaveBeenCalledTimes(2)
+      expect(memberGateway.saveMembers).toHaveBeenCalledTimes(3)
     );
-    expect(memberGateway.saveMembers).toHaveBeenLastCalledWith(201, [1001]);
+    expect(memberGateway.saveMembers).toHaveBeenLastCalledWith(202, [1002]);
     expect(screen.getByText("1人登録済み")).toBeInTheDocument();
   });
 });

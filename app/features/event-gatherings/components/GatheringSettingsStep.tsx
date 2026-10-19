@@ -104,6 +104,7 @@ export function GatheringSettingsStep({
         setMemberSaveError(
           "集合の保存結果を確認できず、参加者を登録できませんでした。集合設定を再読み込みしてください。"
         );
+        onMembersSaved?.();
         return;
       }
 
@@ -131,6 +132,7 @@ export function GatheringSettingsStep({
             "参加者の登録に失敗しました。集合設定を保存して再試行してください。"
           )
         );
+        onMembersSaved?.();
         return;
       }
     }
