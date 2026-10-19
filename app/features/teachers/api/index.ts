@@ -1,86 +1,91 @@
-import { classRoomHttpApi, teacherHttpApi } from "./http/teacher-http";
-import type {
-  ClassRoomDTO,
-  ClassRoomPageDTO,
-  TeacherDTO,
-  TeacherPageDTO,
-} from "./dto/teacher-dto";
+import { teacherHttpApi } from "./http/teacher-http";
+import type { TeacherDTO, TeacherListPageDTO } from "./dto/teacher-dto";
+import { toTeacherPage, toTeacherRow } from "./mappers/teacher-mappers";
 import type {
   TeacherCreateRequest,
-  TeacherAssignmentUpdateRequest,
+  TeacherBooleanFilter,
   TeacherListQuery,
+  TeacherManagementApi,
   TeacherUpdateRequest,
+  UserStatusUpdateInput,
 } from "./contracts/teacher-api";
+import type {
+  TeacherPage,
+  TeacherRow,
+} from "~/features/teachers/model/teacher";
 
-export const TeacherApi = {
-  createTeacher: (body: TeacherCreateRequest) =>
-    teacherHttpApi.createTeacher(body),
-  getTeacherList: (query: TeacherListQuery) =>
-    teacherHttpApi.getTeacherList(query),
-  deleteTeacher: (teacherId: number) => teacherHttpApi.deleteTeacher(teacherId),
-  async getTeachers(): Promise<TeacherPageDTO> {
-    const items: TeacherDTO[] = [];
-    let offset = 0;
-    let total = 0;
+const TEACHER_FETCH_LIMIT = 100;
 
-    while (true) {
-      const result = await teacherHttpApi.getTeachersPage(offset);
-      items.push(...result.items);
-      total = result.total;
-
-      if (
-        result.items.length === 0 ||
-        items.length >= total ||
-        result.items.length < result.limit
-      ) {
-        break;
-      }
-      offset += result.items.length;
-    }
-
-    return { items, total, limit: items.length, offset: 0 };
+export const TeacherApi: TeacherManagementApi = {
+  async createTeacher(input: TeacherCreateRequest): Promise<TeacherRow> {
+    return toTeacherRow(await teacherHttpApi.createTeacher(input));
   },
-  getTeacherById: (teacherId: number) =>
-    teacherHttpApi.getTeacherById(teacherId),
-  updateTeacher: (teacherId: number, body: TeacherUpdateRequest) =>
-    teacherHttpApi.updateTeacher(teacherId, body),
-  updateTeacherAssignment: (
+  async getTeacherList(query: TeacherListQuery = {}): Promise<TeacherPage> {
+    return toTeacherPage(await teacherHttpApi.getTeacherList(query));
+  },
+  async getActiveTeachers(): Promise<TeacherPage> {
+    return toTeacherPage(await fetchAllTeachers("true"));
+  },
+  async getTeacherById(teacherId: number): Promise<TeacherRow> {
+    return toTeacherRow(await teacherHttpApi.getTeacherById(teacherId));
+  },
+  async updateTeacher(
     teacherId: number,
-    body: TeacherAssignmentUpdateRequest
-  ) => teacherHttpApi.updateTeacherAssignment(teacherId, body),
-};
-
-export const ClassRoomApi = {
-  async getClassRooms(): Promise<ClassRoomPageDTO> {
-    const classrooms: ClassRoomDTO[] = [];
-    let offset = 0;
-    let total = 0;
-
-    while (true) {
-      const result = await classRoomHttpApi.getClassRoomsPage(offset);
-      classrooms.push(...result.classrooms);
-      total = result.total;
-      offset += result.classrooms.length;
-
-      if (result.classrooms.length === 0 || offset >= total) break;
-    }
-
-    return { classrooms, total, limit: classrooms.length, offset: 0 };
+    input: TeacherUpdateRequest
+  ): Promise<TeacherRow> {
+    return toTeacherRow(await teacherHttpApi.updateTeacher(teacherId, input));
   },
+  updateUserStatus: (userId: number, input: UserStatusUpdateInput) =>
+    teacherHttpApi.updateUserStatus(userId, input),
+  assignStaff: (userId: number) => teacherHttpApi.assignStaff(userId),
+  revokeStaff: (userId: number) => teacherHttpApi.revokeStaff(userId),
 };
 
+async function fetchAllTeachers(
+  isLiveActive: TeacherBooleanFilter
+): Promise<TeacherListPageDTO> {
+  const items: TeacherDTO[] = [];
+  let offset = 0;
+  let total = 0;
+
+  while (true) {
+    const result = await teacherHttpApi.getTeacherList({
+      limit: TEACHER_FETCH_LIMIT,
+      offset,
+      isStaff: "all",
+      isLiveActive,
+      sortBy: "teacherId",
+      sortOrder: "asc",
+    });
+    items.push(...result.items);
+    total = result.total;
+
+    if (
+      result.items.length === 0 ||
+      items.length >= total ||
+      result.items.length < result.limit
+    ) {
+      break;
+    }
+    offset += result.items.length;
+  }
+
+  return { items, total, limit: items.length, offset: 0 };
+}
+
 export type {
-  ClassRoomDTO,
-  ClassRoomPageDTO,
-  TeacherDTO,
-  TeacherListPageDTO,
-  TeacherPageDTO,
-} from "./dto/teacher-dto";
-export type {
-  TeacherAssignmentUpdateRequest,
   TeacherCreateRequest,
+  TeacherBooleanFilter,
   TeacherListQuery,
   TeacherListSortBy,
   TeacherListSortOrder,
+  TeacherManagementApi,
+  TeacherMutationApi,
+  TeacherQueryApi,
   TeacherUpdateRequest,
+  UserStatusUpdateInput,
 } from "./contracts/teacher-api";
+export type {
+  TeacherPage,
+  TeacherRow,
+} from "~/features/teachers/model/teacher";

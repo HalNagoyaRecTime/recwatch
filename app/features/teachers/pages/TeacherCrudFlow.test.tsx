@@ -2,23 +2,23 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import {
   createMemoryRouter,
-  MemoryRouter,
   Outlet,
   RouterProvider,
+  useLocation,
+  useNavigate,
+  useRevalidator,
 } from "react-router";
 import { describe, expect, it, vi } from "vitest";
 
-import { TeacherActionMenu } from "~/features/teachers/components/TeacherActionMenu";
 import { TeacherCreatePage } from "~/features/teachers/pages/TeacherCreatePage";
 import { TeacherEditPage } from "~/features/teachers/pages/TeacherEditPage";
 import type { TeacherRow } from "~/features/teachers/model/teacher";
+import { ApiClientError } from "~/lib/api-client-error";
 
 const mocks = vi.hoisted(() => ({
   createTeacher: vi.fn(),
   updateTeacher: vi.fn(),
 }));
-
-vi.mock("~/features/teachers/api", () => ({ TeacherApi: mocks }));
 
 vi.mock("~/features/teachers/components/TeacherFormModal", () => ({
   TeacherFormModal: ({
@@ -37,6 +37,16 @@ vi.mock("~/features/teachers/components/TeacherFormModal", () => ({
   ),
 }));
 
+function createApi() {
+  return {
+    assignStaff: vi.fn(),
+    createTeacher: mocks.createTeacher,
+    revokeStaff: vi.fn(),
+    updateTeacher: mocks.updateTeacher,
+    updateUserStatus: vi.fn(),
+  };
+}
+
 const classRooms = [
   { classRoomId: 2, className: "2年A組" },
   { classRoomId: 4, className: "4年A組" },
@@ -44,9 +54,12 @@ const classRooms = [
 
 const teacher: TeacherRow = {
   teacherId: 7,
+  userId: 11,
   displayName: "佐橋 晴斗",
+  email: "sahashi@example.com",
   isLiveActive: true,
-  classRooms: [{ classRoomId: 2, className: "2年A組" }],
+  isStaff: false,
+  classRooms: [{ classRoomId: 2, classCode: "2A", className: "2年A組" }],
 };
 
 function TeacherListDestination() {
@@ -57,12 +70,48 @@ function TeacherListRoute() {
   return (
     <>
       <TeacherListDestination />
+      <LocationProbe />
       <Outlet />
     </>
   );
 }
 
-function renderNestedCreateRouter(element: React.ReactElement) {
+function LocationProbe() {
+  const location = useLocation();
+  return <output data-testid="location-search">{location.search}</output>;
+}
+
+type ModalCallbacks = {
+  onClose: () => void | Promise<void>;
+  onSaved: () => Promise<void>;
+};
+
+function ManagementModalRoute({
+  renderForm,
+}: {
+  renderForm: (callbacks: ModalCallbacks) => React.ReactElement;
+}) {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const revalidator = useRevalidator();
+
+  async function returnToList(refresh: boolean) {
+    await navigate(
+      { pathname: "/teachers", search: location.search },
+      { replace: true }
+    );
+    if (refresh) await revalidator.revalidate();
+  }
+
+  return renderForm({
+    onClose: () => returnToList(false),
+    onSaved: () => returnToList(true),
+  });
+}
+
+function renderNestedCreateRouter(
+  renderForm: (callbacks: ModalCallbacks) => React.ReactElement
+) {
   const listLoader = vi.fn().mockResolvedValue(null);
   const router = createMemoryRouter(
     [
@@ -70,10 +119,40 @@ function renderNestedCreateRouter(element: React.ReactElement) {
         path: "/teachers",
         loader: listLoader,
         element: <TeacherListRoute />,
-        children: [{ path: "new", element }],
+        children: [
+          {
+            path: "new",
+            element: <ManagementModalRoute renderForm={renderForm} />,
+          },
+        ],
       },
     ],
     { initialEntries: ["/teachers/new?search=佐橋&page=2"] }
+  );
+
+  render(<RouterProvider router={router} />);
+  return listLoader;
+}
+
+function renderNestedEditRouter(
+  renderForm: (callbacks: ModalCallbacks) => React.ReactElement
+) {
+  const listLoader = vi.fn().mockResolvedValue(null);
+  const router = createMemoryRouter(
+    [
+      {
+        path: "/teachers",
+        loader: listLoader,
+        element: <TeacherListRoute />,
+        children: [
+          {
+            path: ":teacherId/edit",
+            element: <ManagementModalRoute renderForm={renderForm} />,
+          },
+        ],
+      },
+    ],
+    { initialEntries: ["/teachers/7/edit?sortBy=teacherId"] }
   );
 
   render(<RouterProvider router={router} />);
@@ -104,11 +183,16 @@ describe("teacher create and edit flows", () => {
     mocks.createTeacher.mockResolvedValueOnce({});
     const user = userEvent.setup();
 
-    const listLoader = renderNestedCreateRouter(
-      <TeacherCreatePage classRooms={classRooms} />
-    );
+    const listLoader = renderNestedCreateRouter((callbacks) => (
+      <TeacherCreatePage
+        api={createApi()}
+        classRooms={classRooms}
+        {...callbacks}
+      />
+    ));
 
     await user.type(await screen.findByLabelText("先生名"), "新任");
+    await user.type(screen.getByLabelText("メールアドレス"), "new@example.com");
     await user.click(screen.getByRole("button", { name: "保存する" }));
 
     expect(await screen.findByText("教官一覧")).toBeInTheDocument();
@@ -116,6 +200,7 @@ describe("teacher create and edit flows", () => {
     await waitFor(() => expect(listLoader).toHaveBeenCalledTimes(2));
     expect(mocks.createTeacher).toHaveBeenCalledWith({
       classRoomIds: [],
+      email: "new@example.com",
       userName: "新任",
     });
   });
@@ -126,9 +211,18 @@ describe("teacher create and edit flows", () => {
     );
     const user = userEvent.setup();
 
-    renderCrudRouter("/teachers/new", <TeacherCreatePage classRooms={[]} />);
+    renderCrudRouter(
+      "/teachers/new",
+      <TeacherCreatePage
+        api={createApi()}
+        classRooms={[]}
+        onClose={vi.fn()}
+        onSaved={vi.fn().mockResolvedValue(undefined)}
+      />
+    );
 
     await user.type(screen.getByLabelText("先生名"), "新任");
+    await user.type(screen.getByLabelText("メールアドレス"), "new@example.com");
     await user.click(screen.getByRole("button", { name: "保存する" }));
 
     expect(await screen.findByRole("alert")).toHaveTextContent(
@@ -137,22 +231,63 @@ describe("teacher create and edit flows", () => {
     expect(screen.getByRole("dialog")).toBeInTheDocument();
   });
 
+  it("email重複の409をフォームへ表示して一覧へ遷移しない", async () => {
+    const backendErrorMessage = "メールアドレスが既に登録されています。";
+    mocks.createTeacher.mockRejectedValueOnce(
+      new ApiClientError(409, backendErrorMessage)
+    );
+    const user = userEvent.setup();
+
+    renderCrudRouter(
+      "/teachers/new",
+      <TeacherCreatePage
+        api={createApi()}
+        classRooms={[]}
+        onClose={vi.fn()}
+        onSaved={vi.fn().mockResolvedValue(undefined)}
+      />
+    );
+
+    await user.type(screen.getByLabelText("先生名"), "新任");
+    await user.type(screen.getByLabelText("メールアドレス"), "new@example.com");
+    await user.click(screen.getByRole("button", { name: "保存する" }));
+
+    expect(mocks.createTeacher).toHaveBeenLastCalledWith({
+      classRoomIds: [],
+      email: "new@example.com",
+      userName: "新任",
+    });
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      backendErrorMessage
+    );
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+    expect(screen.queryByText("教官一覧")).not.toBeInTheDocument();
+  });
+
   it("更新成功時にteacherIdと担当クラスを送信して一覧へ戻る", async () => {
     mocks.updateTeacher.mockResolvedValueOnce({});
     const user = userEvent.setup();
 
-    const listLoader = renderCrudRouter(
-      "/teachers/7/edit?sortBy=teacherId",
-      <TeacherEditPage classRooms={classRooms} teacher={teacher} />
-    );
+    const listLoader = renderNestedEditRouter((callbacks) => (
+      <TeacherEditPage
+        api={createApi()}
+        classRooms={classRooms}
+        {...callbacks}
+        teacher={teacher}
+      />
+    ));
 
-    await user.click(screen.getByRole("checkbox", { name: "4年A組" }));
-    await user.click(screen.getByRole("button", { name: "保存する" }));
+    await user.click(await screen.findByRole("checkbox", { name: "4年A組" }));
+    await user.click(await screen.findByRole("button", { name: "保存する" }));
 
     expect(await screen.findByText("教官一覧")).toBeInTheDocument();
-    expect(listLoader).toHaveBeenCalledTimes(1);
+    await waitFor(() => expect(listLoader).toHaveBeenCalledTimes(2));
+    expect(screen.getByTestId("location-search")).toHaveTextContent(
+      "sortBy=teacherId"
+    );
     expect(mocks.updateTeacher).toHaveBeenCalledWith(7, {
       classRoomIds: [2, 4],
+      email: "sahashi@example.com",
       userName: "佐橋 晴斗",
     });
   });
@@ -163,55 +298,20 @@ describe("teacher create and edit flows", () => {
     );
     const user = userEvent.setup();
 
-    render(
-      <MemoryRouter initialEntries={["/teachers/7/edit"]}>
-        <TeacherEditPage classRooms={classRooms} teacher={teacher} />
-      </MemoryRouter>
-    );
+    renderNestedEditRouter((callbacks) => (
+      <TeacherEditPage
+        api={createApi()}
+        classRooms={classRooms}
+        {...callbacks}
+        teacher={teacher}
+      />
+    ));
 
-    await user.click(screen.getByRole("button", { name: "保存する" }));
+    await user.click(await screen.findByRole("button", { name: "保存する" }));
 
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "更新に失敗しました。"
     );
     expect(screen.getByRole("dialog")).toBeInTheDocument();
-  });
-});
-
-function renderActionRouter(onDelete = vi.fn()) {
-  const router = createMemoryRouter(
-    [
-      {
-        path: "/teachers",
-        element: <TeacherActionMenu onDelete={onDelete} teacher={teacher} />,
-      },
-      { path: "/teachers/7/edit", element: <p>編集ページ</p> },
-    ],
-    { initialEntries: ["/teachers"] }
-  );
-
-  render(<RouterProvider router={router} />);
-}
-
-describe("TeacherActionMenu", () => {
-  it("編集と削除を3点メニューから選べる", async () => {
-    const onDelete = vi.fn();
-    const user = userEvent.setup();
-
-    renderActionRouter(onDelete);
-    await user.click(
-      await screen.findByRole("button", { name: "佐橋 晴斗の操作" })
-    );
-
-    const editButton = screen.getByRole("button", { name: "編集" });
-    expect(editButton.querySelector("svg")).toBeNull();
-    const deleteButton = screen.getByRole("button", { name: "削除" });
-    expect(deleteButton).toBeInTheDocument();
-
-    await user.click(deleteButton);
-    expect(onDelete).toHaveBeenCalledWith(teacher);
-
-    await user.click(screen.getByRole("button", { name: "編集" }));
-    expect(await screen.findByText("編集ページ")).toBeInTheDocument();
   });
 });
