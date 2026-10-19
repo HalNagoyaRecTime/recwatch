@@ -1,0 +1,87 @@
+import { apiClient } from "~/lib/api-client";
+import type { StudentListQuery } from "~/features/students/api/contracts/student-api";
+import type {
+  StudentDTO,
+  StudentPageDTO,
+  StudentWriteDTO,
+} from "~/features/students/api/dto/student-dto";
+import type { StudentWriteInput } from "~/features/students/model/student";
+import type { StudentClassRoomAssignmentInput } from "~/features/students/model/student";
+
+export type StudentHttpClient = {
+  get<T>(path: string): Promise<T>;
+  post<T>(path: string, body: unknown): Promise<T>;
+  put<T>(path: string, body: unknown): Promise<T>;
+  patch<T>(path: string, body: unknown): Promise<T>;
+};
+
+export function createStudentHttpApi(client: StudentHttpClient = apiClient): {
+  getStudents(query?: StudentListQuery): Promise<StudentPageDTO>;
+  getStudentById(studentId: number): Promise<StudentDTO>;
+  createStudent(input: StudentWriteInput): Promise<StudentDTO>;
+  updateStudent(
+    studentId: number,
+    input: StudentWriteInput
+  ): Promise<StudentDTO>;
+  updateStudentClassRoom(
+    studentId: number,
+    input: StudentClassRoomAssignmentInput
+  ): Promise<StudentDTO>;
+} {
+  return {
+    getStudents(query = {}) {
+      const params = new URLSearchParams({
+        limit: String(query.limit ?? 50),
+        offset: String(query.offset ?? 0),
+      });
+      const search = query.search?.trim();
+      if (search) params.set("search", search);
+      if (query.classRoomId !== undefined) {
+        params.set("classRoomId", String(query.classRoomId));
+      }
+      params.set("isStaff", query.isStaff ?? "all");
+      params.set("isLiveActive", query.isLiveActive ?? "true");
+      params.set("sortBy", query.sortBy ?? "studentId");
+      params.set("sortOrder", query.sortOrder ?? "asc");
+
+      return client.get<StudentPageDTO>(
+        `/api/v1/students?${params.toString()}`
+      );
+    },
+    getStudentById(studentId) {
+      return client.get<StudentDTO>(`/api/v1/students/${studentId}`);
+    },
+    createStudent(input) {
+      return client.post<StudentDTO>(
+        "/api/v1/students",
+        toStudentWriteDTO(input)
+      );
+    },
+    updateStudent(studentId, input) {
+      return client.put<StudentDTO>(
+        `/api/v1/students/${studentId}`,
+        toStudentWriteDTO(input)
+      );
+    },
+    updateStudentClassRoom(studentId, input) {
+      return client.patch<StudentDTO>(
+        `/api/v1/students/${studentId}/classroom`,
+        {
+          attendance_number: input.attendanceNumber,
+          class_room_id: input.classRoomId,
+        }
+      );
+    },
+  };
+}
+
+export const studentHttpApi = createStudentHttpApi();
+
+function toStudentWriteDTO(input: StudentWriteInput): StudentWriteDTO {
+  return {
+    attendance_number: input.attendanceNumber,
+    class_room_id: input.classRoomId,
+    display_name: input.displayName,
+    student_id_number: input.studentIdNumber,
+  };
+}

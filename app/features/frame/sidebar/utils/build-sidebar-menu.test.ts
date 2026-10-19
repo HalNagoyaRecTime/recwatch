@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { buildSidebarMenu } from "./build-sidebar-menu";
 
 describe("buildSidebarMenu", () => {
-  it("管理者には実装済みの主要画面だけを案内する", () => {
+  it("管理者には画像のサイドメニュー構成で画面を案内する", () => {
     const paths = buildSidebarMenu("admin").flatMap((section) =>
       section.items.flatMap((item) => [
         item.to,
@@ -14,20 +14,23 @@ describe("buildSidebarMenu", () => {
     expect(paths).toEqual(
       expect.arrayContaining([
         "/dashboard",
-        "/members",
-        "/classroom",
+        "/students",
+        "/classrooms",
         "/teachers",
         "/events",
-        "/events/assignments",
-        "/gathering-spots",
-        "/schedule",
-        "/participants",
+        "/events/today",
         "/notifications",
+        "/teams",
+        "/ranking",
+        "/gathering-spots",
+        "/venues",
       ])
     );
-    expect(paths).not.toContain("/members/import");
+    expect(paths).not.toContain("/schedule");
     expect(paths).not.toContain("/events/new");
     expect(paths).not.toContain("/notifications/new");
+    expect(paths).not.toContain("/events/assignments");
+    expect(paths).not.toContain("/participants");
 
     const labels = buildSidebarMenu("admin").flatMap((section) =>
       section.items.flatMap((item) => [
@@ -37,69 +40,64 @@ describe("buildSidebarMenu", () => {
     );
     expect(labels).toEqual(
       expect.arrayContaining([
-        "ユーザー管理",
-        "学生管理",
-        "クラス管理",
-        "教官管理",
-        "イベント管理",
-        "イベント登録一覧",
-        "参加者設定",
+        "イベント",
+        "イベント一覧",
+        "本日の進行",
+        "通知",
+        "チーム",
+        "ランキング",
+        "ユーザー",
+        "学生",
+        "教官",
+        "クラス",
         "集合場所管理",
-        "運用管理",
-        "スケジュール管理",
-        "出場メンバー管理",
-        "通知一覧",
+        "実施場所管理",
       ])
     );
-    expect(labels).not.toContain("メンバー");
-    expect(labels).not.toContain("ユーザー");
-    expect(labels).not.toContain("クラス一覧");
-    expect(labels).not.toContain("イベントマスター");
     expect(labels).not.toContain("スケジュール");
-    expect(labels).not.toContain("新規登録");
+    expect(labels).not.toContain("ユーザー管理");
+    expect(labels).not.toContain("イベント管理");
+    expect(labels).not.toContain("運用管理");
+    expect(labels).not.toContain("スケジュール管理");
+    expect(labels).not.toContain("参加者設定");
+    expect(labels).not.toContain("出場メンバー管理");
 
     expect(
       buildSidebarMenu("admin")
         .slice(1)
-        .every((section) => !section.label)
-    ).toBe(true);
+        .map((section) => section.label)
+    ).toEqual(["運用", "チーム・成績", "管理", "削除予定"]);
+
+    const operationSection = buildSidebarMenu("admin").find(
+      (section) => section.label === "運用"
+    );
+    const deletionSection = buildSidebarMenu("admin").find(
+      (section) => section.label === "削除予定"
+    );
+    expect(operationSection?.items.map((item) => item.label)).not.toContain(
+      "スケジュール"
+    );
+    expect(deletionSection?.items.map((item) => item.label)).toEqual([
+      "集合場所管理",
+      "実施場所管理",
+    ]);
 
     const classRoomItem = buildSidebarMenu("admin")
       .flatMap((section) => section.items)
-      .flatMap((item) => item.children ?? [])
-      .find((item) => item.to === "/classroom");
-    expect(classRoomItem?.icon).toBeUndefined();
+      .find((item) => item.to === "/classrooms");
+    expect(classRoomItem?.icon).toBeDefined();
   });
 
   it("運用管理者には管理画面を表示する", () => {
     const labels = getLabels("manager");
 
-    expect(labels).toEqual(
-      expect.arrayContaining([
-        "ユーザー管理",
-        "教官管理",
-        "イベント管理",
-        "参加者設定",
-        "運用管理",
-        "通知一覧",
-      ])
-    );
+    expect(labels).toEqual([]);
   });
 
   it("一般利用者には許可された画面だけを表示する", () => {
     const labels = getLabels("member");
 
-    expect(labels).toEqual(["ダッシュボード", "運用管理", "スケジュール管理"]);
-    expect(labels).not.toEqual(
-      expect.arrayContaining([
-        "ユーザー管理",
-        "教官管理",
-        "イベント管理",
-        "参加者設定",
-        "出場メンバー管理",
-        "通知一覧",
-      ])
-    );
+    expect(labels).toEqual([]);
   });
 });
 
