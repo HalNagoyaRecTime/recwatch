@@ -10,10 +10,10 @@ export type StudentDTO = {
   user_id: number;
   display_name: string;
   student_id_number: string;
-  attendance_number: number;
+  attendance_number: number | null;
   is_live_active: boolean;
   is_staff: boolean;
-  class_room: StudentClassRoomDTO;
+  class_room: StudentClassRoomDTO | null;
 };
 
 export type StudentManagementDTO = StudentDTO;
@@ -26,8 +26,8 @@ export type StudentPageDTO = {
 };
 
 export type StudentWriteDTO = {
-  attendance_number: number;
-  class_room_id: number;
+  attendance_number: number | null;
+  class_room_id: number | null;
   display_name: string;
   student_id_number: string;
 };

@@ -14,13 +14,13 @@ export type StudentResponseDto = {
   student_id: number;
   user_id: number;
   display_name: string;
-  attendance_number: number;
+  attendance_number: number | null;
   student_id_number: string;
   is_live_active: boolean;
   class_room: {
     class_room_id: number;
     class_name: string;
-  };
+  } | null;
 };
 
 export type StudentPageResponseDto = {
