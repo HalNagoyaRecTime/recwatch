@@ -545,6 +545,15 @@ describe("GatheringSettingsStep", () => {
           studentNumber: "2026002",
           isLiveActive: false,
         },
+        {
+          id: 12,
+          userId: 1003,
+          name: "鈴木 次郎",
+          classroomId: 1,
+          attendanceNumber: 1,
+          studentNumber: "2026003",
+          isLiveActive: true,
+        },
       ],
       nonStudents: new Map(),
     });
@@ -562,30 +571,59 @@ describe("GatheringSettingsStep", () => {
     await screen.findByRole("region", { name: "Round 1" });
     await user.click(screen.getByRole("button", { name: "メンバーを選択" }));
 
-    // 登録済みの停止中学生は操作でき、チェックを外せる
-    expect(await screen.findByLabelText("山田 太郎を選択")).toBeChecked();
-    expect(screen.getByLabelText("山田 太郎を選択")).toBeEnabled();
-    expect(screen.getAllByText("停止中")).toHaveLength(2);
-    // 未登録の停止中学生は行は出すが選べない
-    const notRegistered = screen.getByLabelText("佐藤 花子を選択");
-    expect(notRegistered).toBeDisabled();
-    expect(notRegistered).not.toBeChecked();
+    const table = await screen.findByRole("table", {
+      name: "参加者候補の学生一覧",
+    });
+    const outside = screen.getByRole("region", {
+      name: "登録済みの停止中学生",
+    });
+    const checkbox = within(outside).getByLabelText("山田 太郎を選択");
+    expect(checkbox).toBeChecked();
+    expect(checkbox).toBeEnabled();
+    expect(
+      within(outside).getByRole("table", { name: "登録済みの停止中学生一覧" })
+    ).toBeInTheDocument();
+    expect(within(table).queryByText("山田 太郎")).not.toBeInTheDocument();
+    expect(screen.queryByText("佐藤 花子")).not.toBeInTheDocument();
+    expect(within(table).getByLabelText("鈴木 次郎を選択")).toBeEnabled();
+    expect(screen.getByText(/1人を表示中/)).toBeInTheDocument();
+    expect(screen.getByText(/選択中 1人/)).toBeInTheDocument();
+    expect(
+      screen.queryByText(/氏名を確認できない参加者/)
+    ).not.toBeInTheDocument();
 
-    // 一括選択は操作できる行だけを対象にする
+    // 一括操作は有効な学生の候補だけを対象にし、登録済みの停止中学生は維持する
+    await user.click(
+      screen.getByRole("button", { name: "表示中の全員を選択" })
+    );
+    expect(checkbox).toBeChecked();
+    expect(screen.getByLabelText("鈴木 次郎を選択")).toBeChecked();
+    expect(screen.getByText(/選択中 2人/)).toBeInTheDocument();
     await user.click(
       screen.getByRole("button", { name: "表示中の選択を解除" })
     );
-    expect(screen.getByLabelText("山田 太郎を選択")).not.toBeChecked();
-    expect(notRegistered).not.toBeChecked();
+    expect(checkbox).toBeChecked();
+    expect(screen.getByLabelText("鈴木 次郎を選択")).not.toBeChecked();
+    expect(screen.getByText(/選択中 1人/)).toBeInTheDocument();
 
+    // 候補の絞り込みや検索で、別枠の登録済み参加者を隠さない
+    await user.selectOptions(
+      screen.getByRole("combobox", { name: "クラスで絞り込み" }),
+      "HAL1A"
+    );
+    await user.type(
+      screen.getByRole("searchbox", { name: "参加者を検索" }),
+      "鈴木"
+    );
+    expect(checkbox).toBeVisible();
     await user.click(screen.getByRole("button", { name: "参加者を保存" }));
 
     await waitFor(() =>
-      expect(memberGateway.saveMembers).toHaveBeenCalledWith(101, [])
+      expect(memberGateway.saveMembers).toHaveBeenCalledWith(101, [1001])
     );
   });
 
-  it("停止中の登録済み学生はチェックを外しても行が残り、付け直せる", async () => {
+  it("停止中の登録済み学生はチェックを外しても別枠に残り、付け直せる", async () => {
     const memberGateway = createMemberGateway();
     (memberGateway.loadCandidates as Mock).mockResolvedValue({
       classrooms: [{ id: 1, code: "HAL1A", name: "1年Aクラス" }],
@@ -615,19 +653,106 @@ describe("GatheringSettingsStep", () => {
     await screen.findByRole("region", { name: "Round 1" });
     await user.click(screen.getByRole("button", { name: "メンバーを選択" }));
 
-    const checkbox = await screen.findByLabelText("山田 太郎を選択");
+    const outside = await screen.findByRole("region", {
+      name: "登録済みの停止中学生",
+    });
+    const checkbox = within(outside).getByLabelText("山田 太郎を選択");
+    expect(checkbox).toBeChecked();
     await user.click(checkbox);
     expect(checkbox).not.toBeChecked();
-    // 外した瞬間に行が消えると付け直せなくなるため、判定は開いた時点の登録内容で固定する
-    expect(checkbox).toBeEnabled();
+    // 外した瞬間に行が消えると付け直せなくなるため、開いた時点の登録内容で固定する
+    expect(within(outside).getByLabelText("山田 太郎を選択")).toBeEnabled();
+    expect(screen.getByText(/選択中 0人/)).toBeInTheDocument();
 
     await user.click(checkbox);
     expect(checkbox).toBeChecked();
-
     await user.click(screen.getByRole("button", { name: "参加者を保存" }));
 
     await waitFor(() =>
       expect(memberGateway.saveMembers).toHaveBeenCalledWith(101, [1001])
+    );
+  });
+
+  it("停止中の参加者を全員解除して保存すると 0 人になり、集合を削除できる", async () => {
+    const memberGateway = createMemberGateway();
+    (memberGateway.loadCandidates as Mock).mockResolvedValue({
+      classrooms: [{ id: 1, code: "HAL1A", name: "1年Aクラス" }],
+      students: [
+        {
+          id: 10,
+          userId: 1001,
+          name: "山田 太郎",
+          classroomId: 1,
+          attendanceNumber: 1,
+          studentNumber: "2026001",
+          isLiveActive: false,
+        },
+      ],
+      nonStudents: new Map(),
+    });
+    (memberGateway.loadMembers as Mock).mockResolvedValue([1001]);
+    const save = vi.fn().mockResolvedValue({
+      ...settingsWithMembers,
+      rounds: settingsWithMembers.rounds.map((round) => ({
+        ...round,
+        gatherings: round.gatherings.filter(
+          (gathering) => gathering.id === 102
+        ),
+      })),
+    });
+    renderStep({
+      memberGateway,
+      settingsGateway: {
+        load: vi.fn().mockResolvedValue({
+          ...settingsWithMembers,
+          rounds: settingsWithMembers.rounds.map((round) => ({
+            ...round,
+            gatherings: round.gatherings.map((gathering) => ({
+              ...gathering,
+              memberCount: gathering.id === 101 ? 1 : 0,
+            })),
+          })),
+        }),
+        save,
+      },
+    });
+    const user = userEvent.setup();
+
+    await screen.findByRole("region", { name: "Round 1" });
+    expect(screen.getByText("1人登録済み")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "削除" })).toBeDisabled();
+    expect(
+      screen.getAllByRole("button", { name: "この集合を削除" })
+    ).toHaveLength(1);
+    await user.click(
+      screen.getAllByRole("button", { name: "メンバーを選択" })[0]
+    );
+    await user.click(await screen.findByLabelText("山田 太郎を選択"));
+    await user.click(screen.getByRole("button", { name: "参加者を保存" }));
+
+    await waitFor(() =>
+      expect(memberGateway.saveMembers).toHaveBeenCalledWith(101, [])
+    );
+    expect(screen.getAllByText("0人登録済み")).toHaveLength(2);
+    expect(screen.getByRole("button", { name: "削除" })).toBeEnabled();
+    const removeButtons = screen.getAllByRole("button", {
+      name: "この集合を削除",
+    });
+    expect(removeButtons).toHaveLength(2);
+    await user.click(removeButtons[0]);
+    expect(screen.getByLabelText("集合時間")).toHaveValue("10:55");
+    await user.click(screen.getByRole("button", { name: "集合設定を保存" }));
+
+    await waitFor(() =>
+      expect(save).toHaveBeenCalledWith(12, {
+        rounds: [
+          {
+            round: 1,
+            startTime: null,
+            gatherings: [{ gatheringId: 102, time: "10:55", spotId: 2 }],
+          },
+        ],
+      })
     );
   });
 
