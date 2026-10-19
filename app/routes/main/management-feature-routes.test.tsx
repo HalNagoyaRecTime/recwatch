@@ -258,9 +258,20 @@ describe("management route integration wiring", () => {
     await waitFor(() =>
       expect(router.state.location.pathname).toBe("/classrooms")
     );
+    await waitFor(() =>
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument()
+    );
 
-    await user.click(screen.getByRole("button", { name: "1年B組の操作" }));
-    await user.click(screen.getByRole("button", { name: "クラスを編集する" }));
+    const secondActionButton = await screen.findByRole("button", {
+      name: "1年B組の操作",
+    });
+    await user.click(secondActionButton);
+    await waitFor(() =>
+      expect(secondActionButton).toHaveAttribute("aria-expanded", "true")
+    );
+    await user.click(
+      await screen.findByRole("button", { name: "クラスを編集する" })
+    );
 
     await waitFor(() =>
       expect(router.state.location.pathname).toBe("/classrooms/13/edit")
