@@ -249,7 +249,7 @@ export const notificationApiErrorFixtures = {
       400,
       "リクエスト内容が正しくありません。",
       "VALIDATION_ERROR",
-      { fieldErrors: { title: ["入力してください。"] }, formErrors: [] }
+      { fieldErrors: { content: ["入力してください。"] }, formErrors: [] }
     ),
   STAFF_REQUIRED: () =>
     new ApiClientError(403, "権限がありません。", "STAFF_REQUIRED"),

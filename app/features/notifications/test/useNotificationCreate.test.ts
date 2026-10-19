@@ -132,9 +132,56 @@ describe("useNotificationCreate", () => {
     await act(() => result.current.submit());
 
     expect(result.current.draft).toEqual(draft);
-    expect(result.current.errors.title).toBe("入力してください。");
+    expect(result.current.submissionError).toBe("通知内容: 入力してください。");
     expect(reportFeedback).not.toHaveBeenCalled();
   });
+  it("重複対象を行単位で拒否し、修正後はエラーを消す", async () => {
+    const create = vi.fn();
+    const configApi = createConfigApi();
+    const reportFeedback = vi.fn();
+    const { result } = renderHook(() =>
+      useNotificationCreate({
+        api: createCommandApi(create),
+        audienceApi,
+        configApi,
+        reportFeedback,
+      })
+    );
+    act(() =>
+      result.current.onChange({
+        ...result.current.draft,
+        title: "通知",
+        body: "本文",
+        detailTitle: "詳細",
+        detailBody: "詳細本文",
+        audiences: [
+          { key: "a", type: "class_room", targetId: "1" },
+          { key: "b", type: "class_room", targetId: "01" },
+        ],
+      })
+    );
+    await act(() => result.current.submit());
+    expect(result.current.errors["audiences.1"]).toBe(
+      "同じ通知対象が重複しています"
+    );
+    expect(create).not.toHaveBeenCalled();
+    expect(reportFeedback).not.toHaveBeenCalled();
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 300));
+    });
+    expect(configApi.getAudienceCount).not.toHaveBeenCalled();
+    act(() =>
+      result.current.onChange({
+        ...result.current.draft,
+        audiences: [
+          { key: "a", type: "class_room", targetId: "1" },
+          { key: "b", type: "class_room", targetId: "2" },
+        ],
+      })
+    );
+    expect(result.current.errors["audiences.1"]).toBeUndefined();
+  });
+
   it.each([403, 409, 500])(
     "%iの作成失敗で入力を保持しaction-errorを通知する",
     async (status) => {

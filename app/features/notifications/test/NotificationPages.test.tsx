@@ -10,6 +10,8 @@ import userEvent from "@testing-library/user-event";
 import { httpNotificationAudienceApi } from "~/features/notifications/api/http/notification-audience-api";
 import { httpAdminNotificationCommandApi } from "~/features/notifications/api/http/admin-notification-command-api";
 import { httpNotificationConfigApi } from "~/features/notifications/api/http/notification-config-api";
+import { ApiClientError } from "~/lib/api-client-error";
+import { mockNotificationAudienceOptions } from "~/features/notifications/mock/notification-audience-api";
 import { notificationConfigFixture } from "~/features/notifications/mock/notification-fixtures";
 import { MemoryRouter } from "react-router";
 
@@ -181,6 +183,85 @@ describe("notification pages", () => {
     expect(JSON.parse(String(request?.[1]?.body)).audience).toEqual({
       items: [{ type: "user", targetId: 901 }],
     });
+  });
+
+  it("重複行へinline表示し、Feedbackや作成APIを呼ばない", async () => {
+    const user = userEvent.setup();
+    const api = createCommandApi();
+    const reportFeedback = vi.fn();
+    render(
+      <MemoryRouter>
+        <NotificationCreatePage
+          api={api}
+          audienceApi={{
+            load: vi.fn().mockResolvedValue(mockNotificationAudienceOptions),
+          }}
+          configApi={mockNotificationConfigApi}
+          reportFeedback={reportFeedback}
+        />
+      </MemoryRouter>
+    );
+    for (const label of ["タイトル*", "本文*", "詳細タイトル*", "詳細本文*"])
+      fireEvent.change(screen.getByLabelText(label), {
+        target: { value: "テスト" },
+      });
+    await user.click(screen.getByRole("combobox", { name: "通知対象 1" }));
+    await user.click(screen.getByRole("option", { name: "クラス" }));
+    await screen.findByRole("option", { name: "1年A組" });
+    await user.selectOptions(
+      screen.getByRole("combobox", { name: "対象 1" }),
+      "1"
+    );
+    await user.click(screen.getByRole("button", { name: "対象を追加" }));
+    await user.selectOptions(
+      screen.getByRole("combobox", { name: "対象 2" }),
+      "1"
+    );
+    await user.click(screen.getByRole("button", { name: "通知を配信" }));
+    expect(
+      await screen.findByText("同じ通知対象が重複しています")
+    ).toBeInTheDocument();
+    expect(api.create).not.toHaveBeenCalled();
+    expect(reportFeedback).not.toHaveBeenCalled();
+  });
+
+  it("実APIのcontentとimportanceの400をフォーム内に表示する", async () => {
+    const api = createCommandApi({
+      create: vi.fn().mockRejectedValue(
+        new ApiClientError(400, "入力エラー", "VALIDATION_ERROR", {
+          fieldErrors: {
+            content: ["通知内容を確認してください"],
+            importance: ["この重要度は選べません"],
+          },
+          formErrors: [],
+        })
+      ),
+    });
+    const reportFeedback = vi.fn();
+    render(
+      <MemoryRouter>
+        <NotificationCreatePage
+          api={api}
+          audienceApi={{ load: vi.fn().mockResolvedValue([]) }}
+          configApi={mockNotificationConfigApi}
+          reportFeedback={reportFeedback}
+        />
+      </MemoryRouter>
+    );
+    for (const label of ["タイトル*", "本文*", "詳細タイトル*", "詳細本文*"])
+      fireEvent.change(screen.getByLabelText(label), {
+        target: { value: "テスト" },
+      });
+    const button = screen.getByRole("button", { name: "通知を配信" });
+    await waitFor(() => expect(button).toBeEnabled());
+    fireEvent.click(button);
+    expect(
+      await screen.findByText("この重要度は選べません")
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("通知内容: 通知内容を確認してください")
+    ).toBeInTheDocument();
+    expect(reportFeedback).not.toHaveBeenCalled();
   });
 
   it("開始済み通知はconfigやAudience取得失敗でも詳細を保存できる", async () => {

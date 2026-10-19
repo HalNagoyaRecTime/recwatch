@@ -160,6 +160,45 @@ describe("useNotificationEdit", () => {
     );
     expect(result.current.audienceError).toBeNull();
   });
+  it("編集でも重複対象はAPIとFeedbackへ送らない", async () => {
+    const notification = createNotification(1, "通知");
+    notification.schedules = notification.schedules.map((schedule) => ({
+      ...schedule,
+      status: "scheduled",
+      sendAt: "2030-11-07T12:00:00Z",
+    }));
+    const patch = vi.fn();
+    const reportFeedback = vi.fn();
+    const audienceApi = { load: vi.fn().mockResolvedValue([]) };
+    const queryApi = createQueryApi(vi.fn().mockResolvedValue(notification));
+    const { result } = renderHook(() =>
+      useNotificationEdit({
+        audienceApi,
+        queryApi,
+        commandApi: { ...commandApi, patch },
+        configApi: mockNotificationConfigApi,
+        notificationId: 1,
+        reportFeedback,
+      })
+    );
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    act(() =>
+      result.current.onChange({
+        ...result.current.draft,
+        audiences: [
+          { key: "a", type: "user", targetId: "1" },
+          { key: "b", type: "user", targetId: "1" },
+        ],
+      })
+    );
+    await act(() => result.current.submit());
+    expect(result.current.errors["audiences.1"]).toBe(
+      "同じ通知対象が重複しています"
+    );
+    expect(patch).not.toHaveBeenCalled();
+    expect(reportFeedback).not.toHaveBeenCalled();
+  });
+
   it("409で最新状態を取得し、入力した詳細を保って詳細のみ再保存する", async () => {
     const initial = createNotification(1, "通知");
     initial.schedules = initial.schedules.map((schedule) => ({
@@ -197,6 +236,10 @@ describe("useNotificationEdit", () => {
     act(() =>
       result.current.onChange({
         ...result.current.draft,
+        title: "保存されないPush",
+        body: "保存されない本文",
+        importance: "high",
+        audiences: [{ key: "new", type: "user", targetId: "123" }],
         detailTitle: "入力した詳細",
         detailBody: "入力した本文",
       })
@@ -204,6 +247,12 @@ describe("useNotificationEdit", () => {
     await act(() => result.current.submit());
     expect(getDetail).toHaveBeenCalledTimes(2);
     expect(result.current.canEditAudience).toBe(false);
+    expect(result.current.draft.title).toBe(started.content.push.title);
+    expect(result.current.draft.body).toBe(started.content.push.body);
+    expect(result.current.draft.importance).toBe(started.importance);
+    expect(result.current.draft.audiences[0].type).toBe(
+      started.schedules[0].audience.items[0].type
+    );
     expect(result.current.draft.detailTitle).toBe("入力した詳細");
     expect(result.current.submissionError).toBe("開始済みです");
     await act(() => result.current.submit());
@@ -300,7 +349,9 @@ describe("useNotificationEdit", () => {
         status === 400
           ? {
               fieldErrors: {
-                "content.detail.title": ["詳細を確認してください"],
+                content: ["詳細を確認してください"],
+                schedule: ["配信日時を確認してください"],
+                importance: ["重要度を確認してください"],
               },
               formErrors: [],
             }
@@ -330,8 +381,14 @@ describe("useNotificationEdit", () => {
       await act(async () => expect(await result.current.submit()).toBe(false));
       expect(result.current.draft.detailTitle).toBe("保持する入力");
       if (status === 400) {
-        expect(result.current.errors.detailTitle).toBe(
-          "詳細を確認してください"
+        expect(result.current.submissionError).toContain(
+          "通知内容: 詳細を確認してください"
+        );
+        expect(result.current.submissionError).toContain(
+          "通知対象・配信日時: 配信日時を確認してください"
+        );
+        expect(result.current.errors.importance).toBe(
+          "重要度を確認してください"
         );
         expect(reportFeedback).not.toHaveBeenCalled();
       } else {

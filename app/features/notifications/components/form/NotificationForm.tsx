@@ -241,6 +241,11 @@ export function NotificationForm({
                 {configError}
               </p>
             ) : null}
+            {errors.importance ? (
+              <p className="text-tone-danger-text mt-1.5 text-xs">
+                {errors.importance}
+              </p>
+            ) : null}
           </fieldset>
 
           <fieldset disabled={isFullEditDisabled}>

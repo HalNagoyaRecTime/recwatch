@@ -16,10 +16,12 @@ import {
 } from "~/features/notifications/model/notification-draft";
 import {
   validateNotificationDraft,
+  validateNotificationAudiences,
   type NotificationDraftErrors,
 } from "~/features/notifications/model/notification-draft-validation";
 import { ApiClientError } from "~/lib/api-client-error";
 import { getErrorMessage } from "~/lib/client-error";
+import { toNotificationDraftErrors } from "~/features/notifications/api/mappers/notification-form-validation-error-mapper";
 import { readNotificationValidationDetails } from "~/features/notifications/api/mappers/notification-api-error-mapper";
 import {
   reportNotificationActionError,
@@ -193,6 +195,13 @@ export function useNotificationEdit({
     const timeoutId = window.setTimeout(() => {
       setIsRecipientCountLoading(true);
       setRecipientCountError(null);
+      if (
+        Object.keys(validateNotificationAudiences(draft.audiences)).length > 0
+      ) {
+        setRecipientCount(null);
+        setIsRecipientCountLoading(false);
+        return;
+      }
       try {
         void configApi
           .getAudienceCount({
@@ -227,17 +236,35 @@ export function useNotificationEdit({
         : current
     );
     setSubmissionError(null);
-    setErrors((current) => ({
-      ...current,
-      title: nextDraft.title.trim() ? undefined : current.title,
-      body: nextDraft.body.trim() ? undefined : current.body,
-      detailTitle: nextDraft.detailTitle.trim()
-        ? undefined
-        : current.detailTitle,
-      detailBody: nextDraft.detailBody.trim() ? undefined : current.detailBody,
-      audiences: nextDraft.audiences.length ? undefined : current.audiences,
-      scheduledAt: nextDraft.scheduledAt ? undefined : current.scheduledAt,
-    }));
+    setErrors((current) => {
+      const nextErrors: NotificationDraftErrors = {
+        ...current,
+        title: nextDraft.title.trim() ? undefined : current.title,
+        body: nextDraft.body.trim() ? undefined : current.body,
+        detailTitle: nextDraft.detailTitle.trim()
+          ? undefined
+          : current.detailTitle,
+        detailBody: nextDraft.detailBody.trim()
+          ? undefined
+          : current.detailBody,
+        audiences: nextDraft.audiences.length ? undefined : current.audiences,
+        scheduledAt: nextDraft.scheduledAt ? undefined : current.scheduledAt,
+      };
+      for (const key of Object.keys(current)) {
+        if (key.startsWith("audiences."))
+          delete nextErrors[key as keyof NotificationDraftErrors];
+      }
+      if (
+        Object.keys(current).some(
+          (key) => key === "audiences" || key.startsWith("audiences.")
+        )
+      )
+        Object.assign(
+          nextErrors,
+          validateNotificationAudiences(nextDraft.audiences)
+        );
+      return nextErrors;
+    });
   }
 
   async function submit() {
@@ -285,7 +312,19 @@ export function useNotificationEdit({
             current?.api === queryApi &&
             current.notificationId === notificationId &&
             current.status === "loaded"
-              ? { ...current, notification: latest }
+              ? {
+                  ...current,
+                  notification: latest,
+                  draft: latest.schedules.every(
+                    (schedule) => schedule.status === "scheduled"
+                  )
+                    ? current.draft
+                    : {
+                        ...toNotificationDraft(latest),
+                        detailTitle: current.draft.detailTitle,
+                        detailBody: current.draft.detailBody,
+                      },
+                }
               : current
           );
         } catch {
@@ -293,24 +332,12 @@ export function useNotificationEdit({
         }
       }
       const details = readNotificationValidationDetails(error);
-      if (details) {
-        setErrors((current) => ({
-          ...current,
-          title:
-            details.fieldErrors["content.push.title"]?.[0] ??
-            details.fieldErrors.title?.[0],
-          body:
-            details.fieldErrors["content.push.body"]?.[0] ??
-            details.fieldErrors.body?.[0],
-          detailTitle: details.fieldErrors["content.detail.title"]?.[0],
-          detailBody: details.fieldErrors["content.detail.body"]?.[0],
-          audiences: details.fieldErrors.audience?.[0],
-          scheduledAt: details.fieldErrors.delivery?.[0],
-          importance: details.fieldErrors.importance?.[0],
-        }));
-      }
       const message = getErrorMessage(error);
-      setSubmissionError(message);
+      if (details) {
+        const converted = toNotificationDraftErrors(details);
+        setErrors((current) => ({ ...current, ...converted.fieldErrors }));
+        setSubmissionError(converted.formErrors.join(" / ") || message);
+      } else setSubmissionError(message);
       if (!details)
         reportNotificationActionError(reportFeedback, {
           title: "通知を更新できませんでした",

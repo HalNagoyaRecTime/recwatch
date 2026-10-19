@@ -29,21 +29,7 @@ export function validateNotificationDraft(
     errors.body = "本文を入力してください";
   }
 
-  if (draft.audiences.length === 0) {
-    errors.audiences = "通知対象を1件以上指定してください";
-  }
-  draft.audiences.forEach((audience, index) => {
-    if (audience.type !== "all" && !audience.targetId) {
-      errors[`audiences.${index}`] = "通知対象を選択してください";
-    }
-  });
-
-  if (
-    draft.audiences.some((audience) => audience.type === "all") &&
-    draft.audiences.length > 1
-  ) {
-    errors.audiences = "全体は他の通知対象と同時に指定できません";
-  }
+  Object.assign(errors, validateNotificationAudiences(draft.audiences));
 
   if (draft.deliveryTiming === "scheduled") {
     if (!draft.scheduledAt) {
@@ -59,5 +45,35 @@ export function validateNotificationDraft(
     }
   }
 
+  return errors;
+}
+
+export function validateNotificationAudiences(
+  audiences: NotificationDraft["audiences"]
+): NotificationDraftErrors {
+  const errors: NotificationDraftErrors = {};
+  if (audiences.length === 0)
+    errors.audiences = "通知対象を1件以上指定してください";
+  const seen = new Set<string>();
+  audiences.forEach((audience, index) => {
+    const targetId = Number(audience.targetId);
+    if (
+      audience.type !== "all" &&
+      (!Number.isSafeInteger(targetId) || targetId <= 0)
+    ) {
+      errors[`audiences.${index}`] = "通知対象を選択してください";
+      return;
+    }
+    const key =
+      audience.type === "all" ? "all" : `${audience.type}:${targetId}`;
+    if (seen.has(key))
+      errors[`audiences.${index}`] = "同じ通知対象が重複しています";
+    seen.add(key);
+  });
+  if (
+    audiences.some((audience) => audience.type === "all") &&
+    audiences.length > 1
+  )
+    errors.audiences = "全体は他の通知対象と同時に指定できません";
   return errors;
 }
