@@ -1,4 +1,4 @@
-import { NotificationAudienceLoadingError } from "~/features/notifications/api/contracts/errors/notification-audience-loading-error";
+import { ClientError, ClientErrors } from "~/lib/client-error";
 import type {
   ClassRoomAudienceApiDto,
   EventAudienceApiDto,
@@ -26,14 +26,14 @@ export async function loadAllClassrooms(
         `/api/v1/classrooms?limit=${PAGE_SIZE}&offset=${classrooms.length}`
       )
     );
-    classrooms.push(...page.classrooms);
+    classrooms.push(...page.items);
 
-    if (classrooms.length >= page.total || page.classrooms.length === 0) {
+    if (classrooms.length >= page.total || page.items.length === 0) {
       return classrooms;
     }
   }
 
-  throw new NotificationAudienceLoadingError("unexpected");
+  throw new ClientError(ClientErrors.RESPONSE_PARSE_ERROR);
 }
 
 export async function loadAllEvents(client: NotificationAudienceHttpClient) {
@@ -52,5 +52,5 @@ export async function loadAllEvents(client: NotificationAudienceHttpClient) {
     }
   }
 
-  throw new NotificationAudienceLoadingError("unexpected");
+  throw new ClientError(ClientErrors.RESPONSE_PARSE_ERROR);
 }

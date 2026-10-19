@@ -8,10 +8,10 @@ export type SidebarIconKey =
   | "file"
   | "home"
   | "settings"
-  | "notificationHistory"
   | "classRoom"
   | "timing"
   | "trophy"
+  | "team"
   | "users";
 
 type SidebarRoleConfig = {
@@ -40,121 +40,133 @@ export const sidebarSections = [
       {
         id: "dashboard",
         label: "ダッシュボード",
-        icon: "home",
+        icon: "dashboard",
         to: "/dashboard",
-        roles: ["admin", "manager", "member"],
+        roles: ["admin"],
       },
     ],
   },
   {
-    items: [
-      {
-        id: "members",
-        label: "ユーザー管理",
-        icon: "users",
-        roles: ["admin", "manager"],
-        children: [
-          {
-            id: "members-list",
-            label: "学生管理",
-            to: "/members",
-            activePatterns: ["/members", "/members/teams"],
-            roles: ["admin", "manager"],
-          },
-          {
-            id: "classRoom",
-            label: "クラス管理",
-            to: "/classroom",
-            roles: ["admin", "manager"],
-          },
-          {
-            id: "teachers",
-            label: "教官管理",
-            to: "/teachers",
-            roles: ["admin", "manager"],
-          },
-        ],
-      },
-    ],
-  },
-  {
+    label: "運用",
     items: [
       {
         id: "events",
-        label: "イベント管理",
-        icon: "trophy",
-        roles: ["admin", "manager"],
+        label: "イベント",
+        icon: "calendar",
+        roles: ["admin"],
         children: [
           {
             id: "events-list",
-            label: "イベント登録一覧",
+            label: "イベント一覧",
             to: "/events",
             activePatterns: [
               "/events",
               "/events/new",
-              "/events/active",
-              "/events/past",
-              "/events/tournament",
-              "/events/scoring",
-              "/events/:competitionId/edit",
+              "/events/:eventId",
+              "/events/:eventId/edit",
+              "/events/:eventId/gatherings",
             ],
-            roles: ["admin", "manager"],
+            // `/events/:eventId` は固定パスの画面にも一致するため、別項目のものを除外する
+            activeExclusions: ["/events/today", "/events/assignments"],
+            roles: ["admin"],
           },
           {
-            id: "events-assignments",
-            label: "参加者設定",
-            to: "/events/assignments",
-            roles: ["admin", "manager"],
-          },
-          {
-            id: "gathering-spots",
-            label: "集合場所管理",
-            to: "/gathering-spots",
-            roles: ["admin", "manager"],
+            id: "events-active",
+            label: "本日の進行",
+            to: "/events/today",
+            roles: ["admin"],
           },
         ],
+      },
+      {
+        id: "notifications",
+        label: "通知",
+        icon: "notification",
+        to: "/notifications",
+        activePatterns: [
+          "/notifications",
+          "/notifications/new",
+          "/notifications/monitor",
+          "/notifications/:notificationId",
+          "/notifications/:notificationId/edit",
+        ],
+        roles: ["admin"],
       },
     ],
   },
   {
+    label: "チーム・成績",
     items: [
       {
-        id: "operations",
-        label: "運用管理",
-        icon: "calendar",
-        roles: ["admin", "manager", "member"],
+        id: "teams",
+        label: "チーム",
+        icon: "team",
+        to: "/teams",
+        activePatterns: [
+          "/teams",
+          "/teams/new",
+          "/teams/:id",
+          "/teams/:id/edit",
+        ],
+        roles: ["admin"],
+      },
+      {
+        id: "ranking",
+        label: "ランキング",
+        icon: "trophy",
+        to: "/ranking",
+        activePatterns: ["/ranking", "/ranking/:teamId/edit"],
+        roles: ["admin"],
+      },
+    ],
+  },
+  {
+    label: "管理",
+    items: [
+      {
+        id: "user-management",
+        label: "ユーザー",
+        icon: "users",
+        roles: ["admin"],
         children: [
           {
-            id: "schedule",
-            label: "スケジュール管理",
-            to: "/schedule",
-            activePatterns: [
-              "/schedule",
-              "/schedule/new",
-              "/schedule/:scheduleId/edit",
-            ],
-            roles: ["admin", "manager", "member"],
+            id: "students",
+            label: "学生",
+            to: "/students",
+            activePatterns: ["/students", "/students/import"],
+            roles: ["admin"],
           },
           {
-            id: "participants",
-            label: "出場メンバー管理",
-            to: "/participants",
-            roles: ["admin", "manager"],
-          },
-          {
-            id: "notification-management",
-            label: "通知一覧",
-            icon: "notificationHistory",
-            to: "/notifications",
-            activePatterns: [
-              "/notifications",
-              "/notifications/new",
-              "/notifications/:notificationId",
-              "/notifications/:notificationId/edit",
-            ],
-            roles: ["admin", "manager"],
+            id: "teachers",
+            label: "教官",
+            to: "/teachers",
+            roles: ["admin"],
           },
         ],
+      },
+      {
+        id: "classroom",
+        label: "クラス",
+        icon: "classRoom",
+        to: "/classrooms",
+        roles: ["admin"],
+      },
+    ],
+  },
+  {
+    label: "削除予定",
+    items: [
+      {
+        id: "gathering-spots",
+        label: "集合場所管理",
+        to: "/gathering-spots",
+        roles: ["admin"],
+      },
+      {
+        id: "venues",
+        label: "実施場所管理",
+        to: "/venues",
+        roles: ["admin"],
       },
     ],
   },

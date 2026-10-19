@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { getErrorMessage } from "~/lib/client-error";
 
 import type {
   GatheringSpotGateway,
@@ -38,11 +39,7 @@ export function useGatheringSpots({
     } catch (error) {
       if (nextRequestVersion !== requestVersion.current) return null;
 
-      setLoadError(
-        error instanceof Error
-          ? error.message
-          : "集合場所の取得に失敗しました。"
-      );
+      setLoadError(getErrorMessage(error, "集合場所の取得に失敗しました。"));
       return null;
     } finally {
       if (nextRequestVersion === requestVersion.current) setIsLoading(false);

@@ -1,0 +1,64 @@
+import { render, screen } from "@testing-library/react";
+import { describe, expect, it } from "vitest";
+
+import { FloatingListSurface } from "./FloatingListSurface";
+
+describe("FloatingListSurface", () => {
+  it("scrollableのときだけ共通スクロール領域を使う", () => {
+    const { container } = render(
+      <FloatingListSurface scrollable>
+        <div>内容</div>
+      </FloatingListSurface>
+    );
+
+    const surface = container.firstElementChild;
+    expect(surface).toHaveClass("flex", "flex-col");
+    expect(surface).toHaveClass(
+      "max-h-[var(--floating-panel-available-height)]",
+      "max-w-[var(--floating-panel-available-width)]"
+    );
+    expect(surface).not.toHaveClass("p-2");
+    const scrollViewport = surface?.querySelector(".scrollbar-none");
+    expect(scrollViewport).toBeInTheDocument();
+    expect(scrollViewport).toHaveClass("p-2", "min-w-0", "flex-1");
+  });
+
+  it("scrollableでないときはスクロール領域を追加しない", () => {
+    const { container } = render(
+      <FloatingListSurface>
+        <div>内容</div>
+      </FloatingListSurface>
+    );
+
+    expect(container.querySelector(".scrollbar-none")).not.toBeInTheDocument();
+    expect(container.firstElementChild).toHaveClass("p-2");
+  });
+
+  it("fixedHeaderをスクロール領域の外側へ配置する", () => {
+    const { container } = render(
+      <FloatingListSurface fixedHeader={<h2>ヘッダー</h2>} scrollable>
+        <div>内容</div>
+      </FloatingListSurface>
+    );
+
+    const header = container.querySelector("h2");
+    expect(header).toBeInTheDocument();
+    expect(header?.closest(".scrollbar-none")).not.toBeInTheDocument();
+    expect(container.querySelector(".scrollbar-none")).toContainElement(
+      screen.getByText("内容")
+    );
+  });
+
+  it("必要な画面だけスクロール領域をTab順から外せる", () => {
+    const { container } = render(
+      <FloatingListSurface scrollable scrollTabIndex={-1}>
+        <div>内容</div>
+      </FloatingListSurface>
+    );
+
+    expect(container.querySelector(".scrollbar-none")).toHaveAttribute(
+      "tabindex",
+      "-1"
+    );
+  });
+});

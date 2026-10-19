@@ -94,9 +94,18 @@ flowchart LR
 app/features/notifications/
 ├─ api/
 │  ├─ contracts/
-│  │  └─ errors/
+│  │  ├─ admin-notification-command-api.ts
+│  │  ├─ admin-notification-query-api.ts
+│  │  ├─ notification-config-api.ts
+│  │  ├─ notification-schedule-command-api.ts
+│  │  ├─ notification-schedule-query-api.ts
+│  │  └─ notification-push-delivery-api.ts
 │  ├─ http/
 │  ├─ dto/
+│  │  ├─ notification-common-dto.ts
+│  │  ├─ admin-notification-dto.ts
+│  │  ├─ notification-schedule-dto.ts
+│  │  └─ notification-error-dto.ts
 │  └─ mappers/
 ├─ mock/
 ├─ hooks/
@@ -104,7 +113,6 @@ app/features/notifications/
 │  ├─ useNotificationCreate.ts
 │  └─ useNotificationEdit.ts
 ├─ model/
-│  ├─ notification.ts
 │  ├─ notification-audience.ts
 │  ├─ notification-draft.ts
 │  ├─ notification-draft-validation.ts
@@ -138,6 +146,10 @@ Feature外にはRouteの境界、複数Featureで使うコード、技術的な�
 - アプリケーションコード間のimportは原則`~/`aliasを使う（生成型・同一ディレクトリの相対importは除く）。
 - 1fileに1つの責務を持たせる。
 - Feature間で内部fileを直接参照しない。
+- 通知の配信モニターは`/notifications/monitor`に配置し、RouteでSchedule Read APIと既存Feedbackの公開entrypointを組み立てる。
+- モニターのHookは取得・更新・部分エラーを調整し、React FlowのComponentは選択したScheduleを1Nodeとして扱い、その内部に処理段階を表示する。状態別一覧は同じScheduleをDB状態の列へ配置し、実測高さに応じて後続Nodeをずらす。Schedule statusとRecipient / Delivery集計はAPI契約の値をそのまま使う。
+- 通知管理からFeedbackを利用する場合は`~/features/frame/feedback`の公開entrypointを使う。公開APIは`useFeedback`、`FeedbackInput`、`FeedbackKind`に限定し、Provider、Storage、Centerの内部実装は公開しない。
+- FeedbackのNotification Centerは管理画面の操作・background処理・system警告の履歴を扱う。Backendのユーザー向け通知履歴は複製しない。
 - 循環依存を作らない。
 - Secret、DB client、Node.js専用APIを含めない。
 - 公開できない値を`VITE_`環境変数へ設定しない。
@@ -150,8 +162,7 @@ Feature外にはRouteの境界、複数Featureで使うコード、技術的な�
 - Path、search params、`clientLoader`のデータはRouteが持つ。
 - Pageとcomponentには画面の表示と入力処理を書く。
 - Component内だけの状態はComponentが持つ。
-- ボーダー色は`--color-border-base`に対応するTailwind utilityを使い、新規実装と変更対象から順次移行する。
-- **old:** `border-[color:var(--border-1)]` / `border-border-1` → **new:** `border-border-base`
+- ボーダー色は`--color-border-base`に対応する`border-border-base`などのTailwind utilityを使う。
 - 業務ルールと外部I/Oは書かない。
 
 ### Application

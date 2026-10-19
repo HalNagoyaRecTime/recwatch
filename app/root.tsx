@@ -5,46 +5,46 @@ import {
   Outlet,
   Scripts,
   ScrollRestoration,
+  useLocation,
 } from "react-router";
-import type { ReactNode } from "react";
+import { useLayoutEffect, type ReactNode } from "react";
 
 import type { Route } from "./+types/root";
-import { THEME_STORAGE_KEY } from "./lib/theme";
+import {
+  createAppSurfaceBootstrapScript,
+  getCurrentAppSurface,
+  synchronizeAppSurfaceDocument,
+} from "./lib/appSurface";
 import { ThemeProvider } from "~/components/providers/ThemeProvider";
 import "./app.css";
 
-export const links: Route.LinksFunction = () => [];
+export const links: Route.LinksFunction = () => [
+  {
+    rel: "icon",
+    href: "/recwatch-logo.svg",
+    type: "image/svg+xml",
+    sizes: "any",
+  },
+];
 
 export function Layout({ children }: { children: ReactNode }) {
+  const appSurfaceBootstrapScript = createAppSurfaceBootstrapScript();
+
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" data-app-surface="recwatch" suppressHydrationWarning>
       <head>
         <meta charSet="utf-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta
+          name="viewport"
+          content="width=device-width, initial-scale=1, viewport-fit=cover"
+        />
         <Meta />
         <Links />
         <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              (function() {
-                var storageKey = ${JSON.stringify(THEME_STORAGE_KEY)};
-                var storedTheme = window.localStorage.getItem(storageKey);
-                var theme = ["light", "dark", "system"].includes(storedTheme)
-                  ? storedTheme
-                  : "system";
-                var root = document.documentElement;
-                var isDark =
-                  theme === "dark" ||
-                  (theme === "system" &&
-                    window.matchMedia("(prefers-color-scheme: dark)").matches);
-                root.classList.toggle("dark", isDark);
-                root.dataset.theme = theme;
-              })();
-            `,
-          }}
+          dangerouslySetInnerHTML={{ __html: appSurfaceBootstrapScript }}
         />
       </head>
-      <body className="min-h-dvh bg-[radial-gradient(circle_at_top_right,var(--bg-gradient-glow),transparent_32%),linear-gradient(180deg,var(--bg-gradient-start)_0%,var(--bg-gradient-end)_100%)] text-(--text-base) antialiased transition-colors duration-200">
+      <body>
         {children}
         <ScrollRestoration />
         <Scripts />
@@ -54,8 +54,17 @@ export function Layout({ children }: { children: ReactNode }) {
 }
 
 export default function App() {
+  const { pathname } = useLocation();
+  const surface = getCurrentAppSurface(pathname);
+
+  useLayoutEffect(() => {
+    synchronizeAppSurfaceDocument(pathname, surface);
+  }, [pathname, surface]);
+
   return (
-    <ThemeProvider>
+    <ThemeProvider
+      forcedTheme={surface === "account-deletion" ? "light" : undefined}
+    >
       <Outlet />
     </ThemeProvider>
   );
@@ -78,19 +87,19 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
   }
 
   return (
-    <main className="min-h-dvh p-6 md:p-8">
-      <div className="shadow-soft mx-auto max-w-5xl rounded-3xl border border-(--border-subtle) bg-(--surface-base) p-6 md:p-8">
-        <div className="font-['DM_Mono'] text-xs tracking-[0.18em] text-(--brand-primary) uppercase">
+    <main className="viewport-min-height p-6 md:p-8">
+      <div className="shadow-soft border-border-subtle bg-surface-base mx-auto max-w-5xl rounded-3xl border p-6 md:p-8">
+        <div className="text-brand-primary font-['DM_Mono'] text-xs tracking-[0.18em] uppercase">
           Failure Boundary
         </div>
         <h1 className="mt-3 text-[clamp(28px,4vw,40px)] leading-[1.04] font-semibold">
           {message}
         </h1>
-        <p className="mt-3 max-w-[50ch] text-sm leading-7 text-(--text-muted)">
+        <p className="text-text-muted mt-3 max-w-[50ch] text-sm leading-7">
           {details}
         </p>
         {stack ? (
-          <pre className="mt-5 overflow-x-auto rounded-2xl border border-(--border-subtle) bg-(--surface-hover) p-4 text-xs text-(--text-muted)">
+          <pre className="border-border-subtle bg-surface-hover text-text-muted mt-5 overflow-x-auto rounded-2xl border p-4 text-xs">
             <code>{stack}</code>
           </pre>
         ) : null}
@@ -100,5 +109,12 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
 }
 
 export function HydrateFallback() {
-  return <div className="bg-(--surface-hover) p-6">読み込み中...</div>;
+  return (
+    <div className="root-hydrate-fallback viewport-min-height bg-surface-hover p-6">
+      <span className="root-hydrate-fallback-default">読み込み中...</span>
+      <span className="root-hydrate-fallback-context">
+        <span>認証情報を確認しています...</span>
+      </span>
+    </div>
+  );
 }

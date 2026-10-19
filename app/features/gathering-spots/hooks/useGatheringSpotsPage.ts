@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { getErrorMessage } from "~/lib/client-error";
 
 import type { GatheringSpotGateway } from "~/features/gathering-spots/api/contracts/gathering-spot-gateway";
 import { useGatheringSpots } from "~/features/gathering-spots/hooks/useGatheringSpots";
@@ -96,11 +97,7 @@ export function useGatheringSpotsPage({
         setCurrentPage((page) => page - 1);
       }
     } catch (error) {
-      setActionError(
-        error instanceof Error
-          ? error.message
-          : "集合場所の削除に失敗しました。"
-      );
+      setActionError(getErrorMessage(error, "集合場所の削除に失敗しました。"));
     } finally {
       setIsDeleting(false);
     }
@@ -137,11 +134,7 @@ export function useGatheringSpotsPage({
       await reload();
       closeForm();
     } catch (error) {
-      setSubmitError(
-        error instanceof Error
-          ? error.message
-          : "集合場所の保存に失敗しました。"
-      );
+      setSubmitError(getErrorMessage(error, "集合場所の保存に失敗しました。"));
     } finally {
       setIsSubmitting(false);
     }
