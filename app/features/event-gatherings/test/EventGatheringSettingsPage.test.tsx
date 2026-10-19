@@ -143,7 +143,7 @@ function renderPageInEventDetail(reload: () => void) {
 }
 
 describe("EventGatheringSettingsPage", () => {
-  it("新しい集合を保存した後、そのまま参加者を設定してイベント詳細へ戻る", async () => {
+  it("集合と参加者を保存した後、モーダルを閉じてイベント詳細へ戻る", async () => {
     const load = vi.fn().mockResolvedValue({ eventId: 7, rounds: [] });
     const save = vi.fn().mockResolvedValue({
       eventId: 7,
@@ -200,28 +200,18 @@ describe("EventGatheringSettingsPage", () => {
       })
     );
 
-    expect(
-      await screen.findByText(
-        "集合設定を保存しました。続けて参加者を設定できます。"
-      )
-    ).toBeInTheDocument();
-    expect(screen.getByTestId("location")).toHaveTextContent(
-      /^\/events\/7\/gatherings$/
-    );
     await waitFor(() =>
       expect(memberGateway.saveMembers).toHaveBeenCalledWith(101, [1001])
-    );
-    expect(screen.getByText("1人登録済み")).toBeInTheDocument();
-
-    await user.click(
-      screen.getByRole("button", { name: "イベント詳細へ戻る" })
     );
     await waitFor(() =>
       expect(screen.getByTestId("location")).toHaveTextContent(/^\/events\/7$/)
     );
+    expect(
+      screen.queryByRole("dialog", { name: "集合設定" })
+    ).not.toBeInTheDocument();
   });
 
-  it("既存集合の編集を保存すると、従来どおり保存完了画面へ進む", async () => {
+  it("既存集合の編集を保存すると、モーダルを閉じる", async () => {
     const settings = {
       eventId: 7,
       rounds: [
@@ -248,15 +238,12 @@ describe("EventGatheringSettingsPage", () => {
     await user.type(startTime, "11:00");
     await user.click(screen.getByRole("button", { name: "集合設定を保存" }));
 
-    expect(
-      await screen.findByText("集合設定を保存しました")
-    ).toBeInTheDocument();
-    expect(
-      screen.queryByRole("button", { name: "メンバーを選択" })
-    ).not.toBeInTheDocument();
-    expect(screen.getByTestId("location")).toHaveTextContent(
-      /^\/events\/7\/gatherings$/
+    await waitFor(() =>
+      expect(screen.getByTestId("location")).toHaveTextContent(/^\/events\/7$/)
     );
+    expect(
+      screen.queryByRole("dialog", { name: "集合設定" })
+    ).not.toBeInTheDocument();
   });
 
   it("参加者だけ保存してモーダルを閉じずにいても、イベント詳細を読み直す", async () => {

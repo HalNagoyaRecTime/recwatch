@@ -30,11 +30,8 @@ type GatheringSettingsStepProps = {
    * 人数が変わるため、呼び出し元の表示にも反映させる。
    */
   onMembersSaved?: () => void;
-  /** 集合設定を保存してステップを進めるとき。 */
-  onSaved: (
-    settings: EventGatheringSettings,
-    hasNewGatherings: boolean
-  ) => void;
+  /** 集合設定と参加者の保存が完了したとき。 */
+  onSaved: (settings: EventGatheringSettings) => void;
   settingsGateway?: EventGatheringSettingsGateway;
   spotGateway?: GatheringSpotGateway;
 };
@@ -62,8 +59,6 @@ export function GatheringSettingsStep({
     gateway: memberGateway,
   });
   const [openPickerKey, setOpenPickerKey] = useState<string | null>(null);
-  const [hasSaved, setHasSaved] = useState(false);
-  const [hasCreatedGatherings, setHasCreatedGatherings] = useState(false);
   const [pendingMembers, setPendingMembers] = useState<
     Record<string, number[]>
   >({});
@@ -81,9 +76,6 @@ export function GatheringSettingsStep({
   }
 
   async function handleSave() {
-    const hasNewGatherings = settings.rounds.some((round) =>
-      round.gatherings.some((gathering) => gathering.gatheringId === null)
-    );
     const pendingAssignments = settings.rounds.flatMap((round) =>
       round.gatherings.flatMap((gathering, index) =>
         Object.hasOwn(pendingMembers, gathering.key)
@@ -101,9 +93,6 @@ export function GatheringSettingsStep({
     const saved = await settings.save();
     if (!saved) return;
 
-    const shouldKeepEditing = hasNewGatherings || hasCreatedGatherings;
-    if (hasNewGatherings) setHasCreatedGatherings(true);
-    onSaved(saved, shouldKeepEditing);
     setMemberSaveError(null);
 
     for (const assignment of pendingAssignments) {
@@ -146,8 +135,7 @@ export function GatheringSettingsStep({
       }
     }
 
-    setOpenPickerKey(null);
-    setHasSaved(true);
+    onSaved(saved);
   }
 
   return (
@@ -159,11 +147,6 @@ export function GatheringSettingsStep({
         </p>
       </div>
 
-      {hasSaved ? (
-        <p className="text-tone-success-text text-sm" role="status">
-          集合設定を保存しました。続けて参加者を設定できます。
-        </p>
-      ) : null}
       {memberSaveError ? (
         <p className="text-tone-danger-text text-base" role="alert">
           {memberSaveError}
@@ -186,23 +169,18 @@ export function GatheringSettingsStep({
                 (error) => error.roundKey === round.key
               )}
               onAddGathering={() => {
-                setHasSaved(false);
                 settings.addGathering(round.key);
               }}
               onChangeGathering={(gatheringKey, patch) => {
-                setHasSaved(false);
                 settings.updateGathering(round.key, gatheringKey, patch);
               }}
               onChangeRoundStartTime={(startTime) => {
-                setHasSaved(false);
                 settings.updateRoundStartTime(round.key, startTime);
               }}
               onChangeRoundNumber={(roundNumber) => {
-                setHasSaved(false);
                 settings.updateRoundNumber(round.key, roundNumber);
               }}
               onRemove={() => {
-                setHasSaved(false);
                 setPendingMembers((current) => {
                   const next = { ...current };
                   for (const gathering of round.gatherings) {
@@ -220,7 +198,6 @@ export function GatheringSettingsStep({
                 settings.removeRound(round.key);
               }}
               onRemoveGathering={(gatheringKey) => {
-                setHasSaved(false);
                 setPendingMembers((current) => {
                   const next = { ...current };
                   delete next[gatheringKey];
@@ -251,7 +228,6 @@ export function GatheringSettingsStep({
                         ...current,
                         [gathering.key]: userIds,
                       }));
-                      setHasSaved(false);
                       setOpenPickerKey(null);
                     }}
                   />
@@ -288,10 +264,7 @@ export function GatheringSettingsStep({
           <Button
             disabled={isDisabled}
             icon={Plus}
-            onClick={() => {
-              setHasSaved(false);
-              settings.addRound();
-            }}
+            onClick={settings.addRound}
             size="md"
             type="button"
             variant="secondary"
@@ -316,7 +289,7 @@ export function GatheringSettingsStep({
           type="button"
           variant="secondary"
         >
-          {hasSaved ? "イベント詳細へ戻る" : backLabel}
+          {backLabel}
         </Button>
         <Button
           disabled={isDisabled}
