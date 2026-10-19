@@ -176,6 +176,50 @@ describe("useNotificationList", () => {
     });
     expect(result.current.items[0]?.content.push.title).toBe("最新の通知");
   });
+  it.each([false, true])(
+    "遅延GET中の削除後は新しい一覧・Calendarを取得する（Calendar: %s）",
+    async (calendar) => {
+      const old = createDeferred<AdminNotificationListResponse>();
+      const list = vi
+        .fn<AdminNotificationQueryApi["list"]>()
+        .mockResolvedValueOnce(createResponse("削除前"))
+        .mockReturnValueOnce(old.promise)
+        .mockResolvedValue({ items: [] });
+      const queryApi = createQueryApi(list);
+      const deleteApi = {
+        ...commandApi,
+        delete: vi.fn().mockResolvedValue(undefined),
+      };
+      const { result } = renderHook(() =>
+        useNotificationList({ commandApi: deleteApi, queryApi })
+      );
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+      act(() => result.current.onDeleteRequest(result.current.items[0]));
+      act(() => {
+        if (calendar)
+          void result.current.loadCalendar({
+            from: "2026-11-01T00:00:00Z",
+            to: "2026-12-01T00:00:00Z",
+          });
+        else void result.current.reload();
+      });
+      await waitFor(() => expect(list).toHaveBeenCalledTimes(2));
+      let deletion!: Promise<void>;
+      act(() => {
+        deletion = result.current.confirmDelete();
+      });
+      await waitFor(() => expect(deleteApi.delete).toHaveBeenCalledOnce());
+      expect(list).toHaveBeenCalledTimes(2);
+      await act(async () => {
+        old.resolve(createResponse("古いGET"));
+        await deletion;
+      });
+      expect(result.current.items).toEqual([]);
+      if (calendar) expect(result.current.calendarItems).toEqual([]);
+      expect(list).toHaveBeenCalledTimes(calendar ? 4 : 3);
+    }
+  );
+
   it.each([404, 409])(
     "削除%i後に一覧を再取得しエラーを維持する",
     async (status) => {

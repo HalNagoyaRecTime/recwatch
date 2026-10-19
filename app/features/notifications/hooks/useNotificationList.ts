@@ -60,6 +60,18 @@ export function useNotificationList({
   >(null);
   const deleting = useRef(false);
   const calendarQuery = useRef<AdminNotificationListQuery | null>(null);
+  const pendingReads = useRef(new Set<Promise<unknown>>());
+  const read = useCallback(
+    (query?: AdminNotificationListQuery) => {
+      const request = Promise.resolve().then(() => queryApi.list(query));
+      const tracked = request.finally(() =>
+        pendingReads.current.delete(tracked)
+      );
+      pendingReads.current.add(tracked);
+      return tracked;
+    },
+    [queryApi]
+  );
   const requestSequence = useRef(0);
   const calendarRequestSequence = useRef(0);
 
@@ -67,7 +79,7 @@ export function useNotificationList({
     async (background = false) => {
       const requestId = ++requestSequence.current;
       try {
-        const result = await Promise.resolve().then(() => queryApi.list());
+        const result = await read();
         if (requestId !== requestSequence.current) return;
         setNotifications(result.items);
         setCurrentPage((page) =>
@@ -103,7 +115,7 @@ export function useNotificationList({
         if (requestId === requestSequence.current) setIsLoading(false);
       }
     },
-    [queryApi, reportFeedback]
+    [queryApi, read, reportFeedback]
   );
 
   const loadCalendar = useCallback(
@@ -114,7 +126,7 @@ export function useNotificationList({
       setCalendarErrorMessage(null);
 
       try {
-        const result = await queryApi.list(query);
+        const result = await read(query);
         if (requestId !== calendarRequestSequence.current) return;
         setCalendarNotifications(result.items);
       } catch (error) {
@@ -137,7 +149,7 @@ export function useNotificationList({
         }
       }
     },
-    [queryApi, reportFeedback]
+    [read, reportFeedback]
   );
 
   useEffect(() => {
@@ -214,6 +226,8 @@ export function useNotificationList({
     try {
       await commandApi.delete(selectedNotification.notificationId);
       setSelectedNotification(null);
+      // 共有中の古いGETが完了してから、削除後の新しいGETを取得します。
+      await Promise.allSettled([...pendingReads.current]);
       await reload();
       if (calendarQuery.current)
         await loadCalendar(calendarQuery.current, true);
@@ -224,6 +238,8 @@ export function useNotificationList({
       });
     } catch (error) {
       const message = getErrorMessage(error);
+      // 共有中の古いGETが完了してから、削除後の新しいGETを取得します。
+      await Promise.allSettled([...pendingReads.current]);
       await reload();
       if (calendarQuery.current)
         await loadCalendar(calendarQuery.current, true);
