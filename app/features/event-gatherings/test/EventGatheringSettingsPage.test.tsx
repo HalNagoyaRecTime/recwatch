@@ -143,7 +143,7 @@ function renderPageInEventDetail(reload: () => void) {
 }
 
 describe("EventGatheringSettingsPage", () => {
-  it("集合と参加者を保存した後、モーダルを閉じてイベント詳細へ戻る", async () => {
+  it("新しい集合と参加者を保存した後、完了画面からイベント詳細へ戻る", async () => {
     const load = vi.fn().mockResolvedValue({ eventId: 7, rounds: [] });
     const save = vi.fn().mockResolvedValue({
       eventId: 7,
@@ -203,6 +203,18 @@ describe("EventGatheringSettingsPage", () => {
     await waitFor(() =>
       expect(memberGateway.saveMembers).toHaveBeenCalledWith(101, [1001])
     );
+
+    expect(
+      await screen.findByText("集合設定を保存しました")
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("1Round・1件の集合を登録しました。")
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("dialog", { name: "集合設定" })
+    ).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "一覧へ戻る" }));
     await waitFor(() =>
       expect(screen.getByTestId("location")).toHaveTextContent(/^\/events\/7$/)
     );
