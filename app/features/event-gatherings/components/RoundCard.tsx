@@ -26,10 +26,12 @@ type RoundCardProps = {
     patch: Partial<Pick<GatheringDraft, "time" | "spotId">>
   ) => void;
   onChangeRoundNumber: (roundNumber: number) => void;
+  onChangeRoundStartTime: (startTime: string) => void;
   onRemove: () => void;
   onRemoveGathering: (gatheringKey: string) => void;
   onTogglePicker: (gatheringKey: string) => void;
   openPickerKey: string | null;
+  pendingMemberCounts: Readonly<Record<string, number>>;
   renderPicker: (gathering: GatheringDraft) => ReactNode;
   spots: readonly GatheringSpot[];
   value: RoundDraft;
@@ -41,10 +43,12 @@ export function RoundCard({
   onAddGathering,
   onChangeGathering,
   onChangeRoundNumber,
+  onChangeRoundStartTime,
   onRemove,
   onRemoveGathering,
   onTogglePicker,
   openPickerKey,
+  pendingMemberCounts,
   renderPicker,
   spots,
   value,
@@ -93,6 +97,19 @@ export function RoundCard({
           value={Number.isNaN(value.round) ? "" : value.round}
         />
       </label>
+      <label className="text-text-base block text-sm font-medium">
+        開始時刻（任意）
+        <input
+          aria-label={`Round ${value.round} の開始時刻`}
+          className="app-rounded border-border-base bg-surface-base text-text-base focus:border-border-strong mt-1.5 h-9 border px-3 text-sm outline-none disabled:opacity-50"
+          disabled={disabled}
+          type="time"
+          value={value.startTime}
+          onChange={(event) =>
+            onChangeRoundStartTime(event.currentTarget.value)
+          }
+        />
+      </label>
       {roundErrors.length > 0 ? (
         <p className="text-tone-danger-text text-sm" role="alert">
           {roundErrors.map((error) => error.message).join(" ")}
@@ -111,6 +128,7 @@ export function RoundCard({
                 .filter((error) => error.gatheringKey === gathering.key)
                 .map((error) => error.message)}
               isPickerOpen={openPickerKey === gathering.key}
+              pendingMemberCount={pendingMemberCounts[gathering.key]}
               onChange={(patch) => onChangeGathering(gathering.key, patch)}
               onRemove={() => onRemoveGathering(gathering.key)}
               onTogglePicker={() => onTogglePicker(gathering.key)}

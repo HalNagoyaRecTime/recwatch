@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { buildSidebarMenu } from "~/features/frame/sidebar/utils/build-sidebar-menu";
 import { isSidebarItemActive } from "~/features/frame/sidebar/utils/sidebar-active-matcher";
 import type { SidebarItemDef } from "~/types/sidebar";
 
@@ -113,6 +114,26 @@ describe("isSidebarItemActive", () => {
     expect(
       isSidebarItemActive(userManagement.children![0], "/students/import")
     ).toBe(false);
+  });
+
+  it("チームとランキングはモーダルの子Routeでも選択を保つ", () => {
+    const items = buildSidebarMenu("admin").flatMap((section) => section.items);
+    const teams = items.find((menuItem) => menuItem.id === "teams")!;
+    const ranking = items.find((menuItem) => menuItem.id === "ranking")!;
+
+    for (const pathname of [
+      "/teams",
+      "/teams/new",
+      "/teams/3",
+      "/teams/3/edit",
+    ]) {
+      expect(isSidebarItemActive(teams, pathname)).toBe(true);
+      expect(isSidebarItemActive(ranking, pathname)).toBe(false);
+    }
+    for (const pathname of ["/ranking", "/ranking/3/edit"]) {
+      expect(isSidebarItemActive(ranking, pathname)).toBe(true);
+      expect(isSidebarItemActive(teams, pathname)).toBe(false);
+    }
   });
 
   it("子ページがactiveなら親フォルダをactiveにする", () => {

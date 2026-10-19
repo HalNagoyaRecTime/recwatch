@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import {
   cleanup,
   fireEvent,
@@ -8,7 +10,6 @@ import {
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { MemoryRouter } from "react-router";
 import type { AccountDeletionGateway } from "../api/contracts/account-deletion-gateway";
-import { applyTheme } from "~/lib/theme";
 
 const mocks = vi.hoisted(() => ({
   startAccountDeletionAuth: vi.fn(),
@@ -25,6 +26,7 @@ afterEach(() => {
   cleanup();
   document.documentElement.style.removeProperty("background-color");
   document.body.style.removeProperty("background-color");
+  delete document.documentElement.dataset.appSurface;
   delete document.documentElement.dataset.documentBackgroundOverride;
   delete document.documentElement.dataset.accountDeletionAuthCallback;
   delete document.documentElement.dataset.theme;
@@ -32,6 +34,9 @@ afterEach(() => {
   document
     .querySelectorAll("link[data-test-account-deletion-favicon]")
     .forEach((link) => link.remove());
+  document
+    .querySelectorAll("meta[data-test-account-deletion-viewport]")
+    .forEach((meta) => meta.remove());
   mocks.startAccountDeletionAuth.mockReset();
 });
 
@@ -48,7 +53,7 @@ function addDefaultFavicon() {
   favicon.rel = "icon";
   favicon.href = "/recwatch-logo.svg";
   favicon.type = "image/svg+xml";
-  favicon.sizes = "any";
+  favicon.setAttribute("sizes", "any");
   favicon.dataset.testAccountDeletionFavicon = "true";
   document.head.append(favicon);
   return favicon;
@@ -61,24 +66,20 @@ describe("AccountDeletionPage", () => {
     expect(
       screen.getByRole("heading", {
         level: 1,
-        name: "アカウントを削除",
+        name: "アカウントの削除手続き",
       })
     ).toBeInTheDocument();
     expect(screen.getByText("RE:CREATION")).toBeInTheDocument();
     expect(
       screen.getByRole("heading", {
         level: 1,
-        name: "アカウントを削除",
+        name: "アカウントの削除手続き",
       })
-    ).toHaveClass("text-[#333333]");
-    expect(screen.getByText("アカウントの削除手続きを行います。")).toHaveClass(
-      "max-w-md",
-      "text-center"
-    );
+    ).toHaveClass("text-black");
     expect(screen.queryByText(/recwatch/i)).not.toBeInTheDocument();
     expect(screen.getByText("Produced by HAL Nagoya")).toBeInTheDocument();
     expect(
-      screen.getByText("Developed by RE:CREATION Development Team")
+      screen.getByText("Developed by RE:CREATION App Team")
     ).toBeInTheDocument();
     expect(
       screen.queryByText("Microsoft アカウントが削除されることはありません。")
@@ -91,7 +92,7 @@ describe("AccountDeletionPage", () => {
     });
     expect(microsoftButton).toBeInTheDocument();
     expect(microsoftButton).toHaveClass(
-      "h-12",
+      "min-h-12",
       "bg-[#333333]",
       "font-medium",
       "rounded-sm"
@@ -120,62 +121,69 @@ describe("AccountDeletionPage", () => {
     ).toBeInTheDocument();
   });
 
-  it("表示中は白く保ち、unmount時に最新テーマの背景へ戻す", () => {
-    applyTheme("dark");
-    expect(document.documentElement.style.backgroundColor).toBe("rgb(0, 0, 0)");
-    expect(document.body.style.backgroundColor).toBe("rgb(0, 0, 0)");
-    const { unmount } = renderPage();
-
-    expect(screen.getByRole("main")).toHaveClass(
-      "account-deletion-viewport",
-      "viewport-min-height"
-    );
-    expect(
-      document.documentElement.style.getPropertyValue("background-color")
-    ).toBe("rgb(255, 255, 255)");
-    expect(document.body.style.backgroundColor).toBe("rgb(255, 255, 255)");
-    expect(document.documentElement.dataset.documentBackgroundOverride).toBe(
-      "#ffffff"
-    );
-
-    applyTheme("light");
-    expect(document.documentElement.style.backgroundColor).toBe(
-      "rgb(255, 255, 255)"
-    );
-    expect(document.body.style.backgroundColor).toBe("rgb(255, 255, 255)");
-    applyTheme("dark");
-    expect(document.body.style.backgroundColor).toBe("rgb(255, 255, 255)");
-
-    expect(document.body.style.height).toBe("");
-    expect(document.body.style.overflowY).toBe("");
-    expect(document.body.style.background).toBe("");
-
-    unmount();
-
-    expect(document.documentElement.style.backgroundColor).toBe("rgb(0, 0, 0)");
-    expect(document.body.style.backgroundColor).toBe("rgb(0, 0, 0)");
-    expect(document.documentElement.dataset.documentBackgroundOverride).toBe(
-      undefined
-    );
-    expect(document.documentElement.dataset.accountDeletionAuthCallback).toBe(
-      undefined
-    );
-    expect(document.body.style.height).toBe("");
-    expect(document.body.style.overflowY).toBe("");
-    expect(document.body.style.background).toBe("");
-  });
-
-  it("表示中だけfaviconをRE:CREATIONへ切り替え、終了時に戻す", () => {
+  it("shellのfavicon・viewport・styleを変更しない", () => {
     const favicon = addDefaultFavicon();
+    const viewport = document.createElement("meta");
+    viewport.name = "viewport";
+    viewport.content =
+      "width=device-width, initial-scale=1, viewport-fit=cover";
+    viewport.dataset.testAccountDeletionViewport = "true";
+    document.head.append(viewport);
+
+    const rootStyle = document.documentElement.getAttribute("style");
+    const bodyStyle = document.body.getAttribute("style");
+    const appStyle = document.getElementById("app")?.getAttribute("style");
     const { unmount } = renderPage();
 
-    expect(favicon.getAttribute("href")).toBe("/recreation-favicon.png");
+    expect(favicon.getAttribute("href")).toBe("/recwatch-logo.svg");
+    expect(favicon.getAttribute("type")).toBe("image/svg+xml");
+    expect(favicon.getAttribute("sizes")).toBe("any");
+    expect(viewport.content).toBe(
+      "width=device-width, initial-scale=1, viewport-fit=cover"
+    );
+    expect(document.documentElement.getAttribute("style")).toBe(rootStyle);
+    expect(document.body.getAttribute("style")).toBe(bodyStyle);
+    expect(document.getElementById("app")?.getAttribute("style")).toBe(
+      appStyle
+    );
 
     unmount();
 
     expect(favicon.getAttribute("href")).toBe("/recwatch-logo.svg");
+    expect(viewport.content).toBe(
+      "width=device-width, initial-scale=1, viewport-fit=cover"
+    );
+    expect(document.documentElement.getAttribute("style")).toBe(rootStyle);
+    expect(document.body.getAttribute("style")).toBe(bodyStyle);
   });
 
+  it("デザイン用CSSのsafe-areaとviewport fallbackを維持する", () => {
+    renderPage();
+
+    const main = screen.getByRole("main");
+    expect(main).toHaveClass(
+      "account-deletion-viewport",
+      "viewport-min-height",
+      "box-border"
+    );
+    // 余白はmainのinline styleではなく専用CSS、下端はfooterが担当する。
+    const css = readFileSync(
+      resolve(
+        process.cwd(),
+        "app/features/account-deletion/components/account-deletion.css"
+      ),
+      "utf8"
+    );
+    for (const edge of ["top", "right", "left"]) {
+      expect(css).toContain(`env(safe-area-inset-${edge}, 0px)`);
+    }
+    expect(css).toContain("--deletion-viewport-height: 100vh;");
+    expect(css).toContain("@supports (height: 100dvh)");
+    expect(css).toContain("--deletion-viewport-height: 100dvh;");
+    expect(screen.getByRole("contentinfo").className).toContain(
+      "env(safe-area-inset-bottom,0px)"
+    );
+  });
   it("dark祖先でもライトテーマの背景を維持する", () => {
     render(
       <div className="dark">
@@ -186,8 +194,8 @@ describe("AccountDeletionPage", () => {
     const main = screen.getByRole("main");
     expect(main).toHaveClass("bg-white");
     expect(
-      screen.getByRole("heading", { name: "アカウントを削除" })
-    ).toHaveClass("text-[#333333]");
+      screen.getByRole("heading", { name: "アカウントの削除手続き" })
+    ).toHaveClass("text-black");
   });
 
   it("URLのuserIdやメールアドレスに依存せず表示する", () => {
@@ -205,7 +213,7 @@ describe("AccountDeletionPage", () => {
     expect(
       screen.getByRole("heading", {
         level: 1,
-        name: "アカウントを削除",
+        name: "アカウントの削除手続き",
       })
     ).toBeInTheDocument();
   });

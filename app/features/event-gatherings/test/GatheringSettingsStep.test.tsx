@@ -1,4 +1,10 @@
-import { render, screen, waitFor, within } from "@testing-library/react";
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi, type Mock } from "vitest";
 
@@ -15,6 +21,7 @@ const existingSettings: EventGatheringSettings = {
   rounds: [
     {
       round: 1,
+      startTime: null,
       gatherings: [
         {
           id: 101,
@@ -32,6 +39,7 @@ const settingsWithMembers: EventGatheringSettings = {
   rounds: [
     {
       round: 1,
+      startTime: null,
       gatherings: [
         {
           id: 101,
@@ -72,8 +80,8 @@ function createMemberGateway(): GatheringMemberGateway {
   return {
     loadCandidates: vi.fn().mockResolvedValue({
       classrooms: [
-        { id: 1, name: "HAL1A" },
-        { id: 2, name: "HAL1B" },
+        { id: 1, code: "HAL1A", name: "1年Aクラス" },
+        { id: 2, code: "HAL1B", name: "1年Bクラス" },
       ],
       students: [
         {
@@ -118,10 +126,12 @@ function createMemberGateway(): GatheringMemberGateway {
 function renderStep({
   settingsGateway,
   memberGateway = createMemberGateway(),
+  onMembersSaved = vi.fn(),
   onSaved = vi.fn(),
 }: {
   settingsGateway: EventGatheringSettingsGateway;
   memberGateway?: GatheringMemberGateway;
+  onMembersSaved?: () => void;
   onSaved?: (settings: EventGatheringSettings) => void;
 }) {
   render(
@@ -130,15 +140,63 @@ function renderStep({
       eventId={12}
       memberGateway={memberGateway}
       onBack={vi.fn()}
+      onMembersSaved={onMembersSaved}
       onSaved={onSaved}
       settingsGateway={settingsGateway}
       spotGateway={createSpotGateway()}
     />
   );
-  return { memberGateway, onSaved };
+  return { memberGateway, onMembersSaved, onSaved };
 }
 
 describe("GatheringSettingsStep", () => {
+  it("開始時刻を変更・解除しても集合を維持して保存する", async () => {
+    const save = vi.fn().mockResolvedValue(existingSettings);
+    renderStep({
+      settingsGateway: {
+        load: vi.fn().mockResolvedValue({
+          ...existingSettings,
+          rounds: existingSettings.rounds.map((round) => ({
+            ...round,
+            startTime: "11:00",
+          })),
+        }),
+        save,
+      },
+    });
+    const input = await screen.findByLabelText("Round 1 の開始時刻");
+    expect(input).toHaveValue("11:00");
+    fireEvent.change(input, { target: { value: "11:10" } });
+    const user = userEvent.setup();
+    await user.click(screen.getByRole("button", { name: "集合設定を保存" }));
+    await waitFor(() =>
+      expect(save).toHaveBeenLastCalledWith(12, {
+        rounds: [
+          {
+            round: 1,
+            startTime: "11:10",
+            gatherings: [{ gatheringId: 101, time: "10:45", spotId: 1 }],
+          },
+        ],
+      })
+    );
+    fireEvent.change(screen.getByLabelText("Round 1 の開始時刻"), {
+      target: { value: "" },
+    });
+    await user.click(screen.getByRole("button", { name: "集合設定を保存" }));
+    await waitFor(() =>
+      expect(save).toHaveBeenLastCalledWith(12, {
+        rounds: [
+          {
+            round: 1,
+            startTime: null,
+            gatherings: [{ gatheringId: 101, time: "10:45", spotId: 1 }],
+          },
+        ],
+      })
+    );
+  });
+
   it("既存の集合設定を読み込んで Round ごとに表示する", async () => {
     renderStep({
       settingsGateway: {
@@ -160,6 +218,7 @@ describe("GatheringSettingsStep", () => {
       rounds: [
         {
           round: 1,
+          startTime: null,
           gatherings: [
             {
               id: 101,
@@ -171,6 +230,7 @@ describe("GatheringSettingsStep", () => {
         },
         {
           round: 2,
+          startTime: null,
           gatherings: [
             {
               id: 102,
@@ -206,10 +266,12 @@ describe("GatheringSettingsStep", () => {
         rounds: [
           {
             round: 1,
+            startTime: null,
             gatherings: [{ gatheringId: 101, time: "10:45", spotId: 1 }],
           },
           {
             round: 2,
+            startTime: null,
             gatherings: [{ gatheringId: null, time: "11:00", spotId: 2 }],
           },
         ],
@@ -353,10 +415,17 @@ describe("GatheringSettingsStep", () => {
     await screen.findByLabelText("山田 太郎を選択");
     expect(memberGateway.loadCandidates).toHaveBeenCalledTimes(1);
 
-    await user.selectOptions(
-      screen.getByRole("combobox", { name: "クラスで絞り込み" }),
-      "HAL1A"
-    );
+    const classroomFilter = screen.getByRole("combobox", {
+      name: "クラスで絞り込み",
+    });
+    expect(
+      within(classroomFilter).getByRole("option", { name: "HAL1A" })
+    ).toBeInTheDocument();
+    expect(
+      within(classroomFilter).queryByRole("option", { name: "1年Aクラス" })
+    ).not.toBeInTheDocument();
+
+    await user.selectOptions(classroomFilter, "HAL1A");
     expect(screen.queryByLabelText("鈴木 次郎を選択")).not.toBeInTheDocument();
 
     await user.click(
@@ -381,10 +450,82 @@ describe("GatheringSettingsStep", () => {
     ).toBeInTheDocument();
   });
 
+  it("未所属学生を含む候補でクラスコード・クラス名・氏名・学籍番号を検索できる", async () => {
+    const memberGateway = createMemberGateway();
+    (memberGateway.loadCandidates as Mock).mockResolvedValue({
+      classrooms: [{ id: 1, code: "HAL1A", name: "1年Aクラス" }],
+      students: [
+        {
+          id: 10,
+          userId: 1001,
+          name: "山田 太郎",
+          classroomId: 1,
+          attendanceNumber: 1,
+          studentNumber: "2026001",
+          isLiveActive: true,
+        },
+        {
+          id: 12,
+          userId: 1003,
+          name: "鈴木 次郎",
+          classroomId: null,
+          attendanceNumber: null,
+          studentNumber: "2026003",
+          isLiveActive: true,
+        },
+      ],
+      nonStudents: new Map(),
+    });
+    renderStep({
+      memberGateway,
+      settingsGateway: {
+        load: vi.fn().mockResolvedValue(existingSettings),
+        save: vi.fn(),
+      },
+    });
+    const user = userEvent.setup();
+
+    await screen.findByRole("region", { name: "Round 1" });
+    await user.click(screen.getByRole("button", { name: "メンバーを選択" }));
+    const unassignedStudent = await screen.findByRole("row", {
+      name: /鈴木 次郎/,
+    });
+    expect(within(unassignedStudent).getByText("—")).toBeInTheDocument();
+
+    const search = screen.getByRole("searchbox", { name: "参加者を検索" });
+    for (const keyword of ["hal1a", "1年Aクラス"]) {
+      await user.clear(search);
+      await user.type(search, keyword);
+      expect(screen.getByLabelText("山田 太郎を選択")).toBeInTheDocument();
+      expect(
+        screen.queryByLabelText("鈴木 次郎を選択")
+      ).not.toBeInTheDocument();
+    }
+    for (const keyword of ["鈴木", "2026003"]) {
+      await user.clear(search);
+      await user.type(search, keyword);
+      expect(screen.getByLabelText("鈴木 次郎を選択")).toBeInTheDocument();
+      expect(
+        screen.queryByLabelText("山田 太郎を選択")
+      ).not.toBeInTheDocument();
+    }
+
+    await user.clear(search);
+    const classroomFilter = screen.getByRole("combobox", {
+      name: "クラスで絞り込み",
+    });
+    await user.selectOptions(classroomFilter, "HAL1A");
+    expect(classroomFilter).toHaveValue("1");
+    expect(screen.getByLabelText("山田 太郎を選択")).toBeInTheDocument();
+    expect(screen.queryByLabelText("鈴木 次郎を選択")).not.toBeInTheDocument();
+    await user.selectOptions(classroomFilter, "すべてのクラス");
+    expect(screen.getByLabelText("鈴木 次郎を選択")).toBeInTheDocument();
+  });
+
   it("停止中の学生は登録済みなら外せるが、新しくは追加できない", async () => {
     const memberGateway = createMemberGateway();
     (memberGateway.loadCandidates as Mock).mockResolvedValue({
-      classrooms: [{ id: 1, name: "HAL1A" }],
+      classrooms: [{ id: 1, code: "HAL1A", name: "1年Aクラス" }],
       students: [
         {
           id: 10,
@@ -404,6 +545,15 @@ describe("GatheringSettingsStep", () => {
           studentNumber: "2026002",
           isLiveActive: false,
         },
+        {
+          id: 12,
+          userId: 1003,
+          name: "鈴木 次郎",
+          classroomId: 1,
+          attendanceNumber: 1,
+          studentNumber: "2026003",
+          isLiveActive: true,
+        },
       ],
       nonStudents: new Map(),
     });
@@ -421,33 +571,62 @@ describe("GatheringSettingsStep", () => {
     await screen.findByRole("region", { name: "Round 1" });
     await user.click(screen.getByRole("button", { name: "メンバーを選択" }));
 
-    // 登録済みの停止中学生は操作でき、チェックを外せる
-    expect(await screen.findByLabelText("山田 太郎を選択")).toBeChecked();
-    expect(screen.getByLabelText("山田 太郎を選択")).toBeEnabled();
-    expect(screen.getAllByText("停止中")).toHaveLength(2);
-    // 未登録の停止中学生は行は出すが選べない
-    const notRegistered = screen.getByLabelText("佐藤 花子を選択");
-    expect(notRegistered).toBeDisabled();
-    expect(notRegistered).not.toBeChecked();
+    const table = await screen.findByRole("table", {
+      name: "参加者候補の学生一覧",
+    });
+    const outside = screen.getByRole("region", {
+      name: "登録済みの停止中学生",
+    });
+    const checkbox = within(outside).getByLabelText("山田 太郎を選択");
+    expect(checkbox).toBeChecked();
+    expect(checkbox).toBeEnabled();
+    expect(
+      within(outside).getByRole("table", { name: "登録済みの停止中学生一覧" })
+    ).toBeInTheDocument();
+    expect(within(table).queryByText("山田 太郎")).not.toBeInTheDocument();
+    expect(screen.queryByText("佐藤 花子")).not.toBeInTheDocument();
+    expect(within(table).getByLabelText("鈴木 次郎を選択")).toBeEnabled();
+    expect(screen.getByText(/1人を表示中/)).toBeInTheDocument();
+    expect(screen.getByText(/選択中 1人/)).toBeInTheDocument();
+    expect(
+      screen.queryByText(/氏名を確認できない参加者/)
+    ).not.toBeInTheDocument();
 
-    // 一括選択は操作できる行だけを対象にする
+    // 一括操作は有効な学生の候補だけを対象にし、登録済みの停止中学生は維持する
+    await user.click(
+      screen.getByRole("button", { name: "表示中の全員を選択" })
+    );
+    expect(checkbox).toBeChecked();
+    expect(screen.getByLabelText("鈴木 次郎を選択")).toBeChecked();
+    expect(screen.getByText(/選択中 2人/)).toBeInTheDocument();
     await user.click(
       screen.getByRole("button", { name: "表示中の選択を解除" })
     );
-    expect(screen.getByLabelText("山田 太郎を選択")).not.toBeChecked();
-    expect(notRegistered).not.toBeChecked();
+    expect(checkbox).toBeChecked();
+    expect(screen.getByLabelText("鈴木 次郎を選択")).not.toBeChecked();
+    expect(screen.getByText(/選択中 1人/)).toBeInTheDocument();
 
+    // 候補の絞り込みや検索で、別枠の登録済み参加者を隠さない
+    await user.selectOptions(
+      screen.getByRole("combobox", { name: "クラスで絞り込み" }),
+      "HAL1A"
+    );
+    await user.type(
+      screen.getByRole("searchbox", { name: "参加者を検索" }),
+      "鈴木"
+    );
+    expect(checkbox).toBeVisible();
     await user.click(screen.getByRole("button", { name: "参加者を保存" }));
 
     await waitFor(() =>
-      expect(memberGateway.saveMembers).toHaveBeenCalledWith(101, [])
+      expect(memberGateway.saveMembers).toHaveBeenCalledWith(101, [1001])
     );
   });
 
-  it("停止中の登録済み学生はチェックを外しても行が残り、付け直せる", async () => {
+  it("停止中の登録済み学生はチェックを外しても別枠に残り、付け直せる", async () => {
     const memberGateway = createMemberGateway();
     (memberGateway.loadCandidates as Mock).mockResolvedValue({
-      classrooms: [{ id: 1, name: "HAL1A" }],
+      classrooms: [{ id: 1, code: "HAL1A", name: "1年Aクラス" }],
       students: [
         {
           id: 10,
@@ -474,19 +653,106 @@ describe("GatheringSettingsStep", () => {
     await screen.findByRole("region", { name: "Round 1" });
     await user.click(screen.getByRole("button", { name: "メンバーを選択" }));
 
-    const checkbox = await screen.findByLabelText("山田 太郎を選択");
+    const outside = await screen.findByRole("region", {
+      name: "登録済みの停止中学生",
+    });
+    const checkbox = within(outside).getByLabelText("山田 太郎を選択");
+    expect(checkbox).toBeChecked();
     await user.click(checkbox);
     expect(checkbox).not.toBeChecked();
-    // 外した瞬間に行が消えると付け直せなくなるため、判定は開いた時点の登録内容で固定する
-    expect(checkbox).toBeEnabled();
+    // 外した瞬間に行が消えると付け直せなくなるため、開いた時点の登録内容で固定する
+    expect(within(outside).getByLabelText("山田 太郎を選択")).toBeEnabled();
+    expect(screen.getByText(/選択中 0人/)).toBeInTheDocument();
 
     await user.click(checkbox);
     expect(checkbox).toBeChecked();
-
     await user.click(screen.getByRole("button", { name: "参加者を保存" }));
 
     await waitFor(() =>
       expect(memberGateway.saveMembers).toHaveBeenCalledWith(101, [1001])
+    );
+  });
+
+  it("停止中の参加者を全員解除して保存すると 0 人になり、集合を削除できる", async () => {
+    const memberGateway = createMemberGateway();
+    (memberGateway.loadCandidates as Mock).mockResolvedValue({
+      classrooms: [{ id: 1, code: "HAL1A", name: "1年Aクラス" }],
+      students: [
+        {
+          id: 10,
+          userId: 1001,
+          name: "山田 太郎",
+          classroomId: 1,
+          attendanceNumber: 1,
+          studentNumber: "2026001",
+          isLiveActive: false,
+        },
+      ],
+      nonStudents: new Map(),
+    });
+    (memberGateway.loadMembers as Mock).mockResolvedValue([1001]);
+    const save = vi.fn().mockResolvedValue({
+      ...settingsWithMembers,
+      rounds: settingsWithMembers.rounds.map((round) => ({
+        ...round,
+        gatherings: round.gatherings.filter(
+          (gathering) => gathering.id === 102
+        ),
+      })),
+    });
+    renderStep({
+      memberGateway,
+      settingsGateway: {
+        load: vi.fn().mockResolvedValue({
+          ...settingsWithMembers,
+          rounds: settingsWithMembers.rounds.map((round) => ({
+            ...round,
+            gatherings: round.gatherings.map((gathering) => ({
+              ...gathering,
+              memberCount: gathering.id === 101 ? 1 : 0,
+            })),
+          })),
+        }),
+        save,
+      },
+    });
+    const user = userEvent.setup();
+
+    await screen.findByRole("region", { name: "Round 1" });
+    expect(screen.getByText("1人登録済み")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "削除" })).toBeDisabled();
+    expect(
+      screen.getAllByRole("button", { name: "この集合を削除" })
+    ).toHaveLength(1);
+    await user.click(
+      screen.getAllByRole("button", { name: "メンバーを選択" })[0]
+    );
+    await user.click(await screen.findByLabelText("山田 太郎を選択"));
+    await user.click(screen.getByRole("button", { name: "参加者を保存" }));
+
+    await waitFor(() =>
+      expect(memberGateway.saveMembers).toHaveBeenCalledWith(101, [])
+    );
+    expect(screen.getAllByText("0人登録済み")).toHaveLength(2);
+    expect(screen.getByRole("button", { name: "削除" })).toBeEnabled();
+    const removeButtons = screen.getAllByRole("button", {
+      name: "この集合を削除",
+    });
+    expect(removeButtons).toHaveLength(2);
+    await user.click(removeButtons[0]);
+    expect(screen.getByLabelText("集合時間")).toHaveValue("10:55");
+    await user.click(screen.getByRole("button", { name: "集合設定を保存" }));
+
+    await waitFor(() =>
+      expect(save).toHaveBeenCalledWith(12, {
+        rounds: [
+          {
+            round: 1,
+            startTime: null,
+            gatherings: [{ gatheringId: 102, time: "10:55", spotId: 2 }],
+          },
+        ],
+      })
     );
   });
 
@@ -525,7 +791,7 @@ describe("GatheringSettingsStep", () => {
   it("学生以外の参加者は表の外に氏名付きで出し、チェックを外して参加者から外せる", async () => {
     const memberGateway = createMemberGateway();
     (memberGateway.loadCandidates as Mock).mockResolvedValue({
-      classrooms: [{ id: 1, name: "HAL1A" }],
+      classrooms: [{ id: 1, code: "HAL1A", name: "1年Aクラス" }],
       students: [
         {
           id: 10,
@@ -594,7 +860,7 @@ describe("GatheringSettingsStep", () => {
   it("上限を超えて選ぶと不足人数を案内し、保存できない", async () => {
     const memberGateway = createMemberGateway();
     (memberGateway.loadCandidates as Mock).mockResolvedValue({
-      classrooms: [{ id: 1, name: "HAL1A" }],
+      classrooms: [{ id: 1, code: "HAL1A", name: "1年Aクラス" }],
       students: Array.from({ length: 31 }, (_, index) => ({
         id: 10 + index,
         userId: 1001 + index,
@@ -668,11 +934,34 @@ describe("GatheringSettingsStep", () => {
     expect(screen.getByText("1人登録済み")).toBeInTheDocument();
   });
 
-  it("キャンセルで閉じると選択は保存されず、未保存の新規集合では参加者を選べない", async () => {
+  it("キャンセルで選択を破棄し、新規集合では保存前に参加者を選んで集合保存時に登録する", async () => {
+    const save = vi.fn().mockResolvedValue({
+      eventId: 12,
+      rounds: [
+        {
+          round: 1,
+          startTime: null,
+          gatherings: [
+            {
+              id: 101,
+              time: "10:45",
+              spot: { id: 1, name: "出入口①" },
+              memberCount: 0,
+            },
+            {
+              id: 102,
+              time: "11:00",
+              spot: { id: 2, name: "出入口②" },
+              memberCount: 1,
+            },
+          ],
+        },
+      ],
+    });
     const { memberGateway } = renderStep({
       settingsGateway: {
         load: vi.fn().mockResolvedValue(existingSettings),
-        save: vi.fn(),
+        save,
       },
     });
     const user = userEvent.setup();
@@ -686,20 +975,117 @@ describe("GatheringSettingsStep", () => {
     expect(memberGateway.saveMembers).not.toHaveBeenCalled();
     expect(screen.getByText("0人登録済み")).toBeInTheDocument();
 
-    // 新規行は集合の ID がまだ無いため、参加者の GET / PUT ができない
+    // 集合を保存する前の参加者選択は画面内に保持する
     await user.click(screen.getByRole("button", { name: "集合場所を追加" }));
     const pickerButtons = screen.getAllByRole("button", {
       name: "メンバーを選択",
     });
     expect(pickerButtons[0]).toBeEnabled();
-    expect(pickerButtons[1]).toBeDisabled();
-
-    // disabled なボタンは Chrome / Safari で title が出ないため、理由を本文で出す
-    const hint = screen.getByText(
-      "この集合を「集合設定を保存」で登録すると、参加者を選べます。"
-    );
-    expect(hint).toBeInTheDocument();
+    expect(pickerButtons[1]).toBeEnabled();
+    const hint = screen.getByText("参加者は集合設定の保存後に登録されます。");
     expect(pickerButtons[1]).toHaveAttribute("aria-describedby", hint.id);
-    expect(pickerButtons[0]).not.toHaveAttribute("aria-describedby");
+
+    await user.click(pickerButtons[1]);
+    await user.click(await screen.findByLabelText("山田 太郎を選択"));
+    await user.click(screen.getByRole("button", { name: "選択を確定" }));
+    expect(screen.getByText("1人選択中")).toBeInTheDocument();
+    expect(memberGateway.saveMembers).not.toHaveBeenCalled();
+
+    const gatheringTimes = screen.getAllByLabelText("集合時間");
+    await user.type(gatheringTimes[1], "11:00");
+    const spots = screen.getAllByRole("combobox", { name: "集合場所" });
+    await user.selectOptions(spots[1], "2");
+    await user.click(screen.getByRole("button", { name: "集合設定を保存" }));
+
+    await waitFor(() =>
+      expect(save).toHaveBeenCalledWith(12, {
+        rounds: [
+          {
+            round: 1,
+            startTime: null,
+            gatherings: [
+              { gatheringId: 101, time: "10:45", spotId: 1 },
+              { gatheringId: null, time: "11:00", spotId: 2 },
+            ],
+          },
+        ],
+      })
+    );
+    await waitFor(() =>
+      expect(memberGateway.saveMembers).toHaveBeenCalledWith(102, [1001])
+    );
+    expect(screen.getByText("1人登録済み")).toBeInTheDocument();
+  });
+
+  it("集合保存後の参加者登録に失敗したら選択を保持し、集合保存から再試行できる", async () => {
+    const memberGateway = createMemberGateway();
+    (memberGateway.saveMembers as Mock)
+      .mockImplementationOnce(
+        async (_gatheringId: number, userIds: number[]) => [...userIds]
+      )
+      .mockRejectedValueOnce(new Error("通信に失敗しました。"));
+    const savedSettings: EventGatheringSettings = {
+      eventId: 12,
+      rounds: [
+        {
+          round: 1,
+          startTime: null,
+          gatherings: [201, 202].map((id) => ({
+            id,
+            time: "11:00",
+            spot: { id: 2, name: "出入口②" },
+            memberCount: 0,
+          })),
+        },
+      ],
+    };
+    const user = userEvent.setup();
+    const { onMembersSaved } = renderStep({
+      memberGateway,
+      settingsGateway: {
+        load: vi.fn().mockResolvedValue({ eventId: 12, rounds: [] }),
+        save: vi.fn().mockResolvedValue(savedSettings),
+      },
+    });
+
+    await user.click(
+      await screen.findByRole("button", { name: "Roundを追加" })
+    );
+    await user.click(screen.getByRole("button", { name: "集合場所を追加" }));
+    const pickerButtons = screen.getAllByRole("button", {
+      name: "メンバーを選択",
+    });
+    await user.click(pickerButtons[0]);
+    await user.click(await screen.findByLabelText("山田 太郎を選択"));
+    await user.click(screen.getByRole("button", { name: "選択を確定" }));
+    await user.click(pickerButtons[1]);
+    await user.click(await screen.findByLabelText("佐藤 花子を選択"));
+    await user.click(screen.getByRole("button", { name: "選択を確定" }));
+
+    const gatheringTimes = screen.getAllByLabelText("集合時間");
+    await user.type(gatheringTimes[0], "11:00");
+    await user.type(gatheringTimes[1], "11:00");
+    const spots = screen.getAllByRole("combobox", { name: "集合場所" });
+    await user.selectOptions(spots[0], "2");
+    await user.selectOptions(spots[1], "2");
+    await user.click(screen.getByRole("button", { name: "集合設定を保存" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "参加者の登録に失敗しました。集合設定を保存して再試行してください。"
+    );
+    expect(memberGateway.saveMembers).toHaveBeenNthCalledWith(1, 201, [1001]);
+    expect(memberGateway.saveMembers).toHaveBeenNthCalledWith(2, 202, [1002]);
+    expect(onMembersSaved).toHaveBeenCalledTimes(1);
+    expect(screen.getByText("1人選択中")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "集合設定を保存" })
+    ).toBeEnabled();
+
+    await user.click(screen.getByRole("button", { name: "集合設定を保存" }));
+    await waitFor(() =>
+      expect(memberGateway.saveMembers).toHaveBeenCalledTimes(3)
+    );
+    expect(memberGateway.saveMembers).toHaveBeenLastCalledWith(202, [1002]);
+    expect(screen.getByText("1人登録済み")).toBeInTheDocument();
   });
 });
