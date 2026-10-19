@@ -7,24 +7,16 @@ export type SidebarUIState = {
   isExpanded: boolean;
 };
 
-type SidebarUIProviderProps = {
-  children: ReactNode;
-  forceExpanded?: boolean;
-};
-
 // eslint-disable-next-line react-refresh/only-export-components
 export const SidebarUIContext = createContext<SidebarUIState | undefined>(
   undefined
 );
 
-export function SidebarUIProvider({
-  children,
-  forceExpanded = false,
-}: SidebarUIProviderProps) {
+export function SidebarUIProvider({ children }: { children: ReactNode }) {
   const [isHovering, setHovering] = useState(false);
-  const { sidebarPinnedOpen } = useSidebarState();
+  const { isOpen } = useSidebarState();
 
-  const isExpanded = forceExpanded || sidebarPinnedOpen || isHovering;
+  const isExpanded = isOpen || isHovering;
 
   return (
     <SidebarUIContext.Provider value={{ isHovering, setHovering, isExpanded }}>

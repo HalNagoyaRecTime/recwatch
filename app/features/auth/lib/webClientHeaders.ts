@@ -1,1 +1,1 @@
-export { WEB_CLIENT_HEADERS } from "~/lib/web-client-headers";
+export const WEB_CLIENT_HEADERS = { "X-Client-Type": "web" };

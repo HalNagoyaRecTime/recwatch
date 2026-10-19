@@ -1,20 +1,16 @@
-import { createPageTitle } from "~/lib/page-title";
 import { NotificationCreatePage } from "~/features/notifications/pages/NotificationCreatePage";
 import { httpNotificationAudienceApi } from "~/features/notifications/api/http/notification-audience-api";
-import { httpAdminNotificationCommandApi } from "~/features/notifications/api/http/admin-notification-command-api";
-import { useFeedback } from "~/features/frame/feedback";
+import { httpNotificationSubmissionApi } from "~/features/notifications/api/http/notification-submission-api";
 
 export function meta() {
-  return [{ title: createPageTitle("通知作成") }];
+  return [{ title: "通知作成 | REC TIME" }];
 }
 
 export default function NotificationsNewRoute() {
-  const { report } = useFeedback();
   return (
     <NotificationCreatePage
-      api={httpAdminNotificationCommandApi}
+      api={httpNotificationSubmissionApi}
       audienceApi={httpNotificationAudienceApi}
-      reportFeedback={report}
     />
   );
 }

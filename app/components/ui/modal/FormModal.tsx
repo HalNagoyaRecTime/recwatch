@@ -7,7 +7,6 @@ import {
   type ReactNode,
 } from "react";
 
-import { useDocumentScrollLock } from "~/hooks/useDocumentScrollLock";
 import { cn } from "~/lib/cn";
 
 type FormModalProps = {
@@ -51,8 +50,6 @@ export function FormModal({
   size = "md",
   title,
 }: FormModalProps) {
-  useDocumentScrollLock(true);
-
   const titleId = useId();
   const descriptionId = useId();
   const [isClosing, setIsClosing] = useState(false);

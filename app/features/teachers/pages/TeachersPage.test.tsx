@@ -1,234 +1,107 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter, useLocation, useNavigate } from "react-router";
-import type { ComponentProps } from "react";
+import { MemoryRouter, useLocation } from "react-router";
 import { describe, expect, it, vi } from "vitest";
 
-import type { TeacherMutationApi } from "~/features/teachers/api/contracts/teacher-api";
 import type { TeacherRow } from "~/features/teachers/model/teacher";
 import { TeachersPage } from "~/features/teachers/pages/TeachersPage";
+
+vi.mock("~/features/teachers/components/TeacherActionMenu", () => ({
+  TeacherActionMenu: ({
+    onDelete,
+    teacher,
+  }: {
+    onDelete: (teacher: TeacherRow) => void;
+    teacher: TeacherRow;
+  }) => (
+    <button type="button" onClick={() => onDelete(teacher)}>
+      {teacher.displayName}を削除
+    </button>
+  ),
+}));
 
 const teachers: TeacherRow[] = [
   {
     teacherId: 2,
-    userId: 12,
     displayName: "山田 花子",
-    email: "yamada@example.com",
     isLiveActive: true,
-    isStaff: false,
-    classRooms: [{ classRoomId: 1, classCode: "1A", className: "1年A組" }],
+    classRooms: [],
   },
 ];
 
-const api: TeacherMutationApi = {
-  assignStaff: vi.fn(),
-  createTeacher: vi.fn(),
-  revokeStaff: vi.fn(),
-  updateTeacher: vi.fn(),
-  updateUserStatus: vi.fn(),
-};
-
-type TestTeachersPageProps = Omit<
-  ComponentProps<typeof TeachersPage>,
-  "api" | "classRooms" | "onRevalidate"
-> & { classRooms?: ComponentProps<typeof TeachersPage>["classRooms"] };
-
-function TestTeachersPage({
-  classRooms = [],
-  ...props
-}: TestTeachersPageProps) {
-  return (
-    <TeachersPage
-      api={api}
-      classRooms={classRooms}
-      onRevalidate={vi.fn()}
-      {...props}
-    />
-  );
-}
-
 function LocationProbe() {
   const location = useLocation();
-  return <output data-testid="location-search">{location.search}</output>;
-}
 
-function HistoryBackButton() {
-  const navigate = useNavigate();
   return (
-    <button onClick={() => navigate(-1)} type="button">
-      ブラウザーの戻る
-    </button>
+    <>
+      <output data-testid="location-pathname">{location.pathname}</output>
+      <output data-testid="location-search">{location.search}</output>
+    </>
   );
-}
-
-function getLocationParams() {
-  return new URLSearchParams(
-    screen.getByTestId("location-search").textContent ?? ""
-  );
-}
-
-async function selectOption(
-  user: ReturnType<typeof userEvent.setup>,
-  comboboxName: string,
-  optionName: string
-) {
-  await user.click(screen.getByRole("combobox", { name: comboboxName }));
-  await user.click(screen.getByRole("option", { name: optionName }));
 }
 
 describe("TeachersPage", () => {
-  it("URLの検索を初期表示し、ブラウザーの戻る操作で検索欄を戻す", async () => {
+  it("CSV取り込みの横に同じUIの新規登録ボタンを表示して登録画面へ遷移する", async () => {
     const user = userEvent.setup();
-    render(
-      <MemoryRouter initialEntries={["/teachers?search=%E5%88%9D%E6%9C%9F"]}>
-        <TestTeachersPage limit={50} offset={0} teachers={teachers} total={1} />
-        <LocationProbe />
-        <HistoryBackButton />
-      </MemoryRouter>
-    );
 
-    const search = screen.getByRole("searchbox", { name: "教官を検索" });
-    expect(search).toHaveValue("初期");
-    await user.clear(search);
-    await user.type(search, "新しい検索");
-    await waitFor(() =>
-      expect(getLocationParams().get("search")).toBe("新しい検索")
-    );
-
-    await user.click(screen.getByRole("button", { name: "ブラウザーの戻る" }));
-    await waitFor(() => expect(search).toHaveValue("初期"));
-  });
-
-  it("新規登録ボタンから一覧条件を維持して遷移する", async () => {
-    const user = userEvent.setup();
     render(
       <MemoryRouter initialEntries={["/teachers?search=佐橋&page=2"]}>
-        <TestTeachersPage
-          limit={50}
-          offset={50}
-          teachers={teachers}
-          total={100}
-        />
+        <TeachersPage limit={50} offset={50} teachers={teachers} total={100} />
         <LocationProbe />
       </MemoryRouter>
     );
-    await user.click(screen.getByRole("button", { name: "新規登録" }));
+
+    const importButton = screen.getByRole("button", {
+      name: "CSV / Excel を取り込む",
+    });
+    const individualButton = screen.getByRole("button", { name: "新規登録" });
+
+    expect(importButton.parentElement).toBe(individualButton.parentElement);
+    expect(importButton.className).toBe(individualButton.className);
+
+    await user.click(individualButton);
+
+    expect(screen.getByTestId("location-pathname")).toHaveTextContent(
+      "/teachers/new"
+    );
     expect(screen.getByTestId("location-search")).toHaveTextContent(
-      "search=佐橋&page=2"
+      "?search=佐橋&page=2"
     );
   });
 
-  it("検索・ソートをURLへ反映し、状態変更操作をAPI待ちで無効化する", async () => {
+  it("IDソートのクリックを一覧URLへ反映する", async () => {
     const user = userEvent.setup();
+
     render(
       <MemoryRouter initialEntries={["/teachers"]}>
-        <TestTeachersPage
-          classRooms={[
-            { classRoomId: 1, classCode: "1A", className: "1年A組" },
-          ]}
-          limit={50}
-          offset={0}
-          teachers={teachers}
-          total={1}
-        />
+        <TeachersPage limit={50} offset={0} teachers={teachers} total={1} />
         <LocationProbe />
       </MemoryRouter>
     );
-    await user.click(screen.getByRole("button", { name: "ID" }));
-    await waitFor(() =>
+
+    await user.click(screen.getByRole("button", { name: "教官ID" }));
+    await waitFor(() => {
       expect(screen.getByTestId("location-search")).toHaveTextContent(
         "sortBy=teacherId&sortOrder=asc"
-      )
-    );
-    await user.click(screen.getByRole("button", { name: "山田 花子の操作" }));
-    expect(
-      screen.getByRole("button", { name: "教官を編集する" })
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: "教官を無効化する" })
-    ).toBeEnabled();
-  });
-
-  it("各filterをURLへ反映し、一覧を1ページ目へ戻す", async () => {
-    const user = userEvent.setup();
-    render(
-      <MemoryRouter initialEntries={["/teachers?page=3"]}>
-        <TestTeachersPage
-          classRooms={[
-            { classRoomId: 1, classCode: "1A", className: "1年A組" },
-          ]}
-          limit={50}
-          offset={100}
-          teachers={teachers}
-          total={150}
-        />
-        <LocationProbe />
-      </MemoryRouter>
-    );
-
-    await selectOption(user, "担当クラスフィルター", "1A 1年A組");
-    await waitFor(() => {
-      expect(getLocationParams().get("classRoomId")).toBe("1");
-      expect(getLocationParams().has("page")).toBe(false);
+      );
     });
 
-    await selectOption(user, "staffフィルター", "staff:いいえ");
+    await user.click(screen.getByRole("button", { name: "教官ID" }));
     await waitFor(() => {
-      expect(getLocationParams().get("classRoomId")).toBe("1");
-      expect(getLocationParams().get("isStaff")).toBe("false");
-    });
-
-    await selectOption(user, "有効状態フィルター", "有効:いいえ");
-    await waitFor(() => {
-      expect(getLocationParams().get("isLiveActive")).toBe("false");
-      expect(getLocationParams().has("page")).toBe(false);
+      expect(screen.getByTestId("location-search")).toHaveTextContent(
+        "sortBy=teacherId&sortOrder=desc"
+      );
     });
   });
 
-  it("filterをすべてへ戻すとURLを既定状態へ正規化する", async () => {
+  it("検索変更時に1ページ目へ戻る", async () => {
     const user = userEvent.setup();
+
     render(
       <MemoryRouter
-        initialEntries={[
-          "/teachers?page=2&classRoomId=1&isStaff=false&isLiveActive=false",
-        ]}
+        initialEntries={["/teachers?page=3&sortBy=teacherId&sortOrder=desc"]}
       >
-        <TestTeachersPage
-          classRooms={[
-            { classRoomId: 1, classCode: "1A", className: "1年A組" },
-          ]}
-          limit={50}
-          offset={50}
-          teachers={teachers}
-          total={100}
-        />
-        <LocationProbe />
-      </MemoryRouter>
-    );
-
-    await selectOption(user, "担当クラスフィルター", "クラス:すべて");
-    await selectOption(user, "staffフィルター", "staff:すべて");
-    await selectOption(user, "有効状態フィルター", "有効:すべて");
-
-    await waitFor(() => {
-      const params = getLocationParams();
-      expect(params.has("page")).toBe(false);
-      expect(params.has("classRoomId")).toBe(false);
-      expect(params.has("isStaff")).toBe(false);
-      expect(params.get("isLiveActive")).toBe("all");
-    });
-  });
-
-  it("検索をdebounce後にURLへ反映し、一覧を1ページ目へ戻す", async () => {
-    const user = userEvent.setup();
-    render(
-      <MemoryRouter initialEntries={["/teachers?page=3&isStaff=false"]}>
-        <TestTeachersPage
-          limit={50}
-          offset={100}
-          teachers={teachers}
-          total={150}
-        />
+        <TeachersPage limit={50} offset={100} teachers={teachers} total={200} />
         <LocationProbe />
       </MemoryRouter>
     );
@@ -238,73 +111,93 @@ describe("TeachersPage", () => {
       "佐橋"
     );
 
-    await waitFor(
-      () => {
-        const params = getLocationParams();
-        expect(params.get("search")).toBe("佐橋");
-        expect(params.get("isStaff")).toBe("false");
-        expect(params.has("page")).toBe(false);
-      },
-      { timeout: 1000 }
-    );
+    await waitFor(() => {
+      expect(screen.getByTestId("location-search")).toHaveTextContent(
+        "sortBy=teacherId&sortOrder=desc&search=%E4%BD%90%E6%A9%8B"
+      );
+      expect(screen.getByTestId("location-search")).not.toHaveTextContent(
+        "page=3"
+      );
+    });
   });
 
-  it("paginationをURLへ反映する", async () => {
+  it("最終行削除後に存在する最終ページへ補正する", async () => {
+    render(
+      <MemoryRouter initialEntries={["/teachers?page=3"]}>
+        <TeachersPage limit={50} offset={100} teachers={teachers} total={60} />
+        <LocationProbe />
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId("location-search")).toHaveTextContent("page=2");
+    });
+  });
+
+  it("削除後のページ移動では再取得済み件数を二重に減算しない", async () => {
+    const deleteTeacher = vi.fn().mockResolvedValue(undefined);
+    const confirm = vi.spyOn(window, "confirm").mockReturnValue(true);
     const user = userEvent.setup();
+    const view = render(
+      <MemoryRouter initialEntries={["/teachers"]}>
+        <TeachersPage
+          api={{ deleteTeacher }}
+          limit={10}
+          offset={0}
+          teachers={teachers}
+          total={25}
+        />
+        <LocationProbe />
+      </MemoryRouter>
+    );
+
+    await user.click(screen.getByRole("button", { name: "山田 花子を削除" }));
+    expect(screen.getByText(/全24件/)).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "次のページ" }));
+    await waitFor(() =>
+      expect(screen.getByTestId("location-search")).toHaveTextContent("page=2")
+    );
+
+    view.rerender(
+      <MemoryRouter>
+        <TeachersPage
+          api={{ deleteTeacher }}
+          limit={10}
+          offset={10}
+          teachers={[]}
+          total={24}
+        />
+        <LocationProbe />
+      </MemoryRouter>
+    );
+
+    expect(screen.getByText(/全24件/)).toBeInTheDocument();
+    expect(screen.queryByText(/全23件/)).not.toBeInTheDocument();
+    confirm.mockRestore();
+  });
+
+  it("3点メニューの削除操作をAPIへ反映する", async () => {
+    const deleteTeacher = vi.fn().mockResolvedValue(undefined);
+    const confirm = vi.spyOn(window, "confirm").mockReturnValue(true);
+    const user = userEvent.setup();
+
     render(
       <MemoryRouter initialEntries={["/teachers"]}>
-        <TestTeachersPage
+        <TeachersPage
+          api={{ deleteTeacher }}
           limit={50}
           offset={0}
           teachers={teachers}
-          total={100}
+          total={1}
         />
-        <LocationProbe />
       </MemoryRouter>
     );
 
-    await user.click(screen.getByRole("button", { name: "次のページ" }));
+    await user.click(screen.getByRole("button", { name: "山田 花子を削除" }));
 
-    await waitFor(() => expect(getLocationParams().get("page")).toBe("2"));
-  });
-
-  it("全sort列をAPIのsortByへ反映する", async () => {
-    const user = userEvent.setup();
-    render(
-      <MemoryRouter initialEntries={["/teachers?page=2"]}>
-        <TestTeachersPage
-          limit={50}
-          offset={50}
-          teachers={teachers}
-          total={100}
-        />
-        <LocationProbe />
-      </MemoryRouter>
-    );
-
-    const sortCases = [
-      ["ID", "teacherId"],
-      ["教官名", "displayName"],
-      ["staff", "isStaff"],
-      ["有効", "isLiveActive"],
-      ["クラスコード", "classCode"],
-      ["クラス名", "className"],
-    ] as const;
-
-    for (const [label, sortBy] of sortCases) {
-      await user.click(screen.getByRole("button", { name: label }));
-      await waitFor(() => {
-        const params = getLocationParams();
-        expect(params.get("sortBy")).toBe(sortBy);
-        expect(params.get("sortOrder")).toBe("asc");
-        expect(params.has("page")).toBe(false);
-      });
-    }
-
-    await user.click(screen.getByRole("button", { name: "クラス名" }));
-    await waitFor(() => {
-      expect(getLocationParams().get("sortBy")).toBe("className");
-      expect(getLocationParams().get("sortOrder")).toBe("desc");
-    });
+    await waitFor(() => expect(deleteTeacher).toHaveBeenCalledWith(2));
+    expect(screen.queryByText("山田 花子")).not.toBeInTheDocument();
+    confirm.mockRestore();
   });
 });

@@ -9,10 +9,7 @@ type TeacherTableProps = {
   footer?: ReactNode;
   isMutating?: boolean;
   items: readonly TeacherRow[];
-  onChangeActive: (teacher: TeacherRow) => void | Promise<void>;
-  onChangeStaff: (teacher: TeacherRow) => void | Promise<void>;
-  onClearError: () => void;
-  onEdit: (teacher: TeacherRow) => void;
+  onDelete: (teacher: TeacherRow) => void;
   onSortChange?: (columnId: string) => void;
   sort?: DataTableSort;
 };
@@ -21,16 +18,13 @@ export function TeacherTable({
   footer,
   isMutating = false,
   items,
-  onChangeActive,
-  onChangeStaff,
-  onClearError,
-  onEdit,
+  onDelete,
   onSortChange,
   sort,
 }: TeacherTableProps) {
   const columns: readonly DataTableColumn<TeacherRow>[] = [
     {
-      header: "ID",
+      header: "教官ID",
       id: "teacher-id",
       sortable: true,
       width: { type: "fixed", value: 120 },
@@ -44,47 +38,8 @@ export function TeacherTable({
       renderCell: (teacher) => teacher.displayName,
     },
     {
-      header: "メールアドレス",
-      id: "email",
-      width: { type: "fluid", min: 220, grow: 1 },
-      renderCell: (teacher) => teacher.email,
-    },
-    {
-      align: "center",
-      header: "staff",
-      id: "staff",
-      sortable: true,
-      width: { type: "fluid", min: 120, grow: 0.6 },
-      renderCell: (teacher) => (
-        <span>{teacher.isStaff ? "staff" : "staffではない"}</span>
-      ),
-    },
-    {
-      align: "center",
-      header: "有効",
-      id: "active",
-      sortable: true,
-      width: { type: "fluid", min: 120, grow: 0.6 },
-      renderCell: (teacher) => (
-        <span>{teacher.isLiveActive ? "有効" : "無効"}</span>
-      ),
-    },
-    {
-      header: "クラスコード",
-      id: "class-code",
-      sortable: true,
-      width: { type: "fluid", min: 220, grow: 2 },
-      renderCell: (teacher) =>
-        teacher.classRooms.length > 0
-          ? teacher.classRooms
-              .map((classRoom) => classRoom.classCode)
-              .join("、")
-          : "-",
-    },
-    {
-      header: "クラス名",
-      id: "class-name",
-      sortable: true,
+      header: "担当クラス",
+      id: "class-rooms",
       width: { type: "fluid", min: 220, grow: 2 },
       renderCell: (teacher) =>
         teacher.classRooms.length > 0
@@ -102,10 +57,7 @@ export function TeacherTable({
       renderCell: (teacher) => (
         <TeacherActionMenu
           disabled={isMutating}
-          onChangeActive={() => onChangeActive(teacher)}
-          onChangeStaff={() => onChangeStaff(teacher)}
-          onClearError={onClearError}
-          onEdit={() => onEdit(teacher)}
+          onDelete={onDelete}
           teacher={teacher}
         />
       ),

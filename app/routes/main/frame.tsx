@@ -10,7 +10,6 @@ import { refreshAccessToken } from "~/features/auth/lib/refreshAccessToken";
 import { setRefreshTokenId } from "~/features/auth/lib/refreshTokenStore";
 import { AppShell } from "~/features/frame/AppShell";
 import type { AccountUser } from "~/features/frame/main-header/account-menu/model/account-btn-data";
-import { isAccountUser } from "./account-user-guard";
 
 type AuthMeResponse = {
   user: AccountUser;
@@ -28,6 +27,24 @@ type FrameLoaderData =
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
+}
+
+function isAccountUser(value: unknown): value is AccountUser {
+  if (!isRecord(value)) {
+    return false;
+  }
+
+  return (
+    typeof value.id === "string" &&
+    typeof value.email === "string" &&
+    typeof value.display_name === "string" &&
+    (value.avatar_url === undefined ||
+      value.avatar_url === null ||
+      typeof value.avatar_url === "string") &&
+    (value.avatar_updated_at === undefined ||
+      value.avatar_updated_at === null ||
+      typeof value.avatar_updated_at === "string")
+  );
 }
 
 function isAuthMeResponse(value: unknown): value is AuthMeResponse {
@@ -134,7 +151,7 @@ export default function FrameRoute() {
 
 function BackendErrorScreen({ message }: { message: string }) {
   return (
-    <main className="viewport-min-height flex items-center justify-center p-6">
+    <main className="flex min-h-dvh items-center justify-center p-6">
       <section className="border-border-subtle bg-surface-base shadow-soft w-full max-w-md rounded-2xl border p-6">
         <div className="text-brand-primary font-['DM_Mono'] text-xs tracking-[0.18em] uppercase">
           Backend unavailable

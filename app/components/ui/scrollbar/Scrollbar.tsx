@@ -1,42 +1,51 @@
-import type { RefObject } from "react";
-
 import { cn } from "~/lib/cn";
-import type { ScrollbarAxisState } from "~/components/ui/scrollbar/useScrollbar";
 
 type ScrollbarProps = {
   /** スクロールバーの方向 */
   orientation: "vertical" | "horizontal";
-  /** 共通hookが計算した軸状態と操作 */
-  axis: ScrollbarAxisState;
-  /** トラック要素のref */
-  trackRef: RefObject<HTMLDivElement | null>;
+  /** トラック要素に付けるref（常時DOMに存在させる） */
+  trackRef: React.RefObject<HTMLDivElement | null>;
+  /** サムのサイズ（縦の場合は高さ、横の場合は幅）（px）。0のときはスクロール不要 */
+  thumbSize: number;
+  /** トラック先端からのオフセット（縦の場合は上端から、横の場合は左端から）（px） */
+  thumbOffset: number;
   /** 表示状態（透明度アニメーションに使う） */
   isVisible: boolean;
+  /** ドラッグ中（サムを強調するのに使う） */
+  isDragging: boolean;
   /** 縦スクロールバーのトラック下端に空ける余白（px） */
   verticalTrackInsetBottom?: number;
+  /** サムのmousedownハンドラー */
+  onThumbMouseDown: (e: React.MouseEvent) => void;
+  /** トラックのmousedownハンドラー */
+  onTrackMouseDown: (e: React.MouseEvent) => void;
 };
 
-/** 共通ロジックの軸状態を描画するScrollbarです。 */
+/**
+ * スクロールバーの見た目のみを担当するコンポーネント。
+ * 位置・サイズ計算のロジックは持たない。
+ */
 export function Scrollbar({
   orientation,
-  axis,
   trackRef,
+  thumbSize,
+  thumbOffset,
   isVisible,
+  isDragging,
   verticalTrackInsetBottom = 0,
+  onThumbMouseDown,
+  onTrackMouseDown,
 }: ScrollbarProps) {
   const isVertical = orientation === "vertical";
-  const needsScrollbar = axis.thumbSize > 0;
+  const needsScrollbar = thumbSize > 0;
 
   return (
+    // トラック：常時DOM上に存在。スクロール不要時は opacity-0 で隠す
     <div
       ref={trackRef}
-      data-scrollbar-track={orientation}
       className={cn(
-        "absolute cursor-default transition-opacity duration-200",
+        "pointer-events-auto absolute cursor-default transition-opacity duration-200",
         isVertical ? "top-1 right-0.5 w-1.5" : "inset-x-1 bottom-0.5 h-1.5",
-        needsScrollbar && isVisible
-          ? "pointer-events-auto"
-          : "pointer-events-none",
         isVisible ? "opacity-100" : "opacity-0"
       )}
       style={
@@ -44,33 +53,28 @@ export function Scrollbar({
           ? { bottom: `calc(${verticalTrackInsetBottom}px + 0.25rem)` }
           : undefined
       }
-      onPointerDown={axis.onTrackPointerDown}
+      onMouseDown={onTrackMouseDown}
     >
+      {/* サム：スクロール不要なら描画しない */}
       {needsScrollbar && (
         <div
-          data-scrollbar-thumb={orientation}
           className={cn(
-            "pointer-events-auto absolute touch-none rounded-full transition-colors duration-150",
+            "pointer-events-auto absolute rounded-full transition-colors duration-150",
             isVertical ? "inset-x-0" : "inset-y-0",
-            axis.isDragging
-              ? "bg-text-subtle/70"
-              : "bg-text-subtle/40 hover:bg-text-subtle/60"
+            isDragging ? "bg-text-3/70" : "bg-text-3/40 hover:bg-text-3/60"
           )}
           style={
             isVertical
               ? {
-                  height: axis.thumbSize,
-                  top: axis.thumbOffset,
+                  height: thumbSize,
+                  top: thumbOffset,
                 }
               : {
-                  width: axis.thumbSize,
-                  left: axis.thumbOffset,
+                  width: thumbSize,
+                  left: thumbOffset,
                 }
           }
-          onPointerDown={axis.onThumbPointerDown}
-          onPointerMove={axis.onThumbPointerMove}
-          onPointerUp={axis.onThumbPointerUp}
-          onPointerCancel={axis.onThumbPointerCancel}
+          onMouseDown={onThumbMouseDown}
         />
       )}
     </div>

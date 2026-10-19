@@ -1,65 +1,59 @@
-import type { ReactNode } from "react";
-
 import { DataTable } from "~/components/ui/data-table/DataTable";
 import type {
   DataTableColumn,
   DataTableSort,
 } from "~/components/ui/data-table/data-table-types";
-import { ClassRoomActionMenu } from "~/features/classRoom/components/classRoomActionMenu";
-import type { ClassRoom } from "~/features/classRoom/model/classRoom";
+import type { ClassRoomData } from "~/features/classRoom/model/classRoom";
+import { ManagementRowActionMenu } from "~/features/user-management/components/ManagementRowActionMenu";
 
 type ClassRoomTableProps = {
-  emptyMessage?: string;
-  footer?: ReactNode;
+  classRooms: readonly ClassRoomData[];
   isMutating?: boolean;
-  items: readonly ClassRoom[];
-  onDelete?: (classRoom: ClassRoom) => void;
-  onEdit?: (classRoom: ClassRoom) => void;
+  onDelete?: (classRoom: ClassRoomData) => void;
+  onEdit?: (classRoom: ClassRoomData) => void;
   onSortChange?: (columnId: string) => void;
   sort?: DataTableSort;
 };
 
 export function ClassRoomTable({
-  emptyMessage,
-  footer,
+  classRooms,
   isMutating = false,
-  items,
   onDelete,
   onEdit,
   onSortChange,
   sort,
 }: ClassRoomTableProps) {
-  const columns: readonly DataTableColumn<ClassRoom>[] = [
+  const columns: readonly DataTableColumn<ClassRoomData>[] = [
     {
-      header: "ID",
+      header: "クラスID",
       id: "class-room-id",
       sortable: true,
-      width: { type: "fluid", min: 70, max: 180, grow: 0.5 },
+      width: { type: "fixed", value: 110 },
       renderCell: (classRoom) => classRoom.classRoomId,
     },
     {
-      header: "クラスコード",
+      header: "クラス記号",
       id: "class-room-code",
       sortable: true,
       width: { type: "fluid", min: 140, grow: 1 },
-      renderCell: (classRoom) => classRoom.classCode,
+      renderCell: (classRoom) => classRoom.classRoomCode,
     },
     {
       header: "クラス名",
       id: "class-room-name",
       sortable: true,
       width: { type: "fluid", min: 180, grow: 2 },
-      renderCell: (classRoom) => classRoom.className,
+      renderCell: (classRoom) => classRoom.classRoomName,
     },
     {
       header: "担当教官",
       id: "teacher-name",
       sortable: true,
       width: { type: "fluid", min: 160, grow: 1 },
-      renderCell: (classRoom) => classRoom.teacher?.displayName ?? "未設定",
+      renderCell: (classRoom) => classRoom.teacherName ?? "未設定",
     },
     {
-      align: "start",
+      align: "end",
       edge: "right",
       header: "学生数",
       id: "student-count",
@@ -74,8 +68,8 @@ export function ClassRoomTable({
       id: "actions",
       width: { type: "fixed", value: 64 },
       renderCell: (classRoom) => (
-        <ClassRoomActionMenu
-          classRoom={classRoom}
+        <ManagementRowActionMenu
+          ariaLabel={`${classRoom.classRoomName}の操作`}
           disabled={isMutating}
           onDelete={() => onDelete?.(classRoom)}
           onEdit={() => onEdit?.(classRoom)}
@@ -88,10 +82,9 @@ export function ClassRoomTable({
     <DataTable
       ariaLabel="クラス一覧"
       columns={columns}
-      emptyMessage={emptyMessage ?? "該当するクラスが見つかりません。"}
-      footer={footer}
+      emptyMessage="該当するクラスが見つかりません。"
       getRowKey={(classRoom) => classRoom.classRoomId}
-      items={items}
+      items={classRooms}
       onSortChange={onSortChange}
       sort={sort}
     />

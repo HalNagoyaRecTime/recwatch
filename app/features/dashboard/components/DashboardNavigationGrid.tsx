@@ -17,8 +17,8 @@ const navigationGroups: NavigationGroup[] = [
     icon: UsersRound,
     id: "users",
     items: [
-      { label: "学生管理", to: "/students" },
-      { label: "クラス管理", to: "/classrooms" },
+      { label: "学生管理", to: "/members" },
+      { label: "クラス管理", to: "/classroom" },
       { label: "教官管理", to: "/teachers" },
     ],
     title: "ユーザー管理",
@@ -28,15 +28,19 @@ const navigationGroups: NavigationGroup[] = [
     id: "events",
     items: [
       { label: "イベント登録一覧", to: "/events" },
+      { label: "参加者設定", to: "/events/assignments" },
       { label: "集合場所管理", to: "/gathering-spots" },
-      { label: "実施場所管理", to: "/venues" },
     ],
     title: "イベント管理",
   },
   {
     icon: CalendarDays,
     id: "operations",
-    items: [{ label: "通知一覧", to: "/notifications" }],
+    items: [
+      { label: "スケジュール管理", to: "/schedule" },
+      { label: "出場メンバー管理", to: "/participants" },
+      { label: "通知一覧", to: "/notifications" },
+    ],
     title: "運用管理",
   },
 ];

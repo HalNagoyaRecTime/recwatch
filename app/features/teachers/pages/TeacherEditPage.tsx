@@ -1,6 +1,8 @@
-import { ManagementOptionFeedback } from "~/components/management/ManagementOptionFeedback";
-import type { TeacherMutationApi } from "~/features/teachers/api/contracts/teacher-api";
-import { useTeacherMutation } from "~/features/teachers/hooks/useTeacherMutation";
+import { useState } from "react";
+import { useLocation, useNavigate } from "react-router";
+
+import { TeacherApi } from "~/features/teachers/api";
+import { teacherListTarget } from "~/features/teachers/application/teacher-navigation";
 import {
   TeacherForm,
   type TeacherFormInput,
@@ -10,63 +12,54 @@ import type {
   ClassRoomOption,
   TeacherRow,
 } from "~/features/teachers/model/teacher";
-import type { ManagementOptionState } from "~/hooks/useManagementOptions";
 
 export function TeacherEditPage({
-  api,
-  classRoomOptions,
   classRooms,
-  onClose,
-  onSaved,
   teacher,
 }: {
-  api: TeacherMutationApi;
   classRooms: readonly ClassRoomOption[];
-  classRoomOptions?: ManagementOptionState<ClassRoomOption>;
-  onClose: () => void | Promise<void>;
-  onSaved: () => Promise<void>;
   teacher: TeacherRow;
 }) {
-  const classRoomOptionState = classRoomOptions ?? {
-    error: null,
-    isLoading: false,
-    items: classRooms,
-  };
-  const {
-    error: submitError,
-    isMutating: isSubmitting,
-    save,
-  } = useTeacherMutation({ api });
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   async function handleSubmit(input: TeacherFormInput) {
-    if (await save(teacher.teacherId, input)) {
-      await onSaved();
+    setIsSubmitting(true);
+    setSubmitError(null);
+    try {
+      await TeacherApi.updateTeacher(teacher.teacherId, input);
+      close();
+    } catch (error) {
+      setSubmitError(
+        error instanceof Error
+          ? error.message
+          : "教官情報の更新に失敗しました。"
+      );
+      setIsSubmitting(false);
     }
+  }
+
+  function close() {
+    navigate(teacherListTarget(location.search));
   }
 
   return (
     <TeacherFormModal
-      description={`教官ID: ${teacher.teacherId}`}
-      onClose={onClose}
+      description={`teacher_id: ${teacher.teacherId}`}
+      onClose={close}
       title="教官情報を編集"
     >
       {(requestClose) => (
-        <>
-          <ManagementOptionFeedback
-            label="クラス候補"
-            state={classRoomOptionState}
-          />
-          {!classRoomOptionState.isLoading && !classRoomOptionState.error ? (
-            <TeacherForm
-              classRooms={classRoomOptionState.items}
-              initialTeacher={teacher}
-              isSubmitting={isSubmitting}
-              onCancel={requestClose}
-              onSubmit={handleSubmit}
-              submitError={submitError}
-            />
-          ) : null}
-        </>
+        <TeacherForm
+          classRooms={classRooms}
+          initialTeacher={teacher}
+          isSubmitting={isSubmitting}
+          onCancel={requestClose}
+          onSubmit={handleSubmit}
+          submitError={submitError}
+        />
       )}
     </TeacherFormModal>
   );

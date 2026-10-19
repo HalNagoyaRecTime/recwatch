@@ -9,7 +9,9 @@ type NotificationMobilePreviewProps = {
 };
 
 export type NotificationPreviewMode =
-  "lock-screen" | "notification-detail" | "data-display";
+  | "lock-screen"
+  | "notification-detail"
+  | "data-display";
 
 export function NotificationMobilePreview({
   draft,

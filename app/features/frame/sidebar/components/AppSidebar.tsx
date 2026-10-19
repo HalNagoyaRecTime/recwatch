@@ -1,4 +1,5 @@
 import { useLocation } from "react-router";
+import { currentUser } from "~/config/permissions";
 import { cn } from "~/lib/cn";
 import { useSidebarUI } from "~/features/frame/sidebar/hooks/useSidebarUI";
 import { buildSidebarMenu } from "~/features/frame/sidebar/utils/build-sidebar-menu";
@@ -7,15 +8,8 @@ import { SidebarNavItem } from "~/features/frame/sidebar/components/SidebarNavIt
 import { SIDEBAR_DURATION } from "~/features/frame/sidebar/styles/sidebar-styles";
 import { ScrollbarArea } from "~/components/ui/scrollbar/ScrollbarArea";
 
-type AppSidebarProps = {
-  overscrollBehavior?: "contain" | "none";
-};
-
-export function AppSidebar({
-  overscrollBehavior = "contain",
-}: AppSidebarProps) {
-  // 2026: role-based feature permissions are not implemented; all staff share this menu.
-  const sections = buildSidebarMenu("admin");
+export function AppSidebar() {
+  const sections = buildSidebarMenu(currentUser.role);
   const { isExpanded } = useSidebarUI();
   const location = useLocation();
   const pathname = location.pathname;
@@ -32,10 +26,7 @@ export function AppSidebar({
 
       <ScrollbarArea
         className={cn(
-          overscrollBehavior === "none"
-            ? "overscroll-y-none"
-            : "overscroll-y-contain",
-          "py-3",
+          "overscroll-y-contain py-3",
           "transition-all",
           SIDEBAR_DURATION,
           isExpanded ? "px-3.5" : "px-2"

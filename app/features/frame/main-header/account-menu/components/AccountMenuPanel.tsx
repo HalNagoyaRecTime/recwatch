@@ -6,14 +6,6 @@ import {
   MoonStarIcon,
   SunMediumIcon,
 } from "lucide-react";
-import {
-  useEffect,
-  useRef,
-  useState,
-  type KeyboardEvent,
-  type MutableRefObject,
-} from "react";
-import type { Placement } from "@floating-ui/react";
 
 import {
   Menu,
@@ -29,8 +21,6 @@ import type { AccountBtnData } from "~/features/frame/main-header/account-menu/m
 type AccountMenuPanelProps = {
   account: AccountBtnData;
   photoUrl?: string | null;
-  focusThemeOnOpen?: boolean;
-  themeTriggerRef?: MutableRefObject<HTMLButtonElement | null>;
   onClose: () => void;
   onLogout?: () => void;
 };
@@ -38,27 +28,10 @@ type AccountMenuPanelProps = {
 export function AccountMenuPanel({
   account,
   photoUrl,
-  focusThemeOnOpen = false,
-  themeTriggerRef: externalThemeTriggerRef,
   onClose,
   onLogout,
 }: AccountMenuPanelProps) {
   const { theme, setTheme } = useThemeMode();
-  const localThemeTriggerRef = useRef<HTMLButtonElement | null>(null);
-  const themeTriggerRef = externalThemeTriggerRef ?? localThemeTriggerRef;
-  const logoutRef = useRef<HTMLButtonElement | null>(null);
-  const suppressThemeFocusRef = useRef(false);
-  const [isThemeOpen, setIsThemeOpen] = useState(false);
-  const [themeFocusIndex, setThemeFocusIndex] = useState<number | undefined>();
-  const [themeFocusRequest, setThemeFocusRequest] = useState(0);
-  const [themePlacement, setThemePlacement] =
-    useState<Placement>("right-start");
-
-  useEffect(() => {
-    if (!isThemeOpen) {
-      suppressThemeFocusRef.current = false;
-    }
-  }, [isThemeOpen]);
 
   const ThemeIcon =
     theme === "dark"
@@ -67,7 +40,6 @@ export function AccountMenuPanel({
         ? SunMediumIcon
         : MonitorIcon;
 
-  const selectedThemeIndex = theme === "dark" ? 1 : theme === "system" ? 2 : 0;
   const themeMenuItems: MenuItemType[] = [
     {
       type: "action",
@@ -125,36 +97,12 @@ export function AccountMenuPanel({
       id: "theme-switcher",
       content: (
         <FloatingPanel
-          isOpen={isThemeOpen}
-          onOpenChange={(open, _event, reason) => {
-            const suppressFocusReopen =
-              open && reason === "focus" && suppressThemeFocusRef.current;
-
-            setIsThemeOpen(open);
-            if (!open) {
-              setThemeFocusIndex(undefined);
-            }
-            if (!open && reason === "list-navigation") {
-              suppressThemeFocusRef.current = true;
-              themeTriggerRef.current?.focus();
-            }
-            if (suppressFocusReopen) {
-              suppressThemeFocusRef.current = false;
-              // list-navigation直後のfocusによる再オープンを抑止するため閉じ直します。
-              setIsThemeOpen(false);
-            }
-          }}
-          avoidParentOverlap
-          onPlacementChange={setThemePlacement}
           placement="right-start"
-          scrollable
-          interaction="both"
-          offsetValue={2}
+          interaction="hover"
+          offsetValue={6}
           triggerClassName="block w-full"
           trigger={
             <MenuActionItem
-              data-menu-item-id="theme-switcher"
-              autoFocus={focusThemeOnOpen}
               label="テーマ設定"
               icon={ThemeIcon}
               endIcon={
@@ -164,42 +112,9 @@ export function AccountMenuPanel({
                   className="text-text-subtle"
                 />
               }
-              ref={themeTriggerRef}
-              onKeyDownCapture={(event: KeyboardEvent<HTMLButtonElement>) => {
-                if (event.key === "ArrowUp") {
-                  event.preventDefault();
-                  setIsThemeOpen(false);
-                  onClose();
-                  return;
-                }
-
-                if (event.key === "ArrowDown") {
-                  event.preventDefault();
-                  logoutRef.current?.focus();
-                  return;
-                }
-
-                if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") {
-                  return;
-                }
-
-                event.preventDefault();
-                setThemeFocusIndex(selectedThemeIndex);
-                setThemeFocusRequest((request) => request + 1);
-                setIsThemeOpen(true);
-              }}
             />
           }
-          content={
-            <Menu
-              items={themeMenuItems}
-              listNavigation
-              nested
-              rtl={themePlacement.startsWith("left")}
-              focusActionIndex={themeFocusIndex}
-              focusActionRequest={themeFocusRequest}
-            />
-          }
+          content={<Menu items={themeMenuItems} />}
         />
       ),
     },
@@ -210,15 +125,6 @@ export function AccountMenuPanel({
       label: "ログアウト",
       icon: LogOutIcon,
       danger: true,
-      ref: logoutRef,
-      onKeyDown: (event) => {
-        if (event.key !== "ArrowUp") {
-          return;
-        }
-
-        event.preventDefault();
-        themeTriggerRef.current?.focus();
-      },
       onClick: () => {
         onClose();
         onLogout?.();

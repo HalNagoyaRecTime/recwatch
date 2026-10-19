@@ -1,4 +1,4 @@
-import type { AppRole } from "~/config/permissions";
+import { currentUser, type AppRole } from "~/config/permissions";
 import {
   sidebarSections,
   type SidebarItemConfig,
@@ -55,7 +55,7 @@ function mapSection(
   };
 }
 
-export function buildSidebarMenu(role: AppRole) {
+export function buildSidebarMenu(role: AppRole = currentUser.role) {
   return sidebarSections
     .map((section) => mapSection(role, section))
     .filter((section): section is SidebarSectionDef => section !== null);
