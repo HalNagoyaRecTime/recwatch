@@ -201,7 +201,7 @@ describe("createHttpGatheringMemberGateway", () => {
       nonStudents: new Map(),
     });
     expect(get).toHaveBeenCalledWith("/api/v1/classrooms?limit=100&offset=0");
-    // 登録済みの停止中学生を学生以外の参加者と誤認しないよう、停止中も取得する
+    // 登録済みの参加者が停止されても外せるよう、停止中を含めて取得する
     expect(get).toHaveBeenCalledWith(
       "/api/v1/students?limit=100&offset=0&isLiveActive=all"
     );

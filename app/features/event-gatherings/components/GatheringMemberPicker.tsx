@@ -9,6 +9,7 @@ import type {
   GatheringMemberCandidates,
   MemberNonStudent,
 } from "~/features/event-gatherings/model/gathering-member-candidate";
+import { GatheringInactiveStudentMembers } from "./GatheringInactiveStudentMembers";
 import { GatheringNonStudentMembers } from "./GatheringNonStudentMembers";
 
 type GatheringMemberPickerProps = {
@@ -90,6 +91,16 @@ export function GatheringMemberPicker({
       );
     });
   }, [candidates, classroomId, classroomNames, query]);
+
+  // 開いた時点の登録内容で固定し、解除した学生も保存までは付け直せるようにする。
+  const inactiveStudentMembers = useMemo(
+    () =>
+      (candidates?.students ?? []).filter(
+        (student) =>
+          !student.isLiveActive && initialUserIds.includes(student.userId)
+      ),
+    [candidates, initialUserIds]
+  );
 
   // 候補の表に行が無い登録済みの参加者。開いた時点の登録内容で判定し、
   // チェックを外しても別枠から消えず付け直せるようにする。
@@ -283,12 +294,19 @@ export function GatheringMemberPicker({
       )}
 
       {!loadError && !isLoading && candidates ? (
-        <GatheringNonStudentMembers
-          members={nonStudentMembers.named}
-          onToggle={toggle}
-          selectedUserIds={selectedUserIds}
-          unnamedCount={nonStudentMembers.unnamedCount}
-        />
+        <>
+          <GatheringInactiveStudentMembers
+            members={inactiveStudentMembers}
+            onToggle={toggle}
+            selectedUserIds={selectedUserIds}
+          />
+          <GatheringNonStudentMembers
+            members={nonStudentMembers.named}
+            onToggle={toggle}
+            selectedUserIds={selectedUserIds}
+            unnamedCount={nonStudentMembers.unnamedCount}
+          />
+        </>
       ) : null}
 
       {isOverLimit ? (
@@ -307,7 +325,7 @@ export function GatheringMemberPicker({
 
       <div className="flex items-center justify-between gap-3">
         <p className="text-text-base text-sm">
-          {candidates ? `${visibleStudents.length}人を表示中` : ""}
+          {candidates ? `候補 ${visibleStudents.length}人を表示中` : ""}
           {hasMoreBelow ? "（スクロールで続きを表示）" : ""}
           {candidates
             ? ` ／ 選択中 ${selectedUserIds.length}人 / ${MAX_GATHERING_MEMBERS}人`

@@ -36,7 +36,7 @@ export function createHttpGatheringMemberGateway(
           };
         }),
         // 停止中の学生も取得し、候補表では非表示にする。登録済みの停止中学生を
-        // 学生以外の参加者と誤認せず、保存時にIDを維持するために全件が必要になる。
+        // 学生以外の参加者と誤認せず、登録済みなら別枠で解除できるよう全件を取得する。
         loadAllPages(async (offset, limit) => {
           const page = await client.get<StudentPageResponseDto>(
             `/api/v1/students?limit=${limit}&offset=${offset}&isLiveActive=all`
