@@ -160,6 +160,97 @@ describe("useNotificationEdit", () => {
     );
     expect(result.current.audienceError).toBeNull();
   });
+  it("409で最新状態を取得し、入力した詳細を保って詳細のみ再保存する", async () => {
+    const initial = createNotification(1, "通知");
+    initial.schedules = initial.schedules.map((schedule) => ({
+      ...schedule,
+      status: "scheduled",
+      sendAt: "2030-11-07T12:00:00Z",
+    }));
+    const started = {
+      ...initial,
+      schedules: initial.schedules.map((schedule) => ({
+        ...schedule,
+        status: "sending" as const,
+      })),
+    };
+    const getDetail = vi
+      .fn()
+      .mockResolvedValueOnce(initial)
+      .mockResolvedValue(started);
+    const queryApi = createQueryApi(getDetail);
+    const patch = vi
+      .fn()
+      .mockRejectedValueOnce(new ApiClientError(409, "開始済みです"))
+      .mockResolvedValue(started);
+    const audienceApi = { load: vi.fn().mockResolvedValue([]) };
+    const { result } = renderHook(() =>
+      useNotificationEdit({
+        audienceApi,
+        commandApi: { ...commandApi, patch },
+        configApi: mockNotificationConfigApi,
+        queryApi,
+        notificationId: 1,
+      })
+    );
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    act(() =>
+      result.current.onChange({
+        ...result.current.draft,
+        detailTitle: "入力した詳細",
+        detailBody: "入力した本文",
+      })
+    );
+    await act(() => result.current.submit());
+    expect(getDetail).toHaveBeenCalledTimes(2);
+    expect(result.current.canEditAudience).toBe(false);
+    expect(result.current.draft.detailTitle).toBe("入力した詳細");
+    expect(result.current.submissionError).toBe("開始済みです");
+    await act(() => result.current.submit());
+    expect(patch).toHaveBeenLastCalledWith(1, {
+      content: { detail: { title: "入力した詳細", body: "入力した本文" } },
+    });
+  });
+
+  it("409後の再取得失敗でも入力を保持し、次の保存で回復する", async () => {
+    const notification = createNotification(1, "通知");
+    notification.schedules = notification.schedules.map((schedule) => ({
+      ...schedule,
+      status: "sending",
+      sendAt: "2020-01-01T12:00:00Z",
+    }));
+    const getDetail = vi
+      .fn()
+      .mockResolvedValueOnce(notification)
+      .mockRejectedValueOnce(new Error("通信失敗"))
+      .mockResolvedValue(notification);
+    const queryApi = createQueryApi(getDetail);
+    const patch = vi.fn().mockRejectedValue(new ApiClientError(409, "競合"));
+    const audienceApi = { load: vi.fn().mockResolvedValue([]) };
+    const { result } = renderHook(() =>
+      useNotificationEdit({
+        audienceApi,
+        commandApi: { ...commandApi, patch },
+        configApi: mockNotificationConfigApi,
+        queryApi,
+        notificationId: 1,
+      })
+    );
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    act(() =>
+      result.current.onChange({
+        ...result.current.draft,
+        detailTitle: "維持する入力",
+      })
+    );
+    await act(() => result.current.submit());
+    expect(result.current.draft.detailTitle).toBe("維持する入力");
+    expect(result.current.isSubmitting).toBe(false);
+    await act(() => result.current.submit());
+    expect(getDetail).toHaveBeenCalledTimes(3);
+    expect(result.current.draft.detailTitle).toBe("維持する入力");
+  });
+
   it("配信開始後は過去の配信日時を検証せず詳細だけ保存する", async () => {
     const notification = createNotification(1, "通知");
     notification.schedules = notification.schedules.map((schedule) => ({

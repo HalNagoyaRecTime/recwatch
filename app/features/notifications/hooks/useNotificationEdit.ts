@@ -18,6 +18,7 @@ import {
   validateNotificationDraft,
   type NotificationDraftErrors,
 } from "~/features/notifications/model/notification-draft-validation";
+import { ApiClientError } from "~/lib/api-client-error";
 import { getErrorMessage } from "~/lib/client-error";
 import { readNotificationValidationDetails } from "~/features/notifications/api/mappers/notification-api-error-mapper";
 import {
@@ -277,6 +278,20 @@ export function useNotificationEdit({
       });
       return true;
     } catch (error) {
+      if (error instanceof ApiClientError && error.status === 409) {
+        try {
+          const latest = await queryApi.getDetail(notificationId);
+          setNotificationResult((current) =>
+            current?.api === queryApi &&
+            current.notificationId === notificationId &&
+            current.status === "loaded"
+              ? { ...current, notification: latest }
+              : current
+          );
+        } catch {
+          // 取得失敗時も入力を保持し、次の保存で再取得を試みます。
+        }
+      }
       const details = readNotificationValidationDetails(error);
       if (details) {
         setErrors((current) => ({
