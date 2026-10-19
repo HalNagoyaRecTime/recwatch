@@ -5,6 +5,8 @@ import { httpNotificationScheduleQueryApi } from "~/features/notifications/api/h
 import { NotificationMonitorPage } from "~/features/notifications/pages/NotificationMonitorPage";
 import { createPageTitle } from "~/lib/page-title";
 
+import { httpNotificationScheduleCommandApi } from "~/features/notifications/api/http/notification-schedule-command-api";
+
 export function meta() {
   return [{ title: createPageTitle("配信モニター") }];
 }
@@ -15,6 +17,7 @@ export default function NotificationMonitorRoute() {
     <PageLayout>
       <PagePadding>
         <NotificationMonitorPage
+          commandApi={httpNotificationScheduleCommandApi}
           api={httpNotificationScheduleQueryApi}
           reportFeedback={report}
         />
