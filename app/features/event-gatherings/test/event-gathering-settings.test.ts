@@ -13,6 +13,7 @@ const settings: EventGatheringSettings = {
   rounds: [
     {
       round: 1,
+      startTime: null,
       gatherings: [
         {
           id: 101,
@@ -93,6 +94,7 @@ describe("canRemoveGathering / canRemoveRound", () => {
       rounds: [
         {
           round: 1,
+          startTime: null,
           gatherings: [settings.rounds[0].gatherings[1]],
         },
       ],

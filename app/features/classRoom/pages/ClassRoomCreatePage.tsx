@@ -1,8 +1,7 @@
 import { useState } from "react";
-import { useLocation, useNavigate } from "react-router";
-
+import { ManagementOptionFeedback } from "~/components/management/ManagementOptionFeedback";
 import { FormModal } from "~/components/ui/modal/FormModal";
-import type { ClassRoomManagementApi } from "~/features/classRoom/api/contracts/class-room-api";
+import type { ClassRoomMutationApi } from "~/features/classRoom/api/contracts/class-room-api";
 import {
   ClassRoomForm,
   type ClassRoomTeacherOption,
@@ -10,41 +9,39 @@ import {
 import { useClassRoomMutation } from "~/features/classRoom/hooks/useClassRoomMutation";
 import { emptyClassRoomForm } from "~/features/classRoom/model/classRoom-form";
 import type { ClassRoomWriteInput } from "~/features/classRoom/model/classRoom";
+import type { ManagementOptionState } from "~/hooks/useManagementOptions";
 
 type ClassRoomCreatePageProps = {
-  api: ClassRoomManagementApi;
-  onRevalidate?: () => Promise<void> | void;
+  api: ClassRoomMutationApi;
+  onClose: () => void | Promise<void>;
+  onSaved: () => Promise<void>;
+  teacherOptionState?: ManagementOptionState<ClassRoomTeacherOption>;
   teacherOptions: readonly ClassRoomTeacherOption[];
 };
 
 export function ClassRoomCreatePage({
   api,
-  onRevalidate,
+  onClose,
+  onSaved,
+  teacherOptionState,
   teacherOptions,
 }: ClassRoomCreatePageProps) {
-  const location = useLocation();
-  const navigate = useNavigate();
+  const teacherOptionsState = teacherOptionState ?? {
+    error: null,
+    isLoading: false,
+    items: teacherOptions,
+  };
   const [form, setForm] = useState<ClassRoomWriteInput>(emptyClassRoomForm);
   const {
     clearError,
     create,
     error: submitError,
     isMutating: isSubmitting,
-  } = useClassRoomMutation({
-    api,
-    refresh: async () => {
-      await onRevalidate?.();
-      return null;
-    },
-  });
-
-  function navigateToList() {
-    navigate(`/classrooms${location.search}`, { replace: true });
-  }
+  } = useClassRoomMutation({ api });
 
   async function handleSubmit(input: ClassRoomWriteInput) {
     if (await create(input)) {
-      navigateToList();
+      await onSaved();
     }
   }
 
@@ -53,19 +50,25 @@ export function ClassRoomCreatePage({
       description="クラスコード、クラス名、担当教官を入力します"
       onClose={() => {
         clearError();
-        navigateToList();
+        void onClose();
       }}
       title="クラスの新規登録"
     >
-      <ClassRoomForm
-        form={form}
-        isSubmitting={isSubmitting}
-        onCancel={navigateToList}
-        onChange={setForm}
-        onSubmit={handleSubmit}
-        submitError={submitError}
-        teacherOptions={teacherOptions}
+      <ManagementOptionFeedback
+        label="担当教官候補"
+        state={teacherOptionsState}
       />
+      {!teacherOptionsState.isLoading && !teacherOptionsState.error ? (
+        <ClassRoomForm
+          form={form}
+          isSubmitting={isSubmitting}
+          onCancel={onClose}
+          onChange={setForm}
+          onSubmit={handleSubmit}
+          submitError={submitError}
+          teacherOptions={teacherOptionsState.items}
+        />
+      ) : null}
     </FormModal>
   );
 }

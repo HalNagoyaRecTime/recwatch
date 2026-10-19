@@ -5,6 +5,8 @@ import {
   Outlet,
   RouterProvider,
   useLocation,
+  useNavigate,
+  useRevalidator,
 } from "react-router";
 import { describe, expect, it, vi } from "vitest";
 
@@ -17,8 +19,6 @@ const mocks = vi.hoisted(() => ({
   createTeacher: vi.fn(),
   updateTeacher: vi.fn(),
 }));
-
-vi.mock("~/features/teachers/api", () => ({ TeacherApi: mocks }));
 
 vi.mock("~/features/teachers/components/TeacherFormModal", () => ({
   TeacherFormModal: ({
@@ -36,6 +36,16 @@ vi.mock("~/features/teachers/components/TeacherFormModal", () => ({
     </div>
   ),
 }));
+
+function createApi() {
+  return {
+    assignStaff: vi.fn(),
+    createTeacher: mocks.createTeacher,
+    revokeStaff: vi.fn(),
+    updateTeacher: mocks.updateTeacher,
+    updateUserStatus: vi.fn(),
+  };
+}
 
 const classRooms = [
   { classRoomId: 2, className: "2年A組" },
@@ -71,7 +81,37 @@ function LocationProbe() {
   return <output data-testid="location-search">{location.search}</output>;
 }
 
-function renderNestedCreateRouter(element: React.ReactElement) {
+type ModalCallbacks = {
+  onClose: () => void | Promise<void>;
+  onSaved: () => Promise<void>;
+};
+
+function ManagementModalRoute({
+  renderForm,
+}: {
+  renderForm: (callbacks: ModalCallbacks) => React.ReactElement;
+}) {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const revalidator = useRevalidator();
+
+  async function returnToList(refresh: boolean) {
+    await navigate(
+      { pathname: "/teachers", search: location.search },
+      { replace: true }
+    );
+    if (refresh) await revalidator.revalidate();
+  }
+
+  return renderForm({
+    onClose: () => returnToList(false),
+    onSaved: () => returnToList(true),
+  });
+}
+
+function renderNestedCreateRouter(
+  renderForm: (callbacks: ModalCallbacks) => React.ReactElement
+) {
   const listLoader = vi.fn().mockResolvedValue(null);
   const router = createMemoryRouter(
     [
@@ -79,7 +119,12 @@ function renderNestedCreateRouter(element: React.ReactElement) {
         path: "/teachers",
         loader: listLoader,
         element: <TeacherListRoute />,
-        children: [{ path: "new", element }],
+        children: [
+          {
+            path: "new",
+            element: <ManagementModalRoute renderForm={renderForm} />,
+          },
+        ],
       },
     ],
     { initialEntries: ["/teachers/new?search=佐橋&page=2"] }
@@ -89,7 +134,9 @@ function renderNestedCreateRouter(element: React.ReactElement) {
   return listLoader;
 }
 
-function renderNestedEditRouter(element: React.ReactElement) {
+function renderNestedEditRouter(
+  renderForm: (callbacks: ModalCallbacks) => React.ReactElement
+) {
   const listLoader = vi.fn().mockResolvedValue(null);
   const router = createMemoryRouter(
     [
@@ -97,7 +144,12 @@ function renderNestedEditRouter(element: React.ReactElement) {
         path: "/teachers",
         loader: listLoader,
         element: <TeacherListRoute />,
-        children: [{ path: ":teacherId/edit", element }],
+        children: [
+          {
+            path: ":teacherId/edit",
+            element: <ManagementModalRoute renderForm={renderForm} />,
+          },
+        ],
       },
     ],
     { initialEntries: ["/teachers/7/edit?sortBy=teacherId"] }
@@ -131,9 +183,13 @@ describe("teacher create and edit flows", () => {
     mocks.createTeacher.mockResolvedValueOnce({});
     const user = userEvent.setup();
 
-    const listLoader = renderNestedCreateRouter(
-      <TeacherCreatePage classRooms={classRooms} />
-    );
+    const listLoader = renderNestedCreateRouter((callbacks) => (
+      <TeacherCreatePage
+        api={createApi()}
+        classRooms={classRooms}
+        {...callbacks}
+      />
+    ));
 
     await user.type(await screen.findByLabelText("先生名"), "新任");
     await user.type(screen.getByLabelText("メールアドレス"), "new@example.com");
@@ -155,7 +211,15 @@ describe("teacher create and edit flows", () => {
     );
     const user = userEvent.setup();
 
-    renderCrudRouter("/teachers/new", <TeacherCreatePage classRooms={[]} />);
+    renderCrudRouter(
+      "/teachers/new",
+      <TeacherCreatePage
+        api={createApi()}
+        classRooms={[]}
+        onClose={vi.fn()}
+        onSaved={vi.fn().mockResolvedValue(undefined)}
+      />
+    );
 
     await user.type(screen.getByLabelText("先生名"), "新任");
     await user.type(screen.getByLabelText("メールアドレス"), "new@example.com");
@@ -174,7 +238,15 @@ describe("teacher create and edit flows", () => {
     );
     const user = userEvent.setup();
 
-    renderCrudRouter("/teachers/new", <TeacherCreatePage classRooms={[]} />);
+    renderCrudRouter(
+      "/teachers/new",
+      <TeacherCreatePage
+        api={createApi()}
+        classRooms={[]}
+        onClose={vi.fn()}
+        onSaved={vi.fn().mockResolvedValue(undefined)}
+      />
+    );
 
     await user.type(screen.getByLabelText("先生名"), "新任");
     await user.type(screen.getByLabelText("メールアドレス"), "new@example.com");
@@ -196,9 +268,14 @@ describe("teacher create and edit flows", () => {
     mocks.updateTeacher.mockResolvedValueOnce({});
     const user = userEvent.setup();
 
-    const listLoader = renderNestedEditRouter(
-      <TeacherEditPage classRooms={classRooms} teacher={teacher} />
-    );
+    const listLoader = renderNestedEditRouter((callbacks) => (
+      <TeacherEditPage
+        api={createApi()}
+        classRooms={classRooms}
+        {...callbacks}
+        teacher={teacher}
+      />
+    ));
 
     await user.click(await screen.findByRole("checkbox", { name: "4年A組" }));
     await user.click(await screen.findByRole("button", { name: "保存する" }));
@@ -221,9 +298,14 @@ describe("teacher create and edit flows", () => {
     );
     const user = userEvent.setup();
 
-    renderNestedEditRouter(
-      <TeacherEditPage classRooms={classRooms} teacher={teacher} />
-    );
+    renderNestedEditRouter((callbacks) => (
+      <TeacherEditPage
+        api={createApi()}
+        classRooms={classRooms}
+        {...callbacks}
+        teacher={teacher}
+      />
+    ));
 
     await user.click(await screen.findByRole("button", { name: "保存する" }));
 

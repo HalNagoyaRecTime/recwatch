@@ -14,7 +14,11 @@ import type {
 export function toMemberClassroom(
   response: ClassroomResponseDto
 ): MemberClassroom {
-  return { id: response.class_room_id, name: response.class_name };
+  return {
+    id: response.class_room_id,
+    code: response.class_code,
+    name: response.class_name,
+  };
 }
 
 export function toMemberStudent(response: StudentResponseDto): MemberStudent {
@@ -22,7 +26,7 @@ export function toMemberStudent(response: StudentResponseDto): MemberStudent {
     id: response.student_id,
     userId: response.user_id,
     name: response.display_name,
-    classroomId: response.class_room.class_room_id,
+    classroomId: response.class_room?.class_room_id ?? null,
     attendanceNumber: response.attendance_number,
     studentNumber: response.student_id_number,
     isLiveActive: response.is_live_active,

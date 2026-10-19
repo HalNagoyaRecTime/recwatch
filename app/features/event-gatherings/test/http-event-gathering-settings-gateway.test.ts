@@ -49,6 +49,7 @@ describe("createHttpEventGatheringSettingsGateway", () => {
       rounds: [
         {
           round: 1,
+          startTime: null,
           gatherings: [
             {
               id: 101,
@@ -105,6 +106,7 @@ describe("createHttpEventGatheringSettingsGateway", () => {
       rounds: [
         {
           round: 1,
+          startTime: null,
           gatherings: [
             { gatheringId: 101, time: "10:45", spotId: 1 },
             { gatheringId: null, time: "10:55", spotId: 2 },
@@ -117,6 +119,7 @@ describe("createHttpEventGatheringSettingsGateway", () => {
       rounds: [
         {
           round: 1,
+          start_time: null,
           gatherings: [
             {
               gathering_id: 101,
@@ -133,11 +136,17 @@ describe("createHttpEventGatheringSettingsGateway", () => {
 });
 
 describe("createHttpGatheringMemberGateway", () => {
-  it("クラスと学生を全ページ読み込み、停止中の学生も候補に含める", async () => {
+  it("クラスコードと学生を全ページ読み込み、停止中の学生も候補に含める", async () => {
     const get = vi.fn().mockImplementation(async (path: string) => {
       if (path.startsWith("/api/v1/classrooms")) {
         return {
-          items: [{ class_room_id: 1, class_name: "HAL1A" }],
+          items: [
+            {
+              class_room_id: 1,
+              class_code: "HAL1A",
+              class_name: "1年Aクラス",
+            },
+          ],
           total: 1,
         };
       }
@@ -162,8 +171,17 @@ describe("createHttpGatheringMemberGateway", () => {
               is_live_active: false,
               class_room: { class_room_id: 1, class_name: "HAL1A" },
             },
+            {
+              student_id: 12,
+              user_id: 1003,
+              display_name: "鈴木 次郎",
+              attendance_number: null,
+              student_id_number: "2026003",
+              is_live_active: true,
+              class_room: null,
+            },
           ],
-          total: 2,
+          total: 3,
         };
       }
       if (path.startsWith("/api/v1/teachers")) {
@@ -174,7 +192,7 @@ describe("createHttpGatheringMemberGateway", () => {
     const gateway = createHttpGatheringMemberGateway(createClient({ get }));
 
     await expect(gateway.loadCandidates()).resolves.toEqual({
-      classrooms: [{ id: 1, name: "HAL1A" }],
+      classrooms: [{ id: 1, code: "HAL1A", name: "1年Aクラス" }],
       students: [
         {
           id: 10,
@@ -193,6 +211,15 @@ describe("createHttpGatheringMemberGateway", () => {
           attendanceNumber: 2,
           studentNumber: "2026002",
           isLiveActive: false,
+        },
+        {
+          id: 12,
+          userId: 1003,
+          name: "鈴木 次郎",
+          classroomId: null,
+          attendanceNumber: null,
+          studentNumber: "2026003",
+          isLiveActive: true,
         },
       ],
       nonStudents: new Map(),

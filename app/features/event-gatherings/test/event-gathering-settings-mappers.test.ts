@@ -71,6 +71,7 @@ describe("toEventGatheringSettings", () => {
       rounds: [
         {
           round: 1,
+          startTime: null,
           gatherings: [
             {
               id: 101,
@@ -91,6 +92,7 @@ describe("toEventGatheringSettingsWriteRequest", () => {
       rounds: [
         {
           round: 1,
+          startTime: null,
           gatherings: [
             { gatheringId: 101, time: "10:45", spotId: 1 },
             { gatheringId: null, time: "10:55", spotId: 2 },
@@ -103,6 +105,7 @@ describe("toEventGatheringSettingsWriteRequest", () => {
       rounds: [
         {
           round: 1,
+          start_time: null,
           gatherings: [
             {
               gathering_id: 101,
@@ -115,5 +118,36 @@ describe("toEventGatheringSettingsWriteRequest", () => {
       ],
     });
     expect(request.rounds[0].gatherings[1]).not.toHaveProperty("gathering_id");
+  });
+});
+
+describe("ラウンド開始時刻のAPI互換性", () => {
+  it.each([
+    ["1100", "11:00"],
+    [null, null],
+    [undefined, null],
+  ])("%sを画面の時刻に変換する", (start_time, expected) => {
+    const settings = toEventGatheringSettings({
+      event_id: 12,
+      rounds: [
+        { round: 1, start_time, gatherings: [gatheringResponse(1, "10:45")] },
+      ],
+    });
+    expect(settings.rounds[0].startTime).toBe(expected);
+  });
+  it.each([
+    ["11:10", "1110"],
+    [null, null],
+  ])("%sをAPIの時刻に変換する", (startTime, expected) => {
+    const request = toEventGatheringSettingsWriteRequest({
+      rounds: [
+        {
+          round: 1,
+          startTime,
+          gatherings: [{ gatheringId: 1, time: "10:45", spotId: 1 }],
+        },
+      ],
+    });
+    expect(request.rounds[0].start_time).toBe(expected);
   });
 });

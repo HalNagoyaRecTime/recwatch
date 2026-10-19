@@ -7,6 +7,7 @@ export type GatheringSettingWriteRequestDto = {
 
 export type RoundSettingWriteRequestDto = {
   round: number;
+  start_time?: string | null;
   gatherings: GatheringSettingWriteRequestDto[];
 };
 
@@ -33,6 +34,7 @@ export type GatheringSettingResponseDto = {
 
 export type RoundSettingResponseDto = {
   round: number;
+  start_time?: string | null;
   gatherings: GatheringSettingResponseDto[];
 };
 

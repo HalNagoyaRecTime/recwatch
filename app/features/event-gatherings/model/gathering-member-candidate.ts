@@ -1,6 +1,7 @@
 /** 参加者ピッカーで選択候補になる学生とクラス。 */
 export type MemberClassroom = {
   id: number;
+  code: string;
   name: string;
 };
 
@@ -8,8 +9,8 @@ export type MemberStudent = {
   id: number;
   userId: number;
   name: string;
-  classroomId: number;
-  attendanceNumber: number;
+  classroomId: number | null;
+  attendanceNumber: number | null;
   studentNumber: string;
   /** 利用中かどうか。停止中の学生は新しく参加者に加えられない。 */
   isLiveActive: boolean;

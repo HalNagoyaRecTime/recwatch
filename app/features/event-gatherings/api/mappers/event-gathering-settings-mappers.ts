@@ -19,6 +19,7 @@ export function toEventGatheringSettings(
     eventId: response.event_id,
     rounds: response.rounds.map((round) => ({
       round: round.round,
+      startTime: round.start_time?.replace(/^(\d{2})(\d{2})$/, "$1:$2") ?? null,
       gatherings: round.gatherings.map((gathering) => ({
         id: gathering.gathering_id,
         time: gathering.gathering_time,
@@ -38,6 +39,7 @@ export function toEventGatheringSettingsWriteRequest(
   return {
     rounds: input.rounds.map((round) => ({
       round: round.round,
+      start_time: round.startTime?.replace(":", "") ?? null,
       gatherings: round.gatherings.map((gathering) => ({
         // 新規行は gathering_id を送らない。API は省略を新規作成として扱う。
         ...(gathering.gatheringId === null

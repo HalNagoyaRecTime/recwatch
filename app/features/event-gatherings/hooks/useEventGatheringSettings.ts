@@ -93,6 +93,13 @@ export function useEventGatheringSettings({
     [updateRound]
   );
 
+  const updateRoundStartTime = useCallback(
+    (roundKey: string, startTime: string) => {
+      updateRound(roundKey, (round) => ({ ...round, startTime }));
+    },
+    [updateRound]
+  );
+
   const addGathering = useCallback(
     (roundKey: string) => {
       updateRound(roundKey, (round) => ({
@@ -147,7 +154,31 @@ export function useEventGatheringSettings({
     setIsSaving(true);
     setSaveError(null);
     try {
-      return await gateway.save(eventId, result.input);
+      const saved = await gateway.save(eventId, result.input);
+      const savedRounds = toRoundDrafts(saved);
+      setRounds(
+        savedRounds.map((savedRound) => {
+          const previousRound = rounds.find(
+            (round) => round.round === savedRound.round
+          );
+          return {
+            ...savedRound,
+            key: previousRound?.key ?? savedRound.key,
+            gatherings: savedRound.gatherings.map((savedGathering, index) => {
+              const previousGathering =
+                previousRound?.gatherings.find(
+                  (gathering) =>
+                    gathering.gatheringId === savedGathering.gatheringId
+                ) ?? previousRound?.gatherings[index];
+              return {
+                ...savedGathering,
+                key: previousGathering?.key ?? savedGathering.key,
+              };
+            }),
+          };
+        })
+      );
+      return saved;
     } catch (error) {
       setSaveError(toSaveErrorMessage(error));
       return null;
@@ -166,6 +197,7 @@ export function useEventGatheringSettings({
     addRound,
     removeRound,
     updateRoundNumber,
+    updateRoundStartTime,
     addGathering,
     removeGathering,
     updateGathering,

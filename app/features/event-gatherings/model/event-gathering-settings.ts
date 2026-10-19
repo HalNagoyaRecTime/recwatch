@@ -17,6 +17,7 @@ export type GatheringSetting = {
 
 export type RoundSetting = {
   round: number;
+  startTime: string | null;
   gatherings: GatheringSetting[];
 };
 
@@ -47,6 +48,7 @@ export type GatheringDraft = {
 export type RoundDraft = {
   key: string;
   round: number;
+  startTime: string;
   gatherings: GatheringDraft[];
 };
 
@@ -59,6 +61,7 @@ export type GatheringWriteInput = {
 
 export type RoundWriteInput = {
   round: number;
+  startTime: string | null;
   gatherings: GatheringWriteInput[];
 };
 
@@ -107,6 +110,7 @@ export function createEmptyRoundDraft(
   return {
     key: createDraftKey(),
     round: Math.min(maxRound + 1, MAX_ROUND),
+    startTime: "",
     gatherings: [createEmptyGatheringDraft()],
   };
 }
@@ -115,6 +119,7 @@ export function toRoundDrafts(settings: EventGatheringSettings): RoundDraft[] {
   return settings.rounds.map((round) => ({
     key: createDraftKey(),
     round: round.round,
+    startTime: round.startTime ?? "",
     gatherings: round.gatherings.map((gathering) => ({
       key: createDraftKey(),
       gatheringId: gathering.id,
