@@ -594,7 +594,7 @@ describe("GatheringSettingsStep", () => {
   it("停止中の参加者を全員解除して保存すると 0 人になり、集合を削除できる", async () => {
     const memberGateway = createMemberGateway();
     (memberGateway.loadCandidates as Mock).mockResolvedValue({
-      classrooms: [{ id: 1, name: "HAL1A" }],
+      classrooms: [{ id: 1, code: "HAL1A", name: "1年Aクラス" }],
       students: [
         {
           id: 10,
