@@ -31,6 +31,7 @@ type RoundCardProps = {
   onRemoveGathering: (gatheringKey: string) => void;
   onTogglePicker: (gatheringKey: string) => void;
   openPickerKey: string | null;
+  pendingMemberCounts: Readonly<Record<string, number>>;
   renderPicker: (gathering: GatheringDraft) => ReactNode;
   spots: readonly GatheringSpot[];
   value: RoundDraft;
@@ -47,6 +48,7 @@ export function RoundCard({
   onRemoveGathering,
   onTogglePicker,
   openPickerKey,
+  pendingMemberCounts,
   renderPicker,
   spots,
   value,
@@ -126,6 +128,7 @@ export function RoundCard({
                 .filter((error) => error.gatheringKey === gathering.key)
                 .map((error) => error.message)}
               isPickerOpen={openPickerKey === gathering.key}
+              pendingMemberCount={pendingMemberCounts[gathering.key]}
               onChange={(patch) => onChangeGathering(gathering.key, patch)}
               onRemove={() => onRemoveGathering(gathering.key)}
               onTogglePicker={() => onTogglePicker(gathering.key)}

@@ -26,6 +26,7 @@ type GatheringMemberPickerProps = {
   onCancel: () => void;
   onChange: (userIds: number[]) => void;
   onSave: () => void;
+  saveLabel?: string;
   saveError: string | null;
   selectedUserIds: readonly number[];
 };
@@ -45,6 +46,7 @@ export function GatheringMemberPicker({
   onCancel,
   onChange,
   onSave,
+  saveLabel = "参加者を保存",
   saveError,
   selectedUserIds,
 }: GatheringMemberPickerProps) {
@@ -379,7 +381,7 @@ export function GatheringMemberPicker({
             type="button"
             variant="primary"
           >
-            {isSaving ? "保存中..." : "参加者を保存"}
+            {isSaving ? "保存中..." : saveLabel}
           </Button>
         </div>
       </div>
