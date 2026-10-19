@@ -1,6 +1,7 @@
 /** GET /api/v1/classrooms のページ応答。参加者ピッカーで使う項目だけを持つ。 */
 export type ClassroomResponseDto = {
   class_room_id: number;
+  class_code: string;
   class_name: string;
 };
 

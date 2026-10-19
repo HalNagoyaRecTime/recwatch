@@ -14,7 +14,11 @@ import type {
 export function toMemberClassroom(
   response: ClassroomResponseDto
 ): MemberClassroom {
-  return { id: response.class_room_id, name: response.class_name };
+  return {
+    id: response.class_room_id,
+    code: response.class_code,
+    name: response.class_name,
+  };
 }
 
 export function toMemberStudent(response: StudentResponseDto): MemberStudent {
