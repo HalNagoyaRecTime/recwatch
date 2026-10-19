@@ -1,4 +1,4 @@
-import { ClientError, ClientErrors } from "~/lib/client-error";
+import { NotificationAudienceLoadingError } from "~/features/notifications/api/contracts/errors/notification-audience-loading-error";
 import type { NotificationAudienceOption } from "~/features/notifications/model/notification-audience";
 import type {
   ClassRoomAudienceApiDto,
@@ -10,7 +10,6 @@ import type {
 import {
   isClassRoomAudiencePageResponse,
   isClassRoomAudienceResponse,
-  isEventAudienceDetailResponse,
   isEventAudiencePageResponse,
   isEventAudienceResponse,
   isGatheringAudienceItemResponse,
@@ -25,7 +24,7 @@ export function toClassRoomAudiencePage(
   }
 
   return {
-    items: response.items.map(toClassRoomDto),
+    classrooms: response.classrooms.map(toClassRoomDto),
     total: response.total,
     limit: response.limit,
     offset: response.offset,
@@ -57,26 +56,6 @@ export function toGatheringAudienceDtos(
   return response.map(toGatheringDto);
 }
 
-export function toEventGatheringAudienceDtos(
-  response: unknown,
-  event: EventAudienceApiDto
-): GatheringAudienceApiDto[] {
-  if (!isEventAudienceDetailResponse(response)) {
-    throw unexpectedResponse();
-  }
-
-  return response.rounds.flatMap((round) =>
-    round.gatherings.map((gathering) =>
-      toGatheringDto({
-        gathering_id: gathering.gathering_id,
-        event_name: event.event_name,
-        gathering_spot_name: gathering.gathering_spot.gathering_spot_name,
-        gathering_time: gathering.gathering_time,
-      })
-    )
-  );
-}
-
 export function toNotificationAudienceOptions(input: {
   classrooms: ClassRoomAudienceApiDto[];
   gatherings: GatheringAudienceApiDto[];
@@ -96,7 +75,7 @@ export function toNotificationAudienceOptions(input: {
     ...input.events.map((event) => ({
       id: String(event.event_id),
       name: event.event_name,
-      type: "event" as const,
+      type: "event_participants" as const,
     })),
   ];
 }
@@ -146,5 +125,5 @@ function formatGatheringName(gathering: GatheringAudienceApiDto) {
 }
 
 function unexpectedResponse() {
-  return new ClientError(ClientErrors.RESPONSE_PARSE_ERROR);
+  return new NotificationAudienceLoadingError("unexpected");
 }

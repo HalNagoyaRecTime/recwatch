@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { FloatingTree } from "@floating-ui/react";
 
 import { FloatingPanel } from "~/components/ui/panel/FloatingPanel";
@@ -19,21 +19,12 @@ export function AccountBtn({ user, onLogout }: AccountBtnProps) {
   const account = getAccountBtnData(user);
   const photoUrl = useAccountPhoto(user);
   const [isOpen, setIsOpen] = useState(false);
-  const themeTriggerRef = useRef<HTMLButtonElement | null>(null);
-  const [focusThemeOnOpen, setFocusThemeOnOpen] = useState(false);
 
   return (
     <FloatingTree>
       <FloatingPanel
         isOpen={isOpen}
-        onOpenChange={(open) => {
-          setIsOpen(open);
-          if (!open) {
-            setFocusThemeOnOpen(false);
-          }
-        }}
-        initialFocus={-1}
-        scrollable
+        onOpenChange={setIsOpen}
         placement="bottom-end"
         interaction="click"
         trigger={
@@ -41,27 +32,12 @@ export function AccountBtn({ user, onLogout }: AccountBtnProps) {
             account={account}
             photoUrl={photoUrl}
             isOpen={isOpen}
-            onKeyDownCapture={(event) => {
-              if (event.key !== "ArrowDown") {
-                return;
-              }
-
-              event.preventDefault();
-              if (isOpen) {
-                themeTriggerRef.current?.focus();
-              } else {
-                setFocusThemeOnOpen(true);
-                setIsOpen(true);
-              }
-            }}
           />
         }
         content={
           <AccountMenuPanel
             account={account}
             photoUrl={photoUrl}
-            focusThemeOnOpen={focusThemeOnOpen}
-            themeTriggerRef={themeTriggerRef}
             onClose={() => setIsOpen(false)}
             onLogout={onLogout}
           />

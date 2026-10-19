@@ -10,7 +10,7 @@ type ButtonBaseProps = Omit<
   ButtonHTMLAttributes<HTMLButtonElement>,
   "children" | "className"
 > & {
-  variant?: "primary" | "secondary" | "ghost" | "danger" | "success";
+  variant?: "primary" | "secondary" | "ghost" | "danger";
   size?: "sm" | "md" | "lg";
   icon?: LucideIcon;
 };

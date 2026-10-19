@@ -51,7 +51,6 @@ export function GatheringSpotActionMenu({
       isOpen={isOpen}
       onOpenChange={setIsOpen}
       placement="bottom-end"
-      scrollable
       trigger={
         <Button
           aria-label={`${spot.name}のその他の操作`}

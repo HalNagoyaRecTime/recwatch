@@ -1,8 +1,7 @@
 import { Plus } from "lucide-react";
-import { useEffect } from "react";
-import { useLocation, useNavigate } from "react-router";
+import { useEffect, useState } from "react";
+import { useLocation, useNavigate, useSearchParams } from "react-router";
 import { Button } from "~/components/ui/button/Button";
-import { ManagementOptionFeedback } from "~/components/management/ManagementOptionFeedback";
 import { PageHeader } from "~/components/ui/layout/PageHeader";
 import { SearchField } from "~/components/ui/form/SearchField";
 import { Pagination } from "~/components/ui/navigation/Pagination";
@@ -10,164 +9,152 @@ import { TeacherTable } from "~/features/teachers/components/TeacherTable";
 import type { TeacherRow } from "~/features/teachers/model/teacher";
 import { ImportUploadTrigger } from "~/features/master-import/components/ImportUploadTrigger";
 import {
-  teacherCreateTarget,
-  teacherEditTarget,
-} from "~/features/teachers/application/teacher-navigation";
-import { Select } from "~/components/ui/form/Select";
-import type { TeacherMutationApi } from "~/features/teachers/api/contracts/teacher-api";
-import { useTeacherMutation } from "~/features/teachers/hooks/useTeacherMutation";
-import { useTeacherListUrl } from "~/features/teachers/hooks/useTeacherListUrl";
-import type { ClassRoomOption } from "~/features/teachers/model/teacher";
-import type { ManagementOptionState } from "~/hooks/useManagementOptions";
+  parseTeacherListUrl,
+  updateTeacherListUrl,
+} from "~/features/teachers/application/teacher-list-url";
+import { teacherCreateTarget } from "~/features/teachers/application/teacher-navigation";
+import { UserManagementTabs } from "~/features/user-management/components/UserManagementTabs";
+import { TeacherApi } from "~/features/teachers/api";
+
+type TeacherDeletionApi = {
+  deleteTeacher(teacherId: number): Promise<unknown>;
+};
 
 type TeachersPageProps = {
-  api: TeacherMutationApi;
-  classRooms: readonly ClassRoomOption[];
-  classRoomOptions?: ManagementOptionState<ClassRoomOption>;
+  api?: TeacherDeletionApi;
   limit: number;
   offset: number;
-  onRevalidate: () => Promise<void> | void;
   teachers: TeacherRow[];
   total: number;
 };
 
 export function TeachersPage({
-  api,
-  classRoomOptions,
-  classRooms,
+  api = TeacherApi,
   limit,
   offset,
-  onRevalidate,
   teachers,
   total,
 }: TeachersPageProps) {
-  const classRoomOptionState = classRoomOptions ?? readyOptions(classRooms);
   const navigate = useNavigate();
   const location = useLocation();
-  const { clearError, error, isMutating, updateActive, updateStaff } =
-    useTeacherMutation({ api, onRevalidate });
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [removedTeacherIds, setRemovedTeacherIds] = useState<Set<number>>(
+    () => new Set()
+  );
+  const [isMutating, setIsMutating] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
   const {
-    classRoomId,
-    handleFilterChange,
-    handleSortChange,
-    isLiveActive,
-    isStaff,
-    searchInput,
+    search: query,
     sortBy,
     sortOrder,
-    setSearchInput,
-    updateSearchParams,
-  } = useTeacherListUrl();
+  } = parseTeacherListUrl(searchParams);
   const currentPage = Math.floor(offset / limit) + 1;
-  const pageCount = Math.max(1, Math.ceil(total / limit));
+  const items = teachers.filter(
+    (teacher) => !removedTeacherIds.has(teacher.teacherId)
+  );
+  const visibleTotal = Math.max(0, total - removedTeacherIds.size);
+  const pageCount = Math.max(1, Math.ceil(visibleTotal / limit));
 
   useEffect(() => {
     if (currentPage <= pageCount) return;
-    updateSearchParams({ page: pageCount }, true);
-  }, [currentPage, pageCount, updateSearchParams]);
+    setRemovedTeacherIds(new Set());
+    setSearchParams(updateTeacherListUrl(searchParams, { page: pageCount }), {
+      replace: true,
+    });
+  }, [currentPage, pageCount, searchParams, setSearchParams]);
+
+  function updateSearchParams(
+    updates: Parameters<typeof updateTeacherListUrl>[1]
+  ) {
+    setRemovedTeacherIds(new Set());
+    setSearchParams(updateTeacherListUrl(searchParams, updates));
+  }
+
+  function handleQueryChange(nextQuery: string) {
+    updateSearchParams({ page: 1, search: nextQuery });
+  }
+
+  function handlePageChange(nextPage: number) {
+    updateSearchParams({ page: nextPage });
+  }
+
+  function handleSortChange(columnId: string) {
+    const nextSortBy = columnId === "teacher-id" ? "teacherId" : "displayName";
+    const nextSortOrder =
+      sortBy === nextSortBy && sortOrder === "asc" ? "desc" : "asc";
+    updateSearchParams({
+      page: 1,
+      sortBy: nextSortBy,
+      sortOrder: nextSortOrder,
+    });
+  }
+
+  async function deleteTeacher(teacher: TeacherRow) {
+    if (
+      isMutating ||
+      !window.confirm(
+        `「${teacher.displayName}」を削除します。よろしいですか？`
+      )
+    ) {
+      return;
+    }
+
+    setIsMutating(true);
+    setActionError(null);
+    try {
+      await api.deleteTeacher(teacher.teacherId);
+      setRemovedTeacherIds((current) => {
+        const next = new Set(current);
+        next.add(teacher.teacherId);
+        return next;
+      });
+    } catch (error) {
+      setActionError(
+        error instanceof Error ? error.message : "教官を削除できませんでした。"
+      );
+    } finally {
+      setIsMutating(false);
+    }
+  }
 
   return (
     <div className="min-h-full space-y-5">
-      <PageHeader
-        actions={
-          <div className="flex items-center gap-2">
-            <ImportUploadTrigger showHelperText={false} type="teachers" />
-            <Button
-              icon={Plus}
-              onClick={() => navigate(teacherCreateTarget(location.search))}
-              size="lg"
-              variant="primary"
-            >
-              新規登録
-            </Button>
-          </div>
+      <PageHeader description="教官の基本情報を管理します" title="教官管理" />
+      <ImportUploadTrigger
+        adjacentAction={
+          <Button
+            icon={Plus}
+            onClick={() => navigate(teacherCreateTarget(location.search))}
+            variant="secondary"
+          >
+            新規登録
+          </Button>
         }
-        description="教官の基本情報を管理します"
-        title="教官管理"
+        type="teachers"
+        helperText="取り込み前にプレビューで内容・データ種別を確認できます"
       />
-      <div className="flex flex-wrap items-center gap-3">
-        <div className="min-w-60 flex-1">
-          <SearchField
-            ariaLabel="教官を検索"
-            onValueChange={setSearchInput}
-            placeholder="氏名・クラス名で検索..."
-            value={searchInput}
-          />
-        </div>
-        <Select
-          ariaLabel="担当クラスフィルター"
-          disabled={
-            classRoomOptionState.isLoading ||
-            Boolean(classRoomOptionState.error)
-          }
-          onValueChange={(value) =>
-            updateSearchParams({
-              page: 1,
-              classRoomId: value === "all" ? null : Number(value),
-            })
-          }
-          options={[
-            {
-              label: classRoomOptionState.isLoading
-                ? "クラス:読み込み中..."
-                : "クラス:すべて",
-              value: "all",
-            },
-            ...classRoomOptionState.items.map((classRoom) => ({
-              label: classRoom.classCode
-                ? `${classRoom.classCode} ${classRoom.className}`
-                : classRoom.className,
-              value: String(classRoom.classRoomId),
-            })),
-          ]}
-          value={classRoomId ? String(classRoomId) : "all"}
-        />
-        <Select
-          ariaLabel="staffフィルター"
-          onValueChange={(value) => handleFilterChange("isStaff", value)}
-          options={booleanFilterOptions("staff")}
-          value={isStaff}
-        />
-        <Select
-          ariaLabel="有効状態フィルター"
-          onValueChange={(value) => handleFilterChange("isLiveActive", value)}
-          options={booleanFilterOptions("有効")}
-          value={isLiveActive}
-        />
-      </div>
-      <ManagementOptionFeedback
-        label="クラス候補"
-        state={classRoomOptionState}
+      <UserManagementTabs active="teachers" />
+      <SearchField
+        ariaLabel="教官を検索"
+        onValueChange={handleQueryChange}
+        placeholder="氏名・クラス名で検索..."
+        value={query}
       />
+      {actionError ? (
+        <p className="text-tone-danger-text text-sm" role="alert">
+          {actionError}
+        </p>
+      ) : null}
       <TeacherTable
-        items={teachers}
         isMutating={isMutating}
-        onChangeActive={async (teacher) => {
-          await updateActive(teacher.userId, !teacher.isLiveActive);
-        }}
-        onChangeStaff={async (teacher) => {
-          await updateStaff(teacher.userId, !teacher.isStaff);
-        }}
-        onClearError={clearError}
-        onEdit={(teacher) =>
-          navigate(teacherEditTarget(teacher.teacherId, location.search))
-        }
+        items={items}
+        onDelete={(teacher) => void deleteTeacher(teacher)}
         onSortChange={handleSortChange}
         sort={
           sortBy
             ? {
                 columnId:
-                  sortBy === "teacherId"
-                    ? "teacher-id"
-                    : sortBy === "displayName"
-                      ? "display-name"
-                      : sortBy === "isStaff"
-                        ? "staff"
-                        : sortBy === "isLiveActive"
-                          ? "active"
-                          : sortBy === "classCode"
-                            ? "class-code"
-                            : "class-name",
+                  sortBy === "teacherId" ? "teacher-id" : "display-name",
                 direction: sortOrder ?? "asc",
               }
             : undefined
@@ -175,30 +162,13 @@ export function TeachersPage({
         footer={
           <Pagination
             currentPage={currentPage}
-            onPageChange={(nextPage) => updateSearchParams({ page: nextPage })}
+            onPageChange={handlePageChange}
             pageCount={pageCount}
             pageSize={limit}
-            totalItems={total}
+            totalItems={visibleTotal}
           />
         }
       />
-      {error ? (
-        <p className="text-tone-danger-text text-sm" role="alert">
-          {error}
-        </p>
-      ) : null}
     </div>
   );
-}
-
-function booleanFilterOptions(label: string) {
-  return [
-    { label: `${label}:すべて`, value: "all" as const },
-    { label: `${label}:はい`, value: "true" as const },
-    { label: `${label}:いいえ`, value: "false" as const },
-  ];
-}
-
-function readyOptions<T>(items: readonly T[]): ManagementOptionState<T> {
-  return { error: null, isLoading: false, items };
 }

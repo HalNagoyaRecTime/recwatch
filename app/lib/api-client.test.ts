@@ -128,21 +128,16 @@ describe("apiClient", () => {
     vi.stubGlobal(
       "fetch",
       vi.fn().mockResolvedValue(
-        new Response(
-          JSON.stringify({
-            error: { code: "FORBIDDEN", message: "Forbidden" },
-          }),
-          {
-            status: 403,
-            statusText: "Forbidden",
-            headers: { "Content-Type": "application/json" },
-          }
-        )
+        new Response(JSON.stringify({ error: "Forbidden" }), {
+          status: 403,
+          statusText: "Forbidden",
+          headers: { "Content-Type": "application/json" },
+        })
       )
     );
 
     await expect(apiClient.get("/resource")).rejects.toEqual(
-      new ApiClientError(403, "Forbidden", "FORBIDDEN")
+      new ApiClientError(403, "Forbidden")
     );
   });
 
@@ -150,66 +145,15 @@ describe("apiClient", () => {
     vi.stubGlobal(
       "fetch",
       vi.fn().mockResolvedValue(
-        new Response(
-          JSON.stringify({
-            error: {
-              code: "NOTIFICATION_IN_USE",
-              message: "Notification is in use",
-            },
-          }),
-          {
-            status: 409,
-            headers: { "Content-Type": "application/json" },
-          }
-        )
-      )
-    );
-
-    await expect(apiClient.delete("/admin/notifications/10")).rejects.toEqual(
-      new ApiClientError(409, "Notification is in use", "NOTIFICATION_IN_USE")
-    );
-  });
-
-  it("エラーコードとdetailsをApiClientErrorへ保持する", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn().mockResolvedValue(
-        new Response(
-          JSON.stringify({
-            error: {
-              code: "VALIDATION_FAILED",
-              message: "Invalid request",
-              details: { fieldErrors: { name: ["Required"] } },
-            },
-          }),
-          { status: 400 }
-        )
-      )
-    );
-
-    await expect(apiClient.get("/resource")).rejects.toEqual(
-      new ApiClientError(400, "Invalid request", "VALIDATION_FAILED", {
-        fieldErrors: { name: ["Required"] },
-      })
-    );
-  });
-
-  it("旧形式のフラットなエラーは共通形式として解釈しない", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn().mockResolvedValue(
-        new Response(JSON.stringify({ error: "Forbidden" }), {
-          status: 403,
+        new Response(JSON.stringify({ error: "Notification is in use" }), {
+          status: 409,
+          headers: { "Content-Type": "application/json" },
         })
       )
     );
 
-    await expect(apiClient.get("/resource")).rejects.toEqual(
-      new ApiClientError(
-        403,
-        "APIエラーの内容を読み取れませんでした。（403）",
-        "UNKNOWN_API_ERROR"
-      )
+    await expect(apiClient.delete("/admin/notifications/10")).rejects.toEqual(
+      new ApiClientError(409, "Notification is in use")
     );
   });
 
@@ -226,27 +170,6 @@ describe("apiClient", () => {
       "https://api.example.com/admin/notifications/10",
       {
         method: "DELETE",
-        headers: {
-          Accept: "application/json",
-          "X-Client-Type": "web",
-        },
-      }
-    );
-  });
-
-  it("本文なしのPUTを204レスポンスとして処理する", async () => {
-    const fetchMock = vi
-      .fn()
-      .mockResolvedValue(new Response(null, { status: 204 }));
-    vi.stubGlobal("fetch", fetchMock);
-
-    await expect(
-      apiClient.put("/admin/users/11/staff")
-    ).resolves.toBeUndefined();
-    expect(fetchMock).toHaveBeenCalledWith(
-      "https://api.example.com/admin/users/11/staff",
-      {
-        method: "PUT",
         headers: {
           Accept: "application/json",
           "X-Client-Type": "web",

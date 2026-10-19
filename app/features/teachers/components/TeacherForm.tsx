@@ -8,7 +8,6 @@ import type {
 
 export type TeacherFormInput = {
   classRoomIds: number[];
-  email: string;
   userName: string;
 };
 
@@ -30,7 +29,6 @@ export function TeacherForm({
   submitError,
 }: TeacherFormProps) {
   const [userName, setUserName] = useState(initialTeacher?.displayName ?? "");
-  const [email, setEmail] = useState(initialTeacher?.email ?? "");
   const [classRoomIds, setClassRoomIds] = useState<number[]>(
     () =>
       initialTeacher?.classRooms.map((classRoom) => classRoom.classRoomId) ?? []
@@ -53,26 +51,12 @@ export function TeacherForm({
       return;
     }
 
-    const normalizedEmail = email.trim().toLowerCase();
-    if (!normalizedEmail) {
-      setValidationError("メールアドレスを入力してください。");
-      return;
-    }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
-      setValidationError("メールアドレスの形式を確認してください。");
-      return;
-    }
-
     setValidationError(null);
-    void onSubmit({
-      classRoomIds,
-      email: normalizedEmail,
-      userName: normalizedName,
-    });
+    void onSubmit({ classRoomIds, userName: normalizedName });
   }
 
   return (
-    <form className="space-y-5" noValidate onSubmit={handleSubmit}>
+    <form className="space-y-5" onSubmit={handleSubmit}>
       <label
         className="block text-sm font-semibold"
         htmlFor="teacher-user-name"
@@ -83,19 +67,6 @@ export function TeacherForm({
           id="teacher-user-name"
           onChange={(event) => setUserName(event.target.value)}
           value={userName}
-        />
-      </label>
-
-      <label className="block text-sm font-semibold" htmlFor="teacher-email">
-        メールアドレス
-        <input
-          autoComplete="email"
-          className="border-border-base bg-surface-base text-text-base mt-1 h-10 w-full rounded-md border px-3 outline-none"
-          id="teacher-email"
-          onChange={(event) => setEmail(event.target.value)}
-          required
-          type="email"
-          value={email}
         />
       </label>
 
@@ -112,9 +83,7 @@ export function TeacherForm({
                 onChange={() => toggleClassRoom(classRoom.classRoomId)}
                 type="checkbox"
               />
-              {classRoom.classCode
-                ? `${classRoom.classCode} — ${classRoom.className}`
-                : classRoom.className}
+              {classRoom.className}
             </label>
           ))}
           {classRooms.length === 0 ? (

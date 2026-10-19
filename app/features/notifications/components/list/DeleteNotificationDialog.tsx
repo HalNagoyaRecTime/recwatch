@@ -2,11 +2,10 @@ import { AlertTriangleIcon } from "lucide-react";
 import { useEffect } from "react";
 
 import { Button } from "~/components/ui/button/Button";
-import type { AdminNotificationListItem } from "~/features/notifications/api/contracts/admin-notification-query-api";
-import { useDocumentScrollLock } from "~/hooks/useDocumentScrollLock";
+import type { ManagedNotification } from "~/features/notifications/model/notification";
 
 type DeleteNotificationDialogProps = {
-  notification: AdminNotificationListItem;
+  notification: ManagedNotification;
   isSubmitting: boolean;
   onClose: () => void;
   onConfirm: () => void;
@@ -18,8 +17,6 @@ export function DeleteNotificationDialog({
   onClose,
   onConfirm,
 }: DeleteNotificationDialogProps) {
-  useDocumentScrollLock(true);
-
   useEffect(() => {
     function handleEscape(event: KeyboardEvent) {
       if (event.key === "Escape" && !isSubmitting) {
@@ -60,7 +57,7 @@ export function DeleteNotificationDialog({
               id="delete-notification-description"
               className="text-text-muted mt-2 text-sm leading-6"
             >
-              「{notification.content.push.title}
+              「{notification.title}
               」は配信されず、一覧から削除されます。この操作は元に戻せません。
             </p>
           </div>

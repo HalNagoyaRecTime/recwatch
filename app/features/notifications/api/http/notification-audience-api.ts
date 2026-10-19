@@ -1,9 +1,10 @@
 import { apiClient } from "~/lib/api-client";
 import type { NotificationAudienceApi } from "~/features/notifications/api/contracts/notification-audience-api";
 import {
-  toEventGatheringAudienceDtos,
+  toGatheringAudienceDtos,
   toNotificationAudienceOptions,
 } from "~/features/notifications/api/mappers/notification-audience-response-mapper";
+import { toNotificationAudienceLoadingError } from "~/features/notifications/api/mappers/notification-audience-error-mapper";
 import {
   loadAllClassrooms,
   loadAllEvents,
@@ -15,25 +16,21 @@ export function createHttpNotificationAudienceApi(
 ): NotificationAudienceApi {
   return {
     async load() {
-      const [classrooms, events] = await Promise.all([
-        loadAllClassrooms(client),
-        loadAllEvents(client),
-      ]);
+      try {
+        const [classrooms, gatheringsResponse, events] = await Promise.all([
+          loadAllClassrooms(client),
+          client.get("/api/v1/gatherings"),
+          loadAllEvents(client),
+        ]);
 
-      const gatheringsByEvent = await Promise.all(
-        events.map(async (event) =>
-          toEventGatheringAudienceDtos(
-            await client.get(`/api/v1/events/${event.event_id}`),
-            event
-          )
-        )
-      );
-
-      return toNotificationAudienceOptions({
-        classrooms,
-        gatherings: gatheringsByEvent.flat(),
-        events,
-      });
+        return toNotificationAudienceOptions({
+          classrooms,
+          gatherings: toGatheringAudienceDtos(gatheringsResponse),
+          events,
+        });
+      } catch (error) {
+        throw toNotificationAudienceLoadingError(error);
+      }
     },
   };
 }

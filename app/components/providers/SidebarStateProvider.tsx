@@ -1,20 +1,11 @@
-import {
-  createContext,
-  useCallback,
-  useEffect,
-  useState,
-  type ReactNode,
-} from "react";
+import { createContext, useEffect, useState, type ReactNode } from "react";
 
 export type SidebarState = {
-  mobileOpen: boolean;
-  sidebarPinnedOpen: boolean;
+  isOpen: boolean;
   openAccordions: string[];
-  toggleMobileDrawer: () => void;
-  closeForMobile: () => void;
-  togglePinned: () => void;
-  pinOpen: () => void;
+  toggle: () => void;
   toggleAccordion: (id: string) => void;
+  closeForMobile: () => void;
 };
 
 // eslint-disable-next-line react-refresh/only-export-components
@@ -23,8 +14,7 @@ export const SidebarStateContext = createContext<SidebarState | undefined>(
 );
 
 export function SidebarStateProvider({ children }: { children: ReactNode }) {
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const [sidebarPinnedOpen, setSidebarPinnedOpen] = useState(true);
+  const [isOpen, setIsOpen] = useState(true);
   const [openAccordions, setOpenAccordions] = useState<string[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
 
@@ -34,13 +24,9 @@ export function SidebarStateProvider({ children }: { children: ReactNode }) {
       try {
         const parsed = JSON.parse(saved);
         const stateData = parsed.state ? parsed.state : parsed;
-        if (stateData.sidebarPinnedOpen !== undefined) {
+        if (stateData.isOpen !== undefined) {
           // eslint-disable-next-line react-hooks/set-state-in-effect
-          setSidebarPinnedOpen(stateData.sidebarPinnedOpen);
-        } else if (stateData.isOpen !== undefined) {
-          // `isOpen`は、モバイルとデスクトップの状態を分離する前に保存されていたフィールド。
-          // アップグレード時も既存ユーザーの固定表示状態を引き継ぐ。
-          setSidebarPinnedOpen(stateData.isOpen);
+          setIsOpen(stateData.isOpen);
         }
         if (stateData.openAccordions !== undefined) {
           setOpenAccordions(stateData.openAccordions);
@@ -59,46 +45,35 @@ export function SidebarStateProvider({ children }: { children: ReactNode }) {
     if (!isLoaded) return;
     sessionStorage.setItem(
       "rectime-nav-state",
-      JSON.stringify({
-        state: { sidebarPinnedOpen, openAccordions },
-        version: 1,
-      })
+      JSON.stringify({ state: { isOpen, openAccordions }, version: 0 })
     );
-  }, [sidebarPinnedOpen, openAccordions, isLoaded]);
+  }, [isOpen, openAccordions, isLoaded]);
 
-  const toggleMobileDrawer = useCallback(() => {
-    setMobileOpen((prev) => !prev);
-  }, []);
+  const toggle = () => {
+    setIsOpen((prevIsOpen) => !prevIsOpen);
+  };
 
-  const closeForMobile = useCallback(() => {
-    setMobileOpen(false);
-  }, []);
-
-  const togglePinned = useCallback(() => {
-    setSidebarPinnedOpen((prev) => !prev);
-  }, []);
-
-  const pinOpen = useCallback(() => {
-    setSidebarPinnedOpen(true);
-  }, []);
-
-  const toggleAccordion = useCallback((id: string) => {
+  const toggleAccordion = (id: string) => {
     setOpenAccordions((prev) =>
       prev.includes(id) ? prev.filter((v) => v !== id) : [...prev, id]
     );
-  }, []);
+  };
+
+  const closeForMobile = () => {
+    if (typeof window !== "undefined" && window.innerWidth <= 720) {
+      setIsOpen(false);
+      setOpenAccordions([]);
+    }
+  };
 
   return (
     <SidebarStateContext.Provider
       value={{
-        mobileOpen,
-        sidebarPinnedOpen,
+        isOpen,
         openAccordions,
-        toggleMobileDrawer,
-        closeForMobile,
-        togglePinned,
-        pinOpen,
+        toggle,
         toggleAccordion,
+        closeForMobile,
       }}
     >
       {children}

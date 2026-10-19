@@ -5,16 +5,14 @@ import { useNavigate } from "react-router";
 import { Button } from "~/components/ui/button/Button";
 import { Menu, type MenuItemType } from "~/components/ui/navigation/Menu";
 import { FloatingPanel } from "~/components/ui/panel/FloatingPanel";
-import type { AdminNotificationListItem } from "~/features/notifications/api/contracts/admin-notification-query-api";
+import type { NotificationListItem } from "~/features/notifications/model/notification-list";
 
 type NotificationActionMenuProps = {
-  canModify?: boolean;
-  notification: AdminNotificationListItem;
-  onDelete?: (notification: AdminNotificationListItem) => void;
+  notification: NotificationListItem;
+  onDelete?: (notification: NotificationListItem) => void;
 };
 
 export function NotificationActionMenu({
-  canModify = false,
   notification,
   onDelete,
 }: NotificationActionMenuProps) {
@@ -31,13 +29,13 @@ export function NotificationActionMenu({
     id: "details",
     label: "通知詳細",
     onClick: () =>
-      closeAnd(() => navigate(`/notifications/${notification.notificationId}`)),
+      closeAnd(() => navigate(`/notifications/${notification.id}`)),
     type: "action",
   };
 
   const items: MenuItemType[] = [
     detailsItem,
-    ...(canModify
+    ...(notification.canModify
       ? [
           {
             icon: Pencil,
@@ -45,7 +43,7 @@ export function NotificationActionMenu({
             label: "通知を編集",
             onClick: () =>
               closeAnd(() =>
-                navigate(`/notifications/${notification.notificationId}/edit`)
+                navigate(`/notifications/${notification.id}/edit`)
               ),
             type: "action" as const,
           },
@@ -67,10 +65,9 @@ export function NotificationActionMenu({
       isOpen={isOpen}
       onOpenChange={setIsOpen}
       placement="bottom-end"
-      scrollable
       trigger={
         <Button
-          aria-label={`${notification.content.push.title}のその他の操作`}
+          aria-label={`${notification.title}のその他の操作`}
           icon={Ellipsis}
           iconOnly
           size="sm"

@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { buildBackendUrl, hasBackendBaseUrl } from "~/config/env";
-import { getErrorMessage } from "~/lib/client-error";
 
 import { AuthErrorMessage } from "~/features/auth/components/AuthErrorMessage";
 import { AuthLayout } from "~/features/auth/components/AuthLayout";
@@ -58,7 +57,11 @@ export function AuthLoginPage({
 
       window.location.href = loginUrl;
     } catch (error) {
-      setErrorMessage(getErrorMessage(error, "ログインの開始に失敗しました。"));
+      setErrorMessage(
+        error instanceof Error
+          ? error.message
+          : "ログインの開始に失敗しました。"
+      );
       setIsOAuthSubmitting(false);
     }
   }

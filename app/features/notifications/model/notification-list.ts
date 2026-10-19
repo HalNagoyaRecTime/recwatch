@@ -1,4 +1,6 @@
-export type NotificationDeliveryStatus = string | null;
+import type { ManagedNotificationStatus } from "~/features/notifications/model/notification";
+
+export type NotificationDeliveryStatus = ManagedNotificationStatus;
 
 export type NotificationListItem = {
   audience: string;
@@ -11,18 +13,19 @@ export type NotificationListItem = {
   status: NotificationDeliveryStatus;
   title: string;
 };
+
 export const notificationListPageSize = 20;
 
 export const notificationSortableColumnIds = [
-  "notificationId",
+  "id",
   "title",
   "audience",
-  "sendAt",
-  "creationMethod",
-  "creator",
-  "importance",
+  "deliveredAt",
+  "sender",
+  "competition",
+  "schedule",
   "status",
-] as const;
+] as const satisfies readonly (keyof NotificationListItem)[];
 
 export type NotificationSortableColumnId =
   (typeof notificationSortableColumnIds)[number];
@@ -33,8 +36,6 @@ export type NotificationListSort = {
   columnId: NotificationSortableColumnId;
   direction: NotificationListSortDirection;
 };
-
-export type NotificationCreationMethodFilter = "all" | "manual" | "automatic";
 
 export function getNextNotificationListSort(
   current: NotificationListSort | undefined,
