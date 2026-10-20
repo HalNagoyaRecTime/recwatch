@@ -9,13 +9,11 @@ import { FloatingPanel } from "~/components/ui/panel/FloatingPanel";
 import type { AdminNotificationListItem } from "~/features/notifications/api/contracts/admin-notification-query-api";
 
 type NotificationActionMenuProps = {
-  canModify?: boolean;
   notification: AdminNotificationListItem;
   onDelete?: (notification: AdminNotificationListItem) => void;
 };
 
 export function NotificationActionMenu({
-  canModify = false,
   notification,
   onDelete,
 }: NotificationActionMenuProps) {
@@ -38,20 +36,16 @@ export function NotificationActionMenu({
 
   const items: MenuItemType[] = [
     detailsItem,
-    ...(canModify
-      ? [
-          {
-            icon: Pencil,
-            id: "edit",
-            label: "通知を編集",
-            onClick: () =>
-              closeAnd(() =>
-                navigate(`/notifications/${notification.notificationId}/edit`)
-              ),
-            type: "action" as const,
-          },
-        ]
-      : []),
+    {
+      icon: Pencil,
+      id: "edit",
+      label: "通知を編集",
+      onClick: () =>
+        closeAnd(() =>
+          navigate(`/notifications/${notification.notificationId}/edit`)
+        ),
+      type: "action",
+    },
     ...(onDelete && canDeleteNotification(notification)
       ? [
           { id: "actions-divider", type: "divider" as const },
@@ -60,7 +54,7 @@ export function NotificationActionMenu({
             icon: Trash2,
             id: "delete",
             label: "通知を削除",
-            onClick: () => closeAnd(() => onDelete?.(notification)),
+            onClick: () => closeAnd(() => onDelete(notification)),
             type: "action" as const,
           },
         ]

@@ -15,10 +15,7 @@ import {
   formatNotificationImportance,
 } from "~/features/notifications/components/list/notification-display";
 import { NotificationStatusBadge } from "~/features/notifications/components/list/NotificationStatusBadge";
-import {
-  canModifyNotification,
-  selectRepresentativeSchedule,
-} from "~/features/notifications/hooks/notification-list-data";
+import { selectRepresentativeSchedule } from "~/features/notifications/hooks/notification-list-data";
 import type { NotificationListSort } from "~/features/notifications/model/notification-list";
 
 const notificationTableColumns: readonly DataTableColumn<AdminNotificationListItem>[] =
@@ -134,11 +131,7 @@ export function NotificationsTable({
       ? {
           ...column,
           renderCell: (item: AdminNotificationListItem) => (
-            <NotificationActionMenu
-              canModify={canModifyNotification(item)}
-              notification={item}
-              onDelete={onDelete}
-            />
+            <NotificationActionMenu notification={item} onDelete={onDelete} />
           ),
         }
       : column

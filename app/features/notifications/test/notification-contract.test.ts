@@ -194,7 +194,7 @@ describe("notification v2 contract", () => {
     const error = notificationApiErrorFixtures.VALIDATION_ERROR();
     expect(readNotificationApiErrorCode(error)).toBe("VALIDATION_ERROR");
     expect(readNotificationValidationDetails(error)).toEqual({
-      fieldErrors: { title: ["入力してください。"] },
+      fieldErrors: { content: ["入力してください。"] },
       formErrors: [],
     });
   });
