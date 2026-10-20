@@ -294,4 +294,98 @@ describe("NotificationDetailPage", () => {
       )
     );
   });
+  it("Worker競合409後に再取得し、タブを維持して取消を非表示にする", async () => {
+    const notification = cloneFixture(adminNotificationDetailFixture);
+    notification.schedules = notification.schedules.map((schedule) => ({
+      ...schedule,
+      status: "scheduled",
+    }));
+    const updated = cloneFixture(notification);
+    updated.schedules = updated.schedules.map((schedule) => ({
+      ...schedule,
+      status: "sending",
+    }));
+    const apis = createApis({
+      getSchedule: vi.fn().mockResolvedValue({
+        ...notificationScheduleDetailFixture,
+        status: "scheduled",
+      }),
+      getDetail: vi
+        .fn()
+        .mockResolvedValueOnce(notification)
+        .mockResolvedValue(updated),
+    });
+    const cancel = vi
+      .fn()
+      .mockRejectedValue(new ApiClientError(409, "配信が開始されました。"));
+    const user = userEvent.setup();
+    const reportFeedback = vi.fn();
+    render(
+      <MemoryRouter>
+        <NotificationDetailPage
+          notificationId={103}
+          {...apis}
+          commandApi={{ create: vi.fn(), patch: vi.fn(), delete: vi.fn() }}
+          scheduleCommandApi={{ cancel, resend: vi.fn(), stop: vi.fn() }}
+          reportFeedback={reportFeedback}
+        />
+      </MemoryRouter>
+    );
+    await screen.findByRole("button", { name: "配信予約をキャンセル" });
+    await user.click(screen.getByRole("button", { name: "配信状況" }));
+    await user.click(
+      screen.getByRole("button", { name: "配信予約をキャンセル" })
+    );
+    const dialog = await screen.findByRole("alertdialog");
+    expect(within(dialog).getByText(/Schedule #/)).toBeInTheDocument();
+    await user.click(
+      within(dialog).getByRole("button", { name: "配信予約をキャンセル" })
+    );
+    await screen.findByText("配信が開始されました。");
+    expect(apis.queryApi.getDetail).toHaveBeenCalledTimes(2);
+    expect(
+      screen.queryByRole("button", { name: "配信予約をキャンセル" })
+    ).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "配信状況" })).toHaveAttribute(
+      "aria-current",
+      "page"
+    );
+    expect(reportFeedback).toHaveBeenCalledWith(
+      expect.objectContaining({ kind: "action-error" })
+    );
+  });
+  it.each(["automatic", "started"])(
+    "%s通知の削除操作を表示しない",
+    async (condition) => {
+      const notification = cloneFixture(adminNotificationDetailFixture);
+      notification.schedules = notification.schedules.map((schedule) => ({
+        ...schedule,
+        status: condition === "started" ? "sending" : "scheduled",
+      }));
+      if (condition === "automatic")
+        notification.creation = {
+          method: "automatic",
+          user: null,
+          source: { type: "gathering", id: 1, label: null },
+        };
+      const apis = createApis({
+        getDetail: vi.fn().mockResolvedValue(notification),
+      });
+      render(
+        <MemoryRouter>
+          <NotificationDetailPage
+            notificationId={103}
+            {...apis}
+            commandApi={{ create: vi.fn(), patch: vi.fn(), delete: vi.fn() }}
+          />
+        </MemoryRouter>
+      );
+      await screen.findByRole("heading", {
+        name: notification.content.detail.title,
+      });
+      expect(
+        screen.queryByRole("button", { name: "通知を削除" })
+      ).not.toBeInTheDocument();
+    }
+  );
 });

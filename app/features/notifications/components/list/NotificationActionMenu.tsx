@@ -1,3 +1,4 @@
+import { canDeleteNotification } from "~/features/notifications/hooks/notification-list-data";
 import { Ellipsis, Eye, Pencil, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router";
@@ -8,13 +9,11 @@ import { FloatingPanel } from "~/components/ui/panel/FloatingPanel";
 import type { AdminNotificationListItem } from "~/features/notifications/api/contracts/admin-notification-query-api";
 
 type NotificationActionMenuProps = {
-  canModify?: boolean;
   notification: AdminNotificationListItem;
   onDelete?: (notification: AdminNotificationListItem) => void;
 };
 
 export function NotificationActionMenu({
-  canModify = false,
   notification,
   onDelete,
 }: NotificationActionMenuProps) {
@@ -47,7 +46,7 @@ export function NotificationActionMenu({
         ),
       type: "action",
     },
-    ...(canModify && notification.creation.method === "manual" && onDelete
+    ...(onDelete && canDeleteNotification(notification)
       ? [
           { id: "actions-divider", type: "divider" as const },
           {
