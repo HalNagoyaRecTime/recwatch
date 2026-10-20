@@ -9,6 +9,8 @@ import {
   createMockNotificationMonitorApi,
   createNotificationMonitorFixtures,
 } from "~/features/notifications/mock/notification-monitor-api";
+import type { NotificationScheduleCommandApi } from "~/features/notifications/api/contracts/notification-schedule-command-api";
+import { ApiClientError } from "~/lib/api-client-error";
 import { NotificationMonitorPage } from "~/features/notifications/pages/NotificationMonitorPage";
 
 const graph = vi.hoisted(() => ({
@@ -85,13 +87,15 @@ function renderPage(
   api = createMockNotificationMonitorApi(
     createNotificationMonitorFixtures(now())
   ),
-  reportFeedback = vi.fn()
+  reportFeedback = vi.fn(),
+  commandApi?: NotificationScheduleCommandApi
 ) {
   return {
     ...render(
       <MemoryRouter>
         <NotificationMonitorPage
           api={api}
+          commandApi={commandApi}
           reportFeedback={reportFeedback}
           now={now}
           refreshIntervalMs={0}
@@ -103,6 +107,84 @@ function renderPage(
 }
 
 describe("配信モニター", () => {
+  it("Stop競合後もNodeと確認dialogを保ち、最新状態では実行を無効にする", async () => {
+    const fixtures = createNotificationMonitorFixtures(now());
+    const sending = fixtures.find((item) => item.status === "sending")!;
+    const api = createMockNotificationMonitorApi(fixtures);
+    const commands: NotificationScheduleCommandApi = {
+      resend: vi.fn(),
+      cancel: vi.fn(),
+      stop: vi.fn(async () => {
+        sending.status = "completed";
+        throw new ApiClientError(409, "配信が完了しました");
+      }),
+    };
+    const user = userEvent.setup();
+    renderPage(api, vi.fn(), commands);
+    await user.click(await screen.findByRole("button", { name: "緊急停止" }));
+    const dialog = await screen.findByRole("dialog", {
+      name: "緊急停止の確認",
+    });
+    await user.click(within(dialog).getByRole("button", { name: "実行する" }));
+    expect(await within(dialog).findByRole("alert")).toHaveTextContent(
+      "配信が完了しました"
+    );
+    expect(
+      within(dialog).getByRole("button", { name: "実行する" })
+    ).toBeDisabled();
+    expect(
+      within(dialog).getByText("最新の状態: completed")
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("article", { name: "配信 #503" })
+    ).toBeInTheDocument();
+  });
+
+  it("予約再送の入力と送信中のEscape・二重操作を扱う", async () => {
+    let finish!: () => void;
+    const commands: NotificationScheduleCommandApi = {
+      resend: vi.fn(
+        () =>
+          new Promise<{
+            notificationId: number;
+            notificationScheduleId: number;
+          }>((resolve) => {
+            finish = () =>
+              resolve({ notificationId: 103, notificationScheduleId: 900 });
+          })
+      ),
+      cancel: vi.fn(),
+      stop: vi.fn(),
+    };
+    const user = userEvent.setup();
+    renderPage(undefined, vi.fn(), commands);
+    await user.click(await screen.findByRole("button", { name: "再送" }));
+    const dialog = await screen.findByRole("dialog", { name: "再送の確認" });
+    await user.selectOptions(
+      within(dialog).getByLabelText("再送タイミング"),
+      "scheduled"
+    );
+    await user.type(
+      within(dialog).getByLabelText("再送日時"),
+      "2030-11-01T12:00"
+    );
+    await user.click(within(dialog).getByRole("button", { name: "実行する" }));
+    await user.keyboard("{Escape}");
+    expect(
+      screen.getByRole("dialog", { name: "再送の確認" })
+    ).toBeInTheDocument();
+    expect(
+      within(dialog).getByRole("button", { name: "処理中..." })
+    ).toBeDisabled();
+    expect(commands.resend).toHaveBeenCalledOnce();
+    await act(async () => finish());
+    await waitFor(() =>
+      expect(
+        screen.queryByRole("dialog", { name: "再送の確認" })
+      ).not.toBeInTheDocument()
+    );
+  });
+
   it("選択したScheduleの処理フローと配送内訳を表示する", async () => {
     renderPage();
     const card = await screen.findByRole("article", { name: "配信 #503" });

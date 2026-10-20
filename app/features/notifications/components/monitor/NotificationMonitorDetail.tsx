@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { Button } from "~/components/ui/button/Button";
 import { ButtonLink } from "~/components/ui/button/ButtonLink";
 import { FormModal } from "~/components/ui/modal/FormModal";
@@ -15,11 +16,13 @@ import {
 
 export function NotificationMonitorDetail({
   item,
+  actions,
   isLoading,
   onClose,
   onReload,
 }: {
   item: MonitorSchedule;
+  actions?: ReactNode;
   isLoading: boolean;
   onClose: () => void;
   onReload: () => void;
@@ -28,6 +31,7 @@ export function NotificationMonitorDetail({
   return (
     <FormModal title="配信詳細" onClose={onClose}>
       <div className="space-y-4">
+        {actions}
         <NotificationStatusBadge status={schedule.status} />
         <h2 className="text-text-base text-lg font-semibold break-words">
           {schedule.content.push.title}
