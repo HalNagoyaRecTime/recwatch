@@ -7,6 +7,7 @@ import type {
   AdminNotificationQueryApi,
 } from "~/features/notifications/api/contracts/admin-notification-query-api";
 import {
+  canDeleteNotification,
   filterNotificationList,
   sortNotificationList,
 } from "~/features/notifications/hooks/notification-list-data";
@@ -57,6 +58,20 @@ export function useNotificationList({
   const [calendarErrorMessage, setCalendarErrorMessage] = useState<
     string | null
   >(null);
+  const deleting = useRef(false);
+  const calendarQuery = useRef<AdminNotificationListQuery | null>(null);
+  const pendingReads = useRef(new Set<Promise<unknown>>());
+  const read = useCallback(
+    (query?: AdminNotificationListQuery) => {
+      const request = Promise.resolve().then(() => queryApi.list(query));
+      const tracked = request.finally(() =>
+        pendingReads.current.delete(tracked)
+      );
+      pendingReads.current.add(tracked);
+      return tracked;
+    },
+    [queryApi]
+  );
   const requestSequence = useRef(0);
   const calendarRequestSequence = useRef(0);
 
@@ -64,7 +79,7 @@ export function useNotificationList({
     async (background = false) => {
       const requestId = ++requestSequence.current;
       try {
-        const result = await Promise.resolve().then(() => queryApi.list());
+        const result = await read();
         if (requestId !== requestSequence.current) return;
         setNotifications(result.items);
         setCurrentPage((page) =>
@@ -100,17 +115,18 @@ export function useNotificationList({
         if (requestId === requestSequence.current) setIsLoading(false);
       }
     },
-    [queryApi, reportFeedback]
+    [queryApi, read, reportFeedback]
   );
 
   const loadCalendar = useCallback(
     async (query: AdminNotificationListQuery, background = false) => {
+      calendarQuery.current = query;
       const requestId = ++calendarRequestSequence.current;
       setIsCalendarLoading(true);
       setCalendarErrorMessage(null);
 
       try {
-        const result = await queryApi.list(query);
+        const result = await read(query);
         if (requestId !== calendarRequestSequence.current) return;
         setCalendarNotifications(result.items);
       } catch (error) {
@@ -133,7 +149,7 @@ export function useNotificationList({
         }
       }
     },
-    [queryApi, reportFeedback]
+    [read, reportFeedback]
   );
 
   useEffect(() => {
@@ -192,18 +208,29 @@ export function useNotificationList({
   }
 
   function handleDeleteRequest(notification: AdminNotificationListItem) {
-    setSelectedNotification(notification);
+    if (!deleting.current && canDeleteNotification(notification))
+      setSelectedNotification(notification);
   }
 
   async function handleDelete() {
-    if (!selectedNotification || isDeleting) return;
+    if (
+      !selectedNotification ||
+      deleting.current ||
+      !canDeleteNotification(selectedNotification)
+    )
+      return;
+    deleting.current = true;
 
     setIsDeleting(true);
     setErrorMessage(null);
     try {
       await commandApi.delete(selectedNotification.notificationId);
       setSelectedNotification(null);
+      // 共有中の古いGETが完了してから、削除後の新しいGETを取得します。
+      await Promise.allSettled([...pendingReads.current]);
       await reload();
+      if (calendarQuery.current)
+        await loadCalendar(calendarQuery.current, true);
       reportFeedback?.({
         kind: "action-success",
         title: "通知を削除しました",
@@ -211,6 +238,11 @@ export function useNotificationList({
       });
     } catch (error) {
       const message = getErrorMessage(error);
+      // 共有中の古いGETが完了してから、削除後の新しいGETを取得します。
+      await Promise.allSettled([...pendingReads.current]);
+      await reload();
+      if (calendarQuery.current)
+        await loadCalendar(calendarQuery.current, true);
       setErrorMessage(message);
       setSelectedNotification(null);
       reportNotificationActionError(reportFeedback, {
@@ -221,6 +253,7 @@ export function useNotificationList({
         error,
       });
     } finally {
+      deleting.current = false;
       setIsDeleting(false);
     }
   }
@@ -228,7 +261,9 @@ export function useNotificationList({
   return {
     calendarErrorMessage,
     calendarItems,
-    closeDeleteDialog: () => setSelectedNotification(null),
+    closeDeleteDialog: () => {
+      if (!deleting.current) setSelectedNotification(null);
+    },
     confirmDelete: handleDelete,
     creationMethod,
     currentPage: validPage,
