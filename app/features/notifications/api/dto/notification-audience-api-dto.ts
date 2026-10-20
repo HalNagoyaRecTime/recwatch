@@ -48,3 +48,15 @@ export type EventAudienceGatheringApiDto = {
   };
   member_count: number;
 };
+
+export type UserAudienceApiDto = {
+  user_id: number;
+  display_name: string;
+};
+
+export type UserAudiencePageApiDto = {
+  items: UserAudienceApiDto[];
+  total: number;
+  limit: number;
+  offset: number;
+};

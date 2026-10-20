@@ -26,6 +26,10 @@ export default [
       "notifications/:notificationId",
       "routes/main/notifications.$notificationId.tsx"
     ),
+    route(
+      "notifications/:notificationId/edit",
+      "routes/main/notifications.$notificationId.edit.tsx"
+    ),
     route("students", "routes/main/students.tsx", [
       route("new", "routes/main/students.new.tsx"),
       route(":studentId/edit", "routes/main/students.$studentId.edit.tsx"),
