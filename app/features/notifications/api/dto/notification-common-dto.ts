@@ -47,6 +47,9 @@ export type NotificationAudienceInputDto = {
 
 export type NotificationAudienceDto = {
   items: NotificationAudienceItemDto[];
+};
+
+export type NotificationScheduleAudienceDto = NotificationAudienceDto & {
   recipientResolution: {
     status: "pending" | "resolved";
     resolvedCount: number;

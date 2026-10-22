@@ -10,9 +10,11 @@ import type {
   NotificationAudienceItem,
 } from "~/features/notifications/api/contracts/admin-notification-types";
 import type {
+  NotificationAudienceDto,
   NotificationAudienceInputItemDto,
   NotificationAudienceItemDto,
   NotificationPushDeliveryStatusDto,
+  NotificationScheduleAudienceDto,
   NotificationScheduleStatusDto,
 } from "~/features/notifications/api/dto/notification-common-dto";
 import {
@@ -82,6 +84,41 @@ describe("notification v2 contract", () => {
       label: null,
     };
     expect(response.label).toBeNull();
+  });
+
+  it("Audienceの基底型とSchedule用型を分離する", () => {
+    expectTypeOf<NotificationAudienceDto>().toEqualTypeOf<{
+      items: NotificationAudienceItemDto[];
+    }>();
+    expectTypeOf<NotificationScheduleAudienceDto>().toEqualTypeOf<
+      NotificationAudienceDto & {
+        recipientResolution: {
+          status: "pending" | "resolved";
+          resolvedCount: number;
+        };
+      }
+    >();
+  });
+
+  it("Schedule audienceはrecipientResolutionを必須にする", () => {
+    const notification = adminNotificationListFixture.items[0];
+    const schedule = notification.schedules[0];
+
+    expect(() =>
+      parseAdminNotificationListResponse({
+        items: [
+          {
+            ...notification,
+            schedules: [
+              {
+                ...schedule,
+                audience: { items: schedule.audience.items },
+              },
+            ],
+          },
+        ],
+      })
+    ).toThrow(ClientError);
   });
 
   it("Contract型はDTOのaliasを利用する", () => {

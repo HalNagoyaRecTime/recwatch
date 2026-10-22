@@ -9,12 +9,12 @@ import type {
   NotificationScheduleSummaryDto,
 } from "~/features/notifications/api/dto/admin-notification-dto";
 import {
-  isNotificationAudience,
   isNotificationContent,
   isNotificationCreation,
   isNotificationImportance,
   isNotificationPushContent,
   isNotificationRecipientPushSummary,
+  isNotificationScheduleAudience,
   isNotificationScheduleStatus,
   isNullableNotificationStop,
   isNullableNotificationUserReference,
@@ -104,7 +104,7 @@ function isAdminNotificationListSchedule(
     isNotificationScheduleStatus(value.status) &&
     isNullableNotificationUserReference(value.scheduledBy) &&
     isString(value.createdAt) &&
-    isNotificationAudience(value.audience) &&
+    isNotificationScheduleAudience(value.audience) &&
     isNotificationRecipientPushSummary(value.recipientPushSummary)
   );
 }

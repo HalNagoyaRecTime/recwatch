@@ -6,6 +6,7 @@ import type {
   NotificationPushContentDto,
   NotificationPushDeliveryStatusDto,
   NotificationRecipientPushSummaryDto,
+  NotificationScheduleAudienceDto,
   NotificationScheduleStatusDto,
   NotificationStopDto,
   NotificationUserReferenceDto,
@@ -159,11 +160,23 @@ export function isNotificationAudience(
   return (
     isRecord(value) &&
     Array.isArray(value.items) &&
-    value.items.every(isNotificationAudienceItem) &&
-    isRecord(value.recipientResolution) &&
-    (value.recipientResolution.status === "pending" ||
-      value.recipientResolution.status === "resolved") &&
-    isNonNegativeInteger(value.recipientResolution.resolvedCount)
+    value.items.every(isNotificationAudienceItem)
+  );
+}
+
+export function isNotificationScheduleAudience(
+  value: unknown
+): value is NotificationScheduleAudienceDto {
+  if (!isNotificationAudience(value)) return false;
+
+  const recipientResolution = (value as Record<string, unknown>)
+    .recipientResolution;
+
+  return (
+    isRecord(recipientResolution) &&
+    (recipientResolution.status === "pending" ||
+      recipientResolution.status === "resolved") &&
+    isNonNegativeInteger(recipientResolution.resolvedCount)
   );
 }
 
