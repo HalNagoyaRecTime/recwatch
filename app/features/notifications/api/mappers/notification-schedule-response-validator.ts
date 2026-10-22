@@ -46,6 +46,7 @@ export function isNotificationScheduleDetail(
     isNotificationImportance(value.importance) &&
     isString(value.sendAt) &&
     isNotificationScheduleStatus(value.status) &&
+    isNullableString(value.failureReason) &&
     isNullableNotificationStop(value.stop) &&
     isNotificationCreation(value.creation) &&
     isRecord(value.audienceProgress) &&
@@ -118,6 +119,7 @@ function isNotificationScheduleListItem(
     isNotificationImportance(value.importance) &&
     isString(value.sendAt) &&
     isNotificationScheduleStatus(value.status) &&
+    isNullableString(value.failureReason) &&
     isNullableNotificationStop(value.stop) &&
     isNotificationCreation(value.creation)
   );

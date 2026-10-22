@@ -157,6 +157,8 @@ export const notificationScheduleListFixture: NotificationScheduleListResponseDt
         importance: notification.importance,
         sendAt: schedule.sendAt,
         status: schedule.status,
+        failureReason:
+          schedule.status === "failed" ? "FCM送信に失敗しました" : null,
         stop:
           schedule.status === "stopped"
             ? {

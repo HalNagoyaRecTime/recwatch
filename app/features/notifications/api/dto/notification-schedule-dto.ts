@@ -20,6 +20,7 @@ export type NotificationScheduleListItemDto = {
   importance: NotificationImportanceDto;
   sendAt: string;
   status: NotificationScheduleStatusDto;
+  failureReason: string | null;
   stop: NotificationStopDto | null;
   creation: NotificationCreationDto;
 };
@@ -45,6 +46,7 @@ export type NotificationScheduleDetailDto = {
   importance: NotificationImportanceDto;
   sendAt: string;
   status: NotificationScheduleStatusDto;
+  failureReason: string | null;
   stop: NotificationStopDto | null;
   creation: NotificationCreationDto;
   audienceProgress: {
