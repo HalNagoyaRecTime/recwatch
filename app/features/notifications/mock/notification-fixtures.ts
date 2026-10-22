@@ -10,17 +10,10 @@ import type {
   NotificationScheduleListResponseDto,
   NotificationScheduleResultsDto,
 } from "~/features/notifications/api/dto/notification-schedule-dto";
-import type { NotificationScheduleStatusDto } from "~/features/notifications/api/dto/notification-common-dto";
+import { NOTIFICATION_SCHEDULE_STATUSES } from "~/features/notifications/api/dto/notification-common-dto";
 import { ApiClientError } from "~/lib/api-client-error";
 
-const scheduleStatuses: NotificationScheduleStatusDto[] = [
-  "scheduled",
-  "resolving",
-  "sending",
-  "completed",
-  "failed",
-  "stopped",
-];
+const scheduleStatuses = NOTIFICATION_SCHEDULE_STATUSES;
 
 export const adminNotificationListFixture: AdminNotificationListResponseDto = {
   items: scheduleStatuses.map((status, index) => {

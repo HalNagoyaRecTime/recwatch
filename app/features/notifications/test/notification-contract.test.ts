@@ -9,14 +9,26 @@ import type {
   AdminNotificationListItem,
   NotificationAudienceItem,
 } from "~/features/notifications/api/contracts/admin-notification-types";
-import type {
-  NotificationAudienceDto,
-  NotificationAudienceInputItemDto,
-  NotificationAudienceItemDto,
-  NotificationPushDeliveryStatusDto,
-  NotificationScheduleAudienceDto,
-  NotificationScheduleStatusDto,
+import {
+  NOTIFICATION_AUDIENCE_TYPES,
+  NOTIFICATION_CREATION_METHODS,
+  NOTIFICATION_DELIVERY_TYPES,
+  NOTIFICATION_IMPORTANCE_LEVELS,
+  NOTIFICATION_PLATFORMS,
+  NOTIFICATION_PUSH_DELIVERY_STATUSES,
+  NOTIFICATION_RECIPIENT_RESOLUTION_STATUSES,
+  NOTIFICATION_SCHEDULE_STATUSES,
+  NOTIFICATION_SOURCE_TYPES,
+  NOTIFICATION_STOP_REASONS,
+  NOTIFICATION_TARGET_AUDIENCE_TYPES,
+  type NotificationAudienceDto,
+  type NotificationAudienceInputItemDto,
+  type NotificationAudienceItemDto,
+  type NotificationPushDeliveryStatusDto,
+  type NotificationScheduleAudienceDto,
+  type NotificationScheduleStatusDto,
 } from "~/features/notifications/api/dto/notification-common-dto";
+import { notificationApiErrorCodes } from "~/features/notifications/api/dto/notification-error-dto";
 import {
   parseAdminNotificationDetail,
   parseAdminNotificationListResponse,
@@ -71,6 +83,63 @@ describe("notification v2 contract", () => {
     expectTypeOf<NotificationPushDeliveryStatusDto>().toEqualTypeOf<
       "pending" | "sending" | "retry_wait" | "sent" | "failed" | "stopped"
     >();
+  });
+
+  it("通知契約の値がAPI定義と一致する", () => {
+    expect(NOTIFICATION_SCHEDULE_STATUSES).toEqual([
+      "scheduled",
+      "resolving",
+      "sending",
+      "completed",
+      "failed",
+      "stopped",
+    ]);
+    expect(NOTIFICATION_PUSH_DELIVERY_STATUSES).toEqual([
+      "pending",
+      "sending",
+      "retry_wait",
+      "sent",
+      "failed",
+      "stopped",
+    ]);
+    expect(NOTIFICATION_IMPORTANCE_LEVELS).toEqual(["low", "normal", "high"]);
+    expect(NOTIFICATION_PLATFORMS).toEqual(["ios", "android"]);
+    expect(NOTIFICATION_TARGET_AUDIENCE_TYPES).toEqual([
+      "class_room",
+      "gathering",
+      "event",
+      "user",
+    ]);
+    expect(NOTIFICATION_AUDIENCE_TYPES).toEqual([
+      "all",
+      "class_room",
+      "gathering",
+      "event",
+      "user",
+    ]);
+    expect(NOTIFICATION_RECIPIENT_RESOLUTION_STATUSES).toEqual([
+      "pending",
+      "resolved",
+    ]);
+    expect(NOTIFICATION_DELIVERY_TYPES).toEqual(["immediate", "scheduled"]);
+    expect(NOTIFICATION_CREATION_METHODS).toEqual(["manual", "automatic"]);
+    expect(NOTIFICATION_SOURCE_TYPES).toEqual(["gathering"]);
+    expect(NOTIFICATION_STOP_REASONS).toEqual(["manual", "source_deleted"]);
+    expect(notificationApiErrorCodes).toEqual([
+      "VALIDATION_ERROR",
+      "UNAUTHORIZED",
+      "STAFF_REQUIRED",
+      "ADMIN_NOTIFICATION_NOT_FOUND",
+      "NOTIFICATION_SCHEDULE_NOT_FOUND",
+      "NOTIFICATION_AUDIENCE_NOT_FOUND",
+      "NOTIFICATION_IMPORTANCE_FORBIDDEN",
+      "NOTIFICATION_PUSH_DELIVERY_NOT_FOUND",
+      "NOTIFICATION_EDIT_NOT_ALLOWED",
+      "NOTIFICATION_DELETE_NOT_ALLOWED",
+      "NOTIFICATION_SCHEDULE_CANCEL_NOT_ALLOWED",
+      "NOTIFICATION_SCHEDULE_STOP_NOT_ALLOWED",
+      "NOTIFICATION_RESEND_NOT_ALLOWED",
+    ]);
   });
 
   it("AudienceのRequestとResponseを別の型にする", () => {

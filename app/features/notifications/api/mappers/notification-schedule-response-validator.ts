@@ -11,8 +11,10 @@ import {
   isNotificationCreation,
   isNotificationDeliveryProgress,
   isNotificationImportance,
+  isNotificationPlatform,
   isNotificationPushContent,
   isNotificationPushDeliveryStatus,
+  isNotificationRecipientResolutionStatus,
   isNotificationScheduleStatus,
   isNotificationUserReference,
   isNullableNotificationStop,
@@ -54,8 +56,7 @@ export function isNotificationScheduleDetail(
     isNonNegativeInteger(value.audienceProgress.resolvedCount) &&
     isRecord(value.recipientProgress) &&
     isNonNegativeInteger(value.recipientProgress.count) &&
-    (value.recipientProgress.status === "pending" ||
-      value.recipientProgress.status === "resolved") &&
+    isNotificationRecipientResolutionStatus(value.recipientProgress.status) &&
     isNotificationDeliveryProgress(value.deliveryProgress)
   );
 }
@@ -85,7 +86,7 @@ export function isNotificationPushDeliveryDetail(
     isPositiveInteger(value.notificationPushDeliveryId) &&
     isPositiveInteger(value.notificationRecipientId) &&
     isNullablePositiveInteger(value.firebaseTokenId) &&
-    (value.platform === "ios" || value.platform === "android") &&
+    isNotificationPlatform(value.platform) &&
     isNotificationPushDeliveryStatus(value.status) &&
     isNonNegativeInteger(value.attemptCount) &&
     isNullableString(value.firstAttemptAt) &&
@@ -141,7 +142,7 @@ function isNotificationResultDelivery(
   return (
     isRecord(value) &&
     isPositiveInteger(value.notificationPushDeliveryId) &&
-    (value.platform === "ios" || value.platform === "android") &&
+    isNotificationPlatform(value.platform) &&
     isNotificationPushDeliveryStatus(value.status) &&
     isNonNegativeInteger(value.attemptCount) &&
     isNullableString(value.lastAttemptAt) &&

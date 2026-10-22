@@ -1,35 +1,37 @@
-import type {
-  NotificationAudienceDto,
-  NotificationAudienceItemDto,
-  NotificationContentDto,
-  NotificationCreationDto,
-  NotificationPushContentDto,
-  NotificationPushDeliveryStatusDto,
-  NotificationRecipientPushSummaryDto,
-  NotificationScheduleAudienceDto,
-  NotificationScheduleStatusDto,
-  NotificationStopDto,
-  NotificationUserReferenceDto,
+import {
+  NOTIFICATION_AUDIENCE_TYPES,
+  NOTIFICATION_CREATION_METHODS,
+  NOTIFICATION_IMPORTANCE_LEVELS,
+  NOTIFICATION_PLATFORMS,
+  NOTIFICATION_PUSH_DELIVERY_STATUSES,
+  NOTIFICATION_RECIPIENT_RESOLUTION_STATUSES,
+  NOTIFICATION_SCHEDULE_STATUSES,
+  NOTIFICATION_SOURCE_TYPES,
+  NOTIFICATION_STOP_REASONS,
+  NOTIFICATION_TARGET_AUDIENCE_TYPES,
+  type NotificationAudienceDto,
+  type NotificationAudienceItemDto,
+  type NotificationContentDto,
+  type NotificationCreationDto,
+  type NotificationImportanceDto,
+  type NotificationPlatformDto,
+  type NotificationPushContentDto,
+  type NotificationPushDeliveryStatusDto,
+  type NotificationRecipientPushSummaryDto,
+  type NotificationRecipientResolutionStatusDto,
+  type NotificationScheduleAudienceDto,
+  type NotificationScheduleStatusDto,
+  type NotificationStopDto,
+  type NotificationUserReferenceDto,
 } from "~/features/notifications/api/dto/notification-common-dto";
 import type { NotificationDeliveryProgressDto } from "~/features/notifications/api/dto/notification-schedule-dto";
 
-const scheduleStatuses = new Set<NotificationScheduleStatusDto>([
-  "scheduled",
-  "resolving",
-  "sending",
-  "completed",
-  "failed",
-  "stopped",
-]);
-
-const deliveryStatuses = new Set<NotificationPushDeliveryStatusDto>([
-  "pending",
-  "sending",
-  "retry_wait",
-  "sent",
-  "failed",
-  "stopped",
-]);
+function isOneOf<T extends string>(
+  value: unknown,
+  values: readonly T[]
+): value is T {
+  return typeof value === "string" && values.includes(value as T);
+}
 
 export function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
@@ -60,25 +62,31 @@ export function isNullablePositiveInteger(
 export function isNotificationScheduleStatus(
   value: unknown
 ): value is NotificationScheduleStatusDto {
-  return (
-    typeof value === "string" &&
-    scheduleStatuses.has(value as NotificationScheduleStatusDto)
-  );
+  return isOneOf(value, NOTIFICATION_SCHEDULE_STATUSES);
 }
 
 export function isNotificationPushDeliveryStatus(
   value: unknown
 ): value is NotificationPushDeliveryStatusDto {
-  return (
-    typeof value === "string" &&
-    deliveryStatuses.has(value as NotificationPushDeliveryStatusDto)
-  );
+  return isOneOf(value, NOTIFICATION_PUSH_DELIVERY_STATUSES);
 }
 
 export function isNotificationImportance(
   value: unknown
-): value is "low" | "normal" | "high" {
-  return value === "low" || value === "normal" || value === "high";
+): value is NotificationImportanceDto {
+  return isOneOf(value, NOTIFICATION_IMPORTANCE_LEVELS);
+}
+
+export function isNotificationPlatform(
+  value: unknown
+): value is NotificationPlatformDto {
+  return isOneOf(value, NOTIFICATION_PLATFORMS);
+}
+
+export function isNotificationRecipientResolutionStatus(
+  value: unknown
+): value is NotificationRecipientResolutionStatusDto {
+  return isOneOf(value, NOTIFICATION_RECIPIENT_RESOLUTION_STATUSES);
 }
 
 export function isNotificationUserReference(
@@ -118,17 +126,17 @@ export function isNotificationCreation(
 ): value is NotificationCreationDto {
   if (!isRecord(value)) return false;
 
-  if (value.method === "manual") {
+  if (value.method === NOTIFICATION_CREATION_METHODS[0]) {
     return (
       isNullableNotificationUserReference(value.user) && value.source === null
     );
   }
 
   return (
-    value.method === "automatic" &&
+    value.method === NOTIFICATION_CREATION_METHODS[1] &&
     value.user === null &&
     isRecord(value.source) &&
-    value.source.type === "gathering" &&
+    value.source.type === NOTIFICATION_SOURCE_TYPES[0] &&
     isPositiveInteger(value.source.id) &&
     isNullableString(value.source.label)
   );
@@ -139,15 +147,12 @@ export function isNotificationAudienceItem(
 ): value is NotificationAudienceItemDto {
   if (!isRecord(value)) return false;
 
-  if (value.type === "all") {
+  if (value.type === NOTIFICATION_AUDIENCE_TYPES[0]) {
     return Object.keys(value).length === 1;
   }
 
   return (
-    (value.type === "class_room" ||
-      value.type === "gathering" ||
-      value.type === "event" ||
-      value.type === "user") &&
+    isOneOf(value.type, NOTIFICATION_TARGET_AUDIENCE_TYPES) &&
     Object.keys(value).length === 3 &&
     isPositiveInteger(value.targetId) &&
     isNullableString(value.label)
@@ -174,8 +179,7 @@ export function isNotificationScheduleAudience(
 
   return (
     isRecord(recipientResolution) &&
-    (recipientResolution.status === "pending" ||
-      recipientResolution.status === "resolved") &&
+    isNotificationRecipientResolutionStatus(recipientResolution.status) &&
     isNonNegativeInteger(recipientResolution.resolvedCount)
   );
 }
@@ -185,7 +189,7 @@ export function isNotificationStop(
 ): value is NotificationStopDto {
   return (
     isRecord(value) &&
-    (value.reason === "manual" || value.reason === "source_deleted") &&
+    isOneOf(value.reason, NOTIFICATION_STOP_REASONS) &&
     isString(value.stoppedAt) &&
     isNullableNotificationUserReference(value.stoppedBy)
   );

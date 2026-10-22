@@ -8,6 +8,7 @@ import type {
   NotificationCreateResponseDto,
   NotificationScheduleSummaryDto,
 } from "~/features/notifications/api/dto/admin-notification-dto";
+import { DEFAULT_NOTIFICATION_IMPORTANCE } from "~/features/notifications/api/dto/notification-common-dto";
 import {
   isNotificationContent,
   isNotificationCreation,
@@ -66,7 +67,7 @@ export function isNotificationConfig(
   return (
     isRecord(value) &&
     isRecord(value.importance) &&
-    value.importance.default === "normal" &&
+    value.importance.default === DEFAULT_NOTIFICATION_IMPORTANCE &&
     Array.isArray(value.importance.options) &&
     value.importance.options.every(isNotificationImportance)
   );

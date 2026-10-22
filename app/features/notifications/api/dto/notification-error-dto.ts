@@ -11,6 +11,7 @@ export type NotificationApiErrorDto = {
   };
 };
 
+// OpenAPIのnotificationErrorCodeSchemaと一致させる
 export const notificationApiErrorCodes = [
   "VALIDATION_ERROR",
   "UNAUTHORIZED",

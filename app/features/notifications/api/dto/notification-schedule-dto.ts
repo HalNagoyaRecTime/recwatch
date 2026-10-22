@@ -6,6 +6,7 @@ import type {
   NotificationPlatformDto,
   NotificationPushContentDto,
   NotificationPushDeliveryStatusDto,
+  NotificationRecipientResolutionStatusDto,
   NotificationScheduleStatusDto,
   NotificationStopDto,
   NotificationUserReferenceDto,
@@ -55,7 +56,7 @@ export type NotificationScheduleDetailDto = {
   };
   recipientProgress: {
     count: number;
-    status: "pending" | "resolved";
+    status: NotificationRecipientResolutionStatusDto;
   };
   deliveryProgress: NotificationDeliveryProgressDto;
 };
