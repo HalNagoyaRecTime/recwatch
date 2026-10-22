@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { toNotificationDraftErrors } from "~/features/notifications/api/mappers/notification-form-validation-error-mapper";
+import { toNotificationDraftErrors } from "~/features/notifications/api/contracts/notification-form-errors";
 describe("通知フォームのAPI validation変換", () => {
   it("実APIの先頭キーと未知のエラーを欠落させず表示する", () => {
     expect(

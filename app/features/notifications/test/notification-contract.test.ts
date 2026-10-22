@@ -28,7 +28,9 @@ import {
   type NotificationScheduleAudienceDto,
   type NotificationScheduleStatusDto,
 } from "~/features/notifications/api/dto/notification-common-dto";
-import { notificationApiErrorCodes } from "~/features/notifications/api/dto/notification-error-dto";
+import { notificationApiErrorCodes } from "~/features/notifications/api/contracts/notification-error";
+import { notificationAudienceTypes } from "~/features/notifications/model/notification-audience";
+import { notificationImportanceLevels } from "~/features/notifications/model/notification-draft";
 import {
   parseAdminNotificationDetail,
   parseAdminNotificationListResponse,
@@ -38,7 +40,7 @@ import {
 import {
   readNotificationApiErrorCode,
   readNotificationValidationDetails,
-} from "~/features/notifications/api/mappers/notification-api-error-mapper";
+} from "~/features/notifications/api/contracts/notification-error";
 import {
   parseNotificationPushDeliveryDetail,
   parseNotificationScheduleDetail,
@@ -125,6 +127,10 @@ describe("notification v2 contract", () => {
     expect(NOTIFICATION_CREATION_METHODS).toEqual(["manual", "automatic"]);
     expect(NOTIFICATION_SOURCE_TYPES).toEqual(["gathering"]);
     expect(NOTIFICATION_STOP_REASONS).toEqual(["manual", "source_deleted"]);
+    expect(notificationAudienceTypes).toEqual(NOTIFICATION_AUDIENCE_TYPES);
+    expect(notificationImportanceLevels).toEqual(
+      NOTIFICATION_IMPORTANCE_LEVELS
+    );
     expect(notificationApiErrorCodes).toEqual([
       "VALIDATION_ERROR",
       "UNAUTHORIZED",

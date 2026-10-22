@@ -14,9 +14,9 @@ import type {
 import type {
   NotificationDeliveryTiming,
   NotificationDraft,
+  NotificationImportance,
 } from "~/features/notifications/model/notification-draft";
 import type { NotificationDraftErrors } from "~/features/notifications/model/notification-draft-validation";
-import type { NotificationImportanceDto } from "~/features/notifications/api/dto/notification-common-dto";
 
 type NotificationFormProps = {
   draft: NotificationDraft;
@@ -25,7 +25,7 @@ type NotificationFormProps = {
   isAudienceLoading?: boolean;
   audienceError?: string | null;
   configError?: string | null;
-  importanceOptions?: NotificationImportanceDto[];
+  importanceOptions?: NotificationImportance[];
   recipientCount?: number | null;
   recipientCountError?: string | null;
   isRecipientCountLoading?: boolean;
@@ -60,7 +60,7 @@ const deliveryTimingOptions = [
   { label: "予約配信", value: "scheduled" },
 ] as const;
 
-const importanceLabels: Record<NotificationImportanceDto, string> = {
+const importanceLabels: Record<NotificationImportance, string> = {
   low: "低",
   normal: "通常",
   high: "高",
