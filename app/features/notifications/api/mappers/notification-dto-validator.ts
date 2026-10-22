@@ -26,7 +26,7 @@ import {
 } from "~/features/notifications/api/dto/notification-common-dto";
 import type { NotificationDeliveryProgressDto } from "~/features/notifications/api/dto/notification-schedule-dto";
 
-function isOneOf<T extends string>(
+export function isOneOf<T extends string>(
   value: unknown,
   values: readonly T[]
 ): value is T {
@@ -57,6 +57,39 @@ export function isNullablePositiveInteger(
   value: unknown
 ): value is number | null {
   return value === null || isPositiveInteger(value);
+}
+
+export function hasOnlyKeys(value: object, keys: readonly string[]): boolean {
+  const allowed = new Set(keys);
+  return Object.keys(value).every((key) => allowed.has(key));
+}
+
+export function hasExactKeys(value: object, keys: readonly string[]): boolean {
+  return Object.keys(value).length === keys.length && hasOnlyKeys(value, keys);
+}
+
+export function isOffsetDateTimeString(value: unknown): value is string {
+  return (
+    typeof value === "string" &&
+    /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/.test(
+      value
+    ) &&
+    Number.isFinite(Date.parse(value))
+  );
+}
+
+export function isUtcDateTimeString(value: unknown): value is string {
+  return (
+    typeof value === "string" &&
+    /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/.test(value) &&
+    Number.isFinite(Date.parse(value))
+  );
+}
+
+export function isNullableUtcDateTimeString(
+  value: unknown
+): value is string | null {
+  return value === null || isUtcDateTimeString(value);
 }
 
 export function isNotificationScheduleStatus(
@@ -94,6 +127,7 @@ export function isNotificationUserReference(
 ): value is NotificationUserReferenceDto {
   return (
     isRecord(value) &&
+    hasExactKeys(value, ["userId", "userName"]) &&
     isPositiveInteger(value.userId) &&
     isString(value.userName)
   );
@@ -108,7 +142,12 @@ export function isNullableNotificationUserReference(
 export function isNotificationPushContent(
   value: unknown
 ): value is NotificationPushContentDto {
-  return isRecord(value) && isString(value.title) && isString(value.body);
+  return (
+    isRecord(value) &&
+    hasExactKeys(value, ["title", "body"]) &&
+    isString(value.title) &&
+    isString(value.body)
+  );
 }
 
 export function isNotificationContent(
@@ -116,6 +155,7 @@ export function isNotificationContent(
 ): value is NotificationContentDto {
   return (
     isRecord(value) &&
+    hasExactKeys(value, ["push", "detail"]) &&
     isNotificationPushContent(value.push) &&
     isNotificationPushContent(value.detail)
   );
@@ -124,7 +164,9 @@ export function isNotificationContent(
 export function isNotificationCreation(
   value: unknown
 ): value is NotificationCreationDto {
-  if (!isRecord(value)) return false;
+  if (!isRecord(value) || !hasExactKeys(value, ["method", "user", "source"])) {
+    return false;
+  }
 
   if (value.method === NOTIFICATION_CREATION_METHODS[0]) {
     return (
@@ -136,6 +178,7 @@ export function isNotificationCreation(
     value.method === NOTIFICATION_CREATION_METHODS[1] &&
     value.user === null &&
     isRecord(value.source) &&
+    hasExactKeys(value.source, ["type", "id", "label"]) &&
     value.source.type === NOTIFICATION_SOURCE_TYPES[0] &&
     isPositiveInteger(value.source.id) &&
     isNullableString(value.source.label)
@@ -148,12 +191,12 @@ export function isNotificationAudienceItem(
   if (!isRecord(value)) return false;
 
   if (value.type === NOTIFICATION_AUDIENCE_TYPES[0]) {
-    return Object.keys(value).length === 1;
+    return hasExactKeys(value, ["type"]);
   }
 
   return (
     isOneOf(value.type, NOTIFICATION_TARGET_AUDIENCE_TYPES) &&
-    Object.keys(value).length === 3 &&
+    hasExactKeys(value, ["type", "targetId", "label"]) &&
     isPositiveInteger(value.targetId) &&
     isNullableString(value.label)
   );
@@ -164,6 +207,7 @@ export function isNotificationAudience(
 ): value is NotificationAudienceDto {
   return (
     isRecord(value) &&
+    hasExactKeys(value, ["items"]) &&
     Array.isArray(value.items) &&
     value.items.every(isNotificationAudienceItem)
   );
@@ -172,13 +216,21 @@ export function isNotificationAudience(
 export function isNotificationScheduleAudience(
   value: unknown
 ): value is NotificationScheduleAudienceDto {
-  if (!isNotificationAudience(value)) return false;
+  if (
+    !isRecord(value) ||
+    !hasExactKeys(value, ["items", "recipientResolution"]) ||
+    !Array.isArray(value.items) ||
+    !value.items.every(isNotificationAudienceItem)
+  ) {
+    return false;
+  }
 
   const recipientResolution = (value as Record<string, unknown>)
     .recipientResolution;
 
   return (
     isRecord(recipientResolution) &&
+    hasExactKeys(recipientResolution, ["status", "resolvedCount"]) &&
     isNotificationRecipientResolutionStatus(recipientResolution.status) &&
     isNonNegativeInteger(recipientResolution.resolvedCount)
   );
@@ -189,8 +241,9 @@ export function isNotificationStop(
 ): value is NotificationStopDto {
   return (
     isRecord(value) &&
+    hasExactKeys(value, ["reason", "stoppedAt", "stoppedBy"]) &&
     isOneOf(value.reason, NOTIFICATION_STOP_REASONS) &&
-    isString(value.stoppedAt) &&
+    isUtcDateTimeString(value.stoppedAt) &&
     isNullableNotificationUserReference(value.stoppedBy)
   );
 }
@@ -206,6 +259,12 @@ export function isNotificationRecipientPushSummary(
 ): value is NotificationRecipientPushSummaryDto {
   return (
     isRecord(value) &&
+    hasExactKeys(value, [
+      "totalCount",
+      "successCount",
+      "failedCount",
+      "noPushTargetCount",
+    ]) &&
     isNonNegativeInteger(value.totalCount) &&
     isNonNegativeInteger(value.successCount) &&
     isNonNegativeInteger(value.failedCount) &&
@@ -218,6 +277,15 @@ export function isNotificationDeliveryProgress(
 ): value is NotificationDeliveryProgressDto {
   return (
     isRecord(value) &&
+    hasExactKeys(value, [
+      "totalCount",
+      "pendingCount",
+      "sendingCount",
+      "retryWaitCount",
+      "sentCount",
+      "failedCount",
+      "stoppedCount",
+    ]) &&
     isNonNegativeInteger(value.totalCount) &&
     isNonNegativeInteger(value.pendingCount) &&
     isNonNegativeInteger(value.sendingCount) &&
