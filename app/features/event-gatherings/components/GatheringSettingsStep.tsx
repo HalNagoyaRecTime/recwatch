@@ -12,7 +12,11 @@ import {
 } from "~/features/event-gatherings/api/http/event-gathering-dependencies";
 import { useEventGatheringSettings } from "~/features/event-gatherings/hooks/useEventGatheringSettings";
 import { useGatheringMemberCandidates } from "~/features/event-gatherings/hooks/useGatheringMemberCandidates";
-import type { EventGatheringSettings } from "~/features/event-gatherings/model/event-gathering-settings";
+import type {
+  EventGatheringSettings,
+  RoundDraft,
+} from "~/features/event-gatherings/model/event-gathering-settings";
+import { validateEventGatheringSettings } from "~/features/event-gatherings/model/validate-event-gathering-settings";
 import type { GatheringSpotGateway } from "~/features/gathering-spots/api/contracts/gathering-spot-gateway";
 import { httpGatheringSpotGateway } from "~/features/gathering-spots/api/http/gathering-spot-dependencies";
 import { useGatheringSpots } from "~/features/gathering-spots/hooks/useGatheringSpots";
@@ -62,10 +66,16 @@ export function GatheringSettingsStep({
   const [pendingMembers, setPendingMembers] = useState<
     Record<string, number[]>
   >({});
+  const [deletedRounds, setDeletedRounds] = useState<RoundDraft[]>([]);
+  const [isDeletingRounds, setIsDeletingRounds] = useState(false);
   const [memberSaveError, setMemberSaveError] = useState<string | null>(null);
 
   const loadError = settings.loadError ?? spotList.loadError;
-  const isBusy = settings.isLoading || spotList.isLoading || settings.isSaving;
+  const isBusy =
+    settings.isLoading ||
+    spotList.isLoading ||
+    settings.isSaving ||
+    isDeletingRounds;
   const isDisabled = isBusy || Boolean(loadError);
 
   function togglePicker(gatheringKey: string) {
@@ -76,6 +86,82 @@ export function GatheringSettingsStep({
   }
 
   async function handleSave() {
+    const hasDeletedRounds = deletedRounds.length > 0;
+    if (hasDeletedRounds) setIsDeletingRounds(true);
+    try {
+      await saveSettings();
+    } finally {
+      if (hasDeletedRounds) setIsDeletingRounds(false);
+    }
+  }
+
+  async function saveSettings() {
+    const deletedGatheringIds = [
+      ...new Set(
+        deletedRounds.flatMap((round) =>
+          round.gatherings.flatMap((gathering) =>
+            gathering.gatheringId === null ? [] : [gathering.gatheringId]
+          )
+        )
+      ),
+    ];
+
+    if (
+      deletedGatheringIds.length > 0 &&
+      "errors" in validateEventGatheringSettings(settings.rounds)
+    ) {
+      await settings.save();
+      return;
+    }
+
+    setMemberSaveError(null);
+
+    let memberSnapshots: { gatheringId: number; userIds: number[] }[] = [];
+    try {
+      memberSnapshots = await Promise.all(
+        deletedGatheringIds.map(async (gatheringId) => ({
+          gatheringId,
+          userIds: await memberGateway.loadMembers(gatheringId),
+        }))
+      );
+    } catch (error) {
+      setMemberSaveError(
+        getErrorMessage(
+          error,
+          "削除するRoundの参加者を取得できませんでした。時間をおいて再操作してください。"
+        )
+      );
+      return;
+    }
+
+    const attemptedMemberClears: typeof memberSnapshots = [];
+    for (const snapshot of memberSnapshots) {
+      if (snapshot.userIds.length === 0) continue;
+      attemptedMemberClears.push(snapshot);
+      try {
+        await memberGateway.saveMembers(snapshot.gatheringId, []);
+      } catch (error) {
+        const restoreError = await restoreGatheringMembers(
+          attemptedMemberClears
+        );
+        setMemberSaveError(
+          [
+            getErrorMessage(
+              error,
+              "参加者の解除に失敗しました。Roundは削除されていません。"
+            ),
+            restoreError
+              ? `参加者を元に戻せませんでした。状態を確認して再操作してください。${restoreError}`
+              : null,
+          ]
+            .filter(Boolean)
+            .join(" ")
+        );
+        if (restoreError) onMembersSaved?.();
+        return;
+      }
+    }
+
     const pendingAssignments = settings.rounds.flatMap((round) =>
       round.gatherings.flatMap((gathering, index) =>
         Object.hasOwn(pendingMembers, gathering.key)
@@ -91,9 +177,16 @@ export function GatheringSettingsStep({
       )
     );
     const saved = await settings.save();
-    if (!saved) return;
-
-    setMemberSaveError(null);
+    if (!saved) {
+      const restoreError = await restoreGatheringMembers(attemptedMemberClears);
+      if (restoreError) {
+        setMemberSaveError(
+          `Roundの削除に失敗し、参加者の復元にも失敗しました。状態を確認して再操作してください。${restoreError}`
+        );
+        onMembersSaved?.();
+      }
+      return;
+    }
 
     for (const assignment of pendingAssignments) {
       const round = saved.rounds.find(
@@ -137,7 +230,24 @@ export function GatheringSettingsStep({
       }
     }
 
+    setDeletedRounds([]);
     onSaved(saved);
+  }
+
+  async function restoreGatheringMembers(
+    snapshots: readonly { gatheringId: number; userIds: number[] }[]
+  ): Promise<string | null> {
+    const errors: string[] = [];
+    for (const snapshot of snapshots) {
+      try {
+        await memberGateway.saveMembers(snapshot.gatheringId, snapshot.userIds);
+      } catch (error) {
+        errors.push(
+          getErrorMessage(error, `集合 ${snapshot.gatheringId} の参加者`)
+        );
+      }
+    }
+    return errors.length > 0 ? errors.join(" ") : null;
   }
 
   return (
@@ -183,6 +293,14 @@ export function GatheringSettingsStep({
                 settings.updateRoundNumber(round.key, roundNumber);
               }}
               onRemove={() => {
+                if (
+                  !window.confirm(
+                    `Round ${round.round}を削除します。Round内に登録されている参加者もすべて解除されます。よろしいですか？`
+                  )
+                ) {
+                  return;
+                }
+                setDeletedRounds((current) => [...current, round]);
                 setPendingMembers((current) => {
                   const next = { ...current };
                   for (const gathering of round.gatherings) {
@@ -284,7 +402,7 @@ export function GatheringSettingsStep({
 
       <div className="flex justify-end gap-3 pt-2">
         <Button
-          disabled={settings.isSaving}
+          disabled={settings.isSaving || isDeletingRounds}
           icon={ArrowLeft}
           onClick={onBack}
           size="lg"

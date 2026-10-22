@@ -6,7 +6,7 @@ import {
   within,
 } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it, vi, type Mock } from "vitest";
+import { afterEach, describe, expect, it, vi, type Mock } from "vitest";
 
 import { ApiClientError } from "~/lib/api-client-error";
 
@@ -57,6 +57,10 @@ const settingsWithMembers: EventGatheringSettings = {
     },
   ],
 };
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
 
 function createSpotGateway(): GatheringSpotGateway {
   return {
@@ -282,6 +286,7 @@ describe("GatheringSettingsStep", () => {
 
   it("Round の最後の 1 件は削除できず、Round ごと削除するとリクエストから外れる", async () => {
     const save = vi.fn().mockResolvedValue({ eventId: 12, rounds: [] });
+    vi.stubGlobal("confirm", vi.fn().mockReturnValue(true));
     renderStep({
       settingsGateway: {
         load: vi.fn().mockResolvedValue(existingSettings),
@@ -364,9 +369,11 @@ describe("GatheringSettingsStep", () => {
     expect(within(round2).getByLabelText("集合時間")).toHaveValue("11:00");
   });
 
-  it("参加者が登録済みの集合は人数を表示し、その集合と Round は削除できない", async () => {
+  it("参加者が登録済みの集合は個別削除できず、Round削除を確認できる", async () => {
     const memberGateway = createMemberGateway();
     (memberGateway.loadMembers as Mock).mockResolvedValue([1001, 1003]);
+    const confirm = vi.fn().mockReturnValue(true);
+    vi.stubGlobal("confirm", confirm);
     renderStep({
       memberGateway,
       settingsGateway: {
@@ -381,22 +388,153 @@ describe("GatheringSettingsStep", () => {
     expect(
       screen.getByText("参加者が登録されているため、この集合は削除できません。")
     ).toBeInTheDocument();
-    // 削除ボタンは参加者のいない 2 件目にだけ出る
+    // 個別削除ボタンは参加者のいない 2 件目にだけ出る
     expect(
       screen.getAllByRole("button", { name: "この集合を削除" })
     ).toHaveLength(1);
-    expect(screen.getByRole("button", { name: "削除" })).toBeDisabled();
-
-    // 開くまでは参加者を読まず、開いた集合の分だけ読んでチェックを入れる
-    expect(memberGateway.loadMembers).not.toHaveBeenCalled();
-    await user.click(
-      screen.getAllByRole("button", { name: "メンバーを選択" })[0]
+    expect(screen.getByRole("button", { name: "削除" })).toBeEnabled();
+    await user.click(screen.getByRole("button", { name: "削除" }));
+    expect(confirm).toHaveBeenCalledWith(
+      "Round 1を削除します。Round内に登録されている参加者もすべて解除されます。よろしいですか？"
     );
-    expect(await screen.findByLabelText("山田 太郎を選択")).toBeChecked();
-    expect(screen.getByLabelText("佐藤 花子を選択")).not.toBeChecked();
-    expect(screen.getByLabelText("鈴木 次郎を選択")).toBeChecked();
-    expect(memberGateway.loadMembers).toHaveBeenCalledTimes(1);
-    expect(memberGateway.loadMembers).toHaveBeenCalledWith(101);
+    expect(
+      screen.queryByRole("region", { name: "Round 1" })
+    ).not.toBeInTheDocument();
+  });
+
+  it("Round削除の確認をキャンセルするとRoundと参加者を維持する", async () => {
+    const memberGateway = createMemberGateway();
+    const save = vi.fn();
+    const confirm = vi.fn().mockReturnValue(false);
+    vi.stubGlobal("confirm", confirm);
+    renderStep({
+      memberGateway,
+      settingsGateway: {
+        load: vi.fn().mockResolvedValue(settingsWithMembers),
+        save,
+      },
+    });
+    const user = userEvent.setup();
+
+    await screen.findByRole("region", { name: "Round 1" });
+    await user.click(screen.getByRole("button", { name: "削除" }));
+    await user.click(screen.getByRole("button", { name: "集合設定を保存" }));
+
+    expect(confirm).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole("region", { name: "Round 1" })).toBeInTheDocument();
+    expect(memberGateway.loadMembers).not.toHaveBeenCalled();
+    expect(memberGateway.saveMembers).not.toHaveBeenCalled();
+    expect(save).toHaveBeenCalledWith(12, {
+      rounds: [
+        {
+          round: 1,
+          startTime: null,
+          gatherings: [
+            { gatheringId: 101, time: "10:45", spotId: 1 },
+            { gatheringId: 102, time: "10:55", spotId: 2 },
+          ],
+        },
+      ],
+    });
+  });
+
+  it("Round削除に失敗したら参加者を戻し、再試行できる", async () => {
+    const settingsSave = vi
+      .fn()
+      .mockRejectedValueOnce(new Error("保存エラー"))
+      .mockResolvedValue({ eventId: 12, rounds: [] });
+    const memberGateway = createMemberGateway();
+    (memberGateway.loadMembers as Mock).mockImplementation(
+      async (gatheringId: number) => (gatheringId === 101 ? [1001, 1003] : [])
+    );
+    vi.stubGlobal("confirm", vi.fn().mockReturnValue(true));
+    renderStep({
+      memberGateway,
+      settingsGateway: {
+        load: vi.fn().mockResolvedValue(settingsWithMembers),
+        save: settingsSave,
+      },
+    });
+    const user = userEvent.setup();
+
+    await screen.findByRole("region", { name: "Round 1" });
+    await user.click(screen.getByRole("button", { name: "削除" }));
+    await user.click(screen.getByRole("button", { name: "集合設定を保存" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "集合設定の保存に失敗しました。"
+    );
+    expect(memberGateway.saveMembers).toHaveBeenNthCalledWith(1, 101, []);
+    expect(memberGateway.saveMembers).toHaveBeenNthCalledWith(
+      2,
+      101,
+      [1001, 1003]
+    );
+    expect(settingsSave).toHaveBeenCalledTimes(1);
+
+    await user.click(screen.getByRole("button", { name: "集合設定を保存" }));
+
+    await waitFor(() => expect(settingsSave).toHaveBeenCalledTimes(2));
+    expect(memberGateway.saveMembers).toHaveBeenNthCalledWith(3, 101, []);
+    expect(memberGateway.loadMembers).toHaveBeenCalledTimes(4);
+  });
+
+  it("参加者解除に失敗したらRound削除を保存せず、エラーを表示する", async () => {
+    const settingsSave = vi.fn();
+    const memberGateway = createMemberGateway();
+    (memberGateway.loadMembers as Mock).mockImplementation(
+      async (gatheringId: number) => (gatheringId === 101 ? [1001] : [])
+    );
+    (memberGateway.saveMembers as Mock)
+      .mockRejectedValueOnce(new Error("参加者解除エラー"))
+      .mockResolvedValue([]);
+    vi.stubGlobal("confirm", vi.fn().mockReturnValue(true));
+    renderStep({
+      memberGateway,
+      settingsGateway: {
+        load: vi.fn().mockResolvedValue(settingsWithMembers),
+        save: settingsSave,
+      },
+    });
+    const user = userEvent.setup();
+
+    await screen.findByRole("region", { name: "Round 1" });
+    await user.click(screen.getByRole("button", { name: "削除" }));
+    await user.click(screen.getByRole("button", { name: "集合設定を保存" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "参加者の解除に失敗しました。Roundは削除されていません。"
+    );
+    expect(settingsSave).not.toHaveBeenCalled();
+    expect(memberGateway.saveMembers).toHaveBeenNthCalledWith(1, 101, []);
+    expect(memberGateway.saveMembers).toHaveBeenNthCalledWith(2, 101, [1001]);
+  });
+
+  it("読み込み後に追加された参加者もRound削除前に解除する", async () => {
+    const settingsSave = vi.fn().mockResolvedValue({
+      eventId: 12,
+      rounds: [],
+    });
+    const memberGateway = createMemberGateway();
+    (memberGateway.loadMembers as Mock).mockResolvedValue([1001]);
+    vi.stubGlobal("confirm", vi.fn().mockReturnValue(true));
+    renderStep({
+      memberGateway,
+      settingsGateway: {
+        load: vi.fn().mockResolvedValue(existingSettings),
+        save: settingsSave,
+      },
+    });
+    const user = userEvent.setup();
+
+    await screen.findByRole("region", { name: "Round 1" });
+    await user.click(screen.getByRole("button", { name: "削除" }));
+    await user.click(screen.getByRole("button", { name: "集合設定を保存" }));
+
+    await waitFor(() => {
+      expect(memberGateway.saveMembers).toHaveBeenCalledWith(101, []);
+      expect(settingsSave).toHaveBeenCalledWith(12, { rounds: [] });
+    });
   });
 
   it("参加者ピッカーで候補を絞り込んで選択し、保存すると PUT 1 回で送って人数に反映する", async () => {
@@ -720,7 +858,7 @@ describe("GatheringSettingsStep", () => {
 
     await screen.findByRole("region", { name: "Round 1" });
     expect(screen.getByText("1人登録済み")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "削除" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "削除" })).toBeEnabled();
     expect(
       screen.getAllByRole("button", { name: "この集合を削除" })
     ).toHaveLength(1);
