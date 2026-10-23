@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 
 import {
   canRemoveGathering,
-  canRemoveRound,
   createEmptyRoundDraft,
   toRoundDrafts,
   type EventGatheringSettings,
@@ -79,27 +78,11 @@ describe("createEmptyRoundDraft", () => {
   });
 });
 
-describe("canRemoveGathering / canRemoveRound", () => {
-  it("参加者が登録されている集合と、それを含む Round は削除できない", () => {
+describe("canRemoveGathering", () => {
+  it("参加者が登録されている集合は個別に削除できない", () => {
     const [round] = toRoundDrafts(settings);
 
     expect(canRemoveGathering(round.gatherings[0])).toBe(false);
     expect(canRemoveGathering(round.gatherings[1])).toBe(true);
-    expect(canRemoveRound(round)).toBe(false);
-  });
-
-  it("参加者のいない集合だけの Round は削除できる", () => {
-    const [round] = toRoundDrafts({
-      eventId: 12,
-      rounds: [
-        {
-          round: 1,
-          startTime: null,
-          gatherings: [settings.rounds[0].gatherings[1]],
-        },
-      ],
-    });
-
-    expect(canRemoveRound(round)).toBe(true);
   });
 });
