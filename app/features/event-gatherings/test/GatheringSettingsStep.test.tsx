@@ -416,8 +416,8 @@ describe("GatheringSettingsStep", () => {
     });
     const user = userEvent.setup();
 
-    await screen.findByRole("region", { name: "Round 1" });
-    await user.click(screen.getByRole("button", { name: "削除" }));
+    const round1 = await screen.findByRole("region", { name: "Round 1" });
+    await user.click(within(round1).getByRole("button", { name: "削除" }));
     await user.click(screen.getByRole("button", { name: "集合設定を保存" }));
 
     expect(confirm).toHaveBeenCalledTimes(1);
@@ -477,6 +477,116 @@ describe("GatheringSettingsStep", () => {
     await waitFor(() => expect(settingsSave).toHaveBeenCalledTimes(2));
     expect(memberGateway.saveMembers).toHaveBeenNthCalledWith(3, 101, []);
     expect(memberGateway.loadMembers).toHaveBeenCalledTimes(4);
+  });
+
+  it("Round削除後に別の集合の参加者登録が失敗しても再試行できる", async () => {
+    const memberGateway = createMemberGateway();
+    (memberGateway.loadMembers as Mock).mockImplementation(
+      async (gatheringId: number) => (gatheringId === 101 ? [1001] : [])
+    );
+    (memberGateway.saveMembers as Mock)
+      .mockResolvedValueOnce([])
+      .mockRejectedValueOnce(new Error("参加者登録エラー"))
+      .mockResolvedValueOnce([1002]);
+    const savedSettings: EventGatheringSettings = {
+      eventId: 12,
+      rounds: [
+        {
+          round: 2,
+          startTime: null,
+          gatherings: [
+            {
+              id: 201,
+              time: "11:00",
+              spot: { id: 2, name: "出入口②" },
+              memberCount: 0,
+            },
+            {
+              id: 202,
+              time: "11:10",
+              spot: { id: 2, name: "出入口②" },
+              memberCount: 0,
+            },
+          ],
+        },
+      ],
+    };
+    const settingsSave = vi.fn().mockResolvedValue(savedSettings);
+    const confirm = vi.fn().mockReturnValue(true);
+    vi.stubGlobal("confirm", confirm);
+    const user = userEvent.setup();
+    const { onMembersSaved } = renderStep({
+      memberGateway,
+      settingsGateway: {
+        load: vi.fn().mockResolvedValue({
+          eventId: 12,
+          rounds: [
+            {
+              round: 1,
+              startTime: null,
+              gatherings: [
+                {
+                  id: 101,
+                  time: "10:45",
+                  spot: { id: 1, name: "出入口①" },
+                  memberCount: 1,
+                },
+              ],
+            },
+            {
+              round: 2,
+              startTime: null,
+              gatherings: [
+                {
+                  id: 201,
+                  time: "11:00",
+                  spot: { id: 2, name: "出入口②" },
+                  memberCount: 0,
+                },
+              ],
+            },
+          ],
+        }),
+        save: settingsSave,
+      },
+    });
+
+    const round1 = await screen.findByRole("region", { name: "Round 1" });
+    await user.click(within(round1).getByRole("button", { name: "削除" }));
+    const round2 = screen.getByRole("region", { name: "Round 2" });
+    await user.click(
+      within(round2).getByRole("button", { name: "集合場所を追加" })
+    );
+    await user.click(
+      within(round2).getAllByRole("button", { name: "メンバーを選択" })[1]
+    );
+    await user.click(await screen.findByLabelText("佐藤 花子を選択"));
+    await user.click(screen.getByRole("button", { name: "選択を確定" }));
+    const gatheringTimes = within(round2).getAllByLabelText("集合時間");
+    await user.type(gatheringTimes[1], "11:10");
+    const spots = within(round2).getAllByRole("combobox", {
+      name: "集合場所",
+    });
+    await user.selectOptions(spots[1], "2");
+
+    await user.click(screen.getByRole("button", { name: "集合設定を保存" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "参加者の登録に失敗しました。集合設定を保存して再試行してください。"
+    );
+    expect(memberGateway.loadMembers).toHaveBeenCalledTimes(1);
+    expect(memberGateway.loadMembers).toHaveBeenCalledWith(101);
+    expect(memberGateway.saveMembers).toHaveBeenNthCalledWith(1, 101, []);
+    expect(memberGateway.saveMembers).toHaveBeenNthCalledWith(2, 202, [1002]);
+    expect(settingsSave).toHaveBeenCalledTimes(1);
+
+    await user.click(screen.getByRole("button", { name: "集合設定を保存" }));
+
+    await waitFor(() => expect(settingsSave).toHaveBeenCalledTimes(2));
+    expect(memberGateway.loadMembers).toHaveBeenCalledTimes(1);
+    expect(memberGateway.saveMembers).toHaveBeenCalledTimes(3);
+    expect(memberGateway.saveMembers).toHaveBeenLastCalledWith(202, [1002]);
+    expect(onMembersSaved).toHaveBeenCalledTimes(1);
   });
 
   it("参加者解除に失敗したらRound削除を保存せず、エラーを表示する", async () => {

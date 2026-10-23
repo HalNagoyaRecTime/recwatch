@@ -188,6 +188,8 @@ export function GatheringSettingsStep({
       return;
     }
 
+    setDeletedRounds([]);
+
     for (const assignment of pendingAssignments) {
       const round = saved.rounds.find(
         (savedRound) => savedRound.round === assignment.round
@@ -230,7 +232,6 @@ export function GatheringSettingsStep({
       }
     }
 
-    setDeletedRounds([]);
     onSaved(saved);
   }
 
