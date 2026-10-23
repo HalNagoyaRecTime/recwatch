@@ -100,10 +100,10 @@ function renderTeamRankingRouter(initialEntry: string) {
   return router;
 }
 
-function mockTeamList() {
+function mockTeamList(items: Team[] = [team]) {
   return vi.spyOn(TeamApi, "getTeamList").mockImplementation((query) =>
     Promise.resolve({
-      items: [team],
+      items,
       limit: query.limit,
       offset: query.offset,
       total: 100,
@@ -278,6 +278,56 @@ describe("team management nested routes", () => {
     expect(
       screen.getByRole("heading", { name: "チーム管理" })
     ).toBeInTheDocument();
+    expect(getTeamList).toHaveBeenCalledOnce();
+  });
+
+  it("得点が0のチームを削除すると一覧を再取得する", async () => {
+    const user = userEvent.setup();
+    const getTeamList = mockTeamList([{ ...team, score: 0 }]);
+    const deleteTeam = vi
+      .spyOn(TeamApi, "deleteTeam")
+      .mockResolvedValue(undefined);
+    mocks.getClassRoomData.mockResolvedValue([classRoom]);
+
+    renderTeamRankingRouter("/teams?search=keep");
+
+    await user.click(
+      await screen.findByRole("button", { name: "赤組の操作" }, initialRender)
+    );
+    await user.click(screen.getByRole("button", { name: "削除" }));
+    await user.click(screen.getByRole("button", { name: "削除する" }));
+
+    await waitFor(() => expect(getTeamList).toHaveBeenCalledTimes(2));
+    expect(deleteTeam).toHaveBeenCalledWith(3);
+    await waitFor(() =>
+      expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument()
+    );
+  });
+
+  it("削除の直前に得点が入って409になったときは理由を表示する", async () => {
+    const user = userEvent.setup();
+    const getTeamList = mockTeamList([{ ...team, score: 0 }]);
+    vi.spyOn(TeamApi, "deleteTeam").mockRejectedValue(
+      new ApiClientError(
+        409,
+        "チームに得点が登録されているため削除できません",
+        "TEAM_HAS_SCORES"
+      )
+    );
+    mocks.getClassRoomData.mockResolvedValue([classRoom]);
+
+    renderTeamRankingRouter("/teams");
+
+    await user.click(
+      await screen.findByRole("button", { name: "赤組の操作" }, initialRender)
+    );
+    await user.click(screen.getByRole("button", { name: "削除" }));
+    await user.click(screen.getByRole("button", { name: "削除する" }));
+
+    const dialog = screen.getByRole("alertdialog");
+    expect(await within(dialog).findByRole("alert")).toHaveTextContent(
+      "チームに得点が登録されているため削除できません"
+    );
     expect(getTeamList).toHaveBeenCalledOnce();
   });
 });
