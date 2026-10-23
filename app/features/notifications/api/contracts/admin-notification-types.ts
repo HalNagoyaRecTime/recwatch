@@ -25,6 +25,7 @@ export type {
   NotificationPushContentDto as NotificationPushContent,
   NotificationPushDeliveryStatusDto as NotificationPushDeliveryStatus,
   NotificationRecipientPushSummaryDto as NotificationRecipientPushSummary,
+  NotificationScheduleAudienceDto as NotificationScheduleAudience,
   NotificationScheduleStatusDto as NotificationScheduleStatus,
   NotificationStopDto as NotificationStop,
   NotificationUserReferenceDto as NotificationUserReference,

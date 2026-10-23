@@ -111,7 +111,7 @@ describe("NotificationDetailPage", () => {
         status === "stopped"
           ? {
               reason: "manual",
-              stoppedAt: "2026-11-07T13:00:00+09:00",
+              stoppedAt: "2026-11-07T04:00:00.000Z",
               stoppedBy: { userId: 456, userName: "HAL 花子" },
             }
           : null,
@@ -136,7 +136,7 @@ describe("NotificationDetailPage", () => {
     detail.schedules[0].scheduledBy = null;
     detail.schedules[0].stop = {
       reason: "manual",
-      stoppedAt: "2026-11-07T13:00:00+09:00",
+      stoppedAt: "2026-11-07T04:00:00.000Z",
       stoppedBy: null,
     };
     renderPage(createApis({ getDetail: vi.fn().mockResolvedValue(detail) }));

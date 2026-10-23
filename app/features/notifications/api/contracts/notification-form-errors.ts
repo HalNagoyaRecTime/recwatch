@@ -1,4 +1,4 @@
-import type { NotificationValidationDetailsDto } from "~/features/notifications/api/dto/notification-error-dto";
+import type { NotificationValidationDetails } from "~/features/notifications/api/contracts/notification-error";
 import type { NotificationDraftErrors } from "~/features/notifications/model/notification-draft-validation";
 
 const fieldByApiKey = new Map<string, keyof NotificationDraftErrors>([
@@ -17,8 +17,9 @@ const groupLabels = new Map([
   ["content", "通知内容"],
   ["schedule", "通知対象・配信日時"],
 ]);
+
 export function toNotificationDraftErrors(
-  details: NotificationValidationDetailsDto
+  details: NotificationValidationDetails
 ) {
   const fieldErrors: NotificationDraftErrors = {};
   const formErrors = [...details.formErrors];

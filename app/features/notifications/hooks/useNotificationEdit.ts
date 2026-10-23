@@ -1,14 +1,21 @@
 import { useEffect, useRef, useState } from "react";
 
-import type { AdminNotificationCommandApi } from "~/features/notifications/api/contracts/admin-notification-command-api";
+import type {
+  AdminNotificationCommandApi,
+  AdminNotificationDetail,
+} from "~/features/notifications/api/contracts/admin-notification-command-api";
 import type { AdminNotificationQueryApi } from "~/features/notifications/api/contracts/admin-notification-query-api";
 import type { NotificationAudienceApi } from "~/features/notifications/api/contracts/notification-audience-api";
 import type { NotificationConfigApi } from "~/features/notifications/api/contracts/notification-config-api";
-import { toNotificationAudienceInput } from "~/features/notifications/api/mappers/admin-notification-request-mapper";
-import type {
-  AdminNotificationDetail,
-  NotificationPatchRequest,
-} from "~/features/notifications/api/contracts/admin-notification-command-api";
+import {
+  readApiErrorStatus,
+  readNotificationValidationDetails,
+} from "~/features/notifications/api/contracts/notification-error";
+import { toNotificationDraftErrors } from "~/features/notifications/api/contracts/notification-form-errors";
+import {
+  toNotificationAudienceInput,
+  toNotificationPatchRequest,
+} from "~/features/notifications/api/contracts/notification-request-mapping";
 import type { NotificationAudienceOption } from "~/features/notifications/model/notification-audience";
 import {
   initialNotificationDraft,
@@ -19,10 +26,7 @@ import {
   validateNotificationAudiences,
   type NotificationDraftErrors,
 } from "~/features/notifications/model/notification-draft-validation";
-import { ApiClientError } from "~/lib/api-client-error";
 import { getErrorMessage } from "~/lib/client-error";
-import { toNotificationDraftErrors } from "~/features/notifications/api/mappers/notification-form-validation-error-mapper";
-import { readNotificationValidationDetails } from "~/features/notifications/api/mappers/notification-api-error-mapper";
 import {
   reportNotificationActionError,
   type NotificationFeedbackReporter,
@@ -305,7 +309,7 @@ export function useNotificationEdit({
       });
       return true;
     } catch (error) {
-      if (error instanceof ApiClientError && error.status === 409) {
+      if (readApiErrorStatus(error) === 409) {
         try {
           const latest = await queryApi.getDetail(notificationId);
           setNotificationResult((current) =>
@@ -402,54 +406,6 @@ function toNotificationDraft(
     ),
     deliveryTiming: "scheduled",
     scheduledAt: toDateTimeLocalValue(schedule?.sendAt),
-  };
-}
-
-function toNotificationPatchRequest(
-  notification: AdminNotificationDetail,
-  draft: NotificationDraft
-): NotificationPatchRequest | null {
-  const allSchedulesUnstarted = notification.schedules.every(
-    (schedule) => schedule.status === "scheduled"
-  );
-  if (!allSchedulesUnstarted) {
-    return {
-      content: {
-        detail: { title: draft.detailTitle, body: draft.detailBody },
-      },
-    };
-  }
-
-  const schedule = notification.schedules[0];
-  if (!schedule) return null;
-
-  const audienceItems = draft.audiences.map((audience) => {
-    if (audience.type === "all") return { type: "all" as const };
-    const targetId = Number(audience.targetId);
-    return Number.isSafeInteger(targetId) && targetId > 0
-      ? { type: audience.type, targetId }
-      : null;
-  });
-  if (audienceItems.some((item) => item === null)) return null;
-
-  const sendAt = draft.scheduledAt
-    ? new Date(draft.scheduledAt).toISOString()
-    : null;
-
-  return {
-    content: {
-      push: { title: draft.title, body: draft.body },
-      detail: { title: draft.detailTitle, body: draft.detailBody },
-    },
-    importance: draft.importance,
-    schedule: {
-      notificationScheduleId: schedule.notificationScheduleId,
-      audience: { items: audienceItems.filter((item) => item !== null) },
-      delivery:
-        draft.deliveryTiming === "scheduled" && sendAt
-          ? { type: "scheduled", sendAt }
-          : { type: "immediate", sendAt: null },
-    },
   };
 }
 

@@ -1,5 +1,4 @@
 import type {
-  NotificationAudienceDto,
   NotificationAudienceInputDto,
   NotificationContentDto,
   NotificationCreationDto,
@@ -8,6 +7,7 @@ import type {
   NotificationImportanceDto,
   NotificationPushContentDto,
   NotificationRecipientPushSummaryDto,
+  NotificationScheduleAudienceDto,
   NotificationScheduleStatusDto,
   NotificationStopDto,
   NotificationUserReferenceDto,
@@ -21,7 +21,7 @@ export type AdminNotificationListScheduleDto = {
   status: NotificationScheduleStatusDto;
   scheduledBy: NotificationUserReferenceDto | null;
   createdAt: string;
-  audience: NotificationAudienceDto;
+  audience: NotificationScheduleAudienceDto;
   recipientPushSummary: NotificationRecipientPushSummaryDto;
 };
 
@@ -47,7 +47,7 @@ export type NotificationScheduleSummaryDto = {
   stop: NotificationStopDto | null;
   scheduledBy: NotificationUserReferenceDto | null;
   createdAt: string;
-  audience: NotificationAudienceDto;
+  audience: NotificationScheduleAudienceDto;
   recipientPushSummary: NotificationRecipientPushSummaryDto;
 };
 

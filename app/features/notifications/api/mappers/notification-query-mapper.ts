@@ -1,5 +1,6 @@
 import type { NotificationDateRangeQueryDto } from "~/features/notifications/api/dto/notification-common-dto";
 import type { NotificationScheduleResultsQueryDto } from "~/features/notifications/api/dto/notification-schedule-dto";
+import { isOffsetDateTimeString } from "~/features/notifications/api/mappers/notification-dto-validator";
 import { ClientError, ClientErrors } from "~/lib/client-error";
 
 export function toNotificationDateRangePath(
@@ -14,24 +15,16 @@ export function toNotificationDateRangePath(
     throw new ClientError(ClientErrors.INVALID_REQUEST);
   }
 
-  const from = Date.parse(query.from);
-  const to = Date.parse(query.to);
   if (
-    !isOffsetDateTime(query.from) ||
-    !isOffsetDateTime(query.to) ||
-    !Number.isFinite(from) ||
-    !Number.isFinite(to) ||
-    from > to
+    !isOffsetDateTimeString(query.from) ||
+    !isOffsetDateTimeString(query.to) ||
+    Date.parse(query.from) > Date.parse(query.to)
   ) {
     throw new ClientError(ClientErrors.INVALID_REQUEST);
   }
 
   const search = new URLSearchParams({ from: query.from, to: query.to });
   return `${basePath}?${search.toString()}`;
-}
-
-function isOffsetDateTime(value: string) {
-  return /T.*(?:Z|[+-]\d{2}:\d{2})$/.test(value);
 }
 
 export function toNotificationScheduleResultsPath(
