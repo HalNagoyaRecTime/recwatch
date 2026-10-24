@@ -93,7 +93,9 @@ function mockTransport(createStatus = 200) {
         ) as NotificationCreateRequest;
         detail.content = request.content;
         if (request.delivery.type === "scheduled")
-          detail.schedules[0].sendAt = request.delivery.sendAt;
+          detail.schedules[0].sendAt = new Date(
+            request.delivery.sendAt
+          ).toISOString();
         exists = true;
         return json(
           {
@@ -103,7 +105,29 @@ function mockTransport(createStatus = 200) {
           201
         );
       }
-      if (url.pathname === base) return json({ items: exists ? [detail] : [] });
+      if (url.pathname === base)
+        return json({
+          items: exists
+            ? [
+                {
+                  notificationId: detail.notificationId,
+                  content: { push: detail.content.push },
+                  importance: detail.importance,
+                  creation: detail.creation,
+                  createdAt: detail.createdAt,
+                  schedules: detail.schedules.map((schedule) => ({
+                    notificationScheduleId: schedule.notificationScheduleId,
+                    sendAt: schedule.sendAt,
+                    status: schedule.status,
+                    scheduledBy: schedule.scheduledBy,
+                    createdAt: schedule.createdAt,
+                    audience: schedule.audience,
+                    recipientPushSummary: schedule.recipientPushSummary,
+                  })),
+                },
+              ]
+            : [],
+        });
       if (url.pathname === `${base}/${detail.notificationId}`) {
         if (method === "DELETE") {
           exists = false;
