@@ -1,6 +1,13 @@
-import type { NotificationAudienceInputItemDto } from "~/features/notifications/api/dto/notification-common-dto";
+export const notificationAudienceTypes = [
+  "all",
+  "class_room",
+  "gathering",
+  "event",
+  "user",
+] as const;
 
-export type NotificationAudienceType = NotificationAudienceInputItemDto["type"];
+export type NotificationAudienceType =
+  (typeof notificationAudienceTypes)[number];
 
 export type NotificationAudienceOption = {
   id: string;

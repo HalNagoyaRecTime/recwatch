@@ -3,12 +3,12 @@ import { useEffect, useRef, useState } from "react";
 import type { NotificationAudienceApi } from "~/features/notifications/api/contracts/notification-audience-api";
 import type { AdminNotificationCommandApi } from "~/features/notifications/api/contracts/admin-notification-command-api";
 import type { NotificationConfigApi } from "~/features/notifications/api/contracts/notification-config-api";
+import { readNotificationValidationDetails } from "~/features/notifications/api/contracts/notification-error";
+import { toNotificationDraftErrors } from "~/features/notifications/api/contracts/notification-form-errors";
 import {
   toNotificationAudienceInput,
   toNotificationCreateRequest,
-} from "~/features/notifications/api/mappers/admin-notification-request-mapper";
-import { toNotificationDraftErrors } from "~/features/notifications/api/mappers/notification-form-validation-error-mapper";
-import { readNotificationValidationDetails } from "~/features/notifications/api/mappers/notification-api-error-mapper";
+} from "~/features/notifications/api/contracts/notification-request-mapping";
 import { getErrorMessage } from "~/lib/client-error";
 import type { NotificationAudienceOption } from "~/features/notifications/model/notification-audience";
 import {

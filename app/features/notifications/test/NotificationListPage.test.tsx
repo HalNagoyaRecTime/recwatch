@@ -154,7 +154,7 @@ describe("NotificationListPage", () => {
     );
     const decemberItem = cloneFixture(adminNotificationListFixture.items[1]);
     decemberItem.content.push.title = "12月の通知";
-    decemberItem.schedules[0].sendAt = "2026-12-03T10:00:00+09:00";
+    decemberItem.schedules[0].sendAt = "2026-12-03T01:00:00.000Z";
     const list = vi
       .fn()
       .mockResolvedValueOnce(adminNotificationListFixture)

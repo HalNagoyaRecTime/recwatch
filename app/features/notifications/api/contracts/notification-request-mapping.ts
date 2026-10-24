@@ -1,8 +1,10 @@
 import type {
+  AdminNotificationDetail,
   NotificationAudienceInputItem,
   NotificationCreateRequest,
+  NotificationPatchRequest,
 } from "~/features/notifications/api/contracts/admin-notification-command-api";
-import type { NotificationAudienceInputDto } from "~/features/notifications/api/dto/notification-common-dto";
+import type { NotificationAudienceInput } from "~/features/notifications/api/contracts/admin-notification-types";
 import type { NotificationDraft } from "~/features/notifications/model/notification-draft";
 import { ClientError, ClientErrors } from "~/lib/client-error";
 
@@ -17,7 +19,7 @@ export function toNotificationCreateRequest(
       push: { title, body },
       detail: {
         title: draft.detailTitle.trim(),
-        body: draft.detailBody.trim(),
+        body: draft.detailBody,
       },
     },
     audience: toNotificationAudienceInput(draft.audiences),
@@ -31,8 +33,56 @@ export function toNotificationCreateRequest(
 
 export function toNotificationAudienceInput(
   audiences: NotificationDraft["audiences"]
-): NotificationAudienceInputDto {
+): NotificationAudienceInput {
   return { items: audiences.map(toAudienceInputItem) };
+}
+
+export function toNotificationPatchRequest(
+  notification: AdminNotificationDetail,
+  draft: NotificationDraft
+): NotificationPatchRequest | null {
+  const allSchedulesUnstarted = notification.schedules.every(
+    (schedule) => schedule.status === "scheduled"
+  );
+  if (!allSchedulesUnstarted) {
+    return {
+      content: {
+        detail: { title: draft.detailTitle, body: draft.detailBody },
+      },
+    };
+  }
+
+  const schedule = notification.schedules[0];
+  if (!schedule) return null;
+
+  const audienceItems = draft.audiences.map((audience) => {
+    if (audience.type === "all") return { type: "all" as const };
+    const targetId = Number(audience.targetId);
+    return Number.isSafeInteger(targetId) && targetId > 0
+      ? { type: audience.type, targetId }
+      : null;
+  });
+  if (audienceItems.some((item) => item === null)) return null;
+
+  const sendAt = draft.scheduledAt
+    ? new Date(draft.scheduledAt).toISOString()
+    : null;
+
+  return {
+    content: {
+      push: { title: draft.title, body: draft.body },
+      detail: { title: draft.detailTitle, body: draft.detailBody },
+    },
+    importance: draft.importance,
+    schedule: {
+      notificationScheduleId: schedule.notificationScheduleId,
+      audience: { items: audienceItems.filter((item) => item !== null) },
+      delivery:
+        draft.deliveryTiming === "scheduled" && sendAt
+          ? { type: "scheduled", sendAt }
+          : { type: "immediate", sendAt: null },
+    },
+  };
 }
 
 function toAudienceInputItem(

@@ -1,7 +1,11 @@
 import type { NotificationAudienceType } from "~/features/notifications/model/notification-audience";
-import type { NotificationImportanceDto } from "~/features/notifications/api/dto/notification-common-dto";
 
 export type { NotificationAudienceType } from "~/features/notifications/model/notification-audience";
+
+export const notificationImportanceLevels = ["low", "normal", "high"] as const;
+
+export type NotificationImportance =
+  (typeof notificationImportanceLevels)[number];
 
 export type NotificationDeliveryTiming = "now" | "scheduled";
 
@@ -16,7 +20,7 @@ export type NotificationDraft = {
   body: string;
   detailTitle: string;
   detailBody: string;
-  importance: NotificationImportanceDto;
+  importance: NotificationImportance;
   audiences: NotificationAudienceDraftItem[];
   deliveryTiming?: NotificationDeliveryTiming;
   scheduledAt?: string;

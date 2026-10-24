@@ -8,20 +8,22 @@ import type {
   NotificationCreateResponseDto,
   NotificationScheduleSummaryDto,
 } from "~/features/notifications/api/dto/admin-notification-dto";
+import { DEFAULT_NOTIFICATION_IMPORTANCE } from "~/features/notifications/api/dto/notification-common-dto";
 import {
-  isNotificationAudience,
   isNotificationContent,
   isNotificationCreation,
   isNotificationImportance,
   isNotificationPushContent,
   isNotificationRecipientPushSummary,
+  isNotificationScheduleAudience,
   isNotificationScheduleStatus,
   isNullableNotificationStop,
   isNullableNotificationUserReference,
+  hasExactKeys,
   isNonNegativeInteger,
   isPositiveInteger,
   isRecord,
-  isString,
+  isUtcDateTimeString,
 } from "~/features/notifications/api/mappers/notification-dto-validator";
 
 export function isAdminNotificationListResponse(
@@ -29,6 +31,7 @@ export function isAdminNotificationListResponse(
 ): value is AdminNotificationListResponseDto {
   return (
     isRecord(value) &&
+    hasExactKeys(value, ["items"]) &&
     Array.isArray(value.items) &&
     value.items.every(isAdminNotificationListItem)
   );
@@ -39,12 +42,21 @@ export function isAdminNotificationDetail(
 ): value is AdminNotificationDetailDto {
   return (
     isRecord(value) &&
+    hasExactKeys(value, [
+      "notificationId",
+      "content",
+      "importance",
+      "creation",
+      "createdAt",
+      "updatedAt",
+      "schedules",
+    ]) &&
     isPositiveInteger(value.notificationId) &&
     isNotificationContent(value.content) &&
     isNotificationImportance(value.importance) &&
     isNotificationCreation(value.creation) &&
-    isString(value.createdAt) &&
-    isString(value.updatedAt) &&
+    isUtcDateTimeString(value.createdAt) &&
+    isUtcDateTimeString(value.updatedAt) &&
     Array.isArray(value.schedules) &&
     value.schedules.every(isNotificationScheduleSummary)
   );
@@ -55,6 +67,7 @@ export function isNotificationCreateResponse(
 ): value is NotificationCreateResponseDto {
   return (
     isRecord(value) &&
+    hasExactKeys(value, ["notificationId", "notificationScheduleId"]) &&
     isPositiveInteger(value.notificationId) &&
     isPositiveInteger(value.notificationScheduleId)
   );
@@ -65,8 +78,10 @@ export function isNotificationConfig(
 ): value is NotificationConfigDto {
   return (
     isRecord(value) &&
+    hasExactKeys(value, ["importance"]) &&
     isRecord(value.importance) &&
-    value.importance.default === "normal" &&
+    hasExactKeys(value.importance, ["default", "options"]) &&
+    value.importance.default === DEFAULT_NOTIFICATION_IMPORTANCE &&
     Array.isArray(value.importance.options) &&
     value.importance.options.every(isNotificationImportance)
   );
@@ -75,7 +90,11 @@ export function isNotificationConfig(
 export function isNotificationAudienceCount(
   value: unknown
 ): value is NotificationAudienceCountDto {
-  return isRecord(value) && isNonNegativeInteger(value.recipientCount);
+  return (
+    isRecord(value) &&
+    hasExactKeys(value, ["recipientCount"]) &&
+    isNonNegativeInteger(value.recipientCount)
+  );
 }
 
 function isAdminNotificationListItem(
@@ -83,12 +102,21 @@ function isAdminNotificationListItem(
 ): value is AdminNotificationListItemDto {
   return (
     isRecord(value) &&
+    hasExactKeys(value, [
+      "notificationId",
+      "content",
+      "importance",
+      "creation",
+      "createdAt",
+      "schedules",
+    ]) &&
     isPositiveInteger(value.notificationId) &&
     isRecord(value.content) &&
+    hasExactKeys(value.content, ["push"]) &&
     isNotificationPushContent(value.content.push) &&
     isNotificationImportance(value.importance) &&
     isNotificationCreation(value.creation) &&
-    isString(value.createdAt) &&
+    isUtcDateTimeString(value.createdAt) &&
     Array.isArray(value.schedules) &&
     value.schedules.every(isAdminNotificationListSchedule)
   );
@@ -99,13 +127,16 @@ function isAdminNotificationListSchedule(
 ): value is AdminNotificationListScheduleDto {
   return (
     isRecord(value) &&
-    isPositiveInteger(value.notificationScheduleId) &&
-    isString(value.sendAt) &&
-    isNotificationScheduleStatus(value.status) &&
-    isNullableNotificationUserReference(value.scheduledBy) &&
-    isString(value.createdAt) &&
-    isNotificationAudience(value.audience) &&
-    isNotificationRecipientPushSummary(value.recipientPushSummary)
+    hasExactKeys(value, [
+      "notificationScheduleId",
+      "sendAt",
+      "status",
+      "scheduledBy",
+      "createdAt",
+      "audience",
+      "recipientPushSummary",
+    ]) &&
+    isAdminNotificationScheduleFields(value)
   );
 }
 
@@ -113,8 +144,32 @@ function isNotificationScheduleSummary(
   value: unknown
 ): value is NotificationScheduleSummaryDto {
   return (
-    isAdminNotificationListSchedule(value) &&
-    "stop" in value &&
+    isRecord(value) &&
+    hasExactKeys(value, [
+      "notificationScheduleId",
+      "sendAt",
+      "status",
+      "stop",
+      "scheduledBy",
+      "createdAt",
+      "audience",
+      "recipientPushSummary",
+    ]) &&
+    isAdminNotificationScheduleFields(value) &&
     isNullableNotificationStop(value.stop)
+  );
+}
+
+function isAdminNotificationScheduleFields(
+  value: Record<string, unknown>
+): boolean {
+  return (
+    isPositiveInteger(value.notificationScheduleId) &&
+    isUtcDateTimeString(value.sendAt) &&
+    isNotificationScheduleStatus(value.status) &&
+    isNullableNotificationUserReference(value.scheduledBy) &&
+    isUtcDateTimeString(value.createdAt) &&
+    isNotificationScheduleAudience(value.audience) &&
+    isNotificationRecipientPushSummary(value.recipientPushSummary)
   );
 }

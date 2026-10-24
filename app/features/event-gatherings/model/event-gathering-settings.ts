@@ -38,9 +38,8 @@ export type GatheringDraft = {
   time: string;
   spotId: number | null;
   /**
-   * サーバーに登録済みの参加人数。参加者がいる集合は保存 API が削除を拒否するため、
-   * 画面でも削除できないようにする判断に使う。
-   * 参加者はこの下書きとは別に集合ごとの参加者ピッカーで保存し、保存後に人数だけ反映する。
+   * サーバーに登録済みの参加人数。参加者はこの下書きとは別に集合ごとの
+   * 参加者ピッカーで保存し、保存後に人数だけ反映する。
    */
   savedMemberCount: number;
 };
@@ -130,11 +129,7 @@ export function toRoundDrafts(settings: EventGatheringSettings): RoundDraft[] {
   }));
 }
 
-/** 参加者が登録されている集合は、保存 API が削除を拒否するため画面でも削除させない。 */
+/** 参加者が登録されている集合は、保存 API が個別削除を拒否するため画面でも削除させない。 */
 export function canRemoveGathering(gathering: GatheringDraft): boolean {
   return gathering.savedMemberCount === 0;
-}
-
-export function canRemoveRound(round: RoundDraft): boolean {
-  return round.gatherings.every(canRemoveGathering);
 }

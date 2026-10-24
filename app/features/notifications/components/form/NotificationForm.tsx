@@ -1,3 +1,4 @@
+import { MarkdownPreview } from "~/components/ui/markdown/MarkdownPreview";
 import { CalendarClock, Plus, Send, Trash2 } from "lucide-react";
 
 import { Button } from "~/components/ui/button/Button";
@@ -13,9 +14,9 @@ import type {
 import type {
   NotificationDeliveryTiming,
   NotificationDraft,
+  NotificationImportance,
 } from "~/features/notifications/model/notification-draft";
 import type { NotificationDraftErrors } from "~/features/notifications/model/notification-draft-validation";
-import type { NotificationImportanceDto } from "~/features/notifications/api/dto/notification-common-dto";
 
 type NotificationFormProps = {
   draft: NotificationDraft;
@@ -24,7 +25,7 @@ type NotificationFormProps = {
   isAudienceLoading?: boolean;
   audienceError?: string | null;
   configError?: string | null;
-  importanceOptions?: NotificationImportanceDto[];
+  importanceOptions?: NotificationImportance[];
   recipientCount?: number | null;
   recipientCountError?: string | null;
   isRecipientCountLoading?: boolean;
@@ -59,7 +60,7 @@ const deliveryTimingOptions = [
   { label: "予約配信", value: "scheduled" },
 ] as const;
 
-const importanceLabels: Record<NotificationImportanceDto, string> = {
+const importanceLabels: Record<NotificationImportance, string> = {
   low: "低",
   normal: "通常",
   high: "高",
@@ -223,6 +224,8 @@ export function NotificationForm({
               </span>
             ) : null}
           </label>
+
+          <MarkdownPreview content={draft.detailBody} />
 
           <fieldset disabled={isFullEditDisabled}>
             <p className="text-text-base mb-2 text-sm font-medium">重要度</p>
