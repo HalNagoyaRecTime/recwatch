@@ -1,0 +1,479 @@
+{
+  "environment": "isolated local API / synthetic staff / no FCM",
+  "checks": {
+    "delete_detail": true,
+    "cancel_keeps_notification": true,
+    "resend_keeps_source_and_adds_schedule": true,
+    "stop_delivery_count": true,
+    "delayed_list_delete_refetch_order": true,
+    "cancel_conflict_409": true,
+    "scheduled_resend_date_and_status": true
+  },
+  "events": [
+    {
+      "at": 1792835598.367348,
+      "event": "start",
+      "method": "GET",
+      "path": "/api/v1/admin/notifications/schedules",
+      "fault": null,
+      "delay": 0
+    },
+    {
+      "at": 1792835598.373374,
+      "event": "end",
+      "method": "GET",
+      "path": "/api/v1/admin/notifications/schedules",
+      "status": 200
+    },
+    {
+      "at": 1792835622.387553,
+      "event": "start",
+      "method": "GET",
+      "path": "/api/v1/admin/notifications/schedules",
+      "fault": null,
+      "delay": 0
+    },
+    {
+      "at": 1792835622.3967,
+      "event": "end",
+      "method": "GET",
+      "path": "/api/v1/admin/notifications/schedules",
+      "status": 200
+    },
+    {
+      "at": 1792835652.39924,
+      "event": "start",
+      "method": "GET",
+      "path": "/api/v1/admin/notifications/schedules",
+      "fault": 500,
+      "delay": 0
+    },
+    {
+      "at": 1792835652.3995168,
+      "event": "end",
+      "method": "GET",
+      "path": "/api/v1/admin/notifications/schedules",
+      "status": 500
+    },
+    {
+      "at": 1792835665.980793,
+      "event": "start",
+      "method": "GET",
+      "path": "/api/v1/admin/notifications/schedules",
+      "fault": 500,
+      "delay": 0
+    },
+    {
+      "at": 1792835665.980937,
+      "event": "end",
+      "method": "GET",
+      "path": "/api/v1/admin/notifications/schedules",
+      "status": 500
+    },
+    {
+      "at": 1792835675.27124,
+      "event": "start",
+      "method": "GET",
+      "path": "/api/v1/admin/notifications/schedules",
+      "fault": null,
+      "delay": 0
+    },
+    {
+      "at": 1792835675.2798579,
+      "event": "end",
+      "method": "GET",
+      "path": "/api/v1/admin/notifications/schedules",
+      "status": 200
+    },
+    {
+      "at": 1792835675.3325078,
+      "event": "start",
+      "method": "GET",
+      "path": "/api/v1/admin/notifications/schedules/25",
+      "fault": null,
+      "delay": 0
+    },
+    {
+      "at": 1792835675.342558,
+      "event": "end",
+      "method": "GET",
+      "path": "/api/v1/admin/notifications/schedules/25",
+      "status": 200
+    },
+    {
+      "at": 1792835682.394746,
+      "event": "start",
+      "method": "GET",
+      "path": "/api/v1/admin/notifications/schedules",
+      "fault": null,
+      "delay": 0
+    },
+    {
+      "at": 1792835682.40304,
+      "event": "end",
+      "method": "GET",
+      "path": "/api/v1/admin/notifications/schedules",
+      "status": 200
+    },
+    {
+      "at": 1792835682.450044,
+      "event": "start",
+      "method": "GET",
+      "path": "/api/v1/admin/notifications/schedules/25",
+      "fault": null,
+      "delay": 0
+    },
+    {
+      "at": 1792835682.4609559,
+      "event": "end",
+      "method": "GET",
+      "path": "/api/v1/admin/notifications/schedules/25",
+      "status": 200
+    },
+    {
+      "at": 1792835693.5976589,
+      "event": "start",
+      "method": "DELETE",
+      "path": "/api/v1/admin/notifications/schedules/25",
+      "fault": null,
+      "delay": 0
+    },
+    {
+      "at": 1792835693.6051981,
+      "event": "end",
+      "method": "DELETE",
+      "path": "/api/v1/admin/notifications/schedules/25",
+      "status": 409
+    },
+    {
+      "at": 1792835693.614451,
+      "event": "start",
+      "method": "GET",
+      "path": "/api/v1/admin/notifications/schedules",
+      "fault": null,
+      "delay": 0
+    },
+    {
+      "at": 1792835693.6197178,
+      "event": "end",
+      "method": "GET",
+      "path": "/api/v1/admin/notifications/schedules",
+      "status": 200
+    },
+    {
+      "at": 1792835693.664136,
+      "event": "start",
+      "method": "GET",
+      "path": "/api/v1/admin/notifications/schedules/25",
+      "fault": null,
+      "delay": 0
+    },
+    {
+      "at": 1792835693.67329,
+      "event": "end",
+      "method": "GET",
+      "path": "/api/v1/admin/notifications/schedules/25",
+      "status": 200
+    },
+    {
+      "at": 1792835712.399143,
+      "event": "start",
+      "method": "GET",
+      "path": "/api/v1/admin/notifications/schedules",
+      "fault": null,
+      "delay": 0
+    },
+    {
+      "at": 1792835712.4112582,
+      "event": "end",
+      "method": "GET",
+      "path": "/api/v1/admin/notifications/schedules",
+      "status": 200
+    },
+    {
+      "at": 1792835712.461602,
+      "event": "start",
+      "method": "GET",
+      "path": "/api/v1/admin/notifications/schedules/25",
+      "fault": null,
+      "delay": 0
+    },
+    {
+      "at": 1792835712.47023,
+      "event": "end",
+      "method": "GET",
+      "path": "/api/v1/admin/notifications/schedules/25",
+      "status": 200
+    },
+    {
+      "at": 1792835727.7868311,
+      "event": "start",
+      "method": "GET",
+      "path": "/api/v1/admin/notifications",
+      "fault": null,
+      "delay": 0
+    },
+    {
+      "at": 1792835727.79513,
+      "event": "end",
+      "method": "GET",
+      "path": "/api/v1/admin/notifications",
+      "status": 200
+    },
+    {
+      "at": 1792835741.6145978,
+      "event": "start",
+      "method": "GET",
+      "path": "/api/v1/admin/notifications",
+      "fault": null,
+      "delay": 20
+    },
+    {
+      "at": 1792835750.182028,
+      "event": "start",
+      "method": "DELETE",
+      "path": "/api/v1/admin/notifications/18",
+      "fault": null,
+      "delay": 0
+    },
+    {
+      "at": 1792835750.191942,
+      "event": "end",
+      "method": "DELETE",
+      "path": "/api/v1/admin/notifications/18",
+      "status": 204
+    },
+    {
+      "at": 1792835761.639214,
+      "event": "end",
+      "method": "GET",
+      "path": "/api/v1/admin/notifications",
+      "status": 200
+    },
+    {
+      "at": 1792835761.6432378,
+      "event": "start",
+      "method": "GET",
+      "path": "/api/v1/admin/notifications",
+      "fault": null,
+      "delay": 0
+    },
+    {
+      "at": 1792835761.6551292,
+      "event": "end",
+      "method": "GET",
+      "path": "/api/v1/admin/notifications",
+      "status": 200
+    },
+    {
+      "at": 1792835888.1670861,
+      "event": "start",
+      "method": "GET",
+      "path": "/api/v1/admin/notifications/schedules",
+      "fault": null,
+      "delay": 0
+    },
+    {
+      "at": 1792835888.1822069,
+      "event": "end",
+      "method": "GET",
+      "path": "/api/v1/admin/notifications/schedules",
+      "status": 200
+    },
+    {
+      "at": 1792835888.259923,
+      "event": "start",
+      "method": "GET",
+      "path": "/api/v1/admin/notifications/schedules/25",
+      "fault": null,
+      "delay": 0
+    },
+    {
+      "at": 1792835888.2816372,
+      "event": "end",
+      "method": "GET",
+      "path": "/api/v1/admin/notifications/schedules/25",
+      "status": 200
+    },
+    {
+      "at": 1792835897.790889,
+      "event": "start",
+      "method": "GET",
+      "path": "/api/v1/admin/notifications/schedules",
+      "fault": 500,
+      "delay": 0
+    },
+    {
+      "at": 1792835897.791022,
+      "event": "end",
+      "method": "GET",
+      "path": "/api/v1/admin/notifications/schedules",
+      "status": 500
+    },
+    {
+      "at": 1792835904.406703,
+      "event": "start",
+      "method": "GET",
+      "path": "/api/v1/admin/notifications/schedules",
+      "fault": null,
+      "delay": 0
+    },
+    {
+      "at": 1792835904.4151108,
+      "event": "end",
+      "method": "GET",
+      "path": "/api/v1/admin/notifications/schedules",
+      "status": 200
+    },
+    {
+      "at": 1792835904.4566772,
+      "event": "start",
+      "method": "GET",
+      "path": "/api/v1/admin/notifications/schedules/25",
+      "fault": null,
+      "delay": 0
+    },
+    {
+      "at": 1792835904.4676669,
+      "event": "end",
+      "method": "GET",
+      "path": "/api/v1/admin/notifications/schedules/25",
+      "status": 200
+    },
+    {
+      "at": 1792835918.160217,
+      "event": "start",
+      "method": "GET",
+      "path": "/api/v1/admin/notifications/schedules",
+      "fault": null,
+      "delay": 0
+    },
+    {
+      "at": 1792835918.167416,
+      "event": "end",
+      "method": "GET",
+      "path": "/api/v1/admin/notifications/schedules",
+      "status": 200
+    },
+    {
+      "at": 1792835918.221699,
+      "event": "start",
+      "method": "GET",
+      "path": "/api/v1/admin/notifications/schedules/25",
+      "fault": null,
+      "delay": 0
+    },
+    {
+      "at": 1792835918.232307,
+      "event": "end",
+      "method": "GET",
+      "path": "/api/v1/admin/notifications/schedules/25",
+      "status": 200
+    },
+    {
+      "at": 1792835924.7850099,
+      "event": "start",
+      "method": "POST",
+      "path": "/api/v1/admin/notifications/schedules/23/resend",
+      "fault": null,
+      "delay": 0
+    },
+    {
+      "at": 1792835924.7936199,
+      "event": "end",
+      "method": "POST",
+      "path": "/api/v1/admin/notifications/schedules/23/resend",
+      "status": 201
+    },
+    {
+      "at": 1792835924.800679,
+      "event": "start",
+      "method": "GET",
+      "path": "/api/v1/admin/notifications/schedules",
+      "fault": null,
+      "delay": 0
+    },
+    {
+      "at": 1792835924.806871,
+      "event": "end",
+      "method": "GET",
+      "path": "/api/v1/admin/notifications/schedules",
+      "status": 200
+    },
+    {
+      "at": 1792835924.845715,
+      "event": "start",
+      "method": "GET",
+      "path": "/api/v1/admin/notifications/schedules/25",
+      "fault": null,
+      "delay": 0
+    },
+    {
+      "at": 1792835924.857863,
+      "event": "end",
+      "method": "GET",
+      "path": "/api/v1/admin/notifications/schedules/25",
+      "status": 200
+    },
+    {
+      "at": 1792835924.860818,
+      "event": "start",
+      "method": "GET",
+      "path": "/api/v1/admin/notifications/schedules/27",
+      "fault": null,
+      "delay": 0
+    },
+    {
+      "at": 1792835924.867451,
+      "event": "end",
+      "method": "GET",
+      "path": "/api/v1/admin/notifications/schedules/27",
+      "status": 200
+    },
+    {
+      "at": 1792835948.1709518,
+      "event": "start",
+      "method": "GET",
+      "path": "/api/v1/admin/notifications/schedules",
+      "fault": null,
+      "delay": 0
+    },
+    {
+      "at": 1792835948.182145,
+      "event": "end",
+      "method": "GET",
+      "path": "/api/v1/admin/notifications/schedules",
+      "status": 200
+    },
+    {
+      "at": 1792835948.2300181,
+      "event": "start",
+      "method": "GET",
+      "path": "/api/v1/admin/notifications/schedules/25",
+      "fault": null,
+      "delay": 0
+    },
+    {
+      "at": 1792835948.236026,
+      "event": "start",
+      "method": "GET",
+      "path": "/api/v1/admin/notifications/schedules/27",
+      "fault": null,
+      "delay": 0
+    },
+    {
+      "at": 1792835948.240095,
+      "event": "end",
+      "method": "GET",
+      "path": "/api/v1/admin/notifications/schedules/25",
+      "status": 200
+    },
+    {
+      "at": 1792835948.245781,
+      "event": "end",
+      "method": "GET",
+      "path": "/api/v1/admin/notifications/schedules/27",
+      "status": 200
+    }
+  ]
+}

@@ -28,7 +28,8 @@ export function isMonitorScheduleVisible(
   const sendAt = Date.parse(schedule.sendAt);
   const window = getMonitorWindow(now);
   if (schedule.status === "scheduled") {
-    return sendAt >= window.now && sendAt <= window.to;
+    // 即時再送やWorkerの開始待ちを、予定時刻を過ぎただけで隠さない。
+    return sendAt >= window.from && sendAt <= window.to;
   }
   return sendAt >= window.from && sendAt <= window.now;
 }

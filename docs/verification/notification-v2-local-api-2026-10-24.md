@@ -60,7 +60,7 @@ completedへの到達、Queue Consumer、Retry、FCM・端末配信は未確認�
 4. 競合前提の確認にはローカルD1でstarted_at / status / Recipient / Deliveryの状態を準備する。実Worker競合と記録を分ける。
 5. Stop後と409後にGETし、status・監査・集計・元Scheduleの保持を確認する。
 6. Token 0件の通知では実Cronを1回呼び、Recipient確定とResultsを確認する。FCM設定を使わない場合、配信終端を成功扱いにしない。
-7. 次回は画面E2E、遅延GET・自動更新失敗、Worker実競合、FCM・端末配信を別途実施する。
+7. 画面mutation・遅延GET・自動更新失敗は追加記録を参照する。通常App shellでの実認証、Worker実競合、FCM・端末配信は別途確認する。
 
 ## ブラウザーでの実API操作
 
@@ -73,8 +73,8 @@ Microsoft認証と通常のApp shellを含まないローカル検証shellに、
 - 作成・更新の成功Toastを確認し、操作通知履歴には追加されないことを確認。
 - 状態fixture（Notification #3 / Schedule #5）をMonitorで表示。Recipient 2、Delivery 3、sent 1、stopped 2をAPI値と一致して表示。
 - Monitorの詳細dialog → 通知詳細 → 対象者・配信結果でTokenなしRecipientと3件のDeliveryを確認し、Delivery詳細dialogも表示。
-- 削除・取消・Stop・再送のHTTP確認は上記14確認単位で実施したが、それらの画面mutationは未実施。
-- 遅延GET、Worker実競合、background更新失敗、実Retry、FCM送信・端末受信は残る。
+- 削除・取消・Stop・即時再送の画面mutationも確認済み。追加結果は[画面操作記録](notification-v2-ui-mutations-2026-10-24.md)を参照する。
+- 一覧の遅延GETとbackground更新失敗・回復を隔離プロキシで確認済み。Worker実競合、実Retry、FCM送信・端末受信は残る。
 
 ## 画面証跡
 
@@ -93,4 +93,4 @@ Microsoft認証と通常のApp shellを含まないローカル検証shellに、
 
 - Route統合7件を含む全152 files / 838 tests成功。
 - format / lint / typecheck / buildを確認した。
-- PRへの反映はユーザー指示により保留。画面証跡もまだGitHubへ投稿していない。
+- PR #423へ検証記録と画面証跡を反映済み。後続の画面mutation検証は追加記録にまとめる。
