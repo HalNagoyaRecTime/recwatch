@@ -42,6 +42,7 @@ export default function NotificationMarkdownEditorClient({
     };
 
     updateHeight();
+    if (typeof ResizeObserver === "undefined") return;
     const resizeObserver = new ResizeObserver(updateHeight);
     resizeObserver.observe(editor);
     return () => resizeObserver.disconnect();

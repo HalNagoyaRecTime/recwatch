@@ -9,8 +9,7 @@ type NotificationMobilePreviewProps = {
   mode: NotificationPreviewMode;
 };
 
-export type NotificationPreviewMode =
-  "lock-screen" | "notification-detail" | "data-display";
+export type NotificationPreviewMode = "lock-screen" | "notification-detail";
 
 export function NotificationMobilePreview({
   draft,
@@ -18,21 +17,6 @@ export function NotificationMobilePreview({
 }: NotificationMobilePreviewProps) {
   const frameClassName =
     "w-[min(100%,390px,max(270px,calc((100cqh-24px)*0.45)))] min-w-0 shrink-0 self-start";
-
-  if (mode === "data-display") {
-    return (
-      <div className={frameClassName}>
-        <div className="border-border-base bg-surface-base rounded-xl border p-4">
-          <h3 className="text-text-base mb-3 text-sm font-semibold">
-            入力中の通知データ
-          </h3>
-          <pre className="text-text-muted overflow-x-auto text-xs leading-6 break-all whitespace-pre-wrap">
-            {JSON.stringify(draft, null, 2)}
-          </pre>
-        </div>
-      </div>
-    );
-  }
 
   if (mode === "notification-detail") {
     const scheduledAt = draft.scheduledAt ? new Date(draft.scheduledAt) : null;
