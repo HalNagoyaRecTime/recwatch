@@ -48,7 +48,7 @@ jobs:
         }}-${{ matrix.region }}
       cancel-in-progress: true
     env:
-      VITE_BACKEND_BASE_URL: ${{ vars.VITE_BACKEND_BASE_URL }}
+      VITE_BACKEND_BASE_URL: ${{ vars[format('VITE_BACKEND_BASE_URL_{0}', matrix.account)] }}
       CLOUDFLARE_API_TOKEN: ${{ secrets[format('CLOUDFLARE_API_TOKEN_{0}', matrix.account)] }}
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets[format('CLOUDFLARE_ACCOUNT_ID_{0}', matrix.account)] }}
     steps:
@@ -164,8 +164,7 @@ jobs:
             }
 
       - name: Verify deployed legal pages
-        if: steps.target.outputs.mode != 'skip'
         env:
-          LEGAL_BASE_URL: ${{ steps.target.outputs.verify_url }}
-        # develop未取り込みの既存PRには検証scriptがないため、存在する場合のみ実行する。
+          LEGAL_BASE_URL: >-
+            https://${{ steps.target.outputs.pages_branch }}.${{ matrix.project }}.pages.dev
         run: npm run verify:legal:http --if-present
