@@ -1,40 +1,39 @@
-export const NOTIFICATION_SCHEDULE_STATUSES = [
-  "scheduled",
-  "resolving",
-  "sending",
-  "completed",
-  "failed",
-  "stopped",
-] as const;
+import type {
+  NOTIFICATION_SCHEDULE_STATUSES,
+  NOTIFICATION_PUSH_DELIVERY_STATUSES,
+  NOTIFICATION_IMPORTANCE_LEVELS,
+  NOTIFICATION_PLATFORMS,
+  NOTIFICATION_TARGET_AUDIENCE_TYPES,
+  NOTIFICATION_AUDIENCE_TYPES,
+  NOTIFICATION_RECIPIENT_RESOLUTION_STATUSES,
+  NOTIFICATION_DELIVERY_TYPES,
+  NOTIFICATION_CREATION_METHODS,
+  NOTIFICATION_SOURCE_TYPES,
+  NOTIFICATION_STOP_REASONS,
+} from "~/features/notifications/model/notification-values";
+export {
+  NOTIFICATION_SCHEDULE_STATUSES,
+  NOTIFICATION_PUSH_DELIVERY_STATUSES,
+  NOTIFICATION_IMPORTANCE_LEVELS,
+  DEFAULT_NOTIFICATION_IMPORTANCE,
+  NOTIFICATION_PLATFORMS,
+  NOTIFICATION_TARGET_AUDIENCE_TYPES,
+  NOTIFICATION_AUDIENCE_TYPES,
+  NOTIFICATION_RECIPIENT_RESOLUTION_STATUSES,
+  NOTIFICATION_DELIVERY_TYPES,
+  NOTIFICATION_CREATION_METHODS,
+  NOTIFICATION_SOURCE_TYPES,
+  NOTIFICATION_STOP_REASONS,
+} from "~/features/notifications/model/notification-values";
 
 export type NotificationScheduleStatusDto =
   (typeof NOTIFICATION_SCHEDULE_STATUSES)[number];
 
-export const NOTIFICATION_PUSH_DELIVERY_STATUSES = [
-  "pending",
-  "sending",
-  "retry_wait",
-  "sent",
-  "failed",
-  "stopped",
-] as const;
-
 export type NotificationPushDeliveryStatusDto =
   (typeof NOTIFICATION_PUSH_DELIVERY_STATUSES)[number];
 
-export const NOTIFICATION_IMPORTANCE_LEVELS = [
-  "low",
-  "normal",
-  "high",
-] as const;
-
 export type NotificationImportanceDto =
   (typeof NOTIFICATION_IMPORTANCE_LEVELS)[number];
-
-export const DEFAULT_NOTIFICATION_IMPORTANCE =
-  "normal" as const satisfies NotificationImportanceDto;
-
-export const NOTIFICATION_PLATFORMS = ["ios", "android"] as const;
 
 export type NotificationPlatformDto = (typeof NOTIFICATION_PLATFORMS)[number];
 
@@ -56,23 +55,8 @@ export type NotificationContentDto = {
   };
 };
 
-export const NOTIFICATION_TARGET_AUDIENCE_TYPES = [
-  "class_room",
-  "gathering",
-  "event",
-  "user",
-] as const;
-
 export type NotificationTargetAudienceTypeDto =
   (typeof NOTIFICATION_TARGET_AUDIENCE_TYPES)[number];
-
-export const NOTIFICATION_AUDIENCE_TYPES = [
-  "all",
-  ...NOTIFICATION_TARGET_AUDIENCE_TYPES,
-] as const;
-
-export type NotificationAudienceTypeDto =
-  (typeof NOTIFICATION_AUDIENCE_TYPES)[number];
 
 export type NotificationAudienceInputItemDto =
   | { type: (typeof NOTIFICATION_AUDIENCE_TYPES)[0] }
@@ -97,11 +81,6 @@ export type NotificationAudienceDto = {
   items: NotificationAudienceItemDto[];
 };
 
-export const NOTIFICATION_RECIPIENT_RESOLUTION_STATUSES = [
-  "pending",
-  "resolved",
-] as const;
-
 export type NotificationRecipientResolutionStatusDto =
   (typeof NOTIFICATION_RECIPIENT_RESOLUTION_STATUSES)[number];
 
@@ -112,21 +91,9 @@ export type NotificationScheduleAudienceDto = NotificationAudienceDto & {
   };
 };
 
-export const NOTIFICATION_DELIVERY_TYPES = ["immediate", "scheduled"] as const;
-
-export type NotificationDeliveryTypeDto =
-  (typeof NOTIFICATION_DELIVERY_TYPES)[number];
-
 export type NotificationDeliveryInputDto =
   | { type: (typeof NOTIFICATION_DELIVERY_TYPES)[0]; sendAt: null }
   | { type: (typeof NOTIFICATION_DELIVERY_TYPES)[1]; sendAt: string };
-
-export const NOTIFICATION_CREATION_METHODS = ["manual", "automatic"] as const;
-
-export type NotificationCreationMethodDto =
-  (typeof NOTIFICATION_CREATION_METHODS)[number];
-
-export const NOTIFICATION_SOURCE_TYPES = ["gathering"] as const;
 
 export type NotificationSourceTypeDto =
   (typeof NOTIFICATION_SOURCE_TYPES)[number];
@@ -146,8 +113,6 @@ export type NotificationCreationDto =
         label: string | null;
       };
     };
-
-export const NOTIFICATION_STOP_REASONS = ["manual", "source_deleted"] as const;
 
 export type NotificationStopReasonDto =
   (typeof NOTIFICATION_STOP_REASONS)[number];

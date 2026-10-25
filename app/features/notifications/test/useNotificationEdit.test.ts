@@ -214,9 +214,10 @@ describe("useNotificationEdit", () => {
       })
     );
     await act(() => result.current.submit());
-    expect(result.current.errors["audiences.1"]).toBe(
-      "同じ通知対象が重複しています"
-    );
+    expect(result.current.errors["audiences.1"]).toEqual({
+      kind: "validation",
+      code: "audience_duplicate",
+    });
     expect(patch).not.toHaveBeenCalled();
     expect(reportFeedback).not.toHaveBeenCalled();
   });
@@ -403,15 +404,18 @@ describe("useNotificationEdit", () => {
       await act(async () => expect(await result.current.submit()).toBe(false));
       expect(result.current.draft.detailTitle).toBe("保持する入力");
       if (status === 400) {
-        expect(result.current.submissionError).toContain(
-          "通知内容: 詳細を確認してください"
-        );
-        expect(result.current.submissionError).toContain(
-          "通知対象・配信日時: 配信日時を確認してください"
-        );
-        expect(result.current.errors.importance).toBe(
-          "重要度を確認してください"
-        );
+        expect(result.current.submissionIssues).toContainEqual({
+          field: "content",
+          message: "詳細を確認してください",
+        });
+        expect(result.current.submissionIssues).toContainEqual({
+          field: "schedule",
+          message: "配信日時を確認してください",
+        });
+        expect(result.current.errors.importance).toEqual({
+          kind: "api",
+          message: "重要度を確認してください",
+        });
         expect(reportFeedback).not.toHaveBeenCalled();
       } else {
         expect(reportFeedback).toHaveBeenCalledWith(

@@ -1,14 +1,18 @@
 import { ClientError, ClientErrors } from "~/lib/client-error";
 import type {
   ClassRoomAudienceApiDto,
-  UserAudienceApiDto,
   EventAudienceApiDto,
 } from "~/features/notifications/api/dto/notification-audience-api-dto";
 import {
   toClassRoomAudiencePage,
   toUserAudiencePage,
+  toUserAudienceOption,
   toEventAudiencePage,
 } from "~/features/notifications/api/mappers/notification-audience-response-mapper";
+import {
+  mergeNotificationUserAudiences,
+  type NotificationAudienceOption,
+} from "~/features/notifications/model/notification-audience";
 
 const PAGE_SIZE = 100;
 const MAX_PAGES = 100;
@@ -65,7 +69,7 @@ export async function loadAllUsers(client: NotificationAudienceHttpClient) {
         ["teachers", "teacher"],
       ] as const
     ).map(async ([resource, userCategory]) => {
-      const users: UserAudienceApiDto[] = [];
+      const users: NotificationAudienceOption[] = [];
       for (let pageIndex = 0; pageIndex < MAX_PAGES; pageIndex += 1) {
         const page = toUserAudiencePage(
           await client.get(
@@ -73,31 +77,12 @@ export async function loadAllUsers(client: NotificationAudienceHttpClient) {
           )
         );
         users.push(
-          ...page.items.map((user) => ({
-            ...user,
-            user_category: userCategory,
-          }))
+          ...page.items.map((user) => toUserAudienceOption(user, userCategory))
         );
         if (users.length >= page.total || page.items.length === 0) return users;
       }
       throw new ClientError(ClientErrors.RESPONSE_PARSE_ERROR);
     })
   );
-  const usersById = new Map<number, UserAudienceApiDto>();
-  for (const user of pages.flat()) {
-    const existing = usersById.get(user.user_id);
-    if (!existing) {
-      usersById.set(user.user_id, user);
-      continue;
-    }
-
-    usersById.set(user.user_id, {
-      ...existing,
-      user_category:
-        existing.user_category === user.user_category
-          ? existing.user_category
-          : "student_and_teacher",
-    });
-  }
-  return [...usersById.values()];
+  return mergeNotificationUserAudiences(pages.flat());
 }

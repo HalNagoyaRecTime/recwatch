@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { toNotificationCreateRequest } from "~/features/notifications/api/contracts/notification-request-mapping";
+import { toNotificationCreateRequest } from "~/features/notifications/hooks/notification-request-mapping";
 import { initialNotificationDraft } from "~/features/notifications/model/notification-draft";
 import type { NotificationDraft } from "~/features/notifications/model/notification-draft";
 

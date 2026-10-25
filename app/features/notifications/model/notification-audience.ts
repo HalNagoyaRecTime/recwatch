@@ -1,10 +1,5 @@
-export const notificationAudienceTypes = [
-  "all",
-  "class_room",
-  "gathering",
-  "event",
-  "user",
-] as const;
+import { NOTIFICATION_AUDIENCE_TYPES } from "~/features/notifications/model/notification-values";
+export const notificationAudienceTypes = NOTIFICATION_AUDIENCE_TYPES;
 
 export type NotificationAudienceType =
   (typeof notificationAudienceTypes)[number];
@@ -20,6 +15,29 @@ export type NotificationAudienceOption = {
   userCategory?: "student" | "teacher" | "student_and_teacher";
   type: NotificationAudienceScopeType;
 };
+
+/** 同じユーザーを統合し、生徒・先生の両方に所属する情報を保持する。 */
+export function mergeNotificationUserAudiences(
+  users: readonly NotificationAudienceOption[]
+) {
+  const usersById = new Map<string, NotificationAudienceOption>();
+  for (const user of users) {
+    const existing = usersById.get(user.id);
+    usersById.set(
+      user.id,
+      existing
+        ? {
+            ...existing,
+            userCategory:
+              existing.userCategory === user.userCategory
+                ? existing.userCategory
+                : "student_and_teacher",
+          }
+        : user
+    );
+  }
+  return [...usersById.values()];
+}
 
 export type NotificationAudienceSearchInput = {
   options: NotificationAudienceOption[];

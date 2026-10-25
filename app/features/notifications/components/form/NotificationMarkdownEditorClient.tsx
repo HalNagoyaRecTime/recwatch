@@ -1,5 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import MDEditor, { commands } from "@uiw/react-md-editor";
+import "@uiw/react-md-editor/markdown-editor.css";
+import { MarkdownContent } from "~/components/ui/markdown/MarkdownContent";
+import styles from "./NotificationMarkdownEditor.module.css";
 
 const MIN_CONTENT_HEIGHT = 96;
 const TOOLBAR_HEIGHT = 40;
@@ -55,7 +58,9 @@ export default function NotificationMarkdownEditorClient({
         onChange={(markdown) => onChange(markdown ?? "")}
         preview="edit"
         extraCommands={[commands.codeEdit, commands.codePreview]}
-        previewOptions={{ skipHtml: true }}
+        components={{
+          preview: (source) => <MarkdownContent content={source} />,
+        }}
         textareaProps={{
           "aria-label": "Markdownソース",
           maxLength: 2000,
@@ -66,7 +71,7 @@ export default function NotificationMarkdownEditorClient({
         maxHeight={MAX_EDITOR_HEIGHT}
         visibleDragbar={false}
         data-color-mode={colorMode}
-        className="notification-markdown-editor"
+        className={styles.editor}
       />
     </div>
   );
