@@ -13,10 +13,12 @@ permissions:
 
 jobs:
   deploy:
+    # workflow_runはSecretを使える状態で動くため、フォークからのPRのコードをビルドさせない
     if: >-
       (github.event_name == 'workflow_dispatch' && github.ref_name == 'main') ||
       (github.event.workflow_run.conclusion == 'success' &&
-       (github.event.workflow_run.event == 'pull_request' ||
+       ((github.event.workflow_run.event == 'pull_request' &&
+         github.event.workflow_run.head_repository.full_name == github.repository) ||
         (github.event.workflow_run.event == 'push' && github.event.workflow_run.head_branch == 'develop')))
     strategy:
       fail-fast: false
@@ -53,7 +55,7 @@ jobs:
               ;;
             preview)
               if [ -z "$PR_NUMBER" ]; then
-                echo "::error::workflow_runイベントからPR番号を取得できませんでした(フォークからのPRの可能性があります)"
+                echo "::error::workflow_runイベントからPR番号を取得できませんでした"
                 exit 1
               fi
               echo "pages_branch=pr-${PR_NUMBER}" >> "$GITHUB_OUTPUT"
