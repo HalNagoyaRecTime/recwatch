@@ -12,6 +12,7 @@ import type {
 import type { NotificationDraft } from "~/features/notifications/model/notification-draft";
 import { canEditNotificationSchedule } from "~/features/notifications/model/notification-edit-policy";
 import { toNotificationSendAt } from "~/features/notifications/model/notification-schedule-time";
+import { toNotificationMarkdown } from "~/features/notifications/model/notification-markdown";
 import { ClientError, ClientErrors } from "~/lib/client-error";
 
 export function toNotificationCreateRequest(
@@ -67,7 +68,10 @@ export function toNotificationPatchRequest(
 function toNotificationContent(draft: NotificationDraft): NotificationContent {
   return {
     push: { title: draft.title.trim(), body: draft.body.trim() },
-    detail: { title: draft.detailTitle.trim(), body: draft.detailBody },
+    detail: {
+      title: draft.detailTitle.trim(),
+      body: toNotificationMarkdown(draft.detailBody),
+    },
   };
 }
 

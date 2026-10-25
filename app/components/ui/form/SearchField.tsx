@@ -1,7 +1,10 @@
 import { Search } from "lucide-react";
 import type { InputHTMLAttributes, Ref } from "react";
 
-import { controlSurfaceStyle } from "~/components/ui/form/styles/control-styles";
+import {
+  controlSurfaceStyle,
+  disabledControlTextStyle,
+} from "~/components/ui/form/styles/control-styles";
 
 type SearchFieldProps = Omit<
   InputHTMLAttributes<HTMLInputElement>,
@@ -29,7 +32,7 @@ export function SearchField({
     <label className="group app-rounded relative flex h-9 w-full min-w-0 items-center">
       <span
         aria-hidden="true"
-        className={`${controlSurfaceStyle()} group-focus-within:border-border-strong pointer-events-none absolute inset-0 group-focus-within:border-[1.4px]`}
+        className={`${controlSurfaceStyle({ disabled: props.disabled })} group-focus-within:border-border-strong pointer-events-none absolute inset-0 group-focus-within:border-[1.4px]`}
       />
       <Search
         aria-hidden="true"
@@ -40,7 +43,7 @@ export function SearchField({
         ref={inputRef}
         aria-label={ariaLabel}
         autoComplete={autoComplete}
-        className="app-rounded text-text-base placeholder:text-text-subtle absolute inset-0 w-full bg-transparent pr-3 pl-10 text-sm outline-none focus-visible:outline-none"
+        className={`app-rounded text-text-base placeholder:text-text-subtle absolute inset-0 w-full bg-transparent pr-3 pl-10 text-sm outline-none focus-visible:outline-none ${disabledControlTextStyle}`}
         onChange={(event) => onValueChange(event.currentTarget.value)}
         type="search"
         value={value}

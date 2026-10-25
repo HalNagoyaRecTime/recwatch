@@ -2,7 +2,10 @@ import type { LucideIcon } from "lucide-react";
 import { useLayoutEffect, useRef, type RefObject } from "react";
 import { NavLink, useLocation } from "react-router";
 
-import { controlSurfaceStyle } from "~/components/ui/form/styles/control-styles";
+import {
+  controlSurfaceStyle,
+  disabledControlTextStyle,
+} from "~/components/ui/form/styles/control-styles";
 
 type SegmentBase = {
   icon?: LucideIcon;
@@ -26,6 +29,7 @@ type SegmentedControlProps<T extends string> =
   | {
       ariaLabel: string;
       behavior: "selection";
+      disabled?: boolean;
       onValueChange: (value: T) => void;
       options: readonly SelectionSegment<T>[];
       value: T;
@@ -74,7 +78,7 @@ function SegmentContent({
 }: SegmentContentProps) {
   return (
     <span
-      className={`flex items-center justify-center text-sm transition-colors duration-200 ${
+      className={`group-disabled:text-text-subtle flex items-center justify-center text-sm transition-colors duration-200 ${
         disabled
           ? "text-text-subtle"
           : tone
@@ -145,28 +149,31 @@ function useSegmentIndicator(activeKey: string, options: readonly unknown[]) {
 function SegmentIndicator({
   indicatorRef,
   tone,
+  disabled = false,
 }: {
   indicatorRef: RefObject<HTMLSpanElement | null>;
   tone?: SegmentTone;
+  disabled?: boolean;
 }) {
   return (
     <span
       ref={indicatorRef}
       aria-hidden="true"
-      className={`${tone ? "app-rounded" : controlSurfaceStyle({ borderTone: "strong" })} ${tone ? segmentToneStyles[tone].backgroundClassName : ""} pointer-events-none absolute inset-y-0.5 left-0 opacity-0 shadow-sm transition-[width,transform,opacity,background-color] duration-400 ease-[cubic-bezier(0.22,1,0.36,1)]`}
+      className={`${tone ? "app-rounded" : controlSurfaceStyle({ borderTone: "strong", disabled })} ${tone ? segmentToneStyles[tone].backgroundClassName : ""} ${disabled ? "" : "shadow-sm"} pointer-events-none absolute inset-y-0.5 left-0 opacity-0 transition-[width,transform,opacity,background-color] duration-400 ease-[cubic-bezier(0.22,1,0.36,1)]`}
     />
   );
 }
 
 function SelectionSegmentedControl<T extends string>({
   ariaLabel,
+  disabled = false,
   onValueChange,
   options,
   value,
 }: Extract<SegmentedControlProps<T>, { behavior: "selection" }>) {
   const { containerRef, indicatorRef } = useSegmentIndicator(value, options);
   const activeTone = options.find(
-    (option) => option.value === value && !option.disabled
+    (option) => option.value === value && !option.disabled && !disabled
   )?.tone;
 
   return (
@@ -175,28 +182,40 @@ function SelectionSegmentedControl<T extends string>({
         containerRef.current = element;
       }}
       aria-label={ariaLabel}
-      className="app-rounded bg-surface-muted relative inline-flex h-9 shrink-0 items-center"
+      aria-disabled={disabled || undefined}
+      className="app-rounded bg-surface-muted dark:aria-disabled:bg-surface-subtle relative inline-flex h-9 shrink-0 items-center"
       role="group"
     >
-      <SegmentIndicator indicatorRef={indicatorRef} tone={activeTone} />
+      <SegmentIndicator
+        indicatorRef={indicatorRef}
+        tone={activeTone}
+        disabled={disabled}
+      />
       {options.map(
-        ({ disabled = false, icon, label, tone, value: optionValue }) => {
+        ({
+          disabled: optionDisabled = false,
+          icon,
+          label,
+          tone,
+          value: optionValue,
+        }) => {
           const active = value === optionValue;
+          const isDisabled = disabled || optionDisabled;
 
           return (
             <button
               key={optionValue}
               aria-label={label}
               aria-pressed={active}
-              className={`group ${segmentClassName(icon)} disabled:cursor-not-allowed disabled:opacity-45`}
+              className={`group ${segmentClassName(icon)} ${disabledControlTextStyle}`}
               data-segment
-              disabled={disabled}
+              disabled={isDisabled}
               onClick={() => onValueChange(optionValue)}
               type="button"
             >
               <SegmentContent
                 active={active}
-                disabled={disabled}
+                disabled={isDisabled}
                 icon={icon}
                 label={label}
                 tone={tone}

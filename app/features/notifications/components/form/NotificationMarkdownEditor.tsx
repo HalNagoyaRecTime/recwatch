@@ -35,9 +35,7 @@ export function NotificationMarkdownEditor({
         </Suspense>
       </div>
       <div className="text-text-subtle mt-2 flex justify-between gap-3 text-xs">
-        <p>
-          単独改行は段落内の通常改行です。空行で段落を分け、行末に半角スペース2つで強制改行します。
-        </p>
+        <p>Enterで改行、空行で段落を分けます。</p>
         <span className="shrink-0">{value.length} / 2000</span>
       </div>
       {error ? (
