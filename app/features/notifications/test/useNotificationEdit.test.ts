@@ -38,7 +38,7 @@ const commandApi: AdminNotificationCommandApi = {
 };
 
 describe("useNotificationEdit", () => {
-  it("編集時にPushと詳細を分けて詳細本文の空白を復元する", async () => {
+  it("編集時は字下げを保ち、詳細本文の改行用スペースを通常改行へ戻す", async () => {
     const notification = createNotification(1, "タイトル");
     const body = "\n    code\n本文  \n次の行  ";
     notification.content.detail.body = body;
@@ -56,7 +56,7 @@ describe("useNotificationEdit", () => {
       })
     );
     await waitFor(() => expect(result.current.isLoading).toBe(false));
-    expect(result.current.draft.detailBody).toBe(body);
+    expect(result.current.draft.detailBody).toBe("\n    code\n本文\n次の行  ");
     expect(result.current.draft.body).toBe(notification.content.push.body);
   });
 

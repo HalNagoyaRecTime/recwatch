@@ -104,6 +104,7 @@ export function NotificationAudienceEditor({
         <SegmentedControl
           ariaLabel="通知対象"
           behavior="selection"
+          disabled={isAudienceDisabled}
           onValueChange={(type) => {
             setAudienceQuery("");
             if (type === "all") {

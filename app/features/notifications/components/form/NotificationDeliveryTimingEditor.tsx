@@ -1,10 +1,11 @@
 import { endOfDay, isSameDay, startOfDay } from "date-fns";
 import { ja } from "date-fns/locale/ja";
-import { useEffect, useState } from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 
 import { SegmentedControl } from "~/components/ui/form/SegmentedControl";
+import { textInputStyle } from "~/components/ui/form/styles/control-styles";
+import { useCurrentMinute } from "~/hooks/useCurrentMinute";
 import { formatNotificationDateTime } from "~/features/notifications/components/notification-display";
 import {
   fromNotificationPickerDate,
@@ -35,13 +36,7 @@ export function NotificationDeliveryTimingEditor({
   onTimingChange,
   onScheduledAtChange,
 }: NotificationDeliveryTimingEditorProps) {
-  const [currentTime, setCurrentTime] = useState<Date | null>(null);
-  useEffect(() => {
-    const updateCurrentTime = () => setCurrentTime(new Date());
-    updateCurrentTime();
-    const intervalId = window.setInterval(updateCurrentTime, 60_000);
-    return () => window.clearInterval(intervalId);
-  }, []);
+  const currentTime = useCurrentMinute();
   const minimumScheduledAt = toNotificationPickerDate(
     getMinimumNotificationSchedule(currentTime ?? new Date())
   )!;
@@ -55,6 +50,7 @@ export function NotificationDeliveryTimingEditor({
       <SegmentedControl
         ariaLabel="配信タイミング"
         behavior="selection"
+        disabled={disabled}
         onValueChange={onTimingChange}
         options={deliveryTimingOptions}
         value={timing}
@@ -71,7 +67,7 @@ export function NotificationDeliveryTimingEditor({
               }
               aria-invalid={error ? "true" : undefined}
               aria-label="予約配信日時"
-              className={inputClassName}
+              className={textInputStyle()}
               dateFormat="yyyy/MM/dd (eee) HH:mm"
               locale={ja}
               disabled={disabled}
@@ -114,6 +110,3 @@ export function NotificationDeliveryTimingEditor({
     </fieldset>
   );
 }
-
-const inputClassName =
-  "border-border-base bg-surface-base text-text-base placeholder:text-text-subtle focus:border-border-strong h-9 w-full rounded-md border px-3 text-sm outline-none transition-colors";

@@ -1,4 +1,5 @@
 /** 通知の予約入力は日本時間の年月日時分として扱う。 */
+export const NOTIFICATION_TIME_ZONE = "Asia/Tokyo";
 const NOTIFICATION_OFFSET = "+09:00";
 const NOTIFICATION_OFFSET_MS = 9 * 60 * 60 * 1_000;
 

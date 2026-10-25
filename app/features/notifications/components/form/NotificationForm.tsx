@@ -7,6 +7,7 @@ import { CalendarClock, Send } from "lucide-react";
 import { Button } from "~/components/ui/button/Button";
 import { ButtonLink } from "~/components/ui/button/ButtonLink";
 import { SegmentedControl } from "~/components/ui/form/SegmentedControl";
+import { textInputStyle } from "~/components/ui/form/styles/control-styles";
 import { LayeredPanel } from "~/components/ui/panel/LayeredPanel";
 
 import { NotificationAudienceEditor } from "~/features/notifications/components/form/NotificationAudienceEditor";
@@ -76,7 +77,16 @@ export function NotificationForm({
       noValidate
     >
       <LayeredPanel
-        header={<h2 className="text-text-base font-semibold">通知内容</h2>}
+        header={
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h2 className="text-text-base font-semibold">通知内容</h2>
+            {isFullEditDisabled ? (
+              <span className="bg-surface-base text-text-muted rounded-full px-2.5 py-1 text-xs font-medium">
+                通知詳細のみ編集可能
+              </span>
+            ) : null}
+          </div>
+        }
       >
         <div className="space-y-5">
           <label className="block">
@@ -89,7 +99,7 @@ export function NotificationForm({
                 errors.title ? "notification-title-error" : undefined
               }
               aria-invalid={Boolean(errors.title)}
-              className={inputClassName}
+              className={textInputStyle()}
               disabled={isFullEditDisabled}
               maxLength={50}
               onChange={(event) =>
@@ -122,7 +132,7 @@ export function NotificationForm({
                 errors.body ? "notification-body-error" : undefined
               }
               aria-invalid={Boolean(errors.body)}
-              className={`${inputClassName} min-h-24 resize-y py-2`}
+              className={`${textInputStyle()} min-h-24 resize-y py-2`}
               disabled={isFullEditDisabled}
               maxLength={200}
               onChange={(event) =>
@@ -152,7 +162,7 @@ export function NotificationForm({
             <input
               aria-label="詳細タイトル*"
               aria-invalid={Boolean(errors.detailTitle)}
-              className={inputClassName}
+              className={textInputStyle()}
               maxLength={100}
               onChange={(event) =>
                 onChange({ ...draft, detailTitle: event.currentTarget.value })
@@ -177,6 +187,7 @@ export function NotificationForm({
             <SegmentedControl
               ariaLabel="重要度"
               behavior="selection"
+              disabled={isFullEditDisabled}
               onValueChange={(importance) => onChange({ ...draft, importance })}
               options={[
                 {
@@ -252,15 +263,9 @@ export function NotificationForm({
           type="submit"
           variant="primary"
         >
-          {isSubmitting
-            ? "確認中..."
-            : (submitLabel ??
-              (deliveryTiming === "now" ? "通知を配信" : "配信を予約"))}
+          {isSubmitting ? "確認中..." : (submitLabel ?? "通知を作成")}
         </Button>
       </div>
     </form>
   );
 }
-
-const inputClassName =
-  "border-border-base bg-surface-base text-text-base placeholder:text-text-subtle focus:border-border-strong h-9 w-full rounded-md border px-3 text-sm outline-none transition-colors";

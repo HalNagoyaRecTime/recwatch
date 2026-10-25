@@ -69,8 +69,33 @@ export function formatNotificationDateTime(
     : new Intl.DateTimeFormat("ja-JP", {
         dateStyle: "medium",
         timeStyle: "short",
-        timeZone: "Asia/Tokyo",
+        timeZone: NOTIFICATION_TIME_ZONE,
       }).format(date);
+}
+
+export function formatNotificationClockTime(date: Date | null): string {
+  return date
+    ? new Intl.DateTimeFormat("ja-JP", {
+        hour: "numeric",
+        minute: "2-digit",
+        hourCycle: "h23",
+        timeZone: NOTIFICATION_TIME_ZONE,
+      }).format(date)
+    : "--:--";
+}
+
+export function formatNotificationClockDate(date: Date | null): string {
+  if (!date) return "-";
+  const day = new Intl.DateTimeFormat("ja-JP", {
+    month: "long",
+    day: "numeric",
+    timeZone: NOTIFICATION_TIME_ZONE,
+  }).format(date);
+  const weekday = new Intl.DateTimeFormat("ja-JP", {
+    weekday: "long",
+    timeZone: NOTIFICATION_TIME_ZONE,
+  }).format(date);
+  return `${day} ${weekday}`;
 }
 
 const apiErrorGroupLabels: Record<string, string> = {
@@ -90,3 +115,4 @@ export function formatNotificationSubmissionErrors(
     )
     .join(" / ");
 }
+import { NOTIFICATION_TIME_ZONE } from "~/features/notifications/model/notification-schedule-time";

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import MDEditor, { commands } from "@uiw/react-md-editor";
 import "@uiw/react-md-editor/markdown-editor.css";
-import { MarkdownContent } from "~/components/ui/markdown/MarkdownContent";
+import { NotificationMarkdownContent } from "~/features/notifications/components/preview/NotificationMarkdownContent";
 import styles from "./NotificationMarkdownEditor.module.css";
 
 const MIN_CONTENT_HEIGHT = 96;
@@ -59,7 +59,7 @@ export default function NotificationMarkdownEditorClient({
         preview="edit"
         extraCommands={[commands.codeEdit, commands.codePreview]}
         components={{
-          preview: (source) => <MarkdownContent content={source} />,
+          preview: (source) => <NotificationMarkdownContent content={source} />,
         }}
         textareaProps={{
           "aria-label": "Markdownソース",

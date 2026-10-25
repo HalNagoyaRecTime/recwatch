@@ -130,7 +130,7 @@ describe("notification pages", () => {
         target: { value: "集合場所も確認してください。" },
       }
     );
-    const submitButton = screen.getByRole("button", { name: "通知を配信" });
+    const submitButton = screen.getByRole("button", { name: "通知を作成" });
     await waitFor(() => expect(submitButton).toBeEnabled());
     fireEvent.click(submitButton);
 
@@ -202,7 +202,7 @@ describe("notification pages", () => {
           target: { value: "テスト通知" },
         }
       );
-    const button = screen.getByRole("button", { name: "通知を配信" });
+    const button = screen.getByRole("button", { name: "通知を作成" });
     await waitFor(() => expect(button).toBeEnabled());
     await user.click(button);
     await waitFor(() =>
@@ -303,7 +303,7 @@ describe("notification pages", () => {
           target: { value: "テスト" },
         }
       );
-    const button = screen.getByRole("button", { name: "通知を配信" });
+    const button = screen.getByRole("button", { name: "通知を作成" });
     await waitFor(() => expect(button).toBeEnabled());
     fireEvent.click(button);
     expect(
@@ -346,7 +346,7 @@ describe("notification pages", () => {
     );
     const input = await screen.findByLabelText("詳細タイトル*");
     fireEvent.change(input, { target: { value: "変更する詳細" } });
-    const save = screen.getByRole("button", { name: "変更を保存" });
+    const save = screen.getByRole("button", { name: "通知を保存" });
     expect(save).toBeEnabled();
     expect(screen.getByLabelText("タイトル*")).toBeDisabled();
     fireEvent.click(save);

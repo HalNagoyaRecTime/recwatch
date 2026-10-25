@@ -80,7 +80,7 @@ export function NotificationEditPage(props: NotificationEditPageProps) {
             }}
             recipientCount={state.recipientCount}
             recipientCountError={state.recipientCountError}
-            submitLabel="変更を保存"
+            submitLabel="通知を保存"
           />
           {submissionError ? (
             <p className="text-tone-danger-text text-sm" aria-live="polite">
