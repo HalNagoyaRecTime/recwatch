@@ -164,6 +164,7 @@ jobs:
             }
 
       - name: Verify deployed legal pages
+        if: steps.target.outputs.mode != 'skip'
         env:
           LEGAL_BASE_URL: >-
             ${{ steps.target.outputs.pages_branch == 'main' && format('https://{0}.pages.dev', matrix.project) || format('https://{0}.{1}.pages.dev', steps.target.outputs.pages_branch, matrix.project) }}
