@@ -100,6 +100,7 @@ export function toNotificationAudienceOptions(input: {
     ...(input.users ?? []).map((user) => ({
       id: String(user.user_id),
       name: user.display_name,
+      userCategory: user.user_category,
       type: "user" as const,
     })),
     ...input.events.map((event) => ({

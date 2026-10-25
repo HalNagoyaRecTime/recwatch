@@ -20,10 +20,13 @@
   "dependencies": {
     "@floating-ui/react": "^0.27.19",
     "@react-router/node": "8.4.0",
+    "@uiw/react-md-editor": "^4.1.4",
     "@xyflow/react": "^12.12.0",
+    "date-fns": "^4.4.0",
     "isbot": "^5.2.2",
     "lucide-react": "^1.47.0",
     "react": "^19.3.0",
+    "react-datepicker": "^9.1.0",
     "react-dom": "^19.3.0",
     "react-markdown": "^10.1.0",
     "react-router": "8.4.0",

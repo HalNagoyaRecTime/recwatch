@@ -12,5 +12,6 @@ export type NotificationAudienceType =
 export type NotificationAudienceOption = {
   id: string;
   name: string;
+  userCategory?: "student" | "teacher" | "student_and_teacher";
   type: Exclude<NotificationAudienceType, "all">;
 };
