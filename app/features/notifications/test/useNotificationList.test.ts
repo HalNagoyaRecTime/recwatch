@@ -113,7 +113,7 @@ describe("useNotificationList", () => {
   it("削除後の再取得で件数が減っても存在しないページを表示しない", async () => {
     const list = vi
       .fn<AdminNotificationQueryApi["list"]>()
-      .mockResolvedValueOnce(createResponseWithCount(21, "通知"))
+      .mockResolvedValueOnce(createResponseWithCount(51, "通知"))
       .mockResolvedValueOnce(createResponseWithCount(1, "残った通知"));
     const queryApi = createQueryApi(list);
     const deleteNotification = vi.fn().mockResolvedValue(undefined);
@@ -128,7 +128,7 @@ describe("useNotificationList", () => {
     await waitFor(() => expect(result.current.isLoading).toBe(false));
     act(() => result.current.onPageChange(2));
     expect(result.current.currentPage).toBe(2);
-    expect(result.current.items[0]?.content.push.title).toBe("通知20");
+    expect(result.current.items[0]?.content.push.title).toBe("通知50");
 
     const itemToDelete = result.current.items[0];
     if (!itemToDelete) throw new Error("削除対象がありません");
@@ -137,7 +137,7 @@ describe("useNotificationList", () => {
       await result.current.confirmDelete();
     });
 
-    expect(deleteNotification).toHaveBeenCalledWith(121);
+    expect(deleteNotification).toHaveBeenCalledWith(151);
     expect(list).toHaveBeenCalledTimes(2);
     expect(result.current.currentPage).toBe(1);
     expect(result.current.pageCount).toBe(1);

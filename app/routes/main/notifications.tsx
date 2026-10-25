@@ -18,7 +18,7 @@ export default function NotificationsRoute() {
     <PageLayout>
       <PagePadding>
         <NotificationListPage
-          initialViewMode={
+          viewMode={
             searchParams.get("view") === "calendar" ? "calendar" : "list"
           }
           commandApi={httpAdminNotificationCommandApi}

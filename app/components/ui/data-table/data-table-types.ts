@@ -48,4 +48,5 @@ export type DataTableProps<T> = {
   items: readonly T[];
   onSortChange?: (columnId: string) => void;
   sort?: DataTableSort;
+  rowSizing?: "fixed" | "content";
 };
