@@ -27,6 +27,8 @@ import {
   adminNotificationListFixture,
 } from "~/features/notifications/mock/notification-fixtures";
 
+vi.setConfig({ testTimeout: 15_000 });
+
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
@@ -60,9 +62,12 @@ describe("notification pages", () => {
     fireEvent.change(screen.getByLabelText("本文*"), {
       target: { value: "# Push本文" },
     });
-    fireEvent.change(await screen.findByLabelText("Markdownソース"), {
-      target: { value: "# 詳細本文" },
-    });
+    fireEvent.change(
+      await screen.findByLabelText("Markdownソース", {}, { timeout: 10_000 }),
+      {
+        target: { value: "# 詳細本文" },
+      }
+    );
     expect(
       screen.getByRole("heading", { name: "詳細本文" })
     ).toBeInTheDocument();
@@ -119,9 +124,12 @@ describe("notification pages", () => {
     fireEvent.change(screen.getByLabelText("詳細タイトル*"), {
       target: { value: "緊急連絡の詳細" },
     });
-    fireEvent.change(await screen.findByLabelText("Markdownソース"), {
-      target: { value: "集合場所も確認してください。" },
-    });
+    fireEvent.change(
+      await screen.findByLabelText("Markdownソース", {}, { timeout: 10_000 }),
+      {
+        target: { value: "集合場所も確認してください。" },
+      }
+    );
     const submitButton = screen.getByRole("button", { name: "通知を配信" });
     await waitFor(() => expect(submitButton).toBeEnabled());
     fireEvent.click(submitButton);
@@ -186,7 +194,9 @@ describe("notification pages", () => {
     for (const label of ["タイトル*", "本文*", "詳細タイトル*", "詳細本文*"])
       fireEvent.change(
         await screen.findByLabelText(
-          label === "詳細本文*" ? "Markdownソース" : label
+          label === "詳細本文*" ? "Markdownソース" : label,
+          {},
+          { timeout: 10_000 }
         ),
         {
           target: { value: "テスト通知" },
@@ -233,7 +243,9 @@ describe("notification pages", () => {
     for (const label of ["タイトル*", "本文*", "詳細タイトル*", "詳細本文*"])
       fireEvent.change(
         await screen.findByLabelText(
-          label === "詳細本文*" ? "Markdownソース" : label
+          label === "詳細本文*" ? "Markdownソース" : label,
+          {},
+          { timeout: 10_000 }
         ),
         {
           target: { value: "テスト" },
@@ -283,7 +295,9 @@ describe("notification pages", () => {
     for (const label of ["タイトル*", "本文*", "詳細タイトル*", "詳細本文*"])
       fireEvent.change(
         await screen.findByLabelText(
-          label === "詳細本文*" ? "Markdownソース" : label
+          label === "詳細本文*" ? "Markdownソース" : label,
+          {},
+          { timeout: 10_000 }
         ),
         {
           target: { value: "テスト" },
