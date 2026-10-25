@@ -36,7 +36,11 @@ export function NotificationEditPage(props: NotificationEditPageProps) {
   }
 
   return (
-    <NotificationEditorLayout draft={state.draft}>
+    <NotificationEditorLayout
+      draft={state.draft}
+      notification={state.notification}
+      audienceOptions={state.audienceOptions}
+    >
       <PagePadding>
         <div className="mx-auto flex w-full min-w-0 flex-col gap-6">
           <PageHeader

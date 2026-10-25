@@ -254,7 +254,7 @@ export function NotificationAudienceEditor({
             ? `対象人数を取得できませんでした: ${recipientCountError}`
             : recipientCount === null
               ? null
-              : `対象候補 ${recipientCount.toLocaleString("ja-JP")}人`}
+              : `通知予定 ${recipientCount.toLocaleString("ja-JP")}人`}
       </p>
     </fieldset>
   );
