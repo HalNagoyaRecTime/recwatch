@@ -33,11 +33,11 @@ jobs:
       fail-fast: false
       matrix:
         include: ${{ fromJSON(
-          vars.name != 'preview' &&
+          github.event.workflow_run.event == 'pull_request' &&
+          '[{"region":"nagoya","account":"NAGOYA","project":"recwatch"}]' ||
           '[{"region":"nagoya","account":"NAGOYA","project":"recwatch"},
           {"region":"tokyo","account":"TOKYO","project":"recwatch-tokyo"},
-          {"region":"osaka","account":"OSAKA","project":"recwatch-osaka"}]' ||
-          '[{"region":"nagoya","account":"NAGOYA","project":"recwatch"}]'
+          {"region":"osaka","account":"OSAKA","project":"recwatch-osaka"}]'
           ) }}
     concurrency:
       group: cloudflare-pages-${{
@@ -121,7 +121,7 @@ jobs:
           apiToken: ${{ env.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ env.CLOUDFLARE_ACCOUNT_ID }}
           command: >-
-            pages deploy build/client --project-name=recwatch
+            pages deploy build/client --project-name=${{ matrix.project }}
             --branch=${{ steps.target.outputs.pages_branch }}
           gitHubToken: ${{ secrets.GITHUB_TOKEN }}
 
