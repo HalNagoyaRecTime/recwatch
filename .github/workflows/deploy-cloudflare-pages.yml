@@ -166,5 +166,5 @@ jobs:
       - name: Verify deployed legal pages
         env:
           LEGAL_BASE_URL: >-
-            https://${{ steps.target.outputs.pages_branch }}.${{ matrix.project }}.pages.dev
+            ${{ steps.target.outputs.pages_branch == 'main' && format('https://{0}.pages.dev', matrix.project) || format('https://{0}.{1}.pages.dev', steps.target.outputs.pages_branch, matrix.project) }}
         run: npm run verify:legal:http --if-present
