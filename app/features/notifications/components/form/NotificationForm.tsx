@@ -1,10 +1,17 @@
-import { MarkdownPreview } from "~/components/ui/markdown/MarkdownPreview";
-import { CalendarClock, Plus, Send, Trash2 } from "lucide-react";
+import { NotificationMarkdownEditor } from "~/features/notifications/components/form/NotificationMarkdownEditor";
+import { endOfDay, isSameDay, startOfDay } from "date-fns";
+import { ja } from "date-fns/locale/ja";
+import { useEffect, useState } from "react";
+import DatePicker, { registerLocale } from "react-datepicker";
+import { CalendarClock, Send, Trash2 } from "lucide-react";
 
 import { Button } from "~/components/ui/button/Button";
 import { ButtonLink } from "~/components/ui/button/ButtonLink";
+import {
+  SearchCombobox,
+  type SearchOption,
+} from "~/components/ui/form/SearchCombobox";
 import { SegmentedControl } from "~/components/ui/form/SegmentedControl";
-import { Select } from "~/components/ui/form/Select";
 import { LayeredPanel } from "~/components/ui/panel/LayeredPanel";
 
 import type {
@@ -12,11 +19,23 @@ import type {
   NotificationAudienceType,
 } from "~/features/notifications/model/notification-audience";
 import type {
+  NotificationAudienceDraftItem,
   NotificationDeliveryTiming,
   NotificationDraft,
   NotificationImportance,
 } from "~/features/notifications/model/notification-draft";
 import type { NotificationDraftErrors } from "~/features/notifications/model/notification-draft-validation";
+
+registerLocale("ja", ja);
+
+const currentDateTimeFormatter = new Intl.DateTimeFormat("ja-JP", {
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+  hour: "2-digit",
+  minute: "2-digit",
+  timeZone: "Asia/Tokyo",
+});
 
 type NotificationFormProps = {
   draft: NotificationDraft;
@@ -44,16 +63,32 @@ const notificationAudienceLabels: Record<NotificationAudienceType, string> = {
   all: "全体",
   class_room: "クラス",
   gathering: "集合",
-  event: "競技参加者",
+  event: "イベント",
   user: "ユーザー",
 };
 
-const audienceTypeOptions = Object.entries(notificationAudienceLabels).map(
-  ([value, label]) => ({
-    label,
-    value: value as NotificationAudienceType,
-  })
-);
+const userCategoryLabels = {
+  student: "生徒",
+  teacher: "先生",
+  student_and_teacher: "生徒・先生",
+} as const;
+
+type SelectableNotificationAudienceType = Exclude<
+  NotificationAudienceType,
+  "all"
+>;
+
+const audienceSearchLimit = 30;
+const audienceSelectionOptions: {
+  label: string;
+  value: NotificationAudienceType;
+}[] = [
+  { label: "全員", value: "all" },
+  { label: "ユーザー", value: "user" },
+  { label: "クラス", value: "class_room" },
+  { label: "集合", value: "gathering" },
+  { label: "イベント", value: "event" },
+];
 
 const deliveryTimingOptions = [
   { label: "今すぐ配信", value: "now" },
@@ -104,6 +139,59 @@ export function NotificationForm({
     (item) => item.type !== "all"
   );
   const minimumScheduledAt = getMinimumScheduledAt();
+  const scheduledDate = draft.scheduledAt ? new Date(draft.scheduledAt) : null;
+  const selectedScheduledDate =
+    scheduledDate && !Number.isNaN(scheduledDate.getTime())
+      ? scheduledDate
+      : null;
+  const [currentTime, setCurrentTime] = useState<Date | null>(null);
+
+  useEffect(() => {
+    const updateCurrentTime = () => setCurrentTime(new Date());
+    updateCurrentTime();
+
+    const intervalId = window.setInterval(updateCurrentTime, 60_000);
+    return () => window.clearInterval(intervalId);
+  }, []);
+  const [audienceQuery, setAudienceQuery] = useState("");
+  const selectedAudiences = draft.audiences.filter(
+    (
+      audience
+    ): audience is NotificationAudienceDraftItem & {
+      type: SelectableNotificationAudienceType;
+    } => audience.type !== "all"
+  );
+  const [audienceScope, setAudienceScope] =
+    useState<SelectableNotificationAudienceType>(
+      () => selectedAudiences[0]?.type ?? "user"
+    );
+  const selectedAudienceKeys = new Set(
+    selectedAudiences.map((audience) => `${audience.type}:${audience.targetId}`)
+  );
+  const normalizedAudienceQuery = audienceQuery
+    .trim()
+    .toLocaleLowerCase("ja-JP");
+  const audienceSearchOptions: SearchOption[] = normalizedAudienceQuery
+    ? audienceOptions
+        .filter(
+          (option) =>
+            option.type === audienceScope &&
+            !selectedAudienceKeys.has(`${option.type}:${option.id}`) &&
+            `${option.name} ${option.id}`
+              .toLocaleLowerCase("ja-JP")
+              .includes(normalizedAudienceQuery)
+        )
+        .slice(0, audienceSearchLimit)
+        .map((option) => ({
+          id: `${option.type}:${option.id}`,
+          label: option.name,
+          badge: notificationAudienceLabels[option.type],
+          ...(option.type === "user" && option.userCategory
+            ? { badge: userCategoryLabels[option.userCategory] }
+            : {}),
+          description: `ID: ${option.id}`,
+        }))
+    : [];
 
   return (
     <form
@@ -119,7 +207,7 @@ export function NotificationForm({
         <div className="space-y-5">
           <label className="block">
             <span className="text-text-base mb-2 block text-sm font-medium">
-              タイトル <span className="text-tone-danger-text">*</span>
+              プッシュタイトル <span className="text-tone-danger-text">*</span>
             </span>
             <input
               aria-label="タイトル*"
@@ -133,7 +221,7 @@ export function NotificationForm({
               onChange={(event) =>
                 onChange({ ...draft, title: event.currentTarget.value })
               }
-              placeholder="例：競技開始時間の変更"
+              placeholder="例：イベント時間の変更"
               required
               value={draft.title}
             />
@@ -204,39 +292,38 @@ export function NotificationForm({
             ) : null}
           </label>
 
-          <label className="block">
-            <span className="text-text-base mb-2 block text-sm font-medium">
-              詳細本文 <span className="text-tone-danger-text">*</span>
-            </span>
-            <textarea
-              aria-label="詳細本文*"
-              aria-invalid={Boolean(errors.detailBody)}
-              className={`${inputClassName} min-h-28 resize-y py-2`}
-              maxLength={2000}
-              onChange={(event) =>
-                onChange({ ...draft, detailBody: event.currentTarget.value })
-              }
-              value={draft.detailBody}
-            />
-            {errors.detailBody ? (
-              <span className="text-tone-danger-text mt-1 block text-xs">
-                {errors.detailBody}
-              </span>
-            ) : null}
-          </label>
-
-          <MarkdownPreview content={draft.detailBody} />
+          <NotificationMarkdownEditor
+            value={draft.detailBody}
+            error={errors.detailBody}
+            onChange={(detailBody) => onChange({ ...draft, detailBody })}
+          />
 
           <fieldset disabled={isFullEditDisabled}>
             <p className="text-text-base mb-2 text-sm font-medium">重要度</p>
-            <Select
+            <SegmentedControl
               ariaLabel="重要度"
-              disabled={importanceOptions.length === 0 || isFullEditDisabled}
+              behavior="selection"
               onValueChange={(importance) => onChange({ ...draft, importance })}
-              options={importanceOptions.map((value) => ({
-                value,
-                label: importanceLabels[value],
-              }))}
+              options={[
+                {
+                  value: "low",
+                  label: importanceLabels.low,
+                  disabled: !importanceOptions.includes("low"),
+                  tone: "info",
+                },
+                {
+                  value: "normal",
+                  label: importanceLabels.normal,
+                  disabled: !importanceOptions.includes("normal"),
+                  tone: "success",
+                },
+                {
+                  value: "high",
+                  label: importanceLabels.high,
+                  disabled: !importanceOptions.includes("high"),
+                  tone: "danger",
+                },
+              ]}
               value={draft.importance}
             />
             {configError ? (
@@ -251,132 +338,147 @@ export function NotificationForm({
             ) : null}
           </fieldset>
 
-          <fieldset disabled={isFullEditDisabled}>
-            <div className="mb-2 flex items-center justify-between gap-3">
+          <fieldset disabled={isFullEditDisabled || isAudienceDisabled}>
+            <div className="mb-3 space-y-2">
               <p className="text-text-base text-sm font-medium">
                 通知対象 <span className="text-tone-danger-text">*</span>
               </p>
-              <Button
-                disabled={
-                  isAudienceDisabled ||
-                  draft.audiences.some((item) => item.type === "all")
-                }
-                icon={Plus}
-                onClick={() =>
+              <SegmentedControl
+                ariaLabel="通知対象"
+                behavior="selection"
+                onValueChange={(type) => {
+                  setAudienceQuery("");
+                  if (type === "all") {
+                    onChange({
+                      ...draft,
+                      audiences: [
+                        { key: "audience-all", type: "all", targetId: "" },
+                      ],
+                    });
+                    return;
+                  }
+
+                  setAudienceScope(type);
                   onChange({
                     ...draft,
-                    audiences: [
-                      ...draft.audiences,
-                      {
-                        key: `audience-${Date.now()}`,
-                        type: "class_room",
-                        targetId: "",
-                      },
-                    ],
-                  })
+                    audiences: draft.audiences.some(
+                      (item) => item.type === "all"
+                    )
+                      ? []
+                      : selectedAudiences,
+                  });
+                }}
+                options={audienceSelectionOptions}
+                value={
+                  draft.audiences.some((item) => item.type === "all")
+                    ? "all"
+                    : audienceScope
                 }
-                size="sm"
-                type="button"
-                variant="secondary"
-              >
-                対象を追加
-              </Button>
+              />
             </div>
-            <div className="space-y-3">
-              {draft.audiences.map((audience, index) => {
-                const filteredAudienceOptions = audienceOptions.filter(
-                  (option) => option.type === audience.type
-                );
-                return (
-                  <div
-                    key={audience.key}
-                    className="border-border-base rounded-md border p-3"
-                  >
-                    <div className="flex items-center gap-2">
-                      <div className="grid min-w-0 flex-1 gap-2 sm:grid-cols-2">
-                        <Select
-                          ariaLabel={`通知対象 ${index + 1}`}
-                          disabled={isAudienceDisabled}
-                          onValueChange={(type) =>
-                            onChange({
-                              ...draft,
-                              audiences:
-                                type === "all"
-                                  ? [{ ...audience, type, targetId: "" }]
-                                  : draft.audiences.map((item) =>
-                                      item.key === audience.key
-                                        ? { ...item, type, targetId: "" }
-                                        : item
-                                    ),
-                            })
-                          }
-                          options={audienceTypeOptions}
-                          value={audience.type}
-                        />
-                        {audience.type !== "all" ? (
-                          <select
-                            aria-label={`対象 ${index + 1}`}
-                            className={`${inputClassName} appearance-auto`}
-                            value={audience.targetId}
-                            disabled={
-                              isAudienceDisabled ||
-                              isAudienceLoading ||
-                              Boolean(audienceError)
-                            }
-                            onChange={(event) =>
+            {!draft.audiences.some((item) => item.type === "all") ? (
+              <div className="space-y-3">
+                <SearchCombobox
+                  ariaLabel={`${notificationAudienceLabels[audienceScope]}を検索して追加`}
+
+                  disabled={
+                    isAudienceDisabled ||
+                    isAudienceLoading ||
+                    Boolean(audienceError)
+                  }
+                  emptyMessage={
+                    normalizedAudienceQuery
+                      ? "一致する通知対象がありません"
+                      : "名前またはIDを入力して検索できます"
+                  }
+                  onOptionSelect={(selectedOption) => {
+                    const option = audienceOptions.find(
+                      (item) => `${item.type}:${item.id}` === selectedOption.id
+                    );
+                    if (!option) return;
+
+                    onChange({
+                      ...draft,
+                      audiences: [
+                        ...selectedAudiences,
+                        {
+                          key: `audience-${option.type}-${option.id}`,
+                          type: option.type,
+                          targetId: option.id,
+                        },
+                      ],
+                    });
+                    setAudienceQuery("");
+                  }}
+                  onQueryChange={setAudienceQuery}
+                  options={audienceSearchOptions}
+                  placeholder={`${notificationAudienceLabels[audienceScope]}を名前・IDで検索して追加`}
+                  query={audienceQuery}
+                />
+                {selectedAudiences.length > 0 ? (
+                  <div className="space-y-2">
+                    {selectedAudiences.map((audience, index) => {
+                      const option = audienceOptions.find(
+                        (item) =>
+                          item.type === audience.type &&
+                          item.id === audience.targetId
+                      );
+                      const label = notificationAudienceLabels[audience.type];
+                      const userCategory =
+                        audience.type === "user"
+                          ? option?.userCategory
+                          : undefined;
+
+                      return (
+                        <div
+                          key={audience.key}
+                          className="border-border-base flex items-center gap-3 rounded-md border px-3 py-2.5"
+                        >
+                          <span className="bg-surface-muted text-text-muted app-rounded shrink-0 px-2 py-1 text-xs font-medium">
+                            {userCategory
+                              ? userCategoryLabels[userCategory]
+                              : label}
+                          </span>
+                          <span className="min-w-0 flex-1">
+                            <span className="text-text-base block truncate text-sm font-medium">
+                              {option?.name ?? `${label} #${audience.targetId}`}
+                            </span>
+                            <span className="text-text-subtle block text-xs">
+                              ID: {audience.targetId}
+                            </span>
+                          </span>
+                          <Button
+                            aria-label={`${label} ${option?.name ?? audience.targetId}を削除`}
+                            icon={Trash2}
+                            iconOnly
+                            onClick={() =>
                               onChange({
                                 ...draft,
-                                audiences: draft.audiences.map((item) =>
-                                  item.key === audience.key
-                                    ? {
-                                        ...item,
-                                        targetId: event.currentTarget.value,
-                                      }
-                                    : item
+                                audiences: selectedAudiences.filter(
+                                  (item) => item.key !== audience.key
                                 ),
                               })
                             }
-                          >
-                            <option value="">対象を選択</option>
-                            {filteredAudienceOptions.map((option) => (
-                              <option
-                                key={`${option.type}-${option.id}`}
-                                value={option.id}
-                              >
-                                {option.name}
-                              </option>
-                            ))}
-                          </select>
-                        ) : null}
-                      </div>
-                      {draft.audiences.length > 1 ? (
-                        <Button
-                          aria-label={`通知対象 ${index + 1}を削除`}
-                          icon={Trash2}
-                          iconOnly
-                          onClick={() =>
-                            onChange({
-                              ...draft,
-                              audiences: draft.audiences.filter(
-                                (item) => item.key !== audience.key
-                              ),
-                            })
-                          }
-                          size="sm"
-                          type="button"
-                          variant="ghost"
-                        />
-                      ) : null}
-                    </div>
-                    {errors[`audiences.${index}`] ? (
-                      <p className="text-tone-danger-text mt-1.5 text-xs">
-                        {errors[`audiences.${index}`]}
-                      </p>
-                    ) : null}
+                            size="sm"
+                            type="button"
+                            variant="ghost"
+                          />
+                          {errors[`audiences.${index}`] ? (
+                            <span className="text-tone-danger-text text-xs">
+                              {errors[`audiences.${index}`]}
+                            </span>
+                          ) : null}
+                        </div>
+                      );
+                    })}
                   </div>
-                );
-              })}
-            </div>
+                ) : (
+                  <p className="text-text-subtle text-xs">
+                    上の検索欄から通知対象を追加してください。
+                  </p>
+                )}
+              </div>
+            ) : null}
             {errors.audiences ? (
               <p className="text-tone-danger-text mt-1.5 text-xs">
                 {errors.audiences}
@@ -424,45 +526,68 @@ export function NotificationForm({
               options={deliveryTimingOptions}
               value={deliveryTiming}
             />
-            {deliveryTiming === "scheduled" ? (
-              <label className="mt-3 block">
-                <span className="text-text-muted mb-1.5 block text-xs">
-                  予約配信日時
-                </span>
-                <input
-                  aria-describedby={
-                    errors.scheduledAt
-                      ? "notification-scheduled-at-error"
-                      : undefined
-                  }
-                  aria-invalid={Boolean(errors.scheduledAt)}
-                  aria-label="予約配信日時"
-                  className={inputClassName}
-                  onChange={(event) =>
-                    onChange({
-                      ...draft,
-                      scheduledAt: event.currentTarget.value,
-                    })
-                  }
-                  min={minimumScheduledAt}
-                  required
-                  type="datetime-local"
-                  value={draft.scheduledAt ?? ""}
-                />
-                {errors.scheduledAt ? (
-                  <span
-                    id="notification-scheduled-at-error"
-                    className="text-tone-danger-text mt-1 block text-xs"
-                  >
-                    {errors.scheduledAt}
+            <div className="mt-3 min-h-24">
+              {deliveryTiming === "scheduled" ? (
+                <label className="block">
+                  <span className="text-text-muted mb-1.5 block text-xs">
+                    予約配信日時
                   </span>
-                ) : null}
-              </label>
-            ) : (
-              <p className="text-text-subtle mt-2 text-xs">
-                作成後、対象ユーザーへすぐにプッシュ通知を送信します。
-              </p>
-            )}
+                  <DatePicker
+                    aria-describedby={
+                      errors.scheduledAt
+                        ? "notification-scheduled-at-error"
+                        : undefined
+                    }
+                    aria-invalid={errors.scheduledAt ? "true" : undefined}
+                    aria-label="予約配信日時"
+                    className={inputClassName}
+                    dateFormat="yyyy/MM/dd (eee) HH:mm"
+                    locale="ja"
+                    maxTime={endOfDay(
+                      selectedScheduledDate ?? minimumScheduledAt
+                    )}
+                    minDate={minimumScheduledAt}
+                    minTime={
+                      selectedScheduledDate &&
+                      isSameDay(selectedScheduledDate, minimumScheduledAt)
+                        ? minimumScheduledAt
+                        : startOfDay(
+                            selectedScheduledDate ?? minimumScheduledAt
+                          )
+                    }
+                    onChange={(date: Date | null) =>
+                      onChange({
+                        ...draft,
+                        scheduledAt: date ? toDateTimeLocalValue(date) : "",
+                      })
+                    }
+                    required
+                    selected={selectedScheduledDate}
+                    showTimeSelect
+                    timeCaption="時刻"
+                    timeIntervals={5}
+                    wrapperClassName="block w-full"
+                  />
+                  {errors.scheduledAt ? (
+                    <span
+                      id="notification-scheduled-at-error"
+                      className="text-tone-danger-text mt-1 block text-xs"
+                    >
+                      {errors.scheduledAt}
+                    </span>
+                  ) : null}
+                </label>
+              ) : (
+                <div className="space-y-1">
+                  <p className="text-text-base text-sm font-medium">
+                    現在時刻:{" "}
+                    {currentTime
+                      ? currentDateTimeFormatter.format(currentTime)
+                      : "--"}
+                  </p>
+                </div>
+              )}
+            </div>
           </fieldset>
         </div>
       </LayeredPanel>
@@ -504,9 +629,12 @@ function getMinimumScheduledAt() {
   const minimum = new Date();
   minimum.setSeconds(0, 0);
   minimum.setMinutes(minimum.getMinutes() + 1);
+  return minimum;
+}
 
-  const localMinimum = new Date(
-    minimum.getTime() - minimum.getTimezoneOffset() * 60_000
+function toDateTimeLocalValue(date: Date) {
+  const localDate = new Date(
+    date.getTime() - date.getTimezoneOffset() * 60_000
   );
-  return localMinimum.toISOString().slice(0, 16);
+  return localDate.toISOString().slice(0, 16);
 }

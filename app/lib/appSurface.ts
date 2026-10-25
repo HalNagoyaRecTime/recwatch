@@ -150,7 +150,17 @@ export function synchronizeAppSurfaceDocument(
 }
 
 export function createAppSurfaceBootstrapScript(): string {
-  const resolveSurfaceSource = getAppSurface.toString();
+  // 本番buildのminify後はgetAppSurface.toString()が信頼できないため、
+  // 同じ判定をinlineで持つ。判定を変更するときはgetAppSurfaceも同期する。
+  const resolveSurfaceSource = `function(pathname, deletionAuthPending) {
+    if (pathname === "/account-deletion" || pathname.indexOf("/account-deletion/") === 0) {
+      return "account-deletion";
+    }
+    if (pathname === "/auth/callback" && deletionAuthPending) {
+      return "account-deletion";
+    }
+    return "recwatch";
+  }`;
 
   return `(function() {
     var resolveSurface = ${resolveSurfaceSource};

@@ -59,7 +59,12 @@ export async function loadAllEvents(client: NotificationAudienceHttpClient) {
 
 export async function loadAllUsers(client: NotificationAudienceHttpClient) {
   const pages = await Promise.all(
-    ["students", "teachers"].map(async (resource) => {
+    (
+      [
+        ["students", "student"],
+        ["teachers", "teacher"],
+      ] as const
+    ).map(async ([resource, userCategory]) => {
       const users: UserAudienceApiDto[] = [];
       for (let pageIndex = 0; pageIndex < MAX_PAGES; pageIndex += 1) {
         const page = toUserAudiencePage(
@@ -67,13 +72,32 @@ export async function loadAllUsers(client: NotificationAudienceHttpClient) {
             `/api/v1/${resource}?limit=${PAGE_SIZE}&offset=${users.length}&isStaff=all&isLiveActive=true`
           )
         );
-        users.push(...page.items);
+        users.push(
+          ...page.items.map((user) => ({
+            ...user,
+            user_category: userCategory,
+          }))
+        );
         if (users.length >= page.total || page.items.length === 0) return users;
       }
       throw new ClientError(ClientErrors.RESPONSE_PARSE_ERROR);
     })
   );
-  return [
-    ...new Map(pages.flat().map((user) => [user.user_id, user])).values(),
-  ];
+  const usersById = new Map<number, UserAudienceApiDto>();
+  for (const user of pages.flat()) {
+    const existing = usersById.get(user.user_id);
+    if (!existing) {
+      usersById.set(user.user_id, user);
+      continue;
+    }
+
+    usersById.set(user.user_id, {
+      ...existing,
+      user_category:
+        existing.user_category === user.user_category
+          ? existing.user_category
+          : "student_and_teacher",
+    });
+  }
+  return [...usersById.values()];
 }

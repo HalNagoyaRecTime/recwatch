@@ -21,12 +21,13 @@ type NotificationPreviewPanelProps = {
 export function NotificationPreviewPanel({
   draft,
 }: NotificationPreviewPanelProps) {
-  const [previewMode, setPreviewMode] =
-    useState<NotificationPreviewMode>("lock-screen");
+  const [previewMode, setPreviewMode] = useState<NotificationPreviewMode>(
+    "notification-detail"
+  );
 
   return (
-    <div className="bg-surface-layout flex h-full w-fit flex-col">
-      <header className="main-header-height border-border-base flex shrink-0 items-center justify-center border-b px-4">
+    <div className="bg-surface-layout flex h-full min-h-0 w-full min-w-0 flex-col">
+      <header className="main-header-height border-border-base flex shrink-0 items-center justify-start border-b px-3">
         <SegmentedControl
           ariaLabel="プレビューの表示形式"
           behavior="selection"
@@ -36,8 +37,8 @@ export function NotificationPreviewPanel({
         />
       </header>
 
-      <ScrollbarArea className="@container-[size]">
-        <div className="flex min-h-full justify-center p-4.5">
+      <ScrollbarArea className="@container-[size] min-h-0 flex-1">
+        <div className="flex min-h-full min-w-0 items-start justify-center p-3">
           <NotificationMobilePreview draft={draft} mode={previewMode} />
         </div>
       </ScrollbarArea>

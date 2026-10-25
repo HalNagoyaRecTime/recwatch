@@ -52,6 +52,7 @@ export type EventAudienceGatheringApiDto = {
 export type UserAudienceApiDto = {
   user_id: number;
   display_name: string;
+  user_category?: "student" | "teacher" | "student_and_teacher";
 };
 
 export type UserAudiencePageApiDto = {
