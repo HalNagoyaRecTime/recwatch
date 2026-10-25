@@ -1,14 +1,17 @@
+import { NotificationManagementNavigation } from "~/features/notifications/components/NotificationManagementNavigation";
 import { useState } from "react";
 import { RefreshCw } from "lucide-react";
 import { Button } from "~/components/ui/button/Button";
-import { ButtonLink } from "~/components/ui/button/ButtonLink";
 import { PageHeader } from "~/components/ui/layout/PageHeader";
 import type { NotificationScheduleQueryApi } from "~/features/notifications/api/contracts/notification-schedule-query-api";
 import { NotificationMonitorDetail } from "~/features/notifications/components/monitor/NotificationMonitorDetail";
 import { NotificationMonitorOverview } from "~/features/notifications/components/monitor/NotificationMonitorOverview";
 import { NotificationMonitorGraph } from "~/features/notifications/components/monitor/NotificationMonitorGraph";
 import { NotificationStatusBadge } from "~/features/notifications/components/list/NotificationStatusBadge";
-import { formatNotificationDateTime } from "~/features/notifications/components/list/notification-display";
+import {
+  formatNotificationDateTime,
+  notificationScheduleStatusLabels,
+} from "~/features/notifications/components/list/notification-display";
 import { getMonitorSchedule } from "~/features/notifications/hooks/notification-monitor-data";
 import type { NotificationFeedbackReporter } from "~/features/notifications/hooks/notification-feedback";
 import { useNotificationMonitor } from "~/features/notifications/hooks/useNotificationMonitor";
@@ -27,14 +30,6 @@ type Props = {
   reportFeedback?: NotificationFeedbackReporter;
   now?: () => number;
   refreshIntervalMs?: number;
-};
-const statusLabels = {
-  scheduled: "配信待ち",
-  resolving: "対象解決中",
-  sending: "送信中",
-  completed: "配信完了",
-  failed: "配信失敗",
-  stopped: "停止済み",
 };
 
 export function NotificationMonitorPage(props: Props) {
@@ -66,7 +61,7 @@ export function NotificationMonitorPage(props: Props) {
   const metrics = [
     [
       "Schedule状態",
-      schedule ? statusLabels[schedule.status] : "—",
+      schedule ? notificationScheduleStatusLabels[schedule.status] : "—",
       schedule ? `DB: ${schedule.status}` : "—",
     ],
     [
@@ -138,11 +133,7 @@ export function NotificationMonitorPage(props: Props) {
           disabled={state.isLoading}
         />
       )}
-      <nav className="monitor-tabs" aria-label="通知管理">
-        <ButtonLink to="/notifications">一覧</ButtonLink>
-        <span aria-current="page">配信モニター</span>
-        <ButtonLink to="/notifications?view=calendar">カレンダー</ButtonLink>
-      </nav>
+      <NotificationManagementNavigation active="monitor" />
       <div
         className="monitor-view-switch"
         role="group"
@@ -347,7 +338,9 @@ export function NotificationMonitorPage(props: Props) {
                           <i className={`monitor-dot-${value.status}`} />
                           <span>
                             <strong>{value.content.push.title}</strong>
-                            <small>{statusLabels[value.status]}</small>
+                            <small>
+                              {notificationScheduleStatusLabels[value.status]}
+                            </small>
                           </span>
                         </button>
                       );

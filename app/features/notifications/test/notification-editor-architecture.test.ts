@@ -13,8 +13,9 @@ function layer(path: string) {
   return "presentation";
 }
 
-it("通知の新規・編集からたどれる依存は4層の境界を守る", () => {
+it("通知の新規・編集・一覧からたどれる依存は4層の境界を守る", () => {
   const pending = [
+    resolve(featureRoot, "pages/NotificationListPage.tsx"),
     resolve(featureRoot, "pages/NotificationCreatePage.tsx"),
     resolve(featureRoot, "pages/NotificationEditPage.tsx"),
   ];
