@@ -6,6 +6,10 @@ export type AppSurface = "recwatch" | "account-deletion";
 export const ACCOUNT_DELETION_AUTH_LOADING_CONTEXT = "account-deletion-auth";
 
 const AUTH_CALLBACK_PATH = "/auth/callback";
+const ACCOUNT_DELETION_ROUTES = [
+  { path: "/account-deletion", descendants: true, requiresPendingAuth: false },
+  { path: AUTH_CALLBACK_PATH, descendants: false, requiresPendingAuth: true },
+] as const;
 const RECWATCH_FAVICON_HREF = "/recwatch-logo.svg";
 const ACCOUNT_DELETION_FAVICON_HREF = "/recreation-favicon.png";
 const RECWATCH_FAVICON_TYPE = "image/svg+xml";
@@ -19,18 +23,14 @@ export function getAppSurface(
   pathname: string,
   deletionAuthPending = false
 ): AppSurface {
-  if (
-    pathname === "/account-deletion" ||
-    pathname.startsWith("/account-deletion/")
-  ) {
-    return "account-deletion";
-  }
-
-  if (pathname === "/auth/callback" && deletionAuthPending) {
-    return "account-deletion";
-  }
-
-  return "recwatch";
+  return ACCOUNT_DELETION_ROUTES.some(
+    (route) =>
+      (!route.requiresPendingAuth || deletionAuthPending) &&
+      (pathname === route.path ||
+        (route.descendants && pathname.startsWith(`${route.path}/`)))
+  )
+    ? "account-deletion"
+    : "recwatch";
 }
 
 export function hasDeletionAuthPending(): boolean {
@@ -150,16 +150,14 @@ export function synchronizeAppSurfaceDocument(
 }
 
 export function createAppSurfaceBootstrapScript(): string {
-  // 本番buildのminify後はgetAppSurface.toString()が信頼できないため、
-  // 同じ判定をinlineで持つ。判定を変更するときはgetAppSurfaceも同期する。
+  // 関数のtoStringに依存せず、共通のルート定義から安定したスクリプトを作る。
   const resolveSurfaceSource = `function(pathname, deletionAuthPending) {
-    if (pathname === "/account-deletion" || pathname.indexOf("/account-deletion/") === 0) {
-      return "account-deletion";
-    }
-    if (pathname === "/auth/callback" && deletionAuthPending) {
-      return "account-deletion";
-    }
-    return "recwatch";
+    var routes = ${JSON.stringify(ACCOUNT_DELETION_ROUTES)};
+    return routes.some(function(route) {
+      return (!route.requiresPendingAuth || deletionAuthPending) &&
+        (pathname === route.path ||
+          (route.descendants && pathname.indexOf(route.path + "/") === 0));
+    }) ? "account-deletion" : "recwatch";
   }`;
 
   return `(function() {

@@ -1,3 +1,5 @@
+import { formatNotificationDateTime } from "~/features/notifications/components/notification-display";
+import { parseNotificationScheduledAt } from "~/features/notifications/model/notification-schedule-time";
 import { ArrowLeft } from "lucide-react";
 
 import { MarkdownContent } from "~/components/ui/markdown/MarkdownContent";
@@ -19,15 +21,12 @@ export function NotificationMobilePreview({
     "w-[min(100%,390px,max(270px,calc((100cqh-24px)*0.45)))] min-w-0 shrink-0 self-start";
 
   if (mode === "notification-detail") {
-    const scheduledAt = draft.scheduledAt ? new Date(draft.scheduledAt) : null;
     const dateLabel =
-      scheduledAt && !Number.isNaN(scheduledAt.getTime())
-        ? new Intl.DateTimeFormat("ja-JP", {
-            month: "long",
-            day: "numeric",
-            hour: "2-digit",
-            minute: "2-digit",
-          }).format(scheduledAt)
+      draft.deliveryTiming === "scheduled"
+        ? formatNotificationDateTime(
+            parseNotificationScheduledAt(draft.scheduledAt) ?? undefined,
+            "配信日時"
+          )
         : "配信日時";
     return (
       <div className={frameClassName} aria-label="モバイルの通知詳細プレビュー">

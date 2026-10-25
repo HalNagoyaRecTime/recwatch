@@ -1,3 +1,7 @@
+import {
+  formatNotificationDraftErrors,
+  notificationImportanceLabels,
+} from "~/features/notifications/components/notification-display";
 import { CalendarClock, Send } from "lucide-react";
 
 import { Button } from "~/components/ui/button/Button";
@@ -10,16 +14,15 @@ import { NotificationDeliveryTimingEditor } from "~/features/notifications/compo
 import { NotificationMarkdownEditor } from "~/features/notifications/components/form/NotificationMarkdownEditor";
 import type { NotificationAudienceOption } from "~/features/notifications/model/notification-audience";
 import type {
-  NotificationAudienceScopeItem,
   NotificationDeliveryTiming,
   NotificationDraft,
   NotificationImportance,
 } from "~/features/notifications/model/notification-draft";
-import type { NotificationDraftErrors } from "~/features/notifications/model/notification-draft-validation";
+import type { NotificationFormErrors } from "~/features/notifications/hooks/notification-form-errors";
 
 type NotificationFormProps = {
   draft: NotificationDraft;
-  errors: NotificationDraftErrors;
+  errors: NotificationFormErrors;
   audienceOptions: NotificationAudienceOption[];
   isAudienceLoading?: boolean;
   audienceError?: string | null;
@@ -28,7 +31,7 @@ type NotificationFormProps = {
   recipientCount?: number | null;
   recipientCountError?: string | null;
   isRecipientCountLoading?: boolean;
-  isSubmissionDisabled?: boolean;
+  canSubmit: boolean;
   isSubmitting: boolean;
   isAudienceDisabled?: boolean;
   isFullEditDisabled?: boolean;
@@ -39,15 +42,9 @@ type NotificationFormProps = {
   onAudienceReload?: () => void;
 };
 
-const importanceLabels: Record<NotificationImportance, string> = {
-  low: "低",
-  normal: "通常",
-  high: "高",
-};
-
 export function NotificationForm({
   draft,
-  errors,
+  errors: rawErrors,
   audienceOptions,
   isAudienceLoading = false,
   audienceError = null,
@@ -56,7 +53,7 @@ export function NotificationForm({
   recipientCount = null,
   recipientCountError = null,
   isRecipientCountLoading = false,
-  isSubmissionDisabled = false,
+  canSubmit,
   isSubmitting,
   isAudienceDisabled = false,
   isFullEditDisabled = false,
@@ -68,22 +65,7 @@ export function NotificationForm({
 }: NotificationFormProps) {
   const deliveryTiming: NotificationDeliveryTiming =
     draft.deliveryTiming ?? "now";
-  const selectedAudiences = draft.audiences.filter(
-    (audience): audience is NotificationAudienceScopeItem =>
-      audience.type !== "all"
-  );
-  const canSubmit =
-    draft.detailTitle.trim().length > 0 &&
-    draft.detailBody.trim().length > 0 &&
-    (isFullEditDisabled ||
-      (draft.title.trim().length > 0 &&
-        draft.body.trim().length > 0 &&
-        draft.audiences.length > 0 &&
-        draft.audiences.every(
-          (item) => item.type === "all" || item.targetId.length > 0
-        ) &&
-        (deliveryTiming === "now" || Boolean(draft.scheduledAt))));
-  const requiresAudienceOption = selectedAudiences.length > 0;
+  const errors = formatNotificationDraftErrors(rawErrors);
 
   return (
     <form
@@ -199,19 +181,19 @@ export function NotificationForm({
               options={[
                 {
                   value: "low",
-                  label: importanceLabels.low,
+                  label: notificationImportanceLabels.low,
                   disabled: !importanceOptions.includes("low"),
                   tone: "info",
                 },
                 {
                   value: "normal",
-                  label: importanceLabels.normal,
+                  label: notificationImportanceLabels.normal,
                   disabled: !importanceOptions.includes("normal"),
                   tone: "success",
                 },
                 {
                   value: "high",
-                  label: importanceLabels.high,
+                  label: notificationImportanceLabels.high,
                   disabled: !importanceOptions.includes("high"),
                   tone: "danger",
                 },
@@ -245,10 +227,16 @@ export function NotificationForm({
           />
 
           <NotificationDeliveryTimingEditor
-            draft={draft}
-            errors={errors}
-            isFullEditDisabled={isFullEditDisabled}
-            onChange={onChange}
+            timing={deliveryTiming}
+            scheduledAt={draft.scheduledAt}
+            error={errors.scheduledAt}
+            disabled={isFullEditDisabled}
+            onTimingChange={(timing) =>
+              onChange({ ...draft, deliveryTiming: timing })
+            }
+            onScheduledAtChange={(scheduledAt) =>
+              onChange({ ...draft, scheduledAt })
+            }
           />
         </div>
       </LayeredPanel>
@@ -258,16 +246,7 @@ export function NotificationForm({
           キャンセル
         </ButtonLink>
         <Button
-          disabled={
-            !canSubmit ||
-            isSubmissionDisabled ||
-            isSubmitting ||
-            (!isFullEditDisabled &&
-              (Boolean(configError) ||
-                importanceOptions.length === 0 ||
-                (requiresAudienceOption &&
-                  (isAudienceLoading || Boolean(audienceError)))))
-          }
+          disabled={!canSubmit || isSubmitting}
           icon={deliveryTiming === "now" ? Send : CalendarClock}
           size="lg"
           type="submit"

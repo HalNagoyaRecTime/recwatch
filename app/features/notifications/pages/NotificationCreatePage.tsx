@@ -1,3 +1,4 @@
+import { formatNotificationSubmissionErrors } from "~/features/notifications/components/notification-display";
 import { PageHeader } from "~/components/ui/layout/PageHeader";
 import { PagePadding } from "~/features/frame/page-layout/PagePadding";
 import { NotificationEditorLayout } from "~/features/notifications/components/form/NotificationEditorLayout";
@@ -33,6 +34,11 @@ export function NotificationCreatePage({
     reportFeedback,
   });
 
+  const submissionError = formatNotificationSubmissionErrors(
+    state.submissionIssues,
+    state.submissionError
+  );
+
   return (
     <NotificationEditorLayout
       draft={state.draft}
@@ -45,6 +51,7 @@ export function NotificationCreatePage({
             description="アプリを利用するユーザーへプッシュ通知を配信します"
           />
           <NotificationForm
+            canSubmit={state.canSubmit}
             audienceError={state.audienceError}
             audienceOptions={state.audienceOptions}
             configError={state.configError}
@@ -53,7 +60,6 @@ export function NotificationCreatePage({
             isAudienceLoading={state.isAudienceLoading}
             importanceOptions={state.importanceOptions}
             isRecipientCountLoading={state.isRecipientCountLoading}
-            isSubmissionDisabled={!isSubmissionEnabled}
             isSubmitting={state.isSubmitting}
             onAudienceReload={state.onAudienceReload}
             onChange={state.onChange}
@@ -67,14 +73,14 @@ export function NotificationCreatePage({
           <div
             aria-live="polite"
             className={`min-h-5 text-sm ${
-              state.submissionError
+              submissionError
                 ? "text-tone-danger-text"
                 : "text-tone-success-text"
             }`}
           >
             {!isSubmissionEnabled
               ? "API接続後に通知を配信できます。"
-              : (state.submissionError ??
+              : (submissionError ??
                 (state.submitted ? "通知を配信予定に登録しました。" : null))}
           </div>
         </div>

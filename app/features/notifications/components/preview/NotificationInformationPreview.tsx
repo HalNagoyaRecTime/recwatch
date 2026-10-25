@@ -1,29 +1,15 @@
+import {
+  notificationAudienceLabels,
+  notificationImportanceLabels,
+  formatNotificationDateTime,
+} from "~/features/notifications/components/notification-display";
+import { parseNotificationScheduledAt } from "~/features/notifications/model/notification-schedule-time";
 import type { ReactNode } from "react";
 
 import { LayeredPanel } from "~/components/ui/panel/LayeredPanel";
 import type { AdminNotificationDetail } from "~/features/notifications/api/contracts/admin-notification-types";
 import type { NotificationAudienceOption } from "~/features/notifications/model/notification-audience";
 import type { NotificationDraft } from "~/features/notifications/model/notification-draft";
-
-const importanceLabels = { low: "低", normal: "通常", high: "高" };
-const audienceLabels = {
-  all: "全員",
-  user: "ユーザー",
-  class_room: "クラス",
-  gathering: "集合",
-  event: "イベント",
-};
-
-function formatDateTime(value: string | undefined) {
-  if (!value) return "-";
-  const date = new Date(value);
-  return Number.isNaN(date.getTime())
-    ? "-"
-    : new Intl.DateTimeFormat("ja-JP", {
-        dateStyle: "medium",
-        timeStyle: "short",
-      }).format(date);
-}
 
 function InformationRow({
   label,
@@ -68,7 +54,7 @@ export function NotificationInformationPreview({
             {isAutomatic ? "自動" : "手動"}
           </InformationRow>
           <InformationRow label="重要度">
-            {importanceLabels[draft.importance]}
+            {notificationImportanceLabels[draft.importance]}
           </InformationRow>
           {creation?.source ? (
             <InformationRow label="自動生成元">
@@ -82,7 +68,9 @@ export function NotificationInformationPreview({
           </InformationRow>
           <InformationRow label="配信日時">
             {isScheduled
-              ? formatDateTime(draft.scheduledAt)
+              ? formatNotificationDateTime(
+                  parseNotificationScheduledAt(draft.scheduledAt) ?? undefined
+                )
               : "作成後すぐに配信"}
           </InformationRow>
           <InformationRow label="通知対象">
@@ -101,7 +89,7 @@ export function NotificationInformationPreview({
                       ) : (
                         <>
                           <span className="text-text-subtle block text-xs">
-                            {audienceLabels[audience.type]}
+                            {notificationAudienceLabels[audience.type]}
                           </span>
                           {option?.name.trim() || "-"}
                         </>
@@ -128,11 +116,11 @@ export function NotificationInformationPreview({
             {notification?.notificationId ?? "-"}
           </InformationRow>
           <InformationRow label="作成日時">
-            {formatDateTime(notification?.createdAt)}
+            {formatNotificationDateTime(notification?.createdAt)}
           </InformationRow>
           {notification ? (
             <InformationRow label="更新日時">
-              {formatDateTime(notification.updatedAt)}
+              {formatNotificationDateTime(notification.updatedAt)}
             </InformationRow>
           ) : null}
         </dl>

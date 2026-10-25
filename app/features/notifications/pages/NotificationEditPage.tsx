@@ -1,3 +1,4 @@
+import { formatNotificationSubmissionErrors } from "~/features/notifications/components/notification-display";
 import { useNavigate } from "react-router";
 
 import { PageHeader } from "~/components/ui/layout/PageHeader";
@@ -23,6 +24,11 @@ type NotificationEditPageProps = {
 export function NotificationEditPage(props: NotificationEditPageProps) {
   const navigate = useNavigate();
   const state = useNotificationEdit(props);
+
+  const submissionError = formatNotificationSubmissionErrors(
+    state.submissionIssues,
+    state.submissionError
+  );
 
   if (state.isLoading) {
     return <PagePadding>通知を読み込み中...</PagePadding>;
@@ -52,6 +58,7 @@ export function NotificationEditPage(props: NotificationEditPageProps) {
             }
           />
           <NotificationForm
+            canSubmit={state.canSubmit}
             audienceError={state.audienceError}
             audienceOptions={state.audienceOptions}
             cancelTo={`/notifications/${props.notificationId}`}
@@ -75,9 +82,9 @@ export function NotificationEditPage(props: NotificationEditPageProps) {
             recipientCountError={state.recipientCountError}
             submitLabel="変更を保存"
           />
-          {state.submissionError ? (
+          {submissionError ? (
             <p className="text-tone-danger-text text-sm" aria-live="polite">
-              {state.submissionError}
+              {submissionError}
             </p>
           ) : null}
         </div>

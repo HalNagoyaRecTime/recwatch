@@ -1,7 +1,4 @@
-@import "@uiw/react-md-editor/markdown-editor.css";
-@import "@uiw/react-markdown-preview/markdown.css";
 @import "tailwindcss";
-@import "react-datepicker/dist/react-datepicker.css";
 
 @custom-variant dark (&:where(.dark, .dark *));
 
@@ -457,22 +454,4 @@ html[data-app-loading-context="account-deletion-auth"]
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-}
-
-.notification-markdown-editor {
-  --color-canvas-default: var(--surface-base);
-  --color-canvas-subtle: var(--surface-muted);
-  --color-border-default: var(--border-base);
-  --color-fg-default: var(--text-base);
-  --color-fg-muted: var(--text-muted);
-}
-
-.notification-markdown-editor .w-md-editor-text-input,
-.notification-markdown-editor .w-md-editor-text {
-  font-size: 0.875rem !important;
-  line-height: 1.5rem !important;
-}
-
-.notification-markdown-editor .w-md-editor-preview {
-  box-shadow: inset 1px 0 var(--border-base);
 }

@@ -1,3 +1,7 @@
+import {
+  notificationAudienceLabels,
+  notificationUserCategoryLabels,
+} from "~/features/notifications/components/notification-display";
 import { useState } from "react";
 import { Trash2 } from "lucide-react";
 
@@ -17,21 +21,7 @@ import type {
   NotificationAudienceScopeItem,
 } from "~/features/notifications/model/notification-draft";
 import { searchNotificationAudienceOptions } from "~/features/notifications/model/notification-audience";
-import type { NotificationDraftErrors } from "~/features/notifications/model/notification-draft-validation";
-
-const notificationAudienceLabels: Record<NotificationAudienceType, string> = {
-  all: "全体",
-  class_room: "クラス",
-  gathering: "集合",
-  event: "イベント",
-  user: "ユーザー",
-};
-
-const userCategoryLabels = {
-  student: "生徒",
-  teacher: "先生",
-  student_and_teacher: "生徒・先生",
-} as const;
+import type { NotificationDisplayedErrors } from "~/features/notifications/components/notification-display";
 
 const audienceSearchLimit = 30;
 
@@ -50,7 +40,7 @@ type NotificationAudienceItem = NotificationAudienceDraftItem;
 
 type NotificationAudienceEditorProps = {
   audiences: NotificationAudienceItem[];
-  errors: NotificationDraftErrors;
+  errors: NotificationDisplayedErrors;
   audienceOptions: NotificationAudienceOption[];
   isAudienceLoading?: boolean;
   audienceError?: string | null;
@@ -100,7 +90,7 @@ export function NotificationAudienceEditor({
       label: option.name,
       badge:
         option.type === "user" && option.userCategory
-          ? userCategoryLabels[option.userCategory]
+          ? notificationUserCategoryLabels[option.userCategory]
           : notificationAudienceLabels[option.type],
       description: `ID: ${option.id}`,
     }));
@@ -183,7 +173,9 @@ export function NotificationAudienceEditor({
                     className="border-border-base flex items-center gap-3 rounded-md border px-3 py-2.5"
                   >
                     <span className="bg-surface-muted text-text-muted app-rounded shrink-0 px-2 py-1 text-xs font-medium">
-                      {userCategory ? userCategoryLabels[userCategory] : label}
+                      {userCategory
+                        ? notificationUserCategoryLabels[userCategory]
+                        : label}
                     </span>
                     <span className="min-w-0 flex-1">
                       <span className="text-text-base block truncate text-sm font-medium">

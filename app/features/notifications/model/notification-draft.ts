@@ -1,3 +1,4 @@
+import { NOTIFICATION_IMPORTANCE_LEVELS } from "~/features/notifications/model/notification-values";
 import type {
   NotificationAudienceScopeType,
   NotificationAudienceType,
@@ -5,7 +6,7 @@ import type {
 
 export type { NotificationAudienceType } from "~/features/notifications/model/notification-audience";
 
-export const notificationImportanceLevels = ["low", "normal", "high"] as const;
+export const notificationImportanceLevels = NOTIFICATION_IMPORTANCE_LEVELS;
 
 export type NotificationImportance =
   (typeof notificationImportanceLevels)[number];
