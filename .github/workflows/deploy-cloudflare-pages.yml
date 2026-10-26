@@ -23,10 +23,34 @@ jobs:
        (github.event.workflow_run.event == 'push' || github.event.workflow_run.event == 'pull_request'))
     name: Deploy (${{ github.event.workflow_run.head_branch || github.ref_name }})
     runs-on: ubuntu-latest
-    environment: ${{ (github.event_name == 'workflow_dispatch' && github.ref_name == 'main') && 'production' || (github.event.workflow_run.event == 'push' && github.event.workflow_run.head_branch == 'main') && 'staging' || (github.event.workflow_run.event == 'push' && github.event.workflow_run.head_branch == 'develop') && 'development' || 'preview' }}
+    environment: ${{
+      (github.event_name == 'workflow_dispatch' && github.ref_name == 'main') &&'production' ||
+      (github.event.workflow_run.event == 'push' && github.event.workflow_run.head_branch == 'main') && 'staging' ||
+      (github.event.workflow_run.event == 'push' && github.event.workflow_run.head_branch == 'develop') && 'development' ||
+      'preview'
+      }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJSON(
+          github.event.workflow_run.event == 'pull_request' &&
+          '[{"region":"nagoya","account":"NAGOYA","project":"recwatch"}]' ||
+          '[{"region":"nagoya","account":"NAGOYA","project":"recwatch"},
+          {"region":"tokyo","account":"TOKYO","project":"recwatch-tokyo"},
+          {"region":"osaka","account":"OSAKA","project":"recwatch-osaka"}]'
+          ) }}
+    concurrency:
+      group: cloudflare-pages-${{
+        (github.event_name == 'workflow_dispatch' && github.ref_name == 'main') && 'production' ||
+        (github.event.workflow_run.event == 'push' && github.event.workflow_run.head_branch == 'main') && 'staging' ||
+        (github.event.workflow_run.event == 'push' && github.event.workflow_run.head_branch == 'develop') && 'development' ||
+        format('pr-{0}', github.event.workflow_run.pull_requests[0].number)
+        }}-${{ matrix.region }}
+      cancel-in-progress: true
     env:
-      VITE_BACKEND_BASE_URL: ${{ vars.VITE_BACKEND_BASE_URL }}
-
+      VITE_BACKEND_BASE_URL: ${{ vars[format('VITE_BACKEND_BASE_URL_{0}', matrix.account)] }}
+      CLOUDFLARE_API_TOKEN: ${{ secrets[format('CLOUDFLARE_API_TOKEN_{0}', matrix.account)] }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets[format('CLOUDFLARE_ACCOUNT_ID_{0}', matrix.account)] }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v7
@@ -94,10 +118,10 @@ jobs:
         if: steps.target.outputs.mode != 'skip'
         uses: cloudflare/wrangler-action@v4
         with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          apiToken: ${{ env.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ env.CLOUDFLARE_ACCOUNT_ID }}
           command: >-
-            pages deploy build/client --project-name=recwatch
+            pages deploy build/client --project-name=${{ matrix.project }}
             --branch=${{ steps.target.outputs.pages_branch }}
           gitHubToken: ${{ secrets.GITHUB_TOKEN }}
 
@@ -142,6 +166,6 @@ jobs:
       - name: Verify deployed legal pages
         if: steps.target.outputs.mode != 'skip'
         env:
-          LEGAL_BASE_URL: ${{ steps.target.outputs.verify_url }}
-        # develop未取り込みの既存PRには検証scriptがないため、存在する場合のみ実行する。
+          LEGAL_BASE_URL: >-
+            ${{ steps.target.outputs.pages_branch == 'main' && format('https://{0}.pages.dev', matrix.project) || format('https://{0}.{1}.pages.dev', steps.target.outputs.pages_branch, matrix.project) }}
         run: npm run verify:legal:http --if-present
