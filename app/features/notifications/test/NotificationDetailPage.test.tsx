@@ -77,7 +77,9 @@ describe("NotificationDetailPage", () => {
         name: "競技開始時間変更のお知らせ",
       })
     ).toBeInTheDocument();
-    const schedules = screen.getAllByRole("button", { name: /回目/ });
+    const user = userEvent.setup();
+    await user.click(screen.getByRole("combobox", { name: "配信回を変更" }));
+    const schedules = screen.getAllByRole("option");
     expect(schedules).toHaveLength(2);
     expect(
       screen.getByText(
@@ -85,7 +87,7 @@ describe("NotificationDetailPage", () => {
       )
     ).toBeInTheDocument();
     expect(screen.getByText("通知対象者数")).toBeInTheDocument();
-    await userEvent.setup().click(schedules[1]);
+    await user.click(schedules[1]);
     expect(
       screen.getByText("配信元削除", { exact: false })
     ).toBeInTheDocument();
@@ -122,12 +124,12 @@ describe("NotificationDetailPage", () => {
     renderPage(createApis({ getDetail: vi.fn().mockResolvedValue(detail) }));
 
     await screen.findByText("プッシュ通知のタイトル");
-    const scheduleButtons = screen.getAllByRole("button", { name: /回目/ });
-    statuses.forEach(([, label], index) => {
-      expect(scheduleButtons[index]).toHaveTextContent(label);
-    });
+    for (let index = 0; index < statuses.length; index++) {
+      await user.click(screen.getByRole("combobox", { name: "配信回を変更" }));
+      await user.click(screen.getAllByRole("option")[index]);
+      expect(screen.getAllByText(statuses[index][1]).length).toBeGreaterThan(0);
+    }
 
-    await user.click(scheduleButtons[5]);
     expect(
       screen.getByText("停止者: HAL 花子", { exact: false })
     ).toBeInTheDocument();
@@ -167,8 +169,13 @@ describe("NotificationDetailPage", () => {
 
     await user.click(screen.getByRole("button", { name: "対象者・配信結果" }));
     expect(await screen.findByText("山田 太郎")).toBeInTheDocument();
-    expect(getResults).toHaveBeenCalledWith(504, { page: 1, limit: 50 });
-    expect(screen.getByText("通知先端末の登録なし")).toBeInTheDocument();
+    expect(getResults).toHaveBeenCalledWith(504, { page: 1, limit: 100 });
+    expect(screen.getAllByText("送信先なし").length).toBeGreaterThan(0);
+
+    await user.click(screen.getByRole("button", { name: "山田 太郎の送信先" }));
+    expect(
+      screen.getByRole("row", { name: /^Android.*通知サービス受付済み/ })
+    ).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "配信 #9012の詳細" }));
     expect(
@@ -177,9 +184,6 @@ describe("NotificationDetailPage", () => {
     expect(getDelivery).toHaveBeenCalledWith(9012);
     expect(
       screen.getByText("通知サービスを一時的に利用できません")
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText(/Android・通知サービス受付済み/)
     ).toBeInTheDocument();
   });
 
@@ -251,6 +255,7 @@ describe("NotificationDetailPage", () => {
     await screen.findByText("プッシュ通知のタイトル");
     await user.click(screen.getByRole("button", { name: "対象者・配信結果" }));
     await screen.findByText("山田 太郎");
+    await user.click(screen.getByRole("button", { name: "山田 太郎の送信先" }));
     await user.click(screen.getByRole("button", { name: "配信 #9012の詳細" }));
 
     const dialog = await screen.findByRole("dialog", {
