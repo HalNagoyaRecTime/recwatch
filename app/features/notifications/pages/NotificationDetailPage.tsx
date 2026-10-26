@@ -1,10 +1,13 @@
+import { NotificationScheduleSelector } from "~/features/notifications/components/detail/NotificationScheduleSelector";
+import { useNotificationResults } from "~/features/notifications/hooks/useNotificationResults";
+import { NotificationResultsPanel } from "~/features/notifications/components/detail/NotificationResultsPanel";
+import { NotificationResultSidebar } from "~/features/notifications/components/detail/NotificationResultSidebar";
 import { MarkdownContent } from "~/components/ui/markdown/MarkdownContent";
 import { ChevronLeft, RefreshCw } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router";
 
 import { Button } from "~/components/ui/button/Button";
-import { Pagination } from "~/components/ui/navigation/Pagination";
 import type {
   AdminNotificationDetail,
   AdminNotificationQueryApi,
@@ -12,19 +15,15 @@ import type {
 } from "~/features/notifications/api/contracts/admin-notification-query-api";
 import type { NotificationPushDeliveryApi } from "~/features/notifications/api/contracts/notification-push-delivery-api";
 import type {
-  NotificationResultDelivery,
   NotificationScheduleDetail,
   NotificationScheduleQueryApi,
-  NotificationScheduleResults,
 } from "~/features/notifications/api/contracts/notification-schedule-query-api";
 import { NotificationDeliveryDetailModal } from "~/features/notifications/components/detail/NotificationDeliveryDetailModal";
 import {
-  deliveryStatusLabel,
   formatCreation,
   formatNotificationDetailDateTime,
   formatStop,
   importanceLabel,
-  platformLabel,
   scheduleStatusLabel,
 } from "~/features/notifications/components/detail/notification-detail-display";
 import { NotificationStatusBadge } from "~/features/notifications/components/list/NotificationStatusBadge";
@@ -63,6 +62,7 @@ export function NotificationDetailPage({
   queryApi,
   scheduleQueryApi,
 }: NotificationDetailPageProps) {
+  const [tab, setTab] = useState<DetailTab>("overview");
   const state = useNotificationDetail({
     notificationId,
     pushDeliveryApi,
@@ -78,7 +78,6 @@ export function NotificationDetailPage({
     reload: state.loadNotification,
     onDeleted: () => navigate("/notifications"),
   });
-  const [tab, setTab] = useState<DetailTab>("overview");
   const selectedSchedule = useMemo(
     () =>
       state.notification.data?.schedules.find(
@@ -88,14 +87,18 @@ export function NotificationDetailPage({
     [state.notification.data?.schedules, state.selectedScheduleId]
   );
 
-  const loadResults = state.loadResults;
-  const selectedScheduleId = state.selectedScheduleId;
+  const results = useNotificationResults({
+    api: scheduleQueryApi,
+    scheduleId: state.selectedScheduleId,
+    active: tab === "results",
+    refreshKey: state.refreshKey,
+  });
 
-  useEffect(() => {
-    if (tab === "results" && selectedScheduleId !== null) {
-      void loadResults();
-    }
-  }, [loadResults, selectedScheduleId, tab, state.refreshKey]);
+  const selectSchedule = (id: number) => {
+    if (id === state.selectedScheduleId) return;
+    results.resetFilters();
+    state.selectSchedule(id);
+  };
 
   if (state.notification.isLoading && !state.notification.data) {
     return <PageState role="status" message="通知詳細を読み込み中です" />;
@@ -220,10 +223,10 @@ export function NotificationDetailPage({
         ))}
       </nav>
 
-      <ScheduleSelector
+      <NotificationScheduleSelector
         schedules={notification.schedules}
         selectedScheduleId={state.selectedScheduleId}
-        onSelect={state.selectSchedule}
+        onSelect={selectSchedule}
       />
 
       {tab === "overview" ? (
@@ -237,14 +240,22 @@ export function NotificationDetailPage({
           schedule={selectedSchedule}
         />
       ) : (
-        <ResultsTab
-          errorMessage={state.results.errorMessage}
-          isLoading={state.results.isLoading}
-          onOpenDelivery={(id) => void state.openDelivery(id)}
-          onPageChange={(page) => void state.loadResults(page)}
-          onRetry={() => void state.loadResults()}
-          results={state.results.data}
-        />
+        <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,1fr)_300px]">
+          <NotificationResultsPanel
+            recipientResolved={
+              selectedSchedule?.audience.recipientResolution.status ===
+              "resolved"
+            }
+            key={state.selectedScheduleId}
+            state={results}
+            onOpenDelivery={(id) => void state.openDelivery(id)}
+          />
+          <NotificationResultSidebar
+            notification={notification}
+            selected={selectedSchedule}
+            onSelect={selectSchedule}
+          />
+        </div>
       )}
 
       {state.selectedDeliveryId !== null ? (
@@ -257,52 +268,6 @@ export function NotificationDetailPage({
         />
       ) : null}
     </section>
-  );
-}
-
-function ScheduleSelector({
-  onSelect,
-  schedules,
-  selectedScheduleId,
-}: {
-  onSelect: (scheduleId: number) => void;
-  schedules: NotificationScheduleSummary[];
-  selectedScheduleId: number | null;
-}) {
-  if (schedules.length === 0) {
-    return (
-      <div className="border-border-base app-rounded border px-5 py-4 text-sm">
-        <p className="text-text-muted">Scheduleはまだありません。</p>
-      </div>
-    );
-  }
-
-  return (
-    <div className="flex gap-3 overflow-x-auto pb-1" aria-label="Schedule一覧">
-      {schedules.map((schedule, index) => (
-        <button
-          aria-pressed={schedule.notificationScheduleId === selectedScheduleId}
-          className={cn(
-            "app-rounded min-w-56 border px-4 py-3 text-left transition-colors",
-            schedule.notificationScheduleId === selectedScheduleId
-              ? "border-brand-primary bg-surface-muted"
-              : "border-border-base bg-surface-base hover:bg-surface-hover"
-          )}
-          key={schedule.notificationScheduleId}
-          onClick={() => onSelect(schedule.notificationScheduleId)}
-          type="button"
-        >
-          <span className="text-text-muted text-xs">{index + 1}回目</span>
-          <span className="text-text-base mt-1 block font-semibold">
-            {formatNotificationDetailDateTime(schedule.sendAt)}
-          </span>
-          <span className="text-text-muted mt-1 block text-xs">
-            Schedule #{schedule.notificationScheduleId}・
-            {scheduleStatusLabel[schedule.status]}
-          </span>
-        </button>
-      ))}
-    </div>
   );
 }
 
@@ -487,128 +452,6 @@ function ScheduleTab({
         </div>
       </Card>
     </div>
-  );
-}
-
-function ResultsTab({
-  errorMessage,
-  isLoading,
-  onOpenDelivery,
-  onPageChange,
-  onRetry,
-  results,
-}: {
-  errorMessage: string | null;
-  isLoading: boolean;
-  onOpenDelivery: (deliveryId: number) => void;
-  onPageChange: (page: number) => void;
-  onRetry: () => void;
-  results: NotificationScheduleResults | null;
-}) {
-  if (isLoading && !results)
-    return <SectionState message="配信結果を読み込み中です" role="status" />;
-  if (errorMessage && !results) {
-    return (
-      <SectionState
-        action={<Button onClick={onRetry}>再試行</Button>}
-        message={errorMessage}
-        role="alert"
-      />
-    );
-  }
-  if (!results) return null;
-
-  const pagination = results.recipients.pagination;
-  return (
-    <Card
-      title="対象者・配信結果"
-      description="このScheduleのResultsだけを取得して表示しています"
-    >
-      {errorMessage ? (
-        <p className="text-tone-danger-text mb-3 text-sm" role="alert">
-          {errorMessage}
-        </p>
-      ) : null}
-      <div className="border-border-base app-rounded overflow-x-auto border">
-        <table className="w-full min-w-[760px] border-collapse text-left text-sm">
-          <thead className="bg-surface-muted text-text-muted">
-            <tr>
-              <th className="px-4 py-3 font-medium">User</th>
-              <th className="px-4 py-3 font-medium">Recipient ID</th>
-              <th className="px-4 py-3 font-medium">Push配送</th>
-            </tr>
-          </thead>
-          <tbody className="divide-border-subtle divide-y">
-            {results.recipients.items.map((recipient) => (
-              <tr key={recipient.notificationRecipientId}>
-                <td className="px-4 py-3">
-                  <strong className="text-text-base block">
-                    {recipient.user.userName}
-                  </strong>
-                  <span className="text-text-muted text-xs">
-                    User #{recipient.user.userId}
-                  </span>
-                </td>
-                <td className="text-text-muted px-4 py-3">
-                  #{recipient.notificationRecipientId}
-                </td>
-                <td className="px-4 py-3">
-                  {recipient.deliveries.length === 0 ? (
-                    <span className="text-text-muted">Tokenなし</span>
-                  ) : (
-                    <div className="flex flex-wrap gap-2">
-                      {recipient.deliveries.map((delivery) => (
-                        <DeliveryButton
-                          delivery={delivery}
-                          key={delivery.notificationPushDeliveryId}
-                          onClick={onOpenDelivery}
-                        />
-                      ))}
-                    </div>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-      {pagination.totalPages > 1 ? (
-        <div className="mt-4">
-          <Pagination
-            currentPage={pagination.page}
-            onPageChange={onPageChange}
-            pageCount={pagination.totalPages}
-            pageSize={pagination.limit}
-            totalItems={pagination.totalCount}
-          />
-        </div>
-      ) : null}
-    </Card>
-  );
-}
-
-function DeliveryButton({
-  delivery,
-  onClick,
-}: {
-  delivery: NotificationResultDelivery;
-  onClick: (id: number) => void;
-}) {
-  return (
-    <button
-      aria-label={`Delivery #${delivery.notificationPushDeliveryId}の詳細`}
-      className="border-border-base hover:bg-surface-hover app-rounded border px-3 py-2 text-left"
-      onClick={() => onClick(delivery.notificationPushDeliveryId)}
-      type="button"
-    >
-      <span className="text-text-base block text-xs font-semibold">
-        {platformLabel[delivery.platform]}・
-        {deliveryStatusLabel[delivery.status]}
-      </span>
-      <span className="text-text-muted mt-0.5 block text-xs">
-        #{delivery.notificationPushDeliveryId}・{delivery.attemptCount}回試行
-      </span>
-    </button>
   );
 }
 

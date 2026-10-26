@@ -1,9 +1,7 @@
-import type { NotificationPushDeliveryDetailDto } from "~/features/notifications/api/dto/notification-schedule-dto";
-
-export type NotificationPushDeliveryDetail = NotificationPushDeliveryDetailDto;
-
+import type { NotificationPushDeliveryDetail } from "~/features/notifications/api/contracts/notification-schedule-types";
+export type { NotificationPushDeliveryDetail } from "~/features/notifications/api/contracts/notification-schedule-types";
 export interface NotificationPushDeliveryApi {
   getDetail(
     notificationPushDeliveryId: number
-  ): Promise<NotificationPushDeliveryDetailDto>;
+  ): Promise<NotificationPushDeliveryDetail>;
 }
