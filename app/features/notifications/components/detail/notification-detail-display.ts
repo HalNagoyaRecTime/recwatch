@@ -3,7 +3,6 @@ import type {
   NotificationImportance,
   NotificationPlatform,
   NotificationPushDeliveryStatus,
-  NotificationScheduleStatus,
   NotificationStop,
 } from "~/features/notifications/api/contracts/admin-notification-types";
 
@@ -12,6 +11,8 @@ export function formatNotificationDetailDateTime(value: string | null) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "—";
   return new Intl.DateTimeFormat("ja-JP", {
+    timeZone: "Asia/Tokyo",
+    hourCycle: "h23",
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
@@ -21,14 +22,7 @@ export function formatNotificationDetailDateTime(value: string | null) {
   }).format(date);
 }
 
-export const scheduleStatusLabel = {
-  scheduled: "配信予定",
-  resolving: "対象解決中",
-  sending: "送信中",
-  completed: "完了",
-  failed: "失敗",
-  stopped: "停止済み",
-} satisfies Record<NotificationScheduleStatus, string>;
+export { notificationScheduleStatusLabels as scheduleStatusLabel } from "~/features/notifications/components/list/notification-display";
 
 export const deliveryStatusLabel = {
   pending: "送信待ち",

@@ -339,7 +339,9 @@ describe("notification pages", () => {
           }}
           configApi={{
             getConfig: vi.fn().mockRejectedValue(new Error("config取得失敗")),
-            getAudienceCount: vi.fn(),
+            getAudienceCount: vi
+              .fn()
+              .mockRejectedValue(new Error("対象人数取得失敗")),
           }}
         />
       </MemoryRouter>
