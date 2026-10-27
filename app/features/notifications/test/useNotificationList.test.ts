@@ -30,9 +30,17 @@ const commandApi: AdminNotificationCommandApi = {
   delete: vi.fn(),
 };
 
-function createResponse(title: string): AdminNotificationListResponse {
+function createResponse(
+  title: string,
+  page = 1,
+  limit = 50
+): AdminNotificationListResponse {
   const item = adminNotificationListFixture.items[0];
-  if (!item) return { items: [] };
+  if (!item)
+    return {
+      items: [],
+      pagination: { page, limit, totalCount: 0, totalPages: 1 },
+    };
   return {
     items: [
       {
@@ -40,23 +48,37 @@ function createResponse(title: string): AdminNotificationListResponse {
         content: { push: { ...item.content.push, title } },
       },
     ],
+    pagination: { page, limit, totalCount: 1, totalPages: 1 },
   };
 }
 
 function createResponseWithCount(
   count: number,
-  titlePrefix: string
+  titlePrefix: string,
+  page = 1,
+  limit = 50
 ): AdminNotificationListResponse {
   const item = adminNotificationListFixture.items[0];
-  if (!item) return { items: [] };
+  if (!item)
+    return {
+      items: [],
+      pagination: { page, limit, totalCount: 0, totalPages: 1 },
+    };
+  const items = Array.from({ length: count }, (_, index) => ({
+    ...item,
+    notificationId: item.notificationId + index,
+    content: {
+      push: { ...item.content.push, title: titlePrefix + index },
+    },
+  }));
   return {
-    items: Array.from({ length: count }, (_, index) => ({
-      ...item,
-      notificationId: item.notificationId + index,
-      content: {
-        push: { ...item.content.push, title: titlePrefix + index },
-      },
-    })),
+    items,
+    pagination: {
+      page,
+      limit,
+      totalCount: count,
+      totalPages: Math.max(1, Math.ceil(count / limit)),
+    },
   };
 }
 
@@ -184,7 +206,10 @@ describe("useNotificationList", () => {
         .fn<AdminNotificationQueryApi["list"]>()
         .mockResolvedValueOnce(createResponse("削除前"))
         .mockReturnValueOnce(old.promise)
-        .mockResolvedValue({ items: [] });
+        .mockResolvedValue({
+          items: [],
+          pagination: { page: 1, limit: 50, totalCount: 0, totalPages: 1 },
+        });
       const queryApi = createQueryApi(list);
       const deleteApi = {
         ...commandApi,

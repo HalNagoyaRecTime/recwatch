@@ -26,14 +26,33 @@ import {
   isUtcDateTimeString,
 } from "~/features/notifications/api/mappers/notification-dto-validator";
 
+function isAdminNotificationPagination(
+  value: unknown
+): value is {
+  page: number;
+  limit: number;
+  totalCount: number;
+  totalPages: number;
+} {
+  return (
+    isRecord(value) &&
+    hasExactKeys(value, ["page", "limit", "totalCount", "totalPages"]) &&
+    isPositiveInteger(value.page) &&
+    isPositiveInteger(value.limit) &&
+    isNonNegativeInteger(value.totalCount) &&
+    isNonNegativeInteger(value.totalPages)
+  );
+}
+
 export function isAdminNotificationListResponse(
   value: unknown
 ): value is AdminNotificationListResponseDto {
   return (
     isRecord(value) &&
-    hasExactKeys(value, ["items"]) &&
+    hasExactKeys(value, ["items", "pagination"]) &&
     Array.isArray(value.items) &&
-    value.items.every(isAdminNotificationListItem)
+    value.items.every(isAdminNotificationListItem) &&
+    isAdminNotificationPagination(value.pagination)
   );
 }
 

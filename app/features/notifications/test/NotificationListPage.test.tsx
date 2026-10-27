@@ -183,7 +183,10 @@ describe("NotificationListPage", () => {
       .fn()
       .mockResolvedValueOnce(adminNotificationListFixture)
       .mockReturnValueOnce(novemberRequest)
-      .mockResolvedValueOnce({ items: [decemberItem] });
+      .mockResolvedValueOnce({
+        items: [decemberItem],
+        pagination: { page: 1, limit: 50, totalCount: 1, totalPages: 1 },
+      });
     const user = userEvent.setup();
     renderPage(createQueryApi(list));
     await screen.findByText("通知101");
@@ -196,7 +199,10 @@ describe("NotificationListPage", () => {
     const novemberItem = cloneFixture(adminNotificationListFixture.items[0]);
     novemberItem.content.push.title = "遅い11月の通知";
     await act(async () => {
-      resolveNovember({ items: [novemberItem] });
+      resolveNovember({
+        items: [novemberItem],
+        pagination: { page: 1, limit: 50, totalCount: 1, totalPages: 1 },
+      });
       await novemberRequest;
     });
 
@@ -228,7 +234,10 @@ describe("NotificationListPage", () => {
     ).not.toBeInTheDocument();
 
     await act(async () => {
-      resolveCalendar({ items: [] });
+      resolveCalendar({
+        items: [],
+        pagination: { page: 1, limit: 50, totalCount: 0, totalPages: 1 },
+      });
       await calendarRequest;
     });
     expect(
@@ -263,7 +272,10 @@ describe("NotificationListPage", () => {
       "通知を読み込み中です"
     );
     await act(async () => {
-      resolveList({ items: [] });
+      resolveList({
+        items: [],
+        pagination: { page: 1, limit: 50, totalCount: 0, totalPages: 1 },
+      });
       await request;
     });
     expect(

@@ -13,7 +13,10 @@ import type {
   NotificationUserReference,
 } from "~/features/notifications/api/contracts/notification-common-types";
 
-export type AdminNotificationListQuery = NotificationDateRangeQuery;
+export type AdminNotificationListQuery = NotificationDateRangeQuery & {
+  page?: number;
+  limit?: number;
+};
 
 export type AdminNotificationListSchedule = {
   notificationScheduleId: number;
@@ -36,8 +39,16 @@ export type AdminNotificationListItem = {
   schedules: AdminNotificationListSchedule[];
 };
 
+export type AdminNotificationPagination = {
+  page: number;
+  limit: number;
+  totalCount: number;
+  totalPages: number;
+};
+
 export type AdminNotificationListResponse = {
   items: AdminNotificationListItem[];
+  pagination: AdminNotificationPagination;
 };
 
 export type NotificationScheduleSummary = {
