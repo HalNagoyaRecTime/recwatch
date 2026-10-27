@@ -12,7 +12,6 @@ import {
   canDeleteNotification,
   filterNotificationList,
   matchesNotificationSchedule,
-  sortNotificationList,
 } from "~/features/notifications/model/notification-list-data";
 import {
   reportNotificationActionError,
@@ -45,14 +44,13 @@ export function useNotificationList({
 }: UseNotificationListOptions) {
   const currentMinute = useCurrentMinute();
   const now = currentMinute?.getTime() ?? 0;
-  const [notifications, setNotifications] = useState<
-    AdminNotificationListItem[]
-  >([]);
+  const [items, setItems] = useState<AdminNotificationListItem[]>([]);
   const [calendarNotifications, setCalendarNotifications] = useState<
     AdminNotificationListItem[]
   >([]);
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = notificationListPageSize;
+  const [totalItems, setTotalItems] = useState(0);
   const [filters, setFilters] = useState(defaultNotificationListFilters);
   function onFiltersChange(value: NotificationListFilters) {
     setFilters(value);
@@ -91,31 +89,24 @@ export function useNotificationList({
   const calendarRequestSequence = useRef(0);
 
   const load = useCallback(
-    async (background = false) => {
+    async (page = 1, background = false) => {
       const requestId = ++requestSequence.current;
       try {
-        // 期間省略時は今日だけになるため、一覧では全期間を明示する。
         const result = await read({
-          from: "0001-01-01T00:00:00.000Z",
-          to: "9999-12-31T23:59:59.999Z",
+          page,
+          limit: pageSize,
         });
         if (requestId !== requestSequence.current) return;
-        setNotifications(result.items);
-        setCurrentPage((page) =>
-          Math.min(
-            page,
-            Math.max(
-              1,
-              Math.ceil(result.items.length / notificationListPageSize)
-            )
-          )
-        );
+        setItems(result.items);
+        setTotalItems(result.pagination.totalCount);
+        setCurrentPage(result.pagination.page);
         setErrorMessage(null);
         setLoadedApi(queryApi);
       } catch (error) {
         if (requestId !== requestSequence.current) return;
         if (!background) {
-          setNotifications([]);
+          setItems([]);
+          setTotalItems(0);
           setCurrentPage(1);
         }
         const message = getErrorMessage(error);
@@ -134,7 +125,7 @@ export function useNotificationList({
         if (requestId === requestSequence.current) setIsLoading(false);
       }
     },
-    [queryApi, read, reportFeedback]
+    [pageSize, queryApi, read, reportFeedback]
   );
 
   const loadCalendar = useCallback(
@@ -202,23 +193,11 @@ export function useNotificationList({
   const reload = useCallback(() => {
     setIsLoading(true);
     setErrorMessage(null);
-    return load(true);
-  }, [load]);
+    return load(currentPage, true);
+  }, [load, currentPage]);
 
-  const filteredItems = useMemo(
-    () => filterNotificationList(notifications, creationMethod, filters, now),
-    [creationMethod, notifications, filters, now]
-  );
-  const allItems = useMemo(
-    () => sortNotificationList(filteredItems, sort, filters, now),
-    [filteredItems, sort, filters, now]
-  );
-  const pageCount = Math.max(1, Math.ceil(allItems.length / pageSize));
+  const pageCount = Math.max(1, Math.ceil(totalItems / pageSize));
   const validPage = Math.min(currentPage, pageCount);
-  const items = allItems.slice(
-    (validPage - 1) * pageSize,
-    validPage * pageSize
-  );
   const calendarItems = useMemo(() => {
     const calendarFilters = { ...filters, dateMode: "all" as const };
     return filterNotificationList(
@@ -235,18 +214,22 @@ export function useNotificationList({
   }, [calendarNotifications, creationMethod, filters, now]);
 
   function handlePageChange(page: number) {
-    setCurrentPage(Math.min(Math.max(page, 1), pageCount));
+    const newPage = Math.min(Math.max(page, 1), pageCount);
+    setCurrentPage(newPage);
+    void load(newPage, true);
   }
 
   function handleSortChange(columnId: string) {
     if (!isNotificationSortableColumnId(columnId)) return;
     setSort((current) => getNextNotificationListSort(current, columnId));
     setCurrentPage(1);
+    void load(1, true);
   }
 
   function handleCreationMethodChange(value: NotificationCreationMethodFilter) {
     setCreationMethod(value);
     setCurrentPage(1);
+    void load(1, true);
   }
 
   function handleDeleteRequest(notification: AdminNotificationListItem) {
@@ -331,6 +314,6 @@ export function useNotificationList({
     reload,
     selectedNotification,
     sort,
-    totalItems: allItems.length,
+    totalItems,
   };
 }

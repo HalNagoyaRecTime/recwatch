@@ -9,12 +9,11 @@ import {
 export const mockAdminNotificationQueryApi: AdminNotificationQueryApi = {
   async list(query = {}) {
     const fixture = cloneFixture(adminNotificationListFixture);
-    if (query.from === undefined || query.to === undefined) return fixture;
-
-    const from = Date.parse(query.from);
-    const to = Date.parse(query.to);
-    return {
-      items: fixture.items
+    let filtered = fixture.items;
+    if (query.from !== undefined && query.to !== undefined) {
+      const from = Date.parse(query.from);
+      const to = Date.parse(query.to);
+      filtered = fixture.items
         .map((notification) => ({
           ...notification,
           schedules: notification.schedules.filter((schedule) => {
@@ -22,7 +21,20 @@ export const mockAdminNotificationQueryApi: AdminNotificationQueryApi = {
             return sendAt >= from && sendAt <= to;
           }),
         }))
-        .filter((notification) => notification.schedules.length > 0),
+        .filter((notification) => notification.schedules.length > 0);
+    }
+    const page = query.page ?? 1;
+    const limit = query.limit ?? 50;
+    const offset = (page - 1) * limit;
+    const pagedItems = filtered.slice(offset, offset + limit);
+    return {
+      items: pagedItems,
+      pagination: {
+        page,
+        limit,
+        totalCount: filtered.length,
+        totalPages: Math.max(1, Math.ceil(filtered.length / limit)),
+      },
     };
   },
 
