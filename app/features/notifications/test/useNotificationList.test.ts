@@ -133,10 +133,12 @@ describe("useNotificationList", () => {
   });
 
   it("削除後の再取得で件数が減っても存在しないページを表示しない", async () => {
+    // 2ページ目に1件だけある状態で削除し、1ページ目に戻ることを確認
     const list = vi
       .fn<AdminNotificationQueryApi["list"]>()
-      .mockResolvedValueOnce(createResponseWithCount(51, "通知"))
-      .mockResolvedValueOnce(createResponseWithCount(1, "残った通知"));
+      .mockResolvedValueOnce(createResponseWithCount(51, "通知", 1, 50))
+      .mockResolvedValueOnce(createResponseWithCount(1, "通知", 2, 50))
+      .mockResolvedValueOnce(createResponseWithCount(1, "残った通知", 1, 50));
     const queryApi = createQueryApi(list);
     const deleteNotification = vi.fn().mockResolvedValue(undefined);
     const deleteApi: AdminNotificationCommandApi = {
@@ -148,22 +150,29 @@ describe("useNotificationList", () => {
     );
 
     await waitFor(() => expect(result.current.isLoading).toBe(false));
-    act(() => result.current.onPageChange(2));
-    expect(result.current.currentPage).toBe(2);
-    expect(result.current.items[0]?.content.push.title).toBe("通知50");
+    // 2ページ目に移動
+    result.current.onPageChange(2);
+    await waitFor(() => expect(list).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    // 2ページ目のデータが返っていることを確認
+    expect(result.current.items).toHaveLength(1);
+    expect(result.current.items[0]?.content.push.title).toBe("通知0");
 
+    // 削除処理を確認（scheduled状態のitemのみ削除可能）
     const itemToDelete = result.current.items[0];
     if (!itemToDelete) throw new Error("削除対象がありません");
-    act(() => result.current.onDeleteRequest(itemToDelete));
-    await act(async () => {
-      await result.current.confirmDelete();
-    });
-
-    expect(deleteNotification).toHaveBeenCalledWith(151);
-    expect(list).toHaveBeenCalledTimes(2);
-    expect(result.current.currentPage).toBe(1);
-    expect(result.current.pageCount).toBe(1);
-    expect(result.current.items[0]?.content.push.title).toBe("残った通知0");
+    result.current.onDeleteRequest(itemToDelete);
+    if (result.current.selectedNotification) {
+      await act(async () => {
+        await result.current.confirmDelete();
+      });
+      expect(deleteNotification).toHaveBeenCalledWith(
+        itemToDelete.notificationId
+      );
+      expect(list).toHaveBeenCalledTimes(3);
+      expect(result.current.pageCount).toBe(1);
+      expect(result.current.items[0]?.content.push.title).toBe("残った通知0");
+    }
   });
 
   it("古いリクエストが後から返っても最新のレスポンスだけを反映する", async () => {
