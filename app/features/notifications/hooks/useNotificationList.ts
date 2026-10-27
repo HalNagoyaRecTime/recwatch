@@ -99,7 +99,6 @@ export function useNotificationList({
         if (requestId !== requestSequence.current) return;
         setItems(result.items);
         setTotalItems(result.pagination.totalCount);
-        setCurrentPage(result.pagination.page);
         setErrorMessage(null);
         setLoadedApi(queryApi);
       } catch (error) {
@@ -107,7 +106,6 @@ export function useNotificationList({
         if (!background) {
           setItems([]);
           setTotalItems(0);
-          setCurrentPage(1);
         }
         const message = getErrorMessage(error);
         setErrorMessage(message);
@@ -216,6 +214,8 @@ export function useNotificationList({
   function handlePageChange(page: number) {
     const newPage = Math.min(Math.max(page, 1), pageCount);
     setCurrentPage(newPage);
+    setIsLoading(true);
+    setErrorMessage(null);
     void load(newPage, true);
   }
 
