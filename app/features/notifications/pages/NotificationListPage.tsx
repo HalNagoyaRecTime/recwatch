@@ -68,15 +68,13 @@ export function NotificationListPage({
     : state.totalItems;
 
   const pagination = (
-    <div className="flex flex-wrap items-center justify-between gap-3">
-      <Pagination
-        currentPage={state.currentPage}
-        onPageChange={state.onPageChange}
-        pageCount={state.pageCount}
-        pageSize={state.pageSize}
-        totalItems={state.totalItems}
-      />
-    </div>
+    <Pagination
+      currentPage={state.currentPage}
+      onPageChange={state.onPageChange}
+      pageCount={state.pageCount}
+      pageSize={state.pageSize}
+      totalItems={state.totalItems}
+    />
   );
 
   const reload = () => (isCalendar ? state.reloadCalendar() : state.reload());
@@ -200,17 +198,15 @@ export function NotificationListPage({
             </Button>
           </div>
         ) : viewMode === "list" ? (
-          <>
-            <NotificationsTable
-              now={state.now}
-              filters={state.filters}
-              items={state.items}
-              onDelete={state.onDeleteRequest}
-              onSortChange={state.onSortChange}
-              sort={state.sort}
-            />
-            <div>{pagination}</div>
-          </>
+          <NotificationsTable
+            now={state.now}
+            filters={state.filters}
+            footer={pagination}
+            items={state.items}
+            onDelete={state.onDeleteRequest}
+            onSortChange={state.onSortChange}
+            sort={state.sort}
+          />
         ) : null}
       </section>
       {state.selectedNotification ? (
