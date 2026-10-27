@@ -1,8 +1,12 @@
-import type { NotificationAudienceType } from "~/features/notifications/model/notification-audience";
+import { NOTIFICATION_IMPORTANCE_LEVELS } from "~/features/notifications/model/notification-values";
+import type {
+  NotificationAudienceScopeType,
+  NotificationAudienceType,
+} from "~/features/notifications/model/notification-audience";
 
 export type { NotificationAudienceType } from "~/features/notifications/model/notification-audience";
 
-export const notificationImportanceLevels = ["low", "normal", "high"] as const;
+export const notificationImportanceLevels = NOTIFICATION_IMPORTANCE_LEVELS;
 
 export type NotificationImportance =
   (typeof notificationImportanceLevels)[number];
@@ -12,6 +16,13 @@ export type NotificationDeliveryTiming = "now" | "scheduled";
 export type NotificationAudienceDraftItem = {
   key: string;
   type: NotificationAudienceType;
+  targetId: string;
+};
+
+/** allを除外した通知対象。対象選択UIと検索での絞り込みに使う */
+export type NotificationAudienceScopeItem = {
+  key: string;
+  type: NotificationAudienceScopeType;
   targetId: string;
 };
 

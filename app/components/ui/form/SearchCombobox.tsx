@@ -14,6 +14,7 @@ export type SearchOption = {
 
 type SearchComboboxProps = {
   ariaLabel: string;
+  disabled?: boolean;
   emptyMessage?: string;
   onOptionSelect: (option: SearchOption) => void;
   onQueryChange: (value: string) => void;
@@ -28,6 +29,7 @@ type SearchComboboxProps = {
  */
 export function SearchCombobox({
   ariaLabel,
+  disabled = false,
   emptyMessage = "候補がありません",
   onOptionSelect,
   onQueryChange,
@@ -40,12 +42,16 @@ export function SearchCombobox({
   const inputRef = useRef<HTMLInputElement>(null);
   const rootRef = useRef<HTMLDivElement>(null);
   const listboxId = useId();
+  // disabledはstateに反映せず表示・ariaから導出する。effectでの閉じ直しは
+  // 再描画を増やすため行わない。
+  const isSuggestionsOpen = isOpen && !disabled;
   const resolvedActiveIndex =
-    isOpen && options.length > 0
+    isSuggestionsOpen && options.length > 0
       ? Math.min(Math.max(activeIndex, 0), options.length - 1)
       : -1;
 
   const openSuggestions = () => {
+    if (disabled) return;
     setIsOpen(true);
     setActiveIndex((current) =>
       options.length === 0 ? -1 : Math.max(current, 0)
@@ -110,6 +116,7 @@ export function SearchCombobox({
   return (
     <div ref={rootRef} className="relative w-full min-w-0">
       <SearchField
+        disabled={disabled}
         aria-activedescendant={
           resolvedActiveIndex >= 0
             ? `${listboxId}-option-${resolvedActiveIndex}`
@@ -117,7 +124,7 @@ export function SearchCombobox({
         }
         aria-autocomplete="list"
         aria-controls={listboxId}
-        aria-expanded={isOpen}
+        aria-expanded={isSuggestionsOpen}
         ariaLabel={ariaLabel}
         inputRef={inputRef}
         onClick={openSuggestions}
@@ -132,7 +139,7 @@ export function SearchCombobox({
         value={query}
       />
 
-      {isOpen && (
+      {isSuggestionsOpen && (
         <div
           className={`${controlSurfaceStyle()} shadow-soft absolute top-[calc(100%+4px)] left-0 z-50 flex max-h-90 w-full flex-col overflow-hidden`}
         >
