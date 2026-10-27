@@ -26,9 +26,7 @@ import {
   isUtcDateTimeString,
 } from "~/features/notifications/api/mappers/notification-dto-validator";
 
-function isAdminNotificationPagination(
-  value: unknown
-): value is {
+function isAdminNotificationPagination(value: unknown): value is {
   page: number;
   limit: number;
   totalCount: number;
