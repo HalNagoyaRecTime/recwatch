@@ -16,8 +16,17 @@ import { useSearchResultNavigation } from "~/features/frame/main-header/search/h
 
 export function SearchBtn() {
   const navigate = useNavigate();
-  const { anchorRef, close, frame, inputRef, isOpen, open, query, setQuery } =
-    useSearchTransition();
+  const {
+    anchorRef,
+    close,
+    frame,
+    inputRef,
+    isOpen,
+    isOverlayActive,
+    open,
+    query,
+    setQuery,
+  } = useSearchTransition();
   const shellRef = useRef<HTMLDivElement>(null);
   const results = useMemo(() => filterNavigationSearchResults(query), [query]);
 
@@ -67,12 +76,34 @@ export function SearchBtn() {
     () => false
   );
 
+  const search = (
+    <SearchShell rootRef={shellRef} isOpen={isOpen}>
+      <SearchBarContent
+        inputRef={inputRef}
+        isOpen={isOpen}
+        query={query}
+        onChange={handleQueryChange}
+        onOpen={handleOpen}
+      />
+      <SearchExpandedBody isOpen={isOpen}>
+        <SearchResultsPanel
+          results={results}
+          selectedIndex={selectedIndex}
+          onSelectIndex={setSelectedIndex}
+          onConfirmIndex={handleConfirmIndex}
+        />
+        <SearchFooter />
+      </SearchExpandedBody>
+    </SearchShell>
+  );
+
   return (
     <>
-      {/* domの場所確保用 */}
-      <SearchAnchor anchorRef={anchorRef} />
+      <SearchAnchor anchorRef={anchorRef}>
+        {isOverlayActive ? null : search}
+      </SearchAnchor>
 
-      {isMounted
+      {isMounted && isOverlayActive
         ? createPortal(
             <>
               {/* 黒背景 */}
@@ -84,24 +115,7 @@ export function SearchBtn() {
                 width={frame.width}
                 transform={frame.transform}
               >
-                <SearchShell rootRef={shellRef} isOpen={isOpen}>
-                  <SearchBarContent
-                    inputRef={inputRef}
-                    isOpen={isOpen}
-                    query={query}
-                    onChange={handleQueryChange}
-                    onOpen={handleOpen}
-                  />
-                  <SearchExpandedBody isOpen={isOpen}>
-                    <SearchResultsPanel
-                      results={results}
-                      selectedIndex={selectedIndex}
-                      onSelectIndex={setSelectedIndex}
-                      onConfirmIndex={handleConfirmIndex}
-                    />
-                    <SearchFooter />
-                  </SearchExpandedBody>
-                </SearchShell>
+                {search}
               </SearchPositionContainer>
             </>,
             document.body
