@@ -94,7 +94,7 @@ export function EventForm({
             aria-label="イベントルール"
             className={`${inputClass} resize-y py-2 ${isModal ? "min-h-32" : "min-h-24"}`}
             disabled={isDisabled}
-            maxLength={1000}
+            maxLength={2000}
             onChange={(event) => update("rules", event.currentTarget.value)}
             placeholder="ルールの詳細を入力"
             value={value.rules}
