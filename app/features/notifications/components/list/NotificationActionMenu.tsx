@@ -1,4 +1,4 @@
-import { canDeleteNotification } from "~/features/notifications/hooks/notification-list-data";
+import { canDeleteNotification } from "~/features/notifications/model/notification-list-data";
 import { Ellipsis, Eye, Pencil, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router";
