@@ -175,7 +175,7 @@ describe("NotificationDetailPage", () => {
 
     await user.click(screen.getByRole("button", { name: "対象者・配信結果" }));
     expect(await screen.findByText("山田 太郎")).toBeInTheDocument();
-    expect(getResults).toHaveBeenCalledWith(504, { page: 1, limit: 100 });
+    expect(getResults).toHaveBeenCalledWith(504, { page: 1, limit: 50 });
     expect(screen.getAllByText("送信先なし").length).toBeGreaterThan(0);
 
     await user.click(screen.getByRole("button", { name: "山田 太郎の送信先" }));

@@ -1,13 +1,14 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type {
   NotificationScheduleQueryApi,
   NotificationScheduleResults,
 } from "~/features/notifications/api/contracts/notification-schedule-query-api";
 import {
   defaultResultFilters,
-  filterRecipients,
   type ResultFilters,
 } from "~/features/notifications/model/notification-results";
+
+const ResultsPageSize = 50;
 
 type Options = {
   api: NotificationScheduleQueryApi;
@@ -18,6 +19,12 @@ type Options = {
 type Snapshot = {
   scheduleId: number;
   items: NotificationScheduleResults["recipients"]["items"];
+  pagination: {
+    page: number;
+    limit: number;
+    totalCount: number;
+    totalPages: number;
+  };
 };
 export function useNotificationResults({
   api,
@@ -46,43 +53,24 @@ export function useNotificationResults({
     setLoadingId(scheduleId);
     setError(null);
     try {
-      const first = await api.getResults(scheduleId, { page: 1, limit: 100 });
+      const page = selection.scheduleId === scheduleId ? selection.page : 1;
+      const result = await api.getResults(scheduleId, {
+        page,
+        limit: ResultsPageSize,
+      });
       if (request !== sequence.current) return;
-      const items = [...first.recipients.items];
-      for (
-        let page = 2;
-        page <= first.recipients.pagination.totalPages;
-        page += 4
-      ) {
-        if (request !== sequence.current) return;
-        const pages = Array.from(
-          {
-            length: Math.min(
-              4,
-              first.recipients.pagination.totalPages - page + 1
-            ),
-          },
-          (_, index) => page + index
-        );
-        const batch = await Promise.all(
-          pages.map((page) => api.getResults(scheduleId, { page, limit: 100 }))
-        );
-        if (request !== sequence.current) return;
-        for (const next of batch) items.push(...next.recipients.items);
-      }
-      const unique = [
-        ...new Map(
-          items.map((item) => [item.notificationRecipientId, item])
-        ).values(),
-      ];
-      setSnapshot({ scheduleId, items: unique });
+      setSnapshot({
+        scheduleId,
+        items: result.recipients.items,
+        pagination: result.recipients.pagination,
+      });
     } catch {
       if (request === sequence.current)
         setError({ scheduleId, message: "配信結果を読み込めませんでした。" });
     } finally {
       if (request === sequence.current) setLoadingId(null);
     }
-  }, [api, scheduleId]);
+  }, [api, scheduleId, selection.page, selection.scheduleId]);
   useEffect(() => {
     if (!active || scheduleId === null) return;
     let mounted = true;
@@ -99,19 +87,19 @@ export function useNotificationResults({
     selection.scheduleId === scheduleId
       ? selection.filters
       : defaultResultFilters;
-  const filtered = useMemo(
-    () => filterRecipients(data ?? [], filters),
-    [data, filters]
-  );
-  const pageCount = Math.max(1, Math.ceil(filtered.length / 50));
+  const pagination =
+    snapshot?.scheduleId === scheduleId
+      ? snapshot.pagination
+      : { page: 1, limit: ResultsPageSize, totalCount: 0, totalPages: 1 };
+  const pageCount = Math.max(1, pagination.totalPages);
   const page = Math.min(
     selection.scheduleId === scheduleId ? selection.page : 1,
     pageCount
   );
   return {
     data,
-    items: filtered.slice((page - 1) * 50, page * 50),
-    total: filtered.length,
+    items: data ?? [],
+    total: pagination.totalCount,
     page,
     pageCount,
     filters,
