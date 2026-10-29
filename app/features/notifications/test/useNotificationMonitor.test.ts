@@ -21,6 +21,32 @@ function deferred<T>() {
 afterEach(() => vi.restoreAllMocks());
 
 describe("useNotificationMonitor", () => {
+  it("即時再送の取得中に予定時刻を過ぎても新Scheduleを表示する", async () => {
+    const fixtures = createNotificationMonitorFixtures(now());
+    const scheduled = fixtures.find((item) => item.status === "scheduled")!;
+    scheduled.sendAt = new Date(now() - 1_000).toISOString();
+    const api = createMockNotificationMonitorApi(fixtures);
+    const { result } = renderHook(() =>
+      useNotificationMonitor({ api, ...options })
+    );
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    expect(
+      result.current.items.find(
+        (item) =>
+          item.summary.notificationScheduleId ===
+          scheduled.notificationScheduleId
+      )?.detail?.status
+    ).toBe("scheduled");
+    await act(() => result.current.reloadAfterMutation());
+    expect(
+      result.current.items.some(
+        (item) =>
+          item.summary.notificationScheduleId ===
+          scheduled.notificationScheduleId
+      )
+    ).toBe(true);
+  });
+
   it("前後24時間を明示し、日付をまたぐ配信とAPI集計を取得する", async () => {
     const fixtures = createNotificationMonitorFixtures(now());
     fixtures[0].sendAt = new Date(now() + 23 * 60 * 60 * 1000).toISOString();
