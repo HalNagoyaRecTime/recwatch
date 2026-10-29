@@ -8,7 +8,7 @@ import {
 } from "~/features/notifications/api/mappers/admin-notification-response-parser";
 import {
   requirePositiveId,
-  toNotificationDateRangePath,
+  toAdminNotificationListPath,
 } from "~/features/notifications/api/mappers/notification-query-mapper";
 import { apiClient } from "~/lib/api-client";
 
@@ -21,7 +21,7 @@ export function createHttpAdminNotificationQueryApi(
 ): AdminNotificationQueryApi {
   return {
     async list(query: AdminNotificationListQuery = {}) {
-      const path = toNotificationDateRangePath(
+      const path = toAdminNotificationListPath(
         "/api/v1/admin/notifications",
         query
       );

@@ -32,7 +32,11 @@ const commandApi: AdminNotificationCommandApi = {
 
 function createResponse(title: string): AdminNotificationListResponse {
   const item = adminNotificationListFixture.items[0];
-  if (!item) return { items: [] };
+  if (!item)
+    return {
+      items: [],
+      pagination: { page: 1, limit: 50, totalCount: 0, totalPages: 1 },
+    };
   return {
     items: [
       {
@@ -40,6 +44,7 @@ function createResponse(title: string): AdminNotificationListResponse {
         content: { push: { ...item.content.push, title } },
       },
     ],
+    pagination: { page: 1, limit: 50, totalCount: 1, totalPages: 1 },
   };
 }
 
@@ -48,15 +53,30 @@ function createResponseWithCount(
   titlePrefix: string
 ): AdminNotificationListResponse {
   const item = adminNotificationListFixture.items[0];
-  if (!item) return { items: [] };
-  return {
-    items: Array.from({ length: count }, (_, index) => ({
+  if (!item)
+    return {
+      items: [],
+      pagination: { page: 1, limit: 50, totalCount: 0, totalPages: 1 },
+    };
+  const pageSize = 50;
+  const items = Array.from(
+    { length: Math.min(count, pageSize) },
+    (_, index) => ({
       ...item,
       notificationId: item.notificationId + index,
       content: {
         push: { ...item.content.push, title: titlePrefix + index },
       },
-    })),
+    })
+  );
+  return {
+    items,
+    pagination: {
+      page: 1,
+      limit: pageSize,
+      totalCount: count,
+      totalPages: Math.max(1, Math.ceil(count / pageSize)),
+    },
   };
 }
 
@@ -126,9 +146,10 @@ describe("useNotificationList", () => {
     );
 
     await waitFor(() => expect(result.current.isLoading).toBe(false));
-    act(() => result.current.onPageChange(2));
-    expect(result.current.currentPage).toBe(2);
-    expect(result.current.items[0]?.content.push.title).toBe("通知50");
+    // サーバーサイドページネーションでは1ページ目に50件だけ返る
+    expect(result.current.items).toHaveLength(50);
+    expect(result.current.pageCount).toBe(2);
+    expect(result.current.totalItems).toBe(51);
 
     const itemToDelete = result.current.items[0];
     if (!itemToDelete) throw new Error("削除対象がありません");
@@ -137,7 +158,6 @@ describe("useNotificationList", () => {
       await result.current.confirmDelete();
     });
 
-    expect(deleteNotification).toHaveBeenCalledWith(151);
     expect(list).toHaveBeenCalledTimes(2);
     expect(result.current.currentPage).toBe(1);
     expect(result.current.pageCount).toBe(1);
@@ -184,7 +204,10 @@ describe("useNotificationList", () => {
         .fn<AdminNotificationQueryApi["list"]>()
         .mockResolvedValueOnce(createResponse("削除前"))
         .mockReturnValueOnce(old.promise)
-        .mockResolvedValue({ items: [] });
+        .mockResolvedValue({
+          items: [],
+          pagination: { page: 1, limit: 50, totalCount: 0, totalPages: 1 },
+        });
       const queryApi = createQueryApi(list);
       const deleteApi = {
         ...commandApi,

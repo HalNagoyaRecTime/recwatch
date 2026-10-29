@@ -65,6 +65,9 @@ export type NotificationListFilters = {
   search: string;
   status: "all" | (typeof NOTIFICATION_SCHEDULE_STATUSES)[number];
   dateMode: "all" | "today" | "date" | "range";
+  dateValue: string;
+  dateFrom: string;
+  dateTo: string;
   from: string;
   to: string;
 };
@@ -73,6 +76,9 @@ export const defaultNotificationListFilters: NotificationListFilters = {
   search: "",
   status: "all",
   dateMode: "all",
+  dateValue: "",
+  dateFrom: "",
+  dateTo: "",
   from: "",
   to: "",
 };

@@ -74,6 +74,7 @@ function parseListWithAudienceItem(audienceItem: unknown) {
         ],
       },
     ],
+    pagination: { page: 1, limit: 50, totalCount: 1, totalPages: 1 },
   });
 }
 
@@ -273,6 +274,7 @@ describe("notification v2 contract", () => {
             ],
           },
         ],
+        pagination: { page: 1, limit: 50, totalCount: 1, totalPages: 1 },
       })
     ).toThrow(ClientError);
     expect(() =>
@@ -291,6 +293,7 @@ describe("notification v2 contract", () => {
             ],
           },
         ],
+        pagination: { page: 1, limit: 50, totalCount: 1, totalPages: 1 },
       })
     ).toThrow(ClientError);
   });

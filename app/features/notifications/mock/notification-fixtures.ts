@@ -109,6 +109,12 @@ export const adminNotificationListFixture: AdminNotificationListResponseDto = {
           : [primarySchedule],
     };
   }),
+  pagination: {
+    page: 1,
+    limit: 50,
+    totalCount: scheduleStatuses.length,
+    totalPages: 1,
+  },
 };
 
 export const adminNotificationDetailFixture: AdminNotificationDetailDto = {

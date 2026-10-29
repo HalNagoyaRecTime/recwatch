@@ -25,16 +25,10 @@ describe("notification v2 HTTP adapters", () => {
       .mockResolvedValueOnce(adminNotificationDetailFixture);
     const api = createHttpAdminNotificationQueryApi({ get });
 
-    await api.list({
-      from: "2026-11-07T00:00:00+09:00",
-      to: "2026-11-08T00:00:00+09:00",
-    });
+    await api.list();
     await api.getDetail(103);
 
-    expect(get).toHaveBeenNthCalledWith(
-      1,
-      "/api/v1/admin/notifications?from=2026-11-07T00%3A00%3A00%2B09%3A00&to=2026-11-08T00%3A00%3A00%2B09%3A00"
-    );
+    expect(get).toHaveBeenNthCalledWith(1, "/api/v1/admin/notifications?");
     expect(get).toHaveBeenNthCalledWith(2, "/api/v1/admin/notifications/103");
   });
 

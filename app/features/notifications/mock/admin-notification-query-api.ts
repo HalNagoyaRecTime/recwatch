@@ -13,16 +13,23 @@ export const mockAdminNotificationQueryApi: AdminNotificationQueryApi = {
 
     const from = Date.parse(query.from);
     const to = Date.parse(query.to);
+    const filteredItems = fixture.items
+      .map((notification) => ({
+        ...notification,
+        schedules: notification.schedules.filter((schedule) => {
+          const sendAt = Date.parse(schedule.sendAt);
+          return sendAt >= from && sendAt <= to;
+        }),
+      }))
+      .filter((notification) => notification.schedules.length > 0);
     return {
-      items: fixture.items
-        .map((notification) => ({
-          ...notification,
-          schedules: notification.schedules.filter((schedule) => {
-            const sendAt = Date.parse(schedule.sendAt);
-            return sendAt >= from && sendAt <= to;
-          }),
-        }))
-        .filter((notification) => notification.schedules.length > 0),
+      items: filteredItems,
+      pagination: {
+        page: 1,
+        limit: 50,
+        totalCount: filteredItems.length,
+        totalPages: Math.max(1, Math.ceil(filteredItems.length / 50)),
+      },
     };
   },
 

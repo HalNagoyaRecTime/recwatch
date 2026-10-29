@@ -8,11 +8,10 @@ import type {
   AdminNotificationListQuery,
   AdminNotificationQueryApi,
 } from "~/features/notifications/api/contracts/admin-notification-query-api";
+import type { AdminNotificationPagination } from "~/features/notifications/api/contracts/admin-notification-types";
 import {
   canDeleteNotification,
-  filterNotificationList,
   matchesNotificationSchedule,
-  sortNotificationList,
 } from "~/features/notifications/model/notification-list-data";
 import {
   reportNotificationActionError,
@@ -45,9 +44,13 @@ export function useNotificationList({
 }: UseNotificationListOptions) {
   const currentMinute = useCurrentMinute();
   const now = currentMinute?.getTime() ?? 0;
-  const [notifications, setNotifications] = useState<
-    AdminNotificationListItem[]
-  >([]);
+  const [items, setItems] = useState<AdminNotificationListItem[]>([]);
+  const [pagination, setPagination] = useState<AdminNotificationPagination>({
+    page: 1,
+    limit: notificationListPageSize,
+    totalCount: 0,
+    totalPages: 1,
+  });
   const [calendarNotifications, setCalendarNotifications] = useState<
     AdminNotificationListItem[]
   >([]);
@@ -94,28 +97,35 @@ export function useNotificationList({
     async (background = false) => {
       const requestId = ++requestSequence.current;
       try {
-        // 期間省略時は今日だけになるため、一覧では全期間を明示する。
+        const page = currentPage;
         const result = await read({
-          from: "0001-01-01T00:00:00.000Z",
-          to: "9999-12-31T23:59:59.999Z",
+          page,
+          limit: notificationListPageSize,
+          search: filters.search?.trim() || undefined,
+          status: filters.status !== "all" ? filters.status : undefined,
+          dateMode: filters.dateMode !== "all" ? filters.dateMode : undefined,
+          dateValue:
+            filters.dateMode === "date" ? filters.dateValue : undefined,
+          dateFrom: filters.dateMode === "range" ? filters.dateFrom : undefined,
+          dateTo: filters.dateMode === "range" ? filters.dateTo : undefined,
+          creationMethod: creationMethod !== "all" ? creationMethod : undefined,
+          sort: sort,
         });
         if (requestId !== requestSequence.current) return;
-        setNotifications(result.items);
-        setCurrentPage((page) =>
-          Math.min(
-            page,
-            Math.max(
-              1,
-              Math.ceil(result.items.length / notificationListPageSize)
-            )
-          )
-        );
+        setItems(result.items);
+        setPagination(result.pagination);
         setErrorMessage(null);
         setLoadedApi(queryApi);
       } catch (error) {
         if (requestId !== requestSequence.current) return;
         if (!background) {
-          setNotifications([]);
+          setItems([]);
+          setPagination({
+            page: 1,
+            limit: notificationListPageSize,
+            totalCount: 0,
+            totalPages: 1,
+          });
           setCurrentPage(1);
         }
         const message = getErrorMessage(error);
@@ -134,7 +144,7 @@ export function useNotificationList({
         if (requestId === requestSequence.current) setIsLoading(false);
       }
     },
-    [queryApi, read, reportFeedback]
+    [queryApi, read, reportFeedback, currentPage, filters, creationMethod, sort]
   );
 
   const loadCalendar = useCallback(
@@ -205,34 +215,16 @@ export function useNotificationList({
     return load(true);
   }, [load]);
 
-  const filteredItems = useMemo(
-    () => filterNotificationList(notifications, creationMethod, filters, now),
-    [creationMethod, notifications, filters, now]
-  );
-  const allItems = useMemo(
-    () => sortNotificationList(filteredItems, sort, filters, now),
-    [filteredItems, sort, filters, now]
-  );
-  const pageCount = Math.max(1, Math.ceil(allItems.length / pageSize));
+  const pageCount = Math.max(1, pagination.totalPages);
   const validPage = Math.min(currentPage, pageCount);
-  const items = allItems.slice(
-    (validPage - 1) * pageSize,
-    validPage * pageSize
-  );
   const calendarItems = useMemo(() => {
-    const calendarFilters = { ...filters, dateMode: "all" as const };
-    return filterNotificationList(
-      calendarNotifications,
-      creationMethod,
-      calendarFilters,
-      now
-    ).map((item) => ({
+    return calendarNotifications.map((item) => ({
       ...item,
       schedules: item.schedules.filter((schedule) =>
-        matchesNotificationSchedule(schedule, calendarFilters, now)
+        matchesNotificationSchedule(schedule, filters, now)
       ),
     }));
-  }, [calendarNotifications, creationMethod, filters, now]);
+  }, [calendarNotifications, filters, now]);
 
   function handlePageChange(page: number) {
     setCurrentPage(Math.min(Math.max(page, 1), pageCount));
@@ -331,6 +323,6 @@ export function useNotificationList({
     reload,
     selectedNotification,
     sort,
-    totalItems: allItems.length,
+    totalItems: pagination.totalCount,
   };
 }
