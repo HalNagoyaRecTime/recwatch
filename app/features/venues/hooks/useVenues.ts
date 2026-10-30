@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { getErrorMessage } from "~/lib/client-error";
+import type { PlaceImageChange } from "~/types/place-image-change";
 
 import type {
   VenueGateway,
@@ -76,6 +77,17 @@ export function useVenues({ gateway, listOptions }: UseVenuesOptions) {
     [gateway]
   );
 
+  const saveVenueImage = useCallback(
+    async (id: number, change: PlaceImageChange) => {
+      if (change.type === "replace") {
+        await gateway.setImage(id, change.image);
+      } else {
+        await gateway.deleteImage(id);
+      }
+    },
+    [gateway]
+  );
+
   return {
     venues,
     total,
@@ -84,6 +96,7 @@ export function useVenues({ gateway, listOptions }: UseVenuesOptions) {
     createVenue,
     updateVenue,
     deleteVenue,
+    saveVenueImage,
     reload,
   };
 }

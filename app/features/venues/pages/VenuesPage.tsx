@@ -24,11 +24,15 @@ export function VenuesPage({ gateway }: VenuesPageProps) {
           <ScrollbarArea className="h-full overscroll-y-contain">
             <div className="w-[min(24rem,90vw)] p-5 md:p-6">
               <VenueForm
+                autoFocusImage={state.shouldFocusImage}
                 editingVenue={state.editingVenue}
+                key={state.editingVenue?.id ?? "new"}
+                imageChange={state.imageChange}
                 isSubmitting={state.isSubmitting}
                 name={state.venueNameInput}
                 onChange={state.handleVenueNameChange}
                 onClose={state.closeForm}
+                onImageChange={state.handleImageChange}
                 onSubmit={state.submitForm}
                 submitError={state.submitError}
               />
@@ -84,6 +88,7 @@ export function VenuesPage({ gateway }: VenuesPageProps) {
             items={state.venues}
             onDelete={state.handleDelete}
             onEdit={state.openEditForm}
+            onEditImage={state.openEditImageForm}
             onPageChange={state.handlePageChange}
             onQueryChange={state.handleQueryChange}
             onSortChange={state.handleSortChange}

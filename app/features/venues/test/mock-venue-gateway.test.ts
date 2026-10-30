@@ -6,12 +6,14 @@ const venues = [
   {
     id: 1,
     name: "体育館",
+    imageUrl: null,
     createdAt: "2026-09-25T09:00:00Z",
     updatedAt: "2026-09-25T09:00:00Z",
   },
   {
     id: 2,
     name: "グラウンド",
+    imageUrl: null,
     createdAt: "2026-09-25T09:01:00Z",
     updatedAt: "2026-09-25T09:01:00Z",
   },
@@ -69,5 +71,17 @@ describe("createMockVenueGateway", () => {
         expect.objectContaining({ id: 2 }),
       ],
     });
+  });
+
+  it("画像の登録と削除を一覧の画像URLに反映する", async () => {
+    const gateway = createMockVenueGateway(venues);
+
+    await gateway.setImage(1, new Blob(["image"], { type: "image/jpeg" }));
+    const withImage = await gateway.list();
+    expect(withImage.items[0].imageUrl).not.toBeNull();
+
+    await gateway.deleteImage(1);
+    const withoutImage = await gateway.list();
+    expect(withoutImage.items[0].imageUrl).toBeNull();
   });
 });

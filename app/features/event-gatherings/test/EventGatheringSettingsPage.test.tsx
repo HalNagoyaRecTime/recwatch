@@ -41,7 +41,13 @@ function renderPage(path: string, load = vi.fn(), save = vi.fn()) {
               spotGateway={{
                 list: vi.fn().mockResolvedValue({
                   items: [
-                    { id: 1, name: "出入口①", createdAt: "", updatedAt: "" },
+                    {
+                      id: 1,
+                      name: "出入口①",
+                      imageUrl: null,
+                      createdAt: "",
+                      updatedAt: "",
+                    },
                   ],
                   total: 1,
                   limit: 1,
@@ -51,6 +57,8 @@ function renderPage(path: string, load = vi.fn(), save = vi.fn()) {
                 create: vi.fn(),
                 update: vi.fn(),
                 delete: vi.fn(),
+                setImage: vi.fn(),
+                deleteImage: vi.fn(),
               }}
             />
           }
@@ -119,7 +127,13 @@ function renderPageInEventDetail(reload: () => void) {
                 spotGateway={{
                   list: vi.fn().mockResolvedValue({
                     items: [
-                      { id: 1, name: "出入口①", createdAt: "", updatedAt: "" },
+                      {
+                        id: 1,
+                        name: "出入口①",
+                        imageUrl: null,
+                        createdAt: "",
+                        updatedAt: "",
+                      },
                     ],
                     total: 1,
                     limit: 1,
@@ -129,6 +143,8 @@ function renderPageInEventDetail(reload: () => void) {
                   create: vi.fn(),
                   update: vi.fn(),
                   delete: vi.fn(),
+                  setImage: vi.fn(),
+                  deleteImage: vi.fn(),
                 }}
               />
             }

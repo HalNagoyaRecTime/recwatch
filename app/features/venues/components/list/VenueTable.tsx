@@ -1,3 +1,4 @@
+import { PlaceImageStatusBadge } from "~/components/management/PlaceImageStatusBadge";
 import { DataTable } from "~/components/ui/data-table/DataTable";
 import type { DataTableColumn } from "~/components/ui/data-table/data-table-types";
 import { SearchField } from "~/components/ui/form/SearchField";
@@ -12,6 +13,7 @@ type VenueTableProps = {
   items: readonly Venue[];
   onDelete: (venue: Venue) => void;
   onEdit: (venue: Venue) => void;
+  onEditImage: (venue: Venue) => void;
   onPageChange: (page: number) => void;
   onQueryChange: (query: string) => void;
   onSortChange: (columnId: string) => void;
@@ -29,6 +31,7 @@ export function VenueTable({
   items,
   onDelete,
   onEdit,
+  onEditImage,
   onPageChange,
   onQueryChange,
   onSortChange,
@@ -53,6 +56,19 @@ export function VenueTable({
       width: { type: "fluid", min: 130, grow: 2 },
       renderCell: (venue) => (
         <span className="text-text-base font-medium">{venue.name}</span>
+      ),
+    },
+    {
+      id: "image",
+      header: "画像",
+      width: { type: "fluid", min: 120, grow: 0.3 },
+      renderCell: (venue) => (
+        <PlaceImageStatusBadge
+          disabled={isMutating}
+          imageUrl={venue.imageUrl}
+          label={`${venue.name}の画像`}
+          onClick={() => onEditImage(venue)}
+        />
       ),
     },
     {

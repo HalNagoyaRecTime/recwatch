@@ -254,4 +254,28 @@ describe("apiClient", () => {
       }
     );
   });
+
+  it("BlobをそのままPUTし、Content-TypeにBlobの形式を使う", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(new Response(null, { status: 204 }));
+    vi.stubGlobal("fetch", fetchMock);
+    const image = new Blob(["image"], { type: "image/jpeg" });
+
+    await expect(
+      apiClient.putBlob("/api/v1/venues/1/image", image)
+    ).resolves.toBeUndefined();
+    expect(fetchMock).toHaveBeenCalledWith(
+      "https://api.example.com/api/v1/venues/1/image",
+      {
+        method: "PUT",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "image/jpeg",
+          "X-Client-Type": "web",
+        },
+        body: image,
+      }
+    );
+  });
 });
