@@ -1,25 +1,33 @@
 import { Check } from "lucide-react";
 
+import { PlaceImageField } from "~/components/management/PlaceImageField";
 import { Button } from "~/components/ui/button/Button";
 import type { GatheringSpot } from "~/features/gathering-spots/model/gathering-spot";
+import type { PlaceImageChange } from "~/types/place-image-change";
 
 type GatheringSpotFormProps = {
+  autoFocusImage: boolean;
   editingSpot: GatheringSpot | null;
+  imageChange: PlaceImageChange | null;
   isSubmitting: boolean;
   name: string;
   submitError: string | null;
   onChange: (name: string) => void;
   onClose: () => void;
+  onImageChange: (change: PlaceImageChange | null) => void;
   onSubmit: () => void | Promise<void>;
 };
 
 export function GatheringSpotForm({
+  autoFocusImage,
   editingSpot,
+  imageChange,
   isSubmitting,
   name,
   submitError,
   onChange,
   onClose,
+  onImageChange,
   onSubmit,
 }: GatheringSpotFormProps) {
   return (
@@ -59,6 +67,15 @@ export function GatheringSpotForm({
             value={name}
           />
         </label>
+
+        <PlaceImageField
+          autoFocus={autoFocusImage}
+          change={imageChange}
+          currentImageUrl={editingSpot?.imageUrl ?? null}
+          disabled={isSubmitting}
+          label="集合場所の画像"
+          onChange={onImageChange}
+        />
 
         {submitError ? (
           <p

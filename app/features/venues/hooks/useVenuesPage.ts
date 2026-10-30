@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { getErrorMessage } from "~/lib/client-error";
+import type { PlaceImageChange } from "~/types/place-image-change";
 
 import type { VenueGateway } from "~/features/venues/api/contracts/venue-gateway";
 import { useVenues } from "~/features/venues/hooks/useVenues";
@@ -36,11 +37,14 @@ export function useVenuesPage({ gateway }: UseVenuesPageOptions) {
     createVenue,
     updateVenue,
     deleteVenue,
+    saveVenueImage,
     reload,
   } = useVenues({ gateway, listOptions });
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingVenue, setEditingVenue] = useState<Venue | null>(null);
   const [venueNameInput, setVenueNameInput] = useState("");
+  const [imageChange, setImageChange] = useState<PlaceImageChange | null>(null);
+  const [shouldFocusImage, setShouldFocusImage] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -49,6 +53,8 @@ export function useVenuesPage({ gateway }: UseVenuesPageOptions) {
   function openCreateForm() {
     setEditingVenue(null);
     setVenueNameInput("");
+    setImageChange(null);
+    setShouldFocusImage(false);
     setSubmitError(null);
     setIsFormOpen(true);
   }
@@ -56,14 +62,23 @@ export function useVenuesPage({ gateway }: UseVenuesPageOptions) {
   function openEditForm(venue: Venue) {
     setEditingVenue(venue);
     setVenueNameInput(venue.name);
+    setImageChange(null);
+    setShouldFocusImage(false);
     setSubmitError(null);
     setIsFormOpen(true);
+  }
+
+  function openImageForm(venue: Venue) {
+    openEditForm(venue);
+    setShouldFocusImage(true);
   }
 
   function closeForm() {
     setIsFormOpen(false);
     setEditingVenue(null);
     setVenueNameInput("");
+    setImageChange(null);
+    setShouldFocusImage(false);
     setSubmitError(null);
   }
 
@@ -106,6 +121,10 @@ export function useVenuesPage({ gateway }: UseVenuesPageOptions) {
     setVenueNameInput(name);
   }
 
+  function handleImageChange(change: PlaceImageChange | null) {
+    setImageChange(change);
+  }
+
   function handleSortChange(columnId: string) {
     if (isDeleting || isSubmitting) return;
     if (!isVenueSortableColumnId(columnId)) return;
@@ -125,12 +144,16 @@ export function useVenuesPage({ gateway }: UseVenuesPageOptions) {
     setSubmitError(null);
 
     try {
-      if (editingVenue) {
-        await updateVenue(editingVenue.id, name);
-      } else {
-        await createVenue(name);
+      const savedVenue = editingVenue
+        ? await updateVenue(editingVenue.id, name)
+        : await createVenue(name);
+      // 画像だけ失敗したときに、再送で同じ実施場所を二重に作らないよう編集中に切り替える
+      setEditingVenue(savedVenue);
+      try {
+        if (imageChange) await saveVenueImage(savedVenue.id, imageChange);
+      } finally {
+        await reload();
       }
-      await reload();
       closeForm();
     } catch (error) {
       setSubmitError(getErrorMessage(error, "実施場所の保存に失敗しました。"));
@@ -150,7 +173,9 @@ export function useVenuesPage({ gateway }: UseVenuesPageOptions) {
     handlePageChange,
     handleQueryChange,
     handleSortChange,
+    handleImageChange,
     handleVenueNameChange,
+    imageChange,
     isFormOpen,
     isDeleting,
     isLoading,
@@ -158,12 +183,14 @@ export function useVenuesPage({ gateway }: UseVenuesPageOptions) {
     loadError,
     openCreateForm,
     openEditForm,
+    openImageForm,
     pageCount,
     pageSize,
     query,
     venueNameInput,
     submitError,
     submitForm,
+    shouldFocusImage,
     sort,
     venues,
     total,

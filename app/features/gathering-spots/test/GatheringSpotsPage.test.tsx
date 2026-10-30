@@ -1,20 +1,36 @@
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { GatheringSpotGateway } from "~/features/gathering-spots/api/contracts/gathering-spot-gateway";
 import type { GatheringSpot } from "~/features/gathering-spots/model/gathering-spot";
 import { GatheringSpotsPage } from "~/features/gathering-spots/pages/GatheringSpotsPage";
+import { resizeImage } from "~/lib/resize-image";
+
+vi.mock("~/lib/resize-image", () => ({ resizeImage: vi.fn() }));
+
+const resizedImage = new Blob(["resized"], { type: "image/jpeg" });
+
+beforeEach(() => {
+  vi.mocked(resizeImage).mockResolvedValue(resizedImage);
+  URL.createObjectURL = vi.fn(() => "blob:preview");
+  URL.revokeObjectURL = vi.fn();
+});
 
 afterEach(() => {
   cleanup();
   vi.restoreAllMocks();
 });
 
-function createSpot(id: number, name: string): GatheringSpot {
+function createSpot(
+  id: number,
+  name: string,
+  imageUrl: string | null = null
+): GatheringSpot {
   return {
     id,
     name,
+    imageUrl,
     createdAt: "2026-08-07T09:00:00Z",
     updatedAt: "2026-08-07T09:10:00Z",
   };
@@ -34,6 +50,8 @@ function createGateway(
     create: vi.fn(),
     update: vi.fn(),
     delete: vi.fn().mockResolvedValue(undefined),
+    setImage: vi.fn().mockResolvedValue(undefined),
+    deleteImage: vi.fn().mockResolvedValue(undefined),
     ...overrides,
   };
 }
@@ -324,5 +342,118 @@ describe("GatheringSpotsPage", () => {
         screen.getByRole("button", { name: "スポット1のその他の操作" })
       ).not.toBeDisabled()
     );
+  });
+
+  it("編集で選んだ写真を縮小してから集合場所の画像として登録する", async () => {
+    const update = vi.fn().mockResolvedValue(createSpot(1, "体育館前"));
+    const setImage = vi.fn().mockResolvedValue(undefined);
+    const user = userEvent.setup();
+
+    render(
+      <GatheringSpotsPage gateway={createGateway({ setImage, update })} />
+    );
+
+    await screen.findByText("体育館前");
+    await user.click(
+      screen.getByRole("button", { name: "体育館前のその他の操作" })
+    );
+    await user.click(screen.getByRole("button", { name: "編集" }));
+    await user.upload(
+      screen.getByLabelText("集合場所の画像を選択"),
+      new File(["photo"], "photo.jpg", { type: "image/jpeg" })
+    );
+    await screen.findByRole("img", { name: "集合場所の画像" });
+    await user.click(screen.getByRole("button", { name: "保存する" }));
+
+    await waitFor(() => expect(setImage).toHaveBeenCalledWith(1, resizedImage));
+  });
+
+  it("登録済みの画像を削除して保存すると、集合場所の画像を削除する", async () => {
+    const spot = createSpot(1, "体育館前", "https://images.example.com/1.jpg");
+    const list = vi.fn().mockResolvedValue({
+      items: [spot],
+      total: 1,
+      limit: 20,
+      offset: 0,
+    });
+    const update = vi.fn().mockResolvedValue(spot);
+    const deleteImage = vi.fn().mockResolvedValue(undefined);
+    const user = userEvent.setup();
+
+    render(
+      <GatheringSpotsPage
+        gateway={createGateway({ deleteImage, list, update })}
+      />
+    );
+
+    await screen.findByText("体育館前");
+    await user.click(
+      screen.getByRole("button", { name: "体育館前のその他の操作" })
+    );
+    await user.click(screen.getByRole("button", { name: "編集" }));
+    await user.click(screen.getByRole("button", { name: "画像を削除" }));
+    await user.click(screen.getByRole("button", { name: "保存する" }));
+
+    await waitFor(() => expect(deleteImage).toHaveBeenCalledWith(1));
+  });
+
+  it("一覧で画像が登録済みか未登録かを示す", async () => {
+    const list = vi.fn().mockResolvedValue({
+      items: [
+        createSpot(1, "体育館前", "https://images.example.com/1.jpg"),
+        createSpot(2, "正門前"),
+      ],
+      total: 2,
+      limit: 20,
+      offset: 0,
+    });
+
+    render(<GatheringSpotsPage gateway={createGateway({ list })} />);
+
+    const registeredRow = (await screen.findByText("体育館前")).closest(
+      "[role=row]"
+    );
+    const unregisteredRow = screen.getByText("正門前").closest("[role=row]");
+    expect(registeredRow).toHaveTextContent("登録済み");
+    expect(unregisteredRow).toHaveTextContent("未登録");
+  });
+
+  it("一覧の未登録を押すと、その集合場所の編集を開いて画像の選択へ移る", async () => {
+    const user = userEvent.setup();
+
+    render(<GatheringSpotsPage gateway={createGateway()} />);
+
+    await user.click(
+      await screen.findByRole("button", { name: "体育館前の画像を登録" })
+    );
+
+    expect(
+      screen.getByRole("heading", { name: "集合場所の編集" })
+    ).toBeInTheDocument();
+    expect(screen.getByRole("textbox", { name: "集合場所名*" })).toHaveValue(
+      "体育館前"
+    );
+    expect(screen.getByLabelText("集合場所の画像を選択")).toHaveFocus();
+  });
+
+  it("一覧の登録済みを押すと、その集合場所の編集を開いて画像の選択へ移る", async () => {
+    const list = vi.fn().mockResolvedValue({
+      items: [createSpot(1, "体育館前", "https://images.example.com/1.jpg")],
+      total: 1,
+      limit: 20,
+      offset: 0,
+    });
+    const user = userEvent.setup();
+
+    render(<GatheringSpotsPage gateway={createGateway({ list })} />);
+
+    await user.click(
+      await screen.findByRole("button", { name: "体育館前の画像を変更" })
+    );
+
+    expect(
+      screen.getByRole("heading", { name: "集合場所の編集" })
+    ).toBeInTheDocument();
+    expect(screen.getByLabelText("集合場所の画像を選択")).toHaveFocus();
   });
 });

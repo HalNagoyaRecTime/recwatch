@@ -1,25 +1,33 @@
 import { Check } from "lucide-react";
 
+import { PlaceImageField } from "~/components/management/PlaceImageField";
 import { Button } from "~/components/ui/button/Button";
 import type { Venue } from "~/features/venues/model/venue";
+import type { PlaceImageChange } from "~/types/place-image-change";
 
 type VenueFormProps = {
+  autoFocusImage: boolean;
   editingVenue: Venue | null;
+  imageChange: PlaceImageChange | null;
   isSubmitting: boolean;
   name: string;
   submitError: string | null;
   onChange: (name: string) => void;
   onClose: () => void;
+  onImageChange: (change: PlaceImageChange | null) => void;
   onSubmit: () => void | Promise<void>;
 };
 
 export function VenueForm({
+  autoFocusImage,
   editingVenue,
+  imageChange,
   isSubmitting,
   name,
   submitError,
   onChange,
   onClose,
+  onImageChange,
   onSubmit,
 }: VenueFormProps) {
   return (
@@ -57,6 +65,15 @@ export function VenueForm({
             value={name}
           />
         </label>
+
+        <PlaceImageField
+          autoFocus={autoFocusImage}
+          change={imageChange}
+          currentImageUrl={editingVenue?.imageUrl ?? null}
+          disabled={isSubmitting}
+          label="実施場所の画像"
+          onChange={onImageChange}
+        />
 
         {submitError ? (
           <p

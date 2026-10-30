@@ -56,6 +56,7 @@ export function createMockGatheringSpotGateway(
       const created = {
         id: nextId++,
         name,
+        imageUrl: null,
         createdAt: now,
         updatedAt: now,
       } satisfies GatheringSpot;
@@ -82,5 +83,22 @@ export function createMockGatheringSpotGateway(
       }
       spots = spots.filter((spot) => spot.id !== id);
     },
+
+    async setImage(id) {
+      setImageUrl(id, `mock://gathering-spots/${id}/image`);
+    },
+
+    async deleteImage(id) {
+      setImageUrl(id, null);
+    },
   };
+
+  function setImageUrl(id: number, imageUrl: string | null) {
+    if (!spots.some((spot) => spot.id === id)) {
+      throw new Error("集合場所が見つかりません。");
+    }
+    spots = spots.map((spot) =>
+      spot.id === id ? { ...spot, imageUrl } : spot
+    );
+  }
 }
