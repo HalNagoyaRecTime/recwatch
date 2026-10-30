@@ -460,4 +460,37 @@ describe("VenuesPage", () => {
     ).toBeInTheDocument();
     expect(screen.getByLabelText("実施場所の画像を選択")).toHaveFocus();
   });
+
+  it("写真の読み込みが終わるまでは保存できない", async () => {
+    let finishResize: (image: Blob) => void = () => {};
+    vi.mocked(resizeImage).mockReturnValue(
+      new Promise((resolve) => {
+        finishResize = resolve;
+      })
+    );
+    const update = vi.fn();
+    const user = userEvent.setup();
+
+    render(<VenuesPage gateway={createGateway({ update })} />);
+
+    await user.click(
+      await screen.findByRole("button", { name: "体育館の画像を登録" })
+    );
+    await user.upload(
+      screen.getByLabelText("実施場所の画像を選択"),
+      createPhoto()
+    );
+
+    expect(screen.getByRole("button", { name: "保存する" })).toBeDisabled();
+    await user.type(
+      screen.getByRole("textbox", { name: "実施場所名*" }),
+      "{Enter}"
+    );
+    expect(update).not.toHaveBeenCalled();
+
+    finishResize(resizedImage);
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: "保存する" })).toBeEnabled()
+    );
+  });
 });

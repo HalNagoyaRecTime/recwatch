@@ -1,4 +1,5 @@
 import { Check } from "lucide-react";
+import { useState } from "react";
 
 import { PlaceImageField } from "~/components/management/PlaceImageField";
 import { Button } from "~/components/ui/button/Button";
@@ -30,12 +31,15 @@ export function VenueForm({
   onImageChange,
   onSubmit,
 }: VenueFormProps) {
+  const [isImageProcessing, setIsImageProcessing] = useState(false);
+
   return (
     <form
       aria-labelledby="venue-form-title"
       noValidate
       onSubmit={(event) => {
         event.preventDefault();
+        if (isImageProcessing) return;
         void onSubmit();
       }}
     >
@@ -73,6 +77,7 @@ export function VenueForm({
           disabled={isSubmitting}
           label="実施場所の画像"
           onChange={onImageChange}
+          onProcessingChange={setIsImageProcessing}
         />
 
         {submitError ? (
@@ -91,7 +96,7 @@ export function VenueForm({
             キャンセル
           </Button>
           <Button
-            disabled={isSubmitting}
+            disabled={isSubmitting || isImageProcessing}
             icon={Check}
             size="md"
             type="submit"
