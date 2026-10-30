@@ -9,7 +9,7 @@ import {
   teamDetailTarget,
   teamEditTarget,
 } from "~/features/team/application/team-navigation";
-import type { Team } from "~/features/team/model/team";
+import { canDeleteTeam, type Team } from "~/features/team/model/team";
 
 export function TeamActionMenu({
   onDeleteRequest,
@@ -69,9 +69,12 @@ export function TeamActionMenu({
             { id: "actions-divider", type: "divider" },
             {
               danger: true,
+              disabled: !canDeleteTeam(team),
               icon: Trash2,
               id: "delete",
-              label: "削除",
+              label: canDeleteTeam(team)
+                ? "削除"
+                : "削除（得点があるため不可）",
               onClick: () => closeAnd(() => onDeleteRequest(team)),
               type: "action",
             },
