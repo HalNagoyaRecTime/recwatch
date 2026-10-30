@@ -1,3 +1,6 @@
+import { useFeedback } from "~/features/frame/feedback";
+import { httpAdminNotificationCommandApi } from "~/features/notifications/api/http/admin-notification-command-api";
+import { httpNotificationScheduleCommandApi } from "~/features/notifications/api/http/notification-schedule-command-api";
 import { useParams } from "react-router";
 
 import { createPageTitle } from "~/lib/page-title";
@@ -13,12 +16,16 @@ export function meta() {
 }
 
 export default function NotificationDetailRoute() {
+  const { report } = useFeedback();
   const notificationId = Number(useParams().notificationId);
 
   return (
     <PageLayout>
       <PagePadding>
         <NotificationDetailPage
+          commandApi={httpAdminNotificationCommandApi}
+          scheduleCommandApi={httpNotificationScheduleCommandApi}
+          reportFeedback={report}
           key={notificationId}
           notificationId={notificationId}
           pushDeliveryApi={httpNotificationPushDeliveryApi}

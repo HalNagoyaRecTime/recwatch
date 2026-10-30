@@ -6,6 +6,7 @@ import type {
   NotificationPlatformDto,
   NotificationPushContentDto,
   NotificationPushDeliveryStatusDto,
+  NotificationRecipientResolutionStatusDto,
   NotificationScheduleStatusDto,
   NotificationStopDto,
   NotificationUserReferenceDto,
@@ -20,6 +21,7 @@ export type NotificationScheduleListItemDto = {
   importance: NotificationImportanceDto;
   sendAt: string;
   status: NotificationScheduleStatusDto;
+  failureReason: string | null;
   stop: NotificationStopDto | null;
   creation: NotificationCreationDto;
 };
@@ -45,6 +47,7 @@ export type NotificationScheduleDetailDto = {
   importance: NotificationImportanceDto;
   sendAt: string;
   status: NotificationScheduleStatusDto;
+  failureReason: string | null;
   stop: NotificationStopDto | null;
   creation: NotificationCreationDto;
   audienceProgress: {
@@ -53,7 +56,7 @@ export type NotificationScheduleDetailDto = {
   };
   recipientProgress: {
     count: number;
-    status: "pending" | "resolved";
+    status: NotificationRecipientResolutionStatusDto;
   };
   deliveryProgress: NotificationDeliveryProgressDto;
 };

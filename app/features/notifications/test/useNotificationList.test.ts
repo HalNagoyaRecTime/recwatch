@@ -6,6 +6,7 @@ import type {
   AdminNotificationListResponse,
   AdminNotificationQueryApi,
 } from "~/features/notifications/api/contracts/admin-notification-query-api";
+import { ApiClientError } from "~/lib/api-client-error";
 import { useNotificationList } from "~/features/notifications/hooks/useNotificationList";
 import { adminNotificationListFixture } from "~/features/notifications/mock/notification-fixtures";
 
@@ -112,7 +113,7 @@ describe("useNotificationList", () => {
   it("削除後の再取得で件数が減っても存在しないページを表示しない", async () => {
     const list = vi
       .fn<AdminNotificationQueryApi["list"]>()
-      .mockResolvedValueOnce(createResponseWithCount(21, "通知"))
+      .mockResolvedValueOnce(createResponseWithCount(51, "通知"))
       .mockResolvedValueOnce(createResponseWithCount(1, "残った通知"));
     const queryApi = createQueryApi(list);
     const deleteNotification = vi.fn().mockResolvedValue(undefined);
@@ -127,7 +128,7 @@ describe("useNotificationList", () => {
     await waitFor(() => expect(result.current.isLoading).toBe(false));
     act(() => result.current.onPageChange(2));
     expect(result.current.currentPage).toBe(2);
-    expect(result.current.items[0]?.content.push.title).toBe("通知20");
+    expect(result.current.items[0]?.content.push.title).toBe("通知50");
 
     const itemToDelete = result.current.items[0];
     if (!itemToDelete) throw new Error("削除対象がありません");
@@ -136,7 +137,7 @@ describe("useNotificationList", () => {
       await result.current.confirmDelete();
     });
 
-    expect(deleteNotification).toHaveBeenCalledWith(121);
+    expect(deleteNotification).toHaveBeenCalledWith(151);
     expect(list).toHaveBeenCalledTimes(2);
     expect(result.current.currentPage).toBe(1);
     expect(result.current.pageCount).toBe(1);
@@ -175,4 +176,80 @@ describe("useNotificationList", () => {
     });
     expect(result.current.items[0]?.content.push.title).toBe("最新の通知");
   });
+  it.each([false, true])(
+    "遅延GET中の削除後は新しい一覧・Calendarを取得する（Calendar: %s）",
+    async (calendar) => {
+      const old = createDeferred<AdminNotificationListResponse>();
+      const list = vi
+        .fn<AdminNotificationQueryApi["list"]>()
+        .mockResolvedValueOnce(createResponse("削除前"))
+        .mockReturnValueOnce(old.promise)
+        .mockResolvedValue({ items: [] });
+      const queryApi = createQueryApi(list);
+      const deleteApi = {
+        ...commandApi,
+        delete: vi.fn().mockResolvedValue(undefined),
+      };
+      const { result } = renderHook(() =>
+        useNotificationList({ commandApi: deleteApi, queryApi })
+      );
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+      act(() => result.current.onDeleteRequest(result.current.items[0]));
+      act(() => {
+        if (calendar)
+          void result.current.loadCalendar({
+            from: "2026-11-01T00:00:00Z",
+            to: "2026-12-01T00:00:00Z",
+          });
+        else void result.current.reload();
+      });
+      await waitFor(() => expect(list).toHaveBeenCalledTimes(2));
+      let deletion!: Promise<void>;
+      act(() => {
+        deletion = result.current.confirmDelete();
+      });
+      await waitFor(() => expect(deleteApi.delete).toHaveBeenCalledOnce());
+      expect(list).toHaveBeenCalledTimes(2);
+      await act(async () => {
+        old.resolve(createResponse("古いGET"));
+        await deletion;
+      });
+      expect(result.current.items).toEqual([]);
+      if (calendar) expect(result.current.calendarItems).toEqual([]);
+      expect(list).toHaveBeenCalledTimes(calendar ? 4 : 3);
+    }
+  );
+
+  it.each([404, 409])(
+    "削除%i後に一覧を再取得しエラーを維持する",
+    async (status) => {
+      const list = vi
+        .fn()
+        .mockResolvedValueOnce(createResponse("初回"))
+        .mockResolvedValue(createResponse("最新"));
+      const reportFeedback = vi.fn();
+      const queryApi = createQueryApi(list);
+      const { result } = renderHook(() =>
+        useNotificationList({
+          commandApi: {
+            ...commandApi,
+            delete: vi
+              .fn()
+              .mockRejectedValue(new ApiClientError(status, "削除不可")),
+          },
+          queryApi,
+          reportFeedback,
+        })
+      );
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+      act(() => result.current.onDeleteRequest(result.current.items[0]));
+      await act(() => result.current.confirmDelete());
+      expect(list).toHaveBeenCalledTimes(2);
+      expect(result.current.items[0].content.push.title).toBe("最新");
+      expect(result.current.errorMessage).toBe("削除不可");
+      expect(reportFeedback).toHaveBeenCalledWith(
+        expect.objectContaining({ kind: "action-error" })
+      );
+    }
+  );
 });

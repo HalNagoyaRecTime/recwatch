@@ -10,17 +10,11 @@ import type {
   NotificationScheduleListResponseDto,
   NotificationScheduleResultsDto,
 } from "~/features/notifications/api/dto/notification-schedule-dto";
-import type { NotificationScheduleStatusDto } from "~/features/notifications/api/dto/notification-common-dto";
+import { NOTIFICATION_SCHEDULE_STATUSES } from "~/features/notifications/api/dto/notification-common-dto";
 import { ApiClientError } from "~/lib/api-client-error";
 
-const scheduleStatuses: NotificationScheduleStatusDto[] = [
-  "scheduled",
-  "resolving",
-  "sending",
-  "completed",
-  "failed",
-  "stopped",
-];
+const scheduleStatuses = NOTIFICATION_SCHEDULE_STATUSES;
+const toUtcIso = (value: string) => new Date(value).toISOString();
 
 export const adminNotificationListFixture: AdminNotificationListResponseDto = {
   items: scheduleStatuses.map((status, index) => {
@@ -28,10 +22,14 @@ export const adminNotificationListFixture: AdminNotificationListResponseDto = {
     const isAutomatic = index === 1 || index === 5;
     const primarySchedule = {
       notificationScheduleId: 501 + index,
-      sendAt: `2026-11-07T${String(index + 9).padStart(2, "0")}:20:00+09:00`,
+      sendAt: toUtcIso(
+        `2026-11-07T${String(index + 9).padStart(2, "0")}:20:00+09:00`
+      ),
       status,
       scheduledBy: isAutomatic ? null : { userId: 123, userName: "HAL 太郎" },
-      createdAt: `2026-11-07T0${index + 7}:05:00+09:00`,
+      createdAt: toUtcIso(
+        `2026-11-07T${String(index + 7).padStart(2, "0")}:05:00+09:00`
+      ),
       audience: {
         items: [
           index === 0
@@ -81,7 +79,9 @@ export const adminNotificationListFixture: AdminNotificationListResponseDto = {
             user: { userId: 123, userName: "HAL 太郎" },
             source: null,
           },
-      createdAt: `2026-11-07T0${index + 7}:00:00+09:00`,
+      createdAt: toUtcIso(
+        `2026-11-07T${String(index + 7).padStart(2, "0")}:00:00+09:00`
+      ),
       schedules:
         index === 0
           ? [
@@ -89,7 +89,7 @@ export const adminNotificationListFixture: AdminNotificationListResponseDto = {
               {
                 ...primarySchedule,
                 notificationScheduleId: 601,
-                sendAt: "2026-11-08T09:20:00+09:00",
+                sendAt: "2026-11-08T00:20:00.000Z",
                 status: "scheduled" as const,
                 audience: {
                   ...primarySchedule.audience,
@@ -129,8 +129,8 @@ export const adminNotificationDetailFixture: AdminNotificationDetailDto = {
     user: { userId: 123, userName: "HAL 太郎" },
     source: null,
   },
-  createdAt: "2026-11-07T12:10:00+09:00",
-  updatedAt: "2026-11-07T12:15:00+09:00",
+  createdAt: "2026-11-07T03:10:00.000Z",
+  updatedAt: "2026-11-07T03:15:00.000Z",
   schedules: [
     {
       ...adminNotificationListFixture.items[3].schedules[0],
@@ -140,7 +140,7 @@ export const adminNotificationDetailFixture: AdminNotificationDetailDto = {
       ...adminNotificationListFixture.items[5].schedules[0],
       stop: {
         reason: "source_deleted",
-        stoppedAt: "2026-11-07T13:00:00+09:00",
+        stoppedAt: "2026-11-07T04:00:00.000Z",
         stoppedBy: null,
       },
     },
@@ -157,6 +157,8 @@ export const notificationScheduleListFixture: NotificationScheduleListResponseDt
         importance: notification.importance,
         sendAt: schedule.sendAt,
         status: schedule.status,
+        failureReason:
+          schedule.status === "failed" ? "FCM送信に失敗しました" : null,
         stop:
           schedule.status === "stopped"
             ? {
@@ -200,15 +202,15 @@ export const notificationScheduleResultsFixture: NotificationScheduleResultsDto 
               platform: "android",
               status: "sent",
               attemptCount: 1,
-              lastAttemptAt: "2026-11-07T13:20:05+09:00",
-              sentAt: "2026-11-07T13:20:05+09:00",
+              lastAttemptAt: "2026-11-07T04:20:05.000Z",
+              sentAt: "2026-11-07T04:20:05.000Z",
             },
             {
               notificationPushDeliveryId: 9012,
               platform: "ios",
               status: "retry_wait",
               attemptCount: 2,
-              lastAttemptAt: "2026-11-07T13:20:08+09:00",
+              lastAttemptAt: "2026-11-07T04:20:08.000Z",
               sentAt: null,
             },
           ],
@@ -231,9 +233,9 @@ export const notificationPushDeliveryDetailFixture: NotificationPushDeliveryDeta
     platform: "ios",
     status: "retry_wait",
     attemptCount: 2,
-    firstAttemptAt: "2026-11-07T13:20:04+09:00",
-    lastAttemptAt: "2026-11-07T13:20:08+09:00",
-    nextRetryAt: "2026-11-07T13:25:08+09:00",
+    firstAttemptAt: "2026-11-07T04:20:04.000Z",
+    lastAttemptAt: "2026-11-07T04:20:08.000Z",
+    nextRetryAt: "2026-11-07T04:25:08.000Z",
     sentAt: null,
     failedReason: "UNAVAILABLE",
     fcmMessageId: null,
@@ -249,7 +251,7 @@ export const notificationApiErrorFixtures = {
       400,
       "リクエスト内容が正しくありません。",
       "VALIDATION_ERROR",
-      { fieldErrors: { title: ["入力してください。"] }, formErrors: [] }
+      { fieldErrors: { content: ["入力してください。"] }, formErrors: [] }
     ),
   STAFF_REQUIRED: () =>
     new ApiClientError(403, "権限がありません。", "STAFF_REQUIRED"),

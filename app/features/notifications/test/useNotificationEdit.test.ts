@@ -9,6 +9,7 @@ import { mockNotificationAudienceOptions } from "~/features/notifications/mock/n
 import { adminNotificationDetailFixture } from "~/features/notifications/mock/notification-fixtures";
 import type { AdminNotificationDetail } from "~/features/notifications/api/contracts/admin-notification-command-api";
 import { ApiClientError } from "~/lib/api-client-error";
+import { mockNotificationConfigApi } from "~/features/notifications/mock/notification-config-api";
 
 function createNotification(
   notificationId: number,
@@ -37,6 +38,28 @@ const commandApi: AdminNotificationCommandApi = {
 };
 
 describe("useNotificationEdit", () => {
+  it("編集時は字下げを保ち、詳細本文の改行用スペースを通常改行へ戻す", async () => {
+    const notification = createNotification(1, "タイトル");
+    const body = "\n    code\n本文  \n次の行  ";
+    notification.content.detail.body = body;
+    const queryApi = createQueryApi(vi.fn().mockResolvedValue(notification));
+    const audienceApi = {
+      load: vi.fn().mockResolvedValue(mockNotificationAudienceOptions),
+    };
+    const { result } = renderHook(() =>
+      useNotificationEdit({
+        notificationId: 1,
+        configApi: mockNotificationConfigApi,
+        commandApi,
+        queryApi,
+        audienceApi,
+      })
+    );
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    expect(result.current.draft.detailBody).toBe("\n    code\n本文\n次の行  ");
+    expect(result.current.draft.body).toBe(notification.content.push.body);
+  });
+
   it("通知本体とAudienceを初回取得し、ID変更時にdraftを切り替える", async () => {
     const getDetail = vi
       .fn<AdminNotificationQueryApi["getDetail"]>()
@@ -50,6 +73,7 @@ describe("useNotificationEdit", () => {
         useNotificationEdit({
           audienceApi,
           commandApi,
+          configApi: mockNotificationConfigApi,
           queryApi,
           notificationId,
         }),
@@ -91,6 +115,7 @@ describe("useNotificationEdit", () => {
       useNotificationEdit({
         audienceApi,
         commandApi,
+        configApi: mockNotificationConfigApi,
         queryApi,
         notificationId: 99,
       })
@@ -110,6 +135,7 @@ describe("useNotificationEdit", () => {
       useNotificationEdit({
         audienceApi,
         commandApi,
+        configApi: mockNotificationConfigApi,
         queryApi,
         notificationId: 0,
       })
@@ -136,6 +162,7 @@ describe("useNotificationEdit", () => {
       useNotificationEdit({
         audienceApi,
         commandApi,
+        configApi: mockNotificationConfigApi,
         queryApi,
         notificationId: 1,
       })
@@ -155,4 +182,246 @@ describe("useNotificationEdit", () => {
     );
     expect(result.current.audienceError).toBeNull();
   });
+  it("編集でも重複対象はAPIとFeedbackへ送らない", async () => {
+    const notification = createNotification(1, "通知");
+    notification.schedules = notification.schedules.map((schedule) => ({
+      ...schedule,
+      status: "scheduled",
+      sendAt: "2030-11-07T12:00:00Z",
+    }));
+    const patch = vi.fn();
+    const reportFeedback = vi.fn();
+    const audienceApi = { load: vi.fn().mockResolvedValue([]) };
+    const queryApi = createQueryApi(vi.fn().mockResolvedValue(notification));
+    const { result } = renderHook(() =>
+      useNotificationEdit({
+        audienceApi,
+        queryApi,
+        commandApi: { ...commandApi, patch },
+        configApi: mockNotificationConfigApi,
+        notificationId: 1,
+        reportFeedback,
+      })
+    );
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    act(() =>
+      result.current.onChange({
+        ...result.current.draft,
+        audiences: [
+          { key: "a", type: "user", targetId: "1" },
+          { key: "b", type: "user", targetId: "1" },
+        ],
+      })
+    );
+    await act(() => result.current.submit());
+    expect(result.current.errors["audiences.1"]).toEqual({
+      kind: "validation",
+      code: "audience_duplicate",
+    });
+    expect(patch).not.toHaveBeenCalled();
+    expect(reportFeedback).not.toHaveBeenCalled();
+  });
+
+  it("409で最新状態を取得し、入力した詳細を保って詳細のみ再保存する", async () => {
+    const initial = createNotification(1, "通知");
+    initial.schedules = initial.schedules.map((schedule) => ({
+      ...schedule,
+      status: "scheduled",
+      sendAt: "2030-11-07T12:00:00Z",
+    }));
+    const started = {
+      ...initial,
+      schedules: initial.schedules.map((schedule) => ({
+        ...schedule,
+        status: "sending" as const,
+      })),
+    };
+    const getDetail = vi
+      .fn()
+      .mockResolvedValueOnce(initial)
+      .mockResolvedValue(started);
+    const queryApi = createQueryApi(getDetail);
+    const patch = vi
+      .fn()
+      .mockRejectedValueOnce(new ApiClientError(409, "開始済みです"))
+      .mockResolvedValue(started);
+    const audienceApi = { load: vi.fn().mockResolvedValue([]) };
+    const { result } = renderHook(() =>
+      useNotificationEdit({
+        audienceApi,
+        commandApi: { ...commandApi, patch },
+        configApi: mockNotificationConfigApi,
+        queryApi,
+        notificationId: 1,
+      })
+    );
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    act(() =>
+      result.current.onChange({
+        ...result.current.draft,
+        title: "保存されないPush",
+        body: "保存されない本文",
+        importance: "high",
+        audiences: [{ key: "new", type: "user", targetId: "123" }],
+        detailTitle: "入力した詳細",
+        detailBody: "入力した本文",
+      })
+    );
+    await act(() => result.current.submit());
+    expect(getDetail).toHaveBeenCalledTimes(2);
+    expect(result.current.canEditAudience).toBe(false);
+    expect(result.current.draft.title).toBe(started.content.push.title);
+    expect(result.current.draft.body).toBe(started.content.push.body);
+    expect(result.current.draft.importance).toBe(started.importance);
+    expect(result.current.draft.audiences[0].type).toBe(
+      started.schedules[0].audience.items[0].type
+    );
+    expect(result.current.draft.detailTitle).toBe("入力した詳細");
+    expect(result.current.submissionError).toBe("開始済みです");
+    await act(() => result.current.submit());
+    expect(patch).toHaveBeenLastCalledWith(1, {
+      content: { detail: { title: "入力した詳細", body: "入力した本文" } },
+    });
+  });
+
+  it("409後の再取得失敗でも入力を保持し、次の保存で回復する", async () => {
+    const notification = createNotification(1, "通知");
+    notification.schedules = notification.schedules.map((schedule) => ({
+      ...schedule,
+      status: "sending",
+      sendAt: "2020-01-01T12:00:00Z",
+    }));
+    const getDetail = vi
+      .fn()
+      .mockResolvedValueOnce(notification)
+      .mockRejectedValueOnce(new Error("通信失敗"))
+      .mockResolvedValue(notification);
+    const queryApi = createQueryApi(getDetail);
+    const patch = vi.fn().mockRejectedValue(new ApiClientError(409, "競合"));
+    const audienceApi = { load: vi.fn().mockResolvedValue([]) };
+    const { result } = renderHook(() =>
+      useNotificationEdit({
+        audienceApi,
+        commandApi: { ...commandApi, patch },
+        configApi: mockNotificationConfigApi,
+        queryApi,
+        notificationId: 1,
+      })
+    );
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    act(() =>
+      result.current.onChange({
+        ...result.current.draft,
+        detailTitle: "維持する入力",
+      })
+    );
+    await act(() => result.current.submit());
+    expect(result.current.draft.detailTitle).toBe("維持する入力");
+    expect(result.current.isSubmitting).toBe(false);
+    await act(() => result.current.submit());
+    expect(getDetail).toHaveBeenCalledTimes(3);
+    expect(result.current.draft.detailTitle).toBe("維持する入力");
+  });
+
+  it("配信開始後は過去の配信日時を検証せず詳細だけ保存する", async () => {
+    const notification = createNotification(1, "通知");
+    notification.schedules = notification.schedules.map((schedule) => ({
+      ...schedule,
+      status: "sending",
+      sendAt: "2020-01-01T00:00:00Z",
+    }));
+    const patch = vi.fn().mockResolvedValue(notification);
+    const audienceApi = { load: vi.fn().mockResolvedValue([]) };
+    const queryApi = createQueryApi(vi.fn().mockResolvedValue(notification));
+    const { result } = renderHook(() =>
+      useNotificationEdit({
+        audienceApi,
+        commandApi: { ...commandApi, patch },
+        configApi: mockNotificationConfigApi,
+        queryApi,
+        notificationId: 1,
+      })
+    );
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    act(() =>
+      result.current.onChange({
+        ...result.current.draft,
+        detailTitle: "更新詳細",
+      })
+    );
+    await act(async () => expect(await result.current.submit()).toBe(true));
+    expect(patch).toHaveBeenCalledWith(1, {
+      content: {
+        detail: { title: "更新詳細", body: notification.content.detail.body },
+      },
+    });
+  });
+
+  it.each([400, 409, 500])(
+    "%iエラーでdraftを保持し、validationはFeedbackへ保存しない",
+    async (status) => {
+      const notification = createNotification(1, "通知");
+      notification.schedules = notification.schedules.map((schedule) => ({
+        ...schedule,
+        status: "sending",
+      }));
+      const error = new ApiClientError(
+        status,
+        "保存失敗",
+        status === 400 ? "VALIDATION_ERROR" : "CONFLICT",
+        status === 400
+          ? {
+              fieldErrors: {
+                content: ["詳細を確認してください"],
+                schedule: ["配信日時を確認してください"],
+                importance: ["重要度を確認してください"],
+              },
+              formErrors: [],
+            }
+          : undefined
+      );
+      const patch = vi.fn().mockRejectedValue(error);
+      const reportFeedback = vi.fn();
+      const audienceApi = { load: vi.fn().mockResolvedValue([]) };
+      const queryApi = createQueryApi(vi.fn().mockResolvedValue(notification));
+      const { result } = renderHook(() =>
+        useNotificationEdit({
+          audienceApi,
+          commandApi: { ...commandApi, patch },
+          configApi: mockNotificationConfigApi,
+          queryApi,
+          notificationId: 1,
+          reportFeedback,
+        })
+      );
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+      act(() =>
+        result.current.onChange({
+          ...result.current.draft,
+          detailTitle: "保持する入力",
+        })
+      );
+      await act(async () => expect(await result.current.submit()).toBe(false));
+      expect(result.current.draft.detailTitle).toBe("保持する入力");
+      if (status === 400) {
+        expect(result.current.submissionIssues).toContainEqual({
+          field: "content",
+          message: "詳細を確認してください",
+        });
+        expect(result.current.submissionIssues).toContainEqual({
+          field: "schedule",
+          message: "配信日時を確認してください",
+        });
+        expect(result.current.errors.importance).toEqual({
+          kind: "api",
+          message: "重要度を確認してください",
+        });
+        expect(reportFeedback).not.toHaveBeenCalled();
+      } else {
+        expect(reportFeedback).toHaveBeenCalledWith(
+          expect.objectContaining({ kind: "action-error" })
+        );
+      }
+    }
+  );
 });

@@ -5,8 +5,14 @@ import type {
 } from "~/features/notifications/api/dto/notification-audience-api-dto";
 import {
   toClassRoomAudiencePage,
+  toUserAudiencePage,
+  toUserAudienceOption,
   toEventAudiencePage,
 } from "~/features/notifications/api/mappers/notification-audience-response-mapper";
+import {
+  mergeNotificationUserAudiences,
+  type NotificationAudienceOption,
+} from "~/features/notifications/model/notification-audience";
 
 const PAGE_SIZE = 100;
 const MAX_PAGES = 100;
@@ -53,4 +59,30 @@ export async function loadAllEvents(client: NotificationAudienceHttpClient) {
   }
 
   throw new ClientError(ClientErrors.RESPONSE_PARSE_ERROR);
+}
+
+export async function loadAllUsers(client: NotificationAudienceHttpClient) {
+  const pages = await Promise.all(
+    (
+      [
+        ["students", "student"],
+        ["teachers", "teacher"],
+      ] as const
+    ).map(async ([resource, userCategory]) => {
+      const users: NotificationAudienceOption[] = [];
+      for (let pageIndex = 0; pageIndex < MAX_PAGES; pageIndex += 1) {
+        const page = toUserAudiencePage(
+          await client.get(
+            `/api/v1/${resource}?limit=${PAGE_SIZE}&offset=${users.length}&isStaff=all&isLiveActive=true`
+          )
+        );
+        users.push(
+          ...page.items.map((user) => toUserAudienceOption(user, userCategory))
+        );
+        if (users.length >= page.total || page.items.length === 0) return users;
+      }
+      throw new ClientError(ClientErrors.RESPONSE_PARSE_ERROR);
+    })
+  );
+  return mergeNotificationUserAudiences(pages.flat());
 }

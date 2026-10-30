@@ -24,6 +24,7 @@ export function DataTable<T>({
   items,
   onSortChange,
   sort,
+  rowSizing = "fixed",
 }: DataTableProps<T>) {
   const mainColumns = columns.filter((col) => col.edge === undefined);
   const rightColumns = columns.filter((col) => col.edge === "right");
@@ -91,6 +92,7 @@ export function DataTable<T>({
                 rightColumns={rightColumns}
                 endColumns={endColumns}
                 item={item}
+                rowSizing={rowSizing}
               />
             ))
           )}

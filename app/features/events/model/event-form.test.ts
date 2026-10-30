@@ -50,3 +50,10 @@ describe("validateEventForm", () => {
     ).toEqual({ error: "実施場所は20件まで選択できます。" });
   });
 });
+
+it("ルールの字下げと行末空白を保存する", () => {
+  const rules = "\n    code\n本文  \n次の行  ";
+  expect(
+    validateEventForm({ ...filledForm, venueIds: [1], rules })
+  ).toMatchObject({ input: { rules } });
+});

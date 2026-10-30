@@ -1,41 +1,51 @@
+import { NotificationManagementNavigation } from "~/features/notifications/components/NotificationManagementNavigation";
 import { useState } from "react";
 import { RefreshCw } from "lucide-react";
 import { Button } from "~/components/ui/button/Button";
-import { ButtonLink } from "~/components/ui/button/ButtonLink";
 import { PageHeader } from "~/components/ui/layout/PageHeader";
 import type { NotificationScheduleQueryApi } from "~/features/notifications/api/contracts/notification-schedule-query-api";
 import { NotificationMonitorDetail } from "~/features/notifications/components/monitor/NotificationMonitorDetail";
 import { NotificationMonitorOverview } from "~/features/notifications/components/monitor/NotificationMonitorOverview";
 import { NotificationMonitorGraph } from "~/features/notifications/components/monitor/NotificationMonitorGraph";
 import { NotificationStatusBadge } from "~/features/notifications/components/list/NotificationStatusBadge";
-import { formatNotificationDateTime } from "~/features/notifications/components/list/notification-display";
+import {
+  formatNotificationDateTime,
+  notificationScheduleStatusLabels,
+} from "~/features/notifications/components/list/notification-display";
 import { getMonitorSchedule } from "~/features/notifications/hooks/notification-monitor-data";
 import type { NotificationFeedbackReporter } from "~/features/notifications/hooks/notification-feedback";
 import { useNotificationMonitor } from "~/features/notifications/hooks/useNotificationMonitor";
 import "~/features/notifications/components/monitor/notification-monitor.css";
 
+import type { NotificationScheduleCommandApi } from "~/features/notifications/api/contracts/notification-schedule-command-api";
+import { useNotificationMonitorActions } from "~/features/notifications/hooks/useNotificationMonitorActions";
+import {
+  NotificationMonitorActions,
+  NotificationMonitorActionDialog,
+} from "~/features/notifications/components/monitor/NotificationMonitorActions";
+
 type Props = {
+  commandApi?: NotificationScheduleCommandApi;
   api: NotificationScheduleQueryApi;
   reportFeedback?: NotificationFeedbackReporter;
   now?: () => number;
   refreshIntervalMs?: number;
 };
-const statusLabels = {
-  scheduled: "配信待ち",
-  resolving: "対象解決中",
-  sending: "送信中",
-  completed: "配信完了",
-  failed: "配信失敗",
-  stopped: "停止済み",
-};
 
 export function NotificationMonitorPage(props: Props) {
   const state = useNotificationMonitor(props);
+  const actions = useNotificationMonitorActions({
+    ...props,
+    items: state.items,
+    reload: state.reloadAfterMutation,
+  });
   const [overview, setOverview] = useState(false);
   const [viewId, setViewId] = useState<number | null>(null);
   const item =
     state.items.find(
-      (entry) => entry.summary.notificationScheduleId === viewId
+      (entry) =>
+        entry.summary.notificationScheduleId ===
+        (actions.target?.schedule.notificationScheduleId ?? viewId)
     ) ??
     state.items.find(
       (entry) => getMonitorSchedule(entry).status === "sending"
@@ -51,7 +61,7 @@ export function NotificationMonitorPage(props: Props) {
   const metrics = [
     [
       "Schedule状態",
-      schedule ? statusLabels[schedule.status] : "—",
+      schedule ? notificationScheduleStatusLabels[schedule.status] : "—",
       schedule ? `DB: ${schedule.status}` : "—",
     ],
     [
@@ -115,11 +125,15 @@ export function NotificationMonitorPage(props: Props) {
           </div>
         }
       />
-      <nav className="monitor-tabs" aria-label="通知管理">
-        <ButtonLink to="/notifications">一覧</ButtonLink>
-        <span aria-current="page">配信モニター</span>
-        <ButtonLink to="/notifications?view=calendar">カレンダー</ButtonLink>
-      </nav>
+      {props.commandApi && schedule && (
+        <NotificationMonitorActions
+          schedule={schedule}
+          state={actions}
+          onSelect={setViewId}
+          disabled={state.isLoading}
+        />
+      )}
+      <NotificationManagementNavigation active="monitor" />
       <div
         className="monitor-view-switch"
         role="group"
@@ -324,7 +338,9 @@ export function NotificationMonitorPage(props: Props) {
                           <i className={`monitor-dot-${value.status}`} />
                           <span>
                             <strong>{value.content.push.title}</strong>
-                            <small>{statusLabels[value.status]}</small>
+                            <small>
+                              {notificationScheduleStatusLabels[value.status]}
+                            </small>
                           </span>
                         </button>
                       );
@@ -347,9 +363,20 @@ export function NotificationMonitorPage(props: Props) {
           {state.isLoading ? "更新中" : "再読み込み"}
         </Button>
       </footer>
-      {state.selectedSchedule && (
+      {actions.target && <NotificationMonitorActionDialog state={actions} />}
+      {!actions.target && state.selectedSchedule && (
         <NotificationMonitorDetail
           item={state.selectedSchedule}
+          actions={
+            props.commandApi ? (
+              <NotificationMonitorActions
+                schedule={getMonitorSchedule(state.selectedSchedule)}
+                state={actions}
+                onSelect={setViewId}
+                disabled={state.isLoading}
+              />
+            ) : undefined
+          }
           isLoading={state.isLoading}
           onClose={() => state.selectSchedule(null)}
           onReload={() => void state.reload()}
