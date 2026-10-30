@@ -4,8 +4,8 @@ const JPEG_QUALITY = 0.85;
 export function fitWithin(width: number, height: number, maxEdge: number) {
   const scale = Math.min(1, maxEdge / Math.max(width, height));
   return {
-    width: Math.round(width * scale),
-    height: Math.round(height * scale),
+    width: Math.max(1, Math.round(width * scale)),
+    height: Math.max(1, Math.round(height * scale)),
   };
 }
 
@@ -22,14 +22,17 @@ export async function resizeImage(image: Blob): Promise<Blob> {
   const canvas = document.createElement("canvas");
   canvas.width = width;
   canvas.height = height;
-  const context = canvas.getContext("2d");
-  if (!context) throw new Error("画像を変換できませんでした。");
+  try {
+    const context = canvas.getContext("2d");
+    if (!context) throw new Error("画像を変換できませんでした。");
 
-  // JPEG は透過を持てず、そのままだと透過部分が黒くなるため白で塗る
-  context.fillStyle = "#fff";
-  context.fillRect(0, 0, width, height);
-  context.drawImage(bitmap, 0, 0, width, height);
-  bitmap.close();
+    // 白で塗らないと、JPEG は透過を持てないため透過部分が黒くなる
+    context.fillStyle = "#fff";
+    context.fillRect(0, 0, width, height);
+    context.drawImage(bitmap, 0, 0, width, height);
+  } finally {
+    bitmap.close();
+  }
 
   return new Promise((resolve, reject) => {
     canvas.toBlob(
