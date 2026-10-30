@@ -148,10 +148,18 @@ export function useGatheringSpotsPage({
       const savedSpot = editingSpot
         ? await updateSpot(editingSpot.id, name)
         : await createSpot(name);
-      // 画像だけ失敗したときに、再送で同じ集合場所を二重に作らないよう編集中に切り替える
+      // 編集中に切り替えないと、画像だけ失敗した後の再送で同じ集合場所をもう一度作ってしまう
       setEditingSpot(savedSpot);
       try {
         if (imageChange) await saveSpotImage(savedSpot.id, imageChange);
+      } catch (error) {
+        setSubmitError(
+          getErrorMessage(
+            error,
+            "集合場所名は保存しましたが、画像の保存に失敗しました。"
+          )
+        );
+        return;
       } finally {
         await reload();
       }

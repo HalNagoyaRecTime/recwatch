@@ -147,10 +147,18 @@ export function useVenuesPage({ gateway }: UseVenuesPageOptions) {
       const savedVenue = editingVenue
         ? await updateVenue(editingVenue.id, name)
         : await createVenue(name);
-      // 画像だけ失敗したときに、再送で同じ実施場所を二重に作らないよう編集中に切り替える
+      // 編集中に切り替えないと、画像だけ失敗した後の再送で同じ実施場所をもう一度作ってしまう
       setEditingVenue(savedVenue);
       try {
         if (imageChange) await saveVenueImage(savedVenue.id, imageChange);
+      } catch (error) {
+        setSubmitError(
+          getErrorMessage(
+            error,
+            "実施場所名は保存しましたが、画像の保存に失敗しました。"
+          )
+        );
+        return;
       } finally {
         await reload();
       }
