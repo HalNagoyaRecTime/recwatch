@@ -11,6 +11,10 @@ describe("fitWithin", () => {
     expect(fitWithin(3024, 4032, 1920)).toEqual({ width: 1440, height: 1920 });
   });
 
+  it("極端に細長い画像でも、短い辺を 0px にしない", () => {
+    expect(fitWithin(1, 10000, 1920)).toEqual({ width: 1, height: 1920 });
+  });
+
   it("上限以下の画像は拡大しない", () => {
     expect(fitWithin(800, 600, 1920)).toEqual({ width: 800, height: 600 });
   });
