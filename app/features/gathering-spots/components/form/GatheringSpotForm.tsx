@@ -1,4 +1,5 @@
 import { Check } from "lucide-react";
+import { useState } from "react";
 
 import { PlaceImageField } from "~/components/management/PlaceImageField";
 import { Button } from "~/components/ui/button/Button";
@@ -30,12 +31,15 @@ export function GatheringSpotForm({
   onImageChange,
   onSubmit,
 }: GatheringSpotFormProps) {
+  const [isImageProcessing, setIsImageProcessing] = useState(false);
+
   return (
     <form
       aria-labelledby="gathering-spot-form-title"
       noValidate
       onSubmit={(event) => {
         event.preventDefault();
+        if (isImageProcessing) return;
         void onSubmit();
       }}
     >
@@ -75,6 +79,7 @@ export function GatheringSpotForm({
           disabled={isSubmitting}
           label="集合場所の画像"
           onChange={onImageChange}
+          onProcessingChange={setIsImageProcessing}
         />
 
         {submitError ? (
@@ -93,7 +98,7 @@ export function GatheringSpotForm({
             キャンセル
           </Button>
           <Button
-            disabled={isSubmitting}
+            disabled={isSubmitting || isImageProcessing}
             icon={Check}
             size="md"
             type="submit"

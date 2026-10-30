@@ -13,6 +13,7 @@ type PlaceImageFieldProps = {
   disabled?: boolean;
   label: string;
   onChange: (change: PlaceImageChange | null) => void;
+  onProcessingChange: (isProcessing: boolean) => void;
 };
 
 export function PlaceImageField({
@@ -22,6 +23,7 @@ export function PlaceImageField({
   disabled = false,
   label,
   onChange,
+  onProcessingChange,
 }: PlaceImageFieldProps) {
   const [isProcessing, setIsProcessing] = useState(false);
   const isDisabled = disabled || isProcessing;
@@ -36,6 +38,7 @@ export function PlaceImageField({
     if (!file) return;
 
     setIsProcessing(true);
+    onProcessingChange(true);
     setError(null);
     try {
       onChange({ type: "replace", image: await resizeImage(file) });
@@ -45,6 +48,7 @@ export function PlaceImageField({
       );
     } finally {
       setIsProcessing(false);
+      onProcessingChange(false);
     }
   }
 
