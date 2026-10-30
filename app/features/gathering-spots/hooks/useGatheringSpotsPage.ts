@@ -70,7 +70,7 @@ export function useGatheringSpotsPage({
     setIsFormOpen(true);
   }
 
-  function openImageForm(spot: GatheringSpot) {
+  function openEditImageForm(spot: GatheringSpot) {
     openEditForm(spot);
     setShouldFocusImage(true);
   }
@@ -184,7 +184,7 @@ export function useGatheringSpotsPage({
     loadError,
     openCreateForm,
     openEditForm,
-    openImageForm,
+    openEditImageForm,
     pageCount,
     pageSize,
     query,

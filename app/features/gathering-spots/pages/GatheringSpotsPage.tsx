@@ -88,7 +88,7 @@ export function GatheringSpotsPage({ gateway }: GatheringSpotsPageProps) {
             items={state.spots}
             onDelete={state.handleDelete}
             onEdit={state.openEditForm}
-            onEditImage={state.openImageForm}
+            onEditImage={state.openEditImageForm}
             onPageChange={state.handlePageChange}
             onQueryChange={state.handleQueryChange}
             onSortChange={state.handleSortChange}
