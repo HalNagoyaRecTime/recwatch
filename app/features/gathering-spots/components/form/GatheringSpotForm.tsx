@@ -77,6 +77,7 @@ export function GatheringSpotForm({
           change={imageChange}
           currentImageUrl={editingSpot?.imageUrl ?? null}
           disabled={isSubmitting}
+          isProcessing={isImageProcessing}
           label="集合場所の画像"
           onChange={onImageChange}
           onProcessingChange={setIsImageProcessing}

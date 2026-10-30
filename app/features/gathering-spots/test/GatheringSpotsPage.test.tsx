@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { GatheringSpotGateway } from "~/features/gathering-spots/api/contracts/gathering-spot-gateway";
 import type { GatheringSpot } from "~/features/gathering-spots/model/gathering-spot";
 import { GatheringSpotsPage } from "~/features/gathering-spots/pages/GatheringSpotsPage";
+import { ApiClientError } from "~/lib/api-client-error";
 import { resizeImage } from "~/lib/resize-image";
 
 vi.mock("~/lib/resize-image", () => ({ resizeImage: vi.fn() }));
@@ -424,7 +425,7 @@ describe("GatheringSpotsPage", () => {
     render(<GatheringSpotsPage gateway={createGateway()} />);
 
     await user.click(
-      await screen.findByRole("button", { name: "体育館前の画像を登録" })
+      await screen.findByRole("button", { name: "体育館前の画像：未登録" })
     );
 
     expect(
@@ -448,7 +449,7 @@ describe("GatheringSpotsPage", () => {
     render(<GatheringSpotsPage gateway={createGateway({ list })} />);
 
     await user.click(
-      await screen.findByRole("button", { name: "体育館前の画像を変更" })
+      await screen.findByRole("button", { name: "体育館前の画像：登録済み" })
     );
 
     expect(
@@ -470,7 +471,7 @@ describe("GatheringSpotsPage", () => {
     render(<GatheringSpotsPage gateway={createGateway({ update })} />);
 
     await user.click(
-      await screen.findByRole("button", { name: "体育館前の画像を登録" })
+      await screen.findByRole("button", { name: "体育館前の画像：未登録" })
     );
     await user.upload(
       screen.getByLabelText("集合場所の画像を選択"),
@@ -488,5 +489,53 @@ describe("GatheringSpotsPage", () => {
     await waitFor(() =>
       expect(screen.getByRole("button", { name: "保存する" })).toBeEnabled()
     );
+  });
+
+  it("新規登録で画像だけ失敗したとき、保存し直すと集合場所を作り直さずに画像を登録する", async () => {
+    const create = vi.fn().mockResolvedValue(createSpot(2, "正門前"));
+    const update = vi.fn().mockResolvedValue(createSpot(2, "正門前"));
+    const setImage = vi
+      .fn()
+      .mockRejectedValueOnce(
+        new ApiClientError(
+          400,
+          "画像はJPEG・PNG・WebP形式の5MB以下のファイルを指定してください",
+          "INVALID_PLACE_IMAGE"
+        )
+      )
+      .mockResolvedValueOnce(undefined);
+    const user = userEvent.setup();
+
+    render(
+      <GatheringSpotsPage
+        gateway={createGateway({ create, setImage, update })}
+      />
+    );
+
+    await screen.findByText("体育館前");
+    await user.click(screen.getByRole("button", { name: "新規登録" }));
+    await user.type(
+      screen.getByRole("textbox", { name: "集合場所名*" }),
+      "正門前"
+    );
+    await user.upload(
+      screen.getByLabelText("集合場所の画像を選択"),
+      new File(["photo"], "photo.jpg", { type: "image/jpeg" })
+    );
+    await screen.findByRole("img", { name: "集合場所の画像" });
+    await user.click(screen.getByRole("button", { name: "保存する" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "画像はJPEG・PNG・WebP形式の5MB以下のファイルを指定してください"
+    );
+    expect(
+      screen.getByRole("heading", { name: "集合場所の編集" })
+    ).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "保存する" }));
+
+    await waitFor(() => expect(setImage).toHaveBeenCalledTimes(2));
+    expect(create).toHaveBeenCalledTimes(1);
+    expect(update).toHaveBeenCalledWith(2, "正門前");
   });
 });

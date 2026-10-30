@@ -356,6 +356,7 @@ describe("VenuesPage", () => {
     );
     await user.click(screen.getByRole("button", { name: "画像を削除" }));
     expect(screen.getByText("画像を選択")).toBeInTheDocument();
+    expect(screen.getByLabelText("実施場所の画像を選択")).toHaveFocus();
     await user.click(screen.getByRole("button", { name: "保存する" }));
 
     await waitFor(() => expect(deleteImage).toHaveBeenCalledWith(1));
@@ -409,7 +410,7 @@ describe("VenuesPage", () => {
     render(<VenuesPage gateway={createGateway()} />);
 
     await user.click(
-      await screen.findByRole("button", { name: "体育館の画像を登録" })
+      await screen.findByRole("button", { name: "体育館の画像：未登録" })
     );
 
     expect(
@@ -429,7 +430,7 @@ describe("VenuesPage", () => {
     render(<VenuesPage gateway={createGateway({ setImage, update })} />);
 
     await user.click(
-      await screen.findByRole("button", { name: "体育館の画像を登録" })
+      await screen.findByRole("button", { name: "体育館の画像：未登録" })
     );
     const previewArea = screen.getByText("画像を選択").closest("label");
     if (!previewArea) throw new Error("画像の枠が見つかりません");
@@ -452,7 +453,7 @@ describe("VenuesPage", () => {
     render(<VenuesPage gateway={createGateway({ list })} />);
 
     await user.click(
-      await screen.findByRole("button", { name: "体育館の画像を変更" })
+      await screen.findByRole("button", { name: "体育館の画像：登録済み" })
     );
 
     expect(
@@ -474,7 +475,7 @@ describe("VenuesPage", () => {
     render(<VenuesPage gateway={createGateway({ update })} />);
 
     await user.click(
-      await screen.findByRole("button", { name: "体育館の画像を登録" })
+      await screen.findByRole("button", { name: "体育館の画像：未登録" })
     );
     await user.upload(
       screen.getByLabelText("実施場所の画像を選択"),
@@ -492,5 +493,77 @@ describe("VenuesPage", () => {
     await waitFor(() =>
       expect(screen.getByRole("button", { name: "保存する" })).toBeEnabled()
     );
+  });
+
+  it("写真の読み込み中に別の実施場所を開くと、読み込んだ写真はその実施場所に入らない", async () => {
+    let finishResize: (image: Blob) => void = () => {};
+    vi.mocked(resizeImage).mockReturnValue(
+      new Promise((resolve) => {
+        finishResize = resolve;
+      })
+    );
+    const list = vi.fn().mockResolvedValue({
+      items: [createVenue(1, "体育館"), createVenue(2, "グラウンド")],
+      total: 2,
+      limit: 20,
+      offset: 0,
+    });
+    const update = vi.fn().mockResolvedValue(createVenue(2, "グラウンド"));
+    const setImage = vi.fn().mockResolvedValue(undefined);
+    const user = userEvent.setup();
+
+    render(<VenuesPage gateway={createGateway({ list, setImage, update })} />);
+
+    await user.click(
+      await screen.findByRole("button", { name: "体育館の画像：未登録" })
+    );
+    await user.upload(
+      screen.getByLabelText("実施場所の画像を選択"),
+      createPhoto()
+    );
+    await user.click(
+      screen.getByRole("button", { name: "グラウンドの画像：未登録" })
+    );
+    finishResize(resizedImage);
+
+    expect(await screen.findByText("画像を選択")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "保存する" }));
+    await waitFor(() => expect(update).toHaveBeenCalledWith(2, "グラウンド"));
+    expect(setImage).not.toHaveBeenCalled();
+  });
+
+  it("名前の更新後に画像だけ失敗したときは、名前は保存済みだと伝えて一覧を更新する", async () => {
+    const list = vi.fn().mockResolvedValue({
+      items: [createVenue(1, "体育館")],
+      total: 1,
+      limit: 20,
+      offset: 0,
+    });
+    const update = vi.fn().mockResolvedValue(createVenue(1, "第1体育館"));
+    const setImage = vi.fn().mockRejectedValue(new Error("network"));
+    const user = userEvent.setup();
+
+    render(<VenuesPage gateway={createGateway({ list, setImage, update })} />);
+
+    await user.click(
+      await screen.findByRole("button", { name: "体育館の画像：未登録" })
+    );
+    const input = screen.getByRole("textbox", { name: "実施場所名*" });
+    await user.clear(input);
+    await user.type(input, "第1体育館");
+    await user.upload(
+      screen.getByLabelText("実施場所の画像を選択"),
+      createPhoto()
+    );
+    await screen.findByRole("img", { name: "実施場所の画像" });
+    await user.click(screen.getByRole("button", { name: "保存する" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "実施場所名は保存しましたが、画像の保存に失敗しました。"
+    );
+    expect(list).toHaveBeenCalledTimes(2);
+    expect(
+      screen.getByRole("heading", { name: "実施場所の編集" })
+    ).toBeInTheDocument();
   });
 });
