@@ -68,7 +68,7 @@ export function useVenuesPage({ gateway }: UseVenuesPageOptions) {
     setIsFormOpen(true);
   }
 
-  function openImageForm(venue: Venue) {
+  function openEditImageForm(venue: Venue) {
     openEditForm(venue);
     setShouldFocusImage(true);
   }
@@ -183,7 +183,7 @@ export function useVenuesPage({ gateway }: UseVenuesPageOptions) {
     loadError,
     openCreateForm,
     openEditForm,
-    openImageForm,
+    openEditImageForm,
     pageCount,
     pageSize,
     query,
