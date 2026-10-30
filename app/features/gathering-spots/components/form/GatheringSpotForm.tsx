@@ -88,7 +88,7 @@ export function GatheringSpotForm({
           </p>
         ) : null}
 
-        <div className="flex flex-wrap justify-end gap-3">
+        <div className="grid grid-cols-2 gap-3">
           <Button disabled={isSubmitting} onClick={onClose} size="md">
             キャンセル
           </Button>
