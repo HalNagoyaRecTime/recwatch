@@ -75,6 +75,7 @@ export function VenueForm({
           change={imageChange}
           currentImageUrl={editingVenue?.imageUrl ?? null}
           disabled={isSubmitting}
+          isProcessing={isImageProcessing}
           label="実施場所の画像"
           onChange={onImageChange}
           onProcessingChange={setIsImageProcessing}

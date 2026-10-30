@@ -17,7 +17,6 @@ export function PlaceImageStatusBadge({
 }: PlaceImageStatusBadgeProps) {
   return (
     <button
-      aria-label={imageUrl ? `${label}を変更` : `${label}を登録`}
       className={cn(
         "inline-flex cursor-pointer items-center gap-1 rounded-full px-2 py-1 text-xs font-medium whitespace-nowrap transition-colors disabled:cursor-default disabled:opacity-50",
         imageUrl
@@ -28,6 +27,7 @@ export function PlaceImageStatusBadge({
       onClick={onClick}
       type="button"
     >
+      <span className="sr-only">{label}：</span>
       {imageUrl ? (
         <>
           <Check aria-hidden="true" className="size-3.5" />
