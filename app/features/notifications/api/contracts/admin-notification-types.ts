@@ -1,31 +1,112 @@
-export type {
-  AdminNotificationDetailDto as AdminNotificationDetail,
-  AdminNotificationListItemDto as AdminNotificationListItem,
-  AdminNotificationListQueryDto as AdminNotificationListQuery,
-  AdminNotificationListResponseDto as AdminNotificationListResponse,
-  AdminNotificationListScheduleDto as AdminNotificationListSchedule,
-  NotificationContentPatchDto as NotificationContentPatch,
-  NotificationCreateRequestDto as NotificationCreateRequest,
-  NotificationCreateResponseDto as NotificationCreateResponse,
-  NotificationPatchRequestDto as NotificationPatchRequest,
-  NotificationPatchResponseDto as NotificationPatchResponse,
-  NotificationScheduleSummaryDto as NotificationScheduleSummary,
-} from "~/features/notifications/api/dto/admin-notification-dto";
-export type {
-  NotificationAudienceDto as NotificationAudience,
-  NotificationAudienceInputDto as NotificationAudienceInput,
-  NotificationAudienceInputItemDto as NotificationAudienceInputItem,
-  NotificationAudienceItemDto as NotificationAudienceItem,
-  NotificationContentDto as NotificationContent,
-  NotificationCreationDto as NotificationCreation,
-  NotificationDateRangeQueryDto as NotificationDateRangeQuery,
-  NotificationDeliveryInputDto as NotificationDeliveryInput,
-  NotificationImportanceDto as NotificationImportance,
-  NotificationPlatformDto as NotificationPlatform,
-  NotificationPushContentDto as NotificationPushContent,
-  NotificationPushDeliveryStatusDto as NotificationPushDeliveryStatus,
-  NotificationRecipientPushSummaryDto as NotificationRecipientPushSummary,
-  NotificationScheduleStatusDto as NotificationScheduleStatus,
-  NotificationStopDto as NotificationStop,
-  NotificationUserReferenceDto as NotificationUserReference,
-} from "~/features/notifications/api/dto/notification-common-dto";
+import type {
+  NotificationAudienceInput,
+  NotificationContent,
+  NotificationCreation,
+  NotificationDateRangeQuery,
+  NotificationDeliveryInput,
+  NotificationImportance,
+  NotificationPushContent,
+  NotificationRecipientPushSummary,
+  NotificationScheduleAudience,
+  NotificationScheduleStatus,
+  NotificationStop,
+  NotificationUserReference,
+} from "~/features/notifications/api/contracts/notification-common-types";
+
+export type AdminNotificationListQuery = NotificationDateRangeQuery;
+
+export type AdminNotificationListSchedule = {
+  notificationScheduleId: number;
+  sendAt: string;
+  status: NotificationScheduleStatus;
+  scheduledBy: NotificationUserReference | null;
+  createdAt: string;
+  audience: NotificationScheduleAudience;
+  recipientPushSummary: NotificationRecipientPushSummary;
+};
+
+export type AdminNotificationListItem = {
+  notificationId: number;
+  content: {
+    push: NotificationPushContent;
+  };
+  importance: NotificationImportance;
+  creation: NotificationCreation;
+  createdAt: string;
+  schedules: AdminNotificationListSchedule[];
+};
+
+export type AdminNotificationListResponse = {
+  items: AdminNotificationListItem[];
+};
+
+export type NotificationScheduleSummary = {
+  notificationScheduleId: number;
+  sendAt: string;
+  status: NotificationScheduleStatus;
+  stop: NotificationStop | null;
+  scheduledBy: NotificationUserReference | null;
+  createdAt: string;
+  audience: NotificationScheduleAudience;
+  recipientPushSummary: NotificationRecipientPushSummary;
+};
+
+export type AdminNotificationDetail = {
+  notificationId: number;
+  content: NotificationContent;
+  importance: NotificationImportance;
+  creation: NotificationCreation;
+  createdAt: string;
+  updatedAt: string;
+  schedules: NotificationScheduleSummary[];
+};
+
+export type NotificationCreateRequest = {
+  content: NotificationContent;
+  audience: NotificationAudienceInput;
+  delivery: NotificationDeliveryInput;
+  importance: NotificationImportance;
+};
+
+export type NotificationCreateResponse = {
+  notificationId: number;
+  notificationScheduleId: number;
+};
+
+export type NotificationContentPatch = {
+  push?: {
+    title?: string;
+    body?: string;
+  };
+  detail?: {
+    title?: string;
+    body?: string;
+  };
+};
+
+export type NotificationPatchRequest = {
+  content?: NotificationContentPatch;
+  importance?: NotificationImportance;
+  schedule?: {
+    notificationScheduleId: number;
+    audience?: NotificationAudienceInput;
+    delivery?: NotificationDeliveryInput;
+  };
+};
+
+export type NotificationConfig = {
+  importance: {
+    default: "normal";
+    options: NotificationImportance[];
+  };
+};
+
+export type NotificationAudienceCountRequest = {
+  audience: NotificationAudienceInput;
+};
+
+export type NotificationAudienceCount = {
+  recipientCount: number;
+};
+
+export type * from "~/features/notifications/api/contracts/notification-common-types";

@@ -1,0 +1,7 @@
+.editor {
+  --color-canvas-default: var(--surface-base);
+  --color-canvas-subtle: var(--surface-muted);
+  --color-border-default: var(--border-base);
+  --color-fg-default: var(--text-base);
+  --color-fg-muted: var(--text-muted);
+}

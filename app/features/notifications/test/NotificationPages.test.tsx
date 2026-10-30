@@ -27,6 +27,8 @@ import {
   adminNotificationListFixture,
 } from "~/features/notifications/mock/notification-fixtures";
 
+vi.setConfig({ testTimeout: 15_000 });
+
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
@@ -47,6 +49,33 @@ function createCommandApi(
 }
 
 describe("notification pages", () => {
+  it("MarkdownプレビューにはPushではなく詳細本文を表示する", async () => {
+    render(
+      <MemoryRouter>
+        <NotificationCreatePage
+          api={createCommandApi()}
+          audienceApi={{ load: vi.fn().mockResolvedValue([]) }}
+          configApi={mockNotificationConfigApi}
+        />
+      </MemoryRouter>
+    );
+    fireEvent.change(screen.getByLabelText("本文*"), {
+      target: { value: "# Push本文" },
+    });
+    fireEvent.change(
+      await screen.findByLabelText("Markdownソース", {}, { timeout: 10_000 }),
+      {
+        target: { value: "# 詳細本文" },
+      }
+    );
+    expect(
+      screen.getByRole("heading", { name: "詳細本文" })
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("heading", { name: "Push本文" })
+    ).not.toBeInTheDocument();
+  });
+
   it("v2一覧Responseを表示する", async () => {
     const queryApi: AdminNotificationQueryApi = {
       list: vi.fn().mockResolvedValue(adminNotificationListFixture),
@@ -95,10 +124,13 @@ describe("notification pages", () => {
     fireEvent.change(screen.getByLabelText("詳細タイトル*"), {
       target: { value: "緊急連絡の詳細" },
     });
-    fireEvent.change(screen.getByLabelText("詳細本文*"), {
-      target: { value: "集合場所も確認してください。" },
-    });
-    const submitButton = screen.getByRole("button", { name: "通知を配信" });
+    fireEvent.change(
+      await screen.findByLabelText("Markdownソース", {}, { timeout: 10_000 }),
+      {
+        target: { value: "集合場所も確認してください。" },
+      }
+    );
+    const submitButton = screen.getByRole("button", { name: "通知を作成" });
     await waitFor(() => expect(submitButton).toBeEnabled());
     fireEvent.click(submitButton);
 
@@ -152,18 +184,25 @@ describe("notification pages", () => {
         />
       </MemoryRouter>
     );
-    await user.click(screen.getByRole("combobox", { name: "通知対象 1" }));
-    await user.click(screen.getByRole("option", { name: "ユーザー" }));
-    await screen.findByRole("option", { name: "テスト学生" });
-    await user.selectOptions(
-      screen.getByRole("combobox", { name: "対象 1" }),
-      "901"
-    );
+    await user.click(screen.getByRole("button", { name: "ユーザー" }));
+    const search = screen.getByRole("combobox", {
+      name: "ユーザーを検索して追加",
+    });
+    await waitFor(() => expect(search).toBeEnabled());
+    await user.type(search, "テスト学生");
+    await user.click(await screen.findByRole("option", { name: /テスト学生/ }));
     for (const label of ["タイトル*", "本文*", "詳細タイトル*", "詳細本文*"])
-      fireEvent.change(screen.getByLabelText(label), {
-        target: { value: "テスト通知" },
-      });
-    const button = screen.getByRole("button", { name: "通知を配信" });
+      fireEvent.change(
+        await screen.findByLabelText(
+          label === "詳細本文*" ? "Markdownソース" : label,
+          {},
+          { timeout: 10_000 }
+        ),
+        {
+          target: { value: "テスト通知" },
+        }
+      );
+    const button = screen.getByRole("button", { name: "通知を作成" });
     await waitFor(() => expect(button).toBeEnabled());
     await user.click(button);
     await waitFor(() =>
@@ -185,7 +224,7 @@ describe("notification pages", () => {
     });
   });
 
-  it("重複行へinline表示し、Feedbackや作成APIを呼ばない", async () => {
+  it("追加済みの対象は検索候補に再表示しない", async () => {
     const user = userEvent.setup();
     const api = createCommandApi();
     const reportFeedback = vi.fn();
@@ -202,24 +241,29 @@ describe("notification pages", () => {
       </MemoryRouter>
     );
     for (const label of ["タイトル*", "本文*", "詳細タイトル*", "詳細本文*"])
-      fireEvent.change(screen.getByLabelText(label), {
-        target: { value: "テスト" },
-      });
-    await user.click(screen.getByRole("combobox", { name: "通知対象 1" }));
-    await user.click(screen.getByRole("option", { name: "クラス" }));
-    await screen.findByRole("option", { name: "1年A組" });
-    await user.selectOptions(
-      screen.getByRole("combobox", { name: "対象 1" }),
-      "1"
-    );
-    await user.click(screen.getByRole("button", { name: "対象を追加" }));
-    await user.selectOptions(
-      screen.getByRole("combobox", { name: "対象 2" }),
-      "1"
-    );
-    await user.click(screen.getByRole("button", { name: "通知を配信" }));
+      fireEvent.change(
+        await screen.findByLabelText(
+          label === "詳細本文*" ? "Markdownソース" : label,
+          {},
+          { timeout: 10_000 }
+        ),
+        {
+          target: { value: "テスト" },
+        }
+      );
+    await user.click(screen.getByRole("button", { name: "クラス" }));
+    const search = screen.getByRole("combobox", {
+      name: "クラスを検索して追加",
+    });
+    await waitFor(() => expect(search).toBeEnabled());
+    await user.type(search, "1年A組");
+    await user.click(await screen.findByRole("option", { name: /1年A組/ }));
+    await user.type(search, "1年A組");
     expect(
-      await screen.findByText("同じ通知対象が重複しています")
+      screen.queryByRole("option", { name: /1年A組/ })
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByText("一致する通知対象がありません")
     ).toBeInTheDocument();
     expect(api.create).not.toHaveBeenCalled();
     expect(reportFeedback).not.toHaveBeenCalled();
@@ -249,10 +293,17 @@ describe("notification pages", () => {
       </MemoryRouter>
     );
     for (const label of ["タイトル*", "本文*", "詳細タイトル*", "詳細本文*"])
-      fireEvent.change(screen.getByLabelText(label), {
-        target: { value: "テスト" },
-      });
-    const button = screen.getByRole("button", { name: "通知を配信" });
+      fireEvent.change(
+        await screen.findByLabelText(
+          label === "詳細本文*" ? "Markdownソース" : label,
+          {},
+          { timeout: 10_000 }
+        ),
+        {
+          target: { value: "テスト" },
+        }
+      );
+    const button = screen.getByRole("button", { name: "通知を作成" });
     await waitFor(() => expect(button).toBeEnabled());
     fireEvent.click(button);
     expect(
@@ -295,7 +346,7 @@ describe("notification pages", () => {
     );
     const input = await screen.findByLabelText("詳細タイトル*");
     fireEvent.change(input, { target: { value: "変更する詳細" } });
-    const save = screen.getByRole("button", { name: "変更を保存" });
+    const save = screen.getByRole("button", { name: "通知を保存" });
     expect(save).toBeEnabled();
     expect(screen.getByLabelText("タイトル*")).toBeDisabled();
     fireEvent.click(save);

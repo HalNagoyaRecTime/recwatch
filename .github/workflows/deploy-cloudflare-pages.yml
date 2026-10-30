@@ -23,15 +23,28 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        environment: ${{ fromJSON(github.event_name == 'workflow_dispatch' && '["production"]' || github.event.workflow_run.event == 'pull_request' && '["preview"]' || '["development","staging"]') }}
+        environment: ${{ fromJSON(
+          github.event_name == 'workflow_dispatch' && '["production"]' ||
+          github.event.workflow_run.event == 'pull_request' && '["preview"]' ||
+          '["development","staging"]'
+          ) }}
+        region: ${{ fromJSON(
+          github.event.workflow_run.event == 'pull_request' &&
+          '[{"name":"nagoya","account":"NAGOYA","project":"recwatch"}]' ||
+          '[{"name":"nagoya","account":"NAGOYA","project":"recwatch"},
+          {"name":"tokyo","account":"TOKYO","project":"recwatch-tokyo"},
+          {"name":"osaka","account":"OSAKA","project":"recwatch-osaka"}]'
+          ) }}
     concurrency:
-      group: cloudflare-pages-${{ matrix.environment == 'preview' && format('pr-{0}', github.event.workflow_run.pull_requests[0].number) || matrix.environment }}
+      group: cloudflare-pages-${{ matrix.environment == 'preview' && format('pr-{0}', github.event.workflow_run.pull_requests[0].number) || matrix.environment }}-${{ matrix.region.name }}
       cancel-in-progress: true
-    name: Deploy (${{ matrix.environment }})
+    name: Deploy (${{ matrix.environment }}, ${{ matrix.region.name }})
     runs-on: ubuntu-latest
     environment: ${{ matrix.environment }}
     env:
-      VITE_BACKEND_BASE_URL: ${{ vars.VITE_BACKEND_BASE_URL }}
+      VITE_BACKEND_BASE_URL: ${{ vars[format('VITE_BACKEND_BASE_URL_{0}', matrix.region.account)] }}
+      CLOUDFLARE_API_TOKEN: ${{ secrets[format('CLOUDFLARE_API_TOKEN_{0}', matrix.region.account)] }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets[format('CLOUDFLARE_ACCOUNT_ID_{0}', matrix.region.account)] }}
 
     steps:
       - name: Set deploy target
@@ -43,15 +56,12 @@ jobs:
           case "$ENVIRONMENT" in
             production)
               echo "pages_branch=main" >> "$GITHUB_OUTPUT"
-              echo "verify_url=https://recwatch.pages.dev" >> "$GITHUB_OUTPUT"
               ;;
             staging)
               echo "pages_branch=staging" >> "$GITHUB_OUTPUT"
-              echo "verify_url=https://staging.recwatch.pages.dev" >> "$GITHUB_OUTPUT"
               ;;
             development)
               echo "pages_branch=develop" >> "$GITHUB_OUTPUT"
-              echo "verify_url=https://develop.recwatch.pages.dev" >> "$GITHUB_OUTPUT"
               ;;
             preview)
               if [ -z "$PR_NUMBER" ]; then
@@ -60,7 +70,6 @@ jobs:
               fi
               echo "pages_branch=pr-${PR_NUMBER}" >> "$GITHUB_OUTPUT"
               echo "pr_number=${PR_NUMBER}" >> "$GITHUB_OUTPUT"
-              echo "verify_url=https://pr-${PR_NUMBER}.recwatch.pages.dev" >> "$GITHUB_OUTPUT"
               ;;
           esac
 
@@ -84,10 +93,10 @@ jobs:
       - name: Deploy to Cloudflare Pages
         uses: cloudflare/wrangler-action@v4
         with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          apiToken: ${{ env.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ env.CLOUDFLARE_ACCOUNT_ID }}
           command: >-
-            pages deploy build/client --project-name=recwatch
+            pages deploy build/client --project-name=${{ matrix.region.project }}
             --branch=${{ steps.target.outputs.pages_branch }}
           gitHubToken: ${{ secrets.GITHUB_TOKEN }}
 
@@ -131,6 +140,6 @@ jobs:
 
       - name: Verify deployed legal pages
         env:
-          LEGAL_BASE_URL: ${{ steps.target.outputs.verify_url }}
-        # develop未取り込みの既存PRには検証scriptがないため、存在する場合のみ実行する。
+          LEGAL_BASE_URL: >-
+            ${{ steps.target.outputs.pages_branch == 'main' && format('https://{0}.pages.dev', matrix.region.project) || format('https://{0}.{1}.pages.dev', steps.target.outputs.pages_branch, matrix.region.project) }}
         run: npm run verify:legal:http --if-present

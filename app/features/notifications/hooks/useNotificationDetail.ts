@@ -13,7 +13,7 @@ import type {
   NotificationScheduleQueryApi,
   NotificationScheduleResults,
 } from "~/features/notifications/api/contracts/notification-schedule-query-api";
-import { readApiErrorStatus } from "~/features/notifications/api/mappers/notification-api-error-mapper";
+import { readApiErrorStatus } from "~/features/notifications/api/contracts/notification-error";
 
 type AsyncSection<T> = {
   data: T | null;

@@ -22,9 +22,11 @@ export function Pagination({
   pageSize,
   totalItems,
 }: PaginationProps) {
-  const firstItemIndex = (currentPage - 1) * pageSize + 1;
+  const firstItemIndex =
+    totalItems === 0 ? 0 : (currentPage - 1) * pageSize + 1;
   const lastItemIndex = Math.min(currentPage * pageSize, totalItems);
-  const displayedItemCount = lastItemIndex - firstItemIndex + 1;
+  const displayedItemCount =
+    totalItems === 0 ? 0 : lastItemIndex - firstItemIndex + 1;
   const pageOptions = Array.from({ length: pageCount }, (_, index) => ({
     label: String(index + 1),
     value: String(index + 1),
@@ -33,9 +35,9 @@ export function Pagination({
   return (
     <nav
       aria-label="ページネーション"
-      className="flex items-center justify-between gap-4"
+      className="flex flex-wrap items-center justify-between gap-4"
     >
-      <div className="text-text-muted flex items-center text-sm">
+      <div className="text-text-muted flex flex-wrap items-center gap-y-2 text-sm">
         <p>
           {displayedItemCount}件を表示&nbsp; {firstItemIndex}〜{lastItemIndex}
           件中 全{totalItems}件

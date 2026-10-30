@@ -28,6 +28,20 @@ function LocationProbe() {
 }
 
 describe("EventCreatePage", () => {
+  it("allows rules up to 2000 characters", async () => {
+    render(
+      <MemoryRouter initialEntries={["/events/new"]}>
+        <EventCreatePage api={createApi()} />
+      </MemoryRouter>
+    );
+    await waitForVenueOptions();
+
+    expect(screen.getByLabelText("イベントルール")).toHaveAttribute(
+      "maxlength",
+      "2000"
+    );
+  });
+
   it("submits the shared form through the event API contract", async () => {
     const create = vi.fn().mockResolvedValue({ id: 1 });
     const user = userEvent.setup();

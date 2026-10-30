@@ -49,7 +49,7 @@ export function validateEventForm(
     input: {
       endTime: value.endTime,
       name: value.name.trim(),
-      rules: value.rules.trim() || null,
+      rules: value.rules.trim() ? value.rules : null,
       startTime: value.startTime,
       venueIds: value.venueIds,
     },

@@ -76,6 +76,7 @@ export function createMockNotificationMonitorApi(
             importance: item.importance,
             sendAt: item.sendAt,
             status: item.status,
+            failureReason: item.failureReason,
             stop: cloneFixture(item.stop),
             creation: cloneFixture(item.creation),
           })),

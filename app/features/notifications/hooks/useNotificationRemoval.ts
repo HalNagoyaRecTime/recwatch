@@ -2,7 +2,7 @@ import { useRef, useState } from "react";
 import type { AdminNotificationCommandApi } from "~/features/notifications/api/contracts/admin-notification-command-api";
 import type { AdminNotificationDetail } from "~/features/notifications/api/contracts/admin-notification-query-api";
 import type { NotificationScheduleCommandApi } from "~/features/notifications/api/contracts/notification-schedule-command-api";
-import { canDeleteNotification } from "~/features/notifications/hooks/notification-list-data";
+import { canDeleteNotification } from "~/features/notifications/model/notification-list-data";
 import {
   reportNotificationActionError,
   type NotificationFeedbackReporter,
