@@ -6,10 +6,7 @@ import {
   parseAdminNotificationDetail,
   parseAdminNotificationListResponse,
 } from "~/features/notifications/api/mappers/admin-notification-response-parser";
-import {
-  requirePositiveId,
-  toNotificationDateRangePath,
-} from "~/features/notifications/api/mappers/notification-query-mapper";
+import { requirePositiveId } from "~/features/notifications/api/mappers/notification-query-mapper";
 import { apiClient } from "~/lib/api-client";
 
 export type AdminNotificationQueryHttpClient = {
@@ -21,10 +18,19 @@ export function createHttpAdminNotificationQueryApi(
 ): AdminNotificationQueryApi {
   return {
     async list(query: AdminNotificationListQuery = {}) {
-      const path = toNotificationDateRangePath(
-        "/api/v1/admin/notifications",
-        query
-      );
+      const params = new URLSearchParams();
+      if (query.from !== undefined && query.to !== undefined) {
+        params.set("from", query.from);
+        params.set("to", query.to);
+      }
+      if (query.page !== undefined) {
+        params.set("page", String(query.page));
+      }
+      if (query.limit !== undefined) {
+        params.set("limit", String(query.limit));
+      }
+      const separator = params.toString() ? "?" : "";
+      const path = `/api/v1/admin/notifications${separator}${params.toString()}`;
       return parseAdminNotificationListResponse(await client.get(path));
     },
 

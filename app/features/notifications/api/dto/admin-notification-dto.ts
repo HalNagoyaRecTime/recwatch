@@ -33,8 +33,16 @@ export type AdminNotificationListItemDto = {
   schedules: AdminNotificationListScheduleDto[];
 };
 
+export type AdminNotificationPaginationDto = {
+  page: number;
+  limit: number;
+  totalCount: number;
+  totalPages: number;
+};
+
 export type AdminNotificationListResponseDto = {
   items: AdminNotificationListItemDto[];
+  pagination: AdminNotificationPaginationDto;
 };
 
 export type NotificationScheduleSummaryDto = {

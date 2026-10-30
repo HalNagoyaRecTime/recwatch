@@ -74,6 +74,7 @@ function parseListWithAudienceItem(audienceItem: unknown) {
         ],
       },
     ],
+    pagination: { page: 1, limit: 50, totalCount: 1, totalPages: 1 },
   });
 }
 

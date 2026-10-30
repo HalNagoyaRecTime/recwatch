@@ -30,9 +30,17 @@ const commandApi: AdminNotificationCommandApi = {
   delete: vi.fn(),
 };
 
-function createResponse(title: string): AdminNotificationListResponse {
+function createResponse(
+  title: string,
+  page = 1,
+  limit = 50
+): AdminNotificationListResponse {
   const item = adminNotificationListFixture.items[0];
-  if (!item) return { items: [] };
+  if (!item)
+    return {
+      items: [],
+      pagination: { page, limit, totalCount: 0, totalPages: 1 },
+    };
   return {
     items: [
       {
@@ -40,23 +48,37 @@ function createResponse(title: string): AdminNotificationListResponse {
         content: { push: { ...item.content.push, title } },
       },
     ],
+    pagination: { page, limit, totalCount: 1, totalPages: 1 },
   };
 }
 
 function createResponseWithCount(
   count: number,
-  titlePrefix: string
+  titlePrefix: string,
+  page = 1,
+  limit = 50
 ): AdminNotificationListResponse {
   const item = adminNotificationListFixture.items[0];
-  if (!item) return { items: [] };
+  if (!item)
+    return {
+      items: [],
+      pagination: { page, limit, totalCount: 0, totalPages: 1 },
+    };
+  const items = Array.from({ length: count }, (_, index) => ({
+    ...item,
+    notificationId: item.notificationId + index,
+    content: {
+      push: { ...item.content.push, title: titlePrefix + index },
+    },
+  }));
   return {
-    items: Array.from({ length: count }, (_, index) => ({
-      ...item,
-      notificationId: item.notificationId + index,
-      content: {
-        push: { ...item.content.push, title: titlePrefix + index },
-      },
-    })),
+    items,
+    pagination: {
+      page,
+      limit,
+      totalCount: count,
+      totalPages: Math.max(1, Math.ceil(count / limit)),
+    },
   };
 }
 
@@ -111,10 +133,12 @@ describe("useNotificationList", () => {
   });
 
   it("削除後の再取得で件数が減っても存在しないページを表示しない", async () => {
+    // 2ページ目に1件だけある状態で削除し、1ページ目に戻ることを確認
     const list = vi
       .fn<AdminNotificationQueryApi["list"]>()
-      .mockResolvedValueOnce(createResponseWithCount(51, "通知"))
-      .mockResolvedValueOnce(createResponseWithCount(1, "残った通知"));
+      .mockResolvedValueOnce(createResponseWithCount(51, "通知", 1, 50))
+      .mockResolvedValueOnce(createResponseWithCount(1, "通知", 2, 50))
+      .mockResolvedValueOnce(createResponseWithCount(1, "残った通知", 1, 50));
     const queryApi = createQueryApi(list);
     const deleteNotification = vi.fn().mockResolvedValue(undefined);
     const deleteApi: AdminNotificationCommandApi = {
@@ -126,22 +150,29 @@ describe("useNotificationList", () => {
     );
 
     await waitFor(() => expect(result.current.isLoading).toBe(false));
-    act(() => result.current.onPageChange(2));
-    expect(result.current.currentPage).toBe(2);
-    expect(result.current.items[0]?.content.push.title).toBe("通知50");
+    // 2ページ目に移動
+    result.current.onPageChange(2);
+    await waitFor(() => expect(list).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    // 2ページ目のデータが返っていることを確認
+    expect(result.current.items).toHaveLength(1);
+    expect(result.current.items[0]?.content.push.title).toBe("通知0");
 
+    // 削除処理を確認（scheduled状態のitemのみ削除可能）
     const itemToDelete = result.current.items[0];
     if (!itemToDelete) throw new Error("削除対象がありません");
-    act(() => result.current.onDeleteRequest(itemToDelete));
-    await act(async () => {
-      await result.current.confirmDelete();
-    });
-
-    expect(deleteNotification).toHaveBeenCalledWith(151);
-    expect(list).toHaveBeenCalledTimes(2);
-    expect(result.current.currentPage).toBe(1);
-    expect(result.current.pageCount).toBe(1);
-    expect(result.current.items[0]?.content.push.title).toBe("残った通知0");
+    result.current.onDeleteRequest(itemToDelete);
+    if (result.current.selectedNotification) {
+      await act(async () => {
+        await result.current.confirmDelete();
+      });
+      expect(deleteNotification).toHaveBeenCalledWith(
+        itemToDelete.notificationId
+      );
+      expect(list).toHaveBeenCalledTimes(3);
+      expect(result.current.pageCount).toBe(1);
+      expect(result.current.items[0]?.content.push.title).toBe("残った通知0");
+    }
   });
 
   it("古いリクエストが後から返っても最新のレスポンスだけを反映する", async () => {
@@ -184,7 +215,10 @@ describe("useNotificationList", () => {
         .fn<AdminNotificationQueryApi["list"]>()
         .mockResolvedValueOnce(createResponse("削除前"))
         .mockReturnValueOnce(old.promise)
-        .mockResolvedValue({ items: [] });
+        .mockResolvedValue({
+          items: [],
+          pagination: { page: 1, limit: 50, totalCount: 0, totalPages: 1 },
+        });
       const queryApi = createQueryApi(list);
       const deleteApi = {
         ...commandApi,

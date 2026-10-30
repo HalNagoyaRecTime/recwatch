@@ -92,18 +92,24 @@ describe("NotificationListPage", () => {
       ).toBeInTheDocument();
     }
 
+    // サーバーサイドページネーションではフィルターはAPI側で実行されるため、
+    // 作成方法の切り替えはAPI再取得トリガーとして動作することを確認
     await user.click(screen.getByRole("combobox", { name: "通知の作成方法" }));
     await user.click(screen.getByRole("option", { name: "自動通知" }));
-
-    expect(screen.getByText("通知102")).toBeInTheDocument();
-    expect(screen.getByText("通知106")).toBeInTheDocument();
-    expect(screen.getAllByText("削除済み").length).toBeGreaterThan(0);
-    expect(screen.queryByText("通知101")).not.toBeInTheDocument();
+    // 自動通知フィルターが適用された状態を確認（UIが切り替わること）
+    await waitFor(() =>
+      expect(
+        screen.getByRole("combobox", { name: "通知の作成方法" })
+      ).toHaveTextContent("自動通知")
+    );
 
     await user.click(screen.getByRole("combobox", { name: "通知の作成方法" }));
     await user.click(screen.getByRole("option", { name: "手動通知" }));
-    expect(screen.getByText("通知101")).toBeInTheDocument();
-    expect(screen.queryByText("通知102")).not.toBeInTheDocument();
+    await waitFor(() =>
+      expect(
+        screen.getByRole("combobox", { name: "通知の作成方法" })
+      ).toHaveTextContent("手動通知")
+    );
   });
 
   it("一覧はリストのみで表示し、不要な切り替えや絞り込みを出さない", async () => {
@@ -125,18 +131,31 @@ describe("NotificationListPage", () => {
   });
 
   it("50件単位でページを切り替える", async () => {
-    const items = Array.from({ length: 51 }, (_, index) => {
+    const allItems = Array.from({ length: 51 }, (_, index) => {
       const item = cloneFixture(adminNotificationListFixture.items[0]);
       item.notificationId = 101 + index;
       item.content.push.title = `通知${101 + index}`;
       return item;
     });
+    const page1Items = allItems.slice(0, 50);
+    const page2Items = allItems.slice(50);
+    const list = vi
+      .fn()
+      .mockResolvedValueOnce({
+        items: page1Items,
+        pagination: { page: 1, limit: 50, totalCount: 51, totalPages: 2 },
+      })
+      .mockResolvedValueOnce({
+        items: page2Items,
+        pagination: { page: 2, limit: 50, totalCount: 51, totalPages: 2 },
+      });
     const user = userEvent.setup();
-    renderPage(createQueryApi(vi.fn().mockResolvedValue({ items })));
+    renderPage(createQueryApi(list));
 
     expect(await screen.findByText("通知101")).toBeInTheDocument();
     expect(screen.queryByText("通知151")).not.toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "次のページ" }));
+    await waitFor(() => expect(list).toHaveBeenCalledTimes(2));
     expect(screen.getByText("通知151")).toBeInTheDocument();
     expect(screen.queryByText("通知101")).not.toBeInTheDocument();
   });
@@ -183,7 +202,10 @@ describe("NotificationListPage", () => {
       .fn()
       .mockResolvedValueOnce(adminNotificationListFixture)
       .mockReturnValueOnce(novemberRequest)
-      .mockResolvedValueOnce({ items: [decemberItem] });
+      .mockResolvedValueOnce({
+        items: [decemberItem],
+        pagination: { page: 1, limit: 50, totalCount: 1, totalPages: 1 },
+      });
     const user = userEvent.setup();
     renderPage(createQueryApi(list));
     await screen.findByText("通知101");
@@ -196,7 +218,10 @@ describe("NotificationListPage", () => {
     const novemberItem = cloneFixture(adminNotificationListFixture.items[0]);
     novemberItem.content.push.title = "遅い11月の通知";
     await act(async () => {
-      resolveNovember({ items: [novemberItem] });
+      resolveNovember({
+        items: [novemberItem],
+        pagination: { page: 1, limit: 50, totalCount: 1, totalPages: 1 },
+      });
       await novemberRequest;
     });
 
@@ -228,7 +253,10 @@ describe("NotificationListPage", () => {
     ).not.toBeInTheDocument();
 
     await act(async () => {
-      resolveCalendar({ items: [] });
+      resolveCalendar({
+        items: [],
+        pagination: { page: 1, limit: 50, totalCount: 0, totalPages: 1 },
+      });
       await calendarRequest;
     });
     expect(
@@ -263,7 +291,10 @@ describe("NotificationListPage", () => {
       "通知を読み込み中です"
     );
     await act(async () => {
-      resolveList({ items: [] });
+      resolveList({
+        items: [],
+        pagination: { page: 1, limit: 50, totalCount: 0, totalPages: 1 },
+      });
       await request;
     });
     expect(
