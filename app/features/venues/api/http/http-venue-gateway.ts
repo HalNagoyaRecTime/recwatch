@@ -15,6 +15,7 @@ type VenueHttpClient = {
   get<T>(path: string): Promise<T>;
   post<T>(path: string, body: unknown): Promise<T>;
   put<T>(path: string, body: unknown): Promise<T>;
+  putBlob(path: string, body: Blob): Promise<void>;
   delete(path: string): Promise<void>;
 };
 
@@ -74,6 +75,14 @@ export function createHttpVenueGateway(client: VenueHttpClient): VenueGateway {
 
     async delete(id) {
       await client.delete(`/api/v1/venues/${id}`);
+    },
+
+    async setImage(id, image) {
+      await client.putBlob(`/api/v1/venues/${id}/image`, image);
+    },
+
+    async deleteImage(id) {
+      await client.delete(`/api/v1/venues/${id}/image`);
     },
   };
 }

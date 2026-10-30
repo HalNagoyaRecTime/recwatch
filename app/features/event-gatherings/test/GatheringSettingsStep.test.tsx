@@ -66,8 +66,20 @@ function createSpotGateway(): GatheringSpotGateway {
   return {
     list: vi.fn().mockResolvedValue({
       items: [
-        { id: 1, name: "出入口①", createdAt: "", updatedAt: "" },
-        { id: 2, name: "出入口②", createdAt: "", updatedAt: "" },
+        {
+          id: 1,
+          name: "出入口①",
+          imageUrl: null,
+          createdAt: "",
+          updatedAt: "",
+        },
+        {
+          id: 2,
+          name: "出入口②",
+          imageUrl: null,
+          createdAt: "",
+          updatedAt: "",
+        },
       ],
       total: 2,
       limit: 2,
@@ -77,6 +89,8 @@ function createSpotGateway(): GatheringSpotGateway {
     create: vi.fn(),
     update: vi.fn(),
     delete: vi.fn(),
+    setImage: vi.fn(),
+    deleteImage: vi.fn(),
   };
 }
 

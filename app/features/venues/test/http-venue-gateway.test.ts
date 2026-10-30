@@ -6,6 +6,7 @@ function createResponse(id = 10, name = "体育館") {
   return {
     venue_id: id,
     venue_name: name,
+    image_url: null,
     created_at: "2026-09-25T09:00:00Z",
     updated_at: "2026-09-25T09:10:00Z",
   };
@@ -16,12 +17,14 @@ function createClient(overrides: Record<string, unknown> = {}) {
     get: vi.fn(),
     post: vi.fn(),
     put: vi.fn(),
+    putBlob: vi.fn(),
     delete: vi.fn(),
     ...overrides,
   } as {
     get<T>(path: string): Promise<T>;
     post<T>(path: string, body: unknown): Promise<T>;
     put<T>(path: string, body: unknown): Promise<T>;
+    putBlob(path: string, body: Blob): Promise<void>;
     delete(path: string): Promise<void>;
   };
 }
@@ -111,5 +114,24 @@ describe("createHttpVenueGateway", () => {
 
     await expect(gateway.delete(10)).resolves.toBeUndefined();
     expect(deleteRequest).toHaveBeenCalledWith("/api/v1/venues/10");
+  });
+
+  it("画像の登録はBlobをそのまま画像APIへ送る", async () => {
+    const putBlob = vi.fn().mockResolvedValue(undefined);
+    const gateway = createHttpVenueGateway(createClient({ putBlob }));
+    const image = new Blob(["image"], { type: "image/jpeg" });
+
+    await expect(gateway.setImage(10, image)).resolves.toBeUndefined();
+    expect(putBlob).toHaveBeenCalledWith("/api/v1/venues/10/image", image);
+  });
+
+  it("画像の削除を画像APIへ委譲する", async () => {
+    const deleteRequest = vi.fn().mockResolvedValue(undefined);
+    const gateway = createHttpVenueGateway(
+      createClient({ delete: deleteRequest })
+    );
+
+    await expect(gateway.deleteImage(10)).resolves.toBeUndefined();
+    expect(deleteRequest).toHaveBeenCalledWith("/api/v1/venues/10/image");
   });
 });
