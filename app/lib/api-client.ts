@@ -147,6 +147,12 @@ export const apiClient = {
             body: JSON.stringify(body),
           }
     ),
+  putBlob: (path: string, body: Blob) =>
+    request<void>(path, {
+      method: "PUT",
+      headers: { "Content-Type": body.type },
+      body,
+    }),
   postForm: <T>(path: string, body: FormData) =>
     request<T>(path, { method: "POST", body }),
   delete: (path: string) =>
