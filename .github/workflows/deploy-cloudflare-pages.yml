@@ -23,28 +23,28 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        environment: ${{ fromJSON(
-          github.event_name == 'workflow_dispatch' && '["production"]' ||
-          github.event.workflow_run.event == 'pull_request' && '["preview"]' ||
-          '["development","staging"]'
-          ) }}
-        region: ${{ fromJSON(
+        include: ${{ fromJSON(
+          github.event_name == 'workflow_dispatch' &&
+          '[{"environment":"production","region":"nagoya","account":"NAGOYA","project":"recwatch"},
+          {"environment":"production","region":"tokyo","account":"TOKYO","project":"recwatch-tokyo"},
+          {"environment":"production","region":"osaka","account":"OSAKA","project":"recwatch-osaka"}]' ||
           github.event.workflow_run.event == 'pull_request' &&
-          '[{"name":"nagoya","account":"NAGOYA","project":"recwatch"}]' ||
-          '[{"name":"nagoya","account":"NAGOYA","project":"recwatch"},
-          {"name":"tokyo","account":"TOKYO","project":"recwatch-tokyo"},
-          {"name":"osaka","account":"OSAKA","project":"recwatch-osaka"}]'
+          '[{"environment":"preview","region":"nagoya","account":"NAGOYA","project":"recwatch"}]' ||
+          '[{"environment":"development","region":"nagoya","account":"NAGOYA","project":"recwatch"},
+          {"environment":"staging","region":"nagoya","account":"NAGOYA","project":"recwatch"},
+          {"environment":"staging","region":"tokyo","account":"TOKYO","project":"recwatch-tokyo"},
+          {"environment":"staging","region":"osaka","account":"OSAKA","project":"recwatch-osaka"}]'
           ) }}
     concurrency:
-      group: cloudflare-pages-${{ matrix.environment == 'preview' && format('pr-{0}', github.event.workflow_run.pull_requests[0].number) || matrix.environment }}-${{ matrix.region.name }}
+      group: cloudflare-pages-${{ matrix.environment == 'preview' && format('pr-{0}', github.event.workflow_run.pull_requests[0].number) || matrix.environment }}-${{ matrix.region }}
       cancel-in-progress: true
-    name: Deploy (${{ matrix.environment }}, ${{ matrix.region.name }})
+    name: Deploy (${{ matrix.environment }}, ${{ matrix.region }})
     runs-on: ubuntu-latest
     environment: ${{ matrix.environment }}
     env:
-      VITE_BACKEND_BASE_URL: ${{ vars[format('VITE_BACKEND_BASE_URL_{0}', matrix.region.account)] }}
-      CLOUDFLARE_API_TOKEN: ${{ secrets[format('CLOUDFLARE_API_TOKEN_{0}', matrix.region.account)] }}
-      CLOUDFLARE_ACCOUNT_ID: ${{ secrets[format('CLOUDFLARE_ACCOUNT_ID_{0}', matrix.region.account)] }}
+      VITE_BACKEND_BASE_URL: ${{ vars[format('VITE_BACKEND_BASE_URL_{0}', matrix.account)] }}
+      CLOUDFLARE_API_TOKEN: ${{ secrets[format('CLOUDFLARE_API_TOKEN_{0}', matrix.account)] }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets[format('CLOUDFLARE_ACCOUNT_ID_{0}', matrix.account)] }}
 
     steps:
       - name: Set deploy target
@@ -96,7 +96,7 @@ jobs:
           apiToken: ${{ env.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ env.CLOUDFLARE_ACCOUNT_ID }}
           command: >-
-            pages deploy build/client --project-name=${{ matrix.region.project }}
+            pages deploy build/client --project-name=${{ matrix.project }}
             --branch=${{ steps.target.outputs.pages_branch }}
           gitHubToken: ${{ secrets.GITHUB_TOKEN }}
 
@@ -141,5 +141,5 @@ jobs:
       - name: Verify deployed legal pages
         env:
           LEGAL_BASE_URL: >-
-            ${{ steps.target.outputs.pages_branch == 'main' && format('https://{0}.pages.dev', matrix.region.project) || format('https://{0}.{1}.pages.dev', steps.target.outputs.pages_branch, matrix.region.project) }}
+            ${{ steps.target.outputs.pages_branch == 'main' && format('https://{0}.pages.dev', matrix.project) || format('https://{0}.{1}.pages.dev', steps.target.outputs.pages_branch, matrix.project) }}
         run: npm run verify:legal:http --if-present

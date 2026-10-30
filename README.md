@@ -75,7 +75,7 @@ GitHub Actions のデプロイワークフローで、ビルド時に
 | preview     | PR                                      | `https://pr-<PR番号>.recwatch.pages.dev`   |
 
 `<プロジェクト>` は学校ごとの Pages プロジェクト（名古屋 `recwatch`・東京
-`recwatch-tokyo`・大阪 `recwatch-osaka`）。preview は名古屋だけにデプロイする。
+`recwatch-tokyo`・大阪 `recwatch-osaka`）。development と preview は名古屋だけにデプロイする。
 
 ローカル開発では `.env` の `VITE_BACKEND_BASE_URL` を使う。
 
@@ -95,7 +95,7 @@ GitHub では以下を設定する。
 
 `<学校>` は `NAGOYA`・`TOKYO`・`OSAKA`。
 
-- `production`・`staging`・`development`・`preview` の各 Environment に `VITE_BACKEND_BASE_URL_<学校>`（デプロイ先に対応する Backend の公開 URL。preview は `NAGOYA` だけ）
+- `production`・`staging`・`development`・`preview` の各 Environment に `VITE_BACKEND_BASE_URL_<学校>`（デプロイ先に対応する Backend の公開 URL。development と preview は `NAGOYA` だけ）
 - リポジトリ Secret `CLOUDFLARE_API_TOKEN_<学校>`（その学校の Cloudflare アカウントで Pages Write 権限を持つ API トークン）
 - リポジトリ Secret `CLOUDFLARE_ACCOUNT_ID_<学校>`（その学校の Cloudflare アカウント ID）
 
