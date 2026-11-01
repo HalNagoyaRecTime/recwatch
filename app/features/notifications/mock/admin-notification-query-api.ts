@@ -1,5 +1,10 @@
 import type { AdminNotificationQueryApi } from "~/features/notifications/api/contracts/admin-notification-query-api";
 import {
+  filterNotificationList,
+  sortNotificationList,
+} from "~/features/notifications/model/notification-list-data";
+import type { NotificationListFilters } from "~/features/notifications/model/notification-list";
+import {
   adminNotificationDetailFixture,
   adminNotificationListFixture,
   cloneFixture,
@@ -23,6 +28,31 @@ export const mockAdminNotificationQueryApi: AdminNotificationQueryApi = {
         }))
         .filter((notification) => notification.schedules.length > 0);
     }
+    const filters: NotificationListFilters = {
+      search: query.search ?? "",
+      status: query.status ?? "all",
+      dateMode: query.filterFrom || query.filterTo ? "range" : "all",
+      from: query.filterFrom?.slice(0, 10) ?? "",
+      to: query.filterTo?.slice(0, 10) ?? "",
+    };
+    const now = query.referenceTime
+      ? Date.parse(query.referenceTime)
+      : Date.now();
+    filtered = [
+      ...sortNotificationList(
+        filterNotificationList(
+          filtered,
+          query.creationMethod ?? "all",
+          filters,
+          now
+        ),
+        query.sortBy && query.sortDirection
+          ? { columnId: query.sortBy, direction: query.sortDirection }
+          : undefined,
+        filters,
+        now
+      ),
+    ];
     const page = query.page ?? 1;
     const limit = query.limit ?? 50;
     const offset = (page - 1) * limit;

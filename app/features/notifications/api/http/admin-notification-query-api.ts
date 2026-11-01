@@ -29,6 +29,19 @@ export function createHttpAdminNotificationQueryApi(
       if (query.limit !== undefined) {
         params.set("limit", String(query.limit));
       }
+      for (const key of [
+        "search",
+        "status",
+        "creationMethod",
+        "filterFrom",
+        "filterTo",
+        "sortBy",
+        "sortDirection",
+        "referenceTime",
+      ] as const) {
+        const value = query[key];
+        if (value !== undefined && value !== "") params.set(key, value);
+      }
       const separator = params.toString() ? "?" : "";
       const path = `/api/v1/admin/notifications${separator}${params.toString()}`;
       return parseAdminNotificationListResponse(await client.get(path));

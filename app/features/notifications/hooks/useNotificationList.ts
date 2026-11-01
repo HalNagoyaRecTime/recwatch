@@ -49,16 +49,54 @@ export function useNotificationList({
     AdminNotificationListItem[]
   >([]);
   const [currentPage, setCurrentPage] = useState(1);
+  const currentPageRef = useRef(1);
   const pageSize = notificationListPageSize;
   const [totalItems, setTotalItems] = useState(0);
   const [filters, setFilters] = useState(defaultNotificationListFilters);
   function onFiltersChange(value: NotificationListFilters) {
     setFilters(value);
+    currentPageRef.current = 1;
     setCurrentPage(1);
   }
   const [creationMethod, setCreationMethod] =
     useState<NotificationCreationMethodFilter>("all");
   const [sort, setSort] = useState<NotificationListSort>();
+  const today =
+    filters.dateMode === "today"
+      ? new Intl.DateTimeFormat("sv-SE", { timeZone: "Asia/Tokyo" }).format(
+          currentMinute ?? new Date()
+        )
+      : undefined;
+  const referenceTime =
+    sort && ["audience", "sendAt", "status"].includes(sort.columnId)
+      ? currentMinute?.toISOString()
+      : undefined;
+  const listCriteria = useMemo(() => {
+    const fromDate =
+      filters.dateMode === "today"
+        ? today
+        : filters.dateMode === "date" || filters.dateMode === "range"
+          ? filters.from
+          : "";
+    const toDate =
+      filters.dateMode === "today"
+        ? today
+        : filters.dateMode === "date"
+          ? filters.from
+          : filters.dateMode === "range"
+            ? filters.to
+            : "";
+    return {
+      search: filters.search.trim() || undefined,
+      status: filters.status === "all" ? undefined : filters.status,
+      creationMethod: creationMethod === "all" ? undefined : creationMethod,
+      filterFrom: fromDate ? `${fromDate}T00:00:00.000+09:00` : undefined,
+      filterTo: toDate ? `${toDate}T23:59:59.999+09:00` : undefined,
+      sortBy: sort?.columnId,
+      sortDirection: sort?.direction,
+      referenceTime,
+    } satisfies AdminNotificationListQuery;
+  }, [filters, today, creationMethod, sort, referenceTime]);
   const [selectedNotification, setSelectedNotification] =
     useState<AdminNotificationListItem | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -97,6 +135,7 @@ export function useNotificationList({
           to: "9999-12-31T23:59:59.999Z",
           page,
           limit: pageSize,
+          ...listCriteria,
         });
         if (requestId !== requestSequence.current) return;
         const lastPage = Math.max(
@@ -109,10 +148,12 @@ export function useNotificationList({
             to: "9999-12-31T23:59:59.999Z",
             page: lastPage,
             limit: pageSize,
+            ...listCriteria,
           });
           if (requestId !== requestSequence.current) return;
         }
-        setCurrentPage(Math.min(page, lastPage));
+        currentPageRef.current = Math.min(page, lastPage);
+        setCurrentPage(currentPageRef.current);
         setItems(result.items);
         setTotalItems(result.pagination.totalCount);
         setErrorMessage(null);
@@ -139,7 +180,7 @@ export function useNotificationList({
         if (requestId === requestSequence.current) setIsLoading(false);
       }
     },
-    [pageSize, queryApi, read, reportFeedback]
+    [pageSize, queryApi, read, reportFeedback, listCriteria]
   );
 
   const loadCalendar = useCallback(
@@ -194,19 +235,22 @@ export function useNotificationList({
     });
     return () => {
       active = false;
+      calendarRequestSequence.current += 1;
     };
   }, [activeCalendarRange, loadCalendar]);
 
   useEffect(() => {
     let active = true;
     void Promise.resolve().then(() => {
-      if (active) void load();
+      if (active) {
+        setIsLoading(true);
+        void load(currentPageRef.current);
+      }
     });
 
     return () => {
       active = false;
       requestSequence.current += 1;
-      calendarRequestSequence.current += 1;
     };
   }, [load]);
 
@@ -243,14 +287,14 @@ export function useNotificationList({
   function handleSortChange(columnId: string) {
     if (!isNotificationSortableColumnId(columnId)) return;
     setSort((current) => getNextNotificationListSort(current, columnId));
+    currentPageRef.current = 1;
     setCurrentPage(1);
-    void load(1, true);
   }
 
   function handleCreationMethodChange(value: NotificationCreationMethodFilter) {
     setCreationMethod(value);
+    currentPageRef.current = 1;
     setCurrentPage(1);
-    void load(1, true);
   }
 
   function handleDeleteRequest(notification: AdminNotificationListItem) {

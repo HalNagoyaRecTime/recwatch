@@ -83,6 +83,157 @@ function createResponseWithCount(
 }
 
 describe("useNotificationList", () => {
+  it("1ページ目にない通知も検索結果と総件数に表示する", async () => {
+    const list = vi
+      .fn<AdminNotificationQueryApi["list"]>()
+      .mockImplementation(async (query) => {
+        if (query?.search === "needle") return createResponse("51件目のneedle");
+        return {
+          ...createResponseWithCount(50, "通知"),
+          pagination: { page: 1, limit: 50, totalCount: 51, totalPages: 2 },
+        };
+      });
+    const queryApi = createQueryApi(list);
+    const { result } = renderHook(() =>
+      useNotificationList({ commandApi, queryApi })
+    );
+    await waitFor(() => expect(result.current.totalItems).toBe(51));
+    act(() =>
+      result.current.onFiltersChange({
+        search: "needle",
+        status: "all",
+        dateMode: "all",
+        from: "",
+        to: "",
+      })
+    );
+    await waitFor(() =>
+      expect(result.current.items[0]?.content.push.title).toBe("51件目のneedle")
+    );
+    expect(result.current.totalItems).toBe(1);
+    expect(result.current.pageCount).toBe(1);
+  });
+  it("ページ取得中に検索条件を変えても古いページを表示しない", async () => {
+    const pending = createDeferred<AdminNotificationListResponse>();
+    const list = vi
+      .fn<AdminNotificationQueryApi["list"]>()
+      .mockImplementation(async (query) => {
+        if (query?.search === "needle") return createResponse("検索結果");
+        if (query?.page === 2) return pending.promise;
+        return createResponseWithCount(51, "通知");
+      });
+    const queryApi = createQueryApi(list);
+    const { result } = renderHook(() =>
+      useNotificationList({ commandApi, queryApi })
+    );
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    act(() => result.current.onPageChange(2));
+    await waitFor(() =>
+      expect(list).toHaveBeenCalledWith(expect.objectContaining({ page: 2 }))
+    );
+    act(() =>
+      result.current.onFiltersChange({
+        search: "needle",
+        status: "all",
+        dateMode: "all",
+        from: "",
+        to: "",
+      })
+    );
+    await waitFor(() =>
+      expect(result.current.items[0]?.content.push.title).toBe("検索結果")
+    );
+    await act(async () => {
+      pending.resolve(createResponse("古いページ", 2));
+      await pending.promise;
+    });
+    expect(result.current.currentPage).toBe(1);
+    expect(result.current.items[0]?.content.push.title).toBe("検索結果");
+  });
+  it("検索・絞り込み・並べ替えを一覧APIに送り直す", async () => {
+    const list = vi
+      .fn<AdminNotificationQueryApi["list"]>()
+      .mockResolvedValue(createResponse("該当"));
+    const queryApi = createQueryApi(list);
+    const { result } = renderHook(() =>
+      useNotificationList({ commandApi, queryApi })
+    );
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    act(() =>
+      result.current.onFiltersChange({
+        search: "needle",
+        status: "failed",
+        dateMode: "date",
+        from: "2026-10-10",
+        to: "",
+      })
+    );
+    act(() => result.current.onCreationMethodChange("manual"));
+    act(() => result.current.onSortChange("title"));
+    await waitFor(() =>
+      expect(list).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          page: 1,
+          limit: 50,
+          search: "needle",
+          status: "failed",
+          creationMethod: "manual",
+          filterFrom: "2026-10-10T00:00:00.000+09:00",
+          filterTo: "2026-10-10T23:59:59.999+09:00",
+          sortBy: "title",
+          sortDirection: "asc",
+        })
+      )
+    );
+  });
+  it("一覧は過去と未来の通知を全期間の条件で取得する", async () => {
+    const example = adminNotificationListFixture.items[0];
+    const schedule = example?.schedules[0];
+    if (!example || !schedule) throw new Error("通知fixtureがありません");
+    const records = [
+      "2020-01-01T00:00:00.000Z",
+      "2030-01-01T00:00:00.000Z",
+    ].map((sendAt, index) => ({
+      ...example,
+      notificationId: index + 1,
+      schedules: [{ ...schedule, sendAt }],
+    }));
+    const list = vi
+      .fn<AdminNotificationQueryApi["list"]>()
+      .mockImplementation(async (query) => {
+        const items = records.filter((item) =>
+          item.schedules.some(
+            (s) =>
+              s.sendAt >= (query?.from ?? "2026") &&
+              s.sendAt <= (query?.to ?? "2026")
+          )
+        );
+        return {
+          items,
+          pagination: {
+            page: 1,
+            limit: 50,
+            totalCount: items.length,
+            totalPages: 1,
+          },
+        };
+      });
+    const queryApi = createQueryApi(list);
+    const { result } = renderHook(() =>
+      useNotificationList({ commandApi, queryApi })
+    );
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    expect(result.current.items.map((item) => item.notificationId)).toEqual([
+      1, 2,
+    ]);
+    expect(list).toHaveBeenCalledWith(
+      expect.objectContaining({
+        from: "0001-01-01T00:00:00.000Z",
+        to: "9999-12-31T23:59:59.999Z",
+      })
+    );
+  });
+
   it("カレンダーは月内の2ページ目も取得する", async () => {
     const list = vi
       .fn<AdminNotificationQueryApi["list"]>()
@@ -111,6 +262,7 @@ describe("useNotificationList", () => {
       )
     );
     await waitFor(() => expect(result.current.isCalendarLoading).toBe(false));
+    expect(result.current.calendarItems).toHaveLength(51);
   });
   it("reloadで通知一覧を再取得する", async () => {
     const list = vi
