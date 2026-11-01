@@ -31,7 +31,6 @@ export function isAdminNotificationListResponse(
 ): value is AdminNotificationListResponseDto {
   return (
     isRecord(value) &&
-    hasExactKeys(value, ["items"]) &&
     Array.isArray(value.items) &&
     value.items.every(isAdminNotificationListItem)
   );
