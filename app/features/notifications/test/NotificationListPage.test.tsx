@@ -173,7 +173,11 @@ describe("NotificationListPage", () => {
       await screen.findByLabelText("2026年11月の通知カレンダー")
     ).toBeInTheDocument();
     await waitFor(() =>
-      expect(list).toHaveBeenCalledWith(toNotificationMonthRange(month))
+      expect(list).toHaveBeenCalledWith({
+        ...toNotificationMonthRange(month),
+        page: 1,
+        limit: 50,
+      })
     );
     const notificationLinks = screen.getAllByRole("link", {
       name: /通知101の詳細を表示/,

@@ -92,11 +92,27 @@ export function useNotificationList({
     async (page = 1, background = false) => {
       const requestId = ++requestSequence.current;
       try {
-        const result = await read({
+        let result = await read({
+          from: "0001-01-01T00:00:00.000Z",
+          to: "9999-12-31T23:59:59.999Z",
           page,
           limit: pageSize,
         });
         if (requestId !== requestSequence.current) return;
+        const lastPage = Math.max(
+          1,
+          Math.ceil(result.pagination.totalCount / pageSize)
+        );
+        if (page > lastPage) {
+          result = await read({
+            from: "0001-01-01T00:00:00.000Z",
+            to: "9999-12-31T23:59:59.999Z",
+            page: lastPage,
+            limit: pageSize,
+          });
+          if (requestId !== requestSequence.current) return;
+        }
+        setCurrentPage(Math.min(page, lastPage));
         setItems(result.items);
         setTotalItems(result.pagination.totalCount);
         setErrorMessage(null);
@@ -134,9 +150,15 @@ export function useNotificationList({
       setCalendarErrorMessage(null);
 
       try {
-        const result = await read(query);
+        const result = await read({ ...query, page: 1, limit: pageSize });
+        const allItems = [...result.items];
+        for (let page = 2; page <= result.pagination.totalPages; page++) {
+          if (requestId !== calendarRequestSequence.current) return;
+          const next = await read({ ...query, page, limit: pageSize });
+          allItems.push(...next.items);
+        }
         if (requestId !== calendarRequestSequence.current) return;
-        setCalendarNotifications(result.items);
+        setCalendarNotifications(allItems);
       } catch (error) {
         if (requestId !== calendarRequestSequence.current) return;
         if (!background) setCalendarNotifications([]);
@@ -157,7 +179,7 @@ export function useNotificationList({
         }
       }
     },
-    [read, reportFeedback]
+    [pageSize, read, reportFeedback]
   );
 
   const activeCalendarRange = useMemo(
@@ -213,7 +235,6 @@ export function useNotificationList({
 
   function handlePageChange(page: number) {
     const newPage = Math.min(Math.max(page, 1), pageCount);
-    setCurrentPage(newPage);
     setIsLoading(true);
     setErrorMessage(null);
     void load(newPage, true);

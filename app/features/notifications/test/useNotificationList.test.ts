@@ -83,6 +83,35 @@ function createResponseWithCount(
 }
 
 describe("useNotificationList", () => {
+  it("カレンダーは月内の2ページ目も取得する", async () => {
+    const list = vi
+      .fn<AdminNotificationQueryApi["list"]>()
+      .mockImplementation(async (query) => {
+        if (query?.from?.startsWith("2026-10")) {
+          const page = query.page ?? 1;
+          return {
+            ...createResponseWithCount(page === 1 ? 50 : 1, `月${page}-`, page),
+            pagination: { page, limit: 50, totalCount: 51, totalPages: 2 },
+          };
+        }
+        return createResponse("一覧");
+      });
+    const queryApi = createQueryApi(list);
+    const calendarMonth = new Date(2026, 9, 1);
+    const { result } = renderHook(() =>
+      useNotificationList({ commandApi, queryApi, calendarMonth })
+    );
+    await waitFor(() =>
+      expect(list).toHaveBeenCalledWith(
+        expect.objectContaining({
+          page: 2,
+          limit: 50,
+          from: expect.stringContaining("2026-10"),
+        })
+      )
+    );
+    await waitFor(() => expect(result.current.isCalendarLoading).toBe(false));
+  });
   it("reloadで通知一覧を再取得する", async () => {
     const list = vi
       .fn<AdminNotificationQueryApi["list"]>()
@@ -137,7 +166,14 @@ describe("useNotificationList", () => {
     const list = vi
       .fn<AdminNotificationQueryApi["list"]>()
       .mockResolvedValueOnce(createResponseWithCount(51, "通知", 1, 50))
-      .mockResolvedValueOnce(createResponseWithCount(1, "通知", 2, 50))
+      .mockResolvedValueOnce({
+        ...createResponseWithCount(1, "通知", 2, 50),
+        pagination: { page: 2, limit: 50, totalCount: 51, totalPages: 2 },
+      })
+      .mockResolvedValueOnce({
+        items: [],
+        pagination: { page: 2, limit: 50, totalCount: 1, totalPages: 1 },
+      })
       .mockResolvedValueOnce(createResponseWithCount(1, "残った通知", 1, 50));
     const queryApi = createQueryApi(list);
     const deleteNotification = vi.fn().mockResolvedValue(undefined);
@@ -151,7 +187,7 @@ describe("useNotificationList", () => {
 
     await waitFor(() => expect(result.current.isLoading).toBe(false));
     // 2ページ目に移動
-    result.current.onPageChange(2);
+    act(() => result.current.onPageChange(2));
     await waitFor(() => expect(list).toHaveBeenCalledTimes(2));
     await waitFor(() => expect(result.current.isLoading).toBe(false));
     // 2ページ目のデータが返っていることを確認
@@ -161,18 +197,33 @@ describe("useNotificationList", () => {
     // 削除処理を確認（scheduled状態のitemのみ削除可能）
     const itemToDelete = result.current.items[0];
     if (!itemToDelete) throw new Error("削除対象がありません");
-    result.current.onDeleteRequest(itemToDelete);
-    if (result.current.selectedNotification) {
-      await act(async () => {
-        await result.current.confirmDelete();
-      });
-      expect(deleteNotification).toHaveBeenCalledWith(
-        itemToDelete.notificationId
-      );
-      expect(list).toHaveBeenCalledTimes(3);
-      expect(result.current.pageCount).toBe(1);
-      expect(result.current.items[0]?.content.push.title).toBe("残った通知0");
-    }
+    act(() => result.current.onDeleteRequest(itemToDelete));
+    expect(result.current.selectedNotification).not.toBeNull();
+    await act(async () => {
+      await result.current.confirmDelete();
+    });
+    expect(deleteNotification).toHaveBeenCalledWith(
+      itemToDelete.notificationId
+    );
+    expect(list).toHaveBeenCalledTimes(4);
+    expect(result.current.pageCount).toBe(1);
+    expect(result.current.items[0]?.content.push.title).toBe("残った通知0");
+  });
+
+  it("ページ取得に失敗したら前のページと表示を維持する", async () => {
+    const list = vi
+      .fn<AdminNotificationQueryApi["list"]>()
+      .mockResolvedValueOnce(createResponseWithCount(51, "通知"))
+      .mockRejectedValueOnce(new Error("取得失敗"));
+    const queryApi = createQueryApi(list);
+    const { result } = renderHook(() =>
+      useNotificationList({ commandApi, queryApi })
+    );
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    act(() => result.current.onPageChange(2));
+    await waitFor(() => expect(result.current.errorMessage).not.toBeNull());
+    expect(result.current.currentPage).toBe(1);
+    expect(result.current.items[0]?.content.push.title).toBe("通知0");
   });
 
   it("古いリクエストが後から返っても最新のレスポンスだけを反映する", async () => {
