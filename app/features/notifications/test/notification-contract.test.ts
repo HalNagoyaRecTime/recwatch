@@ -74,10 +74,21 @@ function parseListWithAudienceItem(audienceItem: unknown) {
         ],
       },
     ],
+    pagination: { page: 1, limit: 50, totalCount: 1, totalPages: 1 },
   });
 }
 
 describe("notification v2 contract", () => {
+  it("ページ情報付き一覧も追加トップレベル項目を許容する", () => {
+    const response = {
+      ...adminNotificationListFixture,
+      futureMetadata: { version: 2 },
+    };
+    expect(parseAdminNotificationListResponse(response)).toEqual(response);
+    expect(() =>
+      parseAdminNotificationListResponse({ ...response, pagination: null })
+    ).toThrow(ClientError);
+  });
   it("ScheduleとDeliveryのstatusを分離する", () => {
     expectTypeOf<NotificationScheduleStatusDto>().toEqualTypeOf<
       "scheduled" | "resolving" | "sending" | "completed" | "failed" | "stopped"

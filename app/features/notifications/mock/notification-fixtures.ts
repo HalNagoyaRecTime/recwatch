@@ -16,8 +16,8 @@ import { ApiClientError } from "~/lib/api-client-error";
 const scheduleStatuses = NOTIFICATION_SCHEDULE_STATUSES;
 const toUtcIso = (value: string) => new Date(value).toISOString();
 
-export const adminNotificationListFixture: AdminNotificationListResponseDto = {
-  items: scheduleStatuses.map((status, index) => {
+const listItems: AdminNotificationListResponseDto["items"] =
+  scheduleStatuses.map((status, index) => {
     const notificationId = 101 + index;
     const isAutomatic = index === 1 || index === 5;
     const primarySchedule = {
@@ -108,7 +108,16 @@ export const adminNotificationListFixture: AdminNotificationListResponseDto = {
             ]
           : [primarySchedule],
     };
-  }),
+  });
+
+export const adminNotificationListFixture: AdminNotificationListResponseDto = {
+  items: listItems,
+  pagination: {
+    page: 1,
+    limit: 50,
+    totalCount: listItems.length,
+    totalPages: 1,
+  },
 };
 
 export const adminNotificationDetailFixture: AdminNotificationDetailDto = {
@@ -133,11 +142,11 @@ export const adminNotificationDetailFixture: AdminNotificationDetailDto = {
   updatedAt: "2026-11-07T03:15:00.000Z",
   schedules: [
     {
-      ...adminNotificationListFixture.items[3].schedules[0],
+      ...listItems[3].schedules[0],
       stop: null,
     },
     {
-      ...adminNotificationListFixture.items[5].schedules[0],
+      ...listItems[5].schedules[0],
       stop: {
         reason: "source_deleted",
         stoppedAt: "2026-11-07T04:00:00.000Z",
@@ -149,7 +158,7 @@ export const adminNotificationDetailFixture: AdminNotificationDetailDto = {
 
 export const notificationScheduleListFixture: NotificationScheduleListResponseDto =
   {
-    items: adminNotificationListFixture.items.flatMap((notification) =>
+    items: listItems.flatMap((notification) =>
       notification.schedules.map((schedule) => ({
         notificationId: notification.notificationId,
         notificationScheduleId: schedule.notificationScheduleId,
