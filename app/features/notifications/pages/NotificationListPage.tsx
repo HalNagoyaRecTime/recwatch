@@ -51,6 +51,7 @@ export function NotificationListPage({
     commandApi,
     queryApi,
     reportFeedback,
+    listEnabled: viewMode === "list",
     calendarRange: viewMode === "calendar" ? calendarRange : undefined,
   });
 

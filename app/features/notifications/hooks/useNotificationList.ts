@@ -32,6 +32,7 @@ import { getErrorMessage } from "~/lib/client-error";
 type UseNotificationListOptions = {
   calendarMonth?: Date;
   calendarRange?: AdminNotificationListQuery;
+  listEnabled?: boolean;
   commandApi: AdminNotificationCommandApi;
   queryApi: AdminNotificationQueryApi;
   reportFeedback?: NotificationFeedbackReporter;
@@ -40,6 +41,7 @@ type UseNotificationListOptions = {
 export function useNotificationList({
   calendarMonth,
   calendarRange,
+  listEnabled = true,
   commandApi,
   queryApi,
   reportFeedback,
@@ -244,6 +246,7 @@ export function useNotificationList({
   }, [activeCalendarRange, loadCalendar]);
 
   useEffect(() => {
+    if (!listEnabled) return;
     let active = true;
     void Promise.resolve().then(() => {
       if (active) {
@@ -256,7 +259,7 @@ export function useNotificationList({
       active = false;
       requestSequence.current += 1;
     };
-  }, [load]);
+  }, [listEnabled, load]);
 
   const reload = useCallback(() => {
     setIsLoading(true);

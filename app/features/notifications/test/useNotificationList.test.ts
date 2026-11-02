@@ -83,6 +83,61 @@ function createResponseWithCount(
 }
 
 describe("useNotificationList", () => {
+  it("カレンダーでは一覧を取得せず、一覧に戻ると取得する", async () => {
+    const list = vi
+      .fn<AdminNotificationQueryApi["list"]>()
+      .mockResolvedValue(createResponse("通知"));
+    const queryApi = createQueryApi(list);
+    const calendarRange = {
+      from: "2026-11-01T00:00:00.000+09:00",
+      to: "2026-11-30T23:59:59.999+09:00",
+    };
+    const { result, rerender } = renderHook(
+      ({ listEnabled }) =>
+        useNotificationList({
+          commandApi,
+          queryApi,
+          listEnabled,
+          calendarRange: listEnabled ? undefined : calendarRange,
+        }),
+      { initialProps: { listEnabled: false } }
+    );
+    await waitFor(() => expect(list).toHaveBeenCalledTimes(1));
+    expect(list).toHaveBeenCalledWith({ ...calendarRange, page: 1, limit: 50 });
+    act(() => result.current.onCreationMethodChange("manual"));
+    await act(async () => {
+      await Promise.resolve();
+    });
+    expect(list).toHaveBeenCalledTimes(1);
+    rerender({ listEnabled: true });
+    await waitFor(() => expect(list).toHaveBeenCalledTimes(2));
+    expect(list.mock.calls[1][0]).toMatchObject({
+      creationMethod: "manual",
+      page: 1,
+    });
+  });
+
+  it("カレンダーへ移動した後に返った一覧応答を反映しない", async () => {
+    const pending = createDeferred<AdminNotificationListResponse>();
+    const list = vi
+      .fn<AdminNotificationQueryApi["list"]>()
+      .mockReturnValueOnce(pending.promise)
+      .mockResolvedValue(createResponse("カレンダー"));
+    const queryApi = createQueryApi(list);
+    const { result, rerender } = renderHook(
+      ({ listEnabled }) =>
+        useNotificationList({ commandApi, queryApi, listEnabled }),
+      { initialProps: { listEnabled: true } }
+    );
+    await waitFor(() => expect(list).toHaveBeenCalledTimes(1));
+    rerender({ listEnabled: false });
+    await act(async () => {
+      pending.resolve(createResponse("古い一覧"));
+      await pending.promise;
+    });
+    expect(result.current.items).toEqual([]);
+  });
+
   it("1ページ目にない通知も検索結果と総件数に表示する", async () => {
     const list = vi
       .fn<AdminNotificationQueryApi["list"]>()
