@@ -13,7 +13,7 @@ const fixtures = createNotificationMonitorFixtures(
 afterEach(() => vi.restoreAllMocks());
 
 describe("配信モニターのMockとHTTP契約", () => {
-  it("同じ一覧・詳細Responseを共有し、一覧へ集計を混入させない", async () => {
+  it("同じ一覧・詳細Responseを共有し、一覧の各配信に詳細と同じ進み具合を返す", async () => {
     const mock = createMockNotificationMonitorApi(fixtures);
     const query = {
       from: "2026-10-03T03:00:00.000Z",
@@ -33,7 +33,9 @@ describe("配信モニターのMockとHTTP契約", () => {
         await mock.getDetail(fixture.notificationScheduleId)
       );
     }
-    expect(list.items[0]).not.toHaveProperty("deliveryProgress");
+    for (const item of list.items) {
+      expect(item).toEqual(await mock.getDetail(item.notificationScheduleId));
+    }
   });
 
   it("削除済みScheduleは404を返す", async () => {

@@ -69,17 +69,7 @@ export function createMockNotificationMonitorApi(
             const sendAt = Date.parse(item.sendAt);
             return sendAt >= from && sendAt <= to;
           })
-          .map((item) => ({
-            notificationId: item.notificationId,
-            notificationScheduleId: item.notificationScheduleId,
-            content: cloneFixture(item.content),
-            importance: item.importance,
-            sendAt: item.sendAt,
-            status: item.status,
-            failureReason: item.failureReason,
-            stop: cloneFixture(item.stop),
-            creation: cloneFixture(item.creation),
-          })),
+          .map(cloneFixture),
       };
     },
     async getDetail(id) {

@@ -14,20 +14,8 @@ import type {
 
 export type NotificationScheduleListQueryDto = NotificationDateRangeQueryDto;
 
-export type NotificationScheduleListItemDto = {
-  notificationId: number;
-  notificationScheduleId: number;
-  content: { push: NotificationPushContentDto };
-  importance: NotificationImportanceDto;
-  sendAt: string;
-  status: NotificationScheduleStatusDto;
-  failureReason: string | null;
-  stop: NotificationStopDto | null;
-  creation: NotificationCreationDto;
-};
-
 export type NotificationScheduleListResponseDto = {
-  items: NotificationScheduleListItemDto[];
+  items: NotificationScheduleDetailDto[];
 };
 
 export type NotificationDeliveryProgressDto = {

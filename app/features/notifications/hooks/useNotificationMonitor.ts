@@ -6,7 +6,6 @@ import {
   type NotificationFeedbackReporter,
 } from "~/features/notifications/hooks/notification-feedback";
 import {
-  getMonitorSchedule,
   getMonitorWindow,
   isMonitorScheduleVisible,
   type MonitorSchedule,
@@ -72,59 +71,16 @@ export function useNotificationMonitor({
           to: new Date(range.to).toISOString(),
         });
         if (generation.current !== requestId) return;
-        const summaries = response.items.filter((item) =>
-          isMonitorScheduleVisible(item, at)
-        );
-        const items: MonitorSchedule[] = new Array(summaries.length);
-        let next = 0;
-        const failures: unknown[] = [];
-        const worker = async () => {
-          while (next < summaries.length && generation.current === requestId) {
-            const index = next++;
-            const summary = summaries[index];
-            try {
-              const detail = await api.getDetail(
-                summary.notificationScheduleId
-              );
-              items[index] = { summary, detail, errorMessage: null };
-            } catch (error) {
-              failures.push(error);
-              items[index] = {
-                summary,
-                detail: null,
-                errorMessage: "配信集計を読み込めませんでした。",
-              };
-            }
-          }
-        };
-        // 詳細取得の同時実行数を制限します。
-        await Promise.all(
-          Array.from({ length: Math.min(4, summaries.length) }, worker)
-        );
-        if (generation.current !== requestId) return;
-        const visibleItems = items.filter((item) =>
-          isMonitorScheduleVisible(getMonitorSchedule(item), at)
-        );
         setState({
-          items: visibleItems,
+          items: response.items.filter((item) =>
+            isMonitorScheduleVisible(item, at)
+          ),
           isLoading: false,
           hasLoaded: true,
           errorMessage: null,
           updatedAt: at,
         });
-        if (background && failures.length > 0 && !reportedFailure.current) {
-          reportedFailure.current = true;
-          reportNotificationBackgroundError(reportFeedback, {
-            title: "配信集計を更新できませんでした",
-            message:
-              "一部の配信集計を取得できませんでした。再読み込みしてください。",
-            action: "notification.monitor.refresh",
-            endpoint: "/api/v1/admin/notifications/schedules",
-            error: failures[0],
-          });
-        } else if (failures.length === 0) {
-          reportedFailure.current = false;
-        }
+        reportedFailure.current = false;
       } catch (error) {
         if (generation.current !== requestId) return;
         setState((previous) => ({
@@ -182,7 +138,7 @@ export function useNotificationMonitor({
   }, [load]);
   const selectedSchedule =
     state.items.find(
-      (item) => item.summary.notificationScheduleId === selectedScheduleId
+      (item) => item.notificationScheduleId === selectedScheduleId
     ) ?? null;
   return {
     ...state,

@@ -1,13 +1,6 @@
-import type {
-  NotificationScheduleDetail,
-  NotificationScheduleListItem,
-} from "~/features/notifications/api/contracts/notification-schedule-query-api";
+import type { NotificationScheduleDetail } from "~/features/notifications/api/contracts/notification-schedule-query-api";
 
-export type MonitorSchedule = {
-  summary: NotificationScheduleListItem;
-  detail: NotificationScheduleDetail | null;
-  errorMessage: string | null;
-};
+export type MonitorSchedule = NotificationScheduleDetail;
 
 export const monitorDayMs = 24 * 60 * 60 * 1000;
 export const monitorCardWidth = 320;
@@ -19,7 +12,7 @@ export function getMonitorWindow(now: number) {
 }
 
 export function isMonitorScheduleVisible(
-  schedule: NotificationScheduleListItem,
+  schedule: MonitorSchedule,
   now: number
 ) {
   if (schedule.status === "resolving" || schedule.status === "sending") {
@@ -34,9 +27,7 @@ export function isMonitorScheduleVisible(
 }
 
 // APIのstatusは維持し、表示列だけを計算します。
-export function getMonitorColumn(
-  status: NotificationScheduleListItem["status"]
-) {
+export function getMonitorColumn(status: MonitorSchedule["status"]) {
   switch (status) {
     case "scheduled":
       return 0;
@@ -49,26 +40,18 @@ export function getMonitorColumn(
   }
 }
 
-export function getMonitorSchedule(item: MonitorSchedule) {
-  return item.detail ?? item.summary;
-}
-
 export function layoutMonitorSchedules(
   items: readonly MonitorSchedule[],
   heights: Readonly<Record<string, number>> = {}
 ) {
   const nextY = [72, 72, 72, 72];
   return [...items]
-    .sort((a, b) => {
-      const left = getMonitorSchedule(a);
-      const right = getMonitorSchedule(b);
-      return (
-        Date.parse(left.sendAt) - Date.parse(right.sendAt) ||
-        left.notificationScheduleId - right.notificationScheduleId
-      );
-    })
-    .map((item) => {
-      const schedule = getMonitorSchedule(item);
+    .sort(
+      (a, b) =>
+        Date.parse(a.sendAt) - Date.parse(b.sendAt) ||
+        a.notificationScheduleId - b.notificationScheduleId
+    )
+    .map((schedule) => {
       const id = String(schedule.notificationScheduleId);
       const column = getMonitorColumn(schedule.status);
       const position = {
@@ -76,6 +59,6 @@ export function layoutMonitorSchedules(
         y: nextY[column],
       };
       nextY[column] += (heights[id] ?? 340) + monitorCardGap;
-      return { id, position, item };
+      return { id, position, schedule };
     });
 }

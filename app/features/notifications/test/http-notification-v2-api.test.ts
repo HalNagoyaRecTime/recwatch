@@ -192,6 +192,20 @@ describe("notification v2 HTTP adapters", () => {
     );
   });
 
+  it("進み具合の無いSchedule一覧は想定外のResponseとして扱う", async () => {
+    const item: Record<string, unknown> = {
+      ...notificationScheduleListFixture.items[0],
+    };
+    delete item.audienceProgress;
+    delete item.recipientProgress;
+    delete item.deliveryProgress;
+    const api = createHttpNotificationScheduleQueryApi({
+      get: vi.fn().mockResolvedValue({ items: [item] }),
+    });
+
+    await expect(api.list()).rejects.toBeInstanceOf(ClientError);
+  });
+
   it("Schedule再送・停止・取消を同じ契約で実行する", async () => {
     const post = vi
       .fn()

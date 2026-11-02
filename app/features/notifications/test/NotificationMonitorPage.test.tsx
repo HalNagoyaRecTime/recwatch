@@ -359,38 +359,6 @@ describe("配信モニター", () => {
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });
 
-  it("集計取得に失敗したカードで0件を捏造せず、詳細から再試行できる", async () => {
-    const api = createMockNotificationMonitorApi(
-      createNotificationMonitorFixtures(now())
-    );
-    const getDetail = api.getDetail;
-    vi.spyOn(api, "getDetail").mockImplementation((id) =>
-      id === 503 ? Promise.reject(new Error("通信失敗")) : getDetail(id)
-    );
-    renderPage(api);
-    const card = await screen.findByRole("article", { name: "配信 #503" });
-    expect(
-      screen.getByText("配信集計を読み込めませんでした。")
-    ).toBeInTheDocument();
-    expect(within(card).queryByText("配送総数")).not.toBeInTheDocument();
-    expect(screen.getAllByRole("article")).toHaveLength(1);
-    await userEvent
-      .setup()
-      .click(
-        within(card).getByRole("button", { name: /NOTIFICATION配信詳細/ })
-      );
-    const dialog = await screen.findByRole("dialog", { name: "配信詳細" });
-    vi.mocked(api.getDetail).mockImplementation(getDetail);
-    await userEvent
-      .setup()
-      .click(
-        within(dialog).getByRole("button", { name: "配信集計を再読み込み" })
-      );
-    await waitFor(() =>
-      expect(within(dialog).getByText("42件")).toBeInTheDocument()
-    );
-  });
-
   it("refresh失敗をFeedbackへ報告し、前回のカードを保持する", async () => {
     const api = createMockNotificationMonitorApi(
       createNotificationMonitorFixtures(now())
@@ -443,19 +411,4 @@ describe("配信モニター", () => {
         expect(within(fcm).queryByText("受付成功")).not.toBeInTheDocument();
     }
   );
-
-  it("集計取得失敗時はFCM受付成功と表示しない", async () => {
-    const api = createMockNotificationMonitorApi(
-      createNotificationMonitorFixtures(now())
-    );
-    const original = api.getDetail;
-    vi.spyOn(api, "getDetail").mockImplementation((id) =>
-      id === 503 ? Promise.reject(new Error("集計取得失敗")) : original(id)
-    );
-    renderPage(api);
-    const card = await screen.findByRole("article", { name: "配信 #503" });
-    const fcm = within(card).getByRole("button", { name: /のFCM配信詳細/ });
-    expect(within(fcm).getByText("集計取得失敗")).toBeInTheDocument();
-    expect(within(fcm).queryByText("受付成功")).not.toBeInTheDocument();
-  });
 });

@@ -15,10 +15,10 @@ import "~/features/notifications/components/monitor/notification-monitor.css";
 const nodeTypes = { schedule: NotificationScheduleNode };
 
 export function NotificationMonitorGraph({
-  item,
+  schedule,
   onOpen,
 }: {
-  item: MonitorSchedule;
+  schedule: MonitorSchedule;
   onOpen: (id: number) => void;
 }) {
   const [height, setHeight] = useState(180);
@@ -52,17 +52,17 @@ export function NotificationMonitorGraph({
   const nodes = useMemo<ScheduleFlowNode[]>(
     () => [
       {
-        id: String(item.summary.notificationScheduleId),
+        id: String(schedule.notificationScheduleId),
         type: "schedule",
         position: { x: 0, y: 0 },
         style: { width: 1120, height },
-        data: { item, onOpen, onMeasure },
+        data: { schedule, onOpen, onMeasure },
         draggable: false,
         selectable: false,
         focusable: false,
       },
     ],
-    [item, onOpen, onMeasure, height]
+    [schedule, onOpen, onMeasure, height]
   );
   return (
     <div
@@ -71,10 +71,10 @@ export function NotificationMonitorGraph({
       aria-label="選択した配信の処理フロー"
     >
       <ReactFlow<ScheduleFlowNode>
-        key={item.summary.notificationScheduleId}
+        key={schedule.notificationScheduleId}
         onInit={setInstance}
         onNodeClick={(_, node) =>
-          onOpen(node.data.item.summary.notificationScheduleId)
+          onOpen(node.data.schedule.notificationScheduleId)
         }
         nodes={nodes}
         nodeTypes={nodeTypes}

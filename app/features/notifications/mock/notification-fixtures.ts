@@ -147,6 +147,20 @@ export const adminNotificationDetailFixture: AdminNotificationDetailDto = {
   ],
 };
 
+const notificationScheduleProgressFixture = {
+  audienceProgress: { totalCount: 4, resolvedCount: 4 },
+  recipientProgress: { count: 40, status: "resolved" as const },
+  deliveryProgress: {
+    totalCount: 42,
+    pendingCount: 0,
+    sendingCount: 0,
+    retryWaitCount: 2,
+    sentCount: 38,
+    failedCount: 2,
+    stoppedCount: 0,
+  },
+};
+
 export const notificationScheduleListFixture: NotificationScheduleListResponseDto =
   {
     items: adminNotificationListFixture.items.flatMap((notification) =>
@@ -168,6 +182,7 @@ export const notificationScheduleListFixture: NotificationScheduleListResponseDt
               }
             : null,
         creation: notification.creation,
+        ...notificationScheduleProgressFixture,
       }))
     ),
   };
@@ -175,17 +190,6 @@ export const notificationScheduleListFixture: NotificationScheduleListResponseDt
 export const notificationScheduleDetailFixture: NotificationScheduleDetailDto =
   {
     ...notificationScheduleListFixture.items[2],
-    audienceProgress: { totalCount: 4, resolvedCount: 4 },
-    recipientProgress: { count: 40, status: "resolved" },
-    deliveryProgress: {
-      totalCount: 42,
-      pendingCount: 0,
-      sendingCount: 0,
-      retryWaitCount: 2,
-      sentCount: 38,
-      failedCount: 2,
-      stoppedCount: 0,
-    },
   };
 
 export const notificationScheduleResultsFixture: NotificationScheduleResultsDto =

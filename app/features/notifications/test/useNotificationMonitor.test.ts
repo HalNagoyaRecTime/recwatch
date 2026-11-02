@@ -7,7 +7,6 @@ import {
   createMockNotificationMonitorApi,
   createNotificationMonitorFixtures,
 } from "~/features/notifications/mock/notification-monitor-api";
-import { ApiClientError } from "~/lib/api-client-error";
 
 const now = () => Date.parse("2026-10-04T12:00:00+09:00");
 const options = { now, refreshIntervalMs: 0 };
@@ -21,13 +20,14 @@ function deferred<T>() {
 afterEach(() => vi.restoreAllMocks());
 
 describe("useNotificationMonitor", () => {
-  it("前後24時間を明示し、日付をまたぐ配信とAPI集計を取得する", async () => {
+  it("更新のたびに一覧を1回だけ呼び、日付をまたぐ配信の進み具合を一覧から表示する", async () => {
     const fixtures = createNotificationMonitorFixtures(now());
     fixtures[0].sendAt = new Date(now() + 23 * 60 * 60 * 1000).toISOString();
     const sending = fixtures.find((item) => item.status === "sending")!;
     sending.sendAt = new Date(now() - 23 * 60 * 60 * 1000).toISOString();
     const api = createMockNotificationMonitorApi(fixtures);
     const list = vi.spyOn(api, "list");
+    const getDetail = vi.spyOn(api, "getDetail");
     const { result } = renderHook(() =>
       useNotificationMonitor({ api, ...options })
     );
@@ -37,12 +37,16 @@ describe("useNotificationMonitor", () => {
       to: new Date(now() + 86_400_000).toISOString(),
     });
     expect(result.current.items).toHaveLength(fixtures.length);
-    const detail = result.current.items.find(
-      (item) => item.detail?.status === "sending"
-    )?.detail;
-    expect(detail?.recipientProgress.count).toBe(40);
-    expect(detail?.deliveryProgress.totalCount).toBe(42);
-    expect(detail?.deliveryProgress.retryWaitCount).toBe(2);
+    const schedule = result.current.items.find(
+      (item) => item.status === "sending"
+    );
+    expect(schedule?.recipientProgress.count).toBe(40);
+    expect(schedule?.deliveryProgress.totalCount).toBe(42);
+    expect(schedule?.deliveryProgress.retryWaitCount).toBe(2);
+    await act(() => result.current.reload());
+    await act(() => result.current.reload());
+    expect(list).toHaveBeenCalledTimes(3);
+    expect(getDetail).not.toHaveBeenCalled();
   });
 
   it("mutation後の再取得を進行中の古い取得より優先する", async () => {
@@ -68,83 +72,33 @@ describe("useNotificationMonitor", () => {
     expect(result.current.items.length).toBeGreaterThan(0);
   });
 
-  it("表示対象外の詳細を取得しない", async () => {
+  it("表示対象外の配信を出さない", async () => {
     const fixtures = createNotificationMonitorFixtures(now());
     fixtures[0].sendAt = "2030-01-01T00:00:00Z";
     const api = createMockNotificationMonitorApi(fixtures);
-    const getDetail = vi.spyOn(api, "getDetail");
-    const { result } = renderHook(() =>
-      useNotificationMonitor({ api, ...options })
-    );
-    await waitFor(() => expect(result.current.isLoading).toBe(false));
-    expect(getDetail).not.toHaveBeenCalledWith(
-      fixtures[0].notificationScheduleId
-    );
-  });
-
-  it("詳細の新しいstatusで再配置し、Summaryの状態を推測しない", async () => {
-    const api = createMockNotificationMonitorApi(
-      createNotificationMonitorFixtures(now())
-    );
-    const getDetail = api.getDetail;
-    vi.spyOn(api, "getDetail").mockImplementation(async (id) => ({
-      ...(await getDetail(id)),
-      status: "sending",
-    }));
+    vi.spyOn(api, "list").mockResolvedValue({ items: fixtures });
     const { result } = renderHook(() =>
       useNotificationMonitor({ api, ...options })
     );
     await waitFor(() => expect(result.current.isLoading).toBe(false));
     expect(
-      result.current.items.every((item) => item.detail?.status === "sending")
-    ).toBe(true);
+      result.current.items.map((item) => item.notificationScheduleId)
+    ).not.toContain(fixtures[0].notificationScheduleId);
+    expect(result.current.items).toHaveLength(fixtures.length - 1);
   });
 
-  it("一部の詳細が404でも他のカードを表示し、初期取得ではFeedbackを重複報告しない", async () => {
-    const api = createMockNotificationMonitorApi(
-      createNotificationMonitorFixtures(now())
-    );
-    const getDetail = api.getDetail;
-    vi.spyOn(api, "getDetail").mockImplementation((id) =>
-      id === 501
-        ? Promise.reject(
-            new ApiClientError(
-              404,
-              "削除済み",
-              "NOTIFICATION_SCHEDULE_NOT_FOUND"
-            )
-          )
-        : getDetail(id)
-    );
-    const reportFeedback = vi.fn();
-    const { result } = renderHook(() =>
-      useNotificationMonitor({ api, reportFeedback, ...options })
-    );
-    await waitFor(() => expect(result.current.isLoading).toBe(false));
-    expect(
-      result.current.items.find(
-        (item) => item.summary.notificationScheduleId === 501
-      )?.errorMessage
-    ).toBeTruthy();
-    expect(result.current.items.filter((item) => item.detail)).toHaveLength(6);
-    expect(reportFeedback).not.toHaveBeenCalled();
-    await act(() => result.current.reload());
-    expect(reportFeedback).toHaveBeenCalledTimes(1);
-    expect(reportFeedback).toHaveBeenCalledWith(
-      expect.objectContaining({ kind: "background-error" })
-    );
-  });
-
-  it("一覧の初期エラーを画面に表示し、再読み込みで回復する", async () => {
+  it("一覧の初期エラーはFeedbackへ報告せず画面に表示し、再読み込みで回復する", async () => {
     const api = createMockNotificationMonitorApi(
       createNotificationMonitorFixtures(now())
     );
     vi.spyOn(api, "list").mockRejectedValueOnce(new Error("通信失敗"));
+    const reportFeedback = vi.fn();
     const { result } = renderHook(() =>
-      useNotificationMonitor({ api, ...options })
+      useNotificationMonitor({ api, reportFeedback, ...options })
     );
     await waitFor(() => expect(result.current.errorMessage).toBeTruthy());
     expect(result.current.hasLoaded).toBe(false);
+    expect(reportFeedback).not.toHaveBeenCalled();
     await act(() => result.current.reload());
     expect(result.current.errorMessage).toBeNull();
     expect(result.current.hasLoaded).toBe(true);
@@ -169,26 +123,21 @@ describe("useNotificationMonitor", () => {
     );
   });
 
-  it("詳細取得を最大4件に制限し、再読み込みを重ねない", async () => {
-    const fixtures = createNotificationMonitorFixtures(now());
-    const api = createMockNotificationMonitorApi(fixtures);
+  it("取得中の再読み込みを重ねない", async () => {
+    const api = createMockNotificationMonitorApi(
+      createNotificationMonitorFixtures(now())
+    );
     const pending =
-      deferred<
-        Awaited<ReturnType<NotificationScheduleQueryApi["getDetail"]>>
-      >();
-    const list = vi.spyOn(api, "list");
-    const getDetail = vi
-      .spyOn(api, "getDetail")
-      .mockReturnValue(pending.promise);
+      deferred<Awaited<ReturnType<NotificationScheduleQueryApi["list"]>>>();
+    const list = vi.spyOn(api, "list").mockReturnValueOnce(pending.promise);
     const { result } = renderHook(() =>
       useNotificationMonitor({ api, ...options })
     );
-    await waitFor(() => expect(getDetail).toHaveBeenCalledTimes(4));
+    await waitFor(() => expect(list).toHaveBeenCalledOnce());
     await act(() => result.current.reload());
-    expect(list).toHaveBeenCalledTimes(1);
-    await act(async () => pending.resolve(fixtures[0]));
+    expect(list).toHaveBeenCalledOnce();
+    await act(async () => pending.resolve({ items: [] }));
     await waitFor(() => expect(result.current.isLoading).toBe(false));
-    expect(getDetail).toHaveBeenCalledTimes(fixtures.length);
   });
 
   it("API切替後に古いResponseを反映しない", async () => {
@@ -235,31 +184,26 @@ describe("useNotificationMonitor", () => {
     unmount();
     expect(clear).toHaveBeenCalledWith(123);
   });
-  it.each(["list", "detail"] as const)(
-    "%sの連続失敗を1回だけ報告し、全件回復後に再報告する",
-    async (target) => {
-      const api = createMockNotificationMonitorApi(
-        createNotificationMonitorFixtures(now())
-      );
-      const reportFeedback = vi.fn();
-      const { result } = renderHook(() =>
-        useNotificationMonitor({ api, reportFeedback, ...options })
-      );
-      await waitFor(() => expect(result.current.isLoading).toBe(false));
-      const spy = vi.spyOn(api, target === "list" ? "list" : "getDetail");
-      spy.mockRejectedValue(new Error("通信失敗"));
-      await act(() => result.current.reload());
-      await act(() => result.current.reload());
-      await act(() => result.current.reload());
-      expect(reportFeedback).toHaveBeenCalledTimes(1);
-      spy.mockRestore();
-      await act(() => result.current.reload());
-      expect(reportFeedback).toHaveBeenCalledTimes(1);
-      vi.spyOn(api, target === "list" ? "list" : "getDetail").mockRejectedValue(
-        new Error("再度失敗")
-      );
-      await act(() => result.current.reload());
-      expect(reportFeedback).toHaveBeenCalledTimes(2);
-    }
-  );
+  it("一覧の連続失敗を1回だけ報告し、回復後に再報告する", async () => {
+    const api = createMockNotificationMonitorApi(
+      createNotificationMonitorFixtures(now())
+    );
+    const reportFeedback = vi.fn();
+    const { result } = renderHook(() =>
+      useNotificationMonitor({ api, reportFeedback, ...options })
+    );
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    const spy = vi.spyOn(api, "list");
+    spy.mockRejectedValue(new Error("通信失敗"));
+    await act(() => result.current.reload());
+    await act(() => result.current.reload());
+    await act(() => result.current.reload());
+    expect(reportFeedback).toHaveBeenCalledTimes(1);
+    spy.mockRestore();
+    await act(() => result.current.reload());
+    expect(reportFeedback).toHaveBeenCalledTimes(1);
+    vi.spyOn(api, "list").mockRejectedValue(new Error("再度失敗"));
+    await act(() => result.current.reload());
+    expect(reportFeedback).toHaveBeenCalledTimes(2);
+  });
 });

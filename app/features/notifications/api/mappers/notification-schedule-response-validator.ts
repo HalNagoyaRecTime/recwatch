@@ -2,7 +2,6 @@ import type {
   NotificationPushDeliveryDetailDto,
   NotificationResultDeliveryDto,
   NotificationScheduleDetailDto,
-  NotificationScheduleListItemDto,
   NotificationScheduleListResponseDto,
   NotificationScheduleResultsDto,
   NotificationStopResponseDto,
@@ -35,7 +34,7 @@ export function isNotificationScheduleListResponse(
     isRecord(value) &&
     hasExactKeys(value, ["items"]) &&
     Array.isArray(value.items) &&
-    value.items.every(isNotificationScheduleListItem)
+    value.items.every(isNotificationScheduleDetail)
   );
 }
 
@@ -148,36 +147,6 @@ export function isNotificationStopResponse(
     hasExactKeys(value, ["notificationScheduleId", "status"]) &&
     isPositiveInteger(value.notificationScheduleId) &&
     value.status === "stopped"
-  );
-}
-
-function isNotificationScheduleListItem(
-  value: unknown
-): value is NotificationScheduleListItemDto {
-  return (
-    isRecord(value) &&
-    hasExactKeys(value, [
-      "notificationId",
-      "notificationScheduleId",
-      "content",
-      "importance",
-      "sendAt",
-      "status",
-      "failureReason",
-      "stop",
-      "creation",
-    ]) &&
-    isPositiveInteger(value.notificationId) &&
-    isPositiveInteger(value.notificationScheduleId) &&
-    isRecord(value.content) &&
-    hasExactKeys(value.content, ["push"]) &&
-    isNotificationPushContent(value.content.push) &&
-    isNotificationImportance(value.importance) &&
-    isUtcDateTimeString(value.sendAt) &&
-    isNotificationScheduleStatus(value.status) &&
-    isNullableString(value.failureReason) &&
-    isNullableNotificationStop(value.stop) &&
-    isNotificationCreation(value.creation)
   );
 }
 
