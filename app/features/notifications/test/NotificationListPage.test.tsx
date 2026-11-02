@@ -8,7 +8,7 @@ import {
 } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { MemoryRouter, useSearchParams } from "react-router";
+import { MemoryRouter, useLocation } from "react-router";
 
 import type { AdminNotificationCommandApi } from "~/features/notifications/api/contracts/admin-notification-command-api";
 import type {
@@ -53,18 +53,18 @@ function renderPage(
   commandApi = createCommandApi()
 ) {
   function TestPage() {
-    const [params] = useSearchParams();
+    const { pathname } = useLocation();
     return (
       <NotificationListPage
         commandApi={commandApi}
         initialCalendarMonth={initialCalendarMonth}
         queryApi={queryApi}
-        viewMode={params.get("view") === "calendar" ? "calendar" : "list"}
+        viewMode={pathname === "/notifications/calendar" ? "calendar" : "list"}
       />
     );
   }
   return render(
-    <MemoryRouter>
+    <MemoryRouter initialEntries={["/notifications"]}>
       <TestPage />
     </MemoryRouter>
   );
