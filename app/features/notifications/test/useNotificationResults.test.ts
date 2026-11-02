@@ -16,6 +16,37 @@ function api(
   return { list: vi.fn(), getDetail: vi.fn(), getResults };
 }
 describe("配信結果の取得と検索", () => {
+  it("検索と送信結果の変更を API に渡して1ページ目から取得する", async () => {
+    const getResults = vi
+      .fn()
+      .mockResolvedValue(cloneFixture(notificationScheduleResultsFixture));
+    const queryApi = api(getResults);
+    const { result } = renderHook(() =>
+      useNotificationResults({
+        api: queryApi,
+        scheduleId: 504,
+        active: true,
+        refreshKey: 0,
+      })
+    );
+    await waitFor(() => expect(result.current.data).not.toBeNull());
+    act(() =>
+      result.current.onFiltersChange({
+        search: "山田",
+        status: "failed",
+        platform: "all",
+      })
+    );
+    await waitFor(() =>
+      expect(getResults).toHaveBeenLastCalledWith(504, {
+        page: 1,
+        limit: 50,
+        includeRegisteredAt: "1",
+        search: "山田",
+        status: "failed",
+      })
+    );
+  });
   it("サーバーサイドページネーションで1ページ分だけ取得する", async () => {
     const first = cloneFixture(notificationScheduleResultsFixture);
     first.recipients.pagination = {
@@ -35,7 +66,11 @@ describe("配信結果の取得と検索", () => {
       })
     );
     await waitFor(() => expect(result.current.isLoading).toBe(false));
-    expect(getResults).toHaveBeenCalledWith(504, { page: 1, limit: 50 });
+    expect(getResults).toHaveBeenCalledWith(504, {
+      page: 1,
+      limit: 50,
+      includeRegisteredAt: "1",
+    });
     expect(result.current.total).toBe(first.recipients.items.length);
   });
   it("選択前の遅いレスポンスを別の配信回へ反映しない", async () => {

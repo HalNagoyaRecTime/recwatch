@@ -107,6 +107,13 @@ export function NotificationResultsPanel({
       ),
     },
     {
+      id: "registeredAt",
+      header: "対象登録時間",
+      width: { type: "fluid", min: 180 },
+      renderCell: (item) =>
+        formatNotificationDetailDateTime(item.registeredAt ?? null),
+    },
+    {
       id: "lastAttempt",
       header: "最終送信・試行時間",
       width: { type: "fluid", min: 180 },
@@ -122,7 +129,7 @@ export function NotificationResultsPanel({
             <SearchField
               ariaLabel="対象者を検索"
               placeholder="ユーザー名・User IDを検索"
-              disabled
+              maxLength={100}
               value={state.filters.search}
               onValueChange={(search) =>
                 state.onFiltersChange({ ...state.filters, search })
@@ -131,7 +138,6 @@ export function NotificationResultsPanel({
           </div>
           <Select
             ariaLabel="送信結果で絞り込み"
-            disabled
             value={state.filters.status}
             onValueChange={(status) =>
               state.onFiltersChange({ ...state.filters, status })
@@ -145,9 +151,6 @@ export function NotificationResultsPanel({
             ]}
           />
         </div>
-        <p className="text-text-muted text-xs">
-          検索・絞り込みは今後対応予定です。
-        </p>
       </div>
       {state.isLoading && (
         <p role="status" className="text-text-muted px-4 py-3 text-sm">

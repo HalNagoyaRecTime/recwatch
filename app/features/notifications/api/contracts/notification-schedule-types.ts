@@ -62,6 +62,10 @@ export type NotificationScheduleDetail = {
 export type NotificationScheduleResultsQuery = {
   page: number;
   limit: number;
+  search?: string;
+  status?:
+    "success" | "partial" | "failed" | "processing" | "stopped" | "no_target";
+  includeRegisteredAt?: "1";
 };
 
 export type NotificationResultDelivery = {
@@ -78,6 +82,7 @@ export type NotificationScheduleResults = {
   recipients: {
     items: Array<{
       notificationRecipientId: number;
+      registeredAt?: string;
       user: NotificationUserReference;
       deliveries: NotificationResultDelivery[];
     }>;

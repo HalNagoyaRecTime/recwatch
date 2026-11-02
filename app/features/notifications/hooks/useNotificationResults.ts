@@ -18,6 +18,7 @@ type Options = {
 };
 type Snapshot = {
   scheduleId: number;
+  queryKey: string;
   items: NotificationScheduleResults["recipients"]["items"];
   pagination: {
     page: number;
@@ -44,6 +45,14 @@ export function useNotificationResults({
     page: number;
   }>({ scheduleId: null, filters: defaultResultFilters, page: 1 });
   const sequence = useRef(0);
+  const queryKey =
+    selection.scheduleId === scheduleId
+      ? JSON.stringify([
+          selection.page,
+          selection.filters.search,
+          selection.filters.status,
+        ])
+      : JSON.stringify([1, "", "all"]);
   const invalidateRequests = useCallback(() => {
     sequence.current++;
   }, []);
@@ -57,10 +66,20 @@ export function useNotificationResults({
       const result = await api.getResults(scheduleId, {
         page,
         limit: ResultsPageSize,
+        ...(selection.scheduleId === scheduleId &&
+        selection.filters.search.trim()
+          ? { search: selection.filters.search.trim() }
+          : {}),
+        ...(selection.scheduleId === scheduleId &&
+        selection.filters.status !== "all"
+          ? { status: selection.filters.status }
+          : {}),
+        includeRegisteredAt: "1",
       });
       if (request !== sequence.current) return;
       setSnapshot({
         scheduleId,
+        queryKey,
         items: result.recipients.items,
         pagination: result.recipients.pagination,
       });
@@ -70,7 +89,7 @@ export function useNotificationResults({
     } finally {
       if (request === sequence.current) setLoadingId(null);
     }
-  }, [api, scheduleId, selection.page, selection.scheduleId]);
+  }, [api, scheduleId, selection, queryKey]);
   useEffect(() => {
     if (!active || scheduleId === null) return;
     let mounted = true;
@@ -82,13 +101,16 @@ export function useNotificationResults({
       invalidateRequests();
     };
   }, [active, loadResults, refreshKey, scheduleId, invalidateRequests]);
-  const data = snapshot?.scheduleId === scheduleId ? snapshot.items : null;
+  const data =
+    snapshot?.scheduleId === scheduleId && snapshot.queryKey === queryKey
+      ? snapshot.items
+      : null;
   const filters =
     selection.scheduleId === scheduleId
       ? selection.filters
       : defaultResultFilters;
   const pagination =
-    snapshot?.scheduleId === scheduleId
+    snapshot?.scheduleId === scheduleId && snapshot.queryKey === queryKey
       ? snapshot.pagination
       : { page: 1, limit: ResultsPageSize, totalCount: 0, totalPages: 1 };
   const pageCount = Math.max(1, pagination.totalPages);
