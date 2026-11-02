@@ -12,12 +12,13 @@ function LocationProbe() {
 function renderPage(path: string, load = vi.fn(), save = vi.fn()) {
   const memberGateway = {
     loadCandidates: vi.fn().mockResolvedValue({
-      classrooms: [{ id: 1, name: "HAL1A" }],
+      teams: [{ id: 10, name: "青チーム", classCodes: ["HAL1A"] }],
       students: [
         {
           id: 10,
           userId: 1001,
           name: "山田 太郎",
+          teamId: 10,
           classroomId: 1,
           attendanceNumber: 1,
           studentNumber: "2026001",
@@ -83,12 +84,13 @@ function renderPageInEventDetail(reload: () => void) {
   };
   const memberGateway = {
     loadCandidates: vi.fn().mockResolvedValue({
-      classrooms: [{ id: 1, code: "HAL1A", name: "1年Aクラス" }],
+      teams: [{ id: 10, name: "青チーム", classCodes: ["HAL1A"] }],
       students: [
         {
           id: 10,
           userId: 1001,
           name: "山田 太郎",
+          teamId: 10,
           classroomId: 1,
           attendanceNumber: 1,
           studentNumber: "2026001",
@@ -177,7 +179,7 @@ describe("EventGatheringSettingsPage", () => {
     await user.click(
       within(round).getByRole("button", { name: "メンバーを選択" })
     );
-    await user.click(await screen.findByLabelText("山田 太郎を選択"));
+    await user.click(await screen.findByLabelText("青チームを選択"));
     await user.click(screen.getByRole("button", { name: "選択を確定" }));
     expect(screen.getByText("1人選択中")).toBeInTheDocument();
     expect(memberGateway.saveMembers).not.toHaveBeenCalled();
@@ -277,7 +279,7 @@ describe("EventGatheringSettingsPage", () => {
     await user.click(
       await screen.findByRole("button", { name: "メンバーを選択" })
     );
-    await user.click(await screen.findByLabelText("山田 太郎を選択"));
+    await user.click(await screen.findByLabelText("青チームを選択"));
     await user.click(screen.getByRole("button", { name: "参加者を保存" }));
 
     await waitFor(() =>

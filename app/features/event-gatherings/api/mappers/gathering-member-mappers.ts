@@ -1,31 +1,33 @@
 import type {
-  ClassroomResponseDto,
   GatheringMemberResponseDto,
   ReplaceGatheringMembersRequestDto,
   StudentResponseDto,
+  TeamResponseDto,
   TeacherResponseDto,
 } from "~/features/event-gatherings/api/dto/gathering-member-api-dto";
 import type {
-  MemberClassroom,
   MemberNonStudent,
   MemberStudent,
+  MemberTeam,
 } from "~/features/event-gatherings/model/gathering-member-candidate";
 
-export function toMemberClassroom(
-  response: ClassroomResponseDto
-): MemberClassroom {
+export function toMemberTeam(response: TeamResponseDto): MemberTeam {
   return {
-    id: response.class_room_id,
-    code: response.class_code,
-    name: response.class_name,
+    id: response.team_id,
+    name: response.team_name,
+    classCodes: response.registered_classes,
   };
 }
 
-export function toMemberStudent(response: StudentResponseDto): MemberStudent {
+export function toMemberStudent(
+  response: StudentResponseDto,
+  teamId: number | null
+): MemberStudent {
   return {
     id: response.student_id,
     userId: response.user_id,
     name: response.display_name,
+    teamId,
     classroomId: response.class_room?.class_room_id ?? null,
     attendanceNumber: response.attendance_number,
     studentNumber: response.student_id_number,

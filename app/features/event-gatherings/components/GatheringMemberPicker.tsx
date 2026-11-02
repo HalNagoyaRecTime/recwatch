@@ -4,19 +4,20 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "~/components/ui/button/Button";
 import { SearchField } from "~/components/ui/form/SearchField";
 
+import { GatheringNonStudentMembers } from "~/features/event-gatherings/components/GatheringNonStudentMembers";
 import { MAX_GATHERING_MEMBERS } from "~/features/event-gatherings/model/event-gathering-settings";
 import type {
   GatheringMemberCandidates,
   MemberNonStudent,
 } from "~/features/event-gatherings/model/gathering-member-candidate";
-import { GatheringInactiveStudentMembers } from "./GatheringInactiveStudentMembers";
-import { GatheringNonStudentMembers } from "./GatheringNonStudentMembers";
+import {
+  getTeamSelection,
+  updateSelectedTeamMembers,
+} from "~/features/event-gatherings/model/gathering-team-selection";
 
 type GatheringMemberPickerProps = {
   candidates: GatheringMemberCandidates | null;
-  /**
-   * 開いた時点で登録済みだった参加者。候補表にいない参加者の表示判定に使う。
-   */
+  /** 開いた時点で登録済みだった参加者。停止中の学生を再選択できる状態の維持に使う。 */
   initialUserIds: readonly number[];
   /** 候補または登録済み参加者の読み込み中。どちらかが終わるまで一覧は出さない。 */
   isLoading: boolean;
@@ -30,11 +31,9 @@ type GatheringMemberPickerProps = {
   selectedUserIds: readonly number[];
 };
 
-const ALL_CLASSROOMS = "all";
-
 /**
- * 集合 1 件の参加者を選ぶ。選択状態と保存は呼び出し元が持ち、ここでは候補の絞り込みと
- * チェックの切り替え、保存・キャンセルの操作だけを扱う。
+ * 集合1件の参加対象をチーム単位で選ぶ。
+ * 選択状態と保存は呼び出し元が持ち、ここでは候補の検索とチーム全員の切り替えを扱う。
  */
 export function GatheringMemberPicker({
   candidates,
@@ -49,14 +48,11 @@ export function GatheringMemberPicker({
   saveError,
   selectedUserIds,
 }: GatheringMemberPickerProps) {
-  const [classroomId, setClassroomId] = useState(ALL_CLASSROOMS);
   const [query, setQuery] = useState("");
   const rootRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
-  // 一覧が下に続いているときだけ、下端にフェードを出して続きがあることを示す
   const [hasMoreBelow, setHasMoreBelow] = useState(false);
 
-  // モーダルの下の方で開くと見切れるため、開いた直後に自分が見える位置まで送る
   useEffect(() => {
     const root = rootRef.current;
     if (root && typeof root.scrollIntoView === "function") {
@@ -64,104 +60,94 @@ export function GatheringMemberPicker({
     }
   }, []);
 
-  const classroomNames = useMemo(
-    () =>
-      new Map(
-        (candidates?.classrooms ?? []).map((classroom) => [
-          classroom.id,
-          classroom.name,
-        ])
-      ),
-    [candidates]
-  );
-
-  const classroomCodes = useMemo(
-    () =>
-      new Map(
-        (candidates?.classrooms ?? []).map((classroom) => [
-          classroom.id,
-          classroom.code,
-        ])
-      ),
-    [candidates]
-  );
-
-  const visibleStudents = useMemo(() => {
-    const students = candidates?.students ?? [];
+  const visibleTeams = useMemo(() => {
     const keyword = query.trim().toLowerCase();
-    return students.filter((student) => {
-      if (!student.isLiveActive) return false;
-      if (
-        classroomId !== ALL_CLASSROOMS &&
-        String(student.classroomId) !== classroomId
-      ) {
-        return false;
-      }
-      if (!keyword) return true;
-      const classroomName =
-        student.classroomId === null
-          ? ""
-          : (classroomNames.get(student.classroomId) ?? "");
-      const classroomCode =
-        student.classroomId === null
-          ? ""
-          : (classroomCodes.get(student.classroomId) ?? "");
-      return [
-        student.name,
-        student.studentNumber,
-        classroomCode,
-        classroomName,
-      ].some((value) => value.toLowerCase().includes(keyword));
-    });
-  }, [candidates, classroomCodes, classroomId, classroomNames, query]);
+    return (candidates?.teams ?? []).filter(
+      (team) =>
+        !keyword ||
+        team.name.toLowerCase().includes(keyword) ||
+        team.classCodes.some((classCode) =>
+          classCode.toLowerCase().includes(keyword)
+        )
+    );
+  }, [candidates, query]);
 
-  // 開いた時点の登録内容で固定し、解除した学生も保存までは付け直せるようにする。
-  const inactiveStudentMembers = useMemo(
+  const selectionsByTeamId = useMemo(
     () =>
-      (candidates?.students ?? []).filter(
-        (student) =>
-          !student.isLiveActive && initialUserIds.includes(student.userId)
+      new Map(
+        (candidates?.teams ?? []).map((team) => [
+          team.id,
+          getTeamSelection(
+            team.id,
+            candidates?.students ?? [],
+            selectedUserIds
+          ),
+        ])
       ),
-    [candidates, initialUserIds]
+    [candidates, selectedUserIds]
   );
 
-  // 候補の表に行が無い登録済みの参加者。開いた時点の登録内容で判定し、
-  // チェックを外しても別枠から消えず付け直せるようにする。
-  const nonStudentMembers = useMemo(() => {
+  const selectedTeamCount = Array.from(selectionsByTeamId.values()).filter(
+    (selection) =>
+      selection.totalCount > 0 &&
+      selection.selectedCount === selection.totalCount
+  ).length;
+
+  // チームに紐付かない登録済み学生と学生以外の参加者は、既存設定から消さないよう別枠に出す。
+  const otherMembers = useMemo(() => {
     const named: MemberNonStudent[] = [];
     let unnamedCount = 0;
     if (!candidates) return { named, unnamedCount };
 
-    const studentUserIds = new Set(
-      candidates.students.map((student) => student.userId)
+    const teams = new Set(candidates.teams.map((team) => team.id));
+    const students = new Map(
+      candidates.students.map((student) => [student.userId, student])
     );
+
     for (const userId of initialUserIds) {
-      if (studentUserIds.has(userId)) continue;
-      const member = candidates.nonStudents.get(userId);
-      if (member === undefined) {
-        unnamedCount += 1;
-      } else {
-        named.push(member);
+      const student = students.get(userId);
+      if (student) {
+        if (
+          student.isLiveActive &&
+          student.teamId !== null &&
+          teams.has(student.teamId)
+        ) {
+          continue;
+        }
+        named.push({
+          userId,
+          name: student.name,
+          isLiveActive: student.isLiveActive,
+        });
+        continue;
       }
+
+      const member = candidates.nonStudents.get(userId);
+      if (member) named.push(member);
+      else unnamedCount += 1;
     }
     return { named, unnamedCount };
   }, [candidates, initialUserIds]);
 
-  // 絞り込みで行数が変わるたびに、続きがあるかを取り直す
   useEffect(() => {
     setHasMoreBelow(hasScrollBelow(listRef.current));
-  }, [visibleStudents]);
+  }, [visibleTeams]);
 
-  // 一括選択で上限を超えることがあるため、黙って打ち切らず保存の手前で止める。
   const isOverLimit = selectedUserIds.length > MAX_GATHERING_MEMBERS;
 
-  const isAllVisibleSelected =
-    visibleStudents.length > 0 &&
-    visibleStudents.every((student) =>
-      selectedUserIds.includes(student.userId)
+  function toggleTeam(teamId: number) {
+    const selection = selectionsByTeamId.get(teamId);
+    if (!selection || selection.totalCount === 0) return;
+    onChange(
+      updateSelectedTeamMembers(
+        selectedUserIds,
+        selection.userIds,
+        selection.selectedCount < selection.totalCount
+      )
     );
+  }
 
-  function toggle(userId: number) {
+  function toggleOtherMember(userId: number) {
     onChange(
       selectedUserIds.includes(userId)
         ? selectedUserIds.filter((id) => id !== userId)
@@ -169,64 +155,24 @@ export function GatheringMemberPicker({
     );
   }
 
-  function toggleAllVisible() {
-    const visibleIds = visibleStudents.map((student) => student.userId);
-    if (isAllVisibleSelected) {
-      onChange(selectedUserIds.filter((id) => !visibleIds.includes(id)));
-      return;
-    }
-    onChange([
-      ...selectedUserIds,
-      ...visibleIds.filter((id) => !selectedUserIds.includes(id)),
-    ]);
-  }
-
   return (
     <div
       className="border-border-subtle bg-surface-muted app-rounded space-y-3 border p-3"
       ref={rootRef}
     >
-      <div className="flex flex-wrap items-center gap-3">
-        {/* モーダル内では共有 Select のプルダウンが枠をはみ出すため、既存モーダルと同じネイティブ select を使う */}
-        <select
-          aria-label="クラスで絞り込み"
-          className="app-rounded border-border-base bg-surface-base text-text-base focus:border-border-strong h-9 w-48 shrink-0 border px-3 text-sm outline-none disabled:opacity-50"
-          disabled={!candidates}
-          onChange={(event) => setClassroomId(event.currentTarget.value)}
-          value={classroomId}
-        >
-          <option value={ALL_CLASSROOMS}>すべてのクラス</option>
-          {(candidates?.classrooms ?? []).map((classroom) => (
-            <option key={classroom.id} value={classroom.id}>
-              {classroom.code}
-            </option>
-          ))}
-        </select>
-        <div className="min-w-56 flex-1">
-          <SearchField
-            ariaLabel="参加者を検索"
-            onValueChange={setQuery}
-            placeholder="名前・学籍番号・クラスで検索"
-            value={query}
-          />
-        </div>
-        <Button
-          disabled={visibleStudents.length === 0}
-          onClick={toggleAllVisible}
-          size="sm"
-          type="button"
-          variant="secondary"
-        >
-          {isAllVisibleSelected ? "表示中の選択を解除" : "表示中の全員を選択"}
-        </Button>
-      </div>
+      <SearchField
+        ariaLabel="参加するチームを検索"
+        onValueChange={setQuery}
+        placeholder="チーム名・クラスコードで検索"
+        value={query}
+      />
 
       {loadError ? (
         <p className="text-tone-danger-text text-sm" role="alert">
           {loadError}
         </p>
       ) : isLoading || !candidates ? (
-        <p className="text-text-muted text-sm">参加者を読み込み中...</p>
+        <p className="text-text-muted text-sm">参加対象を読み込み中...</p>
       ) : (
         <div className="relative">
           <div
@@ -236,10 +182,8 @@ export function GatheringMemberPicker({
             }
             ref={listRef}
           >
-            {/* 共有 DataTable は内部に横スクロール領域を持ち、モーダル内では 1px の溢れで
-                横スクロールバーが出るため、リサイズ不要のここでは素の table で描画する */}
             <table
-              aria-label="参加者候補の学生一覧"
+              aria-label="参加対象のチーム一覧"
               className="border-border-base bg-surface-base app-rounded w-full table-fixed border text-sm"
             >
               <thead className="text-text-muted">
@@ -251,60 +195,82 @@ export function GatheringMemberPicker({
                     選択
                   </th>
                   <th className="px-3 py-2.5 text-left font-normal" scope="col">
-                    氏名
+                    チーム名
                   </th>
                   <th
-                    className="w-32 px-3 py-2.5 text-left font-normal"
+                    className="w-64 px-3 py-2.5 text-left font-normal"
                     scope="col"
                   >
-                    クラス
+                    所属クラス
                   </th>
                   <th
-                    className="w-36 px-3 py-2.5 text-left font-normal"
+                    className="w-32 px-3 py-2.5 text-right font-normal"
                     scope="col"
                   >
-                    学籍番号
+                    対象者
                   </th>
                 </tr>
               </thead>
               <tbody>
-                {visibleStudents.length === 0 ? (
+                {visibleTeams.length === 0 ? (
                   <tr>
                     <td
                       className="text-text-muted px-3 py-8 text-center"
                       colSpan={4}
                     >
-                      条件に一致する学生がいません
+                      条件に一致するチームがありません
                     </td>
                   </tr>
                 ) : (
-                  visibleStudents.map((student) => (
-                    <tr
-                      key={student.id}
-                      className="border-border-subtle border-b last:border-b-0"
-                    >
-                      <td className="py-2 text-center">
-                        <input
-                          aria-label={`${student.name}を選択`}
-                          checked={selectedUserIds.includes(student.userId)}
-                          className="accent-brand-primary size-4 align-middle"
-                          onChange={() => toggle(student.userId)}
-                          type="checkbox"
-                        />
-                      </td>
-                      <td className="text-text-base truncate px-3 py-2 font-semibold">
-                        {student.name}
-                      </td>
-                      <td className="text-text-base truncate px-3 py-2">
-                        {student.classroomId === null
-                          ? "—"
-                          : (classroomNames.get(student.classroomId) ?? "—")}
-                      </td>
-                      <td className="text-text-base truncate px-3 py-2">
-                        {student.studentNumber}
-                      </td>
-                    </tr>
-                  ))
+                  visibleTeams.map((team) => {
+                    const selection = selectionsByTeamId.get(team.id) ?? {
+                      selectedCount: 0,
+                      totalCount: 0,
+                      userIds: [],
+                    };
+                    const isSelected =
+                      selection.totalCount > 0 &&
+                      selection.selectedCount === selection.totalCount;
+                    const isPartiallySelected =
+                      selection.selectedCount > 0 && !isSelected;
+
+                    return (
+                      <tr
+                        key={team.id}
+                        className="border-border-subtle border-b last:border-b-0"
+                      >
+                        <td className="py-2 text-center">
+                          <input
+                            aria-label={`${team.name}を選択`}
+                            checked={isSelected}
+                            className="accent-brand-primary size-4 align-middle disabled:opacity-50"
+                            disabled={selection.totalCount === 0}
+                            onChange={() => toggleTeam(team.id)}
+                            ref={(element) => {
+                              if (element) {
+                                element.indeterminate = isPartiallySelected;
+                              }
+                            }}
+                            type="checkbox"
+                          />
+                        </td>
+                        <td className="text-text-base truncate px-3 py-2 font-semibold">
+                          {team.name}
+                        </td>
+                        <td className="text-text-muted px-3 py-2">
+                          {team.classCodes.length > 0
+                            ? team.classCodes.join("、")
+                            : "—"}
+                        </td>
+                        <td className="text-text-base px-3 py-2 text-right">
+                          {selection.selectedCount > 0
+                            ? `${selection.selectedCount} / `
+                            : ""}
+                          {selection.totalCount}人
+                        </td>
+                      </tr>
+                    );
+                  })
                 )}
               </tbody>
             </table>
@@ -319,19 +285,12 @@ export function GatheringMemberPicker({
       )}
 
       {!loadError && !isLoading && candidates ? (
-        <>
-          <GatheringInactiveStudentMembers
-            members={inactiveStudentMembers}
-            onToggle={toggle}
-            selectedUserIds={selectedUserIds}
-          />
-          <GatheringNonStudentMembers
-            members={nonStudentMembers.named}
-            onToggle={toggle}
-            selectedUserIds={selectedUserIds}
-            unnamedCount={nonStudentMembers.unnamedCount}
-          />
-        </>
+        <GatheringNonStudentMembers
+          members={otherMembers.named}
+          onToggle={toggleOtherMember}
+          selectedUserIds={selectedUserIds}
+          unnamedCount={otherMembers.unnamedCount}
+        />
       ) : null}
 
       {isOverLimit ? (
@@ -350,10 +309,10 @@ export function GatheringMemberPicker({
 
       <div className="flex items-center justify-between gap-3">
         <p className="text-text-base text-sm">
-          {candidates ? `候補 ${visibleStudents.length}人を表示中` : ""}
+          {candidates ? `${visibleTeams.length}チームを表示中` : ""}
           {hasMoreBelow ? "（スクロールで続きを表示）" : ""}
           {candidates
-            ? ` ／ 選択中 ${selectedUserIds.length}人 / ${MAX_GATHERING_MEMBERS}人`
+            ? ` ／ 選択中 ${selectedTeamCount}チーム・${selectedUserIds.length}人 / ${MAX_GATHERING_MEMBERS}人`
             : ""}
         </p>
         <div className="flex items-center gap-2">
