@@ -305,8 +305,8 @@ describe("NotificationDetailPage", () => {
       screen.getByRole("combobox", { name: "送信結果で絞り込み" })
     ).toBeDisabled();
     expect(
-      screen.getByRole("combobox", { name: "対象指定で絞り込み" })
-    ).toBeDisabled();
+      screen.queryByRole("combobox", { name: "対象指定で絞り込み" })
+    ).not.toBeInTheDocument();
     expect(
       screen.getByText("検索・絞り込みは今後対応予定です。")
     ).toBeInTheDocument();
