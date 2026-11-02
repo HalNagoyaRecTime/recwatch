@@ -15,7 +15,6 @@ import type {
   AdminNotificationListResponse,
   AdminNotificationQueryApi,
 } from "~/features/notifications/api/contracts/admin-notification-query-api";
-import { toNotificationMonthRange } from "~/features/notifications/hooks/notification-calendar-range";
 import {
   adminNotificationDetailFixture,
   adminNotificationListFixture,
@@ -160,7 +159,7 @@ describe("NotificationListPage", () => {
     expect(screen.queryByText("通知101")).not.toBeInTheDocument();
   });
 
-  it("月範囲を1回取得し、複数Scheduleを日付ごとに詳細リンクとして配置する", async () => {
+  it("表示範囲を取得し、複数Scheduleを詳細リンクとして配置する", async () => {
     const list = vi.fn((query) => mockAdminNotificationQueryApi.list(query));
     const user = userEvent.setup();
     const month = new Date(2026, 10, 1);
@@ -169,27 +168,72 @@ describe("NotificationListPage", () => {
 
     await user.click(screen.getByRole("link", { name: "カレンダー" }));
 
+    expect(await screen.findByLabelText("通知カレンダー")).toBeInTheDocument();
     expect(
-      await screen.findByLabelText("2026年11月の通知カレンダー")
+      within(screen.getByRole("cell", { name: "2026年11月1日" })).getByText(
+        "1",
+        { exact: true }
+      )
     ).toBeInTheDocument();
     await waitFor(() =>
       expect(list).toHaveBeenCalledWith({
-        ...toNotificationMonthRange(month),
+        from: "2026-10-31T15:00:00.000Z",
+        to: "2026-12-05T14:59:59.999Z",
         page: 1,
         limit: 50,
       })
     );
-    const notificationLinks = screen.getAllByRole("link", {
-      name: /通知101の詳細を表示/,
-    });
-    expect(notificationLinks).toHaveLength(2);
-    expect(notificationLinks[0]).toHaveAttribute("href", "/notifications/101");
-    expect(screen.getByLabelText("11月7日")).toContainElement(
-      notificationLinks[0]
+    const notificationLabels = await screen.findAllByText(/通知101/);
+    expect(notificationLabels.length).toBeGreaterThanOrEqual(2);
+    expect(notificationLabels[0].closest("a")).toHaveAttribute(
+      "href",
+      "/notifications/101"
     );
-    expect(screen.getByLabelText("11月8日")).toContainElement(
-      notificationLinks[1]
+  });
+
+  it("カレンダーでは必要な絞り込みを表示する", async () => {
+    const user = userEvent.setup();
+    renderPage(createQueryApi());
+    await screen.findByText("通知101");
+    await user.click(screen.getByRole("link", { name: "カレンダー" }));
+
+    expect(
+      screen.getByRole("heading", { name: "通知カレンダー" })
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("searchbox", { name: "通知を検索" })
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: "配信モニター" })
+    ).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "カレンダー" })).toHaveAttribute(
+      "aria-current",
+      "page"
     );
+    expect(
+      screen.getByRole("combobox", { name: "配信状態" })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("combobox", { name: "通知の作成方法" })
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("navigation", { name: "通知の表示形式" })
+    ).not.toBeInTheDocument();
+  });
+
+  it("再読み込みでは表示中の期間を再取得する", async () => {
+    const list = vi.fn((query) => mockAdminNotificationQueryApi.list(query));
+    const user = userEvent.setup();
+    renderPage(createQueryApi(list));
+    await screen.findByText("通知101");
+    await user.click(screen.getByRole("link", { name: "カレンダー" }));
+    await waitFor(() => expect(list).toHaveBeenCalledTimes(2));
+    const currentRange = list.mock.calls[1][0];
+    await user.click(
+      screen.getByRole("button", { name: "カレンダーを再読み込み" })
+    );
+    await waitFor(() => expect(list).toHaveBeenCalledTimes(3));
+    expect(list.mock.calls[2][0]).toEqual(currentRange);
   });
 
   it("遅れて完了した前月Responseで表示を巻き戻さない", async () => {
@@ -216,8 +260,10 @@ describe("NotificationListPage", () => {
     await user.click(screen.getByRole("link", { name: "カレンダー" }));
     await waitFor(() => expect(list).toHaveBeenCalledTimes(2));
 
-    await user.click(screen.getByRole("button", { name: "次の月" }));
-    expect(await screen.findByText("12月の通知")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "次の期間" }));
+    expect((await screen.findAllByText(/12月の通知/)).length).toBeGreaterThan(
+      0
+    );
 
     const novemberItem = cloneFixture(adminNotificationListFixture.items[0]);
     novemberItem.content.push.title = "遅い11月の通知";
@@ -229,8 +275,31 @@ describe("NotificationListPage", () => {
       await novemberRequest;
     });
 
-    expect(screen.getByText("12月の通知")).toBeInTheDocument();
-    expect(screen.queryByText("遅い11月の通知")).not.toBeInTheDocument();
+    expect(screen.getAllByText(/12月の通知/).length).toBeGreaterThan(0);
+    expect(screen.queryByText(/遅い11月の通知/)).not.toBeInTheDocument();
+  });
+
+  it("週・日表示への切り替えに応じて表示期間を取得する", async () => {
+    const list = vi.fn((query) => mockAdminNotificationQueryApi.list(query));
+    const user = userEvent.setup();
+    renderPage(createQueryApi(list));
+    await screen.findByText("通知101");
+    await user.click(screen.getByRole("link", { name: "カレンダー" }));
+    await waitFor(() => expect(list).toHaveBeenCalledTimes(2));
+
+    await user.click(screen.getByRole("button", { name: "週" }));
+    await waitFor(() => expect(list).toHaveBeenCalledTimes(3));
+    const week = list.mock.calls[2][0];
+    expect(Date.parse(week.to!) - Date.parse(week.from!)).toBe(
+      7 * 24 * 60 * 60 * 1000 - 1
+    );
+
+    await user.click(screen.getByRole("button", { name: /^日$/ }));
+    await waitFor(() => expect(list).toHaveBeenCalledTimes(4));
+    const day = list.mock.calls[3][0];
+    expect(Date.parse(day.to!) - Date.parse(day.from!)).toBe(
+      24 * 60 * 60 * 1000 - 1
+    );
   });
 
   it("Calendarのemptyをloading・errorと同時に表示しない", async () => {
@@ -253,7 +322,7 @@ describe("NotificationListPage", () => {
       "カレンダーを読み込み中です"
     );
     expect(
-      screen.queryByText("この月に配信予定・配信済みの通知はありません")
+      screen.queryByText("この期間に表示する通知はありません")
     ).not.toBeInTheDocument();
 
     await act(async () => {
@@ -264,7 +333,7 @@ describe("NotificationListPage", () => {
       await calendarRequest;
     });
     expect(
-      screen.getByText("この月に配信予定・配信済みの通知はありません")
+      screen.getByText("この期間に表示する通知はありません")
     ).toBeInTheDocument();
     unmount();
 
@@ -280,7 +349,7 @@ describe("NotificationListPage", () => {
       "予期しないエラーが発生しました。"
     );
     expect(
-      screen.queryByText("この月に配信予定・配信済みの通知はありません")
+      screen.queryByText("この期間に表示する通知はありません")
     ).not.toBeInTheDocument();
   });
 

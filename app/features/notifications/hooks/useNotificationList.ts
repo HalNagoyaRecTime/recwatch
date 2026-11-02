@@ -31,6 +31,7 @@ import { getErrorMessage } from "~/lib/client-error";
 
 type UseNotificationListOptions = {
   calendarMonth?: Date;
+  calendarRange?: AdminNotificationListQuery;
   commandApi: AdminNotificationCommandApi;
   queryApi: AdminNotificationQueryApi;
   reportFeedback?: NotificationFeedbackReporter;
@@ -38,6 +39,7 @@ type UseNotificationListOptions = {
 
 export function useNotificationList({
   calendarMonth,
+  calendarRange,
   commandApi,
   queryApi,
   reportFeedback,
@@ -224,8 +226,10 @@ export function useNotificationList({
   );
 
   const activeCalendarRange = useMemo(
-    () => (calendarMonth ? toNotificationMonthRange(calendarMonth) : undefined),
-    [calendarMonth]
+    () =>
+      calendarRange ??
+      (calendarMonth ? toNotificationMonthRange(calendarMonth) : undefined),
+    [calendarMonth, calendarRange]
   );
   useEffect(() => {
     if (!activeCalendarRange) return;
@@ -263,7 +267,11 @@ export function useNotificationList({
   const pageCount = Math.max(1, Math.ceil(totalItems / pageSize));
   const validPage = Math.min(currentPage, pageCount);
   const calendarItems = useMemo(() => {
-    const calendarFilters = { ...filters, dateMode: "all" as const };
+    const calendarFilters = {
+      ...filters,
+      search: "",
+      dateMode: "all" as const,
+    };
     return filterNotificationList(
       calendarNotifications,
       creationMethod,

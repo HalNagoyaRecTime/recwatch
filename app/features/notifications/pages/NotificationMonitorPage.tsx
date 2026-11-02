@@ -125,6 +125,7 @@ export function NotificationMonitorPage(props: Props) {
           </div>
         }
       />
+      <NotificationManagementNavigation active="monitor" />
       {props.commandApi && schedule && (
         <NotificationMonitorActions
           schedule={schedule}
@@ -133,7 +134,6 @@ export function NotificationMonitorPage(props: Props) {
           disabled={state.isLoading}
         />
       )}
-      <NotificationManagementNavigation active="monitor" />
       <div
         className="monitor-view-switch"
         role="group"
