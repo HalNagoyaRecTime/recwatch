@@ -3,7 +3,7 @@ import { useNotificationResults } from "~/features/notifications/hooks/useNotifi
 import { NotificationResultsPanel } from "~/features/notifications/components/detail/NotificationResultsPanel";
 import { NotificationResultSidebar } from "~/features/notifications/components/detail/NotificationResultSidebar";
 import { MarkdownContent } from "~/components/ui/markdown/MarkdownContent";
-import { ChevronLeft, RefreshCw } from "lucide-react";
+import { ChevronLeft } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router";
 
@@ -21,10 +21,8 @@ import type {
 import { NotificationDeliveryDetailModal } from "~/features/notifications/components/detail/NotificationDeliveryDetailModal";
 import {
   formatCreation,
-  formatNotificationDetailDateTime,
   formatStop,
   importanceLabel,
-  scheduleStatusLabel,
 } from "~/features/notifications/components/detail/notification-detail-display";
 import { NotificationStatusBadge } from "~/features/notifications/components/list/NotificationStatusBadge";
 import type { AdminNotificationCommandApi } from "~/features/notifications/api/contracts/admin-notification-command-api";
@@ -147,12 +145,6 @@ export function NotificationDetailPage({
               {formatCreation(notification.creation)}
             </p>
           </div>
-          <Button
-            aria-label="通知詳細を再読み込み"
-            icon={RefreshCw}
-            iconOnly
-            onClick={() => void state.loadNotification()}
-          />
         </div>
       </div>
 
@@ -229,34 +221,46 @@ export function NotificationDetailPage({
         onSelect={selectSchedule}
       />
 
-      {tab === "overview" ? (
-        <OverviewTab notification={notification} schedule={selectedSchedule} />
-      ) : tab === "schedule" ? (
-        <ScheduleTab
-          detail={state.schedule.data}
-          errorMessage={state.schedule.errorMessage}
-          isLoading={state.schedule.isLoading}
-          onRetry={() => void state.loadSchedule()}
-          schedule={selectedSchedule}
-        />
-      ) : (
-        <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,1fr)_300px]">
-          <NotificationResultsPanel
-            recipientResolved={
-              selectedSchedule?.audience.recipientResolution.status ===
-              "resolved"
-            }
-            key={state.selectedScheduleId}
-            state={results}
-            onOpenDelivery={(id) => void state.openDelivery(id)}
-          />
-          <NotificationResultSidebar
-            notification={notification}
-            selected={selectedSchedule}
-            onSelect={selectSchedule}
-          />
+      <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
+        <div className="min-w-0">
+          {tab === "overview" ? (
+            <OverviewTab
+              notification={notification}
+              schedule={selectedSchedule}
+              detail={state.schedule.data}
+              isLoading={state.schedule.isLoading}
+              errorMessage={state.schedule.errorMessage}
+            />
+          ) : tab === "schedule" ? (
+            <ScheduleTab
+              detail={state.schedule.data}
+              errorMessage={state.schedule.errorMessage}
+              isLoading={state.schedule.isLoading}
+              onRetry={() => void state.loadSchedule()}
+              schedule={selectedSchedule}
+            />
+          ) : (
+            <NotificationResultsPanel
+              recipientResolved={
+                selectedSchedule?.audience.recipientResolution.status ===
+                "resolved"
+              }
+              key={state.selectedScheduleId}
+              state={results}
+              onOpenDelivery={(id) => void state.openDelivery(id)}
+            />
+          )}
         </div>
-      )}
+        <NotificationResultSidebar
+          notification={notification}
+          selected={selectedSchedule}
+          scheduleDetail={state.schedule.data}
+          scheduleLoading={state.schedule.isLoading}
+          scheduleError={state.schedule.errorMessage}
+          onSelect={selectSchedule}
+          onRetrySchedule={() => void state.loadSchedule()}
+        />
+      </div>
 
       {state.selectedDeliveryId !== null ? (
         <NotificationDeliveryDetailModal
@@ -274,117 +278,135 @@ export function NotificationDetailPage({
 function OverviewTab({
   notification,
   schedule,
+  detail,
+  isLoading,
+  errorMessage,
 }: {
   notification: AdminNotificationDetail;
   schedule: NotificationScheduleSummary | null;
+  detail: NotificationScheduleDetail | null;
+  isLoading: boolean;
+  errorMessage: string | null;
 }) {
   return (
-    <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
-      <div className="flex min-w-0 flex-col gap-4">
-        <Card
-          title="通知内容"
-          description="スマートフォンのアプリに表示される内容と詳細情報"
-        >
-          <div className="grid gap-3 md:grid-cols-2">
-            <ContentBox
-              label="プッシュ通知のタイトル"
-              value={notification.content.push.title}
-            />
-            <ContentBox
-              label="プッシュ通知の本文"
-              value={notification.content.push.body}
-            />
-          </div>
+    <div className="flex flex-col gap-4">
+      <Card
+        title="通知内容"
+        description="スマートフォンのアプリに表示される内容と詳細情報"
+      >
+        <div className="grid gap-3 md:grid-cols-2">
           <ContentBox
-            label="通知詳細"
-            title={notification.content.detail.title}
-            value={notification.content.detail.body}
-            markdown
+            label="プッシュ通知のタイトル"
+            value={notification.content.push.title}
           />
-        </Card>
-        {schedule ? <RecipientSummary schedule={schedule} /> : null}
-      </div>
-      <div className="flex flex-col gap-4">
-        {schedule ? (
-          <Card title="配信予約">
-            <Definition
-              label="配信予約番号"
-              value={`#${schedule.notificationScheduleId}`}
-            />
-            <Definition
-              label="配信予定"
-              value={formatNotificationDetailDateTime(schedule.sendAt)}
-            />
-            <Definition
-              label="状態"
-              value={scheduleStatusLabel[schedule.status]}
-            />
-            <Definition
-              label="予約者"
-              value={
-                schedule.scheduledBy?.userName ?? "不明（削除済みの可能性あり）"
-              }
-            />
-            <Definition
-              label="配信対象の確定"
-              value={`${schedule.audience.recipientResolution.resolvedCount}件・${schedule.audience.recipientResolution.status === "resolved" ? "確定済み" : "確定待ち"}`}
-            />
-            <Definition
-              label="作成日時"
-              value={formatNotificationDetailDateTime(schedule.createdAt)}
-            />
-            <Definition label="停止" value={formatStop(schedule.stop)} />
-          </Card>
-        ) : null}
-        <Card title="通知情報">
-          <Definition
-            label="作成"
-            value={formatCreation(notification.creation)}
+          <ContentBox
+            label="プッシュ通知の本文"
+            value={notification.content.push.body}
           />
-          <Definition
-            label="作成日時"
-            value={formatNotificationDetailDateTime(notification.createdAt)}
-          />
-          <Definition
-            label="更新日時"
-            value={formatNotificationDetailDateTime(notification.updatedAt)}
-          />
-        </Card>
-      </div>
+        </div>
+        <ContentBox
+          label="通知タイトル"
+          value={notification.content.detail.title}
+        />
+        <ContentBox
+          label="通知詳細"
+          value={notification.content.detail.body}
+          markdown
+        />
+      </Card>
+      <DeliverySummary
+        schedule={schedule}
+        detail={detail}
+        isLoading={isLoading}
+        errorMessage={errorMessage}
+      />
     </div>
   );
 }
 
-function RecipientSummary({
+function DeliverySummary({
   schedule,
+  detail,
+  isLoading,
+  errorMessage,
 }: {
-  schedule: NotificationScheduleSummary;
+  schedule: NotificationScheduleSummary | null;
+  detail: NotificationScheduleDetail | null;
+  isLoading: boolean;
+  errorMessage: string | null;
 }) {
-  const summary = schedule.recipientPushSummary;
+  const resolved = schedule?.audience.recipientResolution.status === "resolved";
+  const summary = schedule?.recipientPushSummary;
+  const delivery =
+    !isLoading &&
+    !errorMessage &&
+    detail?.notificationScheduleId === schedule?.notificationScheduleId
+      ? detail?.deliveryProgress
+      : null;
+  const recipientCount = (value: number | undefined) =>
+    resolved && value !== undefined ? value.toLocaleString() : "未確定";
+  const deliveryCount = (value: number | undefined) =>
+    value === undefined ? "—" : value.toLocaleString();
+  const items = [
+    [
+      "確定した対象者",
+      recipientCount(schedule?.audience.recipientResolution.resolvedCount),
+      "ユーザー単位",
+    ],
+    [
+      "Push 成功ユーザー",
+      recipientCount(summary?.successCount),
+      "1 送信先以上で FCM 受付",
+    ],
+    [
+      "Push 未成功ユーザー",
+      recipientCount(summary?.failedCount),
+      "送信待ち・再送待ちを含む",
+    ],
+    [
+      "送信先なしユーザー",
+      recipientCount(summary?.noPushTargetCount),
+      "Push 配送記録なし",
+    ],
+    ["Push 送信先", deliveryCount(delivery?.totalCount), "送信先単位"],
+    ["FCM 受付成功", deliveryCount(delivery?.sentCount), "送信先単位"],
+    ["送信失敗", deliveryCount(delivery?.failedCount), "送信先単位"],
+    ["再送待ち", deliveryCount(delivery?.retryWaitCount), "送信先単位"],
+  ];
   return (
     <Card
-      title="通知対象者の集計"
-      description="通知対象者ごとの集計です。プッシュ通知の配信件数とは別の集計です"
+      title="配信サマリー"
+      description="ユーザー単位と Push 送信先単位を分けて表示"
     >
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <Metric label="通知対象者数" value={summary.totalCount} />
-        <Metric label="送信受付済みの人数" value={summary.successCount} />
-        <Metric label="送信未成功の人数" value={summary.failedCount} />
-        <Metric label="通知先端末なし" value={summary.noPushTargetCount} />
-      </div>
-      <div className="border-border-subtle mt-4 border-t pt-4">
-        <p className="text-text-muted mb-2 text-xs font-medium">配信対象</p>
-        <div className="flex flex-wrap gap-2">
-          {schedule.audience.items.map((item, index) => (
-            <span
-              className="bg-surface-muted text-text-base rounded-full px-3 py-1 text-sm"
-              key={`${item.type}-${"targetId" in item ? item.targetId : index}`}
-            >
-              {formatAudience(item)}
-            </span>
-          ))}
-        </div>
-      </div>
+      {!schedule ? (
+        <p className="text-text-muted text-sm">配信回がありません。</p>
+      ) : (
+        <>
+          {isLoading ? (
+            <p className="text-text-muted text-xs" role="status">
+              送信先の集計を読み込み中です
+            </p>
+          ) : errorMessage ? (
+            <p className="text-tone-danger-text text-xs">
+              送信先の集計を取得できませんでした。右側から再試行できます。
+            </p>
+          ) : null}
+          <dl className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+            {items.map(([label, value, description]) => (
+              <div
+                key={label}
+                className="border-border-subtle app-rounded min-w-0 border px-4 py-3"
+              >
+                <dt className="text-text-muted text-xs">{label}</dt>
+                <dd className="text-text-base mt-1 text-2xl font-bold">
+                  {value}
+                </dd>
+                <p className="text-text-muted mt-1 text-xs">{description}</p>
+              </div>
+            ))}
+          </dl>
+        </>
+      )}
     </Card>
   );
 }
@@ -486,19 +508,16 @@ function Card({
 function ContentBox({
   label,
   value,
-  title,
   markdown = false,
 }: {
   label: string;
   value: string;
-  title?: string;
   markdown?: boolean;
 }) {
   return (
     <div className="border-border-subtle bg-surface-muted app-rounded border px-4 py-3">
       <p className="text-text-muted text-xs">{label}</p>
       <div className="text-text-base mt-1 font-medium whitespace-pre-wrap">
-        {title ? <p>{title}</p> : null}
         {markdown ? <MarkdownContent content={value} /> : value}
       </div>
     </div>
@@ -583,17 +602,4 @@ function SectionState({
       {action}
     </div>
   );
-}
-
-function formatAudience(
-  item: NotificationScheduleSummary["audience"]["items"][number]
-) {
-  if (item.type === "all") return "全員";
-  const type = {
-    class_room: "クラス",
-    gathering: "集合",
-    event: "イベント",
-    user: "個人",
-  }[item.type];
-  return `${type}: ${item.label ?? "削除済み"}`;
 }
