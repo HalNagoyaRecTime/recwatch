@@ -259,6 +259,17 @@ describe("notification v2 contract", () => {
     ).toEqual({ notificationId: 108, notificationScheduleId: 501 });
   });
 
+  it("通知一覧はページ情報が追加されても受け付け、itemsは検証する", () => {
+    const response = {
+      ...adminNotificationListFixture,
+      pagination: { page: 1, limit: 50, totalCount: 51, totalPages: 2 },
+    };
+    expect(parseAdminNotificationListResponse(response)).toEqual(response);
+    expect(() =>
+      parseAdminNotificationListResponse({ ...response, items: null })
+    ).toThrow(ClientError);
+  });
+
   it("旧statusと旧Audienceを拒否する", () => {
     expect(() =>
       parseAdminNotificationListResponse({
