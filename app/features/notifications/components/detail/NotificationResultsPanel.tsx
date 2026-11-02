@@ -121,7 +121,7 @@ export function NotificationResultsPanel({
           <div className="min-w-56 flex-1">
             <SearchField
               ariaLabel="対象者を検索"
-              placeholder="ユーザー名・User ID・対象指定を検索"
+              placeholder="ユーザー名・User IDを検索"
               disabled
               value={state.filters.search}
               onValueChange={(search) =>
@@ -143,13 +143,6 @@ export function NotificationResultsPanel({
                 label,
               })),
             ]}
-          />
-          <Select
-            ariaLabel="対象指定で絞り込み"
-            disabled
-            value="all"
-            onValueChange={() => {}}
-            options={[{ value: "all", label: "すべての対象指定" }]}
           />
         </div>
         <p className="text-text-muted text-xs">
