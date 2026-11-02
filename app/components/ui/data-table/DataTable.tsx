@@ -1,4 +1,4 @@
-import type { CSSProperties } from "react";
+import { Fragment, type CSSProperties } from "react";
 
 import { LayeredPanel } from "~/components/ui/panel/LayeredPanel";
 import { DataTableHeader } from "~/components/ui/data-table/DataTableHeader";
@@ -23,6 +23,7 @@ export function DataTable<T>({
   getRowKey,
   items,
   onSortChange,
+  renderExpandedRow,
   sort,
   rowSizing = "fixed",
 }: DataTableProps<T>) {
@@ -93,14 +94,16 @@ export function DataTable<T>({
             </div>
           ) : (
             items.map((item) => (
-              <DataTableRow
-                key={getRowKey(item)}
-                mainColumns={mainColumns}
-                rightColumns={rightColumns}
-                endColumns={endColumns}
-                item={item}
-                rowSizing={rowSizing}
-              />
+              <Fragment key={getRowKey(item)}>
+                <DataTableRow
+                  mainColumns={mainColumns}
+                  rightColumns={rightColumns}
+                  endColumns={endColumns}
+                  item={item}
+                  rowSizing={rowSizing}
+                />
+                {renderExpandedRow?.(item)}
+              </Fragment>
             ))
           )}
         </div>

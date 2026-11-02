@@ -47,6 +47,7 @@ export type DataTableProps<T> = {
   getRowKey: (item: T) => Key;
   items: readonly T[];
   onSortChange?: (columnId: string) => void;
+  renderExpandedRow?: (item: T) => ReactNode;
   sort?: DataTableSort;
   rowSizing?: "fixed" | "content";
 };
