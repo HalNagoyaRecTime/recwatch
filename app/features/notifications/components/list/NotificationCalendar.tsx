@@ -21,6 +21,7 @@ import { useRef, useState, type ReactNode } from "react";
 import { Link } from "react-router";
 
 import { Button } from "~/components/ui/button/Button";
+import { ScrollbarArea } from "~/components/ui/scrollbar/ScrollbarArea";
 import type {
   AdminNotificationListItem,
   AdminNotificationListQuery,
@@ -188,8 +189,10 @@ export function NotificationCalendar({
       </div>
       <div className="mt-4 grid items-start gap-4 min-[851px]:grid-cols-[minmax(0,1fr)_280px]">
         <div
-          className="border-border-base bg-surface-base relative overflow-hidden rounded-xl border max-[850px]:overflow-x-auto"
+          className="border-border-base bg-surface-base relative overflow-hidden rounded-xl border"
           aria-busy={isLoading}
+          role="region"
+          aria-label="カレンダー表示領域"
         >
           {isLoading && (
             <div
@@ -205,38 +208,40 @@ export function NotificationCalendar({
               カレンダーを読み込み中です
             </div>
           )}
-          <FullCalendar
-            ref={calendarRef}
-            className="text-[0.78rem] max-[850px]:min-w-[650px]"
-            plugins={plugins}
-            initialView="dayGridMonth"
-            initialDate={month}
-            locale={jaLocale}
-            timeZone="Asia/Tokyo"
-            headerToolbar={false}
-            datesSet={onDatesSet}
-            events={events}
-            eventContent={eventContent}
-            eventClass="!border !border-border-base !rounded-[0.4rem] !bg-surface-base !text-text-base"
-            dayCellClass="min-h-[145px]"
-            dayHeaderClass="!bg-surface-muted !text-text-muted !font-semibold"
-            dayCellTopClass="!justify-start !p-[0.4rem] !text-text-muted !font-semibold"
-            dayCellTopContent={(info) => (
-              <span
-                className={
-                  info.isToday
-                    ? "bg-text-base text-surface-base inline-grid h-6 min-w-6 place-items-center rounded-full"
-                    : undefined
-                }
-              >
-                {info.dayNumberText.replace(/日$/, "")}
-              </span>
-            )}
-            dayMaxEvents={4}
-            height="auto"
-            fixedWeekCount={false}
-            firstDay={0}
-          />
+          <ScrollbarArea orientation="horizontal" scrollTabIndex={0}>
+            <FullCalendar
+              ref={calendarRef}
+              className="text-[0.78rem] max-[850px]:min-w-[650px]"
+              plugins={plugins}
+              initialView="dayGridMonth"
+              initialDate={month}
+              locale={jaLocale}
+              timeZone="Asia/Tokyo"
+              headerToolbar={false}
+              datesSet={onDatesSet}
+              events={events}
+              eventContent={eventContent}
+              eventClass="!border !border-border-base !rounded-[0.4rem] !bg-surface-base !text-text-base"
+              dayCellClass="min-h-[145px]"
+              dayHeaderClass="!bg-surface-muted !text-text-muted !font-semibold"
+              dayCellTopClass="!justify-start !p-[0.4rem] !text-text-muted !font-semibold"
+              dayCellTopContent={(info) => (
+                <span
+                  className={
+                    info.isToday
+                      ? "bg-text-base text-surface-base inline-grid h-6 min-w-6 place-items-center rounded-full"
+                      : undefined
+                  }
+                >
+                  {info.dayNumberText.replace(/日$/, "")}
+                </span>
+              )}
+              dayMaxEvents={4}
+              height="auto"
+              fixedWeekCount={false}
+              firstDay={0}
+            />
+          </ScrollbarArea>
           {showEmptyState && entries.length === 0 ? (
             <p className="text-text-muted p-4 text-center text-sm">
               この期間に表示する通知はありません
@@ -282,45 +287,53 @@ export function NotificationCalendar({
                     </div>
                   ))}
                 </div>
-                <div
-                  className="flex max-h-80 flex-col gap-4 overflow-y-auto overscroll-contain"
-                  role="region"
-                  aria-label="本日の配信一覧"
-                  tabIndex={0}
-                >
-                  {todayEntries.length ? (
-                    todayEntries.map(({ notification, schedule }) => (
-                      <Link
-                        key={schedule.notificationScheduleId}
-                        to={`/notifications/${notification.notificationId}`}
-                        className="flex items-baseline gap-2 text-xs"
-                      >
-                        <time className="text-text-muted">
-                          {formatNotificationTime(schedule.sendAt)}
-                        </time>
-                        <i
-                          className="inline-block size-2 shrink-0 rounded-full"
-                          style={{ backgroundColor: colors[schedule.status] }}
-                        />
-                        <span>
-                          <strong className="block">
-                            {notification.content.push.title}
-                          </strong>
-                          <small className="text-text-muted block text-[0.65rem]">
-                            {notificationScheduleStatusLabels[schedule.status]}
-                            ・
-                            {notification.creation.method === "manual"
-                              ? "手動"
-                              : "自動"}
-                          </small>
-                        </span>
-                      </Link>
-                    ))
-                  ) : (
-                    <p className="text-text-muted mt-[0.3rem] text-xs">
-                      本日の配信はありません
-                    </p>
-                  )}
+                <div role="region" aria-label="本日の配信一覧">
+                  <ScrollbarArea
+                    className="max-h-80 overscroll-contain"
+                    scrollTabIndex={0}
+                  >
+                    <div className="flex flex-col gap-4">
+                      {todayEntries.length ? (
+                        todayEntries.map(({ notification, schedule }) => (
+                          <Link
+                            key={schedule.notificationScheduleId}
+                            to={`/notifications/${notification.notificationId}`}
+                            className="flex items-baseline gap-2 text-xs"
+                          >
+                            <time className="text-text-muted">
+                              {formatNotificationTime(schedule.sendAt)}
+                            </time>
+                            <i
+                              className="inline-block size-2 shrink-0 rounded-full"
+                              style={{
+                                backgroundColor: colors[schedule.status],
+                              }}
+                            />
+                            <span>
+                              <strong className="block">
+                                {notification.content.push.title}
+                              </strong>
+                              <small className="text-text-muted block text-[0.65rem]">
+                                {
+                                  notificationScheduleStatusLabels[
+                                    schedule.status
+                                  ]
+                                }
+                                ・
+                                {notification.creation.method === "manual"
+                                  ? "手動"
+                                  : "自動"}
+                              </small>
+                            </span>
+                          </Link>
+                        ))
+                      ) : (
+                        <p className="text-text-muted mt-[0.3rem] text-xs">
+                          本日の配信はありません
+                        </p>
+                      )}
+                    </div>
+                  </ScrollbarArea>
                 </div>
               </>
             ) : (

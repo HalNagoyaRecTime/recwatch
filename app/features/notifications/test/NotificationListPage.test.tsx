@@ -221,6 +221,28 @@ describe("NotificationListPage", () => {
     ).not.toBeInTheDocument();
   });
 
+  it("カレンダーと本日の配信に共通スクロールバーを使う", async () => {
+    const user = userEvent.setup();
+    renderPage(createQueryApi(), new Date());
+    await screen.findByText("通知101");
+    await user.click(screen.getByRole("link", { name: "カレンダー" }));
+
+    const calendar = screen.getByRole("region", { name: "カレンダー表示領域" });
+    expect(
+      calendar.querySelector('[data-scrollbar-track="horizontal"]')
+    ).toBeInTheDocument();
+    const agenda = await screen.findByRole("region", {
+      name: "本日の配信一覧",
+    });
+    expect(
+      agenda.querySelector('[data-scrollbar-track="vertical"]')
+    ).toBeInTheDocument();
+    expect(agenda.querySelector(".scrollbar-none")).toHaveAttribute(
+      "tabindex",
+      "0"
+    );
+  });
+
   it("再読み込みでは表示中の期間を再取得する", async () => {
     const list = vi.fn((query) => mockAdminNotificationQueryApi.list(query));
     const user = userEvent.setup();
