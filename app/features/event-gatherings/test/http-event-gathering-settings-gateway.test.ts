@@ -136,7 +136,7 @@ describe("createHttpEventGatheringSettingsGateway", () => {
 });
 
 describe("createHttpGatheringMemberGateway", () => {
-  it("クラスコードと学生を全ページ読み込み、停止中の学生も候補に含める", async () => {
+  it("停止中の学生を含めて読み込み、退会済みの学生だけ候補から除外する", async () => {
     const get = vi.fn().mockImplementation(async (path: string) => {
       if (path.startsWith("/api/v1/classrooms")) {
         return {
@@ -180,8 +180,17 @@ describe("createHttpGatheringMemberGateway", () => {
               is_live_active: true,
               class_room: null,
             },
+            {
+              student_id: 13,
+              user_id: 18,
+              display_name: "削除済みユーザー",
+              attendance_number: null,
+              student_id_number: "deleted-18",
+              is_live_active: true,
+              class_room: null,
+            },
           ],
-          total: 3,
+          total: 4,
         };
       }
       if (path.startsWith("/api/v1/teachers")) {
@@ -228,6 +237,51 @@ describe("createHttpGatheringMemberGateway", () => {
     // 登録済みの参加者が停止されても外せるよう、停止中を含めて取得する
     expect(get).toHaveBeenCalledWith(
       "/api/v1/students?limit=100&offset=0&isLiveActive=all"
+    );
+  });
+
+  it("退会済み学生を除外しても API の全件数を基準に次ページを読み込む", async () => {
+    const firstPage = Array.from({ length: 100 }, (_, index) => ({
+      student_id: index + 1,
+      user_id: index + 1,
+      display_name: index === 0 ? "削除済みユーザー" : `学生${index + 1}`,
+      attendance_number: null,
+      student_id_number:
+        index === 0 ? "deleted-1" : `2026${String(index + 1).padStart(3, "0")}`,
+      is_live_active: true,
+      class_room: null,
+    }));
+    const get = vi.fn().mockImplementation(async (path: string) => {
+      if (path.includes("/students?limit=100&offset=0")) {
+        return { items: firstPage, total: 101 };
+      }
+      if (path.includes("/students?limit=100&offset=100")) {
+        return {
+          items: [
+            {
+              student_id: 101,
+              user_id: 101,
+              display_name: "学生101",
+              attendance_number: null,
+              student_id_number: "2026101",
+              is_live_active: true,
+              class_room: null,
+            },
+          ],
+          total: 101,
+        };
+      }
+      return { items: [], total: 0 };
+    });
+    const gateway = createHttpGatheringMemberGateway(createClient({ get }));
+
+    const candidates = await gateway.loadCandidates();
+
+    expect(candidates.students).toHaveLength(100);
+    expect(candidates.students[0].studentNumber).toBe("2026002");
+    expect(candidates.students.at(-1)?.studentNumber).toBe("2026101");
+    expect(get).toHaveBeenCalledWith(
+      "/api/v1/students?limit=100&offset=100&isLiveActive=all"
     );
   });
 

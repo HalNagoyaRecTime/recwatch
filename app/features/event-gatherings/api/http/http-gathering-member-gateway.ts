@@ -14,6 +14,7 @@ import {
   toMemberUserIds,
   toReplaceGatheringMembersRequest,
 } from "~/features/event-gatherings/api/mappers/gathering-member-mappers";
+import { isDeletedStudent } from "~/features/event-gatherings/model/gathering-member-candidate";
 
 type GatheringMemberHttpClient = {
   get<T>(path: string): Promise<T>;
@@ -42,7 +43,7 @@ export function createHttpGatheringMemberGateway(
             `/api/v1/students?limit=${limit}&offset=${offset}&isLiveActive=all`
           );
           return {
-            items: page.items.map(toMemberStudent),
+            items: page.items,
             total: page.total,
           };
         }),
@@ -62,7 +63,11 @@ export function createHttpGatheringMemberGateway(
       const nonStudents = new Map(
         teachers.map((teacher) => [teacher.userId, teacher])
       );
-      return { classrooms, students, nonStudents };
+      // total と offset は API の全件数を基準にするため、全ページ取得後に除外する。
+      const memberStudents = students
+        .map(toMemberStudent)
+        .filter((student) => !isDeletedStudent(student));
+      return { classrooms, students: memberStudents, nonStudents };
     },
 
     async loadMembers(gatheringId) {
