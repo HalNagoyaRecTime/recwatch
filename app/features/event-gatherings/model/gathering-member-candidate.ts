@@ -32,3 +32,13 @@ export type GatheringMemberCandidates = {
    */
   nonStudents: ReadonlyMap<number, MemberNonStudent>;
 };
+
+/**
+ * 退会処理で匿名化された学生かを判定する。
+ * Backend は退会済み学生の学籍番号を `deleted-<user_id>` へ置き換える。
+ */
+export function isDeletedStudent(
+  student: Pick<MemberStudent, "studentNumber">
+): boolean {
+  return /^deleted-\d+$/.test(student.studentNumber);
+}
