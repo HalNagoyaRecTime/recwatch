@@ -269,6 +269,39 @@ describe("notification pages", () => {
     expect(reportFeedback).not.toHaveBeenCalled();
   });
 
+  it("集合候補が5件以上でも6件目の対応ラウンドを選択できる", async () => {
+    const user = userEvent.setup();
+    const gatheringOptions = Array.from({ length: 6 }, (_, index) => ({
+      id: String(index + 1),
+      name: `対応ラウンド ${index + 1}`,
+      type: "gathering" as const,
+    }));
+
+    render(
+      <MemoryRouter>
+        <NotificationCreatePage
+          api={createCommandApi()}
+          audienceApi={{
+            load: vi.fn().mockResolvedValue(gatheringOptions),
+          }}
+          configApi={mockNotificationConfigApi}
+        />
+      </MemoryRouter>
+    );
+
+    await user.click(screen.getByRole("button", { name: "集合" }));
+    const search = screen.getByRole("combobox", {
+      name: "集合を検索して追加",
+    });
+    await waitFor(() => expect(search).toBeEnabled());
+    await user.type(search, "対応ラウンド");
+
+    expect(await screen.findAllByRole("option")).toHaveLength(6);
+    await user.click(screen.getByRole("option", { name: /対応ラウンド 6/ }));
+
+    expect(screen.getByText("対応ラウンド 6")).toBeInTheDocument();
+  });
+
   it("実APIのcontentとimportanceの400をフォーム内に表示する", async () => {
     const api = createCommandApi({
       create: vi.fn().mockRejectedValue(
@@ -339,7 +372,9 @@ describe("notification pages", () => {
           }}
           configApi={{
             getConfig: vi.fn().mockRejectedValue(new Error("config取得失敗")),
-            getAudienceCount: vi.fn(),
+            getAudienceCount: vi
+              .fn()
+              .mockRejectedValue(new Error("対象人数取得失敗")),
           }}
         />
       </MemoryRouter>
