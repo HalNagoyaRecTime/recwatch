@@ -2,6 +2,12 @@ import { NotificationScheduleSelector } from "~/features/notifications/component
 import { useNotificationResults } from "~/features/notifications/hooks/useNotificationResults";
 import { NotificationResultsPanel } from "~/features/notifications/components/detail/NotificationResultsPanel";
 import { NotificationResultSidebar } from "~/features/notifications/components/detail/NotificationResultSidebar";
+import { NotificationDeliveryFlow } from "~/features/notifications/components/detail/NotificationDeliveryFlow";
+import {
+  NotificationMonitorActions,
+  NotificationMonitorActionDialog,
+} from "~/features/notifications/components/monitor/NotificationMonitorActions";
+import { useNotificationMonitorActions } from "~/features/notifications/hooks/useNotificationMonitorActions";
 import { MarkdownContent } from "~/components/ui/markdown/MarkdownContent";
 import { ChevronLeft } from "lucide-react";
 import { useMemo, useState } from "react";
@@ -92,8 +98,24 @@ export function NotificationDetailPage({
     refreshKey: state.refreshKey,
   });
 
+  const monitorActions = useNotificationMonitorActions({
+    commandApi: scheduleCommandApi,
+    items: state.schedule.data
+      ? [
+          {
+            summary: state.schedule.data,
+            detail: state.schedule.data,
+            errorMessage: null,
+          },
+        ]
+      : [],
+    reload: state.loadNotification,
+    reportFeedback,
+  });
+
   const selectSchedule = (id: number) => {
     if (id === state.selectedScheduleId) return;
+    monitorActions.close();
     results.resetFilters();
     state.selectSchedule(id);
   };
@@ -102,7 +124,7 @@ export function NotificationDetailPage({
     return <PageState role="status" message="通知詳細を読み込み中です" />;
   }
 
-  if (state.notification.errorMessage || !state.notification.data) {
+  if (!state.notification.data) {
     return (
       <PageState
         action={
@@ -235,8 +257,28 @@ export function NotificationDetailPage({
             <ScheduleTab
               detail={state.schedule.data}
               errorMessage={state.schedule.errorMessage}
+              refreshError={state.notification.errorMessage}
               isLoading={state.schedule.isLoading}
               onRetry={() => void state.loadSchedule()}
+              onRefresh={() => void state.loadNotification(true)}
+              onShowResults={() => selectTab("results")}
+              actions={
+                state.schedule.data && scheduleCommandApi ? (
+                  <NotificationMonitorActions
+                    schedule={state.schedule.data}
+                    state={monitorActions}
+                    allowedActions={["resend", "stop"]}
+                    disabled={
+                      state.notification.isLoading ||
+                      state.schedule.isLoading ||
+                      Boolean(
+                        state.schedule.errorMessage ||
+                        state.notification.errorMessage
+                      )
+                    }
+                  />
+                ) : null
+              }
               schedule={selectedSchedule}
             />
           ) : (
@@ -271,6 +313,7 @@ export function NotificationDetailPage({
           onRetry={() => void state.openDelivery(state.selectedDeliveryId!)}
         />
       ) : null}
+      <NotificationMonitorActionDialog state={monitorActions} />
     </section>
   );
 }
@@ -414,19 +457,27 @@ function DeliverySummary({
 function ScheduleTab({
   detail,
   errorMessage,
+  refreshError,
   isLoading,
   onRetry,
+  onRefresh,
+  onShowResults,
+  actions,
   schedule,
 }: {
   detail: NotificationScheduleDetail | null;
   errorMessage: string | null;
+  refreshError: string | null;
   isLoading: boolean;
   onRetry: () => void;
+  onRefresh: () => void;
+  onShowResults: () => void;
+  actions: React.ReactNode;
   schedule: NotificationScheduleSummary | null;
 }) {
-  if (isLoading)
+  if (isLoading && !detail)
     return <SectionState message="配信状況を読み込み中です" role="status" />;
-  if (errorMessage)
+  if (errorMessage && !detail)
     return (
       <SectionState
         action={<Button onClick={onRetry}>再試行</Button>}
@@ -438,47 +489,132 @@ function ScheduleTab({
     return <SectionState message="配信状況はありません。" role="status" />;
 
   return (
-    <div className="grid gap-4 lg:grid-cols-2">
-      <Card title="処理状況">
-        <div className="mb-4">
-          <NotificationStatusBadge status={schedule.status} />
+    <div className="space-y-4">
+      {(errorMessage || refreshError) && (
+        <div role="alert" className="text-tone-danger-text text-sm">
+          最新の配信状況を取得できませんでした。前回の表示を保持しています。
+          <Button onClick={onRefresh}>再試行</Button>
         </div>
-        <Definition
-          label="配信対象の確認"
-          value={`${detail.audienceProgress.resolvedCount} / ${detail.audienceProgress.totalCount}`}
-        />
-        <Definition
-          label="通知対象者の確定"
-          value={`${detail.recipientProgress.count}件・${detail.recipientProgress.status === "resolved" ? "確定済み" : "確定待ち"}`}
-        />
-        <Definition label="停止情報" value={formatStop(detail.stop)} />
+      )}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>{actions}</div>
+        <Button onClick={onRefresh}>配信状況を更新</Button>
+      </div>
+      <Card title="配信の流れ" description="選択した配信回の処理状況">
+        <NotificationDeliveryFlow detail={detail} />
       </Card>
-      <Card
-        title="プッシュ通知の配信集計"
-        description="通知先端末の登録情報ごとの集計です。通知対象者数とは一致しない場合があります"
-      >
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <Metric
-            label="総配信件数"
-            value={detail.deliveryProgress.totalCount}
+      <div className="grid gap-4 lg:grid-cols-2">
+        <Card title="処理状況">
+          <div className="mb-4">
+            <NotificationStatusBadge status={detail.status} />
+          </div>
+          <Definition
+            label="配信対象の確認"
+            value={`${detail.audienceProgress.resolvedCount} / ${detail.audienceProgress.totalCount}`}
           />
-          <Metric
-            label="通知サービス受付済み"
-            value={detail.deliveryProgress.sentCount}
+          <Definition
+            label="通知対象者の確定"
+            value={
+              detail.recipientProgress.status === "resolved"
+                ? `${detail.recipientProgress.count.toLocaleString()}件・確定済み`
+                : `${detail.recipientProgress.count.toLocaleString()}件・確定待ち`
+            }
           />
-          <Metric
-            label="再送待ち"
-            value={detail.deliveryProgress.retryWaitCount}
-          />
-          <Metric label="失敗" value={detail.deliveryProgress.failedCount} />
-          <Metric
-            label="送信待ち"
-            value={detail.deliveryProgress.pendingCount}
-          />
-          <Metric label="送信中" value={detail.deliveryProgress.sendingCount} />
-          <Metric label="停止" value={detail.deliveryProgress.stoppedCount} />
+          <Definition label="停止情報" value={formatStop(detail.stop)} />
+        </Card>
+        <Card
+          title="プッシュ通知の配信集計"
+          description="通知先端末の登録情報ごとの集計です。通知対象者数とは一致しない場合があります"
+        >
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <Metric
+              label="総配信件数"
+              value={detail.deliveryProgress.totalCount}
+            />
+            <Metric
+              label="通知サービス受付済み"
+              value={detail.deliveryProgress.sentCount}
+            />
+            <Metric
+              label="再送待ち"
+              value={detail.deliveryProgress.retryWaitCount}
+            />
+            <Metric label="失敗" value={detail.deliveryProgress.failedCount} />
+            <Metric
+              label="送信待ち"
+              value={detail.deliveryProgress.pendingCount}
+            />
+            <Metric
+              label="送信中"
+              value={detail.deliveryProgress.sendingCount}
+            />
+            <Metric label="停止" value={detail.deliveryProgress.stoppedCount} />
+          </div>
+        </Card>
+      </div>
+      <Card title="送信先の内訳" description="送信先総数に対する割合">
+        <div className="space-y-3">
+          {(
+            [
+              [
+                "FCM受付成功",
+                detail.deliveryProgress.sentCount,
+                "bg-tone-success-text",
+              ],
+              [
+                "送信待ち",
+                detail.deliveryProgress.pendingCount,
+                "bg-text-muted",
+              ],
+              [
+                "送信中",
+                detail.deliveryProgress.sendingCount,
+                "bg-brand-primary",
+              ],
+              [
+                "再送待ち",
+                detail.deliveryProgress.retryWaitCount,
+                "bg-text-muted",
+              ],
+              [
+                "失敗",
+                detail.deliveryProgress.failedCount,
+                "bg-tone-danger-text",
+              ],
+              ["停止", detail.deliveryProgress.stoppedCount, "bg-text-muted"],
+            ] as const
+          ).map(([label, count, color]) => {
+            const total = detail.deliveryProgress.totalCount;
+            const percent =
+              total > 0 ? Math.min(100, (count / total) * 100) : null;
+            return (
+              <div key={label} className="space-y-1">
+                <div className="flex justify-between gap-2 text-sm">
+                  <span>
+                    {label} {count.toLocaleString()}件
+                  </span>
+                  <span className="text-text-muted">
+                    {percent === null ? "—" : `${percent.toFixed(1)}%`}
+                  </span>
+                </div>
+                <div
+                  className="bg-surface-muted h-2 overflow-hidden rounded-full"
+                  aria-hidden="true"
+                >
+                  <div
+                    className={`${color} h-full rounded-full`}
+                    style={{ width: `${percent ?? 0}%` }}
+                  />
+                </div>
+              </div>
+            );
+          })}
         </div>
       </Card>
+      <p className="text-text-muted text-xs">
+        FCM受付成功は端末での通知表示や既読を示しません。
+      </p>
+      <Button onClick={onShowResults}>対象者・配信結果を見る</Button>
     </div>
   );
 }

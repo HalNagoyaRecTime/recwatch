@@ -23,6 +23,13 @@ import {
 import { NotificationDetailPage } from "~/features/notifications/pages/NotificationDetailPage";
 import { ApiClientError } from "~/lib/api-client-error";
 
+vi.mock(
+  "~/features/notifications/components/detail/NotificationDeliveryFlow",
+  () => ({
+    NotificationDeliveryFlow: () => <div>配信処理の流れ</div>,
+  })
+);
+
 afterEach(cleanup);
 
 function createApis(overrides?: {
@@ -70,6 +77,47 @@ function renderPage(apis = createApis()) {
 }
 
 describe("NotificationDetailPage", () => {
+  it("手動更新が失敗した場合は前回の配信状況を残す", async () => {
+    const user = userEvent.setup();
+    const getDetail = vi
+      .fn()
+      .mockResolvedValueOnce(cloneFixture(adminNotificationDetailFixture))
+      .mockRejectedValueOnce(new Error("network"));
+    const getSchedule = vi.fn().mockResolvedValue({
+      ...cloneFixture(notificationScheduleDetailFixture),
+      notificationScheduleId: 504,
+    });
+    renderPage(createApis({ getDetail, getSchedule }));
+    await screen.findByText("Pushタイトル");
+    await user.click(screen.getByRole("button", { name: "配信状況" }));
+    expect(await screen.findByText("配信処理の流れ")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "配信状況を更新" }));
+    expect(
+      await screen.findByText(/前回の表示を保持しています/)
+    ).toBeInTheDocument();
+    expect(screen.getByText("配信処理の流れ")).toBeInTheDocument();
+  });
+  it("配信状況を手動更新し、対象者・配信結果へ移動できる", async () => {
+    const user = userEvent.setup();
+    const getSchedule = vi.fn().mockResolvedValue({
+      ...cloneFixture(notificationScheduleDetailFixture),
+      notificationScheduleId: 504,
+    });
+    const apis = createApis({ getSchedule });
+    renderPage(apis);
+    await screen.findByText("Pushタイトル");
+    await user.click(screen.getByRole("button", { name: "配信状況" }));
+    expect(await screen.findByText("配信処理の流れ")).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "送信先の内訳" })
+    ).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "配信状況を更新" }));
+    await waitFor(() => expect(getSchedule).toHaveBeenCalledTimes(2));
+    await user.click(
+      await screen.findByRole("button", { name: "対象者・配信結果を見る" })
+    );
+    expect(await screen.findByText("山田 太郎")).toBeInTheDocument();
+  });
   it("対象者が未確定のときはユーザー単位の集計を未確定と表示する", async () => {
     const notification = cloneFixture(adminNotificationDetailFixture);
     notification.schedules[0].audience.recipientResolution.status = "pending";
