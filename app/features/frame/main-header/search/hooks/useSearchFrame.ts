@@ -136,22 +136,6 @@ export function useSearchFrame({ isOpen }: UseSearchFrameParams) {
   }, [scheduleFrameUpdate]);
 
   useEffect(() => {
-    if (isOpen) {
-      return;
-    }
-
-    function handleScroll() {
-      scheduleFrameUpdate();
-    }
-
-    window.addEventListener("scroll", handleScroll, { passive: true });
-
-    return () => {
-      window.removeEventListener("scroll", handleScroll);
-    };
-  }, [isOpen, scheduleFrameUpdate]);
-
-  useEffect(() => {
     return () => {
       clearPendingFrames();
     };

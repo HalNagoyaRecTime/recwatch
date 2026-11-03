@@ -1,26 +1,34 @@
-export type NotificationDeliveryStatus = string | null;
+import type { NOTIFICATION_SCHEDULE_STATUSES } from "~/features/notifications/model/notification-values";
 
-export type NotificationListItem = {
-  audience: string;
-  canModify: boolean;
-  competition: string;
-  deliveredAt: string;
-  id: string;
-  schedule: string;
-  sender: string;
-  status: NotificationDeliveryStatus;
-  title: string;
+export type NotificationListSchedule = {
+  sendAt: string;
+  status: (typeof NOTIFICATION_SCHEDULE_STATUSES)[number];
+  audience: {
+    items: ({ type: "all" } | { type: string; label: string | null })[];
+  };
 };
-export const notificationListPageSize = 20;
+
+/** 検索・並べ替え・操作可否の判定に必要な値。 */
+export type NotificationListRecord = {
+  notificationId: number;
+  content: { push: { title: string; body: string } };
+  importance: string;
+  creation: {
+    method: "manual" | "automatic";
+    user: { userName: string } | null;
+    source: { label: string | null } | null;
+  };
+  schedules: NotificationListSchedule[];
+};
+
+export const notificationListPageSize = 50;
 
 export const notificationSortableColumnIds = [
   "notificationId",
   "title",
   "audience",
   "sendAt",
-  "creationMethod",
   "creator",
-  "importance",
   "status",
 ] as const;
 
@@ -52,3 +60,19 @@ export function isNotificationSortableColumnId(
 ): value is NotificationSortableColumnId {
   return notificationSortableColumnIds.some((columnId) => columnId === value);
 }
+
+export type NotificationListFilters = {
+  search: string;
+  status: "all" | (typeof NOTIFICATION_SCHEDULE_STATUSES)[number];
+  dateMode: "all" | "today" | "date" | "range";
+  from: string;
+  to: string;
+};
+
+export const defaultNotificationListFilters: NotificationListFilters = {
+  search: "",
+  status: "all",
+  dateMode: "all",
+  from: "",
+  to: "",
+};

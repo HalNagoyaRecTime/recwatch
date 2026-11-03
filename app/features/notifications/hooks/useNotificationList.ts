@@ -1,3 +1,5 @@
+import { toNotificationMonthRange } from "~/features/notifications/hooks/notification-calendar-range";
+import { useCurrentMinute } from "~/hooks/useCurrentMinute";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import type { AdminNotificationCommandApi } from "~/features/notifications/api/contracts/admin-notification-command-api";
@@ -9,14 +11,16 @@ import type {
 import {
   canDeleteNotification,
   filterNotificationList,
-  sortNotificationList,
-} from "~/features/notifications/hooks/notification-list-data";
+  matchesNotificationSchedule,
+} from "~/features/notifications/model/notification-list-data";
 import {
   reportNotificationActionError,
   reportNotificationBackgroundError,
   type NotificationFeedbackReporter,
 } from "~/features/notifications/hooks/notification-feedback";
 import {
+  defaultNotificationListFilters,
+  type NotificationListFilters,
   getNextNotificationListSort,
   isNotificationSortableColumnId,
   notificationListPageSize,
@@ -26,26 +30,73 @@ import {
 import { getErrorMessage } from "~/lib/client-error";
 
 type UseNotificationListOptions = {
+  calendarMonth?: Date;
   commandApi: AdminNotificationCommandApi;
   queryApi: AdminNotificationQueryApi;
   reportFeedback?: NotificationFeedbackReporter;
 };
 
 export function useNotificationList({
+  calendarMonth,
   commandApi,
   queryApi,
   reportFeedback,
 }: UseNotificationListOptions) {
-  const [notifications, setNotifications] = useState<
-    AdminNotificationListItem[]
-  >([]);
+  const currentMinute = useCurrentMinute();
+  const now = currentMinute?.getTime() ?? 0;
+  const [items, setItems] = useState<AdminNotificationListItem[]>([]);
   const [calendarNotifications, setCalendarNotifications] = useState<
     AdminNotificationListItem[]
   >([]);
   const [currentPage, setCurrentPage] = useState(1);
+  const currentPageRef = useRef(1);
+  const pageSize = notificationListPageSize;
+  const [totalItems, setTotalItems] = useState(0);
+  const [filters, setFilters] = useState(defaultNotificationListFilters);
+  function onFiltersChange(value: NotificationListFilters) {
+    setFilters(value);
+    currentPageRef.current = 1;
+    setCurrentPage(1);
+  }
   const [creationMethod, setCreationMethod] =
     useState<NotificationCreationMethodFilter>("all");
   const [sort, setSort] = useState<NotificationListSort>();
+  const today =
+    filters.dateMode === "today"
+      ? new Intl.DateTimeFormat("sv-SE", { timeZone: "Asia/Tokyo" }).format(
+          currentMinute ?? new Date()
+        )
+      : undefined;
+  const referenceTime =
+    sort && ["audience", "sendAt", "status"].includes(sort.columnId)
+      ? currentMinute?.toISOString()
+      : undefined;
+  const listCriteria = useMemo(() => {
+    const fromDate =
+      filters.dateMode === "today"
+        ? today
+        : filters.dateMode === "date" || filters.dateMode === "range"
+          ? filters.from
+          : "";
+    const toDate =
+      filters.dateMode === "today"
+        ? today
+        : filters.dateMode === "date"
+          ? filters.from
+          : filters.dateMode === "range"
+            ? filters.to
+            : "";
+    return {
+      search: filters.search.trim() || undefined,
+      status: filters.status === "all" ? undefined : filters.status,
+      creationMethod: creationMethod === "all" ? undefined : creationMethod,
+      filterFrom: fromDate ? `${fromDate}T00:00:00.000+09:00` : undefined,
+      filterTo: toDate ? `${toDate}T23:59:59.999+09:00` : undefined,
+      sortBy: sort?.columnId,
+      sortDirection: sort?.direction,
+      referenceTime,
+    } satisfies AdminNotificationListQuery;
+  }, [filters, today, creationMethod, sort, referenceTime]);
   const [selectedNotification, setSelectedNotification] =
     useState<AdminNotificationListItem | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -76,28 +127,42 @@ export function useNotificationList({
   const calendarRequestSequence = useRef(0);
 
   const load = useCallback(
-    async (background = false) => {
+    async (page = 1, background = false) => {
       const requestId = ++requestSequence.current;
       try {
-        const result = await read();
+        let result = await read({
+          from: "0001-01-01T00:00:00.000Z",
+          to: "9999-12-31T23:59:59.999Z",
+          page,
+          limit: pageSize,
+          ...listCriteria,
+        });
         if (requestId !== requestSequence.current) return;
-        setNotifications(result.items);
-        setCurrentPage((page) =>
-          Math.min(
-            page,
-            Math.max(
-              1,
-              Math.ceil(result.items.length / notificationListPageSize)
-            )
-          )
+        const lastPage = Math.max(
+          1,
+          Math.ceil(result.pagination.totalCount / pageSize)
         );
+        if (page > lastPage) {
+          result = await read({
+            from: "0001-01-01T00:00:00.000Z",
+            to: "9999-12-31T23:59:59.999Z",
+            page: lastPage,
+            limit: pageSize,
+            ...listCriteria,
+          });
+          if (requestId !== requestSequence.current) return;
+        }
+        currentPageRef.current = Math.min(page, lastPage);
+        setCurrentPage(currentPageRef.current);
+        setItems(result.items);
+        setTotalItems(result.pagination.totalCount);
         setErrorMessage(null);
         setLoadedApi(queryApi);
       } catch (error) {
         if (requestId !== requestSequence.current) return;
         if (!background) {
-          setNotifications([]);
-          setCurrentPage(1);
+          setItems([]);
+          setTotalItems(0);
         }
         const message = getErrorMessage(error);
         setErrorMessage(message);
@@ -115,7 +180,7 @@ export function useNotificationList({
         if (requestId === requestSequence.current) setIsLoading(false);
       }
     },
-    [queryApi, read, reportFeedback]
+    [pageSize, queryApi, read, reportFeedback, listCriteria]
   );
 
   const loadCalendar = useCallback(
@@ -126,9 +191,15 @@ export function useNotificationList({
       setCalendarErrorMessage(null);
 
       try {
-        const result = await read(query);
+        const result = await read({ ...query, page: 1, limit: pageSize });
+        const allItems = [...result.items];
+        for (let page = 2; page <= result.pagination.totalPages; page++) {
+          if (requestId !== calendarRequestSequence.current) return;
+          const next = await read({ ...query, page, limit: pageSize });
+          allItems.push(...next.items);
+        }
         if (requestId !== calendarRequestSequence.current) return;
-        setCalendarNotifications(result.items);
+        setCalendarNotifications(allItems);
       } catch (error) {
         if (requestId !== calendarRequestSequence.current) return;
         if (!background) setCalendarNotifications([]);
@@ -149,61 +220,80 @@ export function useNotificationList({
         }
       }
     },
-    [read, reportFeedback]
+    [pageSize, read, reportFeedback]
   );
+
+  const activeCalendarRange = useMemo(
+    () => (calendarMonth ? toNotificationMonthRange(calendarMonth) : undefined),
+    [calendarMonth]
+  );
+  useEffect(() => {
+    if (!activeCalendarRange) return;
+    let active = true;
+    void Promise.resolve().then(() => {
+      if (active) void loadCalendar(activeCalendarRange);
+    });
+    return () => {
+      active = false;
+      calendarRequestSequence.current += 1;
+    };
+  }, [activeCalendarRange, loadCalendar]);
 
   useEffect(() => {
     let active = true;
     void Promise.resolve().then(() => {
-      if (active) void load();
+      if (active) {
+        setIsLoading(true);
+        void load(currentPageRef.current);
+      }
     });
 
     return () => {
       active = false;
       requestSequence.current += 1;
-      calendarRequestSequence.current += 1;
     };
   }, [load]);
 
   const reload = useCallback(() => {
     setIsLoading(true);
     setErrorMessage(null);
-    return load(true);
-  }, [load]);
+    return load(currentPage, true);
+  }, [load, currentPage]);
 
-  const filteredItems = useMemo(
-    () => filterNotificationList(notifications, creationMethod),
-    [creationMethod, notifications]
-  );
-  const allItems = useMemo(
-    () => sortNotificationList(filteredItems, sort),
-    [filteredItems, sort]
-  );
-  const pageCount = Math.max(
-    1,
-    Math.ceil(allItems.length / notificationListPageSize)
-  );
+  const pageCount = Math.max(1, Math.ceil(totalItems / pageSize));
   const validPage = Math.min(currentPage, pageCount);
-  const items = allItems.slice(
-    (validPage - 1) * notificationListPageSize,
-    validPage * notificationListPageSize
-  );
-  const calendarItems = useMemo(
-    () => filterNotificationList(calendarNotifications, creationMethod),
-    [calendarNotifications, creationMethod]
-  );
+  const calendarItems = useMemo(() => {
+    const calendarFilters = { ...filters, dateMode: "all" as const };
+    return filterNotificationList(
+      calendarNotifications,
+      creationMethod,
+      calendarFilters,
+      now
+    ).map((item) => ({
+      ...item,
+      schedules: item.schedules.filter((schedule) =>
+        matchesNotificationSchedule(schedule, calendarFilters, now)
+      ),
+    }));
+  }, [calendarNotifications, creationMethod, filters, now]);
 
   function handlePageChange(page: number) {
-    setCurrentPage(Math.min(Math.max(page, 1), pageCount));
+    const newPage = Math.min(Math.max(page, 1), pageCount);
+    setIsLoading(true);
+    setErrorMessage(null);
+    void load(newPage, true);
   }
 
   function handleSortChange(columnId: string) {
     if (!isNotificationSortableColumnId(columnId)) return;
     setSort((current) => getNextNotificationListSort(current, columnId));
+    currentPageRef.current = 1;
+    setCurrentPage(1);
   }
 
   function handleCreationMethodChange(value: NotificationCreationMethodFilter) {
     setCreationMethod(value);
+    currentPageRef.current = 1;
     setCurrentPage(1);
   }
 
@@ -259,6 +349,9 @@ export function useNotificationList({
   }
 
   return {
+    filters,
+    onFiltersChange,
+    pageSize,
     calendarErrorMessage,
     calendarItems,
     closeDeleteDialog: () => {
@@ -273,6 +366,11 @@ export function useNotificationList({
     isLoading: isLoading || loadedApi !== queryApi,
     items,
     loadCalendar,
+    reloadCalendar: () =>
+      activeCalendarRange
+        ? loadCalendar(activeCalendarRange, true)
+        : Promise.resolve(),
+    now,
     onCreationMethodChange: handleCreationMethodChange,
     onDeleteRequest: handleDeleteRequest,
     onPageChange: handlePageChange,
@@ -281,6 +379,6 @@ export function useNotificationList({
     reload,
     selectedNotification,
     sort,
-    totalItems: allItems.length,
+    totalItems,
   };
 }

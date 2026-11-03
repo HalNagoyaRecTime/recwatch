@@ -1,26 +1,29 @@
-import { MarkdownPreview } from "~/components/ui/markdown/MarkdownPreview";
-import { CalendarClock, Plus, Send, Trash2 } from "lucide-react";
+import {
+  formatNotificationDraftErrors,
+  notificationImportanceLabels,
+} from "~/features/notifications/components/notification-display";
+import { CalendarClock, Send } from "lucide-react";
 
 import { Button } from "~/components/ui/button/Button";
 import { ButtonLink } from "~/components/ui/button/ButtonLink";
 import { SegmentedControl } from "~/components/ui/form/SegmentedControl";
-import { Select } from "~/components/ui/form/Select";
+import { textInputStyle } from "~/components/ui/form/styles/control-styles";
 import { LayeredPanel } from "~/components/ui/panel/LayeredPanel";
 
-import type {
-  NotificationAudienceOption,
-  NotificationAudienceType,
-} from "~/features/notifications/model/notification-audience";
+import { NotificationAudienceEditor } from "~/features/notifications/components/form/NotificationAudienceEditor";
+import { NotificationDeliveryTimingEditor } from "~/features/notifications/components/form/NotificationDeliveryTimingEditor";
+import { NotificationMarkdownEditor } from "~/features/notifications/components/form/NotificationMarkdownEditor";
+import type { NotificationAudienceOption } from "~/features/notifications/model/notification-audience";
 import type {
   NotificationDeliveryTiming,
   NotificationDraft,
   NotificationImportance,
 } from "~/features/notifications/model/notification-draft";
-import type { NotificationDraftErrors } from "~/features/notifications/model/notification-draft-validation";
+import type { NotificationFormErrors } from "~/features/notifications/hooks/notification-form-errors";
 
 type NotificationFormProps = {
   draft: NotificationDraft;
-  errors: NotificationDraftErrors;
+  errors: NotificationFormErrors;
   audienceOptions: NotificationAudienceOption[];
   isAudienceLoading?: boolean;
   audienceError?: string | null;
@@ -29,7 +32,7 @@ type NotificationFormProps = {
   recipientCount?: number | null;
   recipientCountError?: string | null;
   isRecipientCountLoading?: boolean;
-  isSubmissionDisabled?: boolean;
+  canSubmit: boolean;
   isSubmitting: boolean;
   isAudienceDisabled?: boolean;
   isFullEditDisabled?: boolean;
@@ -40,35 +43,9 @@ type NotificationFormProps = {
   onAudienceReload?: () => void;
 };
 
-const notificationAudienceLabels: Record<NotificationAudienceType, string> = {
-  all: "全体",
-  class_room: "クラス",
-  gathering: "集合",
-  event: "競技参加者",
-  user: "ユーザー",
-};
-
-const audienceTypeOptions = Object.entries(notificationAudienceLabels).map(
-  ([value, label]) => ({
-    label,
-    value: value as NotificationAudienceType,
-  })
-);
-
-const deliveryTimingOptions = [
-  { label: "今すぐ配信", value: "now" },
-  { label: "予約配信", value: "scheduled" },
-] as const;
-
-const importanceLabels: Record<NotificationImportance, string> = {
-  low: "低",
-  normal: "通常",
-  high: "高",
-};
-
 export function NotificationForm({
   draft,
-  errors,
+  errors: rawErrors,
   audienceOptions,
   isAudienceLoading = false,
   audienceError = null,
@@ -77,7 +54,7 @@ export function NotificationForm({
   recipientCount = null,
   recipientCountError = null,
   isRecipientCountLoading = false,
-  isSubmissionDisabled = false,
+  canSubmit,
   isSubmitting,
   isAudienceDisabled = false,
   isFullEditDisabled = false,
@@ -89,21 +66,7 @@ export function NotificationForm({
 }: NotificationFormProps) {
   const deliveryTiming: NotificationDeliveryTiming =
     draft.deliveryTiming ?? "now";
-  const canSubmit =
-    draft.detailTitle.trim().length > 0 &&
-    draft.detailBody.trim().length > 0 &&
-    (isFullEditDisabled ||
-      (draft.title.trim().length > 0 &&
-        draft.body.trim().length > 0 &&
-        draft.audiences.length > 0 &&
-        draft.audiences.every(
-          (item) => item.type === "all" || item.targetId.length > 0
-        ) &&
-        (deliveryTiming === "now" || Boolean(draft.scheduledAt))));
-  const requiresAudienceOption = draft.audiences.some(
-    (item) => item.type !== "all"
-  );
-  const minimumScheduledAt = getMinimumScheduledAt();
+  const errors = formatNotificationDraftErrors(rawErrors);
 
   return (
     <form
@@ -114,12 +77,21 @@ export function NotificationForm({
       noValidate
     >
       <LayeredPanel
-        header={<h2 className="text-text-base font-semibold">通知内容</h2>}
+        header={
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h2 className="text-text-base font-semibold">通知内容</h2>
+            {isFullEditDisabled ? (
+              <span className="bg-surface-base text-text-muted rounded-full px-2.5 py-1 text-xs font-medium">
+                通知詳細のみ編集可能
+              </span>
+            ) : null}
+          </div>
+        }
       >
         <div className="space-y-5">
           <label className="block">
             <span className="text-text-base mb-2 block text-sm font-medium">
-              タイトル <span className="text-tone-danger-text">*</span>
+              プッシュタイトル <span className="text-tone-danger-text">*</span>
             </span>
             <input
               aria-label="タイトル*"
@@ -127,13 +99,13 @@ export function NotificationForm({
                 errors.title ? "notification-title-error" : undefined
               }
               aria-invalid={Boolean(errors.title)}
-              className={inputClassName}
+              className={textInputStyle()}
               disabled={isFullEditDisabled}
               maxLength={50}
               onChange={(event) =>
                 onChange({ ...draft, title: event.currentTarget.value })
               }
-              placeholder="例：競技開始時間の変更"
+              placeholder="例：イベント時間の変更"
               required
               value={draft.title}
             />
@@ -160,7 +132,7 @@ export function NotificationForm({
                 errors.body ? "notification-body-error" : undefined
               }
               aria-invalid={Boolean(errors.body)}
-              className={`${inputClassName} min-h-24 resize-y py-2`}
+              className={`${textInputStyle()} min-h-24 resize-y py-2`}
               disabled={isFullEditDisabled}
               maxLength={200}
               onChange={(event) =>
@@ -190,7 +162,7 @@ export function NotificationForm({
             <input
               aria-label="詳細タイトル*"
               aria-invalid={Boolean(errors.detailTitle)}
-              className={inputClassName}
+              className={textInputStyle()}
               maxLength={100}
               onChange={(event) =>
                 onChange({ ...draft, detailTitle: event.currentTarget.value })
@@ -204,39 +176,39 @@ export function NotificationForm({
             ) : null}
           </label>
 
-          <label className="block">
-            <span className="text-text-base mb-2 block text-sm font-medium">
-              詳細本文 <span className="text-tone-danger-text">*</span>
-            </span>
-            <textarea
-              aria-label="詳細本文*"
-              aria-invalid={Boolean(errors.detailBody)}
-              className={`${inputClassName} min-h-28 resize-y py-2`}
-              maxLength={2000}
-              onChange={(event) =>
-                onChange({ ...draft, detailBody: event.currentTarget.value })
-              }
-              value={draft.detailBody}
-            />
-            {errors.detailBody ? (
-              <span className="text-tone-danger-text mt-1 block text-xs">
-                {errors.detailBody}
-              </span>
-            ) : null}
-          </label>
-
-          <MarkdownPreview content={draft.detailBody} />
+          <NotificationMarkdownEditor
+            value={draft.detailBody}
+            error={errors.detailBody}
+            onChange={(detailBody) => onChange({ ...draft, detailBody })}
+          />
 
           <fieldset disabled={isFullEditDisabled}>
             <p className="text-text-base mb-2 text-sm font-medium">重要度</p>
-            <Select
+            <SegmentedControl
               ariaLabel="重要度"
-              disabled={importanceOptions.length === 0 || isFullEditDisabled}
+              behavior="selection"
+              disabled={isFullEditDisabled}
               onValueChange={(importance) => onChange({ ...draft, importance })}
-              options={importanceOptions.map((value) => ({
-                value,
-                label: importanceLabels[value],
-              }))}
+              options={[
+                {
+                  value: "low",
+                  label: notificationImportanceLabels.low,
+                  disabled: !importanceOptions.includes("low"),
+                  tone: "info",
+                },
+                {
+                  value: "normal",
+                  label: notificationImportanceLabels.normal,
+                  disabled: !importanceOptions.includes("normal"),
+                  tone: "success",
+                },
+                {
+                  value: "high",
+                  label: notificationImportanceLabels.high,
+                  disabled: !importanceOptions.includes("high"),
+                  tone: "danger",
+                },
+              ]}
               value={draft.importance}
             />
             {configError ? (
@@ -251,219 +223,32 @@ export function NotificationForm({
             ) : null}
           </fieldset>
 
-          <fieldset disabled={isFullEditDisabled}>
-            <div className="mb-2 flex items-center justify-between gap-3">
-              <p className="text-text-base text-sm font-medium">
-                通知対象 <span className="text-tone-danger-text">*</span>
-              </p>
-              <Button
-                disabled={
-                  isAudienceDisabled ||
-                  draft.audiences.some((item) => item.type === "all")
-                }
-                icon={Plus}
-                onClick={() =>
-                  onChange({
-                    ...draft,
-                    audiences: [
-                      ...draft.audiences,
-                      {
-                        key: `audience-${Date.now()}`,
-                        type: "class_room",
-                        targetId: "",
-                      },
-                    ],
-                  })
-                }
-                size="sm"
-                type="button"
-                variant="secondary"
-              >
-                対象を追加
-              </Button>
-            </div>
-            <div className="space-y-3">
-              {draft.audiences.map((audience, index) => {
-                const filteredAudienceOptions = audienceOptions.filter(
-                  (option) => option.type === audience.type
-                );
-                return (
-                  <div
-                    key={audience.key}
-                    className="border-border-base rounded-md border p-3"
-                  >
-                    <div className="flex items-center gap-2">
-                      <div className="grid min-w-0 flex-1 gap-2 sm:grid-cols-2">
-                        <Select
-                          ariaLabel={`通知対象 ${index + 1}`}
-                          disabled={isAudienceDisabled}
-                          onValueChange={(type) =>
-                            onChange({
-                              ...draft,
-                              audiences:
-                                type === "all"
-                                  ? [{ ...audience, type, targetId: "" }]
-                                  : draft.audiences.map((item) =>
-                                      item.key === audience.key
-                                        ? { ...item, type, targetId: "" }
-                                        : item
-                                    ),
-                            })
-                          }
-                          options={audienceTypeOptions}
-                          value={audience.type}
-                        />
-                        {audience.type !== "all" ? (
-                          <select
-                            aria-label={`対象 ${index + 1}`}
-                            className={`${inputClassName} appearance-auto`}
-                            value={audience.targetId}
-                            disabled={
-                              isAudienceDisabled ||
-                              isAudienceLoading ||
-                              Boolean(audienceError)
-                            }
-                            onChange={(event) =>
-                              onChange({
-                                ...draft,
-                                audiences: draft.audiences.map((item) =>
-                                  item.key === audience.key
-                                    ? {
-                                        ...item,
-                                        targetId: event.currentTarget.value,
-                                      }
-                                    : item
-                                ),
-                              })
-                            }
-                          >
-                            <option value="">対象を選択</option>
-                            {filteredAudienceOptions.map((option) => (
-                              <option
-                                key={`${option.type}-${option.id}`}
-                                value={option.id}
-                              >
-                                {option.name}
-                              </option>
-                            ))}
-                          </select>
-                        ) : null}
-                      </div>
-                      {draft.audiences.length > 1 ? (
-                        <Button
-                          aria-label={`通知対象 ${index + 1}を削除`}
-                          icon={Trash2}
-                          iconOnly
-                          onClick={() =>
-                            onChange({
-                              ...draft,
-                              audiences: draft.audiences.filter(
-                                (item) => item.key !== audience.key
-                              ),
-                            })
-                          }
-                          size="sm"
-                          type="button"
-                          variant="ghost"
-                        />
-                      ) : null}
-                    </div>
-                    {errors[`audiences.${index}`] ? (
-                      <p className="text-tone-danger-text mt-1.5 text-xs">
-                        {errors[`audiences.${index}`]}
-                      </p>
-                    ) : null}
-                  </div>
-                );
-              })}
-            </div>
-            {errors.audiences ? (
-              <p className="text-tone-danger-text mt-1.5 text-xs">
-                {errors.audiences}
-              </p>
-            ) : null}
-            {isAudienceLoading ? (
-              <p className="text-text-subtle mt-1.5 text-xs">
-                通知対象を読み込み中...
-              </p>
-            ) : audienceError ? (
-              <div className="mt-1.5 flex items-center gap-3">
-                <p className="text-tone-danger-text text-xs">{audienceError}</p>
-                {onAudienceReload ? (
-                  <button
-                    type="button"
-                    className="text-brand-primary text-xs font-semibold underline underline-offset-2"
-                    onClick={onAudienceReload}
-                  >
-                    再試行
-                  </button>
-                ) : null}
-              </div>
-            ) : null}
-            <p className="text-text-subtle mt-2 text-xs" aria-live="polite">
-              {isRecipientCountLoading
-                ? "対象人数を確認中..."
-                : recipientCountError
-                  ? `対象人数を取得できませんでした: ${recipientCountError}`
-                  : recipientCount === null
-                    ? null
-                    : `対象候補 ${recipientCount.toLocaleString("ja-JP")}人`}
-            </p>
-          </fieldset>
+          <NotificationAudienceEditor
+            audiences={draft.audiences}
+            errors={errors}
+            audienceOptions={audienceOptions}
+            isAudienceDisabled={isFullEditDisabled || isAudienceDisabled}
+            isAudienceLoading={isAudienceLoading}
+            audienceError={audienceError}
+            recipientCount={recipientCount}
+            recipientCountError={recipientCountError}
+            isRecipientCountLoading={isRecipientCountLoading}
+            onAudiencesChange={(audiences) => onChange({ ...draft, audiences })}
+            onAudienceReload={onAudienceReload}
+          />
 
-          <fieldset disabled={isFullEditDisabled}>
-            <legend className="text-text-base mb-2 text-sm font-medium">
-              配信タイミング <span className="text-tone-danger-text">*</span>
-            </legend>
-            <SegmentedControl
-              ariaLabel="配信タイミング"
-              behavior="selection"
-              onValueChange={(value) =>
-                onChange({ ...draft, deliveryTiming: value })
-              }
-              options={deliveryTimingOptions}
-              value={deliveryTiming}
-            />
-            {deliveryTiming === "scheduled" ? (
-              <label className="mt-3 block">
-                <span className="text-text-muted mb-1.5 block text-xs">
-                  予約配信日時
-                </span>
-                <input
-                  aria-describedby={
-                    errors.scheduledAt
-                      ? "notification-scheduled-at-error"
-                      : undefined
-                  }
-                  aria-invalid={Boolean(errors.scheduledAt)}
-                  aria-label="予約配信日時"
-                  className={inputClassName}
-                  onChange={(event) =>
-                    onChange({
-                      ...draft,
-                      scheduledAt: event.currentTarget.value,
-                    })
-                  }
-                  min={minimumScheduledAt}
-                  required
-                  type="datetime-local"
-                  value={draft.scheduledAt ?? ""}
-                />
-                {errors.scheduledAt ? (
-                  <span
-                    id="notification-scheduled-at-error"
-                    className="text-tone-danger-text mt-1 block text-xs"
-                  >
-                    {errors.scheduledAt}
-                  </span>
-                ) : null}
-              </label>
-            ) : (
-              <p className="text-text-subtle mt-2 text-xs">
-                作成後、対象ユーザーへすぐにプッシュ通知を送信します。
-              </p>
-            )}
-          </fieldset>
+          <NotificationDeliveryTimingEditor
+            timing={deliveryTiming}
+            scheduledAt={draft.scheduledAt}
+            error={errors.scheduledAt}
+            disabled={isFullEditDisabled}
+            onTimingChange={(timing) =>
+              onChange({ ...draft, deliveryTiming: timing })
+            }
+            onScheduledAtChange={(scheduledAt) =>
+              onChange({ ...draft, scheduledAt })
+            }
+          />
         </div>
       </LayeredPanel>
 
@@ -472,41 +257,15 @@ export function NotificationForm({
           キャンセル
         </ButtonLink>
         <Button
-          disabled={
-            !canSubmit ||
-            isSubmissionDisabled ||
-            isSubmitting ||
-            (!isFullEditDisabled &&
-              (Boolean(configError) ||
-                importanceOptions.length === 0 ||
-                (requiresAudienceOption &&
-                  (isAudienceLoading || Boolean(audienceError)))))
-          }
+          disabled={!canSubmit || isSubmitting}
           icon={deliveryTiming === "now" ? Send : CalendarClock}
           size="lg"
           type="submit"
           variant="primary"
         >
-          {isSubmitting
-            ? "確認中..."
-            : (submitLabel ??
-              (deliveryTiming === "now" ? "通知を配信" : "配信を予約"))}
+          {isSubmitting ? "確認中..." : (submitLabel ?? "通知を作成")}
         </Button>
       </div>
     </form>
   );
-}
-
-const inputClassName =
-  "border-border-base bg-surface-base text-text-base placeholder:text-text-subtle focus:border-border-strong h-9 w-full rounded-md border px-3 text-sm outline-none transition-colors";
-
-function getMinimumScheduledAt() {
-  const minimum = new Date();
-  minimum.setSeconds(0, 0);
-  minimum.setMinutes(minimum.getMinutes() + 1);
-
-  const localMinimum = new Date(
-    minimum.getTime() - minimum.getTimezoneOffset() * 60_000
-  );
-  return localMinimum.toISOString().slice(0, 16);
 }

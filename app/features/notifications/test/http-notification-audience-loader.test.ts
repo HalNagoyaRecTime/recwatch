@@ -139,9 +139,14 @@ describe("http notification audience loader", () => {
     });
     const options = await createHttpNotificationAudienceApi({ get }).load();
     expect(options).toEqual([
-      { id: "901", name: "学生1", type: "user" },
-      { id: "902", name: "学生2", type: "user" },
-      { id: "903", name: "教員1", type: "user" },
+      {
+        id: "901",
+        name: "学生1",
+        type: "user",
+        userCategory: "student_and_teacher",
+      },
+      { id: "902", name: "学生2", type: "user", userCategory: "student" },
+      { id: "903", name: "教員1", type: "user", userCategory: "teacher" },
     ]);
     expect(get).toHaveBeenCalledWith(
       "/api/v1/students?limit=100&offset=1&isStaff=all&isLiveActive=true"

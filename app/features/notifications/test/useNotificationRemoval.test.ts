@@ -1,7 +1,7 @@
 import { act, renderHook } from "@testing-library/react";
 import { describe, it, expect, vi } from "vitest";
 import { useNotificationRemoval } from "~/features/notifications/hooks/useNotificationRemoval";
-import { canDeleteNotification } from "~/features/notifications/hooks/notification-list-data";
+import { canDeleteNotification } from "~/features/notifications/model/notification-list-data";
 import {
   adminNotificationDetailFixture,
   cloneFixture,

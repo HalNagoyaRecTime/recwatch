@@ -14,6 +14,7 @@ import { useId, useState, type KeyboardEvent } from "react";
 
 import { FloatingListSurface } from "~/components/ui/panel/FloatingListSurface";
 import { cva } from "~/lib/cva";
+import { disabledControlStyle } from "~/components/ui/form/styles/control-styles";
 import { floatingListOptionStyle } from "~/components/ui/panel/styles/floating-list-styles";
 
 const floatingListOptionHeight = 36;
@@ -175,7 +176,7 @@ export function Select<T extends string>({
           aria-controls={listboxId}
           aria-expanded={isOpen}
           aria-label={ariaLabel}
-          className={`${selectTriggerStyle({ variant })} disabled:cursor-not-allowed disabled:opacity-50`}
+          className={`${selectTriggerStyle({ variant })} ${disabledControlStyle}`}
           disabled={disabled}
           type="button"
         >

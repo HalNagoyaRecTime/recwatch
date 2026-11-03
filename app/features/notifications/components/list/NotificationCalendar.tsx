@@ -144,7 +144,9 @@ function groupSchedulesByDate(items: readonly AdminNotificationListItem[]) {
     for (const schedule of notification.schedules) {
       const date = new Date(schedule.sendAt);
       if (Number.isNaN(date.getTime())) continue;
-      const key = toLocalDateKey(date);
+      const key = new Intl.DateTimeFormat("sv-SE", {
+        timeZone: "Asia/Tokyo",
+      }).format(date);
       const entries = grouped.get(key) ?? [];
       entries.push({ notification, schedule });
       entries.sort(

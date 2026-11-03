@@ -132,7 +132,9 @@ describe("useNotificationCreate", () => {
     await act(() => result.current.submit());
 
     expect(result.current.draft).toEqual(draft);
-    expect(result.current.submissionError).toBe("通知内容: 入力してください。");
+    expect(result.current.submissionIssues).toEqual([
+      { field: "content", message: "入力してください。" },
+    ]);
     expect(reportFeedback).not.toHaveBeenCalled();
   });
   it("重複対象を行単位で拒否し、修正後はエラーを消す", async () => {
@@ -161,9 +163,10 @@ describe("useNotificationCreate", () => {
       })
     );
     await act(() => result.current.submit());
-    expect(result.current.errors["audiences.1"]).toBe(
-      "同じ通知対象が重複しています"
-    );
+    expect(result.current.errors["audiences.1"]).toEqual({
+      kind: "validation",
+      code: "audience_duplicate",
+    });
     expect(create).not.toHaveBeenCalled();
     expect(reportFeedback).not.toHaveBeenCalled();
     await act(async () => {

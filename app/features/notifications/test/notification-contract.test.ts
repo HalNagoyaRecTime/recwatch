@@ -74,10 +74,21 @@ function parseListWithAudienceItem(audienceItem: unknown) {
         ],
       },
     ],
+    pagination: { page: 1, limit: 50, totalCount: 1, totalPages: 1 },
   });
 }
 
 describe("notification v2 contract", () => {
+  it("ページ情報付き一覧も追加トップレベル項目を許容する", () => {
+    const response = {
+      ...adminNotificationListFixture,
+      futureMetadata: { version: 2 },
+    };
+    expect(parseAdminNotificationListResponse(response)).toEqual(response);
+    expect(() =>
+      parseAdminNotificationListResponse({ ...response, pagination: null })
+    ).toThrow(ClientError);
+  });
   it("ScheduleとDeliveryのstatusを分離する", () => {
     expectTypeOf<NotificationScheduleStatusDto>().toEqualTypeOf<
       "scheduled" | "resolving" | "sending" | "completed" | "failed" | "stopped"
@@ -257,6 +268,17 @@ describe("notification v2 contract", () => {
         notificationScheduleId: 501,
       })
     ).toEqual({ notificationId: 108, notificationScheduleId: 501 });
+  });
+
+  it("通知一覧はページ情報が追加されても受け付け、itemsは検証する", () => {
+    const response = {
+      ...adminNotificationListFixture,
+      pagination: { page: 1, limit: 50, totalCount: 51, totalPages: 2 },
+    };
+    expect(parseAdminNotificationListResponse(response)).toEqual(response);
+    expect(() =>
+      parseAdminNotificationListResponse({ ...response, items: null })
+    ).toThrow(ClientError);
   });
 
   it("旧statusと旧Audienceを拒否する", () => {

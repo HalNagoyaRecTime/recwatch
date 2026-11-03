@@ -1,25 +1,24 @@
-import { useEffect, useRef, useState } from "react";
+import { useNotificationFormResources } from "~/features/notifications/hooks/useNotificationFormResources";
+import { useNotificationFormErrors } from "~/features/notifications/hooks/useNotificationFormErrors";
+import { isNotificationFormReady } from "~/features/notifications/hooks/notification-form-readiness";
+import { useRef, useState } from "react";
 
 import type { NotificationAudienceApi } from "~/features/notifications/api/contracts/notification-audience-api";
 import type { AdminNotificationCommandApi } from "~/features/notifications/api/contracts/admin-notification-command-api";
 import type { NotificationConfigApi } from "~/features/notifications/api/contracts/notification-config-api";
 import { readNotificationValidationDetails } from "~/features/notifications/api/contracts/notification-error";
-import { toNotificationDraftErrors } from "~/features/notifications/api/contracts/notification-form-errors";
 import {
-  toNotificationAudienceInput,
-  toNotificationCreateRequest,
-} from "~/features/notifications/api/contracts/notification-request-mapping";
+  toNotificationFormErrors,
+  toNotificationValidationErrors,
+  type NotificationFormIssue,
+} from "~/features/notifications/hooks/notification-form-errors";
+import { toNotificationCreateRequest } from "~/features/notifications/hooks/notification-request-mapping";
 import { getErrorMessage } from "~/lib/client-error";
-import type { NotificationAudienceOption } from "~/features/notifications/model/notification-audience";
 import {
   initialNotificationDraft,
   type NotificationDraft,
 } from "~/features/notifications/model/notification-draft";
-import {
-  validateNotificationDraft,
-  validateNotificationAudiences,
-  type NotificationDraftErrors,
-} from "~/features/notifications/model/notification-draft-validation";
+import { validateNotificationDraft } from "~/features/notifications/model/notification-draft-validation";
 import {
   reportNotificationActionError,
   type NotificationFeedbackReporter,
@@ -43,159 +42,25 @@ export function useNotificationCreate({
   const [draft, setDraft] = useState<NotificationDraft>(
     initialNotificationDraft
   );
-  const [errors, setErrors] = useState<NotificationDraftErrors>({});
+  const { errors, setErrors, updateDraftErrors } = useNotificationFormErrors();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const submitting = useRef(false);
   const [submitted, setSubmitted] = useState(false);
   const [submissionError, setSubmissionError] = useState<string | null>(null);
-  const [audienceReloadKey, setAudienceReloadKey] = useState(0);
-  const [importanceOptions, setImportanceOptions] = useState<
-    NotificationDraft["importance"][]
+  const [submissionIssues, setSubmissionIssues] = useState<
+    NotificationFormIssue[]
   >([]);
-  const [configError, setConfigError] = useState<string | null>(null);
-  const [recipientCount, setRecipientCount] = useState<number | null>(null);
-  const [isRecipientCountLoading, setIsRecipientCountLoading] = useState(false);
-  const [recipientCountError, setRecipientCountError] = useState<string | null>(
-    null
-  );
-  const [audienceResult, setAudienceResult] = useState<{
-    api: NotificationAudienceApi;
-    reloadKey: number;
-    options: NotificationAudienceOption[];
-    error: string | null;
-  } | null>(null);
-
-  const hasCurrentAudienceResult =
-    audienceResult?.api === audienceApi &&
-    audienceResult.reloadKey === audienceReloadKey;
-  const audienceOptions = audienceResult?.options ?? [];
-  const isAudienceLoading = !hasCurrentAudienceResult;
-  const audienceError = hasCurrentAudienceResult ? audienceResult.error : null;
-
-  useEffect(() => {
-    let active = true;
-
-    audienceApi
-      .load()
-      .then((options) => {
-        if (active) {
-          setAudienceResult({
-            api: audienceApi,
-            reloadKey: audienceReloadKey,
-            options,
-            error: null,
-          });
-        }
-      })
-      .catch((error: unknown) => {
-        if (active) {
-          setAudienceResult({
-            api: audienceApi,
-            reloadKey: audienceReloadKey,
-            options: [],
-            error: toAudienceErrorMessage(error),
-          });
-        }
-      });
-
-    return () => {
-      active = false;
-    };
-  }, [audienceApi, audienceReloadKey]);
-
-  useEffect(() => {
-    let active = true;
-    configApi
-      .getConfig()
-      .then((config) => {
-        if (!active) return;
-        setImportanceOptions(config.importance.options);
-        setDraft((current) => ({
-          ...current,
-          importance: config.importance.default,
-        }));
-        setConfigError(null);
-      })
-      .catch((error: unknown) => {
-        if (!active) return;
-        setImportanceOptions([]);
-        setConfigError(getErrorMessage(error));
-      });
-    return () => {
-      active = false;
-    };
-  }, [configApi]);
-
-  useEffect(() => {
-    let active = true;
-    const timeoutId = window.setTimeout(() => {
-      setIsRecipientCountLoading(true);
-      setRecipientCountError(null);
-      if (
-        Object.keys(validateNotificationAudiences(draft.audiences)).length > 0
-      ) {
-        setRecipientCount(null);
-        setIsRecipientCountLoading(false);
-        return;
-      }
-      try {
-        const audience = toNotificationAudienceInput(draft.audiences);
-        void configApi
-          .getAudienceCount({ audience })
-          .then((result) => {
-            if (active) setRecipientCount(result.recipientCount);
-          })
-          .catch((error: unknown) => {
-            if (!active) return;
-            setRecipientCountError(getErrorMessage(error));
-          })
-          .finally(() => {
-            if (active) setIsRecipientCountLoading(false);
-          });
-      } catch {
-        setRecipientCount(null);
-        setIsRecipientCountLoading(false);
-      }
-    }, 250);
-    return () => {
-      active = false;
-      window.clearTimeout(timeoutId);
-    };
-  }, [configApi, draft.audiences]);
-
+  const resources = useNotificationFormResources({
+    audienceApi,
+    configApi,
+    audiences: draft.audiences,
+  });
   function handleChange(nextDraft: NotificationDraft) {
     setDraft(nextDraft);
     setSubmitted(false);
     setSubmissionError(null);
-    setErrors((current) => {
-      const nextErrors: NotificationDraftErrors = {
-        ...current,
-        title: nextDraft.title.trim() ? undefined : current.title,
-        body: nextDraft.body.trim() ? undefined : current.body,
-        detailTitle: nextDraft.detailTitle.trim()
-          ? undefined
-          : current.detailTitle,
-        detailBody: nextDraft.detailBody.trim()
-          ? undefined
-          : current.detailBody,
-        audiences: nextDraft.audiences.length ? undefined : current.audiences,
-        scheduledAt: nextDraft.scheduledAt ? undefined : current.scheduledAt,
-      };
-      for (const key of Object.keys(current)) {
-        if (key.startsWith("audiences."))
-          delete nextErrors[key as keyof NotificationDraftErrors];
-      }
-      if (
-        Object.keys(current).some(
-          (key) => key === "audiences" || key.startsWith("audiences.")
-        )
-      )
-        Object.assign(
-          nextErrors,
-          validateNotificationAudiences(nextDraft.audiences)
-        );
-      return nextErrors;
-    });
+    setSubmissionIssues([]);
+    updateDraftErrors(nextDraft);
   }
 
   async function submit() {
@@ -204,7 +69,7 @@ export function useNotificationCreate({
     }
 
     const nextErrors = validateNotificationDraft(draft);
-    setErrors(nextErrors);
+    setErrors(toNotificationValidationErrors(nextErrors));
 
     if (Object.keys(nextErrors).length > 0 || submitting.current) {
       return null;
@@ -214,6 +79,7 @@ export function useNotificationCreate({
     setIsSubmitting(true);
     setSubmitted(false);
     setSubmissionError(null);
+    setSubmissionIssues([]);
 
     try {
       const result = await api.create(toNotificationCreateRequest(draft));
@@ -228,9 +94,10 @@ export function useNotificationCreate({
       const details = readNotificationValidationDetails(error);
       const message = getErrorMessage(error);
       if (details) {
-        const converted = toNotificationDraftErrors(details);
+        const converted = toNotificationFormErrors(details);
         setErrors((current) => ({ ...current, ...converted.fieldErrors }));
-        setSubmissionError(converted.formErrors.join(" / ") || message);
+        setSubmissionIssues(converted.formErrors);
+        setSubmissionError(message);
       } else setSubmissionError(message);
       if (!details)
         reportNotificationActionError(reportFeedback, {
@@ -248,25 +115,16 @@ export function useNotificationCreate({
   }
 
   return {
-    audienceError,
-    audienceOptions,
-    configError,
+    ...resources,
+    canSubmit:
+      isSubmissionEnabled && isNotificationFormReady(draft, false, resources),
     draft,
     errors,
-    isAudienceLoading,
-    importanceOptions,
-    isRecipientCountLoading,
     isSubmitting,
-    onAudienceReload: () => setAudienceReloadKey((current) => current + 1),
     onChange: handleChange,
-    recipientCount,
-    recipientCountError,
     submitted,
     submissionError,
+    submissionIssues,
     submit,
   };
-}
-
-function toAudienceErrorMessage(error: unknown) {
-  return getErrorMessage(error);
 }

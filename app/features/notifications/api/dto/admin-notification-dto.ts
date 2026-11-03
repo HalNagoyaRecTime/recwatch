@@ -2,7 +2,6 @@ import type {
   NotificationAudienceInputDto,
   NotificationContentDto,
   NotificationCreationDto,
-  NotificationDateRangeQueryDto,
   NotificationDeliveryInputDto,
   NotificationImportanceDto,
   NotificationPushContentDto,
@@ -12,8 +11,6 @@ import type {
   NotificationStopDto,
   NotificationUserReferenceDto,
 } from "~/features/notifications/api/dto/notification-common-dto";
-
-export type AdminNotificationListQueryDto = NotificationDateRangeQueryDto;
 
 export type AdminNotificationListScheduleDto = {
   notificationScheduleId: number;
@@ -36,8 +33,16 @@ export type AdminNotificationListItemDto = {
   schedules: AdminNotificationListScheduleDto[];
 };
 
+export type AdminNotificationPaginationDto = {
+  page: number;
+  limit: number;
+  totalCount: number;
+  totalPages: number;
+};
+
 export type AdminNotificationListResponseDto = {
   items: AdminNotificationListItemDto[];
+  pagination: AdminNotificationPaginationDto;
 };
 
 export type NotificationScheduleSummaryDto = {
@@ -94,17 +99,11 @@ export type NotificationPatchRequestDto = {
   };
 };
 
-export type NotificationPatchResponseDto = AdminNotificationDetailDto;
-
 export type NotificationConfigDto = {
   importance: {
     default: "normal";
     options: NotificationImportanceDto[];
   };
-};
-
-export type NotificationAudienceCountRequestDto = {
-  audience: NotificationAudienceInputDto;
 };
 
 export type NotificationAudienceCountDto = {

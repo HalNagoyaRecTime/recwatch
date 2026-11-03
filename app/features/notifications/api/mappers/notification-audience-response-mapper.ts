@@ -84,7 +84,7 @@ export function toNotificationAudienceOptions(input: {
   classrooms: ClassRoomAudienceApiDto[];
   gatherings: GatheringAudienceApiDto[];
   events: EventAudienceApiDto[];
-  users?: UserAudienceApiDto[];
+  users?: NotificationAudienceOption[];
 }): NotificationAudienceOption[] {
   return [
     ...input.classrooms.map((classroom) => ({
@@ -97,17 +97,25 @@ export function toNotificationAudienceOptions(input: {
       name: formatGatheringName(gathering),
       type: "gathering" as const,
     })),
-    ...(input.users ?? []).map((user) => ({
-      id: String(user.user_id),
-      name: user.display_name,
-      type: "user" as const,
-    })),
+    ...(input.users ?? []),
     ...input.events.map((event) => ({
       id: String(event.event_id),
       name: event.event_name,
       type: "event" as const,
     })),
   ];
+}
+
+export function toUserAudienceOption(
+  user: UserAudienceApiDto,
+  userCategory: "student" | "teacher"
+): NotificationAudienceOption {
+  return {
+    id: String(user.user_id),
+    name: user.display_name,
+    userCategory,
+    type: "user",
+  };
 }
 
 function toClassRoomDto(value: unknown): ClassRoomAudienceApiDto {
