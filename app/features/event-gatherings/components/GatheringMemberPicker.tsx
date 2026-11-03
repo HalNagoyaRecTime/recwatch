@@ -5,6 +5,10 @@ import { Button } from "~/components/ui/button/Button";
 import { SearchField } from "~/components/ui/form/SearchField";
 
 import { GatheringNonStudentMembers } from "~/features/event-gatherings/components/GatheringNonStudentMembers";
+import {
+  GatheringTeamMemberAdjustment,
+  type SelectedTeamMemberGroup,
+} from "~/features/event-gatherings/components/GatheringTeamMemberAdjustment";
 import { MAX_GATHERING_MEMBERS } from "~/features/event-gatherings/model/event-gathering-settings";
 import type {
   GatheringMemberCandidates,
@@ -93,6 +97,30 @@ export function GatheringMemberPicker({
       selection.selectedCount === selection.totalCount
   ).length;
 
+  const selectedTeamMemberGroups = useMemo<SelectedTeamMemberGroup[]>(() => {
+    if (!candidates) return [];
+
+    const studentsByUserId = new Map(
+      candidates.students.map((student) => [student.userId, student])
+    );
+
+    return candidates.teams.flatMap((team) => {
+      const selection = selectionsByTeamId.get(team.id);
+      if (!selection || selection.selectedCount === 0) return [];
+
+      return [
+        {
+          id: team.id,
+          name: team.name,
+          students: selection.userIds.flatMap((userId) => {
+            const student = studentsByUserId.get(userId);
+            return student ? [student] : [];
+          }),
+        },
+      ];
+    });
+  }, [candidates, selectionsByTeamId]);
+
   // チームに紐付かない登録済み学生と学生以外の参加者は、既存設定から消さないよう別枠に出す。
   const otherMembers = useMemo(() => {
     const named: MemberNonStudent[] = [];
@@ -148,6 +176,14 @@ export function GatheringMemberPicker({
   }
 
   function toggleOtherMember(userId: number) {
+    onChange(
+      selectedUserIds.includes(userId)
+        ? selectedUserIds.filter((id) => id !== userId)
+        : [...selectedUserIds, userId]
+    );
+  }
+
+  function toggleTeamMember(userId: number) {
     onChange(
       selectedUserIds.includes(userId)
         ? selectedUserIds.filter((id) => id !== userId)
@@ -283,6 +319,12 @@ export function GatheringMemberPicker({
           ) : null}
         </div>
       )}
+
+      <GatheringTeamMemberAdjustment
+        groups={selectedTeamMemberGroups}
+        onToggle={toggleTeamMember}
+        selectedUserIds={selectedUserIds}
+      />
 
       {!loadError && !isLoading && candidates ? (
         <GatheringNonStudentMembers
