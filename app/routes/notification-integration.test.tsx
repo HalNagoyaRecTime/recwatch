@@ -1,4 +1,5 @@
 import {
+  act,
   cleanup,
   fireEvent,
   render,
@@ -35,7 +36,7 @@ const json = (body: unknown, status = 200) =>
     headers: { "Content-Type": "application/json" },
   });
 // HTTPだけを置換し、Routeの本番adapter・Mapper・共通apiClientはそのまま使用します。
-function mockTransport(createStatus = 200) {
+function mockTransport(createStatus = 200, initialExists = false) {
   const detail = cloneFixture(adminNotificationDetailFixture);
   detail.schedules = [
     {
@@ -44,7 +45,7 @@ function mockTransport(createStatus = 200) {
     },
   ];
   detail.schedules[0].sendAt = new Date(Date.now() + 600_000).toISOString();
-  let exists = false;
+  let exists = initialExists;
   const fetchMock = vi.fn(
     async (input: string | URL | Request, init?: RequestInit) => {
       const url = new URL(String(input));
@@ -226,6 +227,90 @@ afterEach(() => {
 });
 
 describe("通知RouteのHTTP境界統合（応答はMock）", () => {
+  it("Calendarの古いGET中に一覧で削除し、再表示しても削除済み予定を戻さない", async () => {
+    const user = userEvent.setup();
+    const { fetchMock, detail } = mockTransport(200, true);
+    const transport = fetchMock.getMockImplementation()!;
+    let holdNextCalendarRead = false;
+    let releaseRead: (() => void) | undefined;
+    fetchMock.mockImplementation(async (input, init) => {
+      const response = await transport(input, init);
+      const url = new URL(String(input));
+      if (
+        holdNextCalendarRead &&
+        url.pathname === base &&
+        (init?.method ?? "GET") === "GET" &&
+        url.searchParams.has("from")
+      ) {
+        holdNextCalendarRead = false;
+        return new Promise<Response>((resolve) => {
+          releaseRead = () => resolve(response);
+        });
+      }
+      return response;
+    });
+    renderRoutes("/notifications?view=calendar");
+    await screen.findByRole("link", {
+      name: (name) => name.endsWith(`${detail.content.push.title}の詳細を表示`),
+    });
+    holdNextCalendarRead = true;
+    await user.click(
+      screen.getByRole("button", { name: "通知一覧を再読み込み" })
+    );
+    await waitFor(() => expect(releaseRead).toBeTypeOf("function"));
+    await user.click(screen.getByRole("link", { name: "一覧" }));
+    await user.click(
+      await screen.findByRole("button", {
+        name: `${detail.content.push.title}のその他の操作`,
+      })
+    );
+    await user.click(screen.getByRole("button", { name: "通知を削除" }));
+    await user.click(
+      within(screen.getByRole("alertdialog")).getByRole("button", {
+        name: "削除する",
+      })
+    );
+    await waitFor(() =>
+      expect(
+        fetchMock.mock.calls.some(([, init]) => init?.method === "DELETE")
+      ).toBe(true)
+    );
+    const beforeRelease = fetchMock.mock.calls.length;
+    const deletionIndex = fetchMock.mock.calls.findIndex(
+      ([, init]) => init?.method === "DELETE"
+    );
+    expect(
+      fetchMock.mock.calls
+        .slice(deletionIndex + 1)
+        .some(
+          ([input, init]) =>
+            new URL(String(input)).pathname === base &&
+            (init?.method ?? "GET") === "GET"
+        )
+    ).toBe(false);
+    await act(async () => releaseRead!());
+    await screen.findByText("条件に一致する通知はありません");
+    await waitFor(() =>
+      expect(
+        fetchMock.mock.calls
+          .slice(beforeRelease)
+          .some(
+            ([input, init]) =>
+              new URL(String(input)).pathname === base &&
+              (init?.method ?? "GET") === "GET"
+          )
+      ).toBe(true)
+    );
+    await user.click(screen.getByRole("link", { name: "カレンダー" }));
+    await screen.findByText("この月に配信予定・配信済みの通知はありません");
+    expect(
+      screen.queryByRole("link", {
+        name: (name) =>
+          name.endsWith(`${detail.content.push.title}の詳細を表示`),
+      })
+    ).not.toBeInTheDocument();
+  });
+
   it.each(["now", "scheduled"] as const)(
     "%s作成から詳細・一覧・編集・削除まで遷移し、成功はToastのみへ通知する",
     async (timing) => {
@@ -238,9 +323,7 @@ describe("通知RouteのHTTP境界統合（応答はMock）", () => {
         const future = new Date(Date.now() + 600_000);
         fireEvent.change(screen.getByLabelText("予約配信日時"), {
           target: {
-            value: new Date(
-              future.getTime() - future.getTimezoneOffset() * 60_000
-            )
+            value: new Date(future.getTime() + 9 * 60 * 60_000)
               .toISOString()
               .slice(0, 16),
           },
@@ -306,7 +389,7 @@ describe("通知RouteのHTTP境界統合（応答はMock）", () => {
       );
       expect(JSON.parse(String(createCall?.[1]?.body)).delivery).toEqual(
         timing === "scheduled"
-          ? { type: "scheduled", sendAt: expect.any(String) }
+          ? { type: "scheduled", sendAt: expect.stringMatching(/\+09:00$/) }
           : { type: "immediate", sendAt: null }
       );
       const mutations = fetchMock.mock.calls.filter(([, init]) =>
