@@ -5,6 +5,7 @@ import { FormModal } from "~/components/ui/modal/FormModal";
 
 import type { EventGatheringSettingsGateway } from "~/features/event-gatherings/api/contracts/event-gathering-settings-gateway";
 import type { GatheringMemberGateway } from "~/features/event-gatherings/api/contracts/gathering-member-gateway";
+import { EventGatheringContext } from "~/features/event-gatherings/components/EventGatheringContext";
 import { GatheringSettingsSavedStep } from "~/features/event-gatherings/components/GatheringSettingsSavedStep";
 import { GatheringSettingsStep } from "~/features/event-gatherings/components/GatheringSettingsStep";
 import type { EventGatheringSettings } from "~/features/event-gatherings/model/event-gathering-settings";
@@ -51,6 +52,15 @@ export function EventGatheringSettingsPage({
           : "Roundごとの集合時間・集合場所を編集します。"
       }
       onClose={handleClose}
+      pinnedContent={
+        outletContext?.event ? (
+          <EventGatheringContext
+            endTime={outletContext.event.endTime}
+            name={outletContext.event.name}
+            startTime={outletContext.event.startTime}
+          />
+        ) : undefined
+      }
       size="xl"
       title="集合設定"
     >
