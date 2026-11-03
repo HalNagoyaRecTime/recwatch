@@ -1089,7 +1089,7 @@ describe("GatheringSettingsStep", () => {
     );
   });
 
-  it("上限を超えて選ぶと不足人数を案内し、保存できない", async () => {
+  it("31人のチームを選び、1人外して30人で保存できる", async () => {
     const memberGateway = createMemberGateway();
     (memberGateway.loadCandidates as Mock).mockResolvedValue({
       teams: [{ id: 10, name: "青チーム", classCodes: ["HAL1A"] }],
@@ -1126,11 +1126,27 @@ describe("GatheringSettingsStep", () => {
     );
     expect(screen.getByRole("button", { name: "参加者を保存" })).toBeDisabled();
 
-    // チームを外せば上限内に戻る
-    await user.click(screen.getByLabelText("青チームを選択"));
+    const adjustment = screen.getByRole("region", {
+      name: "選択したチームの参加者調整",
+    });
+    await user.click(
+      within(adjustment).getByLabelText("学生31（2026031）を参加者に含める")
+    );
+
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    expect(
+      screen.getByText(/選択中 0チーム・30人 \/ 30人/)
+    ).toBeInTheDocument();
+    expect(screen.getByLabelText("青チームを選択")).toBePartiallyChecked();
+    expect(screen.getByRole("button", { name: "参加者を保存" })).toBeEnabled();
+
     await user.click(screen.getByRole("button", { name: "参加者を保存" }));
-    await waitFor(() => expect(memberGateway.saveMembers).toHaveBeenCalled());
+    await waitFor(() =>
+      expect(memberGateway.saveMembers).toHaveBeenCalledWith(
+        101,
+        Array.from({ length: 30 }, (_, index) => 1001 + index)
+      )
+    );
   });
 
   it("参加者の保存に失敗しても選択を保持し、再試行できる", async () => {
