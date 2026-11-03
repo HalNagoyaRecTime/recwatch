@@ -73,6 +73,7 @@ export function toEventGatheringAudienceDtos(
       toGatheringDto({
         gathering_id: gathering.gathering_id,
         event_name: event.event_name,
+        round: round.round,
         gathering_spot_name: gathering.gathering_spot.gathering_spot_name,
         gathering_time: gathering.gathering_time,
       })
@@ -149,6 +150,7 @@ function toGatheringDto(value: unknown): GatheringAudienceApiDto {
   return {
     gathering_id: value.gathering_id,
     event_name: value.event_name,
+    round: value.round,
     gathering_spot_name: value.gathering_spot_name,
     gathering_time: value.gathering_time,
   };
@@ -159,7 +161,7 @@ function formatGatheringName(gathering: GatheringAudienceApiDto) {
     ? `${gathering.gathering_time.slice(0, 2)}:${gathering.gathering_time.slice(2)}`
     : gathering.gathering_time;
 
-  return `${gathering.event_name} / ${gathering.gathering_spot_name} (${time})`;
+  return `${gathering.event_name} / Round ${gathering.round} / ${gathering.gathering_spot_name} (${time})`;
 }
 
 function unexpectedResponse() {
