@@ -125,4 +125,20 @@ describe("FormModal", () => {
     await user.tab({ shift: true });
     expect(saveButton).toHaveFocus();
   });
+
+  it("固定表示する内容をスクロール領域の外に配置する", () => {
+    render(
+      <FormModal onClose={vi.fn()} pinnedContent={<p>固定情報</p>} title="登録">
+        <p>入力内容</p>
+      </FormModal>
+    );
+
+    expect(screen.getByText("固定情報").parentElement).toHaveClass("shrink-0");
+    expect(screen.getByText("固定情報").parentElement).not.toHaveClass(
+      "overflow-y-auto"
+    );
+    expect(screen.getByText("入力内容").parentElement).toHaveClass(
+      "overflow-y-auto"
+    );
+  });
 });
