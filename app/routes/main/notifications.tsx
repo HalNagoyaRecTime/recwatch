@@ -1,4 +1,4 @@
-import { useSearchParams } from "react-router";
+import { Navigate, useSearchParams } from "react-router";
 import { createPageTitle } from "~/lib/page-title";
 import { httpAdminNotificationCommandApi } from "~/features/notifications/api/http/admin-notification-command-api";
 import { httpAdminNotificationQueryApi } from "~/features/notifications/api/http/admin-notification-query-api";
@@ -14,13 +14,25 @@ export function meta() {
 export default function NotificationsRoute() {
   const { report } = useFeedback();
   const [searchParams] = useSearchParams();
+  if (searchParams.get("view") === "calendar") {
+    const remainingParams = new URLSearchParams(searchParams);
+    remainingParams.delete("view");
+    const search = remainingParams.toString();
+    return (
+      <Navigate
+        replace
+        to={{
+          pathname: "/notifications/calendar",
+          search: search ? `?${search}` : "",
+        }}
+      />
+    );
+  }
   return (
     <PageLayout>
       <PagePadding>
         <NotificationListPage
-          viewMode={
-            searchParams.get("view") === "calendar" ? "calendar" : "list"
-          }
+          viewMode="list"
           commandApi={httpAdminNotificationCommandApi}
           queryApi={httpAdminNotificationQueryApi}
           reportFeedback={report}
