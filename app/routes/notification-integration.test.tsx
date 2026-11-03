@@ -107,6 +107,12 @@ function mockTransport(createStatus = 200) {
       }
       if (url.pathname === base)
         return json({
+          pagination: {
+            page: 1,
+            limit: 50,
+            totalCount: exists ? 1 : 0,
+            totalPages: exists ? 1 : 0,
+          },
           items: exists
             ? [
                 {
@@ -200,14 +206,16 @@ function renderRoutes(path = "/notifications/new") {
     </MemoryRouter>
   );
 }
-function fillContent() {
+async function fillContent() {
   for (const [label, value] of [
     ["タイトル*", "統合確認の通知"],
     ["本文*", "検証用の本文"],
     ["詳細タイトル*", "統合確認の詳細"],
-    ["詳細本文*", "検証用の詳細本文"],
+    ["Markdownソース", "検証用の詳細本文"],
   ])
-    fireEvent.change(screen.getByLabelText(label), { target: { value } });
+    fireEvent.change(await screen.findByLabelText(label), {
+      target: { value },
+    });
 }
 beforeEach(() => localStorage.clear());
 afterEach(() => {
@@ -224,7 +232,7 @@ describe("通知RouteのHTTP境界統合（応答はMock）", () => {
       const user = userEvent.setup();
       const { fetchMock, detail } = mockTransport();
       renderRoutes();
-      fillContent();
+      await fillContent();
       if (timing === "scheduled") {
         await user.click(screen.getByRole("button", { name: "予約配信" }));
         const future = new Date(Date.now() + 600_000);
@@ -239,9 +247,8 @@ describe("通知RouteのHTTP境界統合（応答はMock）", () => {
         });
       }
 
-      await screen.findByText("対象候補 7人");
       const submit = screen.getByRole("button", {
-        name: timing === "scheduled" ? "配信を予約" : "通知を配信",
+        name: "通知を作成",
       });
       await waitFor(() => expect(submit).toBeEnabled());
       await user.click(submit);
@@ -256,12 +263,10 @@ describe("通知RouteのHTTP境界統合（応答はMock）", () => {
           "通知はありません"
         )
       ).toBeInTheDocument();
-      await user.click(screen.getByRole("link", { name: "通知一覧" }));
-      await screen.findByRole("heading", { name: "通知一覧" });
+      await user.click(await screen.findByRole("link", { name: "通知一覧" }));
+      await screen.findByRole("heading", { name: "通知管理" });
       if (timing === "scheduled") {
-        await user.click(
-          screen.getByRole("button", { name: "カレンダー表示" })
-        );
+        await user.click(screen.getByRole("link", { name: "カレンダー" }));
         const link = await screen.findByRole("link", {
           name: /統合確認の通知の詳細を表示/,
         });
@@ -272,8 +277,8 @@ describe("通知RouteのHTTP境界統合（応答はMock）", () => {
         ).toBe(true);
         await user.click(link);
         await screen.findByRole("heading", { name: "統合確認の詳細" });
-        await user.click(screen.getByRole("link", { name: "通知一覧" }));
-        await screen.findByRole("heading", { name: "通知一覧" });
+        await user.click(await screen.findByRole("link", { name: "通知一覧" }));
+        await screen.findByRole("heading", { name: "通知管理" });
       }
       await user.click(
         await screen.findByRole("button", {
@@ -283,15 +288,17 @@ describe("通知RouteのHTTP境界統合（応答はMock）", () => {
       await user.click(screen.getByRole("button", { name: "通知を編集" }));
       const title = await screen.findByLabelText("詳細タイトル*");
       fireEvent.change(title, { target: { value: "編集後の詳細" } });
-      await user.click(screen.getByRole("button", { name: "変更を保存" }));
+      await user.click(screen.getByRole("button", { name: "通知を保存" }));
       await screen.findByRole("heading", { name: "編集後の詳細" });
-      await user.click(screen.getByRole("button", { name: "通知を削除" }));
+      await user.click(
+        await screen.findByRole("button", { name: "通知を削除" })
+      );
       await user.click(
         within(screen.getByRole("alertdialog")).getByRole("button", {
           name: "削除する",
         })
       );
-      await screen.findByRole("heading", { name: "通知一覧" });
+      await screen.findByRole("heading", { name: "通知管理" });
       await screen.findByText("条件に一致する通知はありません");
       const createCall = fetchMock.mock.calls.find(
         ([url, init]) =>
@@ -335,8 +342,8 @@ describe("通知RouteのHTTP境界統合（応答はMock）", () => {
       const user = userEvent.setup();
       mockTransport(status);
       renderRoutes();
-      fillContent();
-      const submit = screen.getByRole("button", { name: "通知を配信" });
+      await fillContent();
+      const submit = screen.getByRole("button", { name: "通知を作成" });
       await waitFor(() => expect(submit).toBeEnabled());
       await user.click(submit);
       if (status === 400)

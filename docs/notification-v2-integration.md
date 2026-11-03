@@ -5,7 +5,7 @@
 この文書は通知管理のシナリオ・検証手順・未実施項目をまとめる。Route統合テストに加え、2026-10-24に最新Backendの隔離HTTP境界を一部確認した。画面・runtime全体の検証は残っており、#343の完了報告ではない。
 
 - recwatch #335 / #336 / #337 / #338 / #340 / #341 / #342 / #344はdevelopへ統合済み。
-- Backendの旧PR #474はCloseされ、代替のPR #562がdevelopへmerge済み。#451は管理上Openであり、Gathering削除hookの#449もOpen。#474のmergeを開始条件にはしない。
+- Backendの旧PR #474はCloseされ、代替のPR #562がdevelopへmerge済み。#451は管理上Openであり、Gathering削除hook #449はPR #564 / #567で統合済み。#474のmergeを開始条件にはしない。
 - 実API検証にはv2 Routeが接続された最新developを使用する。Backendの作業ブランチをrecwatchへ取り込まない。
 - 本番RouteのHTTP adapter・共通apiClientは変更しない。Mockへの切り替えはテスト内だけで行う。
 
@@ -46,15 +46,17 @@ Node.js 25でjsdomのlocalStorageが利用できない場合は、上記コマ�
 | N10 | sendingを緊急Stop                    | bodyなしPOST、応答はIDとstoppedのみ、GETで監査・集計を取得  | 既存HTTP adapter / Monitor操作           | 画面操作→stopped・配送停止数をGETで確認          |
 | N11 | Stop直前にcompleted、または重複Stop  | 409後にGET、Nodeとdialogを保持                              | 既存Monitor操作                          | 完了状態への自動更新でdialogの実行不可を確認     |
 | N12 | immediate / scheduledで再送          | 元Scheduleは保持し、新ScheduleがGET一覧へ現れる             | 既存HTTP adapter / Monitor操作           | 即時/日時指定再送を画面確認・非表示条件を修正    |
-| N13 | source削除済みautomaticから再送      | 操作非表示・最終判断はBackend409、履歴を破壊しない          | 既存Monitor操作                          | source不在fixtureで409・削除hook未               |
+| N13 | source削除済みautomaticから再送      | 操作非表示・最終判断はBackend409、履歴を破壊しない          | 既存Monitor操作                          | 実Gathering削除PUT→cleanup・再送409、画面未      |
 | N14 | Tokenが0件のRecipient                | User数とToken数を混同せず、詳細・Resultsで確認可能          | 既存詳細Page / DTO                       | CronのRecipient確定・Results画面確認、配信完了未 |
 | N15 | retry_waitがある配信                 | Retryを成功扱いせず、数値はBackend値と一致                  | 既存Monitor Page                         | retry_wait fixtureのAPI確認・実Retry未           |
-| N16 | automaticのsource.labelがnull        | 表示が壊れず、再送を許可しない                              | 既存Monitor操作・表示                    | API確認・画面未                                  |
+| N16 | automaticのsource.labelがnull        | 表示が壊れず、再送を許可しない                              | 既存Monitor操作・表示                    | 実削除後label=nullをadapterで確認、実画面未      |
 | N17 | 400のcontent / schedule / importance | 項目またはフォーム内へ表示、Toast / Centerへ保存しない      | 今回のRoute統合、既存Form / Mapper       | importance 400のみ確認・画面未                   |
 | N18 | 404 / 409 / 5xx / 通信失敗           | 入力・選択を保持し、操作エラーは既存Feedbackへ              | 今回のRoute統合、既存Hook                | 403/404/409 API確認・5xx/通信失敗はMockのみ      |
 | N19 | Monitorの自動更新失敗 → 回復         | 前回表示を保持、background-errorを重複保存しない            | 既存useNotificationMonitor               | 自動GETへ500を注入し表示保持・重複抑止・回復確認 |
 
 対応する既存テストは`app/features/notifications/test/`配下にある。表の「既存」は個別境界での確認を示し、画面間・実runtime全体の成功を意味しない。
+
+Gathering削除hookの追加実API結果は[2026-11-03の記録](verification/notification-v2-gathering-cleanup-2026-11-03.md)を参照する。
 
 ## Cutover後の実施手順
 
