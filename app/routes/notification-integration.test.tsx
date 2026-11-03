@@ -214,9 +214,17 @@ async function fillContent() {
     ["詳細タイトル*", "統合確認の詳細"],
     ["Markdownソース", "検証用の詳細本文"],
   ])
-    fireEvent.change(await screen.findByLabelText(label), {
-      target: { value },
-    });
+    fireEvent.change(
+      await screen.findByLabelText(
+        label,
+        {},
+        {
+          // CIでは初回のMarkdownエディターのmodule読み込みを待つ。
+          timeout: label === "Markdownソース" ? 10_000 : 1_000,
+        }
+      ),
+      { target: { value } }
+    );
 }
 beforeEach(() => localStorage.clear());
 afterEach(() => {
@@ -416,7 +424,8 @@ describe("通知RouteのHTTP境界統合（応答はMock）", () => {
           "通知はありません"
         )
       ).toBeInTheDocument();
-    }
+    },
+    15_000
   );
 
   it.each([400, 409, 500, 0])(

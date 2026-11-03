@@ -8,6 +8,8 @@
 
 入力をJSTの年月日時分で作り、POSTのsendAtに`+09:00`が付くことも確認する。productionの日時検証を緩和せず、テストを現行契約へ合わせた。
 
+次のCIではUTC予約入力の失敗が解消し、898件中897件が成功した。残る1件は初回Markdownエディターのmodule読み込みが既定の1秒を超えたためで、`findByLabelText`が実際のエディター出現を最大10秒待つよう変更した。該当する作成・編集・削除フローだけテスト期限を15秒とし、固定sleepやretry、assertionの削除は行わない。
+
 - `TZ=UTC NODE_OPTIONS=--no-experimental-webstorage npm test` → 160 files / 898 tests成功。
 - `TZ=Asia/Tokyo NODE_OPTIONS=--no-experimental-webstorage npm test -- app/routes/notification-integration.test.tsx` → 8 tests成功。
 
