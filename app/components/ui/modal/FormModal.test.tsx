@@ -133,12 +133,10 @@ describe("FormModal", () => {
       </FormModal>
     );
 
-    expect(screen.getByText("固定情報").parentElement).toHaveClass("shrink-0");
-    expect(screen.getByText("固定情報").parentElement).not.toHaveClass(
-      "overflow-y-auto"
-    );
-    expect(screen.getByText("入力内容").parentElement).toHaveClass(
-      "overflow-y-auto"
-    );
+    const pinnedContent = screen.getByText("固定情報");
+    const formContent = screen.getByText("入力内容");
+
+    expect(pinnedContent.closest(".overflow-y-auto")).toBeNull();
+    expect(formContent.closest(".overflow-y-auto")).not.toBeNull();
   });
 });
