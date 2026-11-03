@@ -2,15 +2,15 @@ import { loadAllPages } from "~/lib/load-all-pages";
 
 import type { GatheringMemberGateway } from "~/features/event-gatherings/api/contracts/gathering-member-gateway";
 import type {
-  ClassroomPageResponseDto,
   GatheringMemberResponseDto,
   StudentPageResponseDto,
+  TeamPageResponseDto,
   TeacherPageResponseDto,
 } from "~/features/event-gatherings/api/dto/gathering-member-api-dto";
 import {
-  toMemberClassroom,
   toMemberNonStudent,
   toMemberStudent,
+  toMemberTeam,
   toMemberUserIds,
   toReplaceGatheringMembersRequest,
 } from "~/features/event-gatherings/api/mappers/gathering-member-mappers";
@@ -25,13 +25,13 @@ export function createHttpGatheringMemberGateway(
 ): GatheringMemberGateway {
   return {
     async loadCandidates() {
-      const [classrooms, students, teachers] = await Promise.all([
+      const [teams, studentResponses, teachers] = await Promise.all([
         loadAllPages(async (offset, limit) => {
-          const page = await client.get<ClassroomPageResponseDto>(
-            `/api/v1/classrooms?limit=${limit}&offset=${offset}`
+          const page = await client.get<TeamPageResponseDto>(
+            `/api/v1/teams?limit=${limit}&offset=${offset}`
           );
           return {
-            items: page.items.map(toMemberClassroom),
+            items: page.items.map(toMemberTeam),
             total: page.total,
           };
         }),
@@ -42,7 +42,7 @@ export function createHttpGatheringMemberGateway(
             `/api/v1/students?limit=${limit}&offset=${offset}&isLiveActive=all`
           );
           return {
-            items: page.items.map(toMemberStudent),
+            items: page.items,
             total: page.total,
           };
         }),
@@ -62,7 +62,20 @@ export function createHttpGatheringMemberGateway(
       const nonStudents = new Map(
         teachers.map((teacher) => [teacher.userId, teacher])
       );
-      return { classrooms, students, nonStudents };
+      const teamIdByClassCode = new Map(
+        teams.flatMap((team) =>
+          team.classCodes.map((classCode) => [classCode, team.id] as const)
+        )
+      );
+      const students = studentResponses.map((student) =>
+        toMemberStudent(
+          student,
+          student.class_room
+            ? (teamIdByClassCode.get(student.class_room.class_code) ?? null)
+            : null
+        )
+      );
+      return { teams, students, nonStudents };
     },
 
     async loadMembers(gatheringId) {
