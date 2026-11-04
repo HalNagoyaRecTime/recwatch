@@ -14,6 +14,7 @@ export type ClassRoomAudiencePageApiDto = {
 export type GatheringAudienceApiDto = {
   gathering_id: number;
   event_name: string;
+  round: number;
   gathering_spot_name: string;
   gathering_time: string;
 };

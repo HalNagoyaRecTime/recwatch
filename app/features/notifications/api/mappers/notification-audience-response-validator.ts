@@ -74,6 +74,7 @@ export function isGatheringAudienceItemResponse(
     isRecord(value) &&
     isPositiveInteger(value.gathering_id) &&
     isNonEmptyString(value.event_name) &&
+    isPositiveInteger(value.round) &&
     isNonEmptyString(value.gathering_spot_name) &&
     isNonEmptyString(value.gathering_time)
   );
