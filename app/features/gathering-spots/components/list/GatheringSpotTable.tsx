@@ -1,3 +1,4 @@
+import { PlaceImageStatusBadge } from "~/components/management/PlaceImageStatusBadge";
 import { DataTable } from "~/components/ui/data-table/DataTable";
 import type { DataTableColumn } from "~/components/ui/data-table/data-table-types";
 import { SearchField } from "~/components/ui/form/SearchField";
@@ -15,6 +16,7 @@ type GatheringSpotTableProps = {
   items: readonly GatheringSpot[];
   onDelete: (spot: GatheringSpot) => void;
   onEdit: (spot: GatheringSpot) => void;
+  onEditImage: (spot: GatheringSpot) => void;
   onPageChange: (page: number) => void;
   onQueryChange: (query: string) => void;
   onSortChange: (columnId: string) => void;
@@ -32,6 +34,7 @@ export function GatheringSpotTable({
   items,
   onDelete,
   onEdit,
+  onEditImage,
   onPageChange,
   onQueryChange,
   onSortChange,
@@ -56,6 +59,19 @@ export function GatheringSpotTable({
       width: { type: "fluid", min: 130, grow: 2 },
       renderCell: (spot) => (
         <span className="text-text-base font-medium">{spot.name}</span>
+      ),
+    },
+    {
+      id: "image",
+      header: "画像",
+      width: { type: "fluid", min: 120, grow: 0.3 },
+      renderCell: (spot) => (
+        <PlaceImageStatusBadge
+          disabled={isMutating}
+          imageUrl={spot.imageUrl}
+          label={`${spot.name}の画像`}
+          onClick={() => onEditImage(spot)}
+        />
       ),
     },
     {

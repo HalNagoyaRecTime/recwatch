@@ -9,6 +9,7 @@ export function toVenue(response: VenueResponseDto): Venue {
   return {
     id: response.venue_id,
     name: response.venue_name,
+    imageUrl: response.image_url,
     createdAt: response.created_at,
     updatedAt: response.updated_at,
   };
