@@ -15,6 +15,7 @@ type FormModalProps = {
   description?: ReactNode;
   onClose: () => void;
   isDismissDisabled?: boolean;
+  pinnedContent?: ReactNode;
   size?: "md" | "xl";
   title: ReactNode;
 };
@@ -50,6 +51,7 @@ export function FormModal({
   description,
   onClose,
   isDismissDisabled = false,
+  pinnedContent,
   size = "md",
   title,
 }: FormModalProps) {
@@ -219,6 +221,11 @@ export function FormModal({
             <span aria-hidden="true">×</span>
           </button>
         </header>
+        {pinnedContent ? (
+          <div className="bg-surface-base shrink-0 px-5 pt-5">
+            {pinnedContent}
+          </div>
+        ) : null}
         <div className="min-h-0 overflow-y-auto px-5 py-5">{content}</div>
       </section>
     </div>
