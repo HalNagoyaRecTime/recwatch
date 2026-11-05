@@ -1,5 +1,6 @@
 import type {
   MasterImportCommittedResult,
+  MasterImportExcludedRow,
   MasterImportRowError,
   MasterImportSession,
   MasterImportStatus,
@@ -15,6 +16,8 @@ type ApiMasterImportSession = {
   success_count: number;
   error_count: number;
   errors: unknown[];
+  excluded_count: number;
+  excluded: unknown[];
   rows: unknown[];
   rows_total: number;
   rows_limit: number;
@@ -40,6 +43,8 @@ export function toMasterImportSession(response: unknown): MasterImportSession {
     successCount: response.success_count,
     errorCount: response.error_count,
     errors: response.errors.map(toRowError),
+    excludedCount: response.excluded_count,
+    excluded: response.excluded.map(toExcludedRow),
     rows: response.rows.filter(isRecord),
     rowsTotal: response.rows_total,
     rowsLimit: response.rows_limit,
@@ -64,6 +69,8 @@ function isApiMasterImportSession(
     isNonNegativeInteger(value.success_count) &&
     isNonNegativeInteger(value.error_count) &&
     Array.isArray(value.errors) &&
+    isNonNegativeInteger(value.excluded_count) &&
+    Array.isArray(value.excluded) &&
     Array.isArray(value.rows) &&
     isNonNegativeInteger(value.rows_total) &&
     isNonNegativeInteger(value.rows_limit) &&
@@ -82,6 +89,25 @@ function toRowError(value: unknown): MasterImportRowError {
     ...value,
     rowIndex: value.row_index,
     reason: typeof value.reason === "string" ? value.reason : "unknown",
+  };
+}
+
+function toExcludedRow(value: unknown): MasterImportExcludedRow {
+  if (
+    !isRecord(value) ||
+    !isNonNegativeInteger(value.row_index) ||
+    typeof value.student_id_number !== "string" ||
+    typeof value.display_name !== "string" ||
+    typeof value.reason !== "string"
+  ) {
+    throw new Error(INVALID_RESPONSE_MESSAGE);
+  }
+
+  return {
+    rowIndex: value.row_index,
+    studentIdNumber: value.student_id_number,
+    displayName: value.display_name,
+    reason: value.reason,
   };
 }
 
