@@ -17,6 +17,7 @@ type EventDetailPageProps = {
 
 /** 子ルート（集合設定モーダル）から詳細の再取得を依頼するための受け渡し口。 */
 export type EventDetailOutletContext = {
+  event: EventDetail | null;
   reload: () => void;
 };
 
@@ -36,8 +37,8 @@ export function EventDetailPage({
   const [reloadToken, setReloadToken] = useState(0);
   const reload = useCallback(() => setReloadToken((token) => token + 1), []);
   const outletContext = useMemo<EventDetailOutletContext>(
-    () => ({ reload }),
-    [reload]
+    () => ({ event, reload }),
+    [event, reload]
   );
 
   useEffect(() => {

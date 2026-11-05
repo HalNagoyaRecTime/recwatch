@@ -31,7 +31,15 @@ export const MASTER_IMPORT_COLUMN_LABEL: Record<string, string> = {
 
 export const MASTER_IMPORT_ERROR_REASON_LABEL: Record<string, string> = {
   student_id_number_duplicate_in_file: "学籍番号がファイル内で重複しています",
-  student_id_number_duplicate_in_db: "学籍番号が既に登録されています",
+  attendance_number_duplicate_in_file:
+    "同じクラスの出席番号がファイル内で重複しています",
+  attendance_number_duplicate_in_db: "同じクラスの出席番号が既に使われています",
   class_code_duplicate_in_file: "クラスコードがファイル内で重複しています",
   class_code_duplicate_in_db: "クラスコードが既に登録されています",
+};
+
+export const MASTER_IMPORT_EXCLUSION_REASON_LABEL: Record<string, string> = {
+  student_already_registered: "既に登録されています",
+  student_already_registered_inactive: "無効化された学生として登録されています",
+  student_account_deleted: "退会した学生のため登録しません",
 };
