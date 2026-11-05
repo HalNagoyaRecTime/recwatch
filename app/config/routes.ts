@@ -70,12 +70,6 @@ export const sidebarSections = [
             activeExclusions: ["/events/today", "/events/assignments"],
             roles: ["admin"],
           },
-          {
-            id: "events-active",
-            label: "本日の進行",
-            to: "/events/today",
-            roles: ["admin"],
-          },
         ],
       },
       {
@@ -151,22 +145,24 @@ export const sidebarSections = [
         to: "/classrooms",
         roles: ["admin"],
       },
-    ],
-  },
-  {
-    label: "削除予定",
-    items: [
       {
-        id: "gathering-spots",
-        label: "集合場所管理",
-        to: "/gathering-spots",
+        id: "locations",
+        label: "場所",
         roles: ["admin"],
-      },
-      {
-        id: "venues",
-        label: "実施場所管理",
-        to: "/venues",
-        roles: ["admin"],
+        children: [
+          {
+            id: "gathering-spots",
+            label: "集合場所管理",
+            to: "/gathering-spots",
+            roles: ["admin"],
+          },
+          {
+            id: "venues",
+            label: "実施場所管理",
+            to: "/venues",
+            roles: ["admin"],
+          },
+        ],
       },
     ],
   },
