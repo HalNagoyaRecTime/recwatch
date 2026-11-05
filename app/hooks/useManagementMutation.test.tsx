@@ -71,14 +71,18 @@ describe("useManagementMutation", () => {
     await waitFor(() => expect(result.current.error).toBeNull());
   });
 
-  it("onConflict指定時の409は固定文言を出してonConflictを呼ぶ", async () => {
+  it("onConflict指定時の版の競合は固定文言を出してonConflictを呼ぶ", async () => {
     const onConflict = vi.fn().mockResolvedValue(undefined);
     const { result } = renderHook(() => useManagementMutation());
 
     let succeeded = true;
     await act(async () => {
       succeeded = await result.current.run(
-        vi.fn().mockRejectedValue(new ApiClientError(409, "API failure")),
+        vi
+          .fn()
+          .mockRejectedValue(
+            new ApiClientError(409, "API failure", "CLASS_ROOM_UPDATE_CONFLICT")
+          ),
         "fallback",
         false,
         onConflict
@@ -91,13 +95,21 @@ describe("useManagementMutation", () => {
     expect(result.current.isMutating).toBe(false);
   });
 
-  it("409以外の失敗ではonConflictを呼ばない", async () => {
+  it("重複エラーなど版の競合ではない409ではonConflictを呼ばない", async () => {
     const onConflict = vi.fn();
     const { result } = renderHook(() => useManagementMutation());
 
     await act(async () => {
       await result.current.run(
-        vi.fn().mockRejectedValue(new ApiClientError(400, "API failure")),
+        vi
+          .fn()
+          .mockRejectedValue(
+            new ApiClientError(
+              409,
+              "API failure",
+              "CLASS_ROOM_CODE_ALREADY_EXISTS"
+            )
+          ),
         "fallback",
         false,
         onConflict
