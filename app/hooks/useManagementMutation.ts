@@ -1,6 +1,10 @@
 import { useCallback, useRef, useState } from "react";
 
 import { getErrorMessage } from "~/lib/client-error";
+import {
+  isUpdateConflictError,
+  UPDATE_CONFLICT_MESSAGE,
+} from "~/lib/update-conflict";
 
 export type ManagementMutationOperation = () => Promise<unknown>;
 
@@ -23,7 +27,8 @@ export function useManagementMutation({
     async (
       operation: ManagementMutationOperation,
       fallbackMessage: string,
-      shouldRevalidate = false
+      shouldRevalidate = false,
+      onConflict?: () => Promise<void> | void
     ): Promise<boolean> => {
       if (mutationLock.current) return false;
 
@@ -36,7 +41,12 @@ export function useManagementMutation({
         if (shouldRevalidate) await onRevalidate?.();
         return true;
       } catch (reason) {
-        setError(getErrorMessage(reason, fallbackMessage));
+        if (onConflict && isUpdateConflictError(reason)) {
+          setError(UPDATE_CONFLICT_MESSAGE);
+          await onConflict();
+        } else {
+          setError(getErrorMessage(reason, fallbackMessage));
+        }
         return false;
       } finally {
         mutationLock.current = false;

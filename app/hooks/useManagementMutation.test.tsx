@@ -2,6 +2,7 @@ import { act, renderHook, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 import { ApiClientError } from "~/lib/api-client-error";
+import { UPDATE_CONFLICT_MESSAGE } from "~/lib/update-conflict";
 import { useManagementMutation } from "~/hooks/useManagementMutation";
 
 describe("useManagementMutation", () => {
@@ -68,5 +69,42 @@ describe("useManagementMutation", () => {
 
     act(() => result.current.clearError());
     await waitFor(() => expect(result.current.error).toBeNull());
+  });
+
+  it("onConflict指定時の409は固定文言を出してonConflictを呼ぶ", async () => {
+    const onConflict = vi.fn().mockResolvedValue(undefined);
+    const { result } = renderHook(() => useManagementMutation());
+
+    let succeeded = true;
+    await act(async () => {
+      succeeded = await result.current.run(
+        vi.fn().mockRejectedValue(new ApiClientError(409, "API failure")),
+        "fallback",
+        false,
+        onConflict
+      );
+    });
+
+    expect(succeeded).toBe(false);
+    expect(onConflict).toHaveBeenCalledOnce();
+    expect(result.current.error).toBe(UPDATE_CONFLICT_MESSAGE);
+    expect(result.current.isMutating).toBe(false);
+  });
+
+  it("409以外の失敗ではonConflictを呼ばない", async () => {
+    const onConflict = vi.fn();
+    const { result } = renderHook(() => useManagementMutation());
+
+    await act(async () => {
+      await result.current.run(
+        vi.fn().mockRejectedValue(new ApiClientError(400, "API failure")),
+        "fallback",
+        false,
+        onConflict
+      );
+    });
+
+    expect(onConflict).not.toHaveBeenCalled();
+    expect(result.current.error).toBe("API failure");
   });
 });
