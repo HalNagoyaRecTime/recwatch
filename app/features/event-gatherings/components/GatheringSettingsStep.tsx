@@ -254,7 +254,7 @@ export function GatheringSettingsStep({
   return (
     <div className="space-y-5">
       <div>
-        <h3 className="text-text-base text-lg font-semibold">集合設定</h3>
+        <h3 className="text-text-base text-lg font-semibold">ラウンド設定</h3>
         <p className="text-text-muted mt-1 text-sm">
           Roundごとに集合時間・集合場所・参加者を設定します。
         </p>

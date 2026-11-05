@@ -96,9 +96,21 @@ describe("http notification audience loader", () => {
       type: "event",
     });
     expect(options.filter((option) => option.type === "gathering")).toEqual([
-      { id: "101", name: "競技1 / 体育館前 (08:50)", type: "gathering" },
-      { id: "102", name: "競技1 / 体育館前 (08:50)", type: "gathering" },
-      { id: "10101", name: "競技101 / 体育館前 (08:50)", type: "gathering" },
+      {
+        id: "101",
+        name: "競技1 / Round 1 / 体育館前 (08:50)",
+        type: "gathering",
+      },
+      {
+        id: "102",
+        name: "競技1 / Round 2 / 体育館前 (08:50)",
+        type: "gathering",
+      },
+      {
+        id: "10101",
+        name: "競技101 / Round 1 / 体育館前 (08:50)",
+        type: "gathering",
+      },
     ]);
     expect(
       get.mock.calls.filter(([path]) => /^\/api\/v1\/events\/\d+$/.test(path))

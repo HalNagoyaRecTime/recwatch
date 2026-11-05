@@ -11,6 +11,7 @@ import {
   type MasterImportSession,
 } from "~/features/master-import/api";
 import { getErrorMessage } from "~/lib/client-error";
+import { ImportExcludedRows } from "~/features/master-import/components/ImportExcludedRows";
 import { ImportPreviewTable } from "~/features/master-import/components/ImportPreviewTable";
 import {
   MASTER_IMPORT_ERROR_REASON_LABEL,
@@ -167,6 +168,7 @@ function ImportSessionContent({
 }) {
   const isCommitted = session.status === "committed";
   const hasErrors = session.errorCount > 0;
+  const hasExcluded = session.excludedCount > 0;
   const rangeStart = session.rowsTotal === 0 ? 0 : session.rowsOffset + 1;
   const rangeEnd = Math.min(
     session.rowsOffset + session.rowsLimit,
@@ -175,11 +177,21 @@ function ImportSessionContent({
 
   return (
     <div className="space-y-5">
-      <dl className="border-border-subtle grid gap-4 border-b pb-4 sm:grid-cols-2 lg:grid-cols-4">
+      <dl className="border-border-subtle grid gap-4 border-b pb-4 sm:grid-cols-2 lg:grid-cols-3">
         <SummaryValue
           label="取り込み件数"
           value={`${session.total.toLocaleString()}件`}
         />
+        <SummaryValue
+          label="登録件数"
+          value={`${session.successCount.toLocaleString()}件`}
+        />
+        {hasExcluded ? (
+          <SummaryValue
+            label="除外件数"
+            value={`${session.excludedCount.toLocaleString()}件`}
+          />
+        ) : null}
         <SummaryValue label="ファイル" value={session.fileName} />
         <SummaryValue
           label="データ種別"
@@ -211,6 +223,8 @@ function ImportSessionContent({
         </div>
       ) : null}
 
+      {hasExcluded ? <ImportExcludedRows rows={session.excluded} /> : null}
+
       {commitError ? (
         <p className="text-tone-danger-text text-sm" role="alert">
           {commitError}
@@ -220,6 +234,9 @@ function ImportSessionContent({
       {isCommitted && session.committedResult ? (
         <p className="text-tone-success-text text-sm" role="status">
           {session.committedResult.imported.toLocaleString()}件を登録しました。
+          {hasExcluded
+            ? `${session.excludedCount.toLocaleString()}件は除外しました。`
+            : null}
         </p>
       ) : null}
 
@@ -249,14 +266,14 @@ function ImportSessionContent({
           </ButtonLink>
           {!isCommitted ? (
             <Button
-              disabled={hasErrors || isCommitting}
+              disabled={hasErrors || session.successCount === 0 || isCommitting}
               icon={Check}
               onClick={onCommit}
               variant="primary"
             >
               {isCommitting
                 ? "登録中..."
-                : `登録する（${session.total.toLocaleString()}件）`}
+                : `登録する（${session.successCount.toLocaleString()}件）`}
             </Button>
           ) : null}
         </div>
