@@ -1,3 +1,4 @@
+import { MarkdownContent } from "~/components/ui/markdown/MarkdownContent";
 import { ArrowLeft, Check } from "lucide-react";
 
 import { Button } from "~/components/ui/button/Button";
@@ -35,7 +36,7 @@ export function EventConfirmStep({
         <ConfirmRow label="実施場所" value={formatVenueNames(selectedVenues)} />
         <ConfirmRow label="開始時間" value={value.startTime} />
         <ConfirmRow label="終了時間" value={value.endTime} />
-        <ConfirmRow label="ルール・備考" value={value.rules} />
+        <ConfirmRow label="ルール・備考" value={value.rules} markdown />
       </dl>
 
       {submitError ? (
@@ -68,12 +69,24 @@ export function EventConfirmStep({
   );
 }
 
-function ConfirmRow({ label, value }: { label: string; value: string }) {
+function ConfirmRow({
+  label,
+  value,
+  markdown = false,
+}: {
+  label: string;
+  value: string;
+  markdown?: boolean;
+}) {
   return (
     <div className="flex gap-6 px-5 py-4">
       <dt className="text-text-muted w-32 shrink-0 text-base">{label}</dt>
       <dd className="text-text-base min-w-0 flex-1 text-base font-medium break-words whitespace-pre-wrap">
-        {value.trim() || "—"}
+        {markdown && value.trim() ? (
+          <MarkdownContent content={value} />
+        ) : (
+          value.trim() || "—"
+        )}
       </dd>
     </div>
   );

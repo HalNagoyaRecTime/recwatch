@@ -68,8 +68,8 @@ describe("配信モニターのMockとHTTP契約", () => {
     const at = Date.parse("2026-10-04T23:30:00+09:00");
     vi.spyOn(Date, "now").mockReturnValue(at);
     const items = createNotificationMonitorFixtures(at);
-    items[0].sendAt = "2026-10-05T00:00:00+09:00";
-    items[1].sendAt = "2026-10-03T23:59:59+09:00";
+    items[0].sendAt = "2026-10-04T15:00:00.000Z";
+    items[1].sendAt = "2026-10-03T14:59:59.000Z";
     const response = await createMockNotificationMonitorApi(items).list();
     expect(response.items.map((item) => item.notificationScheduleId)).toEqual(
       items.slice(2).map((item) => item.notificationScheduleId)

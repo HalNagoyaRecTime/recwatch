@@ -10,7 +10,6 @@ import type {
 } from "~/features/event-gatherings/model/event-gathering-settings";
 import {
   canRemoveGathering,
-  canRemoveRound,
   MAX_ROUND,
   MIN_ROUND,
 } from "~/features/event-gatherings/model/event-gathering-settings";
@@ -54,7 +53,6 @@ export function RoundCard({
   value,
 }: RoundCardProps) {
   const roundErrors = errors.filter((error) => !error.gatheringKey);
-  const isRoundRemovable = canRemoveRound(value);
 
   return (
     <section
@@ -66,15 +64,10 @@ export function RoundCard({
           Round {value.round}
         </h3>
         <Button
-          disabled={disabled || !isRoundRemovable}
+          disabled={disabled}
           icon={Trash2}
           onClick={onRemove}
           size="sm"
-          title={
-            isRoundRemovable
-              ? undefined
-              : "参加者が登録されている集合があるため削除できません"
-          }
           type="button"
           variant="danger"
         >

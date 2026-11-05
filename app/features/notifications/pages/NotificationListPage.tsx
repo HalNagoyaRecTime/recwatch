@@ -1,33 +1,25 @@
-import { CalendarDays, Grid2X2, List, Plus, RefreshCw } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { Plus, RefreshCw } from "lucide-react";
+import { useState } from "react";
 
+import { NotificationManagementNavigation } from "~/features/notifications/components/NotificationManagementNavigation";
+import { NotificationListFilters } from "~/features/notifications/components/list/NotificationListFilters";
+import { notificationScheduleStatusLabels } from "~/features/notifications/components/list/notification-display";
 import { Button } from "~/components/ui/button/Button";
 import { ButtonLink } from "~/components/ui/button/ButtonLink";
-import { SegmentedControl } from "~/components/ui/form/SegmentedControl";
 import { Select } from "~/components/ui/form/Select";
 import { PageHeader } from "~/components/ui/layout/PageHeader";
 import { Pagination } from "~/components/ui/navigation/Pagination";
 import type { AdminNotificationCommandApi } from "~/features/notifications/api/contracts/admin-notification-command-api";
 import type { AdminNotificationQueryApi } from "~/features/notifications/api/contracts/admin-notification-query-api";
+import type { AdminNotificationListQuery } from "~/features/notifications/api/contracts/admin-notification-query-api";
 import { NotificationCalendar } from "~/features/notifications/components/list/NotificationCalendar";
 import { DeleteNotificationDialog } from "~/features/notifications/components/list/DeleteNotificationDialog";
-import { NotificationGrid } from "~/features/notifications/components/list/NotificationGrid";
 import { NotificationsTable } from "~/features/notifications/components/list/NotificationsTable";
 import type { NotificationFeedbackReporter } from "~/features/notifications/hooks/notification-feedback";
-import { toNotificationMonthRange } from "~/features/notifications/hooks/notification-calendar-range";
 import { useNotificationList } from "~/features/notifications/hooks/useNotificationList";
-import {
-  notificationListPageSize,
-  type NotificationCreationMethodFilter,
-} from "~/features/notifications/model/notification-list";
+import { type NotificationCreationMethodFilter } from "~/features/notifications/model/notification-list";
 
-const notificationViewOptions = [
-  { icon: CalendarDays, label: "カレンダー表示", value: "calendar" },
-  { icon: Grid2X2, label: "グリッド表示", value: "grid" },
-  { icon: List, label: "リスト表示", value: "list" },
-] as const;
-
-type NotificationViewMode = (typeof notificationViewOptions)[number]["value"];
+type NotificationViewMode = "calendar" | "list";
 
 const notificationDisplayOptions = [
   { label: "すべて表示", value: "all" },
@@ -39,6 +31,7 @@ type NotificationListPageProps = {
   commandApi: AdminNotificationCommandApi;
   initialCalendarMonth?: Date;
   initialViewMode?: NotificationViewMode;
+  viewMode?: NotificationViewMode;
   queryApi: AdminNotificationQueryApi;
   reportFeedback?: NotificationFeedbackReporter;
 };
@@ -47,38 +40,20 @@ export function NotificationListPage({
   commandApi,
   initialCalendarMonth = new Date(),
   initialViewMode = "list",
+  viewMode: controlledViewMode,
   queryApi,
   reportFeedback,
 }: NotificationListPageProps) {
-  const state = useNotificationList({ commandApi, queryApi, reportFeedback });
-  const [viewMode, setViewMode] =
-    useState<NotificationViewMode>(initialViewMode);
-  const [calendarMonth, setCalendarMonth] = useState(
-    () =>
-      new Date(
-        initialCalendarMonth.getFullYear(),
-        initialCalendarMonth.getMonth(),
-        1
-      )
-  );
-  const calendarRange = useMemo(
-    () => toNotificationMonthRange(calendarMonth),
-    [calendarMonth]
-  );
-  const loadCalendar = state.loadCalendar;
-
-  useEffect(() => {
-    if (viewMode !== "calendar") return;
-
-    let active = true;
-    void Promise.resolve().then(() => {
-      if (active) void loadCalendar(calendarRange);
-    });
-
-    return () => {
-      active = false;
-    };
-  }, [calendarRange, loadCalendar, viewMode]);
+  const viewMode = controlledViewMode ?? initialViewMode;
+  const [calendarRange, setCalendarRange] =
+    useState<AdminNotificationListQuery>();
+  const state = useNotificationList({
+    commandApi,
+    queryApi,
+    reportFeedback,
+    listEnabled: viewMode === "list",
+    calendarRange: viewMode === "calendar" ? calendarRange : undefined,
+  });
 
   const isCalendar = viewMode === "calendar";
   const activeError = isCalendar
@@ -89,29 +64,97 @@ export function NotificationListPage({
     ? state.calendarItems.length
     : state.totalItems;
 
-  const pagination =
-    state.pageCount > 1 ? (
-      <Pagination
-        currentPage={state.currentPage}
-        onPageChange={state.onPageChange}
-        pageCount={state.pageCount}
-        pageSize={notificationListPageSize}
-        totalItems={state.totalItems}
-      />
-    ) : undefined;
+  const pagination = (
+    <Pagination
+      currentPage={state.currentPage}
+      onPageChange={state.onPageChange}
+      pageCount={state.pageCount}
+      pageSize={state.pageSize}
+      totalItems={state.totalItems}
+    />
+  );
 
-  const reload = () =>
-    isCalendar ? state.loadCalendar(calendarRange, true) : state.reload();
+  const reload = () => (isCalendar ? state.reloadCalendar() : state.reload());
+
+  const toolbar = (
+    <>
+      <NotificationListFilters
+        calendar={isCalendar}
+        value={state.filters}
+        onChange={state.onFiltersChange}
+      />
+
+      <Select
+        ariaLabel="通知の作成方法"
+        onValueChange={(value: NotificationCreationMethodFilter) =>
+          state.onCreationMethodChange(value)
+        }
+        options={notificationDisplayOptions}
+        value={state.creationMethod}
+      />
+      <Button
+        aria-label="通知一覧を再読み込み"
+        disabled={activeLoading || state.isDeleting}
+        iconOnly
+        icon={RefreshCw}
+        onClick={() => void reload()}
+        size="md"
+        variant="secondary"
+      />
+    </>
+  );
+  const calendarFilters = (
+    <>
+      <Select
+        ariaLabel="配信状態"
+        value={state.filters.status}
+        onValueChange={(status) =>
+          state.onFiltersChange({ ...state.filters, status })
+        }
+        options={[
+          { value: "all", label: "すべての状態" },
+          ...Object.entries(notificationScheduleStatusLabels).map(
+            ([value, label]) => ({
+              value: value as keyof typeof notificationScheduleStatusLabels,
+              label,
+            })
+          ),
+        ]}
+      />
+      <Select
+        ariaLabel="通知の作成方法"
+        onValueChange={state.onCreationMethodChange}
+        options={[
+          { label: "手動 / 自動", value: "all" },
+          { label: "手動通知", value: "manual" },
+          { label: "自動通知", value: "automatic" },
+        ]}
+        value={state.creationMethod}
+      />
+      <Button
+        aria-label="カレンダーを再読み込み"
+        disabled={state.isCalendarLoading}
+        iconOnly
+        icon={RefreshCw}
+        onClick={() => void state.reloadCalendar()}
+        size="md"
+        variant="secondary"
+      />
+    </>
+  );
 
   return (
     <>
       <section className="mx-auto flex w-full flex-col gap-4">
         <PageHeader
-          title="通知一覧"
-          description="通知の配信予定と処理状況を一覧・カレンダーで確認できます"
+          title={isCalendar ? "通知カレンダー" : "通知管理"}
+          description={
+            isCalendar
+              ? "通知の配信予定・配信状況を時間軸で確認できます。"
+              : "通知の配信予定と処理状況を一覧・カレンダーで確認できます"
+          }
           actions={
             <div className="flex flex-wrap gap-2">
-              <ButtonLink to="/notifications/monitor">配信モニター</ButtonLink>
               <ButtonLink
                 icon={Plus}
                 to="/notifications/new"
@@ -124,32 +167,12 @@ export function NotificationListPage({
           }
         />
 
-        <div className="flex flex-wrap items-center gap-3">
-          <Select
-            ariaLabel="通知の作成方法"
-            onValueChange={(value: NotificationCreationMethodFilter) =>
-              state.onCreationMethodChange(value)
-            }
-            options={notificationDisplayOptions}
-            value={state.creationMethod}
-          />
-          <SegmentedControl
-            ariaLabel="表示形式"
-            behavior="selection"
-            onValueChange={setViewMode}
-            options={notificationViewOptions}
-            value={viewMode}
-          />
-          <Button
-            aria-label="通知一覧を再読み込み"
-            disabled={activeLoading || state.isDeleting}
-            iconOnly
-            icon={RefreshCw}
-            onClick={() => void reload()}
-            size="md"
-            variant="secondary"
-          />
-        </div>
+        <NotificationManagementNavigation
+          active={isCalendar ? "calendar" : "list"}
+        />
+        {!isCalendar && (
+          <div className="flex flex-wrap items-center gap-2">{toolbar}</div>
+        )}
 
         {activeError && activeItemCount > 0 ? (
           <p
@@ -163,15 +186,6 @@ export function NotificationListPage({
 
         {viewMode === "calendar" ? (
           <>
-            {state.isCalendarLoading ? (
-              <p
-                aria-live="polite"
-                className="text-text-muted text-sm"
-                role="status"
-              >
-                カレンダーを読み込み中です
-              </p>
-            ) : null}
             {state.calendarErrorMessage && state.calendarItems.length === 0 ? (
               <div
                 className="border-tone-danger-border bg-tone-danger-bg app-rounded flex items-center justify-between gap-3 border px-4 py-3"
@@ -191,8 +205,10 @@ export function NotificationListPage({
             ) : null}
             <NotificationCalendar
               items={state.calendarItems}
-              month={calendarMonth}
-              onMonthChange={setCalendarMonth}
+              month={initialCalendarMonth}
+              filters={calendarFilters}
+              isLoading={state.isCalendarLoading}
+              onRangeChange={setCalendarRange}
               showEmptyState={
                 !state.isCalendarLoading && !state.calendarErrorMessage
               }
@@ -218,17 +234,14 @@ export function NotificationListPage({
           </div>
         ) : viewMode === "list" ? (
           <NotificationsTable
+            now={state.now}
+            filters={state.filters}
             footer={pagination}
             items={state.items}
             onDelete={state.onDeleteRequest}
             onSortChange={state.onSortChange}
             sort={state.sort}
           />
-        ) : viewMode === "grid" ? (
-          <>
-            <NotificationGrid items={state.items} />
-            {pagination ? <div>{pagination}</div> : null}
-          </>
         ) : null}
       </section>
       {state.selectedNotification ? (

@@ -1,18 +1,24 @@
-import { useEffect, useState } from "react";
+import { useNotificationFormResources } from "~/features/notifications/hooks/useNotificationFormResources";
+import { useNotificationFormErrors } from "~/features/notifications/hooks/useNotificationFormErrors";
+import { isNotificationFormReady } from "~/features/notifications/hooks/notification-form-readiness";
+import { useRef, useState } from "react";
 
 import type { NotificationAudienceApi } from "~/features/notifications/api/contracts/notification-audience-api";
 import type { AdminNotificationCommandApi } from "~/features/notifications/api/contracts/admin-notification-command-api";
-import { toNotificationCreateRequest } from "~/features/notifications/api/mappers/admin-notification-request-mapper";
+import type { NotificationConfigApi } from "~/features/notifications/api/contracts/notification-config-api";
+import { readNotificationValidationDetails } from "~/features/notifications/api/contracts/notification-error";
+import {
+  toNotificationFormErrors,
+  toNotificationValidationErrors,
+  type NotificationFormIssue,
+} from "~/features/notifications/hooks/notification-form-errors";
+import { toNotificationCreateRequest } from "~/features/notifications/hooks/notification-request-mapping";
 import { getErrorMessage } from "~/lib/client-error";
-import type { NotificationAudienceOption } from "~/features/notifications/model/notification-audience";
 import {
   initialNotificationDraft,
   type NotificationDraft,
 } from "~/features/notifications/model/notification-draft";
-import {
-  validateNotificationDraft,
-  type NotificationDraftErrors,
-} from "~/features/notifications/model/notification-draft-validation";
+import { validateNotificationDraft } from "~/features/notifications/model/notification-draft-validation";
 import {
   reportNotificationActionError,
   type NotificationFeedbackReporter,
@@ -21,6 +27,7 @@ import {
 type UseNotificationCreateOptions = {
   api: AdminNotificationCommandApi;
   audienceApi: NotificationAudienceApi;
+  configApi: NotificationConfigApi;
   isSubmissionEnabled?: boolean;
   reportFeedback?: NotificationFeedbackReporter;
 };
@@ -28,129 +35,96 @@ type UseNotificationCreateOptions = {
 export function useNotificationCreate({
   api,
   audienceApi,
+  configApi,
   isSubmissionEnabled = true,
   reportFeedback,
 }: UseNotificationCreateOptions) {
   const [draft, setDraft] = useState<NotificationDraft>(
     initialNotificationDraft
   );
-  const [errors, setErrors] = useState<NotificationDraftErrors>({});
+  const { errors, setErrors, updateDraftErrors } = useNotificationFormErrors();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const submitting = useRef(false);
   const [submitted, setSubmitted] = useState(false);
   const [submissionError, setSubmissionError] = useState<string | null>(null);
-  const [audienceReloadKey, setAudienceReloadKey] = useState(0);
-  const [audienceResult, setAudienceResult] = useState<{
-    api: NotificationAudienceApi;
-    reloadKey: number;
-    options: NotificationAudienceOption[];
-    error: string | null;
-  } | null>(null);
-
-  const hasCurrentAudienceResult =
-    audienceResult?.api === audienceApi &&
-    audienceResult.reloadKey === audienceReloadKey;
-  const audienceOptions = audienceResult?.options ?? [];
-  const isAudienceLoading = !hasCurrentAudienceResult;
-  const audienceError = hasCurrentAudienceResult ? audienceResult.error : null;
-
-  useEffect(() => {
-    let active = true;
-
-    audienceApi
-      .load()
-      .then((options) => {
-        if (active) {
-          setAudienceResult({
-            api: audienceApi,
-            reloadKey: audienceReloadKey,
-            options,
-            error: null,
-          });
-        }
-      })
-      .catch((error: unknown) => {
-        if (active) {
-          setAudienceResult({
-            api: audienceApi,
-            reloadKey: audienceReloadKey,
-            options: [],
-            error: toAudienceErrorMessage(error),
-          });
-        }
-      });
-
-    return () => {
-      active = false;
-    };
-  }, [audienceApi, audienceReloadKey]);
-
+  const [submissionIssues, setSubmissionIssues] = useState<
+    NotificationFormIssue[]
+  >([]);
+  const resources = useNotificationFormResources({
+    audienceApi,
+    configApi,
+    audiences: draft.audiences,
+  });
   function handleChange(nextDraft: NotificationDraft) {
     setDraft(nextDraft);
     setSubmitted(false);
     setSubmissionError(null);
-    setErrors((current) => ({
-      ...current,
-      title: nextDraft.title.trim() ? undefined : current.title,
-      body: nextDraft.body.trim() ? undefined : current.body,
-      audienceId: nextDraft.audienceId ? undefined : current.audienceId,
-      scheduledAt: nextDraft.scheduledAt ? undefined : current.scheduledAt,
-    }));
+    setSubmissionIssues([]);
+    updateDraftErrors(nextDraft);
   }
 
   async function submit() {
     if (!isSubmissionEnabled) {
-      return;
+      return null;
     }
 
     const nextErrors = validateNotificationDraft(draft);
-    setErrors(nextErrors);
+    setErrors(toNotificationValidationErrors(nextErrors));
 
-    if (Object.keys(nextErrors).length > 0 || isSubmitting) {
-      return;
+    if (Object.keys(nextErrors).length > 0 || submitting.current) {
+      return null;
     }
 
+    submitting.current = true;
     setIsSubmitting(true);
     setSubmitted(false);
     setSubmissionError(null);
+    setSubmissionIssues([]);
 
     try {
-      await api.create(toNotificationCreateRequest(draft));
+      const result = await api.create(toNotificationCreateRequest(draft));
       setSubmitted(true);
       reportFeedback?.({
         kind: "action-success",
         title: "通知を登録しました",
         message: "通知を配信予定に登録しました。",
       });
+      return result;
     } catch (error) {
+      const details = readNotificationValidationDetails(error);
       const message = getErrorMessage(error);
-      setSubmissionError(message);
-      reportNotificationActionError(reportFeedback, {
-        title: "通知を登録できませんでした",
-        message,
-        action: "notification.create",
-        endpoint: "/api/v1/admin/notifications",
-        error,
-      });
+      if (details) {
+        const converted = toNotificationFormErrors(details);
+        setErrors((current) => ({ ...current, ...converted.fieldErrors }));
+        setSubmissionIssues(converted.formErrors);
+        setSubmissionError(message);
+      } else setSubmissionError(message);
+      if (!details)
+        reportNotificationActionError(reportFeedback, {
+          title: "通知を登録できませんでした",
+          message,
+          action: "notification.create",
+          endpoint: "/api/v1/admin/notifications",
+          error,
+        });
+      return null;
     } finally {
+      submitting.current = false;
       setIsSubmitting(false);
     }
   }
 
   return {
-    audienceError,
-    audienceOptions,
+    ...resources,
+    canSubmit:
+      isSubmissionEnabled && isNotificationFormReady(draft, false, resources),
     draft,
     errors,
-    isAudienceLoading,
     isSubmitting,
-    onAudienceReload: () => setAudienceReloadKey((current) => current + 1),
     onChange: handleChange,
     submitted,
     submissionError,
+    submissionIssues,
     submit,
   };
-}
-
-function toAudienceErrorMessage(error: unknown) {
-  return getErrorMessage(error);
 }

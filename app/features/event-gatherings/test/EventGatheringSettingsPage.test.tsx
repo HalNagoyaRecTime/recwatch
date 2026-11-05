@@ -4,6 +4,17 @@ import { MemoryRouter, Outlet, Route, Routes, useLocation } from "react-router";
 import { describe, expect, it, vi } from "vitest";
 
 import { EventGatheringSettingsPage } from "~/features/event-gatherings/pages/EventGatheringSettingsPage";
+import type { EventDetail } from "~/features/events/model/event-detail";
+
+const basketball: EventDetail = {
+  id: 7,
+  name: "バスケットボール",
+  venues: [{ id: 1, name: "体育館B" }],
+  startTime: "18:00",
+  endTime: "19:30",
+  rules: null,
+  rounds: [],
+};
 
 function LocationProbe() {
   return <output data-testid="location">{useLocation().pathname}</output>;
@@ -12,12 +23,13 @@ function LocationProbe() {
 function renderPage(path: string, load = vi.fn(), save = vi.fn()) {
   const memberGateway = {
     loadCandidates: vi.fn().mockResolvedValue({
-      classrooms: [{ id: 1, name: "HAL1A" }],
+      teams: [{ id: 10, name: "青チーム", classCodes: ["HAL1A"] }],
       students: [
         {
           id: 10,
           userId: 1001,
           name: "山田 太郎",
+          teamId: 10,
           classroomId: 1,
           attendanceNumber: 1,
           studentNumber: "2026001",
@@ -41,7 +53,13 @@ function renderPage(path: string, load = vi.fn(), save = vi.fn()) {
               spotGateway={{
                 list: vi.fn().mockResolvedValue({
                   items: [
-                    { id: 1, name: "出入口①", createdAt: "", updatedAt: "" },
+                    {
+                      id: 1,
+                      name: "出入口①",
+                      imageUrl: null,
+                      createdAt: "",
+                      updatedAt: "",
+                    },
                   ],
                   total: 1,
                   limit: 1,
@@ -51,6 +69,8 @@ function renderPage(path: string, load = vi.fn(), save = vi.fn()) {
                 create: vi.fn(),
                 update: vi.fn(),
                 delete: vi.fn(),
+                setImage: vi.fn(),
+                deleteImage: vi.fn(),
               }}
             />
           }
@@ -64,7 +84,10 @@ function renderPage(path: string, load = vi.fn(), save = vi.fn()) {
 }
 
 /** イベント詳細の子ルートとして開き、詳細の再読み込みを受け取れる状態で描画する。 */
-function renderPageInEventDetail(reload: () => void) {
+function renderPageInEventDetail(
+  reload: () => void,
+  event: EventDetail = basketball
+) {
   const settings = {
     eventId: 7,
     rounds: [
@@ -83,12 +106,13 @@ function renderPageInEventDetail(reload: () => void) {
   };
   const memberGateway = {
     loadCandidates: vi.fn().mockResolvedValue({
-      classrooms: [{ id: 1, code: "HAL1A", name: "1年Aクラス" }],
+      teams: [{ id: 10, name: "青チーム", classCodes: ["HAL1A"] }],
       students: [
         {
           id: 10,
           userId: 1001,
           name: "山田 太郎",
+          teamId: 10,
           classroomId: 1,
           attendanceNumber: 1,
           studentNumber: "2026001",
@@ -105,7 +129,7 @@ function renderPageInEventDetail(reload: () => void) {
     <MemoryRouter initialEntries={["/events/7/gatherings"]}>
       <Routes>
         <Route
-          element={<Outlet context={{ reload }} />}
+          element={<Outlet context={{ event, reload }} />}
           path="/events/:eventId"
         >
           <Route
@@ -119,7 +143,13 @@ function renderPageInEventDetail(reload: () => void) {
                 spotGateway={{
                   list: vi.fn().mockResolvedValue({
                     items: [
-                      { id: 1, name: "出入口①", createdAt: "", updatedAt: "" },
+                      {
+                        id: 1,
+                        name: "出入口①",
+                        imageUrl: null,
+                        createdAt: "",
+                        updatedAt: "",
+                      },
                     ],
                     total: 1,
                     limit: 1,
@@ -129,6 +159,8 @@ function renderPageInEventDetail(reload: () => void) {
                   create: vi.fn(),
                   update: vi.fn(),
                   delete: vi.fn(),
+                  setImage: vi.fn(),
+                  deleteImage: vi.fn(),
                 }}
               />
             }
@@ -143,6 +175,27 @@ function renderPageInEventDetail(reload: () => void) {
 }
 
 describe("EventGatheringSettingsPage", () => {
+  it("設定対象の競技名と競技時間を操作できない固定情報として表示する", async () => {
+    renderPageInEventDetail(vi.fn());
+
+    const context = screen.getByRole("region", { name: "設定対象の競技" });
+    expect(
+      within(context).getByRole("heading", { name: "バスケットボール" })
+    ).toBeInTheDocument();
+    expect(within(context).getByText("競技時間")).toBeInTheDocument();
+    expect(within(context).getByText("18:00〜19:30")).toBeInTheDocument();
+    expect(within(context).queryByRole("button")).not.toBeInTheDocument();
+    expect(within(context).queryByRole("textbox")).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "ラウンド設定" })
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("heading", { name: "集合設定", level: 3 })
+    ).not.toBeInTheDocument();
+
+    await screen.findByRole("button", { name: "メンバーを選択" });
+  });
+
   it("新しい集合と参加者を保存した後、完了画面からイベント詳細へ戻る", async () => {
     const load = vi.fn().mockResolvedValue({ eventId: 7, rounds: [] });
     const save = vi.fn().mockResolvedValue({
@@ -177,7 +230,7 @@ describe("EventGatheringSettingsPage", () => {
     await user.click(
       within(round).getByRole("button", { name: "メンバーを選択" })
     );
-    await user.click(await screen.findByLabelText("山田 太郎を選択"));
+    await user.click(await screen.findByLabelText("青チームを選択"));
     await user.click(screen.getByRole("button", { name: "選択を確定" }));
     expect(screen.getByText("1人選択中")).toBeInTheDocument();
     expect(memberGateway.saveMembers).not.toHaveBeenCalled();
@@ -277,7 +330,7 @@ describe("EventGatheringSettingsPage", () => {
     await user.click(
       await screen.findByRole("button", { name: "メンバーを選択" })
     );
-    await user.click(await screen.findByLabelText("山田 太郎を選択"));
+    await user.click(await screen.findByLabelText("青チームを選択"));
     await user.click(screen.getByRole("button", { name: "参加者を保存" }));
 
     await waitFor(() =>

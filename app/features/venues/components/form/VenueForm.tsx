@@ -1,33 +1,45 @@
 import { Check } from "lucide-react";
+import { useState } from "react";
 
+import { PlaceImageField } from "~/components/management/PlaceImageField";
 import { Button } from "~/components/ui/button/Button";
 import type { Venue } from "~/features/venues/model/venue";
+import type { PlaceImageChange } from "~/types/place-image-change";
 
 type VenueFormProps = {
+  autoFocusImage: boolean;
   editingVenue: Venue | null;
+  imageChange: PlaceImageChange | null;
   isSubmitting: boolean;
   name: string;
   submitError: string | null;
   onChange: (name: string) => void;
   onClose: () => void;
+  onImageChange: (change: PlaceImageChange | null) => void;
   onSubmit: () => void | Promise<void>;
 };
 
 export function VenueForm({
+  autoFocusImage,
   editingVenue,
+  imageChange,
   isSubmitting,
   name,
   submitError,
   onChange,
   onClose,
+  onImageChange,
   onSubmit,
 }: VenueFormProps) {
+  const [isImageProcessing, setIsImageProcessing] = useState(false);
+
   return (
     <form
       aria-labelledby="venue-form-title"
       noValidate
       onSubmit={(event) => {
         event.preventDefault();
+        if (isImageProcessing) return;
         void onSubmit();
       }}
     >
@@ -58,6 +70,17 @@ export function VenueForm({
           />
         </label>
 
+        <PlaceImageField
+          autoFocus={autoFocusImage}
+          change={imageChange}
+          currentImageUrl={editingVenue?.imageUrl ?? null}
+          disabled={isSubmitting}
+          isProcessing={isImageProcessing}
+          label="実施場所の画像"
+          onChange={onImageChange}
+          onProcessingChange={setIsImageProcessing}
+        />
+
         {submitError ? (
           <p
             id="venue-name-error"
@@ -69,12 +92,12 @@ export function VenueForm({
           </p>
         ) : null}
 
-        <div className="flex flex-wrap justify-end gap-3">
+        <div className="grid grid-cols-2 gap-3">
           <Button disabled={isSubmitting} onClick={onClose} size="md">
             キャンセル
           </Button>
           <Button
-            disabled={isSubmitting}
+            disabled={isSubmitting || isImageProcessing}
             icon={Check}
             size="md"
             type="submit"

@@ -51,6 +51,7 @@ export function createMockVenueGateway(
       const created = {
         id: nextId++,
         name,
+        imageUrl: null,
         createdAt: now,
         updatedAt: now,
       } satisfies Venue;
@@ -77,5 +78,22 @@ export function createMockVenueGateway(
       }
       venues = venues.filter((venue) => venue.id !== id);
     },
+
+    async setImage(id) {
+      setImageUrl(id, `mock://venues/${id}/image`);
+    },
+
+    async deleteImage(id) {
+      setImageUrl(id, null);
+    },
   };
+
+  function setImageUrl(id: number, imageUrl: string | null) {
+    if (!venues.some((venue) => venue.id === id)) {
+      throw new Error("実施場所が見つかりません。");
+    }
+    venues = venues.map((venue) =>
+      venue.id === id ? { ...venue, imageUrl } : venue
+    );
+  }
 }

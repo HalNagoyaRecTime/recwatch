@@ -1,17 +1,17 @@
 import type { MemberNonStudent } from "~/features/event-gatherings/model/gathering-member-candidate";
 
 type GatheringNonStudentMembersProps = {
-  /** 候補の表に行が無く、氏名が分かった登録済みの参加者。 */
+  /** チーム候補に含まれず、氏名が分かった登録済みの参加者。 */
   members: readonly MemberNonStudent[];
   onToggle: (userId: number) => void;
   selectedUserIds: readonly number[];
-  /** 候補の表に行が無く、氏名も分からない登録済みの参加者の人数。 */
+  /** チーム候補に含まれず、氏名も分からない登録済みの参加者の人数。 */
   unnamedCount: number;
 };
 
 /**
- * 学生以外の登録済み参加者を、候補の表とは別枠で表示する。
- * 表の絞り込み・検索の対象にできないため表には混ぜず、行の見た目だけ表に揃える。
+ * チームに紐付かない既存参加者を候補の表とは別枠で表示する。
+ * 既存設定を編集しただけで参加者が消えないよう、個別に解除できる状態を維持する。
  */
 export function GatheringNonStudentMembers({
   members,
@@ -22,13 +22,14 @@ export function GatheringNonStudentMembers({
   if (members.length === 0 && unnamedCount === 0) return null;
 
   return (
-    <section aria-label="学生以外の参加者" className="space-y-2 text-sm">
-      <p className="text-text-muted">
-        学生以外の参加者（クラスでの絞り込み・検索の対象外）
-      </p>
+    <section
+      aria-label="チーム外の登録済み参加者"
+      className="space-y-2 text-sm"
+    >
+      <p className="text-text-muted">チーム外の登録済み参加者</p>
       {members.length > 0 ? (
         <table
-          aria-label="学生以外の参加者一覧"
+          aria-label="チーム外の登録済み参加者一覧"
           className="border-border-base bg-surface-base app-rounded w-full table-fixed border"
         >
           <thead className="text-text-muted">

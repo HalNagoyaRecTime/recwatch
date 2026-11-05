@@ -6,6 +6,7 @@ function createResponse(id = 10, name = "体育館前") {
   return {
     gathering_spot_id: id,
     gathering_spot_name: name,
+    image_url: null,
     created_at: "2026-08-07T09:00:00Z",
     updated_at: "2026-08-07T09:10:00Z",
   };
@@ -16,12 +17,14 @@ function createClient(overrides: Record<string, unknown> = {}) {
     get: vi.fn(),
     post: vi.fn(),
     put: vi.fn(),
+    putBlob: vi.fn(),
     delete: vi.fn(),
     ...overrides,
   } as {
     get<T>(path: string): Promise<T>;
     post<T>(path: string, body: unknown): Promise<T>;
     put<T>(path: string, body: unknown): Promise<T>;
+    putBlob(path: string, body: Blob): Promise<void>;
     delete(path: string): Promise<void>;
   };
 }
@@ -117,5 +120,29 @@ describe("createHttpGatheringSpotGateway", () => {
     expect(put).toHaveBeenCalledWith("/api/v1/gathering-spots/11", {
       gatheringSpotName: "体育館入口",
     });
+  });
+
+  it("画像の登録はBlobをそのまま画像APIへ送る", async () => {
+    const putBlob = vi.fn().mockResolvedValue(undefined);
+    const gateway = createHttpGatheringSpotGateway(createClient({ putBlob }));
+    const image = new Blob(["image"], { type: "image/jpeg" });
+
+    await expect(gateway.setImage(10, image)).resolves.toBeUndefined();
+    expect(putBlob).toHaveBeenCalledWith(
+      "/api/v1/gathering-spots/10/image",
+      image
+    );
+  });
+
+  it("画像の削除を画像APIへ委譲する", async () => {
+    const deleteRequest = vi.fn().mockResolvedValue(undefined);
+    const gateway = createHttpGatheringSpotGateway(
+      createClient({ delete: deleteRequest })
+    );
+
+    await expect(gateway.deleteImage(10)).resolves.toBeUndefined();
+    expect(deleteRequest).toHaveBeenCalledWith(
+      "/api/v1/gathering-spots/10/image"
+    );
   });
 });

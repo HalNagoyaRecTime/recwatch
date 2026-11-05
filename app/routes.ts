@@ -20,11 +20,16 @@ export default [
       route("gatherings", "routes/main/events.$eventId.gatherings.tsx"),
     ]),
     route("notifications", "routes/main/notifications.tsx"),
+    route("notifications/calendar", "routes/main/notifications.calendar.tsx"),
     route("notifications/monitor", "routes/main/notifications.monitor.tsx"),
     route("notifications/new", "routes/main/notifications.new.tsx"),
     route(
       "notifications/:notificationId",
       "routes/main/notifications.$notificationId.tsx"
+    ),
+    route(
+      "notifications/:notificationId/edit",
+      "routes/main/notifications.$notificationId.edit.tsx"
     ),
     route("students", "routes/main/students.tsx", [
       route("new", "routes/main/students.new.tsx"),

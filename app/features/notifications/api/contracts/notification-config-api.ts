@@ -1,12 +1,12 @@
 import type {
-  NotificationAudienceCountDto,
-  NotificationAudienceCountRequestDto,
-  NotificationConfigDto,
-} from "~/features/notifications/api/dto/admin-notification-dto";
+  NotificationAudienceCount,
+  NotificationAudienceCountRequest,
+  NotificationConfig,
+} from "~/features/notifications/api/contracts/admin-notification-types";
 
 export interface NotificationConfigApi {
-  getConfig(): Promise<NotificationConfigDto>;
+  getConfig(): Promise<NotificationConfig>;
   getAudienceCount(
-    request: NotificationAudienceCountRequestDto
-  ): Promise<NotificationAudienceCountDto>;
+    request: NotificationAudienceCountRequest
+  ): Promise<NotificationAudienceCount>;
 }

@@ -14,6 +14,8 @@ type FormModalProps = {
   children: ReactNode | ((requestClose: () => void) => ReactNode);
   description?: ReactNode;
   onClose: () => void;
+  isDismissDisabled?: boolean;
+  pinnedContent?: ReactNode;
   size?: "md" | "xl";
   title: ReactNode;
 };
@@ -48,6 +50,8 @@ export function FormModal({
   children,
   description,
   onClose,
+  isDismissDisabled = false,
+  pinnedContent,
   size = "md",
   title,
 }: FormModalProps) {
@@ -58,7 +62,9 @@ export function FormModal({
   const [isClosing, setIsClosing] = useState(false);
   const backdropRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLElement>(null);
-  const requestClose = useCallback(() => setIsClosing(true), []);
+  const requestClose = useCallback(() => {
+    if (!isDismissDisabled) setIsClosing(true);
+  }, [isDismissDisabled]);
 
   useEffect(() => {
     const duration = getTransitionDuration();
@@ -206,6 +212,7 @@ export function FormModal({
             ) : null}
           </div>
           <button
+            disabled={isDismissDisabled}
             aria-label="閉じる"
             className="text-text-muted hover:bg-surface-hover hover:text-text-base -mt-1 -mr-2 inline-flex size-9 shrink-0 items-center justify-center rounded-md text-xl"
             onClick={requestClose}
@@ -214,6 +221,11 @@ export function FormModal({
             <span aria-hidden="true">×</span>
           </button>
         </header>
+        {pinnedContent ? (
+          <div className="bg-surface-base shrink-0 px-5 pt-5">
+            {pinnedContent}
+          </div>
+        ) : null}
         <div className="min-h-0 overflow-y-auto px-5 py-5">{content}</div>
       </section>
     </div>

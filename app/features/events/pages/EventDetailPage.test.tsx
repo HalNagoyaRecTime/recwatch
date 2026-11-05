@@ -1,10 +1,13 @@
 import { render, screen, waitFor, within } from "@testing-library/react";
-import { MemoryRouter, Route, Routes } from "react-router";
+import { MemoryRouter, Route, Routes, useOutletContext } from "react-router";
 import { describe, expect, it, vi } from "vitest";
 
 import type { EventDetailGateway } from "~/features/events/api/event-detail-gateway";
 import type { EventDetail } from "~/features/events/model/event-detail";
-import { EventDetailPage } from "~/features/events/pages/EventDetailPage";
+import {
+  EventDetailPage,
+  type EventDetailOutletContext,
+} from "~/features/events/pages/EventDetailPage";
 
 const relay: EventDetail = {
   id: 12,
@@ -47,6 +50,18 @@ const relay: EventDetail = {
   ],
 };
 
+function GatheringSettingsProbe() {
+  const { event } = useOutletContext<EventDetailOutletContext>();
+
+  return (
+    <p>
+      {event
+        ? `${event.name} ${event.startTime}〜${event.endTime}`
+        : "イベントを読み込んでいます"}
+    </p>
+  );
+}
+
 function renderPage(path: string, gateway: EventDetailGateway) {
   render(
     <MemoryRouter initialEntries={[path]}>
@@ -55,7 +70,7 @@ function renderPage(path: string, gateway: EventDetailGateway) {
           element={<EventDetailPage gateway={gateway} />}
           path="/events/:eventId"
         >
-          <Route element={<p>集合設定モーダル</p>} path="gatherings" />
+          <Route element={<GatheringSettingsProbe />} path="gatherings" />
         </Route>
       </Routes>
     </MemoryRouter>
@@ -134,7 +149,7 @@ describe("EventDetailPage", () => {
     expect(
       await screen.findByRole("link", { name: "集合を追加" })
     ).toHaveAttribute("href", "/events/12/gatherings");
-    expect(screen.queryByText("集合設定モーダル")).not.toBeInTheDocument();
+    expect(screen.queryByText("リレー 11:00〜12:30")).not.toBeInTheDocument();
   });
 
   it("子ルートの URL では詳細の上に集合設定モーダルを出す", async () => {
@@ -145,7 +160,7 @@ describe("EventDetailPage", () => {
     expect(
       await screen.findByRole("heading", { name: "リレー", level: 2 })
     ).toBeInTheDocument();
-    expect(screen.getByText("集合設定モーダル")).toBeInTheDocument();
+    expect(screen.getByText("リレー 11:00〜12:30")).toBeInTheDocument();
   });
 
   it("集合が無ければ案内を出す", async () => {

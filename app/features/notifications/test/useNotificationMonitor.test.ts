@@ -45,6 +45,29 @@ describe("useNotificationMonitor", () => {
     expect(detail?.deliveryProgress.retryWaitCount).toBe(2);
   });
 
+  it("mutation後の再取得を進行中の古い取得より優先する", async () => {
+    const api = createMockNotificationMonitorApi(
+      createNotificationMonitorFixtures(now())
+    );
+    const oldRequest = deferred<Awaited<ReturnType<typeof api.list>>>();
+    const list = vi.spyOn(api, "list").mockReturnValueOnce(oldRequest.promise);
+    const { result } = renderHook(() =>
+      useNotificationMonitor({ api, ...options })
+    );
+    await waitFor(() => expect(list).toHaveBeenCalledOnce());
+    let refresh!: Promise<void>;
+    act(() => {
+      refresh = result.current.reloadAfterMutation();
+    });
+    expect(list).toHaveBeenCalledOnce();
+    await act(async () => {
+      oldRequest.resolve({ items: [] });
+      await refresh;
+    });
+    expect(list).toHaveBeenCalledTimes(2);
+    expect(result.current.items.length).toBeGreaterThan(0);
+  });
+
   it("表示対象外の詳細を取得しない", async () => {
     const fixtures = createNotificationMonitorFixtures(now());
     fixtures[0].sendAt = "2030-01-01T00:00:00Z";

@@ -1,6 +1,7 @@
 export type GatheringSpot = {
   id: number;
   name: string;
+  imageUrl: string | null;
   createdAt: string;
   updatedAt: string;
 };

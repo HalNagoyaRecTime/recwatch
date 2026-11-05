@@ -44,13 +44,19 @@ export function useNotificationMonitor({
   });
   const generation = useRef(0);
   const loading = useRef(false);
+  const inFlight = useRef<Promise<void> | null>(null);
   const reportedFailure = useRef(false);
   const [selectedScheduleId, selectSchedule] = useState<number | null>(null);
 
   const load = useCallback(
-    async (background = false) => {
-      if (loading.current) return;
+    async (background = false, force = false) => {
+      if (loading.current && !force) return;
       loading.current = true;
+      let finish!: () => void;
+      const settled = new Promise<void>((resolve) => {
+        finish = resolve;
+      });
+      inFlight.current = settled;
       const requestId = ++generation.current;
       setState((previous) => ({
         ...previous,
@@ -137,6 +143,8 @@ export function useNotificationMonitor({
           });
         }
       } finally {
+        finish();
+        if (inFlight.current === settled) inFlight.current = null;
         if (generation.current === requestId) loading.current = false;
       }
     },
@@ -166,9 +174,21 @@ export function useNotificationMonitor({
   }, [load, refreshIntervalMs]);
 
   const reload = useCallback(() => load(true), [load]);
+  const reloadAfterMutation = useCallback(async () => {
+    // apiClientが進行中のGETを共有するため、完了後に新しいGETを開始します。
+    generation.current += 1;
+    await inFlight.current;
+    await load(true, true);
+  }, [load]);
   const selectedSchedule =
     state.items.find(
       (item) => item.summary.notificationScheduleId === selectedScheduleId
     ) ?? null;
-  return { ...state, reload, selectedSchedule, selectSchedule };
+  return {
+    ...state,
+    reload,
+    reloadAfterMutation,
+    selectedSchedule,
+    selectSchedule,
+  };
 }

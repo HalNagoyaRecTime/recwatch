@@ -1,3 +1,4 @@
+import { MarkdownContent } from "~/components/ui/markdown/MarkdownContent";
 import { Info } from "lucide-react";
 
 import { formatVenueNames } from "~/features/events/model/event-venue";
@@ -37,7 +38,11 @@ export function EventBasicInfoCard({ event }: EventBasicInfoCardProps) {
           >
             <dt className="text-text-muted text-sm">{row.label}</dt>
             <dd className="text-text-base text-sm break-words whitespace-pre-wrap">
-              {row.value}
+              {row.label === "ルール・備考" ? (
+                <MarkdownContent content={row.value} />
+              ) : (
+                row.value
+              )}
             </dd>
           </div>
         ))}

@@ -2,6 +2,8 @@ import { ClientError, ClientErrors } from "~/lib/client-error";
 import type { NotificationAudienceOption } from "~/features/notifications/model/notification-audience";
 import type {
   ClassRoomAudienceApiDto,
+  UserAudienceApiDto,
+  UserAudiencePageApiDto,
   ClassRoomAudiencePageApiDto,
   EventAudienceApiDto,
   EventAudiencePageApiDto,
@@ -9,6 +11,7 @@ import type {
 } from "~/features/notifications/api/dto/notification-audience-api-dto";
 import {
   isClassRoomAudiencePageResponse,
+  isUserAudienceResponse,
   isClassRoomAudienceResponse,
   isEventAudienceDetailResponse,
   isEventAudiencePageResponse,
@@ -70,6 +73,7 @@ export function toEventGatheringAudienceDtos(
       toGatheringDto({
         gathering_id: gathering.gathering_id,
         event_name: event.event_name,
+        round: round.round,
         gathering_spot_name: gathering.gathering_spot.gathering_spot_name,
         gathering_time: gathering.gathering_time,
       })
@@ -81,6 +85,7 @@ export function toNotificationAudienceOptions(input: {
   classrooms: ClassRoomAudienceApiDto[];
   gatherings: GatheringAudienceApiDto[];
   events: EventAudienceApiDto[];
+  users?: NotificationAudienceOption[];
 }): NotificationAudienceOption[] {
   return [
     ...input.classrooms.map((classroom) => ({
@@ -93,12 +98,25 @@ export function toNotificationAudienceOptions(input: {
       name: formatGatheringName(gathering),
       type: "gathering" as const,
     })),
+    ...(input.users ?? []),
     ...input.events.map((event) => ({
       id: String(event.event_id),
       name: event.event_name,
       type: "event" as const,
     })),
   ];
+}
+
+export function toUserAudienceOption(
+  user: UserAudienceApiDto,
+  userCategory: "student" | "teacher"
+): NotificationAudienceOption {
+  return {
+    id: String(user.user_id),
+    name: user.display_name,
+    userCategory,
+    type: "user",
+  };
 }
 
 function toClassRoomDto(value: unknown): ClassRoomAudienceApiDto {
@@ -132,6 +150,7 @@ function toGatheringDto(value: unknown): GatheringAudienceApiDto {
   return {
     gathering_id: value.gathering_id,
     event_name: value.event_name,
+    round: value.round,
     gathering_spot_name: value.gathering_spot_name,
     gathering_time: value.gathering_time,
   };
@@ -142,9 +161,27 @@ function formatGatheringName(gathering: GatheringAudienceApiDto) {
     ? `${gathering.gathering_time.slice(0, 2)}:${gathering.gathering_time.slice(2)}`
     : gathering.gathering_time;
 
-  return `${gathering.event_name} / ${gathering.gathering_spot_name} (${time})`;
+  return `${gathering.event_name} / Round ${gathering.round} / ${gathering.gathering_spot_name} (${time})`;
 }
 
 function unexpectedResponse() {
   return new ClientError(ClientErrors.RESPONSE_PARSE_ERROR);
+}
+
+export function toUserAudiencePage(response: unknown): UserAudiencePageApiDto {
+  if (
+    !isClassRoomAudiencePageResponse(response) ||
+    !response.items.every(isUserAudienceResponse)
+  ) {
+    throw unexpectedResponse();
+  }
+  return {
+    items: response.items.map((user) => ({
+      user_id: user.user_id,
+      display_name: user.display_name,
+    })),
+    total: response.total,
+    limit: response.limit,
+    offset: response.offset,
+  };
 }
