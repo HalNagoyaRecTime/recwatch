@@ -20,7 +20,10 @@ type SaveOutcome = {
 /**
  * 選択した複数チームの得点をまとめて加算するモーダル。
  * 1リクエスト/チームでAPIを呼ぶため、一部失敗しても成功分は反映しつつ、
- * 失敗したチームだけを残して再試行できるようにする（二重加算を避ける）。
+ * 失敗したチームだけを残して再試行できるようにする。
+ * 通信エラー等でリクエストが失敗扱いになってもサーバー側では加算が完了して
+ * いることがあるため、失敗した場合は現在の得点を取得して加算済みかどうかを
+ * 確認し、再試行による二重加算を防ぐ。
  */
 export function RankingBulkScoreDialog({
   onClose,
@@ -105,14 +108,30 @@ export function RankingBulkScoreDialog({
 
     const succeededTeamIds: number[] = [];
     const failedTeamNames: string[] = [];
-    results.forEach((result, index) => {
-      const teamId = entries[index].teamId;
-      if (result.status === "fulfilled") {
-        succeededTeamIds.push(teamId);
-      } else {
-        failedTeamNames.push(rankingByTeamId.get(teamId)?.teamName ?? "");
-      }
-    });
+    await Promise.all(
+      results.map(async (result, index) => {
+        const entry = entries[index];
+        if (result.status === "fulfilled") {
+          succeededTeamIds.push(entry.teamId);
+          return;
+        }
+
+        // 通信エラーなどでリクエストが失敗扱いになっても、サーバー側では
+        // 加算が完了していることがある。現在の得点を取得し、想定どおり
+        // 加算済みであれば成功として扱い、再試行による二重加算を避ける。
+        const baseScore = rankingByTeamId.get(entry.teamId)?.score ?? 0;
+        try {
+          const current = await TeamApi.getTeamById(entry.teamId);
+          if (current.score === baseScore + entry.points) {
+            succeededTeamIds.push(entry.teamId);
+            return;
+          }
+        } catch {
+          // 確認自体が失敗した場合は安全側に倒して失敗として扱う
+        }
+        failedTeamNames.push(rankingByTeamId.get(entry.teamId)?.teamName ?? "");
+      })
+    );
 
     return {
       failedTeamNames: failedTeamNames.filter(Boolean),

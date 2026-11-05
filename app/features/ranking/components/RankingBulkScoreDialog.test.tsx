@@ -140,6 +140,10 @@ describe("RankingBulkScoreDialog", () => {
           ? Promise.reject(new Error("network error"))
           : Promise.resolve(createTeam(redTeam, redTeam.score + body.points))
       );
+    // 加算が実際には反映されていないことを確認したうえで失敗とする
+    vi.spyOn(TeamApi, "getTeamById").mockResolvedValue(
+      createTeam(blueTeam, blueTeam.score)
+    );
     const onSaved = vi.fn();
 
     render(
@@ -150,6 +154,9 @@ describe("RankingBulkScoreDialog", () => {
       />
     );
 
+    const blueInput = screen.getByLabelText("青チームの加算点");
+    await user.clear(blueInput);
+    await user.type(blueInput, "5");
     await user.click(screen.getByRole("button", { name: "まとめて保存" }));
 
     expect(
@@ -161,5 +168,39 @@ describe("RankingBulkScoreDialog", () => {
     expect(screen.getByText("青チーム")).toBeInTheDocument();
     await waitFor(() => expect(onSaved).toHaveBeenCalledWith([2]));
     expect(addTeamScore).toHaveBeenCalledTimes(2);
+  });
+
+  it("通信エラーでも実際には加算済みなら成功として扱い、二重加算を防ぐ", async () => {
+    const user = userEvent.setup();
+    const addTeamScore = vi
+      .spyOn(TeamApi, "addTeamScore")
+      .mockImplementation((teamId, body) =>
+        teamId === blueTeam.teamId
+          ? Promise.reject(new Error("response lost"))
+          : Promise.resolve(createTeam(redTeam, redTeam.score + body.points))
+      );
+    // レスポンスだけ失われており、サーバー側では加算が完了している
+    const getTeamById = vi
+      .spyOn(TeamApi, "getTeamById")
+      .mockResolvedValue(createTeam(blueTeam, blueTeam.score + 5));
+    const onSaved = vi.fn();
+
+    render(
+      <RankingBulkScoreDialog
+        onClose={vi.fn()}
+        onSaved={onSaved}
+        rankings={[blueTeam, redTeam]}
+      />
+    );
+
+    await user.type(screen.getByLabelText("青チームの加算点"), "5");
+    await user.click(screen.getByRole("button", { name: "まとめて保存" }));
+
+    expect(
+      await screen.findByText("2件の得点を更新しました。")
+    ).toBeInTheDocument();
+    expect(getTeamById).toHaveBeenCalledWith(blueTeam.teamId);
+    expect(addTeamScore).toHaveBeenCalledTimes(2);
+    await waitFor(() => expect(onSaved).toHaveBeenCalledWith([2, 1]));
   });
 });
