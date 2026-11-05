@@ -12,6 +12,7 @@ import { MemoryRouter, Route, Routes } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import NotificationsNewRoute from "~/routes/main/notifications.new";
 import NotificationsRoute from "~/routes/main/notifications";
+import NotificationsCalendarRoute from "~/routes/main/notifications.calendar";
 import NotificationDetailRoute from "~/routes/main/notifications.$notificationId";
 import NotificationEditRoute from "~/routes/main/notifications.$notificationId.edit";
 import { FeedbackProvider } from "~/features/frame/feedback/components/FeedbackProvider";
@@ -185,6 +186,10 @@ function renderRoutes(path = "/notifications/new") {
         <Routes>
           <Route path="/notifications" element={<NotificationsRoute />} />
           <Route
+            path="/notifications/calendar"
+            element={<NotificationsCalendarRoute />}
+          />
+          <Route
             path="/notifications/new"
             element={<NotificationsNewRoute />}
           />
@@ -226,11 +231,17 @@ async function fillContent() {
       { target: { value } }
     );
 }
-beforeEach(() => localStorage.clear());
+beforeEach(() => {
+  localStorage.clear();
+  // UTC / JSTでも当日の予定リンクを同じ条件で確認する。
+  vi.useFakeTimers({ toFake: ["Date"] });
+  vi.setSystemTime(new Date("2026-11-05T03:00:00.000Z"));
+});
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
+  vi.useRealTimers();
   localStorage.clear();
 });
 
@@ -257,13 +268,15 @@ describe("通知RouteのHTTP境界統合（応答はMock）", () => {
       }
       return response;
     });
-    renderRoutes("/notifications?view=calendar");
-    await screen.findByRole("link", {
-      name: (name) => name.endsWith(`${detail.content.push.title}の詳細を表示`),
-    });
+    renderRoutes("/notifications/calendar");
+    expect(
+      await within(
+        await screen.findByRole("region", { name: "本日の配信一覧" })
+      ).findByRole("link", { name: new RegExp(detail.content.push.title) })
+    ).toHaveAttribute("href", `/notifications/${detail.notificationId}`);
     holdNextCalendarRead = true;
     await user.click(
-      screen.getByRole("button", { name: "通知一覧を再読み込み" })
+      screen.getByRole("button", { name: "カレンダーを再読み込み" })
     );
     await waitFor(() => expect(releaseRead).toBeTypeOf("function"));
     await user.click(screen.getByRole("link", { name: "一覧" }));
@@ -283,40 +296,52 @@ describe("通知RouteのHTTP境界統合（応答はMock）", () => {
         fetchMock.mock.calls.some(([, init]) => init?.method === "DELETE")
       ).toBe(true)
     );
-    const beforeRelease = fetchMock.mock.calls.length;
+    // 別Routeの一覧GETは古いCalendar GETと異なるqueryで再取得する。
+    await screen.findByText("条件に一致する通知はありません");
     const deletionIndex = fetchMock.mock.calls.findIndex(
       ([, init]) => init?.method === "DELETE"
     );
     expect(
-      fetchMock.mock.calls
-        .slice(deletionIndex + 1)
-        .some(
-          ([input, init]) =>
-            new URL(String(input)).pathname === base &&
-            (init?.method ?? "GET") === "GET"
-        )
-    ).toBe(false);
-    await act(async () => releaseRead!());
-    await screen.findByText("条件に一致する通知はありません");
-    await waitFor(() =>
-      expect(
-        fetchMock.mock.calls
-          .slice(beforeRelease)
-          .some(
-            ([input, init]) =>
-              new URL(String(input)).pathname === base &&
-              (init?.method ?? "GET") === "GET"
-          )
-      ).toBe(true)
-    );
-    await user.click(screen.getByRole("link", { name: "カレンダー" }));
-    await screen.findByText("この月に配信予定・配信済みの通知はありません");
-    expect(
-      screen.queryByRole("link", {
-        name: (name) =>
-          name.endsWith(`${detail.content.push.title}の詳細を表示`),
+      fetchMock.mock.calls.slice(deletionIndex + 1).some(([input, init]) => {
+        const url = new URL(String(input));
+        return (
+          url.pathname === base &&
+          url.searchParams.get("from") === "0001-01-01T00:00:00.000Z" &&
+          (init?.method ?? "GET") === "GET"
+        );
       })
+    ).toBe(true);
+    await act(async () => releaseRead!());
+    expect(
+      screen.getByRole("heading", { name: "通知管理" })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("条件に一致する通知はありません")
+    ).toBeInTheDocument();
+    const beforeReturn = fetchMock.mock.calls.length;
+    await user.click(screen.getByRole("link", { name: "カレンダー" }));
+    await screen.findByText("この期間に表示する通知はありません");
+    expect(
+      fetchMock.mock.calls.slice(beforeReturn).some(([input, init]) => {
+        const url = new URL(String(input));
+        return (
+          url.pathname === base &&
+          url.searchParams.has("from") &&
+          url.searchParams.get("from") !== "0001-01-01T00:00:00.000Z" &&
+          (init?.method ?? "GET") === "GET"
+        );
+      })
+    ).toBe(true);
+    expect(
+      within(
+        screen.getByRole("region", { name: "本日の配信一覧" })
+      ).queryByRole("link", { name: new RegExp(detail.content.push.title) })
     ).not.toBeInTheDocument();
+    expect(
+      fetchMock.mock.calls.some(([input]) =>
+        new URL(String(input)).pathname.endsWith("/calendar")
+      )
+    ).toBe(false);
   });
 
   it.each(["now", "scheduled"] as const)(
@@ -358,9 +383,13 @@ describe("通知RouteのHTTP境界統合（応答はMock）", () => {
       await screen.findByRole("heading", { name: "通知管理" });
       if (timing === "scheduled") {
         await user.click(screen.getByRole("link", { name: "カレンダー" }));
-        const link = await screen.findByRole("link", {
-          name: /統合確認の通知の詳細を表示/,
-        });
+        const link = await within(
+          await screen.findByRole("region", { name: "本日の配信一覧" })
+        ).findByRole("link", { name: /統合確認の通知/ });
+        expect(link).toHaveAttribute(
+          "href",
+          `/notifications/${detail.notificationId}`
+        );
         expect(
           fetchMock.mock.calls.some(([url]) =>
             new URL(String(url)).searchParams.has("from")

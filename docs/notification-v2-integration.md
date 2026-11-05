@@ -32,27 +32,27 @@ Node.js 25でjsdomのlocalStorageが利用できない場合は、上記コマ�
 
 下表の「実API」は隔離されたローカルHTTP境界の確認状況。画面E2Eや実FCM送信の完了を示さない。[実施記録](verification/notification-v2-local-api-2026-10-24.md)と[HTTP証跡](verification/notification-v2-local-api-2026-10-24.json)を参照する。
 
-| ID  | 操作・事前条件                       | 確認する結果                                                | 現在の自動確認                           | 実API                                                   |
-| --- | ------------------------------------ | ----------------------------------------------------------- | ---------------------------------------- | ------------------------------------------------------- |
-| N01 | manual即時作成 → 一覧 → 詳細         | POSTのIDで遷移し、GETの内容を表示                           | 今回のRoute統合                          | 即時作成・一覧・詳細を画面確認                          |
-| N02 | manual予約作成 → Calendar → 詳細     | 指定日時と対象Scheduleが一致、Calendarに表示                | 今回のRoute統合                          | 予約作成・Calendar・詳細を画面確認                      |
-| N03 | 全Schedule未開始で編集               | push / detail / importance / audience / deliveryを保存      | 今回のRoute統合、既存Hook                | APIと編集保存の画面確認                                 |
-| N04 | 編集画面を開いた後にWorker開始       | PATCH409 → GET → detail入力だけ保持し、最新の編集範囲へ切替 | 既存useNotificationEdit                  | 開始済みfixtureで409・実競合未                          |
-| N05 | manual未開始Notificationを削除       | 対象確認後DELETE、一覧とCalendarを再取得                    | 今回のRoute統合、既存useNotificationList | 詳細からの削除・一覧復帰を画面確認                      |
-| N06 | 一覧・Calendarの遅延GET中に削除      | 古いGET完了後に新しいGET、削除済み行が残らない              | 既存useNotificationList                  | 一覧実HTTP確認済み・Calendar遅延GETをRoute Mock統合追加 |
-| N07 | 未開始Scheduleを予約取消             | 204後にGET、Notificationは残りScheduleだけ消える            | 既存useNotificationRemoval               | 取消後にScheduleだけ消え本体維持を画面確認              |
-| N08 | 取消直前にWorkerがclaim              | 409を成功扱いせずGET、開始済みへ更新                        | 既存useNotificationRemoval               | dialog中にDB状態変更→409→GETを画面確認・Worker未        |
-| N09 | Monitorでsendingを表示               | Schedule状態・Recipient数・Delivery数をAPI値のまま表示      | 既存Monitor Hook / Page                  | 状態fixtureのMonitor集計も画面確認                      |
-| N10 | sendingを緊急Stop                    | bodyなしPOST、応答はIDとstoppedのみ、GETで監査・集計を取得  | 既存HTTP adapter / Monitor操作           | 画面操作→stopped・配送停止数をGETで確認                 |
-| N11 | Stop直前にcompleted、または重複Stop  | 409後にGET、Nodeとdialogを保持                              | 既存Monitor操作                          | Stop409→GETを本番adapter+Page Mock統合で確認・実画面未  |
-| N12 | immediate / scheduledで再送          | 元Scheduleは保持し、新ScheduleがGET一覧へ現れる             | 既存HTTP adapter / Monitor操作           | 即時/日時指定再送を画面確認・非表示条件を修正           |
-| N13 | source削除済みautomaticから再送      | 操作非表示・最終判断はBackend409、履歴を破壊しない          | 既存Monitor操作                          | 実Gathering削除PUT→cleanup・再送409、画面未             |
-| N14 | Tokenが0件のRecipient                | User数とToken数を混同せず、詳細・Resultsで確認可能          | 既存詳細Page / DTO                       | CronのRecipient確定・Results画面確認、配信完了未        |
-| N15 | retry_waitがある配信                 | Retryを成功扱いせず、数値はBackend値と一致                  | 既存Monitor Page                         | retry_wait fixtureのAPI確認・実Retry未                  |
-| N16 | automaticのsource.labelがnull        | 表示が壊れず、再送を許可しない                              | 既存Monitor操作・表示                    | 実削除後label=nullをadapterで確認、実画面未             |
-| N17 | 400のcontent / schedule / importance | 項目またはフォーム内へ表示、Toast / Centerへ保存しない      | 今回のRoute統合、既存Form / Mapper       | importance 400のみ確認・画面未                          |
-| N18 | 404 / 409 / 5xx / 通信失敗           | 入力・選択を保持し、操作エラーは既存Feedbackへ              | 今回のRoute統合、既存Hook                | 403/404/409 API確認・5xx/通信失敗はMockのみ             |
-| N19 | Monitorの自動更新失敗 → 回復         | 前回表示を保持、background-errorを重複保存しない            | 既存useNotificationMonitor               | 自動GETへ500を注入し表示保持・重複抑止・回復確認        |
+| ID  | 操作・事前条件                       | 確認する結果                                                                   | 現在の自動確認                           | 実API                                                   |
+| --- | ------------------------------------ | ------------------------------------------------------------------------------ | ---------------------------------------- | ------------------------------------------------------- |
+| N01 | manual即時作成 → 一覧 → 詳細         | POSTのIDで遷移し、GETの内容を表示                                              | 今回のRoute統合                          | 即時作成・一覧・詳細を画面確認                          |
+| N02 | manual予約作成 → Calendar → 詳細     | 指定日時と対象Scheduleが一致、Calendarに表示                                   | 今回のRoute統合                          | 予約作成・Calendar・詳細を画面確認                      |
+| N03 | 全Schedule未開始で編集               | push / detail / importance / audience / deliveryを保存                         | 今回のRoute統合、既存Hook                | APIと編集保存の画面確認                                 |
+| N04 | 編集画面を開いた後にWorker開始       | PATCH409 → GET → detail入力だけ保持し、最新の編集範囲へ切替                    | 既存useNotificationEdit                  | 開始済みfixtureで409・実競合未                          |
+| N05 | manual未開始Notificationを削除       | 対象確認後DELETE、一覧とCalendarを再取得                                       | 今回のRoute統合、既存useNotificationList | 詳細からの削除・一覧復帰を画面確認                      |
+| N06 | 一覧・Calendarの遅延GET中に削除      | 一覧の古いGET完了後に再取得。別RouteのCalendarへ戻る際も削除済み予定が残らない | 既存useNotificationList                  | 一覧実HTTP確認済み・Calendar遅延GETをRoute Mock統合追加 |
+| N07 | 未開始Scheduleを予約取消             | 204後にGET、Notificationは残りScheduleだけ消える                               | 既存useNotificationRemoval               | 取消後にScheduleだけ消え本体維持を画面確認              |
+| N08 | 取消直前にWorkerがclaim              | 409を成功扱いせずGET、開始済みへ更新                                           | 既存useNotificationRemoval               | dialog中にDB状態変更→409→GETを画面確認・Worker未        |
+| N09 | Monitorでsendingを表示               | Schedule状態・Recipient数・Delivery数をAPI値のまま表示                         | 既存Monitor Hook / Page                  | 状態fixtureのMonitor集計も画面確認                      |
+| N10 | sendingを緊急Stop                    | bodyなしPOST、応答はIDとstoppedのみ、GETで監査・集計を取得                     | 既存HTTP adapter / Monitor操作           | 画面操作→stopped・配送停止数をGETで確認                 |
+| N11 | Stop直前にcompleted、または重複Stop  | 409後にGET、Nodeとdialogを保持                                                 | 既存Monitor操作                          | Stop409→GETを本番adapter+Page Mock統合で確認・実画面未  |
+| N12 | immediate / scheduledで再送          | 元Scheduleは保持し、新ScheduleがGET一覧へ現れる                                | 既存HTTP adapter / Monitor操作           | 即時/日時指定再送を画面確認・非表示条件を修正           |
+| N13 | source削除済みautomaticから再送      | 操作非表示・最終判断はBackend409、履歴を破壊しない                             | 既存Monitor操作                          | 実Gathering削除PUT→cleanup・再送409、画面未             |
+| N14 | Tokenが0件のRecipient                | User数とToken数を混同せず、詳細・Resultsで確認可能                             | 既存詳細Page / DTO                       | CronのRecipient確定・Results画面確認、配信完了未        |
+| N15 | retry_waitがある配信                 | Retryを成功扱いせず、数値はBackend値と一致                                     | 既存Monitor Page                         | retry_wait fixtureのAPI確認・実Retry未                  |
+| N16 | automaticのsource.labelがnull        | 表示が壊れず、再送を許可しない                                                 | 既存Monitor操作・表示                    | 実削除後label=nullをadapterで確認、実画面未             |
+| N17 | 400のcontent / schedule / importance | 項目またはフォーム内へ表示、Toast / Centerへ保存しない                         | 今回のRoute統合、既存Form / Mapper       | importance 400のみ確認・画面未                          |
+| N18 | 404 / 409 / 5xx / 通信失敗           | 入力・選択を保持し、操作エラーは既存Feedbackへ                                 | 今回のRoute統合、既存Hook                | 403/404/409 API確認・5xx/通信失敗はMockのみ             |
+| N19 | Monitorの自動更新失敗 → 回復         | 前回表示を保持、background-errorを重複保存しない                               | 既存useNotificationMonitor               | 自動GETへ500を注入し表示保持・重複抑止・回復確認        |
 
 対応する既存テストは`app/features/notifications/test/`配下にある。表の「既存」は個別境界での確認を示し、画面間・実runtime全体の成功を意味しない。
 
