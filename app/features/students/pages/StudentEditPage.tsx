@@ -17,6 +17,7 @@ type StudentEditPageProps = {
   api: StudentMutationApi;
   classRooms: readonly StudentClassRoomOption[];
   classRoomOptions?: ManagementOptionState<StudentClassRoomOption>;
+  onConflict: () => Promise<void> | void;
   onClose: () => void | Promise<void>;
   onSaved: () => Promise<void>;
   student: StudentRow;
@@ -27,6 +28,7 @@ export function StudentEditPage({
   api,
   classRoomOptions,
   classRooms,
+  onConflict,
   onClose,
   onSaved,
   student,
@@ -41,10 +43,17 @@ export function StudentEditPage({
     error: submitError,
     isMutating: isSubmitting,
     save,
-  } = useStudentMutation({ api, userApi });
+  } = useStudentMutation({ api, onConflict, userApi });
 
   async function handleSubmit(input: StudentWriteInput) {
-    if (await save(student.studentId, input)) await onSaved();
+    if (
+      await save(student.studentId, {
+        ...input,
+        lockVersion: student.lockVersion,
+      })
+    ) {
+      await onSaved();
+    }
   }
 
   return (
@@ -58,7 +67,9 @@ export function StudentEditPage({
         state={classRoomOptionState}
       />
       {!classRoomOptionState.isLoading && !classRoomOptionState.error ? (
+        // 競合後の再取得で版が変わったら、編集中の内容を捨てて最新の値で作り直す。
         <StudentForm
+          key={student.lockVersion}
           classRooms={classRoomOptionState.items}
           initialStudent={student}
           isSubmitting={isSubmitting}

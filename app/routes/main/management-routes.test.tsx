@@ -43,6 +43,7 @@ const student: StudentRow = {
     classCode: "1A",
     className: "1年Aクラス",
   },
+  lockVersion: 0,
 };
 
 function LocationProbe() {
@@ -186,6 +187,7 @@ describe("student management nested routes", () => {
       classRoomId: 1,
       displayName: "山田太郎",
       studentIdNumber: "S007",
+      lockVersion: 0,
     });
     expect(getStudentById).toHaveBeenCalledOnce();
     await waitFor(() =>
@@ -222,6 +224,7 @@ describe("student management nested routes", () => {
         classRoomId: null,
         displayName: "山田 花子",
         studentIdNumber: "S007",
+        lockVersion: 0,
       })
     );
   });

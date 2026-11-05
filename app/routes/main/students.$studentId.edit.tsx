@@ -1,4 +1,4 @@
-import { useLoaderData, useRouteError } from "react-router";
+import { useLoaderData, useRevalidator, useRouteError } from "react-router";
 
 import { StudentApi } from "~/features/students/api";
 import { parseStudentId } from "~/features/students/application/student-loaders";
@@ -40,12 +40,14 @@ export default function StudentEditRoute() {
   const { student } = useLoaderData<typeof clientLoader>();
   const classRoomOptions = useManagementRouteOptions<StudentClassRoomOption>();
   const closeModal = useManagementModalReturn();
+  const revalidator = useRevalidator();
 
   return (
     <StudentEditPage
       api={StudentApi}
       classRoomOptions={classRoomOptions}
       classRooms={classRoomOptions.items}
+      onConflict={() => revalidator.revalidate()}
       onClose={() => closeModal()}
       onSaved={() => closeModal(true)}
       student={student}
