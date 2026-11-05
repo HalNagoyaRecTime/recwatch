@@ -17,6 +17,7 @@ const teacher: TeacherRow = {
   isLiveActive: true,
   isStaff: false,
   classRooms: [],
+  lockVersion: 0,
 };
 
 const classRoom: ClassRoom = {

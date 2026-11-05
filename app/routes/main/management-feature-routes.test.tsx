@@ -144,6 +144,7 @@ describe("management route integration wiring", () => {
             isLiveActive: true,
             isStaff: false,
             classRooms: [],
+            lockVersion: 0,
           },
         ],
         limit: 50,

@@ -14,6 +14,7 @@ export function toTeacherRow(dto: TeacherDTO): TeacherRow {
       classCode: classRoom.class_code,
       className: classRoom.class_name,
     })),
+    lockVersion: dto.lock_version,
   };
 }
 

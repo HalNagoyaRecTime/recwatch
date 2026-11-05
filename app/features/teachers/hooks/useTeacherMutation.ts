@@ -7,11 +7,13 @@ import type {
 
 type UseTeacherMutationOptions = {
   api: TeacherMutationApi;
+  onConflict?: () => Promise<void> | void;
   onRevalidate?: () => Promise<void> | void;
 };
 
 export function useTeacherMutation({
   api,
+  onConflict,
   onRevalidate,
 }: UseTeacherMutationOptions) {
   const { clearError, error, isMutating, run } = useManagementMutation({
@@ -29,7 +31,9 @@ export function useTeacherMutation({
           : api.updateTeacher(teacherId, input),
       teacherId === null
         ? "教官の登録に失敗しました。"
-        : "教官情報の更新に失敗しました。"
+        : "教官情報の更新に失敗しました。",
+      false,
+      onConflict
     );
   }
 

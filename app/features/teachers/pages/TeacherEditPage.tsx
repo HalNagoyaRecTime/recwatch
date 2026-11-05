@@ -16,6 +16,7 @@ export function TeacherEditPage({
   api,
   classRoomOptions,
   classRooms,
+  onConflict,
   onClose,
   onSaved,
   teacher,
@@ -23,6 +24,7 @@ export function TeacherEditPage({
   api: TeacherMutationApi;
   classRooms: readonly ClassRoomOption[];
   classRoomOptions?: ManagementOptionState<ClassRoomOption>;
+  onConflict: () => Promise<void> | void;
   onClose: () => void | Promise<void>;
   onSaved: () => Promise<void>;
   teacher: TeacherRow;
@@ -36,10 +38,15 @@ export function TeacherEditPage({
     error: submitError,
     isMutating: isSubmitting,
     save,
-  } = useTeacherMutation({ api });
+  } = useTeacherMutation({ api, onConflict });
 
   async function handleSubmit(input: TeacherFormInput) {
-    if (await save(teacher.teacherId, input)) {
+    if (
+      await save(teacher.teacherId, {
+        ...input,
+        lockVersion: teacher.lockVersion,
+      })
+    ) {
       await onSaved();
     }
   }
@@ -57,7 +64,9 @@ export function TeacherEditPage({
             state={classRoomOptionState}
           />
           {!classRoomOptionState.isLoading && !classRoomOptionState.error ? (
+            // 競合後の再取得で版が変わったら、編集中の内容を捨てて最新の値で作り直す。
             <TeacherForm
+              key={teacher.lockVersion}
               classRooms={classRoomOptionState.items}
               initialTeacher={teacher}
               isSubmitting={isSubmitting}
