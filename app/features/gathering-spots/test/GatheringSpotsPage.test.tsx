@@ -276,14 +276,14 @@ describe("GatheringSpotsPage", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("名前の重複など版の競合ではない409では入力を残す", async () => {
+  it("版の競合ではない409では入力を残す", async () => {
     const update = vi
       .fn()
       .mockRejectedValue(
         new ApiClientError(
           409,
-          "この名前は既に使われています。",
-          "GATHERING_SPOT_NAME_ALREADY_EXISTS"
+          "使用中の集合場所は削除できません",
+          "GATHERING_SPOT_IN_USE"
         )
       );
     const user = userEvent.setup();
@@ -301,7 +301,7 @@ describe("GatheringSpotsPage", () => {
     await user.click(screen.getByRole("button", { name: "保存する" }));
 
     expect(await screen.findByRole("alert")).toHaveTextContent(
-      "この名前は既に使われています。"
+      "使用中の集合場所は削除できません"
     );
     expect(input).toHaveValue("自分の変更");
   });
