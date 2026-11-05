@@ -33,7 +33,6 @@ export function TeamEditPage({
     setSubmitError(null);
     try {
       await TeamApi.updateTeam(team.id, {
-        teamName: input.name,
         classCodes: [...input.registeredClasses],
       });
     } catch (error) {

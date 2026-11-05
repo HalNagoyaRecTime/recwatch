@@ -54,20 +54,17 @@ describe("teamHttpApi", () => {
     mocks.deleteMock.mockResolvedValueOnce(undefined);
     mocks.patchMock.mockResolvedValueOnce({});
 
-    await teamHttpApi.createTeam({ teamName: "新設", classCodes: ["1A"] });
+    await teamHttpApi.createTeam({ classCodes: ["1A"] });
     await teamHttpApi.updateTeam(7, {
-      teamName: "更新後",
       classCodes: ["1A", "1B"],
     });
     await teamHttpApi.deleteTeam(7);
     await teamHttpApi.addTeamScore(7, { points: -10 });
 
     expect(mocks.postMock).toHaveBeenCalledWith("/api/v1/teams", {
-      team_name: "新設",
       class_codes: ["1A"],
     });
     expect(mocks.putMock).toHaveBeenCalledWith("/api/v1/teams/7", {
-      team_name: "更新後",
       class_codes: ["1A", "1B"],
     });
     expect(mocks.deleteMock).toHaveBeenCalledWith("/api/v1/teams/7");

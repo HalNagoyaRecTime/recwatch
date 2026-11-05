@@ -5,7 +5,6 @@ import type { TeamClassOption } from "~/features/team/model/team-class-option";
 import type { Team } from "~/features/team/model/team";
 
 export type TeamFormInput = {
-  name: string;
   registeredClasses: readonly string[];
 };
 
@@ -24,7 +23,6 @@ export function TeamForm({
   onSubmit: (input: TeamFormInput) => void | Promise<void>;
   submitError: string | null;
 }) {
-  const [name, setName] = useState(initialTeam?.name ?? "");
   const [registeredClasses, setRegisteredClasses] = useState<string[]>(
     () => initialTeam?.registeredClasses.slice() ?? []
   );
@@ -56,32 +54,28 @@ export function TeamForm({
 
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const normalizedName = name.trim();
-    if (!normalizedName) {
-      setValidationError("チーム名を入力してください。");
-      return;
-    }
     if (registeredClasses.length === 0) {
       setValidationError("登録クラスを1つ以上選択してください。");
       return;
     }
 
     setValidationError(null);
-    void onSubmit({ name: normalizedName, registeredClasses });
+    void onSubmit({ registeredClasses });
   }
 
   return (
     <form className="space-y-5" onSubmit={handleSubmit}>
-      <label className="block text-sm font-semibold" htmlFor="team-name">
-        チーム名
-        <input
-          autoFocus
-          className="border-border-base bg-surface-base text-text-base mt-1 h-10 w-full rounded-md border px-3 outline-none"
-          id="team-name"
-          onChange={(event) => setName(event.target.value)}
-          value={name}
-        />
-      </label>
+      <div className="text-sm">
+        <span className="font-semibold">チーム名</span>
+        <p className="text-text-muted mt-1">
+          登録クラスのクラスコードから自動的に設定されます。
+        </p>
+        <p className="text-text-base mt-1 font-medium">
+          {registeredClasses.length > 0
+            ? registeredClasses.join(" ")
+            : "（登録クラスを選択してください）"}
+        </p>
+      </div>
 
       <fieldset>
         <legend className="text-sm font-semibold">登録クラス</legend>

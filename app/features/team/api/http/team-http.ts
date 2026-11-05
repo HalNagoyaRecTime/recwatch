@@ -7,7 +7,7 @@ import type {
 import type { TeamDTO, TeamListPageDTO } from "../dto/team-dto";
 
 function toTeamWriteBody(body: TeamWriteRequest) {
-  return { team_name: body.teamName, class_codes: body.classCodes };
+  return { class_codes: body.classCodes };
 }
 
 export const teamHttpApi = {

@@ -1,5 +1,4 @@
 export type TeamWriteRequest = {
-  teamName: string;
   classCodes: string[];
 };
 
