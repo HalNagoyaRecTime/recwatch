@@ -4,6 +4,7 @@ export type VenueResponseDto = {
   image_url: string | null;
   created_at: string;
   updated_at: string;
+  lock_version: number;
 };
 
 export type VenuePageResponseDto = {
@@ -16,4 +17,5 @@ export type VenuePageResponseDto = {
 // API のリクエスト本文は camelCase で受け付けている
 export type VenueWriteRequestDto = {
   venueName: string;
+  lockVersion?: number;
 };

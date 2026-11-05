@@ -94,15 +94,18 @@ describe("createHttpVenueGateway", () => {
       id: 11,
       name: "グラウンド",
     });
-    await expect(gateway.update(11, "第2グラウンド")).resolves.toMatchObject({
-      id: 11,
-      name: "第2グラウンド",
-    });
+    await expect(gateway.update(11, "第2グラウンド", 4)).resolves.toMatchObject(
+      {
+        id: 11,
+        name: "第2グラウンド",
+      }
+    );
     expect(post).toHaveBeenCalledWith("/api/v1/venues", {
       venueName: "グラウンド",
     });
     expect(put).toHaveBeenCalledWith("/api/v1/venues/11", {
       venueName: "第2グラウンド",
+      lockVersion: 4,
     });
   });
 

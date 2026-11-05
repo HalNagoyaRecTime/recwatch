@@ -1,5 +1,9 @@
 import { useMemo, useState } from "react";
 import { getErrorMessage } from "~/lib/client-error";
+import {
+  isUpdateConflictError,
+  UPDATE_CONFLICT_MESSAGE,
+} from "~/lib/update-conflict";
 import type { PlaceImageChange } from "~/types/place-image-change";
 
 import type { VenueGateway } from "~/features/venues/api/contracts/venue-gateway";
@@ -131,6 +135,20 @@ export function useVenuesPage({ gateway }: UseVenuesPageOptions) {
     setSort((current) => getNextVenueSort(current, columnId));
   }
 
+  // 編集中の内容は破棄する。検索条件から外れた・削除された場合は一覧に無いのでフォームを閉じる。
+  async function replaceFormWithLatest(venueId: number) {
+    const latest = (await reload())?.items.find(({ id }) => id === venueId);
+    if (!latest) {
+      closeForm();
+      setActionError(UPDATE_CONFLICT_MESSAGE);
+      return;
+    }
+    setEditingVenue(latest);
+    setVenueNameInput(latest.name);
+    setImageChange(null);
+    setSubmitError(UPDATE_CONFLICT_MESSAGE);
+  }
+
   async function submitForm() {
     if (isSubmitting || isDeleting) return;
 
@@ -145,7 +163,7 @@ export function useVenuesPage({ gateway }: UseVenuesPageOptions) {
 
     try {
       const savedVenue = editingVenue
-        ? await updateVenue(editingVenue.id, name)
+        ? await updateVenue(editingVenue.id, name, editingVenue.lockVersion)
         : await createVenue(name);
       // 編集中に切り替えないと、画像だけ失敗した後の再送で同じ実施場所をもう一度作ってしまう
       setEditingVenue(savedVenue);
@@ -164,6 +182,10 @@ export function useVenuesPage({ gateway }: UseVenuesPageOptions) {
       }
       closeForm();
     } catch (error) {
+      if (editingVenue && isUpdateConflictError(error)) {
+        await replaceFormWithLatest(editingVenue.id);
+        return;
+      }
       setSubmitError(getErrorMessage(error, "実施場所の保存に失敗しました。"));
     } finally {
       setIsSubmitting(false);
