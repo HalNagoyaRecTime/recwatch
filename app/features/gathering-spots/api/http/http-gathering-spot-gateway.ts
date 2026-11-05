@@ -73,10 +73,10 @@ export function createHttpGatheringSpotGateway(
       return toGatheringSpot(response);
     },
 
-    async update(id, name) {
+    async update(id, name, lockVersion) {
       const response = await client.put<GatheringSpotResponseDto>(
         `/api/v1/gathering-spots/${id}`,
-        toGatheringSpotWriteRequest(name)
+        toGatheringSpotWriteRequest(name, lockVersion)
       );
       return toGatheringSpot(response);
     },
