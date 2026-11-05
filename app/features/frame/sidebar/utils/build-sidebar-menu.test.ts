@@ -43,12 +43,12 @@ describe("buildSidebarMenu", () => {
         "学生",
         "教官",
         "クラス",
-        "場所",
         "集合場所管理",
         "実施場所管理",
       ])
     );
     expect(labels).not.toContain("本日の進行");
+    expect(labels).not.toContain("場所");
     expect(labels).not.toContain("スケジュール");
     expect(labels).not.toContain("ユーザー管理");
     expect(labels).not.toContain("イベント管理");
@@ -64,29 +64,38 @@ describe("buildSidebarMenu", () => {
     ]);
 
     const operationSection = menu.find((section) => section.label === "運用");
-    const managementSection = menu.find((section) => section.label === "管理");
     expect(operationSection?.items.map((item) => item.label)).not.toContain(
       "スケジュール"
     );
-    const locations = managementSection?.items.find(
-      (item) => item.id === "locations"
-    );
-    expect(locations?.children?.map((item) => item.label)).toEqual([
+    const events = operationSection?.items.find((item) => item.id === "events");
+    expect(events?.children?.map((item) => item.label)).toEqual([
+      "イベント一覧",
       "集合場所管理",
       "実施場所管理",
     ]);
-    expect(locations?.children?.map((item) => item.to)).toEqual([
+    expect(events?.children?.map((item) => item.to)).toEqual([
+      "/events",
       "/gathering-spots",
       "/venues",
     ]);
-    if (!locations?.children) {
-      throw new Error("場所管理のメニューが見つかりません");
+    if (!events?.children) {
+      throw new Error("イベントメニューが見つかりません");
     }
-    expect(isSidebarItemActive(locations.children[0], "/gathering-spots")).toBe(
+    expect(isSidebarItemActive(events.children[1], "/gathering-spots")).toBe(
       true
     );
-    expect(isSidebarItemActive(locations.children[1], "/venues")).toBe(true);
-    expect(isSidebarItemActive(locations.children[0], "/venues")).toBe(false);
+    expect(isSidebarItemActive(events.children[2], "/venues")).toBe(true);
+    expect(isSidebarItemActive(events.children[1], "/venues")).toBe(false);
+
+    const managementSection = menu.find((section) => section.label === "管理");
+    expect(
+      managementSection?.items.some((item) => item.id === "locations")
+    ).toBe(false);
+    expect(
+      managementSection?.items.some((item) =>
+        ["gathering-spots", "venues"].includes(item.id)
+      )
+    ).toBe(false);
 
     const classRoomItem = menu
       .flatMap((section) => section.items)
