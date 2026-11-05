@@ -13,6 +13,8 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import type { ClassRoomManagementApi } from "~/features/classRoom/api";
 import { ClassRoomCreatePage } from "~/features/classRoom/pages/ClassRoomCreatePage";
 import { ClassRoomEditPage } from "~/features/classRoom/pages/ClassRoomEditPage";
+import { ApiClientError } from "~/lib/api-client-error";
+import { UPDATE_CONFLICT_MESSAGE } from "~/lib/update-conflict";
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -121,6 +123,7 @@ describe("ClassRoomCreatePage", () => {
       className: "1年A組",
       studentCount: 3,
       teacher: null,
+      lockVersion: 5,
     };
     const updateClassRoom = vi.fn().mockResolvedValue(classRoom);
     const onSaved = vi.fn().mockResolvedValue(undefined);
@@ -129,6 +132,7 @@ describe("ClassRoomCreatePage", () => {
       <ClassRoomEditPage
         api={createApi({ updateClassRoom })}
         classRoom={classRoom}
+        onConflict={vi.fn()}
         onClose={vi.fn()}
         onSaved={onSaved}
         teacherOptions={[]}
@@ -154,6 +158,70 @@ describe("ClassRoomCreatePage", () => {
         classCode: "1B",
         className: "1年B組",
         teacherId: null,
+        lockVersion: 5,
+      })
+    );
+    expect(onSaved).toHaveBeenCalledOnce();
+  });
+
+  it("更新が競合したら理由を伝えて再取得し、最新の値でフォームを置き換える", async () => {
+    const user = userEvent.setup();
+    const classRoom = {
+      classRoomId: 12,
+      classCode: "1A",
+      className: "1年A組",
+      studentCount: 3,
+      teacher: null,
+      lockVersion: 5,
+    };
+    const latest = { ...classRoom, className: "他の人の変更", lockVersion: 6 };
+    const updateClassRoom = vi
+      .fn()
+      .mockRejectedValueOnce(
+        new ApiClientError(409, "conflict", "CLASS_ROOM_UPDATE_CONFLICT")
+      )
+      .mockResolvedValueOnce(latest);
+    const onConflict = vi.fn();
+    const onSaved = vi.fn().mockResolvedValue(undefined);
+    const api = createApi({ updateClassRoom });
+    const renderPage = (value: typeof classRoom) => (
+      <ClassRoomEditPage
+        api={api}
+        classRoom={value}
+        onConflict={onConflict}
+        onClose={vi.fn()}
+        onSaved={onSaved}
+        teacherOptions={[]}
+      />
+    );
+    const { rerender } = render(renderPage(classRoom));
+
+    const nameInput = await screen.findByRole("textbox", {
+      name: "クラス名*",
+    });
+    await user.clear(nameInput);
+    await user.type(nameInput, "自分の変更");
+    await user.click(screen.getByRole("button", { name: "保存する" }));
+
+    expect(
+      await screen.findByText(UPDATE_CONFLICT_MESSAGE)
+    ).toBeInTheDocument();
+    expect(onConflict).toHaveBeenCalledOnce();
+    expect(onSaved).not.toHaveBeenCalled();
+
+    // 再取得の結果が新しい版で届いたら、編集中の内容は破棄される。
+    rerender(renderPage(latest));
+    expect(screen.getByRole("textbox", { name: "クラス名*" })).toHaveValue(
+      "他の人の変更"
+    );
+
+    await user.click(screen.getByRole("button", { name: "保存する" }));
+    await waitFor(() =>
+      expect(updateClassRoom).toHaveBeenLastCalledWith(12, {
+        classCode: "1A",
+        className: "他の人の変更",
+        teacherId: null,
+        lockVersion: 6,
       })
     );
     expect(onSaved).toHaveBeenCalledOnce();

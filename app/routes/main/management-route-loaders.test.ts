@@ -25,6 +25,7 @@ const classRoom: ClassRoom = {
   className: "1年A組",
   studentCount: 3,
   teacher: null,
+  lockVersion: 0,
 };
 
 afterEach(() => {

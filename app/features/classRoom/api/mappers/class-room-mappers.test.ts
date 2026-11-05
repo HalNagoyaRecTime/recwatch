@@ -15,6 +15,7 @@ const dto = {
     user_id: 10,
     display_name: "佐橋 晴斗",
   },
+  lock_version: 4,
 };
 
 describe("ClassRoom API mappers", () => {
@@ -29,7 +30,19 @@ describe("ClassRoom API mappers", () => {
         userId: 10,
         displayName: "佐橋 晴斗",
       },
+      lockVersion: 4,
     });
+  });
+
+  it("lock_versionが無いレスポンスは受け付けない", () => {
+    expect(() =>
+      toClassRoomPage({
+        items: [{ ...dto, lock_version: undefined }],
+        total: 1,
+        limit: 50,
+        offset: 0,
+      })
+    ).toThrow("クラス一覧APIのレスポンス形式が不正です。");
   });
 
   it("担当教官が未設定の場合はnullを保持する", () => {

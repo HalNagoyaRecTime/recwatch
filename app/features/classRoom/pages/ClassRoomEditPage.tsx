@@ -18,16 +18,26 @@ type ClassRoomEditPageProps = {
   api: ClassRoomMutationApi;
   children?: ReactNode;
   classRoom: ClassRoom;
+  onConflict: () => Promise<void> | void;
   onClose: () => void | Promise<void>;
   onSaved: () => Promise<void>;
   teacherOptionState?: ManagementOptionState<ClassRoomTeacherOption>;
   teacherOptions: readonly ClassRoomTeacherOption[];
 };
 
+function toEditForm(classRoom: ClassRoom): ClassRoomWriteInput {
+  return {
+    classCode: classRoom.classCode,
+    className: classRoom.className,
+    teacherId: classRoom.teacher?.teacherId ?? null,
+  };
+}
+
 export function ClassRoomEditPage({
   api,
   children,
   classRoom,
+  onConflict,
   onClose,
   onSaved,
   teacherOptionState,
@@ -38,19 +48,30 @@ export function ClassRoomEditPage({
     isLoading: false,
     items: teacherOptions,
   };
-  const [form, setForm] = useState<ClassRoomWriteInput>(() => ({
-    classCode: classRoom.classCode,
-    className: classRoom.className,
-    teacherId: classRoom.teacher?.teacherId ?? null,
-  }));
+  const [form, setForm] = useState<ClassRoomWriteInput>(() =>
+    toEditForm(classRoom)
+  );
+  // 競合後の再取得で版が変わったら、編集中の内容を捨てて最新の値で置き換える。
+  const [formVersion, setFormVersion] = useState(classRoom.lockVersion);
+  if (formVersion !== classRoom.lockVersion) {
+    setFormVersion(classRoom.lockVersion);
+    setForm(toEditForm(classRoom));
+  }
   const {
     error: submitError,
     isMutating: isSubmitting,
     update,
-  } = useClassRoomMutation({ api });
+  } = useClassRoomMutation({ api, onConflict });
 
   async function handleSubmit(input: ClassRoomWriteInput) {
-    if (await update(classRoom.classRoomId, input)) await onSaved();
+    if (
+      await update(classRoom.classRoomId, {
+        ...input,
+        lockVersion: classRoom.lockVersion,
+      })
+    ) {
+      await onSaved();
+    }
   }
 
   return (

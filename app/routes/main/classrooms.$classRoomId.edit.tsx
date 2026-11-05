@@ -94,6 +94,7 @@ export default function ClassRoomEditRoute() {
     <ClassRoomEditPage
       api={ClassRoomApi}
       classRoom={classRoom}
+      onConflict={() => revalidator.revalidate()}
       onClose={() => closeModal()}
       onSaved={() => closeModal(true)}
       teacherOptionState={teacherOptions}

@@ -39,6 +39,7 @@ const classRoom = {
   className: "1年A組",
   studentCount: 2,
   teacher: null,
+  lockVersion: 0,
 };
 
 const secondClassRoom = {
