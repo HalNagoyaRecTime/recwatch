@@ -185,6 +185,12 @@ export function GatheringSettingsStep({
         );
         onMembersSaved?.();
       }
+      if (await settings.reloadAfterConflict()) {
+        // 古い下書きに紐づく操作が、次の保存へ混ざらないように捨てる。
+        setDeletedRounds([]);
+        setPendingMembers({});
+        setOpenPickerKey(null);
+      }
       return;
     }
 

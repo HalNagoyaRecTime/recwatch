@@ -9,6 +9,7 @@ import {
 
 const settings: EventGatheringSettings = {
   eventId: 12,
+  lockVersion: 3,
   rounds: [
     {
       round: 1,
