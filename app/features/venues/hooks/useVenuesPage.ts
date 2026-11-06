@@ -3,6 +3,7 @@ import { getErrorMessage } from "~/lib/client-error";
 import {
   isUpdateConflictError,
   UPDATE_CONFLICT_MESSAGE,
+  UPDATE_CONFLICT_RELOAD_FAILED_MESSAGE,
 } from "~/lib/update-conflict";
 import type { PlaceImageChange } from "~/types/place-image-change";
 
@@ -136,8 +137,14 @@ export function useVenuesPage({ gateway }: UseVenuesPageOptions) {
   }
 
   // 編集中の内容は破棄する。検索条件から外れた・削除された場合は一覧に無いのでフォームを閉じる。
+  // 一覧を取得できないときは最新の内容が分からないので、入力を残して再度の保存を促す。
   async function replaceFormWithLatest(venueId: number) {
-    const latest = (await reload())?.items.find(({ id }) => id === venueId);
+    const page = await reload();
+    if (!page) {
+      setSubmitError(UPDATE_CONFLICT_RELOAD_FAILED_MESSAGE);
+      return;
+    }
+    const latest = page.items.find(({ id }) => id === venueId);
     if (!latest) {
       closeForm();
       setActionError(UPDATE_CONFLICT_MESSAGE);

@@ -6,7 +6,10 @@ import type { GatheringSpotGateway } from "~/features/gathering-spots/api/contra
 import type { GatheringSpot } from "~/features/gathering-spots/model/gathering-spot";
 import { GatheringSpotsPage } from "~/features/gathering-spots/pages/GatheringSpotsPage";
 import { ApiClientError } from "~/lib/api-client-error";
-import { UPDATE_CONFLICT_MESSAGE } from "~/lib/update-conflict";
+import {
+  UPDATE_CONFLICT_MESSAGE,
+  UPDATE_CONFLICT_RELOAD_FAILED_MESSAGE,
+} from "~/lib/update-conflict";
 import { resizeImage } from "~/lib/resize-image";
 
 vi.mock("~/lib/resize-image", () => ({ resizeImage: vi.fn() }));
@@ -274,6 +277,69 @@ describe("GatheringSpotsPage", () => {
     expect(
       screen.queryByRole("textbox", { name: "集合場所名*" })
     ).not.toBeInTheDocument();
+  });
+
+  it("競合後の再取得に失敗したらフォームと入力を残し、再度の保存で最新の値へ置き換える", async () => {
+    const list = vi
+      .fn()
+      .mockResolvedValueOnce({
+        items: [createSpot(1, "体育館前")],
+        total: 1,
+        limit: 20,
+        offset: 0,
+      })
+      .mockRejectedValueOnce(new Error("network"))
+      .mockResolvedValue({
+        items: [{ ...createSpot(1, "他の人の変更"), lockVersion: 1 }],
+        total: 1,
+        limit: 20,
+        offset: 0,
+      });
+    const update = vi
+      .fn()
+      .mockRejectedValue(
+        new ApiClientError(409, "conflict", "GATHERING_SPOT_UPDATE_CONFLICT")
+      );
+    const user = userEvent.setup();
+
+    render(<GatheringSpotsPage gateway={createGateway({ list, update })} />);
+
+    await screen.findByText("体育館前");
+    await user.click(
+      screen.getByRole("button", { name: "体育館前のその他の操作" })
+    );
+    await user.click(screen.getByRole("button", { name: "編集" }));
+    const input = screen.getByRole("textbox", { name: "集合場所名*" });
+    await user.clear(input);
+    await user.type(input, "自分の変更");
+    await user.upload(
+      screen.getByLabelText("集合場所の画像を選択"),
+      new File(["photo"], "photo.jpg", { type: "image/jpeg" })
+    );
+    await screen.findByRole("img", { name: "集合場所の画像" });
+    await user.click(screen.getByRole("button", { name: "保存する" }));
+
+    expect(
+      await screen.findByText(UPDATE_CONFLICT_RELOAD_FAILED_MESSAGE)
+    ).toBeInTheDocument();
+    expect(screen.queryByText(UPDATE_CONFLICT_MESSAGE)).not.toBeInTheDocument();
+    expect(screen.getByRole("textbox", { name: "集合場所名*" })).toHaveValue(
+      "自分の変更"
+    );
+    expect(
+      screen.getByRole("img", { name: "集合場所の画像" })
+    ).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "保存する" }));
+
+    expect(
+      await screen.findByText(UPDATE_CONFLICT_MESSAGE)
+    ).toBeInTheDocument();
+    expect(screen.getByRole("textbox", { name: "集合場所名*" })).toHaveValue(
+      "他の人の変更"
+    );
+    expect(update).toHaveBeenCalledTimes(2);
+    expect(update).toHaveBeenLastCalledWith(1, "自分の変更", 0);
   });
 
   it("版の競合ではない409では入力を残す", async () => {

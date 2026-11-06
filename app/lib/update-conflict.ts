@@ -3,6 +3,9 @@ import { ApiClientError } from "./api-client-error";
 export const UPDATE_CONFLICT_MESSAGE =
   "他の人がこの内容を変更しました。最新の内容を読み込みます。";
 
+export const UPDATE_CONFLICT_RELOAD_FAILED_MESSAGE =
+  "他の人がこの内容を変更しましたが、最新の内容を読み込めませんでした。時間をおいて、もう一度保存してください。";
+
 // 同じ PUT から重複エラーなど別の 409 も返るため、status ではなく code で判定する。
 const UPDATE_CONFLICT_CODES: ReadonlySet<string> = new Set([
   "CLASS_ROOM_UPDATE_CONFLICT",
