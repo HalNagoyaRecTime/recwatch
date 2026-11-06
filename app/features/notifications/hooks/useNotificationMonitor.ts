@@ -9,9 +9,11 @@ import {
   type NotificationFeedbackReporter,
 } from "~/features/notifications/hooks/notification-feedback";
 import {
+  getMonitorProgress,
   getMonitorWindow,
   hasMonitorProgress,
   isMonitorScheduleVisible,
+  type MonitorProgress,
   type MonitorSchedule,
 } from "~/features/notifications/hooks/notification-monitor-data";
 
@@ -20,6 +22,11 @@ const currentTime = () => Date.now();
 function isSettledSchedule(schedule: NotificationScheduleDetail) {
   return schedule.status === "completed" || schedule.status === "failed";
 }
+
+type CachedProgress = MonitorProgress & {
+  isSettled: boolean;
+  generation: number;
+};
 
 type MonitorState = {
   items: MonitorSchedule[];
@@ -54,9 +61,7 @@ export function useNotificationMonitor({
   const inFlight = useRef<Promise<void> | null>(null);
   const reportedFailure = useRef(false);
   const [selectedScheduleId, selectSchedule] = useState<number | null>(null);
-  const [details, setDetails] = useState<
-    Record<number, NotificationScheduleDetail>
-  >({});
+  const [progress, setProgress] = useState<Record<number, CachedProgress>>({});
   const detailsInFlight = useRef(new Set<number>());
   const failedDetailIds = useRef(new Set<number>());
   const detailsGeneration = useRef(0);
@@ -86,20 +91,31 @@ export function useNotificationMonitor({
           to: new Date(range.to).toISOString(),
         });
         if (generation.current !== requestId) return;
+        const items = response.items.filter((item) =>
+          isMonitorScheduleVisible(item, at)
+        );
         failedDetailIds.current.clear();
         detailsInFlight.current.clear();
-        detailsGeneration.current += 1;
-        setDetails((previous) =>
-          Object.fromEntries(
-            Object.entries(previous).filter(([, detail]) =>
-              isSettledSchedule(detail)
-            )
-          )
-        );
+        const detailsRequestId = ++detailsGeneration.current;
+        setProgress((previous) => {
+          const next: Record<number, CachedProgress> = {};
+          for (const item of items) {
+            const id = item.notificationScheduleId;
+            // 完了して一覧の進み具合がnullになったとき、詳細が届くまで出す値として残します。
+            if (hasMonitorProgress(item)) {
+              next[id] = {
+                ...getMonitorProgress(item),
+                isSettled: false,
+                generation: detailsRequestId,
+              };
+            } else if (previous[id]) {
+              next[id] = previous[id];
+            }
+          }
+          return next;
+        });
         setState({
-          items: response.items.filter((item) =>
-            isMonitorScheduleVisible(item, at)
-          ),
+          items,
           isLoading: false,
           hasLoaded: true,
           errorMessage: null,
@@ -163,30 +179,46 @@ export function useNotificationMonitor({
   }, [load]);
   // 一覧はcompleted・failedの進み具合をnullで返すため、表示するものだけ詳細を取ります。
   // この2つは以後進み具合が変わらないため、取った詳細は取り直しません。
-  // 進み具合を返す前のAPIでは進行中の配信もnullになるので、それは一覧の更新ごとに取り直します。
+  // 進み具合を返す前のAPIでは進行中の配信もnullになるので、それは一覧の更新ごとに取り直し、
+  // 届くまでは前回の進み具合を出したままにします。
   const loadDetails = useCallback(
     async (ids: readonly number[]) => {
+      const requestGeneration = detailsGeneration.current;
       const targets = state.items
         .filter((item) => !hasMonitorProgress(item))
         .map((item) => item.notificationScheduleId)
-        .filter(
-          (id) =>
+        .filter((id) => {
+          const cached = progress[id];
+          return (
             ids.includes(id) &&
-            !(id in details) &&
+            !(
+              cached &&
+              (cached.isSettled || cached.generation === requestGeneration)
+            ) &&
             !detailsInFlight.current.has(id) &&
             !failedDetailIds.current.has(id)
-        );
+          );
+        });
       for (const id of targets) detailsInFlight.current.add(id);
-      const requestGeneration = detailsGeneration.current;
       let next = 0;
       const failures: unknown[] = [];
       const worker = async () => {
-        while (next < targets.length) {
+        while (
+          next < targets.length &&
+          detailsGeneration.current === requestGeneration
+        ) {
           const id = targets[next++];
           try {
             const detail = await api.getDetail(id);
             if (detailsGeneration.current !== requestGeneration) continue;
-            setDetails((previous) => ({ ...previous, [id]: detail }));
+            setProgress((previous) => ({
+              ...previous,
+              [id]: {
+                ...getMonitorProgress(detail),
+                isSettled: isSettledSchedule(detail),
+                generation: requestGeneration,
+              },
+            }));
           } catch (error) {
             if (detailsGeneration.current !== requestGeneration) continue;
             failedDetailIds.current.add(id);
@@ -215,22 +247,17 @@ export function useNotificationMonitor({
         error: failures[0],
       });
     },
-    [api, details, reportFeedback, state.items]
+    [api, progress, reportFeedback, state.items]
   );
   const items = useMemo(
     () =>
       state.items.map((item) => {
-        const detail = details[item.notificationScheduleId];
-        return hasMonitorProgress(item) || !detail
+        const cached = progress[item.notificationScheduleId];
+        return hasMonitorProgress(item) || !cached
           ? item
-          : {
-              ...item,
-              audienceProgress: detail.audienceProgress,
-              recipientProgress: detail.recipientProgress,
-              deliveryProgress: detail.deliveryProgress,
-            };
+          : { ...item, ...getMonitorProgress(cached) };
       }),
-    [state.items, details]
+    [state.items, progress]
   );
   const selectedSchedule =
     items.find((item) => item.notificationScheduleId === selectedScheduleId) ??

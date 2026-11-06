@@ -4,6 +4,10 @@ import type {
 } from "~/features/notifications/api/contracts/notification-schedule-query-api";
 
 export type MonitorSchedule = NotificationScheduleListItem;
+export type MonitorProgress = Pick<
+  NotificationScheduleDetail,
+  "audienceProgress" | "recipientProgress" | "deliveryProgress"
+>;
 
 export function hasMonitorProgress(
   schedule: MonitorSchedule
@@ -13,6 +17,14 @@ export function hasMonitorProgress(
     schedule.recipientProgress !== null &&
     schedule.deliveryProgress !== null
   );
+}
+
+export function getMonitorProgress(source: MonitorProgress): MonitorProgress {
+  return {
+    audienceProgress: source.audienceProgress,
+    recipientProgress: source.recipientProgress,
+    deliveryProgress: source.deliveryProgress,
+  };
 }
 
 export const monitorDayMs = 24 * 60 * 60 * 1000;
