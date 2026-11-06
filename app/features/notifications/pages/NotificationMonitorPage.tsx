@@ -1,5 +1,5 @@
 import { NotificationManagementNavigation } from "~/features/notifications/components/NotificationManagementNavigation";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { RefreshCw } from "lucide-react";
 import { Button } from "~/components/ui/button/Button";
 import { PageHeader } from "~/components/ui/layout/PageHeader";
@@ -12,9 +12,9 @@ import {
   formatNotificationDateTime,
   notificationScheduleStatusLabels,
 } from "~/features/notifications/components/list/notification-display";
-import { getMonitorSchedule } from "~/features/notifications/hooks/notification-monitor-data";
 import type { NotificationFeedbackReporter } from "~/features/notifications/hooks/notification-feedback";
 import { useNotificationMonitor } from "~/features/notifications/hooks/useNotificationMonitor";
+import { hasMonitorProgress } from "~/features/notifications/hooks/notification-monitor-data";
 import "~/features/notifications/components/monitor/notification-monitor.css";
 
 import type { NotificationScheduleCommandApi } from "~/features/notifications/api/contracts/notification-schedule-command-api";
@@ -41,19 +41,31 @@ export function NotificationMonitorPage(props: Props) {
   });
   const [overview, setOverview] = useState(false);
   const [viewId, setViewId] = useState<number | null>(null);
-  const item =
+  const schedule =
     state.items.find(
       (entry) =>
-        entry.summary.notificationScheduleId ===
+        entry.notificationScheduleId ===
         (actions.target?.schedule.notificationScheduleId ?? viewId)
     ) ??
-    state.items.find(
-      (entry) => getMonitorSchedule(entry).status === "sending"
-    ) ??
+    state.items.find((entry) => entry.status === "sending") ??
     state.items[0];
-  const schedule = item && getMonitorSchedule(item);
-  const detail = item?.detail;
-  const delivery = detail?.deliveryProgress;
+  const shownId = schedule?.notificationScheduleId;
+  const selectedId = state.selectedSchedule?.notificationScheduleId;
+  const shownIds = useMemo(
+    () =>
+      [
+        ...(overview
+          ? state.items.map((entry) => entry.notificationScheduleId)
+          : [shownId]),
+        selectedId,
+      ].filter((id) => id !== undefined),
+    [overview, state.items, shownId, selectedId]
+  );
+  const { loadDetails } = state;
+  useEffect(() => {
+    void loadDetails(shownIds);
+  }, [shownIds, loadDetails]);
+  const delivery = schedule?.deliveryProgress;
   const percent = (count: number) =>
     delivery && delivery.totalCount > 0
       ? ((count / delivery.totalCount) * 100).toFixed(1)
@@ -66,8 +78,8 @@ export function NotificationMonitorPage(props: Props) {
     ],
     [
       "確定Recipient",
-      detail?.recipientProgress.count.toLocaleString() ?? "—",
-      detail?.recipientProgress.status === "pending"
+      schedule?.recipientProgress?.count.toLocaleString() ?? "—",
+      schedule?.recipientProgress?.status === "pending"
         ? "User単位・未確定"
         : "User単位",
     ],
@@ -100,18 +112,15 @@ export function NotificationMonitorPage(props: Props) {
               onChange={(event) => setViewId(Number(event.target.value))}
             >
               {!schedule && <option value="">配信なし</option>}
-              {state.items.map((entry) => {
-                const value = getMonitorSchedule(entry);
-                return (
-                  <option
-                    key={value.notificationScheduleId}
-                    value={value.notificationScheduleId}
-                  >
-                    #{value.notificationId} {value.content.push.title} /
-                    Schedule #{value.notificationScheduleId}
-                  </option>
-                );
-              })}
+              {state.items.map((entry) => (
+                <option
+                  key={entry.notificationScheduleId}
+                  value={entry.notificationScheduleId}
+                >
+                  #{entry.notificationId} {entry.content.push.title} / Schedule
+                  #{entry.notificationScheduleId}
+                </option>
+              ))}
             </select>
             <Button
               disabled={!schedule}
@@ -171,7 +180,7 @@ export function NotificationMonitorPage(props: Props) {
           表示対象の配信はありません。
         </p>
       )}
-      {!overview && schedule && item && (
+      {!overview && schedule && (
         <>
           <div className="monitor-metrics">
             {metrics.map(([label, value, caption]) => (
@@ -197,18 +206,16 @@ export function NotificationMonitorPage(props: Props) {
                   30秒ごとに更新
                 </span>
               </header>
-              {item.errorMessage && (
-                <p
-                  role="alert"
-                  className="text-tone-danger-text bg-tone-danger-bg p-3 text-sm"
-                >
-                  {item.errorMessage}
+              {hasMonitorProgress(schedule) ? (
+                <NotificationMonitorGraph
+                  schedule={schedule}
+                  onOpen={state.selectSchedule}
+                />
+              ) : (
+                <p role="status" className="text-text-muted py-12 text-center">
+                  集計を読み込んでいます。
                 </p>
               )}
-              <NotificationMonitorGraph
-                item={item}
-                onOpen={state.selectSchedule}
-              />
             </section>
             <aside className="monitor-sidebar">
               <section className="monitor-panel monitor-side-panel">
@@ -231,11 +238,11 @@ export function NotificationMonitorPage(props: Props) {
                   <div>
                     <dt>Recipient確定</dt>
                     <dd>
-                      {detail
-                        ? detail.recipientProgress.status === "resolved"
+                      {!schedule.recipientProgress
+                        ? "—"
+                        : schedule.recipientProgress.status === "resolved"
                           ? "確定済み"
-                          : "未確定"
-                        : "—"}
+                          : "未確定"}
                     </dd>
                   </div>
                   <div>
@@ -250,7 +257,7 @@ export function NotificationMonitorPage(props: Props) {
               </section>
               <section className="monitor-panel monitor-side-panel">
                 <h2>Push内訳</h2>
-                {delivery ? (
+                {delivery && (
                   <div className="monitor-breakdown">
                     {[
                       {
@@ -300,51 +307,38 @@ export function NotificationMonitorPage(props: Props) {
                       </div>
                     ))}
                   </div>
-                ) : (
-                  <p className="text-text-muted text-xs">
-                    配信集計を取得できません。
-                  </p>
                 )}
               </section>
               <section className="monitor-panel monitor-side-panel">
                 <h2>配信一覧</h2>
                 <div className="monitor-timeline">
                   {[...state.items]
-                    .sort(
-                      (a, b) =>
-                        Date.parse(a.summary.sendAt) -
-                        Date.parse(b.summary.sendAt)
-                    )
-                    .map((entry) => {
-                      const value = getMonitorSchedule(entry);
-                      return (
-                        <button
-                          type="button"
-                          key={value.notificationScheduleId}
-                          aria-pressed={
-                            value.notificationScheduleId ===
-                            schedule.notificationScheduleId
-                          }
-                          onClick={() =>
-                            setViewId(value.notificationScheduleId)
-                          }
-                        >
-                          <time>
-                            {new Date(value.sendAt).toLocaleTimeString(
-                              "ja-JP",
-                              { hour: "2-digit", minute: "2-digit" }
-                            )}
-                          </time>
-                          <i className={`monitor-dot-${value.status}`} />
-                          <span>
-                            <strong>{value.content.push.title}</strong>
-                            <small>
-                              {notificationScheduleStatusLabels[value.status]}
-                            </small>
-                          </span>
-                        </button>
-                      );
-                    })}
+                    .sort((a, b) => Date.parse(a.sendAt) - Date.parse(b.sendAt))
+                    .map((entry) => (
+                      <button
+                        type="button"
+                        key={entry.notificationScheduleId}
+                        aria-pressed={
+                          entry.notificationScheduleId ===
+                          schedule.notificationScheduleId
+                        }
+                        onClick={() => setViewId(entry.notificationScheduleId)}
+                      >
+                        <time>
+                          {new Date(entry.sendAt).toLocaleTimeString("ja-JP", {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </time>
+                        <i className={`monitor-dot-${entry.status}`} />
+                        <span>
+                          <strong>{entry.content.push.title}</strong>
+                          <small>
+                            {notificationScheduleStatusLabels[entry.status]}
+                          </small>
+                        </span>
+                      </button>
+                    ))}
                 </div>
               </section>
             </aside>
@@ -366,20 +360,18 @@ export function NotificationMonitorPage(props: Props) {
       {actions.target && <NotificationMonitorActionDialog state={actions} />}
       {!actions.target && state.selectedSchedule && (
         <NotificationMonitorDetail
-          item={state.selectedSchedule}
+          schedule={state.selectedSchedule}
           actions={
             props.commandApi ? (
               <NotificationMonitorActions
-                schedule={getMonitorSchedule(state.selectedSchedule)}
+                schedule={state.selectedSchedule}
                 state={actions}
                 onSelect={setViewId}
                 disabled={state.isLoading}
               />
             ) : undefined
           }
-          isLoading={state.isLoading}
           onClose={() => state.selectSchedule(null)}
-          onReload={() => void state.reload()}
         />
       )}
     </section>

@@ -20,7 +20,14 @@ export function parseNotificationScheduleListResponse(
   value: unknown
 ): NotificationScheduleListResponseDto {
   if (!isNotificationScheduleListResponse(value)) throw unexpectedResponse();
-  return value;
+  return {
+    items: value.items.map((item) => ({
+      ...item,
+      audienceProgress: item.audienceProgress ?? null,
+      recipientProgress: item.recipientProgress ?? null,
+      deliveryProgress: item.deliveryProgress ?? null,
+    })),
+  };
 }
 
 export function parseNotificationScheduleDetail(
