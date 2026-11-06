@@ -117,7 +117,9 @@ describe("isSidebarItemActive", () => {
   });
 
   it("チームとランキングはモーダルの子Routeでも選択を保つ", () => {
-    const items = buildSidebarMenu("admin").flatMap((section) => section.items);
+    const items = buildSidebarMenu("admin")
+      .flatMap((section) => section.items)
+      .flatMap((menuItem) => menuItem.children ?? [menuItem]);
     const teams = items.find((menuItem) => menuItem.id === "teams")!;
     const ranking = items.find((menuItem) => menuItem.id === "ranking")!;
 
