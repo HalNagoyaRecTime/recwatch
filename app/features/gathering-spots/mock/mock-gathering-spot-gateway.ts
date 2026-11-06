@@ -59,6 +59,7 @@ export function createMockGatheringSpotGateway(
         imageUrl: null,
         createdAt: now,
         updatedAt: now,
+        lockVersion: 0,
       } satisfies GatheringSpot;
       spots = [...spots, created];
       return created;
@@ -72,6 +73,7 @@ export function createMockGatheringSpotGateway(
         ...current,
         name,
         updatedAt: new Date().toISOString(),
+        lockVersion: current.lockVersion + 1,
       } satisfies GatheringSpot;
       spots = spots.map((spot) => (spot.id === id ? updated : spot));
       return updated;

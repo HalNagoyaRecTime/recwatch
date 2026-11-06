@@ -7,8 +7,13 @@ import { EventForm } from "~/features/events/components/EventForm";
 import { useEventVenueOptions } from "~/features/events/hooks/useEventVenueOptions";
 import { getErrorMessage } from "~/lib/client-error";
 import {
+  isUpdateConflictError,
+  UPDATE_CONFLICT_MESSAGE,
+} from "~/lib/update-conflict";
+import {
   emptyEventForm,
   validateEventForm,
+  type EventEditValue,
 } from "~/features/events/model/event-form";
 
 type EventEditPageProps = {
@@ -27,10 +32,16 @@ export function EventEditPage({
     Number.isInteger(eventId) && eventId > 0 ? `/events/${eventId}` : "/events";
   const venueOptions = useEventVenueOptions(api);
   const [form, setForm] = useState(emptyEventForm);
+  const [lockVersion, setLockVersion] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
+
+  function applyLoadedEvent({ lockVersion, ...value }: EventEditValue) {
+    setForm(value);
+    setLockVersion(lockVersion);
+  }
 
   useEffect(() => {
     let isCurrent = true;
@@ -47,7 +58,7 @@ export function EventEditPage({
 
       try {
         const value = await api.get(eventId);
-        if (isCurrent) setForm(value);
+        if (isCurrent) applyLoadedEvent(value);
       } catch (error) {
         if (!isCurrent) return;
         setLoadError(
@@ -63,11 +74,23 @@ export function EventEditPage({
     };
   }, [api, eventId]);
 
+  // 編集中の内容は破棄して、最新の値で置き換える。
+  async function reloadLatestEvent() {
+    try {
+      applyLoadedEvent(await api.get(eventId));
+    } catch (error) {
+      setLoadError(
+        getErrorMessage(error, "イベントデータの取得に失敗しました。")
+      );
+    }
+  }
+
   async function handleSubmit() {
     if (
       isLoading ||
       isSubmitting ||
       loadError ||
+      lockVersion === null ||
       !Number.isInteger(eventId) ||
       eventId <= 0
     ) {
@@ -83,9 +106,14 @@ export function EventEditPage({
     setIsSubmitting(true);
     setSubmitError(null);
     try {
-      await api.update(eventId, result.input);
+      await api.update(eventId, result.input, lockVersion);
       navigate(detailPath);
     } catch (error) {
+      if (isUpdateConflictError(error)) {
+        setSubmitError(UPDATE_CONFLICT_MESSAGE);
+        await reloadLatestEvent();
+        return;
+      }
       setSubmitError(
         getErrorMessage(error, "イベントデータの更新に失敗しました。")
       );

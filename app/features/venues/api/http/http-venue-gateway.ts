@@ -65,10 +65,10 @@ export function createHttpVenueGateway(client: VenueHttpClient): VenueGateway {
       return toVenue(response);
     },
 
-    async update(id, name) {
+    async update(id, name, lockVersion) {
       const response = await client.put<VenueResponseDto>(
         `/api/v1/venues/${id}`,
-        toVenueWriteRequest(name)
+        toVenueWriteRequest(name, lockVersion)
       );
       return toVenue(response);
     },

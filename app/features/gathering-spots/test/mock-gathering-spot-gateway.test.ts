@@ -9,6 +9,7 @@ const spots = [
     imageUrl: null,
     createdAt: "2026-08-07T09:00:00Z",
     updatedAt: "2026-08-07T09:00:00Z",
+    lockVersion: 0,
   },
   {
     id: 2,
@@ -16,6 +17,7 @@ const spots = [
     imageUrl: null,
     createdAt: "2026-08-07T09:01:00Z",
     updatedAt: "2026-08-07T09:01:00Z",
+    lockVersion: 0,
   },
 ];
 

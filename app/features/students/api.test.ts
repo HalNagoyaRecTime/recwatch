@@ -34,6 +34,7 @@ function makeStudentDTO(id: number): StudentDTO {
       class_code: "1A",
       class_name: "クラスA",
     },
+    lock_version: 0,
   };
 }
 
@@ -88,6 +89,7 @@ describe("studentHttpApi", () => {
         classCode: "1A",
         className: "クラスA",
       },
+      lockVersion: 0,
     });
 
     expect(mocks.get).toHaveBeenCalledWith("/api/v1/students/8");
@@ -177,6 +179,26 @@ describe("studentHttpApi", () => {
     );
   });
 
+  it("更新は取得した版をlock_versionとして送り返す", async () => {
+    mocks.put.mockResolvedValueOnce(makeStudentDTO(3));
+
+    await studentHttpApi.updateStudent(3, {
+      attendanceNumber: 3,
+      classRoomId: 1,
+      displayName: "学生3",
+      studentIdNumber: "S003",
+      lockVersion: 2,
+    });
+
+    expect(mocks.put).toHaveBeenCalledWith("/api/v1/students/3", {
+      attendance_number: 3,
+      class_room_id: 1,
+      display_name: "学生3",
+      student_id_number: "S003",
+      lock_version: 2,
+    });
+  });
+
   it("所属・移動と未所属化を専用PATCH endpointへ送信する", async () => {
     mocks.patch.mockResolvedValue(makeStudentDTO(3));
 
@@ -225,6 +247,7 @@ describe("StudentApi", () => {
             classCode: "1A",
             className: "クラスA",
           },
+          lockVersion: 0,
         },
       ],
       total: 1,

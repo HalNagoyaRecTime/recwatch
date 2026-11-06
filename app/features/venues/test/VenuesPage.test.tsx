@@ -3,6 +3,10 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { ApiClientError } from "~/lib/api-client-error";
+import {
+  UPDATE_CONFLICT_MESSAGE,
+  UPDATE_CONFLICT_RELOAD_FAILED_MESSAGE,
+} from "~/lib/update-conflict";
 import { resizeImage } from "~/lib/resize-image";
 import type { VenueGateway } from "~/features/venues/api/contracts/venue-gateway";
 import type { Venue } from "~/features/venues/model/venue";
@@ -38,6 +42,7 @@ function createVenue(
     imageUrl,
     createdAt: "2026-09-25T09:00:00Z",
     updatedAt: "2026-09-25T09:10:00Z",
+    lockVersion: 0,
   };
 }
 
@@ -168,7 +173,182 @@ describe("VenuesPage", () => {
     await user.type(input, "第1体育館");
     await user.click(screen.getByRole("button", { name: "保存する" }));
 
-    await waitFor(() => expect(update).toHaveBeenCalledWith(1, "第1体育館"));
+    await waitFor(() => expect(update).toHaveBeenCalledWith(1, "第1体育館", 0));
+  });
+
+  it("更新が競合したら理由を伝えて再取得し、最新の値でフォームを置き換える", async () => {
+    const list = vi
+      .fn()
+      .mockResolvedValueOnce({
+        items: [createVenue(1, "体育館")],
+        total: 1,
+        limit: 20,
+        offset: 0,
+      })
+      .mockResolvedValue({
+        items: [{ ...createVenue(1, "他の人の変更"), lockVersion: 1 }],
+        total: 1,
+        limit: 20,
+        offset: 0,
+      });
+    const update = vi
+      .fn()
+      .mockRejectedValueOnce(
+        new ApiClientError(409, "conflict", "VENUE_UPDATE_CONFLICT")
+      )
+      .mockResolvedValue(createVenue(1, "他の人の変更"));
+    const user = userEvent.setup();
+
+    render(<VenuesPage gateway={createGateway({ list, update })} />);
+
+    await screen.findByText("体育館");
+    await user.click(
+      screen.getByRole("button", { name: "体育館のその他の操作" })
+    );
+    await user.click(screen.getByRole("button", { name: "編集" }));
+    const input = screen.getByRole("textbox", { name: "実施場所名*" });
+    await user.clear(input);
+    await user.type(input, "自分の変更");
+    await user.click(screen.getByRole("button", { name: "保存する" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      UPDATE_CONFLICT_MESSAGE
+    );
+    expect(screen.getByRole("textbox", { name: "実施場所名*" })).toHaveValue(
+      "他の人の変更"
+    );
+
+    await user.click(screen.getByRole("button", { name: "保存する" }));
+    await waitFor(() =>
+      expect(update).toHaveBeenLastCalledWith(1, "他の人の変更", 1)
+    );
+  });
+
+  it("競合後に一覧で見つからなければフォームを閉じて理由を一覧へ出す", async () => {
+    const list = vi
+      .fn()
+      .mockResolvedValueOnce({
+        items: [createVenue(1, "体育館")],
+        total: 1,
+        limit: 20,
+        offset: 0,
+      })
+      .mockResolvedValue({ items: [], total: 0, limit: 20, offset: 0 });
+    const update = vi
+      .fn()
+      .mockRejectedValue(
+        new ApiClientError(409, "conflict", "VENUE_UPDATE_CONFLICT")
+      );
+    const user = userEvent.setup();
+
+    render(<VenuesPage gateway={createGateway({ list, update })} />);
+
+    await screen.findByText("体育館");
+    await user.click(
+      screen.getByRole("button", { name: "体育館のその他の操作" })
+    );
+    await user.click(screen.getByRole("button", { name: "編集" }));
+    await user.click(screen.getByRole("button", { name: "保存する" }));
+
+    expect(
+      await screen.findByText(UPDATE_CONFLICT_MESSAGE)
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("textbox", { name: "実施場所名*" })
+    ).not.toBeInTheDocument();
+  });
+
+  it("競合後の再取得に失敗したらフォームと入力を残し、再度の保存で最新の値へ置き換える", async () => {
+    const list = vi
+      .fn()
+      .mockResolvedValueOnce({
+        items: [createVenue(1, "体育館")],
+        total: 1,
+        limit: 20,
+        offset: 0,
+      })
+      .mockRejectedValueOnce(new Error("network"))
+      .mockResolvedValue({
+        items: [{ ...createVenue(1, "他の人の変更"), lockVersion: 1 }],
+        total: 1,
+        limit: 20,
+        offset: 0,
+      });
+    const update = vi
+      .fn()
+      .mockRejectedValue(
+        new ApiClientError(409, "conflict", "VENUE_UPDATE_CONFLICT")
+      );
+    const user = userEvent.setup();
+
+    render(<VenuesPage gateway={createGateway({ list, update })} />);
+
+    await screen.findByText("体育館");
+    await user.click(
+      screen.getByRole("button", { name: "体育館のその他の操作" })
+    );
+    await user.click(screen.getByRole("button", { name: "編集" }));
+    const input = screen.getByRole("textbox", { name: "実施場所名*" });
+    await user.clear(input);
+    await user.type(input, "自分の変更");
+    await user.upload(
+      screen.getByLabelText("実施場所の画像を選択"),
+      new File(["photo"], "photo.jpg", { type: "image/jpeg" })
+    );
+    await screen.findByRole("img", { name: "実施場所の画像" });
+    await user.click(screen.getByRole("button", { name: "保存する" }));
+
+    expect(
+      await screen.findByText(UPDATE_CONFLICT_RELOAD_FAILED_MESSAGE)
+    ).toBeInTheDocument();
+    expect(screen.queryByText(UPDATE_CONFLICT_MESSAGE)).not.toBeInTheDocument();
+    expect(screen.getByRole("textbox", { name: "実施場所名*" })).toHaveValue(
+      "自分の変更"
+    );
+    expect(
+      screen.getByRole("img", { name: "実施場所の画像" })
+    ).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "保存する" }));
+
+    expect(
+      await screen.findByText(UPDATE_CONFLICT_MESSAGE)
+    ).toBeInTheDocument();
+    expect(screen.getByRole("textbox", { name: "実施場所名*" })).toHaveValue(
+      "他の人の変更"
+    );
+    expect(update).toHaveBeenCalledTimes(2);
+    expect(update).toHaveBeenLastCalledWith(1, "自分の変更", 0);
+  });
+
+  it("名前の重複など版の競合ではない409では入力を残す", async () => {
+    const update = vi
+      .fn()
+      .mockRejectedValue(
+        new ApiClientError(
+          409,
+          "この名前は既に使われています。",
+          "VENUE_NAME_ALREADY_EXISTS"
+        )
+      );
+    const user = userEvent.setup();
+
+    render(<VenuesPage gateway={createGateway({ update })} />);
+
+    await screen.findByText("体育館");
+    await user.click(
+      screen.getByRole("button", { name: "体育館のその他の操作" })
+    );
+    await user.click(screen.getByRole("button", { name: "編集" }));
+    const input = screen.getByRole("textbox", { name: "実施場所名*" });
+    await user.clear(input);
+    await user.type(input, "自分の変更");
+    await user.click(screen.getByRole("button", { name: "保存する" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "この名前は既に使われています。"
+    );
+    expect(input).toHaveValue("自分の変更");
   });
 
   it("削除後に一覧を再取得する", async () => {
@@ -284,7 +464,9 @@ describe("VenuesPage", () => {
   });
 
   it("新規登録で画像だけ失敗したとき、保存し直すと実施場所を作り直さずに画像を登録する", async () => {
-    const create = vi.fn().mockResolvedValue(createVenue(2, "グラウンド"));
+    const create = vi
+      .fn()
+      .mockResolvedValue({ ...createVenue(2, "グラウンド"), lockVersion: 5 });
     const update = vi.fn().mockResolvedValue(createVenue(2, "グラウンド"));
     const setImage = vi
       .fn()
@@ -326,7 +508,7 @@ describe("VenuesPage", () => {
 
     await waitFor(() => expect(setImage).toHaveBeenCalledTimes(2));
     expect(create).toHaveBeenCalledTimes(1);
-    expect(update).toHaveBeenCalledWith(2, "グラウンド");
+    expect(update).toHaveBeenCalledWith(2, "グラウンド", 5);
   });
 
   it("登録済みの画像を削除して保存すると、実施場所の画像を削除する", async () => {
@@ -528,7 +710,9 @@ describe("VenuesPage", () => {
 
     expect(await screen.findByText("画像を選択")).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "保存する" }));
-    await waitFor(() => expect(update).toHaveBeenCalledWith(2, "グラウンド"));
+    await waitFor(() =>
+      expect(update).toHaveBeenCalledWith(2, "グラウンド", 0)
+    );
     expect(setImage).not.toHaveBeenCalled();
   });
 

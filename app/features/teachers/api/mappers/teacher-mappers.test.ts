@@ -15,6 +15,7 @@ describe("toTeacherRow", () => {
         class_rooms: [
           { class_room_id: 3, class_code: "A-1", class_name: "1年A組" },
         ],
+        lock_version: 4,
       })
     ).toEqual({
       teacherId: 7,
@@ -24,6 +25,7 @@ describe("toTeacherRow", () => {
       isLiveActive: true,
       isStaff: false,
       classRooms: [{ classRoomId: 3, classCode: "A-1", className: "1年A組" }],
+      lockVersion: 4,
     });
   });
 });

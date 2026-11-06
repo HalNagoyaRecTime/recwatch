@@ -10,6 +10,7 @@ export type ClassRoom = {
   className: string;
   studentCount: number;
   teacher: ClassRoomTeacher | null;
+  lockVersion: number;
 };
 
 export type ClassRoomPage = {
@@ -23,4 +24,6 @@ export type ClassRoomWriteInput = {
   classCode: string;
   className: string;
   teacherId: number | null;
+  /** 更新時に、取得した版を送り返して競合を検出する。作成では送らない。 */
+  lockVersion?: number;
 };

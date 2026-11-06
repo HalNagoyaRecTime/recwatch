@@ -9,6 +9,7 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi, type Mock } from "vitest";
 
 import { ApiClientError } from "~/lib/api-client-error";
+import { UPDATE_CONFLICT_MESSAGE } from "~/lib/update-conflict";
 
 import type { EventGatheringSettingsGateway } from "~/features/event-gatherings/api/contracts/event-gathering-settings-gateway";
 import type { GatheringMemberGateway } from "~/features/event-gatherings/api/contracts/gathering-member-gateway";
@@ -18,6 +19,7 @@ import type { GatheringSpotGateway } from "~/features/gathering-spots/api/contra
 
 const existingSettings: EventGatheringSettings = {
   eventId: 12,
+  lockVersion: 3,
   rounds: [
     {
       round: 1,
@@ -36,6 +38,7 @@ const existingSettings: EventGatheringSettings = {
 
 const settingsWithMembers: EventGatheringSettings = {
   eventId: 12,
+  lockVersion: 3,
   rounds: [
     {
       round: 1,
@@ -192,6 +195,7 @@ describe("GatheringSettingsStep", () => {
     await user.click(screen.getByRole("button", { name: "集合設定を保存" }));
     await waitFor(() =>
       expect(save).toHaveBeenLastCalledWith(12, {
+        lockVersion: 3,
         rounds: [
           {
             round: 1,
@@ -207,6 +211,7 @@ describe("GatheringSettingsStep", () => {
     await user.click(screen.getByRole("button", { name: "集合設定を保存" }));
     await waitFor(() =>
       expect(save).toHaveBeenLastCalledWith(12, {
+        lockVersion: 3,
         rounds: [
           {
             round: 1,
@@ -284,6 +289,7 @@ describe("GatheringSettingsStep", () => {
 
     await waitFor(() =>
       expect(save).toHaveBeenCalledWith(12, {
+        lockVersion: 3,
         rounds: [
           {
             round: 1,
@@ -299,6 +305,149 @@ describe("GatheringSettingsStep", () => {
       })
     );
     expect(onSaved).toHaveBeenCalledTimes(1);
+  });
+
+  it("保存レスポンスの版で保持する版を更新し、次の保存へ送る", async () => {
+    const save = vi
+      .fn()
+      .mockResolvedValue({ ...existingSettings, lockVersion: 9 });
+    renderStep({
+      settingsGateway: {
+        load: vi.fn().mockResolvedValue(existingSettings),
+        save,
+      },
+    });
+    const user = userEvent.setup();
+
+    await screen.findByRole("region", { name: "Round 1" });
+    await user.click(screen.getByRole("button", { name: "集合設定を保存" }));
+    await waitFor(() => expect(save).toHaveBeenCalledTimes(1));
+    expect(save.mock.calls[0][1]).toMatchObject({ lockVersion: 3 });
+
+    await user.click(screen.getByRole("button", { name: "集合設定を保存" }));
+    await waitFor(() => expect(save).toHaveBeenCalledTimes(2));
+    expect(save.mock.calls[1][1]).toMatchObject({ lockVersion: 9 });
+  });
+
+  it("競合したら理由を伝えて最新の内容へ置き換え、次の保存は新しい版で送る", async () => {
+    const latest: EventGatheringSettings = {
+      eventId: 12,
+      lockVersion: 4,
+      rounds: [
+        {
+          round: 1,
+          startTime: null,
+          gatherings: [
+            {
+              id: 101,
+              time: "11:11",
+              spot: { id: 1, name: "出入口①" },
+              memberCount: 0,
+            },
+          ],
+        },
+      ],
+    };
+    const save = vi
+      .fn()
+      .mockRejectedValueOnce(
+        new ApiClientError(409, "conflict", "EVENT_UPDATE_CONFLICT")
+      )
+      .mockResolvedValue(latest);
+    renderStep({
+      settingsGateway: {
+        load: vi
+          .fn()
+          .mockResolvedValueOnce(existingSettings)
+          .mockResolvedValue(latest),
+        save,
+      },
+    });
+    const user = userEvent.setup();
+
+    const round = await screen.findByRole("region", { name: "Round 1" });
+    const time = within(round).getByLabelText("集合時間");
+    fireEvent.change(time, { target: { value: "12:00" } });
+    await user.click(screen.getByRole("button", { name: "集合設定を保存" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      UPDATE_CONFLICT_MESSAGE
+    );
+    await waitFor(() =>
+      expect(screen.getByLabelText("集合時間")).toHaveValue("11:11")
+    );
+
+    await user.click(screen.getByRole("button", { name: "集合設定を保存" }));
+    await waitFor(() => expect(save).toHaveBeenCalledTimes(2));
+    expect(save.mock.calls[1][1]).toMatchObject({ lockVersion: 4 });
+  });
+
+  it("Round の削除が競合したら参加者を戻してから読み込み、削除予定を捨てる", async () => {
+    const settings: EventGatheringSettings = {
+      eventId: 12,
+      lockVersion: 3,
+      rounds: [
+        {
+          round: 1,
+          startTime: null,
+          gatherings: [
+            {
+              id: 101,
+              time: "10:45",
+              spot: { id: 1, name: "出入口①" },
+              memberCount: 1,
+            },
+          ],
+        },
+        {
+          round: 2,
+          startTime: null,
+          gatherings: [
+            {
+              id: 201,
+              time: "11:00",
+              spot: { id: 2, name: "出入口②" },
+              memberCount: 0,
+            },
+          ],
+        },
+      ],
+    };
+    const load = vi.fn().mockResolvedValue(settings);
+    const save = vi
+      .fn()
+      .mockRejectedValueOnce(
+        new ApiClientError(409, "conflict", "EVENT_UPDATE_CONFLICT")
+      )
+      .mockResolvedValue(settings);
+    const memberGateway = createMemberGateway();
+    (memberGateway.loadMembers as Mock).mockResolvedValue([1001]);
+    (memberGateway.saveMembers as Mock).mockResolvedValue([1001]);
+    vi.stubGlobal("confirm", vi.fn().mockReturnValue(true));
+    const user = userEvent.setup();
+    renderStep({ memberGateway, settingsGateway: { load, save } });
+
+    const round1 = await screen.findByRole("region", { name: "Round 1" });
+    await user.click(within(round1).getByRole("button", { name: "削除" }));
+    await user.click(screen.getByRole("button", { name: "集合設定を保存" }));
+
+    expect(
+      await screen.findByRole("region", { name: "Round 1" })
+    ).toBeInTheDocument();
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      UPDATE_CONFLICT_MESSAGE
+    );
+    expect(memberGateway.saveMembers).toHaveBeenNthCalledWith(1, 101, []);
+    expect(memberGateway.saveMembers).toHaveBeenNthCalledWith(2, 101, [1001]);
+    expect(load).toHaveBeenCalledTimes(2);
+    const saveMembersOrder = (memberGateway.saveMembers as Mock).mock
+      .invocationCallOrder[1];
+    expect(saveMembersOrder).toBeLessThan(load.mock.invocationCallOrder[1]);
+
+    // 削除予定を捨てたので、次の保存では参加者を解除しない
+    await user.click(screen.getByRole("button", { name: "集合設定を保存" }));
+    await waitFor(() => expect(save).toHaveBeenCalledTimes(2));
+    expect(memberGateway.saveMembers).toHaveBeenCalledTimes(2);
   });
 
   it("Round の最後の 1 件は削除できず、Round ごと削除するとリクエストから外れる", async () => {
@@ -331,7 +480,9 @@ describe("GatheringSettingsStep", () => {
     await user.click(screen.getByRole("button", { name: "削除" }));
     await user.click(screen.getByRole("button", { name: "集合設定を保存" }));
 
-    await waitFor(() => expect(save).toHaveBeenCalledWith(12, { rounds: [] }));
+    await waitFor(() =>
+      expect(save).toHaveBeenCalledWith(12, { lockVersion: 3, rounds: [] })
+    );
   });
 
   it("入力不足があれば保存せず、行ごとにエラーを表示する", async () => {
@@ -442,6 +593,7 @@ describe("GatheringSettingsStep", () => {
     expect(memberGateway.loadMembers).not.toHaveBeenCalled();
     expect(memberGateway.saveMembers).not.toHaveBeenCalled();
     expect(save).toHaveBeenCalledWith(12, {
+      lockVersion: 3,
       rounds: [
         {
           round: 1,
@@ -507,6 +659,7 @@ describe("GatheringSettingsStep", () => {
       .mockResolvedValueOnce([1002]);
     const savedSettings: EventGatheringSettings = {
       eventId: 12,
+      lockVersion: 3,
       rounds: [
         {
           round: 2,
@@ -660,7 +813,10 @@ describe("GatheringSettingsStep", () => {
 
     await waitFor(() => {
       expect(memberGateway.saveMembers).toHaveBeenCalledWith(101, []);
-      expect(settingsSave).toHaveBeenCalledWith(12, { rounds: [] });
+      expect(settingsSave).toHaveBeenCalledWith(12, {
+        lockVersion: 3,
+        rounds: [],
+      });
     });
   });
 
@@ -990,6 +1146,7 @@ describe("GatheringSettingsStep", () => {
 
     await waitFor(() =>
       expect(save).toHaveBeenCalledWith(12, {
+        lockVersion: 3,
         rounds: [
           {
             round: 1,
@@ -1260,6 +1417,7 @@ describe("GatheringSettingsStep", () => {
 
     await waitFor(() =>
       expect(save).toHaveBeenCalledWith(12, {
+        lockVersion: 3,
         rounds: [
           {
             round: 1,
@@ -1287,6 +1445,7 @@ describe("GatheringSettingsStep", () => {
       .mockRejectedValueOnce(new Error("通信に失敗しました。"));
     const savedSettings: EventGatheringSettings = {
       eventId: 12,
+      lockVersion: 3,
       rounds: [
         {
           round: 1,

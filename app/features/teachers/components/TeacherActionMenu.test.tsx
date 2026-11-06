@@ -13,6 +13,7 @@ const teacher: TeacherRow = {
   isLiveActive: true,
   isStaff: false,
   classRooms: [],
+  lockVersion: 0,
 };
 
 function renderMenu(overrides: Partial<TeacherRow> = {}) {

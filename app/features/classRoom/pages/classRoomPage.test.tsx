@@ -24,6 +24,7 @@ const firstClassRoom: ClassRoom = {
   className: "1年A組",
   studentCount: 12,
   teacher: null,
+  lockVersion: 0,
 };
 
 function createApi(

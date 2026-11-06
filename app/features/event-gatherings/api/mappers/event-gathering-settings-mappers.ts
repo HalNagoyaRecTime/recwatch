@@ -17,6 +17,7 @@ export function toEventGatheringSettings(
 ): EventGatheringSettings {
   return {
     eventId: response.event_id,
+    lockVersion: response.lock_version,
     rounds: response.rounds.map((round) => ({
       round: round.round,
       startTime: round.start_time?.replace(/^(\d{2})(\d{2})$/, "$1:$2") ?? null,
@@ -49,5 +50,8 @@ export function toEventGatheringSettingsWriteRequest(
         gathering_spot_id: gathering.spotId,
       })),
     })),
+    ...(input.lockVersion === undefined
+      ? {}
+      : { lock_version: input.lockVersion }),
   };
 }

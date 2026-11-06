@@ -21,7 +21,7 @@ export interface GatheringSpotGateway {
   list(options?: GatheringSpotListOptions): Promise<GatheringSpotPage>;
   getById(id: number): Promise<GatheringSpot>;
   create(name: string): Promise<GatheringSpot>;
-  update(id: number, name: string): Promise<GatheringSpot>;
+  update(id: number, name: string, lockVersion: number): Promise<GatheringSpot>;
   delete(id: number): Promise<void>;
   setImage(id: number, image: Blob): Promise<void>;
   deleteImage(id: number): Promise<void>;

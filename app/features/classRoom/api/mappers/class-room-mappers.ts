@@ -21,6 +21,7 @@ export function toClassRoom(dto: ClassRoomDTO): ClassRoom {
           displayName: dto.teacher.display_name,
         }
       : null,
+    lockVersion: dto.lock_version,
   };
 }
 
@@ -74,7 +75,9 @@ function isClassRoomDTO(value: unknown): value is ClassRoomDTO {
     typeof record.class_code !== "string" ||
     typeof record.class_name !== "string" ||
     !isInteger(record.student_count) ||
-    record.student_count < 0
+    record.student_count < 0 ||
+    !isInteger(record.lock_version) ||
+    record.lock_version < 0
   ) {
     return false;
   }
@@ -99,5 +102,8 @@ export function toClassRoomWriteDTO(
     classCode: input.classCode,
     className: input.className,
     teacherId: input.teacherId,
+    ...(input.lockVersion === undefined
+      ? {}
+      : { lockVersion: input.lockVersion }),
   };
 }

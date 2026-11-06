@@ -1,10 +1,5 @@
-import { createPageTitle } from "~/lib/page-title";
-import { SidebarPlaceholderPage } from "~/features/admin-pages/components/SidebarPlaceholderPage";
-
-export function meta() {
-  return [{ title: createPageTitle("本日の進行") }];
-}
+import { Navigate } from "react-router";
 
 export default function EventsTodayRoute() {
-  return <SidebarPlaceholderPage title="本日の進行" />;
+  return <Navigate to="/events" replace />;
 }

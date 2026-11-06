@@ -14,6 +14,7 @@ describe("集合場所APIマッパー", () => {
         image_url: "https://images.example.com/gathering-spots/1.jpg",
         created_at: "2026-08-07T09:00:00Z",
         updated_at: "2026-08-07T09:10:00Z",
+        lock_version: 4,
       })
     ).toEqual({
       id: 10,
@@ -21,6 +22,7 @@ describe("集合場所APIマッパー", () => {
       imageUrl: "https://images.example.com/gathering-spots/1.jpg",
       createdAt: "2026-08-07T09:00:00Z",
       updatedAt: "2026-08-07T09:10:00Z",
+      lockVersion: 4,
     });
   });
 

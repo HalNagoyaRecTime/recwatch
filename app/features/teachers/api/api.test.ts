@@ -22,6 +22,7 @@ const teacherDto = {
   is_live_active: true,
   is_staff: false,
   class_rooms: [{ class_room_id: 2, class_code: "2A", class_name: "2年A組" }],
+  lock_version: 3,
 };
 
 describe("TeacherApi", () => {
@@ -42,6 +43,7 @@ describe("TeacherApi", () => {
       isLiveActive: true,
       isStaff: false,
       classRooms: [{ classRoomId: 2, classCode: "2A", className: "2年A組" }],
+      lockVersion: 3,
     });
     await expect(TeacherApi.getTeacherList()).resolves.toMatchObject({
       items: [

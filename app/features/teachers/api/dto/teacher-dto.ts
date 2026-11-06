@@ -12,6 +12,7 @@ export type TeacherDTO = {
   is_live_active: boolean;
   is_staff: boolean;
   class_rooms: TeacherClassRoomDTO[];
+  lock_version: number;
 };
 
 export type TeacherListPageDTO = {

@@ -1,5 +1,10 @@
 import { useMemo, useState } from "react";
 import { getErrorMessage } from "~/lib/client-error";
+import {
+  isUpdateConflictError,
+  UPDATE_CONFLICT_MESSAGE,
+  UPDATE_CONFLICT_RELOAD_FAILED_MESSAGE,
+} from "~/lib/update-conflict";
 import type { PlaceImageChange } from "~/types/place-image-change";
 
 import type { GatheringSpotGateway } from "~/features/gathering-spots/api/contracts/gathering-spot-gateway";
@@ -132,6 +137,26 @@ export function useGatheringSpotsPage({
     setSort((current) => getNextGatheringSpotSort(current, columnId));
   }
 
+  // 編集中の内容は破棄する。検索条件から外れた・削除された場合は一覧に無いのでフォームを閉じる。
+  // 一覧を取得できないときは最新の内容が分からないので、入力を残して再度の保存を促す。
+  async function replaceFormWithLatest(spotId: number) {
+    const page = await reload();
+    if (!page) {
+      setSubmitError(UPDATE_CONFLICT_RELOAD_FAILED_MESSAGE);
+      return;
+    }
+    const latest = page.items.find(({ id }) => id === spotId);
+    if (!latest) {
+      closeForm();
+      setActionError(UPDATE_CONFLICT_MESSAGE);
+      return;
+    }
+    setEditingSpot(latest);
+    setSpotNameInput(latest.name);
+    setImageChange(null);
+    setSubmitError(UPDATE_CONFLICT_MESSAGE);
+  }
+
   async function submitForm() {
     if (isSubmitting || isDeleting) return;
 
@@ -146,7 +171,7 @@ export function useGatheringSpotsPage({
 
     try {
       const savedSpot = editingSpot
-        ? await updateSpot(editingSpot.id, name)
+        ? await updateSpot(editingSpot.id, name, editingSpot.lockVersion)
         : await createSpot(name);
       // 編集中に切り替えないと、画像だけ失敗した後の再送で同じ集合場所をもう一度作ってしまう
       setEditingSpot(savedSpot);
@@ -165,6 +190,10 @@ export function useGatheringSpotsPage({
       }
       closeForm();
     } catch (error) {
+      if (editingSpot && isUpdateConflictError(error)) {
+        await replaceFormWithLatest(editingSpot.id);
+        return;
+      }
       setSubmitError(getErrorMessage(error, "集合場所の保存に失敗しました。"));
     } finally {
       setIsSubmitting(false);
