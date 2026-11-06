@@ -234,6 +234,36 @@ describe("notification v2 HTTP adapters", () => {
     await expect(api.list()).rejects.toBeInstanceOf(ClientError);
   });
 
+  it("Schedule一覧は進み具合のnullを受け付け、詳細のnullや形の崩れた進み具合は想定外のResponseとして扱う", async () => {
+    const settled = {
+      ...notificationScheduleDetailFixture,
+      status: "completed",
+      audienceProgress: null,
+      recipientProgress: null,
+      deliveryProgress: null,
+    };
+    const listApi = (items: unknown[]) =>
+      createHttpNotificationScheduleQueryApi({
+        get: vi.fn().mockResolvedValue({ items }),
+      });
+    const detailApi = createHttpNotificationScheduleQueryApi({
+      get: vi.fn().mockResolvedValue(settled),
+    });
+
+    await expect(listApi([settled]).list()).resolves.toEqual({
+      items: [settled],
+    });
+    await expect(
+      listApi([
+        {
+          ...notificationScheduleDetailFixture,
+          deliveryProgress: { totalCount: 1 },
+        },
+      ]).list()
+    ).rejects.toBeInstanceOf(ClientError);
+    await expect(detailApi.getDetail(503)).rejects.toBeInstanceOf(ClientError);
+  });
+
   it("Schedule再送・停止・取消を同じ契約で実行する", async () => {
     const post = vi
       .fn()

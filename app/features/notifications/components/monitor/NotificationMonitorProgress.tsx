@@ -1,10 +1,16 @@
-import type { MonitorSchedule } from "~/features/notifications/hooks/notification-monitor-data";
+import {
+  hasMonitorProgress,
+  type MonitorSchedule,
+} from "~/features/notifications/hooks/notification-monitor-data";
 
 export function NotificationMonitorProgress({
   schedule,
 }: {
   schedule: MonitorSchedule;
 }) {
+  if (!hasMonitorProgress(schedule)) {
+    return <p className="text-text-muted text-xs">集計を読み込んでいます。</p>;
+  }
   const delivery = schedule.deliveryProgress;
   const values = [
     ["対象者", `${schedule.recipientProgress.count}人`],

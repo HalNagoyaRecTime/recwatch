@@ -1,6 +1,19 @@
-import type { NotificationScheduleDetail } from "~/features/notifications/api/contracts/notification-schedule-query-api";
+import type {
+  NotificationScheduleDetail,
+  NotificationScheduleListItem,
+} from "~/features/notifications/api/contracts/notification-schedule-query-api";
 
-export type MonitorSchedule = NotificationScheduleDetail;
+export type MonitorSchedule = NotificationScheduleListItem;
+
+export function hasMonitorProgress(
+  schedule: MonitorSchedule
+): schedule is NotificationScheduleDetail {
+  return (
+    schedule.audienceProgress !== null &&
+    schedule.recipientProgress !== null &&
+    schedule.deliveryProgress !== null
+  );
+}
 
 export const monitorDayMs = 24 * 60 * 60 * 1000;
 export const monitorCardWidth = 320;

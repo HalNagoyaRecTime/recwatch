@@ -40,13 +40,79 @@ describe("useNotificationMonitor", () => {
     const schedule = result.current.items.find(
       (item) => item.status === "sending"
     );
-    expect(schedule?.recipientProgress.count).toBe(40);
-    expect(schedule?.deliveryProgress.totalCount).toBe(42);
-    expect(schedule?.deliveryProgress.retryWaitCount).toBe(2);
+    expect(schedule?.recipientProgress?.count).toBe(40);
+    expect(schedule?.deliveryProgress?.totalCount).toBe(42);
+    expect(schedule?.deliveryProgress?.retryWaitCount).toBe(2);
     await act(() => result.current.reload());
     await act(() => result.current.reload());
     expect(list).toHaveBeenCalledTimes(3);
     expect(getDetail).not.toHaveBeenCalled();
+  });
+
+  it("一覧で進み具合がnullの配信のうち、頼まれたものだけ詳細を1回取り、更新後も取り直さない", async () => {
+    const fixtures = createNotificationMonitorFixtures(now());
+    const completed = fixtures.find((item) => item.status === "completed")!;
+    const failed = fixtures.find((item) => item.status === "failed")!;
+    const sending = fixtures.find((item) => item.status === "sending")!;
+    const api = createMockNotificationMonitorApi(fixtures);
+    const getDetail = vi.spyOn(api, "getDetail");
+    const { result } = renderHook(() =>
+      useNotificationMonitor({ api, ...options })
+    );
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    const progressOf = (id: number) =>
+      result.current.items.find((item) => item.notificationScheduleId === id)
+        ?.deliveryProgress;
+    expect(progressOf(completed.notificationScheduleId)).toBeNull();
+
+    await act(() =>
+      result.current.loadDetails([
+        completed.notificationScheduleId,
+        sending.notificationScheduleId,
+      ])
+    );
+    await act(() => result.current.reload());
+    await act(() =>
+      result.current.loadDetails([completed.notificationScheduleId])
+    );
+
+    expect(getDetail).toHaveBeenCalledOnce();
+    expect(getDetail).toHaveBeenCalledWith(completed.notificationScheduleId);
+    expect(progressOf(completed.notificationScheduleId)).toEqual(
+      completed.deliveryProgress
+    );
+    expect(progressOf(failed.notificationScheduleId)).toBeNull();
+  });
+
+  it("詳細の取得に失敗したら1回だけ報告し、次の一覧更新までは取り直さない", async () => {
+    const fixtures = createNotificationMonitorFixtures(now());
+    const completed = fixtures.find((item) => item.status === "completed")!;
+    const api = createMockNotificationMonitorApi(fixtures);
+    const getDetail = vi
+      .spyOn(api, "getDetail")
+      .mockRejectedValueOnce(new Error("通信失敗"));
+    const reportFeedback = vi.fn();
+    const { result } = renderHook(() =>
+      useNotificationMonitor({ api, reportFeedback, ...options })
+    );
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    const ids = [completed.notificationScheduleId];
+
+    await act(() => result.current.loadDetails(ids));
+    await act(() => result.current.loadDetails(ids));
+    expect(getDetail).toHaveBeenCalledOnce();
+    expect(reportFeedback).toHaveBeenCalledOnce();
+    await act(() => result.current.reload());
+    await act(() => result.current.loadDetails(ids));
+
+    expect(getDetail).toHaveBeenCalledTimes(2);
+    expect(reportFeedback).toHaveBeenCalledOnce();
+    expect(
+      result.current.items.find(
+        (item) =>
+          item.notificationScheduleId === completed.notificationScheduleId
+      )?.deliveryProgress
+    ).toEqual(completed.deliveryProgress);
   });
 
   it("mutation後の再取得を進行中の古い取得より優先する", async () => {

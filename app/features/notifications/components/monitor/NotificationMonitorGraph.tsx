@@ -10,7 +10,7 @@ import {
   NotificationScheduleNode,
   type ScheduleFlowNode,
 } from "~/features/notifications/components/monitor/NotificationScheduleNode";
-import type { MonitorSchedule } from "~/features/notifications/hooks/notification-monitor-data";
+import type { NotificationScheduleDetail } from "~/features/notifications/api/contracts/notification-schedule-query-api";
 import "~/features/notifications/components/monitor/notification-monitor.css";
 const nodeTypes = { schedule: NotificationScheduleNode };
 
@@ -18,7 +18,7 @@ export function NotificationMonitorGraph({
   schedule,
   onOpen,
 }: {
-  schedule: MonitorSchedule;
+  schedule: NotificationScheduleDetail;
   onOpen: (id: number) => void;
 }) {
   const [height, setHeight] = useState(180);

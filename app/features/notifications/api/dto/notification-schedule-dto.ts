@@ -14,8 +14,19 @@ import type {
 
 export type NotificationScheduleListQueryDto = NotificationDateRangeQueryDto;
 
+type NotificationScheduleProgressKey =
+  "audienceProgress" | "recipientProgress" | "deliveryProgress";
+
+export type NotificationScheduleListItemDto = Omit<
+  NotificationScheduleDetailDto,
+  NotificationScheduleProgressKey
+> & {
+  [Key in NotificationScheduleProgressKey]:
+    NotificationScheduleDetailDto[Key] | null;
+};
+
 export type NotificationScheduleListResponseDto = {
-  items: NotificationScheduleDetailDto[];
+  items: NotificationScheduleListItemDto[];
 };
 
 export type NotificationDeliveryProgressDto = {

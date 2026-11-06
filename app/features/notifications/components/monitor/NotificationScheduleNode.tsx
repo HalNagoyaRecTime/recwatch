@@ -5,12 +5,12 @@ import {
   type Node,
   type NodeProps,
 } from "@xyflow/react";
-import type { MonitorSchedule } from "~/features/notifications/hooks/notification-monitor-data";
+import type { NotificationScheduleDetail } from "~/features/notifications/api/contracts/notification-schedule-query-api";
 import { formatNotificationDateTime } from "~/features/notifications/components/list/notification-display";
 
 export type ScheduleFlowNode = Node<
   {
-    schedule: MonitorSchedule;
+    schedule: NotificationScheduleDetail;
     onOpen: (id: number) => void;
     onMeasure: (id: string, height: number) => void;
   },

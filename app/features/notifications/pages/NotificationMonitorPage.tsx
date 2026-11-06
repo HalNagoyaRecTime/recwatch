@@ -1,5 +1,5 @@
 import { NotificationManagementNavigation } from "~/features/notifications/components/NotificationManagementNavigation";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { RefreshCw } from "lucide-react";
 import { Button } from "~/components/ui/button/Button";
 import { PageHeader } from "~/components/ui/layout/PageHeader";
@@ -14,6 +14,7 @@ import {
 } from "~/features/notifications/components/list/notification-display";
 import type { NotificationFeedbackReporter } from "~/features/notifications/hooks/notification-feedback";
 import { useNotificationMonitor } from "~/features/notifications/hooks/useNotificationMonitor";
+import { hasMonitorProgress } from "~/features/notifications/hooks/notification-monitor-data";
 import "~/features/notifications/components/monitor/notification-monitor.css";
 
 import type { NotificationScheduleCommandApi } from "~/features/notifications/api/contracts/notification-schedule-command-api";
@@ -48,6 +49,22 @@ export function NotificationMonitorPage(props: Props) {
     ) ??
     state.items.find((entry) => entry.status === "sending") ??
     state.items[0];
+  const shownId = schedule?.notificationScheduleId;
+  const selectedId = state.selectedSchedule?.notificationScheduleId;
+  const shownIds = useMemo(
+    () =>
+      [
+        ...(overview
+          ? state.items.map((entry) => entry.notificationScheduleId)
+          : [shownId]),
+        selectedId,
+      ].filter((id) => id !== undefined),
+    [overview, state.items, shownId, selectedId]
+  );
+  const { loadDetails } = state;
+  useEffect(() => {
+    void loadDetails(shownIds);
+  }, [shownIds, loadDetails]);
   const delivery = schedule?.deliveryProgress;
   const percent = (count: number) =>
     delivery && delivery.totalCount > 0
@@ -61,8 +78,8 @@ export function NotificationMonitorPage(props: Props) {
     ],
     [
       "確定Recipient",
-      schedule?.recipientProgress.count.toLocaleString() ?? "—",
-      schedule?.recipientProgress.status === "pending"
+      schedule?.recipientProgress?.count.toLocaleString() ?? "—",
+      schedule?.recipientProgress?.status === "pending"
         ? "User単位・未確定"
         : "User単位",
     ],
@@ -189,10 +206,16 @@ export function NotificationMonitorPage(props: Props) {
                   30秒ごとに更新
                 </span>
               </header>
-              <NotificationMonitorGraph
-                schedule={schedule}
-                onOpen={state.selectSchedule}
-              />
+              {hasMonitorProgress(schedule) ? (
+                <NotificationMonitorGraph
+                  schedule={schedule}
+                  onOpen={state.selectSchedule}
+                />
+              ) : (
+                <p role="status" className="text-text-muted py-12 text-center">
+                  集計を読み込んでいます。
+                </p>
+              )}
             </section>
             <aside className="monitor-sidebar">
               <section className="monitor-panel monitor-side-panel">
@@ -215,9 +238,11 @@ export function NotificationMonitorPage(props: Props) {
                   <div>
                     <dt>Recipient確定</dt>
                     <dd>
-                      {schedule.recipientProgress.status === "resolved"
-                        ? "確定済み"
-                        : "未確定"}
+                      {!schedule.recipientProgress
+                        ? "—"
+                        : schedule.recipientProgress.status === "resolved"
+                          ? "確定済み"
+                          : "未確定"}
                     </dd>
                   </div>
                   <div>

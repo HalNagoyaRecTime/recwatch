@@ -199,6 +199,7 @@ export const notificationScheduleListFixture: NotificationScheduleListResponseDt
 export const notificationScheduleDetailFixture: NotificationScheduleDetailDto =
   {
     ...notificationScheduleListFixture.items[2],
+    ...notificationScheduleProgressFixture,
   };
 
 export const notificationScheduleResultsFixture: NotificationScheduleResultsDto =

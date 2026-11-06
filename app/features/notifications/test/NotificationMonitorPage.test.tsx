@@ -53,6 +53,13 @@ vi.mock("@xyflow/react", () => ({
 }));
 
 const now = () => Date.parse("2026-10-04T12:00:00+09:00");
+function deferred<T>() {
+  let resolve!: (value: T) => void;
+  const promise = new Promise<T>((done) => {
+    resolve = done;
+  });
+  return { promise, resolve };
+}
 const observers: Array<{
   element?: Element;
   callback: ResizeObserverCallback;
@@ -301,6 +308,93 @@ describe("配信モニター", () => {
     expect(
       await screen.findByRole("dialog", { name: "配信詳細" })
     ).toBeInTheDocument();
+  });
+
+  it("選択した配信が進行中なら詳細を取らない", async () => {
+    const api = createMockNotificationMonitorApi(
+      createNotificationMonitorFixtures(now())
+    );
+    const getDetail = vi.spyOn(api, "getDetail");
+    renderPage(api);
+
+    expect(
+      await screen.findByRole("article", { name: "配信 #503" })
+    ).toBeInTheDocument();
+    expect(getDetail).not.toHaveBeenCalled();
+  });
+
+  it("状態別一覧を開くと、送り終えた配信の詳細だけ取る", async () => {
+    const fixtures = createNotificationMonitorFixtures(now());
+    const api = createMockNotificationMonitorApi(fixtures);
+    const getDetail = vi.spyOn(api, "getDetail");
+    const user = userEvent.setup();
+    renderPage(api);
+    await screen.findByRole("article", { name: "配信 #503" });
+
+    await user.click(screen.getByRole("button", { name: "状態別一覧" }));
+
+    const settledIds = fixtures
+      .filter((item) => item.status === "completed" || item.status === "failed")
+      .map((item) => item.notificationScheduleId);
+    await waitFor(() =>
+      expect(getDetail).toHaveBeenCalledTimes(settledIds.length)
+    );
+    expect(getDetail.mock.calls.map(([id]) => id).sort()).toEqual(
+      settledIds.sort()
+    );
+    const card = screen.getByRole("article", {
+      name: `状態別配信 #${settledIds[0]}`,
+    });
+    expect(await within(card).findByText("42件")).toBeInTheDocument();
+  });
+
+  it("送り終えた配信を選ぶと、集計を読み込んでから処理フローを表示する", async () => {
+    const fixtures = createNotificationMonitorFixtures(now());
+    const completed = fixtures.find((item) => item.status === "completed")!;
+    const api = createMockNotificationMonitorApi(fixtures);
+    const detail = deferred<Awaited<ReturnType<typeof api.getDetail>>>();
+    vi.spyOn(api, "getDetail").mockReturnValueOnce(detail.promise);
+    const user = userEvent.setup();
+    renderPage(api);
+    await screen.findByRole("article", { name: "配信 #503" });
+
+    await user.selectOptions(
+      screen.getByRole("combobox", { name: "表示する配信" }),
+      String(completed.notificationScheduleId)
+    );
+    expect(screen.getByText("集計を読み込んでいます。")).toBeInTheDocument();
+    await act(async () => detail.resolve(completed));
+
+    expect(
+      await screen.findByRole("article", {
+        name: `配信 #${completed.notificationScheduleId}`,
+      })
+    ).toBeInTheDocument();
+  });
+
+  it("送り終えた配信の詳細ダイアログは、集計を読み込んでから表示する", async () => {
+    const fixtures = createNotificationMonitorFixtures(now());
+    const completed = fixtures.find((item) => item.status === "completed")!;
+    const api = createMockNotificationMonitorApi(fixtures);
+    const detail = deferred<Awaited<ReturnType<typeof api.getDetail>>>();
+    vi.spyOn(api, "getDetail").mockReturnValueOnce(detail.promise);
+    const user = userEvent.setup();
+    renderPage(api);
+    await screen.findByRole("article", { name: "配信 #503" });
+    await user.click(screen.getByRole("button", { name: "状態別一覧" }));
+    await user.click(
+      screen.getByRole("button", {
+        name: `${completed.content.push.title}の状態別配信詳細`,
+      })
+    );
+    const dialog = await screen.findByRole("dialog", { name: "配信詳細" });
+    expect(
+      within(dialog).getByText("集計を読み込んでいます。")
+    ).toBeInTheDocument();
+
+    await act(async () => detail.resolve(completed));
+
+    expect(await within(dialog).findByText("40人")).toBeInTheDocument();
   });
 
   it("状態別カードの高さが変わると同じ列の後続Nodeをずらす", async () => {

@@ -1,12 +1,16 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import type { NotificationScheduleQueryApi } from "~/features/notifications/api/contracts/notification-schedule-query-api";
+import type {
+  NotificationScheduleDetail,
+  NotificationScheduleQueryApi,
+} from "~/features/notifications/api/contracts/notification-schedule-query-api";
 import {
   reportNotificationBackgroundError,
   type NotificationFeedbackReporter,
 } from "~/features/notifications/hooks/notification-feedback";
 import {
   getMonitorWindow,
+  hasMonitorProgress,
   isMonitorScheduleVisible,
   type MonitorSchedule,
 } from "~/features/notifications/hooks/notification-monitor-data";
@@ -46,6 +50,12 @@ export function useNotificationMonitor({
   const inFlight = useRef<Promise<void> | null>(null);
   const reportedFailure = useRef(false);
   const [selectedScheduleId, selectSchedule] = useState<number | null>(null);
+  const [details, setDetails] = useState<
+    Record<number, NotificationScheduleDetail>
+  >({});
+  const detailsInFlight = useRef(new Set<number>());
+  const failedDetailIds = useRef(new Set<number>());
+  const reportedDetailFailure = useRef(false);
 
   const load = useCallback(
     async (background = false, force = false) => {
@@ -71,6 +81,7 @@ export function useNotificationMonitor({
           to: new Date(range.to).toISOString(),
         });
         if (generation.current !== requestId) return;
+        failedDetailIds.current.clear();
         setState({
           items: response.items.filter((item) =>
             isMonitorScheduleVisible(item, at)
@@ -136,12 +147,79 @@ export function useNotificationMonitor({
     await inFlight.current;
     await load(true, true);
   }, [load]);
+  // 一覧はcompleted・failedの進み具合をnullで返すため、表示するものだけ詳細を取ります。
+  // この2つは以後進み具合が変わらないため、取った詳細は取り直しません。
+  const loadDetails = useCallback(
+    async (ids: readonly number[]) => {
+      const targets = state.items
+        .filter((item) => !hasMonitorProgress(item))
+        .map((item) => item.notificationScheduleId)
+        .filter(
+          (id) =>
+            ids.includes(id) &&
+            !(id in details) &&
+            !detailsInFlight.current.has(id) &&
+            !failedDetailIds.current.has(id)
+        );
+      for (const id of targets) detailsInFlight.current.add(id);
+      let next = 0;
+      const failures: unknown[] = [];
+      const worker = async () => {
+        while (next < targets.length) {
+          const id = targets[next++];
+          try {
+            const detail = await api.getDetail(id);
+            setDetails((previous) => ({ ...previous, [id]: detail }));
+          } catch (error) {
+            failedDetailIds.current.add(id);
+            failures.push(error);
+          } finally {
+            detailsInFlight.current.delete(id);
+          }
+        }
+      };
+      // 状態別一覧を開いた直後は送り終えた配信が多いので、同時実行数を制限します。
+      await Promise.all(
+        Array.from({ length: Math.min(4, targets.length) }, worker)
+      );
+      if (failures.length === 0) {
+        if (targets.length > 0) reportedDetailFailure.current = false;
+        return;
+      }
+      if (reportedDetailFailure.current) return;
+      reportedDetailFailure.current = true;
+      reportNotificationBackgroundError(reportFeedback, {
+        title: "配信集計を読み込めませんでした",
+        message: "次の更新で読み込み直します。",
+        action: "notification.monitor.detail",
+        endpoint: "/api/v1/admin/notifications/schedules/{id}",
+        error: failures[0],
+      });
+    },
+    [api, details, reportFeedback, state.items]
+  );
+  const items = useMemo(
+    () =>
+      state.items.map((item) => {
+        const detail = details[item.notificationScheduleId];
+        return hasMonitorProgress(item) || !detail
+          ? item
+          : {
+              ...item,
+              audienceProgress: detail.audienceProgress,
+              recipientProgress: detail.recipientProgress,
+              deliveryProgress: detail.deliveryProgress,
+            };
+      }),
+    [state.items, details]
+  );
   const selectedSchedule =
-    state.items.find(
-      (item) => item.notificationScheduleId === selectedScheduleId
-    ) ?? null;
+    items.find((item) => item.notificationScheduleId === selectedScheduleId) ??
+    null;
   return {
     ...state,
+    items,
+    loadDetails,
     reload,
     reloadAfterMutation,
     selectedSchedule,
