@@ -4,6 +4,7 @@ export type GatheringSpot = {
   imageUrl: string | null;
   createdAt: string;
   updatedAt: string;
+  lockVersion: number;
 };
 
 export const gatheringSpotSortableColumnIds = [

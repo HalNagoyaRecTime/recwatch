@@ -17,6 +17,7 @@ const teachers: TeacherRow[] = [
     isLiveActive: true,
     isStaff: false,
     classRooms: [{ classRoomId: 1, classCode: "1A", className: "1年A組" }],
+    lockVersion: 0,
   },
 ];
 

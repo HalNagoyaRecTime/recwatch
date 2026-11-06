@@ -20,6 +20,7 @@ const member: StudentRow = {
   studentId: 7,
   studentIdNumber: "S007",
   userId: 11,
+  lockVersion: 0,
 };
 
 describe("StudentClassRoomMembershipPanel", () => {

@@ -14,11 +14,16 @@ export function toGatheringSpot(
     imageUrl: response.image_url,
     createdAt: response.created_at,
     updatedAt: response.updated_at,
+    lockVersion: response.lock_version,
   };
 }
 
 export function toGatheringSpotWriteRequest(
-  name: string
+  name: string,
+  lockVersion?: number
 ): GatheringSpotWriteRequestDto {
-  return { gatheringSpotName: name };
+  return {
+    gatheringSpotName: name,
+    ...(lockVersion === undefined ? {} : { lockVersion }),
+  };
 }

@@ -23,6 +23,8 @@ export type RoundSetting = {
 
 export type EventGatheringSettings = {
   eventId: number;
+  /** Event と共有する版。集合設定の保存でも進む。 */
+  lockVersion: number;
   rounds: RoundSetting[];
 };
 
@@ -66,6 +68,8 @@ export type RoundWriteInput = {
 
 export type EventGatheringSettingsWriteInput = {
   rounds: RoundWriteInput[];
+  /** 取得した版を送り返して競合を検出する。 */
+  lockVersion?: number;
 };
 
 /** 旧 API で集合時刻が未設定のまま作成された行に入っている値。画面では未入力として扱う。 */

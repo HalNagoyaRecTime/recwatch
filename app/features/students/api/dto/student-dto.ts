@@ -14,6 +14,7 @@ export type StudentDTO = {
   is_live_active: boolean;
   is_staff: boolean;
   class_room: StudentClassRoomDTO | null;
+  lock_version: number;
 };
 
 export type StudentManagementDTO = StudentDTO;
@@ -30,4 +31,5 @@ export type StudentWriteDTO = {
   class_room_id: number | null;
   display_name: string;
   student_id_number: string;
+  lock_version?: number;
 };

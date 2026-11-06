@@ -13,6 +13,11 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import type { ClassRoomManagementApi } from "~/features/classRoom/api";
 import { ClassRoomCreatePage } from "~/features/classRoom/pages/ClassRoomCreatePage";
 import { ClassRoomEditPage } from "~/features/classRoom/pages/ClassRoomEditPage";
+import { ApiClientError } from "~/lib/api-client-error";
+import {
+  UPDATE_CONFLICT_MESSAGE,
+  UPDATE_CONFLICT_RELOAD_FAILED_MESSAGE,
+} from "~/lib/update-conflict";
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -121,6 +126,7 @@ describe("ClassRoomCreatePage", () => {
       className: "1年A組",
       studentCount: 3,
       teacher: null,
+      lockVersion: 5,
     };
     const updateClassRoom = vi.fn().mockResolvedValue(classRoom);
     const onSaved = vi.fn().mockResolvedValue(undefined);
@@ -129,6 +135,7 @@ describe("ClassRoomCreatePage", () => {
       <ClassRoomEditPage
         api={createApi({ updateClassRoom })}
         classRoom={classRoom}
+        loadLatest={vi.fn()}
         onClose={vi.fn()}
         onSaved={onSaved}
         teacherOptions={[]}
@@ -154,9 +161,137 @@ describe("ClassRoomCreatePage", () => {
         classCode: "1B",
         className: "1年B組",
         teacherId: null,
+        lockVersion: 5,
       })
     );
     expect(onSaved).toHaveBeenCalledOnce();
+  });
+
+  it("更新が競合したら理由を伝えて再取得し、最新の値でフォームを置き換える", async () => {
+    const user = userEvent.setup();
+    const classRoom = {
+      classRoomId: 12,
+      classCode: "1A",
+      className: "1年A組",
+      studentCount: 3,
+      teacher: null,
+      lockVersion: 5,
+    };
+    const latest = { ...classRoom, className: "他の人の変更", lockVersion: 6 };
+    const updateClassRoom = vi
+      .fn()
+      .mockRejectedValueOnce(
+        new ApiClientError(409, "conflict", "CLASS_ROOM_UPDATE_CONFLICT")
+      )
+      .mockResolvedValueOnce(latest);
+    const loadLatest = vi.fn().mockResolvedValue(latest);
+    const onSaved = vi.fn().mockResolvedValue(undefined);
+    render(
+      <ClassRoomEditPage
+        api={createApi({ updateClassRoom })}
+        classRoom={classRoom}
+        loadLatest={loadLatest}
+        onClose={vi.fn()}
+        onSaved={onSaved}
+        teacherOptions={[]}
+      />
+    );
+
+    const nameInput = await screen.findByRole("textbox", {
+      name: "クラス名*",
+    });
+    await user.clear(nameInput);
+    await user.type(nameInput, "自分の変更");
+    await user.click(screen.getByRole("button", { name: "保存する" }));
+
+    expect(
+      await screen.findByText(UPDATE_CONFLICT_MESSAGE)
+    ).toBeInTheDocument();
+    expect(loadLatest).toHaveBeenCalledOnce();
+    expect(onSaved).not.toHaveBeenCalled();
+
+    // 再取得の結果が新しい版で届いたら、編集中の内容は破棄される。
+    await waitFor(() =>
+      expect(screen.getByRole("textbox", { name: "クラス名*" })).toHaveValue(
+        "他の人の変更"
+      )
+    );
+
+    await user.click(screen.getByRole("button", { name: "保存する" }));
+    await waitFor(() =>
+      expect(updateClassRoom).toHaveBeenLastCalledWith(12, {
+        classCode: "1A",
+        className: "他の人の変更",
+        teacherId: null,
+        lockVersion: 6,
+      })
+    );
+    expect(onSaved).toHaveBeenCalledOnce();
+  });
+
+  it("競合後の再取得に失敗したら入力を残し、再度の保存で最新の値へ置き換える", async () => {
+    const user = userEvent.setup();
+    const classRoom = {
+      classRoomId: 12,
+      classCode: "1A",
+      className: "1年A組",
+      studentCount: 3,
+      teacher: null,
+      lockVersion: 5,
+    };
+    const updateClassRoom = vi
+      .fn()
+      .mockRejectedValue(
+        new ApiClientError(409, "conflict", "CLASS_ROOM_UPDATE_CONFLICT")
+      );
+    const loadLatest = vi
+      .fn()
+      .mockRejectedValueOnce(new Error("network"))
+      .mockResolvedValue({
+        ...classRoom,
+        className: "他の人の変更",
+        lockVersion: 6,
+      });
+    render(
+      <ClassRoomEditPage
+        api={createApi({ updateClassRoom })}
+        classRoom={classRoom}
+        loadLatest={loadLatest}
+        onClose={vi.fn()}
+        onSaved={vi.fn()}
+        teacherOptions={[]}
+      />
+    );
+
+    const nameInput = await screen.findByRole("textbox", {
+      name: "クラス名*",
+    });
+    await user.clear(nameInput);
+    await user.type(nameInput, "自分の変更");
+    await user.click(screen.getByRole("button", { name: "保存する" }));
+
+    expect(
+      await screen.findByText(UPDATE_CONFLICT_RELOAD_FAILED_MESSAGE)
+    ).toBeInTheDocument();
+    expect(screen.getByRole("textbox", { name: "クラス名*" })).toHaveValue(
+      "自分の変更"
+    );
+
+    await user.click(screen.getByRole("button", { name: "保存する" }));
+
+    expect(
+      await screen.findByText(UPDATE_CONFLICT_MESSAGE)
+    ).toBeInTheDocument();
+    await waitFor(() =>
+      expect(screen.getByRole("textbox", { name: "クラス名*" })).toHaveValue(
+        "他の人の変更"
+      )
+    );
+    expect(updateClassRoom).toHaveBeenCalledTimes(2);
+    expect(updateClassRoom).toHaveBeenLastCalledWith(
+      12,
+      expect.objectContaining({ lockVersion: 5 })
+    );
   });
 
   it("登録APIエラー時はフォームを維持してエラーを表示する", async () => {

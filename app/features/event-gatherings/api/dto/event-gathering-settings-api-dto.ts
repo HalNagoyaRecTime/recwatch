@@ -13,6 +13,7 @@ export type RoundSettingWriteRequestDto = {
 
 export type EventGatheringSettingsWriteRequestDto = {
   rounds: RoundSettingWriteRequestDto[];
+  lock_version?: number;
 };
 
 /**
@@ -40,5 +41,6 @@ export type RoundSettingResponseDto = {
 
 export type EventGatheringSettingsResponseDto = {
   event_id: number;
+  lock_version: number;
   rounds: RoundSettingResponseDto[];
 };

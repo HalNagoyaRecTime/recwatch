@@ -35,6 +35,7 @@ function makeStudent(
       classCode: "1A",
       className: "1年Aクラス",
     },
+    lockVersion: 0,
     ...overrides,
   };
 }

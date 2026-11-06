@@ -54,6 +54,7 @@ export function createMockVenueGateway(
         imageUrl: null,
         createdAt: now,
         updatedAt: now,
+        lockVersion: 0,
       } satisfies Venue;
       venues = [...venues, created];
       return created;
@@ -67,6 +68,7 @@ export function createMockVenueGateway(
         ...current,
         name,
         updatedAt: new Date().toISOString(),
+        lockVersion: current.lockVersion + 1,
       } satisfies Venue;
       venues = venues.map((venue) => (venue.id === id ? updated : venue));
       return updated;

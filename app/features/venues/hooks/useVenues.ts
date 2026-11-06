@@ -64,8 +64,8 @@ export function useVenues({ gateway, listOptions }: UseVenuesOptions) {
   );
 
   const updateVenue = useCallback(
-    async (id: number, name: string) => {
-      return gateway.update(id, name);
+    async (id: number, name: string, lockVersion: number) => {
+      return gateway.update(id, name, lockVersion);
     },
     [gateway]
   );

@@ -14,6 +14,7 @@ describe("実施場所APIマッパー", () => {
         image_url: "https://images.example.com/venues/1.jpg",
         created_at: "2026-09-25T09:00:00Z",
         updated_at: "2026-09-25T09:10:00Z",
+        lock_version: 4,
       })
     ).toEqual({
       id: 10,
@@ -21,6 +22,14 @@ describe("実施場所APIマッパー", () => {
       imageUrl: "https://images.example.com/venues/1.jpg",
       createdAt: "2026-09-25T09:00:00Z",
       updatedAt: "2026-09-25T09:10:00Z",
+      lockVersion: 4,
+    });
+  });
+
+  it("更新では版をlockVersionとして送る", () => {
+    expect(toVenueWriteRequest("体育館", 4)).toEqual({
+      venueName: "体育館",
+      lockVersion: 4,
     });
   });
 

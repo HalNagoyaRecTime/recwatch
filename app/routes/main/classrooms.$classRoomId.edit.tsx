@@ -1,3 +1,4 @@
+import { useRef } from "react";
 import { useLoaderData, useRevalidator, useRouteError } from "react-router";
 
 import { ClassRoomApi } from "~/features/classRoom/api";
@@ -89,12 +90,18 @@ export default function ClassRoomEditRoute() {
     setSearchInput,
   } = useClassRoomMembershipUrl();
   const revalidator = useRevalidator();
+  // 競合が起きたら一覧も古いので、保存せずに閉じるときも再検証する。
+  const hasConflict = useRef(false);
 
   return (
     <ClassRoomEditPage
       api={ClassRoomApi}
       classRoom={classRoom}
-      onClose={() => closeModal()}
+      loadLatest={() => {
+        hasConflict.current = true;
+        return ClassRoomApi.getClassRoomById(classRoom.classRoomId);
+      }}
+      onClose={() => closeModal(hasConflict.current)}
       onSaved={() => closeModal(true)}
       teacherOptionState={teacherOptions}
       teacherOptions={teacherOptions.items}
