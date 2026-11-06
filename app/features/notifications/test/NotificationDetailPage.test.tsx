@@ -304,20 +304,21 @@ describe("NotificationDetailPage", () => {
 
     await user.click(screen.getByRole("button", { name: "対象者・配信結果" }));
     expect(await screen.findByText("山田 太郎")).toBeInTheDocument();
-    expect(getResults).toHaveBeenCalledWith(504, { page: 1, limit: 50 });
+    expect(getResults).toHaveBeenCalledWith(504, {
+      page: 1,
+      limit: 50,
+      includeRegisteredAt: "1",
+    });
     expect(screen.getAllByText("送信先なし").length).toBeGreaterThan(0);
     expect(
       screen.getByRole("searchbox", { name: "対象者を検索" })
-    ).toBeDisabled();
+    ).toBeEnabled();
     expect(
       screen.getByRole("combobox", { name: "送信結果で絞り込み" })
-    ).toBeDisabled();
+    ).toBeEnabled();
     expect(
       screen.queryByRole("combobox", { name: "対象指定で絞り込み" })
     ).not.toBeInTheDocument();
-    expect(
-      screen.getByText("検索・絞り込みは今後対応予定です。")
-    ).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "山田 太郎の送信先" }));
     expect(

@@ -64,6 +64,10 @@ export type NotificationScheduleDetailDto = {
 export type NotificationScheduleResultsQueryDto = {
   page: number;
   limit: number;
+  search?: string;
+  status?:
+    "success" | "partial" | "failed" | "processing" | "stopped" | "no_target";
+  includeRegisteredAt?: "1";
 };
 
 export type NotificationResultDeliveryDto = {
@@ -80,6 +84,7 @@ export type NotificationScheduleResultsDto = {
   recipients: {
     items: Array<{
       notificationRecipientId: number;
+      registeredAt?: string;
       user: NotificationUserReferenceDto;
       deliveries: NotificationResultDeliveryDto[];
     }>;
