@@ -1,5 +1,9 @@
 import { useState } from "react";
 import { ChevronDown, ChevronRight } from "lucide-react";
+import {
+  DataTable,
+  type DataTableColumn,
+} from "~/components/ui/data-table/DataTable";
 import { Button } from "~/components/ui/button/Button";
 import { SearchField } from "~/components/ui/form/SearchField";
 import { Select } from "~/components/ui/form/Select";
@@ -43,202 +47,223 @@ export function NotificationResultsPanel({
   state: ReturnType<typeof useNotificationResults>;
   onOpenDelivery: (id: number) => void;
 }) {
+  const [expandedIds, setExpandedIds] = useState<Set<number>>(() => new Set());
+  const columns: DataTableColumn<Recipient>[] = [
+    {
+      id: "user",
+      header: "ユーザー",
+      width: { type: "fluid", min: 180, grow: 2 },
+      renderCell: (item) => (
+        <button
+          type="button"
+          aria-label={`${item.user.userName}の送信先`}
+          aria-expanded={expandedIds.has(item.notificationRecipientId)}
+          aria-controls={
+            item.deliveries.length
+              ? `recipient-deliveries-${item.notificationRecipientId}`
+              : undefined
+          }
+          disabled={!item.deliveries.length}
+          onClick={() =>
+            setExpandedIds((current) => {
+              const next = new Set(current);
+              if (next.has(item.notificationRecipientId))
+                next.delete(item.notificationRecipientId);
+              else next.add(item.notificationRecipientId);
+              return next;
+            })
+          }
+          className="text-text-base flex max-w-full items-center gap-2 text-left enabled:cursor-pointer disabled:cursor-default"
+        >
+          {expandedIds.has(item.notificationRecipientId) ? (
+            <ChevronDown className="size-4 shrink-0" />
+          ) : (
+            <ChevronRight className="size-4 shrink-0" />
+          )}
+          <span className="min-w-0">
+            <strong className="block truncate">{item.user.userName}</strong>
+            <span className="text-text-muted text-xs">
+              User #{item.user.userId}
+            </span>
+          </span>
+        </button>
+      ),
+    },
+    {
+      id: "status",
+      header: "送信結果",
+      width: { type: "fluid", min: 130 },
+      renderCell: (item) => (
+        <>
+          <span
+            className={`${resultTones[getRecipientResult(item)]} inline-flex rounded-full px-2 py-0.5 text-xs font-semibold`}
+          >
+            {resultLabels[getRecipientResult(item)]}
+          </span>
+          <span className="text-text-muted ml-2 text-xs">
+            {item.deliveries.length}送信先
+          </span>
+        </>
+      ),
+    },
+    {
+      id: "lastAttempt",
+      header: "最終送信・試行時間",
+      width: { type: "fluid", min: 180 },
+      renderCell: (item) =>
+        formatNotificationDetailDateTime(lastRecipientAttempt(item)),
+    },
+  ];
   return (
-    <div className="min-w-0 space-y-4">
-      <div className="flex flex-wrap items-center gap-2">
-        <div className="min-w-56 flex-1">
-          <SearchField
-            ariaLabel="対象者を検索"
-            placeholder="ユーザー名・User IDを検索"
-            value={state.filters.search}
-            onValueChange={(search) =>
-              state.onFiltersChange({ ...state.filters, search })
+    <section aria-label="対象者・配信結果" className="min-w-0 space-y-4">
+      <div className="space-y-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="min-w-56 flex-1">
+            <SearchField
+              ariaLabel="対象者を検索"
+              placeholder="ユーザー名・User IDを検索"
+              disabled
+              value={state.filters.search}
+              onValueChange={(search) =>
+                state.onFiltersChange({ ...state.filters, search })
+              }
+            />
+          </div>
+          <Select
+            ariaLabel="送信結果で絞り込み"
+            disabled
+            value={state.filters.status}
+            onValueChange={(status) =>
+              state.onFiltersChange({ ...state.filters, status })
             }
+            options={[
+              { value: "all", label: "すべての送信結果" },
+              ...Object.entries(resultLabels).map(([value, label]) => ({
+                value: value as ResultStatus,
+                label,
+              })),
+            ]}
           />
         </div>
-        <Select
-          ariaLabel="送信結果で絞り込み"
-          value={state.filters.status}
-          onValueChange={(status) =>
-            state.onFiltersChange({ ...state.filters, status })
-          }
-          options={[
-            { value: "all", label: "すべての送信結果" },
-            ...Object.entries(resultLabels).map(([value, label]) => ({
-              value: value as ResultStatus,
-              label,
-            })),
-          ]}
-        />
-        <Select
-          ariaLabel="送信先で絞り込み"
-          value={state.filters.platform}
-          onValueChange={(platform) =>
-            state.onFiltersChange({ ...state.filters, platform })
-          }
-          options={[
-            { value: "all", label: "すべての送信先" },
-            { value: "ios", label: "iOS" },
-            { value: "android", label: "Android" },
-          ]}
-        />
+        <p className="text-text-muted text-xs">
+          検索・絞り込みは今後対応予定です。
+        </p>
       </div>
       {state.isLoading && (
-        <p role="status" className="text-text-muted text-sm">
+        <p role="status" className="text-text-muted px-4 py-3 text-sm">
           配信結果を読み込み中です
         </p>
       )}
       {state.errorMessage && (
-        <div role="alert" className="flex items-center gap-3 text-sm">
+        <div role="alert" className="flex items-center gap-3 p-4 text-sm">
           <p className="text-tone-danger-text">{state.errorMessage}</p>
           <Button onClick={() => void state.loadResults()}>再試行</Button>
         </div>
       )}
       {state.data && (
         <>
-          <div className="border-border-base bg-surface-base app-rounded overflow-x-auto border">
-            <table className="w-full min-w-[650px] border-collapse text-left text-sm">
-              <thead className="bg-surface-muted text-text-muted">
-                <tr>
-                  <th className="px-4 py-3 font-medium">ユーザー</th>
-                  <th className="px-4 py-3 font-medium">送信結果</th>
-                  <th className="px-4 py-3 font-medium">最終送信時間</th>
-                </tr>
-              </thead>
-              <tbody className="divide-border-subtle divide-y">
-                {state.items.map((item) => (
-                  <RecipientRow
-                    key={item.notificationRecipientId}
-                    item={item}
-                    onOpenDelivery={onOpenDelivery}
-                  />
-                ))}
-              </tbody>
-            </table>
-            {!state.items.length && (
-              <p className="text-text-muted px-4 py-10 text-center text-sm">
-                {recipientResolved
-                  ? "条件に一致する対象者はいません"
-                  : "対象者はまだ確定していません"}
-              </p>
-            )}
-          </div>
-          <Pagination
-            currentPage={state.page}
-            pageCount={state.pageCount}
-            pageSize={50}
-            totalItems={state.total}
-            onPageChange={state.onPageChange}
+          <DataTable
+            ariaLabel="対象者一覧"
+            columns={columns}
+            items={state.items}
+            getRowKey={(item) => item.notificationRecipientId}
+            emptyMessage={
+              recipientResolved
+                ? "配信対象者はいません"
+                : "対象者はまだ確定していません"
+            }
+            footer={
+              <Pagination
+                currentPage={state.page}
+                pageCount={state.pageCount}
+                pageSize={50}
+                totalItems={state.total}
+                onPageChange={state.onPageChange}
+              />
+            }
+            renderExpandedRow={(item) =>
+              expandedIds.has(item.notificationRecipientId) ? (
+                <RecipientDeliveries
+                  item={item}
+                  onOpenDelivery={onOpenDelivery}
+                />
+              ) : null
+            }
           />
         </>
       )}
-    </div>
+    </section>
   );
 }
-function RecipientRow({
+function RecipientDeliveries({
   item,
   onOpenDelivery,
 }: {
   item: Recipient;
   onOpenDelivery: (id: number) => void;
 }) {
-  const [expanded, setExpanded] = useState(false);
-  const status = getRecipientResult(item);
   const regionId = `recipient-deliveries-${item.notificationRecipientId}`;
-  return (
-    <>
-      <tr>
-        <td className="px-4 py-4">
-          <button
-            type="button"
-            aria-label={`${item.user.userName}の送信先`}
-            aria-expanded={expanded}
-            aria-controls={item.deliveries.length ? regionId : undefined}
-            disabled={!item.deliveries.length}
-            onClick={() => setExpanded((value) => !value)}
-            className="text-text-base flex max-w-full items-center gap-2 text-left enabled:cursor-pointer disabled:cursor-default"
-          >
-            {expanded ? (
-              <ChevronDown className="size-4 shrink-0" />
-            ) : (
-              <ChevronRight className="size-4 shrink-0" />
-            )}
-            <span>
-              <strong className="block">{item.user.userName}</strong>
-              <span className="text-text-muted text-xs">
-                User #{item.user.userId}
-              </span>
-            </span>
-          </button>
-        </td>
-        <td className="px-4 py-4">
-          <span
-            className={`${resultTones[status]} inline-flex rounded-full px-2 py-1 text-xs font-semibold`}
-          >
-            {resultLabels[status]}
-          </span>
-          <p className="text-text-muted mt-1 text-xs">
-            {item.deliveries.length}送信先
+  type Delivery = Recipient["deliveries"][number];
+  const columns: DataTableColumn<Delivery>[] = [
+    {
+      id: "platform",
+      header: "送信先",
+      width: { type: "fluid", min: 120 },
+      renderCell: (delivery) => (
+        <>
+          {platformLabel[delivery.platform]}
+          <p className="text-text-muted text-xs">
+            Delivery #{delivery.notificationPushDeliveryId}
           </p>
-        </td>
-        <td className="px-4 py-4">
-          {formatNotificationDetailDateTime(lastRecipientAttempt(item))}
-        </td>
-      </tr>
-      {expanded && (
-        <tr>
-          <td colSpan={3} className="bg-surface-muted p-3">
-            <div
-              id={regionId}
-              className="border-border-base bg-surface-base app-rounded overflow-hidden border"
-            >
-              <table className="w-full text-left text-sm">
-                <thead className="text-text-muted">
-                  <tr>
-                    <th className="px-3 py-2 font-medium">送信先</th>
-                    <th className="px-3 py-2 font-medium">状態</th>
-                    <th className="px-3 py-2 font-medium">試行</th>
-                    <th className="px-3 py-2 font-medium">最終送信</th>
-                    <th className="px-3 py-2 font-medium">詳細</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-border-subtle divide-y">
-                  {item.deliveries.map((delivery) => (
-                    <tr key={delivery.notificationPushDeliveryId}>
-                      <td className="px-3 py-3">
-                        {platformLabel[delivery.platform]}
-                        <p className="text-text-muted text-xs">
-                          Delivery #{delivery.notificationPushDeliveryId}
-                        </p>
-                      </td>
-                      <td className="px-3 py-3">
-                        {deliveryStatusLabel[delivery.status]}
-                      </td>
-                      <td className="px-3 py-3">{delivery.attemptCount}回</td>
-                      <td className="px-3 py-3">
-                        {formatNotificationDetailDateTime(
-                          delivery.sentAt ?? delivery.lastAttemptAt
-                        )}
-                      </td>
-                      <td className="px-3 py-3">
-                        <Button
-                          size="sm"
-                          aria-label={`Delivery #${delivery.notificationPushDeliveryId}の詳細`}
-                          onClick={() =>
-                            onOpenDelivery(delivery.notificationPushDeliveryId)
-                          }
-                        >
-                          詳細
-                        </Button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </td>
-        </tr>
-      )}
-    </>
+        </>
+      ),
+    },
+    {
+      id: "status",
+      header: "状態",
+      width: { type: "fluid", min: 125 },
+      renderCell: (delivery) => deliveryStatusLabel[delivery.status],
+    },
+    {
+      id: "attempts",
+      header: "試行",
+      width: { type: "fixed", value: 70 },
+      renderCell: (delivery) => `${delivery.attemptCount}回`,
+    },
+    {
+      id: "lastAttempt",
+      header: "最終送信・試行",
+      width: { type: "fluid", min: 170 },
+      renderCell: (delivery) =>
+        formatNotificationDetailDateTime(
+          delivery.lastAttemptAt ?? delivery.sentAt
+        ),
+    },
+    {
+      id: "detail",
+      header: "詳細",
+      width: { type: "fixed", value: 100 },
+      renderCell: (delivery) => (
+        <Button
+          size="sm"
+          aria-label={`Delivery #${delivery.notificationPushDeliveryId}の詳細`}
+          onClick={() => onOpenDelivery(delivery.notificationPushDeliveryId)}
+        >
+          詳細
+        </Button>
+      ),
+    },
+  ];
+  return (
+    <div role="row" className="bg-surface-muted p-3">
+      <div role="cell" id={regionId}>
+        <DataTable
+          ariaLabel={`${item.user.userName}の送信先一覧`}
+          columns={columns}
+          items={item.deliveries}
+          getRowKey={(delivery) => delivery.notificationPushDeliveryId}
+        />
+      </div>
+    </div>
   );
 }
