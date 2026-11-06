@@ -1,0 +1,351 @@
+{
+  "date": "2026-11-03",
+  "backendSha": "defbe87fb653ecf0b479db151baad36d4bc7e8fa",
+  "environment": "isolated local D1 / synthetic staff / no FCM",
+  "checks": {
+    "gathering_api_generated_automatic_notifications": true,
+    "scheduled_notification_deleted": true,
+    "sending_source_deleted_stop": true,
+    "only_pending_and_retry_wait_stopped": true,
+    "in_flight_sent_failed_delivery_history_preserved": true,
+    "completed_history_preserved": true,
+    "deleted_source_label_null": true,
+    "deleted_source_resend_409": true
+  },
+  "events": [
+    {
+      "method": "GET",
+      "path": "/admin/notifications/1",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/admin/notifications/2",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/admin/notifications/3",
+      "status": 200
+    },
+    {
+      "method": "PUT",
+      "path": "/events/900001/gatherings",
+      "status": 200
+    },
+    {
+      "method": "PUT",
+      "path": "/events/900002/gatherings",
+      "status": 200
+    },
+    {
+      "method": "PUT",
+      "path": "/events/900003/gatherings",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/admin/notifications/1",
+      "status": 404
+    },
+    {
+      "method": "GET",
+      "path": "/admin/notifications/schedules/1",
+      "status": 404
+    },
+    {
+      "method": "GET",
+      "path": "/admin/notifications/schedules/2",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/admin/notifications/schedules/2/results",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/admin/notifications/schedules/3",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/admin/notifications/schedules/2/resend",
+      "status": 409
+    },
+    {
+      "method": "POST",
+      "path": "/admin/notifications/schedules/3/resend",
+      "status": 409
+    }
+  ],
+  "before": {
+    "1": {
+      "notificationId": 1,
+      "content": {
+        "push": {
+          "title": "集合時間のお知らせ",
+          "body": "集合時間は23:30です。"
+        },
+        "detail": {
+          "title": "集合時間のお知らせ",
+          "body": "集合時間は23:30です。"
+        }
+      },
+      "importance": "normal",
+      "creation": {
+        "method": "automatic",
+        "user": null,
+        "source": {
+          "type": "gathering",
+          "id": 1,
+          "label": "隔離検証の集合場所"
+        }
+      },
+      "createdAt": "2026-11-03T12:58:56.405Z",
+      "updatedAt": "2026-11-03T12:58:56.405Z",
+      "schedules": [
+        {
+          "notificationScheduleId": 1,
+          "sendAt": "2026-11-03T14:15:00.000Z",
+          "status": "scheduled",
+          "scheduledBy": null,
+          "createdAt": "2026-11-03T12:58:56.405Z",
+          "audience": {
+            "items": [
+              {
+                "type": "gathering",
+                "targetId": 1,
+                "label": "隔離検証の集合場所"
+              }
+            ],
+            "recipientResolution": {
+              "status": "pending",
+              "resolvedCount": 0
+            }
+          },
+          "recipientPushSummary": {
+            "totalCount": 0,
+            "successCount": 0,
+            "failedCount": 0,
+            "noPushTargetCount": 0
+          },
+          "stop": null
+        }
+      ]
+    },
+    "2": {
+      "notificationId": 2,
+      "content": {
+        "push": {
+          "title": "集合時間のお知らせ",
+          "body": "集合時間は23:30です。"
+        },
+        "detail": {
+          "title": "集合時間のお知らせ",
+          "body": "集合時間は23:30です。"
+        }
+      },
+      "importance": "normal",
+      "creation": {
+        "method": "automatic",
+        "user": null,
+        "source": {
+          "type": "gathering",
+          "id": 2,
+          "label": "隔離検証の集合場所"
+        }
+      },
+      "createdAt": "2026-11-03T12:58:56.419Z",
+      "updatedAt": "2026-11-03T12:58:56.419Z",
+      "schedules": [
+        {
+          "notificationScheduleId": 2,
+          "sendAt": "2026-11-03T12:55:06.955Z",
+          "status": "sending",
+          "scheduledBy": null,
+          "createdAt": "2026-11-03T12:58:56.419Z",
+          "audience": {
+            "items": [
+              {
+                "type": "gathering",
+                "targetId": 2,
+                "label": "隔離検証の集合場所"
+              }
+            ],
+            "recipientResolution": {
+              "status": "resolved",
+              "resolvedCount": 1
+            }
+          },
+          "recipientPushSummary": {
+            "totalCount": 1,
+            "successCount": 1,
+            "failedCount": 0,
+            "noPushTargetCount": 0
+          },
+          "stop": null
+        }
+      ]
+    },
+    "3": {
+      "notificationId": 3,
+      "content": {
+        "push": {
+          "title": "集合時間のお知らせ",
+          "body": "集合時間は23:30です。"
+        },
+        "detail": {
+          "title": "集合時間のお知らせ",
+          "body": "集合時間は23:30です。"
+        }
+      },
+      "importance": "normal",
+      "creation": {
+        "method": "automatic",
+        "user": null,
+        "source": {
+          "type": "gathering",
+          "id": 3,
+          "label": "隔離検証の集合場所"
+        }
+      },
+      "createdAt": "2026-11-03T12:58:56.429Z",
+      "updatedAt": "2026-11-03T12:58:56.429Z",
+      "schedules": [
+        {
+          "notificationScheduleId": 3,
+          "sendAt": "2026-11-03T12:55:06.955Z",
+          "status": "completed",
+          "scheduledBy": null,
+          "createdAt": "2026-11-03T12:58:56.429Z",
+          "audience": {
+            "items": [
+              {
+                "type": "gathering",
+                "targetId": 3,
+                "label": "隔離検証の集合場所"
+              }
+            ],
+            "recipientResolution": {
+              "status": "resolved",
+              "resolvedCount": 1
+            }
+          },
+          "recipientPushSummary": {
+            "totalCount": 1,
+            "successCount": 1,
+            "failedCount": 0,
+            "noPushTargetCount": 0
+          },
+          "stop": null
+        }
+      ]
+    }
+  },
+  "after": {
+    "stopped": {
+      "notificationId": 2,
+      "notificationScheduleId": 2,
+      "content": {
+        "push": {
+          "title": "集合時間のお知らせ",
+          "body": "集合時間は23:30です。"
+        }
+      },
+      "importance": "normal",
+      "sendAt": "2026-11-03T12:55:06.955Z",
+      "status": "stopped",
+      "failureReason": null,
+      "stop": {
+        "reason": "source_deleted",
+        "stoppedAt": "2026-11-03T13:01:15.557Z",
+        "stoppedBy": null
+      },
+      "creation": {
+        "method": "automatic",
+        "user": null,
+        "source": {
+          "type": "gathering",
+          "id": 2,
+          "label": null
+        }
+      },
+      "audienceProgress": {
+        "totalCount": 1,
+        "resolvedCount": 0
+      },
+      "recipientProgress": {
+        "count": 1,
+        "status": "resolved"
+      },
+      "deliveryProgress": {
+        "totalCount": 5,
+        "pendingCount": 0,
+        "sendingCount": 1,
+        "retryWaitCount": 0,
+        "sentCount": 1,
+        "failedCount": 1,
+        "stoppedCount": 2
+      }
+    },
+    "completed": {
+      "notificationId": 3,
+      "notificationScheduleId": 3,
+      "content": {
+        "push": {
+          "title": "集合時間のお知らせ",
+          "body": "集合時間は23:30です。"
+        }
+      },
+      "importance": "normal",
+      "sendAt": "2026-11-03T12:55:06.955Z",
+      "status": "completed",
+      "failureReason": null,
+      "stop": null,
+      "creation": {
+        "method": "automatic",
+        "user": null,
+        "source": {
+          "type": "gathering",
+          "id": 3,
+          "label": null
+        }
+      },
+      "audienceProgress": {
+        "totalCount": 1,
+        "resolvedCount": 0
+      },
+      "recipientProgress": {
+        "count": 1,
+        "status": "resolved"
+      },
+      "deliveryProgress": {
+        "totalCount": 1,
+        "pendingCount": 0,
+        "sendingCount": 0,
+        "retryWaitCount": 0,
+        "sentCount": 1,
+        "failedCount": 0,
+        "stoppedCount": 0
+      }
+    },
+    "deliveries": {
+      "1": "stopped",
+      "2": "stopped",
+      "3": "sending",
+      "4": "sent",
+      "5": "failed"
+    }
+  },
+  "frontendAdapterChecks": {
+    "realHttpAdaptersAndParser": true,
+    "sourceDeletedStopAndCounts": true,
+    "deletedNotification404": true,
+    "deletedNotificationAbsentInList": true,
+    "completedHistoryReadable": true,
+    "resendBlockedForDeletedSources": true,
+    "stopAndCancelUnavailable": true,
+    "resultsDeliveryHistory": true
+  }
+}
