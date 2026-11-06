@@ -220,12 +220,33 @@ describe("notification v2 HTTP adapters", () => {
     );
   });
 
-  it("進み具合の無いSchedule一覧は想定外のResponseとして扱う", async () => {
+  it("進み具合のキーが無い旧APIのSchedule一覧は、進み具合をnullにそろえて受け付ける", async () => {
     const item: Record<string, unknown> = {
       ...notificationScheduleListFixture.items[0],
     };
     delete item.audienceProgress;
     delete item.recipientProgress;
+    delete item.deliveryProgress;
+    const api = createHttpNotificationScheduleQueryApi({
+      get: vi.fn().mockResolvedValue({ items: [item] }),
+    });
+
+    await expect(api.list()).resolves.toEqual({
+      items: [
+        {
+          ...item,
+          audienceProgress: null,
+          recipientProgress: null,
+          deliveryProgress: null,
+        },
+      ],
+    });
+  });
+
+  it("進み具合のキーが一部だけのSchedule一覧は想定外のResponseとして扱う", async () => {
+    const item: Record<string, unknown> = {
+      ...notificationScheduleListFixture.items[0],
+    };
     delete item.deliveryProgress;
     const api = createHttpNotificationScheduleQueryApi({
       get: vi.fn().mockResolvedValue({ items: [item] }),

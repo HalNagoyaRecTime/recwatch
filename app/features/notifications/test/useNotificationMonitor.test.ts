@@ -115,6 +115,95 @@ describe("useNotificationMonitor", () => {
     ).toEqual(completed.deliveryProgress);
   });
 
+  it("旧APIで進行中の配信の進み具合もnullのときは、一覧の更新ごとに詳細を取り直す", async () => {
+    const fixtures = createNotificationMonitorFixtures(now());
+    const completed = fixtures.find((item) => item.status === "completed")!;
+    const sending = fixtures.find((item) => item.status === "sending")!;
+    const api = createMockNotificationMonitorApi(fixtures);
+    vi.spyOn(api, "list").mockImplementation(async () => ({
+      items: fixtures.map((item) => ({
+        ...item,
+        audienceProgress: null,
+        recipientProgress: null,
+        deliveryProgress: null,
+      })),
+    }));
+    const getDetail = vi.spyOn(api, "getDetail");
+    const { result } = renderHook(() =>
+      useNotificationMonitor({ api, ...options })
+    );
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    const ids = [
+      completed.notificationScheduleId,
+      sending.notificationScheduleId,
+    ];
+
+    await act(() => result.current.loadDetails(ids));
+    sending.deliveryProgress = { ...sending.deliveryProgress, sentCount: 30 };
+    await act(() => result.current.reload());
+    await act(() => result.current.loadDetails(ids));
+
+    expect(
+      getDetail.mock.calls.filter(
+        ([id]) => id === completed.notificationScheduleId
+      )
+    ).toHaveLength(1);
+    expect(
+      getDetail.mock.calls.filter(
+        ([id]) => id === sending.notificationScheduleId
+      )
+    ).toHaveLength(2);
+    expect(
+      result.current.items.find(
+        (item) => item.notificationScheduleId === sending.notificationScheduleId
+      )?.deliveryProgress?.sentCount
+    ).toBe(30);
+  });
+
+  it("一覧の更新前に始めた詳細の取得は、更新後に返ってきても表示に使わない", async () => {
+    const fixtures = createNotificationMonitorFixtures(now());
+    const sending = fixtures.find((item) => item.status === "sending")!;
+    const api = createMockNotificationMonitorApi(fixtures);
+    vi.spyOn(api, "list").mockImplementation(async () => ({
+      items: fixtures.map((item) => ({
+        ...item,
+        audienceProgress: null,
+        recipientProgress: null,
+        deliveryProgress: null,
+      })),
+    }));
+    const stale = deferred<Awaited<ReturnType<typeof api.getDetail>>>();
+    const getDetail = vi
+      .spyOn(api, "getDetail")
+      .mockReturnValueOnce(stale.promise);
+    const { result } = renderHook(() =>
+      useNotificationMonitor({ api, ...options })
+    );
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    const ids = [sending.notificationScheduleId];
+    let staleLoad!: Promise<void>;
+    act(() => {
+      staleLoad = result.current.loadDetails(ids);
+    });
+
+    await act(() => result.current.reload());
+    await act(() => result.current.loadDetails(ids));
+    await act(async () => {
+      stale.resolve({
+        ...sending,
+        deliveryProgress: { ...sending.deliveryProgress, sentCount: 0 },
+      });
+      await staleLoad;
+    });
+
+    expect(getDetail).toHaveBeenCalledTimes(2);
+    expect(
+      result.current.items.find(
+        (item) => item.notificationScheduleId === sending.notificationScheduleId
+      )?.deliveryProgress?.sentCount
+    ).toBe(sending.deliveryProgress.sentCount);
+  });
+
   it("mutation後の再取得を進行中の古い取得より優先する", async () => {
     const api = createMockNotificationMonitorApi(
       createNotificationMonitorFixtures(now())

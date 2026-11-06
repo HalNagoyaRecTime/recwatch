@@ -39,7 +39,7 @@ export function isNotificationScheduleListResponse(
   );
 }
 
-const notificationScheduleKeys = [
+const notificationScheduleBaseKeys = [
   "notificationId",
   "notificationScheduleId",
   "content",
@@ -49,6 +49,9 @@ const notificationScheduleKeys = [
   "failureReason",
   "stop",
   "creation",
+];
+const notificationScheduleKeys = [
+  ...notificationScheduleBaseKeys,
   "audienceProgress",
   "recipientProgress",
   "deliveryProgress",
@@ -67,13 +70,15 @@ export function isNotificationScheduleDetail(
   );
 }
 
+// 進み具合のキーが無い一覧は、進み具合を返す前のAPIの形です。
+// APIより先にこの画面をデプロイしても読めるよう受け付け、parserで進み具合をnullに揃えます。
 function isNotificationScheduleListItem(
   value: unknown
 ): value is NotificationScheduleListItemDto {
+  if (!isRecord(value) || !hasNotificationScheduleFields(value)) return false;
+  if (hasExactKeys(value, notificationScheduleBaseKeys)) return true;
   return (
-    isRecord(value) &&
     hasExactKeys(value, notificationScheduleKeys) &&
-    hasNotificationScheduleFields(value) &&
     (value.audienceProgress === null ||
       isAudienceProgress(value.audienceProgress)) &&
     (value.recipientProgress === null ||

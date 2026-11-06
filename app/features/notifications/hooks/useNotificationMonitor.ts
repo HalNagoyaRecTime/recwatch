@@ -17,6 +17,10 @@ import {
 
 const currentTime = () => Date.now();
 
+function isSettledSchedule(schedule: NotificationScheduleDetail) {
+  return schedule.status === "completed" || schedule.status === "failed";
+}
+
 type MonitorState = {
   items: MonitorSchedule[];
   isLoading: boolean;
@@ -55,6 +59,7 @@ export function useNotificationMonitor({
   >({});
   const detailsInFlight = useRef(new Set<number>());
   const failedDetailIds = useRef(new Set<number>());
+  const detailsGeneration = useRef(0);
   const reportedDetailFailure = useRef(false);
 
   const load = useCallback(
@@ -82,6 +87,15 @@ export function useNotificationMonitor({
         });
         if (generation.current !== requestId) return;
         failedDetailIds.current.clear();
+        detailsInFlight.current.clear();
+        detailsGeneration.current += 1;
+        setDetails((previous) =>
+          Object.fromEntries(
+            Object.entries(previous).filter(([, detail]) =>
+              isSettledSchedule(detail)
+            )
+          )
+        );
         setState({
           items: response.items.filter((item) =>
             isMonitorScheduleVisible(item, at)
@@ -149,6 +163,7 @@ export function useNotificationMonitor({
   }, [load]);
   // 一覧はcompleted・failedの進み具合をnullで返すため、表示するものだけ詳細を取ります。
   // この2つは以後進み具合が変わらないため、取った詳細は取り直しません。
+  // 進み具合を返す前のAPIでは進行中の配信もnullになるので、それは一覧の更新ごとに取り直します。
   const loadDetails = useCallback(
     async (ids: readonly number[]) => {
       const targets = state.items
@@ -162,6 +177,7 @@ export function useNotificationMonitor({
             !failedDetailIds.current.has(id)
         );
       for (const id of targets) detailsInFlight.current.add(id);
+      const requestGeneration = detailsGeneration.current;
       let next = 0;
       const failures: unknown[] = [];
       const worker = async () => {
@@ -169,12 +185,15 @@ export function useNotificationMonitor({
           const id = targets[next++];
           try {
             const detail = await api.getDetail(id);
+            if (detailsGeneration.current !== requestGeneration) continue;
             setDetails((previous) => ({ ...previous, [id]: detail }));
           } catch (error) {
+            if (detailsGeneration.current !== requestGeneration) continue;
             failedDetailIds.current.add(id);
             failures.push(error);
           } finally {
-            detailsInFlight.current.delete(id);
+            if (detailsGeneration.current === requestGeneration)
+              detailsInFlight.current.delete(id);
           }
         }
       };
