@@ -11,12 +11,14 @@ describe("集合場所APIマッパー", () => {
       toGatheringSpot({
         gathering_spot_id: 10,
         gathering_spot_name: "体育館前",
+        image_url: "https://images.example.com/gathering-spots/1.jpg",
         created_at: "2026-08-07T09:00:00Z",
         updated_at: "2026-08-07T09:10:00Z",
       })
     ).toEqual({
       id: 10,
       name: "体育館前",
+      imageUrl: "https://images.example.com/gathering-spots/1.jpg",
       createdAt: "2026-08-07T09:00:00Z",
       updatedAt: "2026-08-07T09:10:00Z",
     });

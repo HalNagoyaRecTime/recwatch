@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { getErrorMessage } from "~/lib/client-error";
+import type { PlaceImageChange } from "~/types/place-image-change";
 
 import type {
   GatheringSpotGateway,
@@ -79,6 +80,17 @@ export function useGatheringSpots({
     [gateway]
   );
 
+  const saveSpotImage = useCallback(
+    async (id: number, change: PlaceImageChange) => {
+      if (change.type === "replace") {
+        await gateway.setImage(id, change.image);
+      } else {
+        await gateway.deleteImage(id);
+      }
+    },
+    [gateway]
+  );
+
   return {
     spots,
     total,
@@ -87,6 +99,7 @@ export function useGatheringSpots({
     createSpot,
     updateSpot,
     deleteSpot,
+    saveSpotImage,
     reload,
   };
 }

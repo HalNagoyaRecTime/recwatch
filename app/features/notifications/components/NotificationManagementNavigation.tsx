@@ -7,7 +7,7 @@ const destinations = [
   {
     value: "calendar",
     label: "カレンダー",
-    to: "/notifications?view=calendar",
+    to: "/notifications/calendar",
   },
 ] as const;
 

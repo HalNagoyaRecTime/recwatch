@@ -18,6 +18,34 @@ import {
 import { ClientError } from "~/lib/client-error";
 
 describe("notification v2 HTTP adapters", () => {
+  it("ページングと検索・絞り込み・並べ替えの条件をAPIに送る", async () => {
+    const get = vi.fn().mockResolvedValue(adminNotificationListFixture);
+    const api = createHttpAdminNotificationQueryApi({ get });
+    await api.list({
+      page: 2,
+      limit: 50,
+      search: "会場 A",
+      status: "failed",
+      creationMethod: "manual",
+      filterFrom: "2026-11-07T00:00:00+09:00",
+      filterTo: "2026-11-07T23:59:59+09:00",
+      sortBy: "title",
+      sortDirection: "asc",
+    });
+    const path = get.mock.calls[0]?.[0] as string;
+    const url = new URL(path, "https://example.invalid");
+    expect(Object.fromEntries(url.searchParams)).toEqual({
+      page: "2",
+      limit: "50",
+      search: "会場 A",
+      status: "failed",
+      creationMethod: "manual",
+      filterFrom: "2026-11-07T00:00:00+09:00",
+      filterTo: "2026-11-07T23:59:59+09:00",
+      sortBy: "title",
+      sortDirection: "asc",
+    });
+  });
   it("通知一覧と詳細を取得する", async () => {
     const get = vi
       .fn()

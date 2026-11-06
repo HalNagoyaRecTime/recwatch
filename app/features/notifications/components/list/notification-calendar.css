@@ -1,0 +1,14 @@
+.notification-calendar-theme {
+  --fc-classic-background: var(--surface-base);
+  --fc-classic-foreground: var(--text-base);
+  --fc-classic-muted-foreground: var(--text-muted);
+  --fc-classic-faint-foreground: var(--text-subtle);
+  --fc-classic-border: var(--border-base);
+  --fc-classic-strong-border: var(--border-strong);
+  --fc-classic-faint: var(--surface-muted);
+  --fc-classic-muted: var(--surface-subtle);
+  --fc-classic-strong: var(--border-strong);
+  --fc-classic-event: var(--surface-base);
+  --fc-classic-event-contrast: var(--text-base);
+  --fc-classic-today: var(--surface-hover);
+}

@@ -28,6 +28,7 @@ describe("notification audience response mapper", () => {
       {
         gathering_id: 2,
         event_id: 3,
+        round: 2,
         gathering_spot_id: 4,
         gathering_time: "0850",
         event_name: "大縄跳び",
@@ -53,7 +54,7 @@ describe("notification audience response mapper", () => {
       { id: "1", name: "1A 1年A組", type: "class_room" },
       {
         id: "2",
-        name: "大縄跳び / 体育館前 (08:50)",
+        name: "大縄跳び / Round 2 / 体育館前 (08:50)",
         type: "gathering",
       },
       { id: "3", name: "大縄跳び", type: "event" },

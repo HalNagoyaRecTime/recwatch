@@ -1,33 +1,45 @@
 import { Check } from "lucide-react";
+import { useState } from "react";
 
+import { PlaceImageField } from "~/components/management/PlaceImageField";
 import { Button } from "~/components/ui/button/Button";
 import type { GatheringSpot } from "~/features/gathering-spots/model/gathering-spot";
+import type { PlaceImageChange } from "~/types/place-image-change";
 
 type GatheringSpotFormProps = {
+  autoFocusImage: boolean;
   editingSpot: GatheringSpot | null;
+  imageChange: PlaceImageChange | null;
   isSubmitting: boolean;
   name: string;
   submitError: string | null;
   onChange: (name: string) => void;
   onClose: () => void;
+  onImageChange: (change: PlaceImageChange | null) => void;
   onSubmit: () => void | Promise<void>;
 };
 
 export function GatheringSpotForm({
+  autoFocusImage,
   editingSpot,
+  imageChange,
   isSubmitting,
   name,
   submitError,
   onChange,
   onClose,
+  onImageChange,
   onSubmit,
 }: GatheringSpotFormProps) {
+  const [isImageProcessing, setIsImageProcessing] = useState(false);
+
   return (
     <form
       aria-labelledby="gathering-spot-form-title"
       noValidate
       onSubmit={(event) => {
         event.preventDefault();
+        if (isImageProcessing) return;
         void onSubmit();
       }}
     >
@@ -60,6 +72,17 @@ export function GatheringSpotForm({
           />
         </label>
 
+        <PlaceImageField
+          autoFocus={autoFocusImage}
+          change={imageChange}
+          currentImageUrl={editingSpot?.imageUrl ?? null}
+          disabled={isSubmitting}
+          isProcessing={isImageProcessing}
+          label="集合場所の画像"
+          onChange={onImageChange}
+          onProcessingChange={setIsImageProcessing}
+        />
+
         {submitError ? (
           <p
             id="gathering-spot-name-error"
@@ -71,12 +94,12 @@ export function GatheringSpotForm({
           </p>
         ) : null}
 
-        <div className="flex flex-wrap justify-end gap-3">
+        <div className="grid grid-cols-2 gap-3">
           <Button disabled={isSubmitting} onClick={onClose} size="md">
             キャンセル
           </Button>
           <Button
-            disabled={isSubmitting}
+            disabled={isSubmitting || isImageProcessing}
             icon={Check}
             size="md"
             type="submit"

@@ -24,11 +24,15 @@ export function GatheringSpotsPage({ gateway }: GatheringSpotsPageProps) {
           <ScrollbarArea className="h-full overscroll-y-contain">
             <div className="w-[min(24rem,90vw)] p-5 md:p-6">
               <GatheringSpotForm
+                autoFocusImage={state.shouldFocusImage}
                 editingSpot={state.editingSpot}
+                key={state.editingSpot?.id ?? "new"}
+                imageChange={state.imageChange}
                 isSubmitting={state.isSubmitting}
                 name={state.spotNameInput}
                 onChange={state.handleSpotNameChange}
                 onClose={state.closeForm}
+                onImageChange={state.handleImageChange}
                 onSubmit={state.submitForm}
                 submitError={state.submitError}
               />
@@ -84,6 +88,7 @@ export function GatheringSpotsPage({ gateway }: GatheringSpotsPageProps) {
             items={state.spots}
             onDelete={state.handleDelete}
             onEdit={state.openEditForm}
+            onEditImage={state.openEditImageForm}
             onPageChange={state.handlePageChange}
             onQueryChange={state.handleQueryChange}
             onSortChange={state.handleSortChange}
