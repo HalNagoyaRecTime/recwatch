@@ -4,6 +4,7 @@ import { getErrorMessage } from "~/lib/client-error";
 import {
   isUpdateConflictError,
   UPDATE_CONFLICT_MESSAGE,
+  UPDATE_CONFLICT_RELOAD_FAILED_MESSAGE,
 } from "~/lib/update-conflict";
 
 export type ManagementMutationOperation = () => Promise<unknown>;
@@ -43,7 +44,11 @@ export function useManagementMutation({
       } catch (reason) {
         if (onConflict && isUpdateConflictError(reason)) {
           setError(UPDATE_CONFLICT_MESSAGE);
-          await onConflict();
+          try {
+            await onConflict();
+          } catch {
+            setError(UPDATE_CONFLICT_RELOAD_FAILED_MESSAGE);
+          }
         } else {
           setError(getErrorMessage(reason, fallbackMessage));
         }

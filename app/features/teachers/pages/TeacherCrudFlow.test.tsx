@@ -12,7 +12,10 @@ import { describe, expect, it, vi } from "vitest";
 
 import { TeacherCreatePage } from "~/features/teachers/pages/TeacherCreatePage";
 import { TeacherEditPage } from "~/features/teachers/pages/TeacherEditPage";
-import { UPDATE_CONFLICT_MESSAGE } from "~/lib/update-conflict";
+import {
+  UPDATE_CONFLICT_MESSAGE,
+  UPDATE_CONFLICT_RELOAD_FAILED_MESSAGE,
+} from "~/lib/update-conflict";
 import type { TeacherRow } from "~/features/teachers/model/teacher";
 import { ApiClientError } from "~/lib/api-client-error";
 
@@ -274,7 +277,7 @@ describe("teacher create and edit flows", () => {
       <TeacherEditPage
         api={createApi()}
         classRooms={classRooms}
-        onConflict={vi.fn()}
+        loadLatest={vi.fn()}
         {...callbacks}
         teacher={teacher}
       />
@@ -300,19 +303,22 @@ describe("teacher create and edit flows", () => {
     mocks.updateTeacher.mockRejectedValueOnce(
       new ApiClientError(409, "conflict", "TEACHER_UPDATE_CONFLICT")
     );
-    const onConflict = vi.fn();
+    const loadLatest = vi.fn().mockResolvedValue({
+      ...teacher,
+      displayName: "他の人の変更",
+      lockVersion: 4,
+    });
     const user = userEvent.setup();
-    const renderPage = (value: TeacherRow) => (
+    render(
       <TeacherEditPage
         api={createApi()}
         classRooms={classRooms}
+        loadLatest={loadLatest}
         onClose={vi.fn()}
-        onConflict={onConflict}
         onSaved={vi.fn()}
-        teacher={value}
+        teacher={teacher}
       />
     );
-    const { rerender } = render(renderPage(teacher));
 
     const nameInput = await screen.findByLabelText("先生名");
     await user.clear(nameInput);
@@ -322,14 +328,55 @@ describe("teacher create and edit flows", () => {
     expect(
       await screen.findByText(UPDATE_CONFLICT_MESSAGE)
     ).toBeInTheDocument();
-    expect(onConflict).toHaveBeenCalledOnce();
+    expect(loadLatest).toHaveBeenCalledOnce();
+    await waitFor(() =>
+      expect(screen.getByLabelText("先生名")).toHaveValue("他の人の変更")
+    );
+    expect(screen.getByText(UPDATE_CONFLICT_MESSAGE)).toBeInTheDocument();
+  });
 
-    rerender(
-      renderPage({ ...teacher, displayName: "他の人の変更", lockVersion: 4 })
+  it("競合後の再取得に失敗したら入力を残し、再度の保存で最新の値へ置き換える", async () => {
+    mocks.updateTeacher.mockRejectedValue(
+      new ApiClientError(409, "conflict", "TEACHER_UPDATE_CONFLICT")
+    );
+    const loadLatest = vi
+      .fn()
+      .mockRejectedValueOnce(new Error("network"))
+      .mockResolvedValue({
+        ...teacher,
+        displayName: "他の人の変更",
+        lockVersion: 4,
+      });
+    const user = userEvent.setup();
+    render(
+      <TeacherEditPage
+        api={createApi()}
+        classRooms={classRooms}
+        loadLatest={loadLatest}
+        onClose={vi.fn()}
+        onSaved={vi.fn()}
+        teacher={teacher}
+      />
     );
 
-    expect(screen.getByLabelText("先生名")).toHaveValue("他の人の変更");
-    expect(screen.getByText(UPDATE_CONFLICT_MESSAGE)).toBeInTheDocument();
+    const nameInput = await screen.findByLabelText("先生名");
+    await user.clear(nameInput);
+    await user.type(nameInput, "自分の変更");
+    await user.click(screen.getByRole("button", { name: "保存する" }));
+
+    expect(
+      await screen.findByText(UPDATE_CONFLICT_RELOAD_FAILED_MESSAGE)
+    ).toBeInTheDocument();
+    expect(screen.getByLabelText("先生名")).toHaveValue("自分の変更");
+
+    await user.click(screen.getByRole("button", { name: "保存する" }));
+
+    expect(
+      await screen.findByText(UPDATE_CONFLICT_MESSAGE)
+    ).toBeInTheDocument();
+    await waitFor(() =>
+      expect(screen.getByLabelText("先生名")).toHaveValue("他の人の変更")
+    );
   });
 
   it("更新APIエラーをフォームへ表示してモーダルを維持する", async () => {
@@ -342,7 +389,7 @@ describe("teacher create and edit flows", () => {
       <TeacherEditPage
         api={createApi()}
         classRooms={classRooms}
-        onConflict={vi.fn()}
+        loadLatest={vi.fn()}
         {...callbacks}
         teacher={teacher}
       />

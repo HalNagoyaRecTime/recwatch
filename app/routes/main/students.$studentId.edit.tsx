@@ -1,4 +1,5 @@
-import { useLoaderData, useRevalidator, useRouteError } from "react-router";
+import { useRef } from "react";
+import { useLoaderData, useRouteError } from "react-router";
 
 import { StudentApi } from "~/features/students/api";
 import { parseStudentId } from "~/features/students/application/student-loaders";
@@ -40,15 +41,19 @@ export default function StudentEditRoute() {
   const { student } = useLoaderData<typeof clientLoader>();
   const classRoomOptions = useManagementRouteOptions<StudentClassRoomOption>();
   const closeModal = useManagementModalReturn();
-  const revalidator = useRevalidator();
+  // 競合が起きたら一覧も古いので、保存せずに閉じるときも再検証する。
+  const hasConflict = useRef(false);
 
   return (
     <StudentEditPage
       api={StudentApi}
       classRoomOptions={classRoomOptions}
       classRooms={classRoomOptions.items}
-      onConflict={() => revalidator.revalidate()}
-      onClose={() => closeModal()}
+      loadLatest={() => {
+        hasConflict.current = true;
+        return StudentApi.getStudentById(student.studentId);
+      }}
+      onClose={() => closeModal(hasConflict.current)}
       onSaved={() => closeModal(true)}
       student={student}
       userApi={userManagementApi}

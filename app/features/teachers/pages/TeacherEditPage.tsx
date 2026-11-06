@@ -10,25 +10,30 @@ import type {
   ClassRoomOption,
   TeacherRow,
 } from "~/features/teachers/model/teacher";
+import { useLatestAfterConflict } from "~/hooks/useLatestAfterConflict";
 import type { ManagementOptionState } from "~/hooks/useManagementOptions";
 
 export function TeacherEditPage({
   api,
   classRoomOptions,
   classRooms,
-  onConflict,
+  loadLatest,
   onClose,
   onSaved,
-  teacher,
+  teacher: loadedTeacher,
 }: {
   api: TeacherMutationApi;
   classRooms: readonly ClassRoomOption[];
   classRoomOptions?: ManagementOptionState<ClassRoomOption>;
-  onConflict: () => Promise<void> | void;
+  loadLatest: () => Promise<TeacherRow>;
   onClose: () => void | Promise<void>;
   onSaved: () => Promise<void>;
   teacher: TeacherRow;
 }) {
+  const { current: teacher, reloadLatest } = useLatestAfterConflict(
+    loadedTeacher,
+    loadLatest
+  );
   const classRoomOptionState = classRoomOptions ?? {
     error: null,
     isLoading: false,
@@ -38,7 +43,7 @@ export function TeacherEditPage({
     error: submitError,
     isMutating: isSubmitting,
     save,
-  } = useTeacherMutation({ api, onConflict });
+  } = useTeacherMutation({ api, onConflict: reloadLatest });
 
   async function handleSubmit(input: TeacherFormInput) {
     if (

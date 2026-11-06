@@ -6,6 +6,7 @@ import type {
 } from "~/features/students/api/contracts/student-api";
 import { StudentForm } from "~/features/students/components/StudentForm";
 import { useStudentMutation } from "~/features/students/hooks/useStudentMutation";
+import { useLatestAfterConflict } from "~/hooks/useLatestAfterConflict";
 import type { ManagementOptionState } from "~/hooks/useManagementOptions";
 import type {
   StudentClassRoomOption,
@@ -17,7 +18,7 @@ type StudentEditPageProps = {
   api: StudentMutationApi;
   classRooms: readonly StudentClassRoomOption[];
   classRoomOptions?: ManagementOptionState<StudentClassRoomOption>;
-  onConflict: () => Promise<void> | void;
+  loadLatest: () => Promise<StudentRow>;
   onClose: () => void | Promise<void>;
   onSaved: () => Promise<void>;
   student: StudentRow;
@@ -28,12 +29,16 @@ export function StudentEditPage({
   api,
   classRoomOptions,
   classRooms,
-  onConflict,
+  loadLatest,
   onClose,
   onSaved,
-  student,
+  student: loadedStudent,
   userApi,
 }: StudentEditPageProps) {
+  const { current: student, reloadLatest } = useLatestAfterConflict(
+    loadedStudent,
+    loadLatest
+  );
   const classRoomOptionState = classRoomOptions ?? {
     error: null,
     isLoading: false,
@@ -43,7 +48,11 @@ export function StudentEditPage({
     error: submitError,
     isMutating: isSubmitting,
     save,
-  } = useStudentMutation({ api, onConflict, userApi });
+  } = useStudentMutation({
+    api,
+    onConflict: reloadLatest,
+    userApi,
+  });
 
   async function handleSubmit(input: StudentWriteInput) {
     if (

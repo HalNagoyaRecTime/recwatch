@@ -2,7 +2,10 @@ import { act, renderHook, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 import { ApiClientError } from "~/lib/api-client-error";
-import { UPDATE_CONFLICT_MESSAGE } from "~/lib/update-conflict";
+import {
+  UPDATE_CONFLICT_MESSAGE,
+  UPDATE_CONFLICT_RELOAD_FAILED_MESSAGE,
+} from "~/lib/update-conflict";
 import { useManagementMutation } from "~/hooks/useManagementMutation";
 
 describe("useManagementMutation", () => {
@@ -92,6 +95,28 @@ describe("useManagementMutation", () => {
     expect(succeeded).toBe(false);
     expect(onConflict).toHaveBeenCalledOnce();
     expect(result.current.error).toBe(UPDATE_CONFLICT_MESSAGE);
+    expect(result.current.isMutating).toBe(false);
+  });
+
+  it("onConflictが失敗したら再取得に失敗した文言を出してlockを解除する", async () => {
+    const { result } = renderHook(() => useManagementMutation());
+
+    let succeeded = true;
+    await act(async () => {
+      succeeded = await result.current.run(
+        vi
+          .fn()
+          .mockRejectedValue(
+            new ApiClientError(409, "API failure", "CLASS_ROOM_UPDATE_CONFLICT")
+          ),
+        "fallback",
+        false,
+        vi.fn().mockRejectedValue(new Error("network"))
+      );
+    });
+
+    expect(succeeded).toBe(false);
+    expect(result.current.error).toBe(UPDATE_CONFLICT_RELOAD_FAILED_MESSAGE);
     expect(result.current.isMutating).toBe(false);
   });
 

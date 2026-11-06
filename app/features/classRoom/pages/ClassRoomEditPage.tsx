@@ -12,13 +12,14 @@ import type {
   ClassRoom,
   ClassRoomWriteInput,
 } from "~/features/classRoom/model/classRoom";
+import { useLatestAfterConflict } from "~/hooks/useLatestAfterConflict";
 import type { ManagementOptionState } from "~/hooks/useManagementOptions";
 
 type ClassRoomEditPageProps = {
   api: ClassRoomMutationApi;
   children?: ReactNode;
   classRoom: ClassRoom;
-  onConflict: () => Promise<void> | void;
+  loadLatest: () => Promise<ClassRoom>;
   onClose: () => void | Promise<void>;
   onSaved: () => Promise<void>;
   teacherOptionState?: ManagementOptionState<ClassRoomTeacherOption>;
@@ -36,13 +37,17 @@ function toEditForm(classRoom: ClassRoom): ClassRoomWriteInput {
 export function ClassRoomEditPage({
   api,
   children,
-  classRoom,
-  onConflict,
+  classRoom: loadedClassRoom,
+  loadLatest,
   onClose,
   onSaved,
   teacherOptionState,
   teacherOptions,
 }: ClassRoomEditPageProps) {
+  const { current: classRoom, reloadLatest } = useLatestAfterConflict(
+    loadedClassRoom,
+    loadLatest
+  );
   const teacherOptionsState = teacherOptionState ?? {
     error: null,
     isLoading: false,
@@ -61,7 +66,10 @@ export function ClassRoomEditPage({
     error: submitError,
     isMutating: isSubmitting,
     update,
-  } = useClassRoomMutation({ api, onConflict });
+  } = useClassRoomMutation({
+    api,
+    onConflict: reloadLatest,
+  });
 
   async function handleSubmit(input: ClassRoomWriteInput) {
     if (
