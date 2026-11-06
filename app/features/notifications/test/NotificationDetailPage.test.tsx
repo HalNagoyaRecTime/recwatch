@@ -1,4 +1,5 @@
 import {
+  act,
   cleanup,
   render,
   screen,
@@ -69,6 +70,120 @@ function renderPage(apis = createApis()) {
 }
 
 describe("NotificationDetailPage", () => {
+  it("対象者が未確定のときはユーザー単位の集計を未確定と表示する", async () => {
+    const notification = cloneFixture(adminNotificationDetailFixture);
+    notification.schedules[0].audience.recipientResolution.status = "pending";
+    renderPage(
+      createApis({ getDetail: vi.fn().mockResolvedValue(notification) })
+    );
+    const card = (
+      await screen.findByRole("heading", { name: "配信サマリー" })
+    ).closest("section")!;
+    expect(within(card).getAllByText("未確定")).toHaveLength(4);
+  });
+
+  it("概要に選択した配信回のサマリーを表示し、切り替え中は古い送信先集計を表示しない", async () => {
+    const user = userEvent.setup();
+    let resolveNext!: (value: typeof notificationScheduleDetailFixture) => void;
+    const next = new Promise<typeof notificationScheduleDetailFixture>(
+      (resolve) => {
+        resolveNext = resolve;
+      }
+    );
+    const first = {
+      ...cloneFixture(notificationScheduleDetailFixture),
+      notificationScheduleId: 504,
+      deliveryProgress: {
+        ...notificationScheduleDetailFixture.deliveryProgress,
+        totalCount: 42,
+      },
+    };
+    const second = {
+      ...cloneFixture(notificationScheduleDetailFixture),
+      notificationScheduleId: 506,
+      deliveryProgress: {
+        ...notificationScheduleDetailFixture.deliveryProgress,
+        totalCount: 99,
+      },
+    };
+    const getSchedule = vi
+      .fn()
+      .mockResolvedValueOnce(first)
+      .mockReturnValueOnce(next);
+    const apis = createApis({ getSchedule });
+    renderPage(apis);
+    const heading = await screen.findByRole("heading", {
+      name: "配信サマリー",
+    });
+    const card = heading.closest("section")!;
+    expect(await within(card).findByText("42")).toBeInTheDocument();
+    expect(within(card).getByText("Push 未成功ユーザー")).toBeInTheDocument();
+    expect(within(card).getByText("送信先なしユーザー")).toBeInTheDocument();
+    expect(within(card).getByText("再送待ち")).toBeInTheDocument();
+    expect(getSchedule).toHaveBeenCalledTimes(1);
+    expect(apis.queryApi.getDetail).toHaveBeenCalledTimes(1);
+    expect(apis.scheduleQueryApi.getResults).not.toHaveBeenCalled();
+
+    await user.click(
+      within(screen.getByRole("complementary")).getByRole("button", {
+        name: /2回目/,
+      })
+    );
+    expect(within(card).queryByText("42")).not.toBeInTheDocument();
+    expect(
+      within(card).getByText("送信先の集計を読み込み中です")
+    ).toBeInTheDocument();
+    await act(async () => {
+      resolveNext(second);
+      await next;
+    });
+    expect(await within(card).findByText("99")).toBeInTheDocument();
+    expect(getSchedule).toHaveBeenCalledTimes(2);
+    expect(apis.queryApi.getDetail).toHaveBeenCalledTimes(1);
+    expect(apis.scheduleQueryApi.getResults).not.toHaveBeenCalled();
+  });
+
+  it("全タブで共通情報を表示し、配信回に応じた情報を切り替える", async () => {
+    const user = userEvent.setup();
+    const detail = cloneFixture(adminNotificationDetailFixture);
+    detail.schedules[1].audience.items = [{ type: "all" }];
+    const getSchedule = vi.fn(async (id: number) => ({
+      ...cloneFixture(notificationScheduleDetailFixture),
+      notificationScheduleId: id,
+      audienceProgress: {
+        totalCount: id === 504 ? 4 : 9,
+        resolvedCount: id === 504 ? 4 : 7,
+      },
+    }));
+    renderPage(
+      createApis({ getDetail: vi.fn().mockResolvedValue(detail), getSchedule })
+    );
+
+    const sidebar = await screen.findByRole("complementary");
+    expect(within(sidebar).getByText("配信履歴")).toBeInTheDocument();
+    expect(within(sidebar).getByText("配信結果")).toBeInTheDocument();
+    expect(within(sidebar).getByText("対象指定")).toBeInTheDocument();
+    expect(within(sidebar).getByText("通知情報")).toBeInTheDocument();
+    expect(await within(sidebar).findByText("4 / 4")).toBeInTheDocument();
+
+    await user.click(within(sidebar).getByRole("button", { name: /2回目/ }));
+    expect(within(sidebar).getAllByText("全員").length).toBeGreaterThan(0);
+    expect(await within(sidebar).findByText("7 / 9")).toBeInTheDocument();
+    expect(within(sidebar).getByText("#103")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "配信状況" }));
+    expect(
+      within(screen.getByRole("complementary")).getByText("7 / 9")
+    ).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "対象者・配信結果" }));
+    expect(
+      within(screen.getByRole("complementary")).getByText("7 / 9")
+    ).toBeInTheDocument();
+    expect(
+      within(screen.getByRole("complementary")).getByText("#103")
+    ).toBeInTheDocument();
+  });
+
   it("通知内容と複数Scheduleを表示し、Recipient集計をDeliveryから分離する", async () => {
     renderPage();
 
@@ -77,13 +192,29 @@ describe("NotificationDetailPage", () => {
         name: "競技開始時間変更のお知らせ",
       })
     ).toBeInTheDocument();
-    const schedules = screen.getAllByRole("button", { name: /回目/ });
-    expect(schedules).toHaveLength(2);
+    const contentCard = screen
+      .getByRole("heading", { name: "通知内容" })
+      .closest("section");
+    expect(contentCard).not.toBeNull();
+    const titleLabel = within(contentCard!).getByText("通知タイトル");
+    const detailLabel = within(contentCard!).getByText("通知詳細");
+    expect(titleLabel.parentElement).toHaveTextContent(
+      adminNotificationDetailFixture.content.detail.title
+    );
+    expect(detailLabel.parentElement).toHaveTextContent(
+      adminNotificationDetailFixture.content.detail.body
+    );
     expect(
-      screen.getByText("Recipient単位。Push配送数とは別の集計です")
-    ).toBeInTheDocument();
-    expect(screen.getByText("対象Recipient")).toBeInTheDocument();
-    await userEvent.setup().click(schedules[1]);
+      titleLabel.compareDocumentPosition(detailLabel) &
+        Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
+    const user = userEvent.setup();
+    await user.click(screen.getByRole("combobox", { name: "配信回を変更" }));
+    const schedules = screen.getAllByRole("option");
+    expect(schedules).toHaveLength(2);
+    expect(screen.getByText(/対象者単位/)).toBeInTheDocument();
+    expect(screen.getByText("対象")).toBeInTheDocument();
+    await user.click(schedules[1]);
     expect(
       screen.getByText("配信元削除", { exact: false })
     ).toBeInTheDocument();
@@ -120,12 +251,20 @@ describe("NotificationDetailPage", () => {
     renderPage(createApis({ getDetail: vi.fn().mockResolvedValue(detail) }));
 
     await screen.findByText("Pushタイトル");
-    const scheduleButtons = screen.getAllByRole("button", { name: /回目/ });
-    statuses.forEach(([, label], index) => {
-      expect(scheduleButtons[index]).toHaveTextContent(label);
-    });
+    for (let index = 0; index < statuses.length; index++) {
+      await user.click(screen.getByRole("combobox", { name: "配信回を変更" }));
+      await user.click(screen.getAllByRole("option")[index]);
+      const labels = [
+        "配信待ち",
+        "対象者確定中",
+        "送信中",
+        "配信完了",
+        "処理失敗",
+        "停止",
+      ];
+      expect(screen.getAllByText(labels[index]).length).toBeGreaterThan(0);
+    }
 
-    await user.click(scheduleButtons[5]);
     expect(
       screen.getByText("停止者: HAL 花子", { exact: false })
     ).toBeInTheDocument();
@@ -166,7 +305,12 @@ describe("NotificationDetailPage", () => {
     await user.click(screen.getByRole("button", { name: "対象者・配信結果" }));
     expect(await screen.findByText("山田 太郎")).toBeInTheDocument();
     expect(getResults).toHaveBeenCalledWith(504, { page: 1, limit: 50 });
-    expect(screen.getByText("Tokenなし")).toBeInTheDocument();
+    expect(screen.getAllByText("送信先なし").length).toBeGreaterThan(0);
+
+    await user.click(screen.getByRole("button", { name: "山田 太郎の送信先" }));
+    expect(
+      screen.getByRole("row", { name: /^Android.*FCM受付成功/ })
+    ).toBeInTheDocument();
 
     await user.click(
       screen.getByRole("button", { name: "Delivery #9012の詳細" })
@@ -176,7 +320,6 @@ describe("NotificationDetailPage", () => {
     ).toBeInTheDocument();
     expect(getDelivery).toHaveBeenCalledWith(9012);
     expect(screen.getByText("UNAVAILABLE")).toBeInTheDocument();
-    expect(screen.getByText(/Android・FCM受付成功/)).toBeInTheDocument();
   });
 
   it("Resultsの部分取得失敗でも通知本体を残して再試行できる", async () => {
@@ -247,6 +390,7 @@ describe("NotificationDetailPage", () => {
     await screen.findByText("Pushタイトル");
     await user.click(screen.getByRole("button", { name: "対象者・配信結果" }));
     await screen.findByText("山田 太郎");
+    await user.click(screen.getByRole("button", { name: "山田 太郎の送信先" }));
     await user.click(
       screen.getByRole("button", { name: "Delivery #9012の詳細" })
     );
