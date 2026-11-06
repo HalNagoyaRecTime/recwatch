@@ -594,4 +594,26 @@ describe("Desktop / Tablet Sidebar", () => {
     fireEvent.click(getHamburger());
     expect(desktopSidebar.className).toContain("sidebar-close-width");
   });
+
+  it("開いたページを含むフォルダーを自動で開き、手動で閉じた状態は維持する", () => {
+    render(
+      <MemoryRouter initialEntries={["/notifications"]}>
+        <SidebarStateProvider>
+          <SidebarShell />
+        </SidebarStateProvider>
+      </MemoryRouter>
+    );
+    const sidebar = within(getDesktopSidebar());
+    const accordion = sidebar
+      .getByRole("link", { name: "通知管理" })
+      .closest(".grid");
+
+    expect(accordion).toHaveClass("grid-rows-[1fr]");
+    expect(
+      sidebar.getByRole("link", { name: "学生管理" }).closest(".grid")
+    ).toHaveClass("grid-rows-[0fr]");
+
+    fireEvent.click(sidebar.getByRole("button", { name: "イベント管理" }));
+    expect(accordion).toHaveClass("grid-rows-[0fr]");
+  });
 });
