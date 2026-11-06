@@ -160,7 +160,11 @@ describe("team management nested routes", () => {
     const router = renderTeamRankingRouter("/teams/new?search=keep&page=2");
 
     expect(
-      await screen.findByLabelText("チーム名", undefined, initialRender)
+      await screen.findByRole(
+        "listbox",
+        { name: "クラス検索結果" },
+        initialRender
+      )
     ).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "キャンセル" }));
     await waitFor(() => expect(router.state.location.pathname).toBe("/teams"));
@@ -180,15 +184,14 @@ describe("team management nested routes", () => {
 
     const router = renderTeamRankingRouter("/teams/new?search=keep");
 
-    await user.type(
-      await screen.findByLabelText("チーム名", undefined, initialRender),
-      "青組"
-    );
     await user.click(
-      within(screen.getByRole("listbox", { name: "クラス検索結果" })).getByRole(
-        "button",
-        { name: /1A/ }
-      )
+      within(
+        await screen.findByRole(
+          "listbox",
+          { name: "クラス検索結果" },
+          initialRender
+        )
+      ).getByRole("button", { name: /1A/ })
     );
     await user.click(screen.getByRole("button", { name: "保存する" }));
 
@@ -196,7 +199,6 @@ describe("team management nested routes", () => {
     await waitFor(() => expect(getTeamList).toHaveBeenCalledTimes(2));
     expect(router.state.location.search).toBe("?search=keep");
     expect(createTeam).toHaveBeenCalledWith({
-      teamName: "青組",
       classCodes: ["1A"],
     });
     // 登録クラス候補は一覧で一度だけ取得し、保存後の再取得には含めない
@@ -217,8 +219,8 @@ describe("team management nested routes", () => {
     );
 
     expect(
-      await screen.findByLabelText("チーム名", undefined, initialRender)
-    ).toHaveValue("赤組");
+      await screen.findByLabelText("1Aを削除", undefined, initialRender)
+    ).toBeInTheDocument();
     expect(getTeamById).toHaveBeenCalledOnce();
     expect(getTeamById).toHaveBeenCalledWith(3);
 
@@ -230,7 +232,6 @@ describe("team management nested routes", () => {
       "?search=keep&sortBy=teamName&sortOrder=asc"
     );
     expect(updateTeam).toHaveBeenCalledWith(3, {
-      teamName: "赤組",
       classCodes: ["1A"],
     });
     expect(getTeamById).toHaveBeenCalledOnce();
