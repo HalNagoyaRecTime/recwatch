@@ -37,7 +37,7 @@ export const NAVIGATION_SEARCH_RESULTS: readonly NavigationSearchResult[] = [
   },
   {
     id: "events",
-    title: "イベント登録一覧",
+    title: "イベント管理",
     category: "イベント",
     to: "/events",
     keywords: ["イベント", "種目"],
@@ -65,7 +65,7 @@ export const NAVIGATION_SEARCH_RESULTS: readonly NavigationSearchResult[] = [
   },
   {
     id: "notifications",
-    title: "通知一覧",
+    title: "通知管理",
     category: "通知",
     to: "/notifications",
     keywords: ["お知らせ", "履歴"],

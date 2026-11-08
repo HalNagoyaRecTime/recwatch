@@ -15,6 +15,7 @@ export type SidebarState = {
   togglePinned: () => void;
   pinOpen: () => void;
   toggleAccordion: (id: string) => void;
+  openAccordion: (id: string) => void;
 };
 
 // eslint-disable-next-line react-refresh/only-export-components
@@ -88,6 +89,11 @@ export function SidebarStateProvider({ children }: { children: ReactNode }) {
     );
   }, []);
 
+  // すでに開いているフォルダーは何もしない（再描画を避けるため同じ配列を返す）
+  const openAccordion = useCallback((id: string) => {
+    setOpenAccordions((prev) => (prev.includes(id) ? prev : [...prev, id]));
+  }, []);
+
   return (
     <SidebarStateContext.Provider
       value={{
@@ -99,6 +105,7 @@ export function SidebarStateProvider({ children }: { children: ReactNode }) {
         togglePinned,
         pinOpen,
         toggleAccordion,
+        openAccordion,
       }}
     >
       {children}
