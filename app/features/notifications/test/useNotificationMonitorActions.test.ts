@@ -13,7 +13,6 @@ function setup(status: "sending" | "scheduled" = "sending") {
   const detail = createNotificationMonitorFixtures(now()).find(
     (item) => item.status === status
   )!;
-  const item = { summary: detail, detail, errorMessage: null };
   const commandApi: NotificationScheduleCommandApi = {
     resend: vi.fn().mockResolvedValue({
       notificationId: detail.notificationId,
@@ -27,11 +26,11 @@ function setup(status: "sending" | "scheduled" = "sending") {
   };
   const reload = vi.fn().mockResolvedValue(undefined);
   const reportFeedback = vi.fn();
-  const props = { commandApi, reload, reportFeedback, now, items: [item] };
+  const props = { commandApi, reload, reportFeedback, now, items: [detail] };
   const hook = renderHook((options) => useNotificationMonitorActions(options), {
     initialProps: props,
   });
-  return { ...hook, props, item, detail, commandApi, reload, reportFeedback };
+  return { ...hook, props, detail, commandApi, reload, reportFeedback };
 }
 describe("配信モニター操作", () => {
   it.each(["resend", "stop", "cancel"] as MonitorAction[])(
@@ -147,7 +146,7 @@ describe("配信モニター操作", () => {
     act(() => test.result.current.open(test.detail, "cancel"));
     test.rerender({
       ...test.props,
-      items: [{ ...test.item, detail: { ...test.detail, status: "sending" } }],
+      items: [{ ...test.detail, status: "sending" }],
     });
     await act(() => test.result.current.submit());
     expect(test.commandApi.cancel).not.toHaveBeenCalled();
