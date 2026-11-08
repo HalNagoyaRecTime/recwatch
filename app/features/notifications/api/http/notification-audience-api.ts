@@ -25,7 +25,9 @@ export function createHttpNotificationAudienceApi(
       const gatheringsByEvent = await Promise.all(
         events.map(async (event) =>
           toEventGatheringAudienceDtos(
-            await client.get(`/api/v1/events/${event.event_id}`),
+            await client.get(
+              `/api/v1/events/${event.event_id}?includeMemberCount=true`
+            ),
             event
           )
         )

@@ -9,7 +9,7 @@ type EventDetailApiClient = {
 };
 
 /**
- * GET /api/v1/events/:eventId のレスポンス。
+ * GET /api/v1/events/:eventId?includeMemberCount=true のレスポンス。
  * Event 本体の項目に加えて、集合設定と同じ形の `rounds` を返す。
  */
 type EventDetailDto = EventGatheringSettingsResponseDto & {
@@ -49,7 +49,7 @@ export function createHttpEventDetailGateway(
   return {
     async load(eventId) {
       const response = await client.get<EventDetailDto>(
-        `/api/v1/events/${eventId}`
+        `/api/v1/events/${eventId}?includeMemberCount=true`
       );
       return toEventDetail(response);
     },

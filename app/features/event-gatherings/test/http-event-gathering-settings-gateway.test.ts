@@ -13,7 +13,7 @@ function createClient(overrides: Partial<Record<keyof Client, unknown>> = {}) {
 }
 
 describe("createHttpEventGatheringSettingsGateway", () => {
-  it("Event 詳細 1 回の GET だけで Event 単位の集合設定にし、集合ごとの参加者は読まない", async () => {
+  it("参加者数付きの Event 詳細 1 回の GET だけで Event 単位の集合設定にし、集合ごとの参加者は読まない", async () => {
     const get = vi.fn().mockResolvedValue({
       event_id: 12,
       event_name: "リレー",
@@ -62,7 +62,9 @@ describe("createHttpEventGatheringSettingsGateway", () => {
       ],
     });
     expect(get).toHaveBeenCalledTimes(1);
-    expect(get).toHaveBeenCalledWith("/api/v1/events/12");
+    expect(get).toHaveBeenCalledWith(
+      "/api/v1/events/12?includeMemberCount=true"
+    );
   });
 
   it("集合が 1 件もない Event は空の集合設定を返す", async () => {
