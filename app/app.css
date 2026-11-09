@@ -149,11 +149,16 @@
     min-height: 100vh;
     overflow-x: hidden;
     background-color: #ffffff;
+    /* ページの高さでグラデーションの大きさが変わらないよう、画面幅基準の固定サイズにする。
+       background-attachment: fixed は iOS Safari で無効・不安定なため使わない。 */
     background-image: radial-gradient(
       circle at top right,
       var(--bg-gradient-glow),
       transparent 50%
     );
+    background-size: 100vw 100vw;
+    background-position: top right;
+    background-repeat: no-repeat;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     /* テーマ切替時にSafariのUI色とずれないよう、背景色は遷移させない。 */
