@@ -107,23 +107,24 @@ export function useNotificationResults({
       invalidateRequests();
     };
   }, [active, loadResults, refreshKey, scheduleId, invalidateRequests]);
-  const data =
-    snapshot?.scheduleId === scheduleId && snapshot.queryKey === queryKey
-      ? snapshot.items
-      : null;
+  const snapshotMatchesSchedule = snapshot?.scheduleId === scheduleId;
+  const data = snapshotMatchesSchedule ? snapshot.items : null;
   const filters =
     selection.scheduleId === scheduleId
       ? selection.filters
       : defaultResultFilters;
-  const pagination =
-    snapshot?.scheduleId === scheduleId && snapshot.queryKey === queryKey
-      ? snapshot.pagination
-      : { page: 1, limit: ResultsPageSize, totalCount: 0, totalPages: 1 };
+  const pagination = snapshotMatchesSchedule
+    ? snapshot.pagination
+    : { page: 1, limit: ResultsPageSize, totalCount: 0, totalPages: 1 };
   const pageCount = Math.max(1, pagination.totalPages);
   const page = Math.min(
     selection.scheduleId === scheduleId ? selection.page : 1,
     pageCount
   );
+  const isLoading =
+    active &&
+    scheduleId !== null &&
+    (loadingId === scheduleId || (!data && error?.scheduleId !== scheduleId));
   return {
     data,
     items: data ?? [],
@@ -131,10 +132,8 @@ export function useNotificationResults({
     page,
     pageCount,
     filters,
-    isLoading:
-      active &&
-      scheduleId !== null &&
-      (loadingId === scheduleId || (!data && error?.scheduleId !== scheduleId)),
+    isLoading,
+    isRefreshing: data !== null && isLoading,
     errorMessage: error?.scheduleId === scheduleId ? error.message : null,
     loadResults,
     resetFilters: () =>

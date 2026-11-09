@@ -9,31 +9,39 @@ import {
 vi.mock("@xyflow/react", () => ({
   ReactFlow: ({
     nodes,
+    nodeTypes,
   }: {
-    nodes: Array<{ id: string; data: { label: React.ReactNode } }>;
+    nodes: Array<{ id: string; type: string; data: unknown }>;
+    nodeTypes: Record<
+      string,
+      React.ComponentType<{ id: string; data: unknown }>
+    >;
   }) => (
     <div>
-      {nodes.map((node) => (
-        <div key={node.id}>{node.data.label}</div>
-      ))}
+      {nodes.map((node) => {
+        const Component = nodeTypes[node.type];
+        return <Component key={node.id} id={node.id} data={node.data} />;
+      })}
     </div>
   ),
   Background: () => null,
+  Controls: () => null,
 }));
+
 afterEach(cleanup);
 
 describe("配信処理フロー", () => {
-  it("未確定の人数を確定値として表示せず、実際の件数を表示する", () => {
+  it("未確定の人数を確定値として表示せず、APIの集計をそのまま表示する", () => {
     const detail = cloneFixture(notificationScheduleDetailFixture);
     detail.recipientProgress = { count: 40, status: "pending" };
     detail.status = "stopped";
     render(<NotificationDeliveryFlow detail={detail} />);
-    expect(screen.getByText("未確定")).toBeInTheDocument();
-    expect(screen.queryByText("40人")).not.toBeInTheDocument();
+    expect(screen.getAllByText("未確定").length).toBeGreaterThan(0);
+    expect(screen.queryByText("40")).not.toBeInTheDocument();
+    expect(screen.getByText("配信回")).toBeInTheDocument();
     expect(screen.getByText("停止")).toBeInTheDocument();
-    expect(screen.getByText("42送信先")).toBeInTheDocument();
-    expect(
-      screen.getByText("再送待ち 2 / 失敗 2 / 停止 0")
-    ).toBeInTheDocument();
+    expect(screen.getByText("対象指定 4 / 4 解決")).toBeInTheDocument();
+    expect(screen.getByText("42件")).toBeInTheDocument();
+    expect(screen.getByText("成功 38件")).toBeInTheDocument();
   });
 });
