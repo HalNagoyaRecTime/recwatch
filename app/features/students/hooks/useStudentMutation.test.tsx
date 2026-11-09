@@ -66,7 +66,7 @@ describe("useStudentMutation", () => {
     });
 
     expect(result.current.error).toBe(
-      "学生のstaff状態を更新できませんでした。"
+      "学生のスタッフ権限を更新できませんでした。"
     );
     expect(result.current.isMutating).toBe(false);
     expect(onRevalidate).not.toHaveBeenCalled();

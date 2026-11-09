@@ -12,6 +12,7 @@ import { TeachersPage } from "~/features/teachers/pages/TeachersPage";
 import { TeacherApi } from "~/features/teachers/api";
 import { PagePadding } from "~/features/frame/page-layout/PagePadding";
 import { PageLayout } from "~/features/frame/page-layout/PageLayout";
+import { ListPageLayout } from "~/features/frame/page-layout/ListPageLayout";
 import { getClassRoomData } from "~/features/classRoom/application/class-room-options";
 import { useManagementOptions } from "~/hooks/useManagementOptions";
 import { getManagementRouteErrorMessage } from "~/routes/main/management-route-error";
@@ -81,20 +82,18 @@ export default function TeachersRoute() {
   );
   return (
     <>
-      <PageLayout>
-        <PagePadding>
-          <TeachersPage
-            api={TeacherApi}
-            classRoomOptions={classRoomOptions}
-            classRooms={classRoomOptions.items}
-            limit={limit}
-            offset={offset}
-            onRevalidate={() => revalidator.revalidate()}
-            teachers={teachers}
-            total={total}
-          />
-        </PagePadding>
-      </PageLayout>
+      <ListPageLayout>
+        <TeachersPage
+          api={TeacherApi}
+          classRoomOptions={classRoomOptions}
+          classRooms={classRoomOptions.items}
+          limit={limit}
+          offset={offset}
+          onRevalidate={() => revalidator.revalidate()}
+          teachers={teachers}
+          total={total}
+        />
+      </ListPageLayout>
       <Outlet context={{ closeModal, options: classRoomOptions }} />
     </>
   );

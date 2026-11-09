@@ -31,7 +31,7 @@ export function Layout({ children }: { children: ReactNode }) {
   const appSurfaceBootstrapScript = createAppSurfaceBootstrapScript();
 
   return (
-    <html lang="en" data-app-surface="recwatch" suppressHydrationWarning>
+    <html lang="ja" data-app-surface="recwatch" suppressHydrationWarning>
       <head>
         <meta charSet="utf-8" />
         <meta
@@ -71,15 +71,15 @@ export default function App() {
 }
 
 export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
-  let message = "Unexpected error";
-  let details = "A route failed while rendering the admin frame.";
+  let message = "予期しないエラー";
+  let details = "管理画面の表示中にエラーが発生しました。";
   let stack: string | undefined;
 
   if (isRouteErrorResponse(error)) {
-    message = error.status === 404 ? "404" : "Route error";
+    message = error.status === 404 ? "404" : "画面の読み込みエラー";
     details =
       error.status === 404
-        ? "The requested admin screen does not exist."
+        ? "指定された管理画面は存在しません。"
         : error.statusText || details;
   } else if (import.meta.env.DEV && error instanceof Error) {
     details = error.message;
@@ -90,7 +90,7 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
     <main className="viewport-min-height p-6 md:p-8">
       <div className="shadow-soft border-border-subtle bg-surface-base mx-auto max-w-5xl rounded-3xl border p-6 md:p-8">
         <div className="text-brand-primary font-['DM_Mono'] text-xs tracking-[0.18em] uppercase">
-          Failure Boundary
+          エラー情報
         </div>
         <h1 className="mt-3 text-[clamp(28px,4vw,40px)] leading-[1.04] font-semibold">
           {message}

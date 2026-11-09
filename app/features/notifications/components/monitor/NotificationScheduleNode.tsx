@@ -29,7 +29,7 @@ export function NotificationScheduleNode({
   const resolved = schedule.recipientProgress.status === "resolved";
   const fcmState =
     delivery.totalCount === 0
-      ? { badge: "配送なし", tone: "waiting" }
+      ? { badge: "配信なし", tone: "waiting" }
       : delivery.failedCount > 0 || delivery.retryWaitCount > 0
         ? { badge: "要確認", tone: "attention" }
         : delivery.stoppedCount > 0
@@ -41,49 +41,49 @@ export function NotificationScheduleNode({
               : { badge: "未送信あり", tone: "waiting" };
   const stages = [
     {
-      label: "NOTIFICATION",
+      label: "通知",
       value: schedule.content.push.title,
-      caption: `Notification #${schedule.notificationId}`,
+      caption: `通知 #${schedule.notificationId}`,
       badge: "作成済み",
       tone: "done",
     },
     {
-      label: "SCHEDULE",
+      label: "配信予約",
       value: formatNotificationDateTime(schedule.sendAt),
-      caption: `Schedule #${schedule.notificationScheduleId}`,
+      caption: `配信予約 #${schedule.notificationScheduleId}`,
       badge: started ? "開始済み" : "配信待ち",
       tone: started ? "done" : "waiting",
     },
     {
-      label: "AUDIENCE",
+      label: "配信対象",
       value: `${schedule.audienceProgress.resolvedCount} / ${schedule.audienceProgress.totalCount}`,
-      caption: "配信対象の解決",
-      badge: resolved ? "resolved" : "解決待ち",
+      caption: "配信対象の確認",
+      badge: resolved ? "確定済み" : "確定待ち",
       tone: resolved ? "done" : "waiting",
     },
     {
-      label: "RECIPIENTS",
+      label: "通知対象者",
       value: schedule.recipientProgress.count.toLocaleString(),
-      caption: "対象User数",
+      caption: "対象の利用者数",
       badge: resolved ? "確定済み" : "未確定",
       tone: resolved ? "done" : "waiting",
     },
     {
-      label: "PUSH DELIVERIES",
+      label: "プッシュ通知の配信",
       value: delivery.totalCount.toLocaleString(),
-      caption: `Pending ${delivery.pendingCount} / Sending ${delivery.sendingCount}`,
+      caption: `送信待ち ${delivery.pendingCount} / 送信中 ${delivery.sendingCount}`,
       badge:
         schedule.status === "sending"
           ? "送信中"
           : schedule.status === "scheduled"
             ? "待機中"
-            : "配送集計",
+            : "配信集計",
       tone: schedule.status === "sending" ? "active" : "waiting",
     },
     {
-      label: "FCM",
+      label: "通知サービス",
       value: delivery.sentCount.toLocaleString(),
-      caption: `Retry ${delivery.retryWaitCount} / Failed ${delivery.failedCount}`,
+      caption: `再送待ち ${delivery.retryWaitCount} / 失敗 ${delivery.failedCount}`,
       badge: fcmState.badge,
       tone: fcmState.tone,
     },

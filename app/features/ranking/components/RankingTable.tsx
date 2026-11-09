@@ -48,7 +48,7 @@ export function RankingTable({
       header: "スコア",
       id: "score",
       width: { type: "fixed", value: 140 },
-      renderCell: (ranking) => `${ranking.score} pt`,
+      renderCell: (ranking) => `${ranking.score} 点`,
     },
     {
       align: "center",

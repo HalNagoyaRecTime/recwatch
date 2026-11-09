@@ -9,6 +9,7 @@ import { useCallback } from "react";
 import { getClassRoomData } from "~/features/classRoom/application/class-room-options";
 import { PagePadding } from "~/features/frame/page-layout/PagePadding";
 import { PageLayout } from "~/features/frame/page-layout/PageLayout";
+import { ListPageLayout } from "~/features/frame/page-layout/ListPageLayout";
 import { StudentApi } from "~/features/students/api";
 import { loadStudentManagementPage } from "~/features/students/application/student-loaders";
 import { StudentsPage } from "~/features/students/pages/StudentsPage";
@@ -61,18 +62,16 @@ export default function StudentsRoute() {
 
   return (
     <>
-      <PageLayout>
-        <PagePadding>
-          <StudentsPage
-            api={StudentApi}
-            classRoomOptions={classRoomOptions}
-            classRooms={classRoomOptions.items}
-            {...page}
-            onRevalidate={() => revalidator.revalidate()}
-            userApi={userManagementApi}
-          />
-        </PagePadding>
-      </PageLayout>
+      <ListPageLayout>
+        <StudentsPage
+          api={StudentApi}
+          classRoomOptions={classRoomOptions}
+          classRooms={classRoomOptions.items}
+          {...page}
+          onRevalidate={() => revalidator.revalidate()}
+          userApi={userManagementApi}
+        />
+      </ListPageLayout>
       <Outlet context={{ closeModal, options: classRoomOptions }} />
     </>
   );

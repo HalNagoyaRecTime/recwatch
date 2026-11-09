@@ -128,7 +128,7 @@ export function GatheringSettingsStep({
       setMemberSaveError(
         getErrorMessage(
           error,
-          "削除するRoundの参加者を取得できませんでした。時間をおいて再操作してください。"
+          "削除するラウンドの参加者を取得できませんでした。時間をおいて再操作してください。"
         )
       );
       return;
@@ -148,7 +148,7 @@ export function GatheringSettingsStep({
           [
             getErrorMessage(
               error,
-              "参加者の解除に失敗しました。Roundは削除されていません。"
+              "参加者の解除に失敗しました。ラウンドは削除されていません。"
             ),
             restoreError
               ? `参加者を元に戻せませんでした。状態を確認して再操作してください。${restoreError}`
@@ -181,7 +181,7 @@ export function GatheringSettingsStep({
       const restoreError = await restoreGatheringMembers(attemptedMemberClears);
       if (restoreError) {
         setMemberSaveError(
-          `Roundの削除に失敗し、参加者の復元にも失敗しました。状態を確認して再操作してください。${restoreError}`
+          `ラウンドの削除に失敗し、参加者の復元にも失敗しました。状態を確認して再操作してください。${restoreError}`
         );
         onMembersSaved?.();
       }
@@ -262,7 +262,7 @@ export function GatheringSettingsStep({
       <div>
         <h3 className="text-text-base text-lg font-semibold">ラウンド設定</h3>
         <p className="text-text-muted mt-1 text-sm">
-          Roundごとに集合時間・集合場所・参加者を設定します。
+          ラウンドごとに集合時間・集合場所・参加者を設定します。
         </p>
       </div>
 
@@ -302,7 +302,7 @@ export function GatheringSettingsStep({
               onRemove={() => {
                 if (
                   !window.confirm(
-                    `Round ${round.round}を削除します。Round内に登録されている参加者もすべて解除されます。よろしいですか？`
+                    `ラウンド ${round.round}を削除します。ラウンド内に登録されている参加者もすべて解除されます。よろしいですか？`
                   )
                 ) {
                   return;
@@ -385,7 +385,7 @@ export function GatheringSettingsStep({
           ))}
           {settings.rounds.length === 0 ? (
             <p className="text-text-muted text-sm">
-              まだRoundがありません。「Roundを追加」から集合設定を始めてください。
+              まだラウンドがありません。「ラウンドを追加」から集合設定を始めてください。
             </p>
           ) : null}
           <Button
@@ -396,7 +396,7 @@ export function GatheringSettingsStep({
             type="button"
             variant="secondary"
           >
-            Roundを追加
+            ラウンドを追加
           </Button>
         </div>
       )}

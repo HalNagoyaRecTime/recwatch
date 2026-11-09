@@ -22,8 +22,8 @@ export function AccountDeletionFooter() {
           プライバシーポリシー
         </a>
       </nav>
-      <p>Produced by HAL Nagoya</p>
-      <p>Developed by RE:CREATION App Team</p>
+      <p>制作：HAL名古屋</p>
+      <p>開発：RE:CREATION アプリ開発チーム</p>
     </footer>
   );
 }

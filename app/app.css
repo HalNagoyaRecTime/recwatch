@@ -196,6 +196,30 @@
 }
 
 @layer utilities {
+  html:has(.list-page-layout),
+  html:has(.list-page-layout) body {
+    overscroll-behavior-y: none;
+  }
+
+  .list-page-layout {
+    --data-table-flex: 1;
+    --data-table-max-height: none;
+    height: calc(100vh - var(--main-header-total-height));
+  }
+
+  .list-page-layout .list-page-controls {
+    max-height: max(3rem, calc(100% - 15rem));
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior-y: none;
+  }
+
+  @supports (height: 100dvh) {
+    .list-page-layout {
+      height: calc(100dvh - var(--main-header-total-height));
+    }
+  }
+
   .viewport-min-height {
     min-height: 100vh;
   }

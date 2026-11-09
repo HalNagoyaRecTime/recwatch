@@ -205,8 +205,8 @@ describe("StudentsPage", () => {
       await screen.findByRole("heading", { name: "学生管理" })
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("combobox", { name: "staffフィルター" })
-    ).toHaveTextContent("staff:すべて");
+      screen.getByRole("combobox", { name: "スタッフフィルター" })
+    ).toHaveTextContent("スタッフ:すべて");
     expect(
       screen.getByRole("combobox", { name: "有効状態フィルター" })
     ).toHaveTextContent("有効:はい");
@@ -241,8 +241,10 @@ describe("StudentsPage", () => {
       screen.getByRole("combobox", { name: "担当クラスフィルター" })
     );
     await user.click(screen.getByRole("option", { name: /1A 1年Aクラス/ }));
-    await user.click(screen.getByRole("combobox", { name: "staffフィルター" }));
-    await user.click(screen.getByRole("option", { name: "staff:はい" }));
+    await user.click(
+      screen.getByRole("combobox", { name: "スタッフフィルター" })
+    );
+    await user.click(screen.getByRole("option", { name: "スタッフ:はい" }));
     await user.click(
       screen.getByRole("combobox", { name: "有効状態フィルター" })
     );
@@ -268,16 +270,16 @@ describe("StudentsPage", () => {
     });
 
     const table = await screen.findByRole("table", { name: "学生一覧" });
-    expect(within(table).getAllByText("staff").length).toBeGreaterThanOrEqual(
-      2
-    );
+    expect(
+      within(table).getAllByText("スタッフ").length
+    ).toBeGreaterThanOrEqual(2);
     expect(within(table).getByText("無効")).toBeInTheDocument();
 
     for (const [column, sortBy] of [
       ["ID", "studentId"],
       ["学籍番号", "studentIdNumber"],
       ["氏名", "displayName"],
-      ["staff", "isStaff"],
+      ["スタッフ", "isStaff"],
       ["有効", "isLiveActive"],
       ["クラスコード", "classCode"],
       ["クラス名", "className"],
@@ -318,7 +320,7 @@ describe("StudentsPage", () => {
       screen.getByRole("button", { name: "学生を編集する" })
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: "staffを解除する" })
+      screen.getByRole("button", { name: "スタッフ権限を解除する" })
     ).toBeEnabled();
     expect(
       screen.getByRole("button", { name: "学生を無効化する" })
@@ -400,10 +402,14 @@ describe("StudentsPage", () => {
     await user.click(
       within(table).getByRole("button", { name: "山田太郎の操作" })
     );
-    await user.click(screen.getByRole("button", { name: "staffを付与する" }));
+    await user.click(
+      screen.getByRole("button", { name: "スタッフ権限を付与する" })
+    );
     expect(grantStaff).not.toHaveBeenCalled();
 
-    await user.click(screen.getByRole("button", { name: "staffを付与する" }));
+    await user.click(
+      screen.getByRole("button", { name: "スタッフ権限を付与する" })
+    );
     await waitFor(() => expect(grantStaff).toHaveBeenCalledWith(101));
     await waitFor(() => expect(onRevalidate).toHaveBeenCalledOnce());
     expect(getStudents).not.toHaveBeenCalled();

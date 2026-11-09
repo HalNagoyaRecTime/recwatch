@@ -1,3 +1,4 @@
+import { notificationScheduleStatusLabels } from "~/features/notifications/components/list/notification-display";
 import { Button } from "~/components/ui/button/Button";
 import { FormModal } from "~/components/ui/modal/FormModal";
 import type { MonitorSchedule } from "~/features/notifications/hooks/notification-monitor-data";
@@ -23,7 +24,7 @@ export function NotificationMonitorActions({
   return (
     <div
       className="flex flex-wrap gap-2"
-      aria-label={`Schedule #${schedule.notificationScheduleId}の操作`}
+      aria-label={`配信予約 #${schedule.notificationScheduleId}の操作`}
     >
       {(["resend", "cancel", "stop"] as MonitorAction[])
         .filter((action) => canRunMonitorAction(schedule, action))
@@ -58,7 +59,7 @@ export function NotificationMonitorActionDialog({
     >
       <div className="space-y-4">
         <p className="text-sm">
-          Notification #{target.schedule.notificationId} / Schedule #
+          通知 #{target.schedule.notificationId} / 配信予約 #
           {target.schedule.notificationScheduleId}
           <br />
           {target.schedule.content.push.title}
@@ -66,7 +67,7 @@ export function NotificationMonitorActionDialog({
         {target.action === "resend" ? (
           <>
             <p className="text-text-muted text-sm">
-              元の配信先条件を使い、新しいScheduleを作成します。対象者は配信時に再確定します。
+              元の配信先条件を使い、新しい配信予約を作成します。対象者は配信時に再確定します。
             </p>
             <label className="block text-sm">
               再送タイミング
@@ -101,12 +102,13 @@ export function NotificationMonitorActionDialog({
           <p className="text-text-muted text-sm">
             {target.action === "cancel"
               ? "未開始の配信予約を削除します。通知自体は削除しません。"
-              : "新しいPush送信と再試行を停止します。送信開始済みのリクエストは取り消せません。"}
+              : "新たなプッシュ通知の送信と再試行を停止します。すでに開始した送信は取り消せません。"}
           </p>
         )}
         {state.schedule && (
           <p className="text-text-muted text-sm">
-            最新の状態: {state.schedule.status}
+            最新の状態:{" "}
+            {notificationScheduleStatusLabels[state.schedule.status]}
           </p>
         )}
         {!state.canSubmit && (

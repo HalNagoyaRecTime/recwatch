@@ -98,14 +98,14 @@ describe("EventDetailPage", () => {
       within(basicInfo).getByText("バトンを使用します。")
     ).toBeInTheDocument();
 
-    const round1 = screen.getByRole("region", { name: "Round 1" });
+    const round1 = screen.getByRole("region", { name: "ラウンド 1" });
     expect(within(round1).getByText("合計 31名")).toBeInTheDocument();
     expect(within(round1).getByText("出入口①")).toBeInTheDocument();
     expect(within(round1).getByText("16名")).toBeInTheDocument();
     expect(within(round1).getByText("15名")).toBeInTheDocument();
 
     // 集合時刻が未設定の行は "99:59" を出さない
-    const round2 = screen.getByRole("region", { name: "Round 2" });
+    const round2 = screen.getByRole("region", { name: "ラウンド 2" });
     expect(within(round2).getByText("未設定")).toBeInTheDocument();
     expect(within(round2).queryByText("99:59")).not.toBeInTheDocument();
   });
@@ -120,14 +120,14 @@ describe("EventDetailPage", () => {
     });
 
     expect(
-      await screen.findByRole("region", { name: "Round 3" })
+      await screen.findByRole("region", { name: "ラウンド 3" })
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("heading", { name: "Round 3", level: 3 })
+      screen.getByRole("heading", { name: "ラウンド 3", level: 3 })
     ).toBeInTheDocument();
     // 配列上の位置（2 番目）を番号として出さない
     expect(
-      screen.queryByRole("heading", { name: "Round 2", level: 3 })
+      screen.queryByRole("heading", { name: "ラウンド 2", level: 3 })
     ).not.toBeInTheDocument();
     expect(screen.queryByText("2")).not.toBeInTheDocument();
   });

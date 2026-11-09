@@ -23,12 +23,12 @@ export function AppNotificationDiagnostic({
         <DiagnosticValue label="画面" value={diagnostic.route} />
         <DiagnosticValue label="操作" value={diagnostic.action} />
         <DiagnosticValue
-          label="HTTP Status"
+          label="通信状態（HTTP）"
           value={diagnostic.status?.toString()}
         />
-        <DiagnosticValue label="Error Code" value={diagnostic.errorCode} />
-        <DiagnosticValue label="Request ID" value={diagnostic.requestId} />
-        <DiagnosticValue label="Endpoint" value={diagnostic.endpoint} />
+        <DiagnosticValue label="エラーコード" value={diagnostic.errorCode} />
+        <DiagnosticValue label="リクエストID" value={diagnostic.requestId} />
+        <DiagnosticValue label="通信先" value={diagnostic.endpoint} />
       </dl>
     </div>
   );

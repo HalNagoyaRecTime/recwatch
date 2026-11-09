@@ -55,9 +55,9 @@ export function useStudentMutation({
             ? userApi.grantStaff(student.userId)
             : userApi.revokeStaff(student.userId)
           : Promise.reject(
-              new Error("学生のstaff状態を更新できませんでした。")
+              new Error("学生のスタッフ権限を更新できませんでした。")
             ),
-      "学生のstaff状態を更新できませんでした。",
+      "学生のスタッフ権限を更新できませんでした。",
       true
     );
   }

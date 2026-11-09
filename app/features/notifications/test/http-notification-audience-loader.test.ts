@@ -98,17 +98,17 @@ describe("http notification audience loader", () => {
     expect(options.filter((option) => option.type === "gathering")).toEqual([
       {
         id: "101",
-        name: "競技1 / Round 1 / 体育館前 (08:50)",
+        name: "競技1 / ラウンド1 / 体育館前 (08:50)",
         type: "gathering",
       },
       {
         id: "102",
-        name: "競技1 / Round 2 / 体育館前 (08:50)",
+        name: "競技1 / ラウンド2 / 体育館前 (08:50)",
         type: "gathering",
       },
       {
         id: "10101",
-        name: "競技101 / Round 1 / 体育館前 (08:50)",
+        name: "競技101 / ラウンド1 / 体育館前 (08:50)",
         type: "gathering",
       },
     ]);

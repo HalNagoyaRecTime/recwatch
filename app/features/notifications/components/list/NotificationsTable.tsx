@@ -87,7 +87,7 @@ function getNotificationTableColumns(
       ),
     },
     {
-      header: "Push送信先",
+      header: "プッシュ通知先",
       id: "pushSummary",
       width: { grow: 1, min: 170, type: "fluid" },
       renderCell: (item) => (

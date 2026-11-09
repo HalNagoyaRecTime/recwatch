@@ -56,12 +56,12 @@ export function RoundCard({
 
   return (
     <section
-      aria-label={`Round ${value.round}`}
+      aria-label={`ラウンド ${value.round}`}
       className="border-border-base app-rounded space-y-4 border p-4"
     >
       <div className="flex items-center justify-between gap-3">
         <h3 className="text-text-base text-base font-semibold">
-          Round {value.round}
+          ラウンド {value.round}
         </h3>
         <Button
           disabled={disabled}
@@ -76,9 +76,9 @@ export function RoundCard({
       </div>
 
       <label className="text-text-base block text-sm font-medium">
-        Round番号
+        ラウンド番号
         <input
-          aria-label={`Round ${value.round} の番号`}
+          aria-label={`ラウンド ${value.round} の番号`}
           className="app-rounded border-border-base bg-surface-base text-text-base focus:border-border-strong mt-1.5 h-9 w-24 border px-3 text-sm outline-none disabled:opacity-50"
           disabled={disabled}
           max={MAX_ROUND}
@@ -93,7 +93,7 @@ export function RoundCard({
       <label className="text-text-base block text-sm font-medium">
         開始時刻（任意）
         <input
-          aria-label={`Round ${value.round} の開始時刻`}
+          aria-label={`ラウンド ${value.round} の開始時刻`}
           className="app-rounded border-border-base bg-surface-base text-text-base focus:border-border-strong mt-1.5 h-9 border px-3 text-sm outline-none disabled:opacity-50"
           disabled={disabled}
           type="time"

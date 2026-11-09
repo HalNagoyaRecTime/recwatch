@@ -161,7 +161,7 @@ function formatGatheringName(gathering: GatheringAudienceApiDto) {
     ? `${gathering.gathering_time.slice(0, 2)}:${gathering.gathering_time.slice(2)}`
     : gathering.gathering_time;
 
-  return `${gathering.event_name} / Round ${gathering.round} / ${gathering.gathering_spot_name} (${time})`;
+  return `${gathering.event_name} / ラウンド${gathering.round} / ${gathering.gathering_spot_name} (${time})`;
 }
 
 function unexpectedResponse() {

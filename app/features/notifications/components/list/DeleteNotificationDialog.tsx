@@ -67,7 +67,7 @@ export function DeleteNotificationDialog({
               通知 #{notification.notificationId}「
               {notification.content.push.title}」
               {scheduleId
-                ? `のSchedule #${scheduleId}の配信予約を取り消します。通知本体は削除しません。`
+                ? `の配信予約 #${scheduleId}を取り消します。通知本体は削除しません。`
                 : "を削除します。この操作は元に戻せません。"}
             </p>
           </div>
