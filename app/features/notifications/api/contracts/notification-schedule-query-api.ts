@@ -1,29 +1,29 @@
 import type {
-  NotificationScheduleDetail,
-  NotificationScheduleListQuery,
-  NotificationScheduleListResponse,
-  NotificationScheduleResults,
-  NotificationScheduleResultsQuery,
-} from "~/features/notifications/api/contracts/notification-schedule-types";
+  NotificationScheduleDetailDto,
+  NotificationScheduleListItemDto,
+  NotificationScheduleListQueryDto,
+  NotificationScheduleListResponseDto,
+  NotificationResultDeliveryDto,
+  NotificationScheduleResultsDto,
+  NotificationScheduleResultsQueryDto,
+} from "~/features/notifications/api/dto/notification-schedule-dto";
 
-export type {
-  NotificationResultDelivery,
-  NotificationScheduleDetail,
-  NotificationScheduleListItem,
-  NotificationScheduleResults,
-} from "~/features/notifications/api/contracts/notification-schedule-types";
+export type NotificationResultDelivery = NotificationResultDeliveryDto;
+export type NotificationScheduleDetail = NotificationScheduleDetailDto;
+export type NotificationScheduleListItem = NotificationScheduleListItemDto;
 export type NotificationDeliveryProgress =
-  NotificationScheduleDetail["deliveryProgress"];
+  NotificationScheduleDetailDto["deliveryProgress"];
+export type NotificationScheduleResults = NotificationScheduleResultsDto;
 
 export interface NotificationScheduleQueryApi {
   list(
-    query?: NotificationScheduleListQuery
-  ): Promise<NotificationScheduleListResponse>;
+    query?: NotificationScheduleListQueryDto
+  ): Promise<NotificationScheduleListResponseDto>;
   getDetail(
     notificationScheduleId: number
-  ): Promise<NotificationScheduleDetail>;
+  ): Promise<NotificationScheduleDetailDto>;
   getResults(
     notificationScheduleId: number,
-    query: NotificationScheduleResultsQuery
-  ): Promise<NotificationScheduleResults>;
+    query: NotificationScheduleResultsQueryDto
+  ): Promise<NotificationScheduleResultsDto>;
 }
