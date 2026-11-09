@@ -5,15 +5,12 @@ import {
   type Node,
   type NodeProps,
 } from "@xyflow/react";
-import {
-  getMonitorSchedule,
-  type MonitorSchedule,
-} from "~/features/notifications/hooks/notification-monitor-data";
+import type { NotificationScheduleDetail } from "~/features/notifications/api/contracts/notification-schedule-query-api";
 import { formatNotificationDateTime } from "~/features/notifications/components/list/notification-display";
 
 export type ScheduleFlowNode = Node<
   {
-    item: MonitorSchedule;
+    schedule: NotificationScheduleDetail;
     onOpen: (id: number) => void;
     onMeasure: (id: string, height: number) => void;
   },
@@ -26,15 +23,12 @@ export function NotificationScheduleNode({
 }: NodeProps<ScheduleFlowNode>) {
   const element = useRef<HTMLElement>(null);
   const updateNodeInternals = useUpdateNodeInternals();
-  const { item, onOpen, onMeasure } = data;
-  const schedule = getMonitorSchedule(item);
-  const detail = item.detail;
-  const delivery = detail?.deliveryProgress;
+  const { schedule, onOpen, onMeasure } = data;
+  const delivery = schedule.deliveryProgress;
   const started = schedule.status !== "scheduled";
-  const resolved = detail?.recipientProgress.status === "resolved";
-  const fcmState = !delivery
-    ? { badge: "集計取得失敗", tone: "attention" }
-    : delivery.totalCount === 0
+  const resolved = schedule.recipientProgress.status === "resolved";
+  const fcmState =
+    delivery.totalCount === 0
       ? { badge: "配信なし", tone: "waiting" }
       : delivery.failedCount > 0 || delivery.retryWaitCount > 0
         ? { badge: "要確認", tone: "attention" }
@@ -62,26 +56,22 @@ export function NotificationScheduleNode({
     },
     {
       label: "配信対象",
-      value: detail
-        ? `${detail.audienceProgress.resolvedCount} / ${detail.audienceProgress.totalCount}`
-        : "—",
+      value: `${schedule.audienceProgress.resolvedCount} / ${schedule.audienceProgress.totalCount}`,
       caption: "配信対象の確認",
       badge: resolved ? "確定済み" : "確定待ち",
       tone: resolved ? "done" : "waiting",
     },
     {
       label: "通知対象者",
-      value: detail?.recipientProgress.count.toLocaleString() ?? "—",
+      value: schedule.recipientProgress.count.toLocaleString(),
       caption: "対象の利用者数",
       badge: resolved ? "確定済み" : "未確定",
       tone: resolved ? "done" : "waiting",
     },
     {
       label: "プッシュ通知の配信",
-      value: delivery?.totalCount.toLocaleString() ?? "—",
-      caption: delivery
-        ? `送信待ち ${delivery.pendingCount} / 送信中 ${delivery.sendingCount}`
-        : "集計を取得できません",
+      value: delivery.totalCount.toLocaleString(),
+      caption: `送信待ち ${delivery.pendingCount} / 送信中 ${delivery.sendingCount}`,
       badge:
         schedule.status === "sending"
           ? "送信中"
@@ -92,10 +82,8 @@ export function NotificationScheduleNode({
     },
     {
       label: "通知サービス",
-      value: delivery?.sentCount.toLocaleString() ?? "—",
-      caption: delivery
-        ? `再送待ち ${delivery.retryWaitCount} / 失敗 ${delivery.failedCount}`
-        : "集計を取得できません",
+      value: delivery.sentCount.toLocaleString(),
+      caption: `再送待ち ${delivery.retryWaitCount} / 失敗 ${delivery.failedCount}`,
       badge: fcmState.badge,
       tone: fcmState.tone,
     },

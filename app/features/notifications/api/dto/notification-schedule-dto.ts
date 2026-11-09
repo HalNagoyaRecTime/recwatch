@@ -14,16 +14,15 @@ import type {
 
 export type NotificationScheduleListQueryDto = NotificationDateRangeQueryDto;
 
-export type NotificationScheduleListItemDto = {
-  notificationId: number;
-  notificationScheduleId: number;
-  content: { push: NotificationPushContentDto };
-  importance: NotificationImportanceDto;
-  sendAt: string;
-  status: NotificationScheduleStatusDto;
-  failureReason: string | null;
-  stop: NotificationStopDto | null;
-  creation: NotificationCreationDto;
+type NotificationScheduleProgressKey =
+  "audienceProgress" | "recipientProgress" | "deliveryProgress";
+
+export type NotificationScheduleListItemDto = Omit<
+  NotificationScheduleDetailDto,
+  NotificationScheduleProgressKey
+> & {
+  [Key in NotificationScheduleProgressKey]:
+    NotificationScheduleDetailDto[Key] | null;
 };
 
 export type NotificationScheduleListResponseDto = {

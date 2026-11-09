@@ -136,7 +136,7 @@ export function EventListPage({
               新規登録
             </ButtonLink>
           }
-          title="イベント一覧"
+          title="イベント管理"
         />
       </div>
 

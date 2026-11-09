@@ -1,7 +1,7 @@
 import { notificationScheduleStatusLabels } from "~/features/notifications/components/list/notification-display";
 import { Button } from "~/components/ui/button/Button";
 import { FormModal } from "~/components/ui/modal/FormModal";
-import type { NotificationScheduleListItem } from "~/features/notifications/api/contracts/notification-schedule-query-api";
+import type { MonitorSchedule } from "~/features/notifications/hooks/notification-monitor-data";
 import {
   canRunMonitorAction,
   monitorActionLabels,
@@ -16,7 +16,7 @@ export function NotificationMonitorActions({
   disabled = false,
   onSelect,
 }: {
-  schedule: NotificationScheduleListItem;
+  schedule: MonitorSchedule;
   state: ActionState;
   disabled?: boolean;
   onSelect?: (id: number) => void;

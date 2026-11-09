@@ -64,7 +64,7 @@ export function EventForm({
     <div className={cn("space-y-6", title && "min-h-full")}>
       {title ? (
         <PageHeader
-          description="登録内容はイベント登録一覧へ反映されます"
+          description="登録内容はイベント管理へ反映されます"
           title={title}
         />
       ) : null}

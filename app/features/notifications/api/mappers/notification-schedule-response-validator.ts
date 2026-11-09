@@ -39,25 +39,57 @@ export function isNotificationScheduleListResponse(
   );
 }
 
+const notificationScheduleBaseKeys = [
+  "notificationId",
+  "notificationScheduleId",
+  "content",
+  "importance",
+  "sendAt",
+  "status",
+  "failureReason",
+  "stop",
+  "creation",
+];
+const notificationScheduleKeys = [
+  ...notificationScheduleBaseKeys,
+  "audienceProgress",
+  "recipientProgress",
+  "deliveryProgress",
+];
+
 export function isNotificationScheduleDetail(
   value: unknown
 ): value is NotificationScheduleDetailDto {
   return (
     isRecord(value) &&
-    hasExactKeys(value, [
-      "notificationId",
-      "notificationScheduleId",
-      "content",
-      "importance",
-      "sendAt",
-      "status",
-      "failureReason",
-      "stop",
-      "creation",
-      "audienceProgress",
-      "recipientProgress",
-      "deliveryProgress",
-    ]) &&
+    hasExactKeys(value, notificationScheduleKeys) &&
+    hasNotificationScheduleFields(value) &&
+    isAudienceProgress(value.audienceProgress) &&
+    isRecipientProgress(value.recipientProgress) &&
+    isNotificationDeliveryProgress(value.deliveryProgress)
+  );
+}
+
+// 進み具合のキーが無い一覧は、進み具合を返す前のAPIの形です。
+// APIより先にこの画面をデプロイしても読めるよう受け付け、parserで進み具合をnullに揃えます。
+function isNotificationScheduleListItem(
+  value: unknown
+): value is NotificationScheduleListItemDto {
+  if (!isRecord(value) || !hasNotificationScheduleFields(value)) return false;
+  if (hasExactKeys(value, notificationScheduleBaseKeys)) return true;
+  return (
+    hasExactKeys(value, notificationScheduleKeys) &&
+    (value.audienceProgress === null ||
+      isAudienceProgress(value.audienceProgress)) &&
+    (value.recipientProgress === null ||
+      isRecipientProgress(value.recipientProgress)) &&
+    (value.deliveryProgress === null ||
+      isNotificationDeliveryProgress(value.deliveryProgress))
+  );
+}
+
+function hasNotificationScheduleFields(value: Record<string, unknown>) {
+  return (
     isPositiveInteger(value.notificationId) &&
     isPositiveInteger(value.notificationScheduleId) &&
     isRecord(value.content) &&
@@ -68,16 +100,25 @@ export function isNotificationScheduleDetail(
     isNotificationScheduleStatus(value.status) &&
     isNullableString(value.failureReason) &&
     isNullableNotificationStop(value.stop) &&
-    isNotificationCreation(value.creation) &&
-    isRecord(value.audienceProgress) &&
-    hasExactKeys(value.audienceProgress, ["totalCount", "resolvedCount"]) &&
-    isNonNegativeInteger(value.audienceProgress.totalCount) &&
-    isNonNegativeInteger(value.audienceProgress.resolvedCount) &&
-    isRecord(value.recipientProgress) &&
-    hasExactKeys(value.recipientProgress, ["count", "status"]) &&
-    isNonNegativeInteger(value.recipientProgress.count) &&
-    isNotificationRecipientResolutionStatus(value.recipientProgress.status) &&
-    isNotificationDeliveryProgress(value.deliveryProgress)
+    isNotificationCreation(value.creation)
+  );
+}
+
+function isAudienceProgress(value: unknown) {
+  return (
+    isRecord(value) &&
+    hasExactKeys(value, ["totalCount", "resolvedCount"]) &&
+    isNonNegativeInteger(value.totalCount) &&
+    isNonNegativeInteger(value.resolvedCount)
+  );
+}
+
+function isRecipientProgress(value: unknown) {
+  return (
+    isRecord(value) &&
+    hasExactKeys(value, ["count", "status"]) &&
+    isNonNegativeInteger(value.count) &&
+    isNotificationRecipientResolutionStatus(value.status)
   );
 }
 
@@ -148,36 +189,6 @@ export function isNotificationStopResponse(
     hasExactKeys(value, ["notificationScheduleId", "status"]) &&
     isPositiveInteger(value.notificationScheduleId) &&
     value.status === "stopped"
-  );
-}
-
-function isNotificationScheduleListItem(
-  value: unknown
-): value is NotificationScheduleListItemDto {
-  return (
-    isRecord(value) &&
-    hasExactKeys(value, [
-      "notificationId",
-      "notificationScheduleId",
-      "content",
-      "importance",
-      "sendAt",
-      "status",
-      "failureReason",
-      "stop",
-      "creation",
-    ]) &&
-    isPositiveInteger(value.notificationId) &&
-    isPositiveInteger(value.notificationScheduleId) &&
-    isRecord(value.content) &&
-    hasExactKeys(value.content, ["push"]) &&
-    isNotificationPushContent(value.content.push) &&
-    isNotificationImportance(value.importance) &&
-    isUtcDateTimeString(value.sendAt) &&
-    isNotificationScheduleStatus(value.status) &&
-    isNullableString(value.failureReason) &&
-    isNullableNotificationStop(value.stop) &&
-    isNotificationCreation(value.creation)
   );
 }
 
