@@ -249,7 +249,7 @@ describe("team management nested routes", () => {
       { name: "チーム詳細" },
       initialRender
     );
-    expect(within(dialog).getByText("10pt")).toBeInTheDocument();
+    expect(within(dialog).getByText("10点")).toBeInTheDocument();
     await user.click(
       within(dialog).getAllByRole("button", { name: "閉じる" }).at(-1)!
     );

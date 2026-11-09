@@ -29,7 +29,7 @@ export function GatheringSettingsSavedStep({
           集合設定を保存しました
         </p>
         <p className="text-text-muted text-base">
-          {settings.rounds.length}Round・{gatheringCount}
+          {settings.rounds.length}ラウンド・{gatheringCount}
           件の集合を登録しました。
         </p>
       </div>

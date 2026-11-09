@@ -122,7 +122,7 @@ export function useNotificationMonitorActions({
       reportFeedback?.({
         kind: "action-success",
         title: `${monitorActionLabels[action]}しました`,
-        message: `Schedule #${id}の最新情報を再取得しました。`,
+        message: `配信予約 #${id}の最新情報を再取得しました。`,
       });
     } catch (cause) {
       await reload();

@@ -57,7 +57,7 @@ function getDesktopSidebar() {
 }
 
 function getHamburger() {
-  return screen.getByRole("button", { name: "Toggle navigation" });
+  return screen.getByRole("button", { name: "メニューの開閉" });
 }
 
 function getDesktopFooterToggle() {

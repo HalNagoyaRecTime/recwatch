@@ -158,9 +158,9 @@ function ManagedStudentsPage({
           value={classRoomId ? String(classRoomId) : "all"}
         />
         <Select
-          ariaLabel="staffフィルター"
+          ariaLabel="スタッフフィルター"
           onValueChange={(value) => handleFilterChange("isStaff", value)}
-          options={booleanFilterOptions("staff")}
+          options={booleanFilterOptions("スタッフ")}
           value={isStaff}
         />
         <Select

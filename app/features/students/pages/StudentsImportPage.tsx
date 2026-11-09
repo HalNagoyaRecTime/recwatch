@@ -350,7 +350,7 @@ export function StudentsImportPage({
       await refreshStudentList();
     } catch (error) {
       setSubmitError(
-        getErrorMessage(error, "学生のstaff状態を更新できませんでした。")
+        getErrorMessage(error, "学生のスタッフ権限を更新できませんでした。")
       );
     } finally {
       endMutation();
@@ -405,9 +405,9 @@ export function StudentsImportPage({
           value={classRoomId ? String(classRoomId) : "all"}
         />
         <Select
-          ariaLabel="staffフィルター"
+          ariaLabel="スタッフフィルター"
           onValueChange={(value) => handleFilterChange("isStaff", value)}
-          options={booleanFilterOptions("staff")}
+          options={booleanFilterOptions("スタッフ")}
           value={isStaff}
         />
         <Select

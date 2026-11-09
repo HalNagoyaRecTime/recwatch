@@ -49,12 +49,12 @@ export function EventGatheringRounds({
           {rounds.map((round) => (
             <section
               key={round.round}
-              aria-label={`Round ${round.round}`}
+              aria-label={`ラウンド ${round.round}`}
               className="bg-surface-muted app-rounded space-y-2 p-3"
             >
               <div className="flex items-center justify-between gap-3">
                 <h3 className="text-text-base text-sm font-semibold">
-                  Round {round.round}
+                  ラウンド {round.round}
                   {round.startTime ? (
                     <span className="ml-3 text-sm font-normal">
                       開始 {round.startTime}

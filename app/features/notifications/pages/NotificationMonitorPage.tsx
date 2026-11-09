@@ -60,27 +60,33 @@ export function NotificationMonitorPage(props: Props) {
       : "0.0";
   const metrics = [
     [
-      "Schedule状態",
+      "配信予約の状態",
       schedule ? notificationScheduleStatusLabels[schedule.status] : "—",
-      schedule ? `DB: ${schedule.status}` : "—",
+      schedule
+        ? `記録された状態: ${notificationScheduleStatusLabels[schedule.status]}`
+        : "—",
     ],
     [
-      "確定Recipient",
+      "確定した通知対象者",
       detail?.recipientProgress.count.toLocaleString() ?? "—",
       detail?.recipientProgress.status === "pending"
-        ? "User単位・未確定"
-        : "User単位",
+        ? "利用者ごと・未確定"
+        : "利用者ごと",
     ],
-    ["Push送信先", delivery?.totalCount.toLocaleString() ?? "—", "Token単位"],
     [
-      "送信成功",
+      "プッシュ通知の送信先",
+      delivery?.totalCount.toLocaleString() ?? "—",
+      "通知先端末の登録情報ごと",
+    ],
+    [
+      "通知サービス受付済み",
       delivery?.sentCount.toLocaleString() ?? "—",
       delivery ? `${percent(delivery.sentCount)}%` : "—",
     ],
     [
       "要確認",
       delivery
-        ? `Retry ${delivery.retryWaitCount} / Failed ${delivery.failedCount}`
+        ? `再送待ち ${delivery.retryWaitCount} / 失敗 ${delivery.failedCount}`
         : "—",
       "再送待ち / 失敗",
     ],
@@ -89,7 +95,7 @@ export function NotificationMonitorPage(props: Props) {
     <section className="monitor-page">
       <PageHeader
         title="配信モニター"
-        description="通知がどこまで進んでいるかを、Schedule単位で確認します。"
+        description="通知がどこまで進んでいるかを、配信予約ごとに確認します。"
         actions={
           <div className="monitor-actions">
             <select
@@ -108,7 +114,7 @@ export function NotificationMonitorPage(props: Props) {
                     value={value.notificationScheduleId}
                   >
                     #{value.notificationId} {value.content.push.title} /
-                    Schedule #{value.notificationScheduleId}
+                    配信予約 #{value.notificationScheduleId}
                   </option>
                 );
               })}
@@ -187,7 +193,7 @@ export function NotificationMonitorPage(props: Props) {
               <header className="monitor-flow-header">
                 <div>
                   <h2>
-                    Notification #{schedule.notificationId} /{" "}
+                    通知 #{schedule.notificationId} /{" "}
                     {schedule.content.push.title}
                   </h2>
                   <p>配信予定 {formatNotificationDateTime(schedule.sendAt)}</p>
@@ -221,15 +227,15 @@ export function NotificationMonitorPage(props: Props) {
                     </dd>
                   </div>
                   <div>
-                    <dt>DB status</dt>
-                    <dd>{schedule.status}</dd>
+                    <dt>記録された状態</dt>
+                    <dd>{notificationScheduleStatusLabels[schedule.status]}</dd>
                   </div>
                   <div>
-                    <dt>Schedule</dt>
+                    <dt>配信予約</dt>
                     <dd>#{schedule.notificationScheduleId}</dd>
                   </div>
                   <div>
-                    <dt>Recipient確定</dt>
+                    <dt>通知対象者の確定</dt>
                     <dd>
                       {detail
                         ? detail.recipientProgress.status === "resolved"
@@ -249,37 +255,37 @@ export function NotificationMonitorPage(props: Props) {
                 </dl>
               </section>
               <section className="monitor-panel monitor-side-panel">
-                <h2>Push内訳</h2>
+                <h2>プッシュ通知の内訳</h2>
                 {delivery ? (
                   <div className="monitor-breakdown">
                     {[
                       {
-                        label: "Sent",
+                        label: "通知サービス受付済み",
                         count: delivery.sentCount,
                         tone: "success",
                       },
                       {
-                        label: "Pending",
+                        label: "送信待ち",
                         count: delivery.pendingCount,
                         tone: "muted",
                       },
                       {
-                        label: "Sending",
+                        label: "送信中",
                         count: delivery.sendingCount,
                         tone: "active",
                       },
                       {
-                        label: "Retry",
+                        label: "再送待ち",
                         count: delivery.retryWaitCount,
                         tone: "attention",
                       },
                       {
-                        label: "Failed",
+                        label: "失敗",
                         count: delivery.failedCount,
                         tone: "danger",
                       },
                       {
-                        label: "Stopped",
+                        label: "停止済み",
                         count: delivery.stoppedCount,
                         tone: "muted",
                       },
@@ -353,7 +359,7 @@ export function NotificationMonitorPage(props: Props) {
       )}
       <footer className="monitor-footer">
         <p>
-          進行中を含め前後24時間の配信を取得し、配信待ちは次の24時間、処理終了は配信時刻が過去24時間を表示します。FCM受付成功は端末での表示・既読を示しません。
+          進行中を含め前後24時間の配信を取得し、配信待ちは次の24時間、処理終了は配信時刻が過去24時間を表示します。通知サービス受付済みは端末での表示・既読を示しません。
         </p>
         <Button
           icon={RefreshCw}

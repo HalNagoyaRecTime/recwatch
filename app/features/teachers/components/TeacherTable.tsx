@@ -51,12 +51,12 @@ export function TeacherTable({
     },
     {
       align: "center",
-      header: "staff",
+      header: "スタッフ",
       id: "staff",
       sortable: true,
       width: { type: "fluid", min: 120, grow: 0.6 },
       renderCell: (teacher) => (
-        <span>{teacher.isStaff ? "staff" : "staffではない"}</span>
+        <span>{teacher.isStaff ? "スタッフ" : "スタッフ以外"}</span>
       ),
     },
     {

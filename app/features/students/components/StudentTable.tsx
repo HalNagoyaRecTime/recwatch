@@ -55,12 +55,12 @@ export function StudentTable({
     },
     {
       align: "center",
-      header: "staff",
+      header: "スタッフ",
       id: "staff",
       sortable: true,
       width: { type: "fluid", min: 120, grow: 0.6 },
       renderCell: (student) => (
-        <span>{student.isStaff ? "staff" : "staffではない"}</span>
+        <span>{student.isStaff ? "スタッフ" : "スタッフ以外"}</span>
       ),
     },
     {

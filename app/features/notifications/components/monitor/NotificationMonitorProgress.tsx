@@ -8,18 +8,18 @@ export function NotificationMonitorProgress({
   const delivery = detail.deliveryProgress;
   const values = [
     ["対象者", `${detail.recipientProgress.count}人`],
-    ["配送総数", `${delivery.totalCount}件`],
+    ["総配信件数", `${delivery.totalCount}件`],
     ["送信待ち", `${delivery.pendingCount}件`],
     ["送信中", `${delivery.sendingCount}件`],
     ["再送待ち", `${delivery.retryWaitCount}件`],
-    ["FCM受付成功", `${delivery.sentCount}件`],
+    ["通知サービス受付済み", `${delivery.sentCount}件`],
     ["失敗", `${delivery.failedCount}件`],
     ["停止", `${delivery.stoppedCount}件`],
   ];
   return (
     <div>
       <p className="text-text-muted mb-2 text-xs">
-        対象解決: {detail.audienceProgress.resolvedCount} /{" "}
+        配信対象の確認: {detail.audienceProgress.resolvedCount} /{" "}
         {detail.audienceProgress.totalCount}・
         {detail.recipientProgress.status === "pending"
           ? "人数未確定"

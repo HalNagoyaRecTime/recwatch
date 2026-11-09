@@ -272,13 +272,13 @@ function ScheduleSelector({
   if (schedules.length === 0) {
     return (
       <div className="border-border-base app-rounded border px-5 py-4 text-sm">
-        <p className="text-text-muted">Scheduleはまだありません。</p>
+        <p className="text-text-muted">配信予約はまだありません。</p>
       </div>
     );
   }
 
   return (
-    <div className="flex gap-3 overflow-x-auto pb-1" aria-label="Schedule一覧">
+    <div className="flex gap-3 overflow-x-auto pb-1" aria-label="配信予約一覧">
       {schedules.map((schedule, index) => (
         <button
           aria-pressed={schedule.notificationScheduleId === selectedScheduleId}
@@ -297,7 +297,7 @@ function ScheduleSelector({
             {formatNotificationDetailDateTime(schedule.sendAt)}
           </span>
           <span className="text-text-muted mt-1 block text-xs">
-            Schedule #{schedule.notificationScheduleId}・
+            配信予約 #{schedule.notificationScheduleId}・
             {scheduleStatusLabel[schedule.status]}
           </span>
         </button>
@@ -316,14 +316,17 @@ function OverviewTab({
   return (
     <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
       <div className="flex min-w-0 flex-col gap-4">
-        <Card title="通知内容" description="Mobileへ表示される内容と詳細情報">
+        <Card
+          title="通知内容"
+          description="スマートフォンのアプリに表示される内容と詳細情報"
+        >
           <div className="grid gap-3 md:grid-cols-2">
             <ContentBox
-              label="Pushタイトル"
+              label="プッシュ通知のタイトル"
               value={notification.content.push.title}
             />
             <ContentBox
-              label="Push本文"
+              label="プッシュ通知の本文"
               value={notification.content.push.body}
             />
           </div>
@@ -338,9 +341,9 @@ function OverviewTab({
       </div>
       <div className="flex flex-col gap-4">
         {schedule ? (
-          <Card title="Schedule">
+          <Card title="配信予約">
             <Definition
-              label="Schedule ID"
+              label="配信予約番号"
               value={`#${schedule.notificationScheduleId}`}
             />
             <Definition
@@ -358,7 +361,7 @@ function OverviewTab({
               }
             />
             <Definition
-              label="Audience確定"
+              label="配信対象の確定"
               value={`${schedule.audience.recipientResolution.resolvedCount}件・${schedule.audience.recipientResolution.status === "resolved" ? "確定済み" : "確定待ち"}`}
             />
             <Definition
@@ -395,17 +398,17 @@ function RecipientSummary({
   const summary = schedule.recipientPushSummary;
   return (
     <Card
-      title="Recipient集計"
-      description="Recipient単位。Push配送数とは別の集計です"
+      title="通知対象者の集計"
+      description="通知対象者ごとの集計です。プッシュ通知の配信件数とは別の集計です"
     >
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <Metric label="対象Recipient" value={summary.totalCount} />
-        <Metric label="成功Recipient" value={summary.successCount} />
-        <Metric label="失敗Recipient" value={summary.failedCount} />
-        <Metric label="Push対象なし" value={summary.noPushTargetCount} />
+        <Metric label="通知対象者数" value={summary.totalCount} />
+        <Metric label="送信受付済みの人数" value={summary.successCount} />
+        <Metric label="送信未成功の人数" value={summary.failedCount} />
+        <Metric label="通知先端末なし" value={summary.noPushTargetCount} />
       </div>
       <div className="border-border-subtle mt-4 border-t pt-4">
-        <p className="text-text-muted mb-2 text-xs font-medium">Audience</p>
+        <p className="text-text-muted mb-2 text-xs font-medium">配信対象</p>
         <div className="flex flex-wrap gap-2">
           {schedule.audience.items.map((item, index) => (
             <span
@@ -454,23 +457,26 @@ function ScheduleTab({
           <NotificationStatusBadge status={schedule.status} />
         </div>
         <Definition
-          label="Audience解決"
+          label="配信対象の確認"
           value={`${detail.audienceProgress.resolvedCount} / ${detail.audienceProgress.totalCount}`}
         />
         <Definition
-          label="Recipient確定"
+          label="通知対象者の確定"
           value={`${detail.recipientProgress.count}件・${detail.recipientProgress.status === "resolved" ? "確定済み" : "確定待ち"}`}
         />
         <Definition label="停止情報" value={formatStop(detail.stop)} />
       </Card>
       <Card
-        title="Push配送集計"
-        description="Token単位。Recipient集計とは一致しない場合があります"
+        title="プッシュ通知の配信集計"
+        description="通知先端末の登録情報ごとの集計です。通知対象者数とは一致しない場合があります"
       >
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <Metric label="全配送" value={detail.deliveryProgress.totalCount} />
           <Metric
-            label="FCM受付成功"
+            label="総配信件数"
+            value={detail.deliveryProgress.totalCount}
+          />
+          <Metric
+            label="通知サービス受付済み"
             value={detail.deliveryProgress.sentCount}
           />
           <Metric
@@ -522,7 +528,7 @@ function ResultsTab({
   return (
     <Card
       title="対象者・配信結果"
-      description="このScheduleのResultsだけを取得して表示しています"
+      description="この配信予約の結果だけを取得して表示しています"
     >
       {errorMessage ? (
         <p className="text-tone-danger-text mb-3 text-sm" role="alert">
@@ -533,9 +539,9 @@ function ResultsTab({
         <table className="w-full min-w-[760px] border-collapse text-left text-sm">
           <thead className="bg-surface-muted text-text-muted">
             <tr>
-              <th className="px-4 py-3 font-medium">User</th>
-              <th className="px-4 py-3 font-medium">Recipient ID</th>
-              <th className="px-4 py-3 font-medium">Push配送</th>
+              <th className="px-4 py-3 font-medium">利用者</th>
+              <th className="px-4 py-3 font-medium">通知対象者番号</th>
+              <th className="px-4 py-3 font-medium">プッシュ通知の配信</th>
             </tr>
           </thead>
           <tbody className="divide-border-subtle divide-y">
@@ -546,7 +552,7 @@ function ResultsTab({
                     {recipient.user.userName}
                   </strong>
                   <span className="text-text-muted text-xs">
-                    User #{recipient.user.userId}
+                    利用者 #{recipient.user.userId}
                   </span>
                 </td>
                 <td className="text-text-muted px-4 py-3">
@@ -554,7 +560,9 @@ function ResultsTab({
                 </td>
                 <td className="px-4 py-3">
                   {recipient.deliveries.length === 0 ? (
-                    <span className="text-text-muted">Tokenなし</span>
+                    <span className="text-text-muted">
+                      通知先端末の登録なし
+                    </span>
                   ) : (
                     <div className="flex flex-wrap gap-2">
                       {recipient.deliveries.map((delivery) => (
@@ -596,7 +604,7 @@ function DeliveryButton({
 }) {
   return (
     <button
-      aria-label={`Delivery #${delivery.notificationPushDeliveryId}の詳細`}
+      aria-label={`配信 #${delivery.notificationPushDeliveryId}の詳細`}
       className="border-border-base hover:bg-surface-hover app-rounded border px-3 py-2 text-left"
       onClick={() => onClick(delivery.notificationPushDeliveryId)}
       type="button"

@@ -173,7 +173,7 @@ describe("TeachersPage", () => {
       expect(getLocationParams().has("page")).toBe(false);
     });
 
-    await selectOption(user, "staffフィルター", "staff:いいえ");
+    await selectOption(user, "スタッフフィルター", "スタッフ:いいえ");
     await waitFor(() => {
       expect(getLocationParams().get("classRoomId")).toBe("1");
       expect(getLocationParams().get("isStaff")).toBe("false");
@@ -208,7 +208,7 @@ describe("TeachersPage", () => {
     );
 
     await selectOption(user, "担当クラスフィルター", "クラス:すべて");
-    await selectOption(user, "staffフィルター", "staff:すべて");
+    await selectOption(user, "スタッフフィルター", "スタッフ:すべて");
     await selectOption(user, "有効状態フィルター", "有効:すべて");
 
     await waitFor(() => {
@@ -286,7 +286,7 @@ describe("TeachersPage", () => {
     const sortCases = [
       ["ID", "teacherId"],
       ["教官名", "displayName"],
-      ["staff", "isStaff"],
+      ["スタッフ", "isStaff"],
       ["有効", "isLiveActive"],
       ["クラスコード", "classCode"],
       ["クラス名", "className"],

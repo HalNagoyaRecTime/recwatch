@@ -26,7 +26,7 @@ export function RankingTable({ footer, items }: RankingTableProps) {
       header: "スコア",
       id: "score",
       width: { type: "fixed", value: 140 },
-      renderCell: (ranking) => `${ranking.score} pt`,
+      renderCell: (ranking) => `${ranking.score} 点`,
     },
     {
       align: "center",

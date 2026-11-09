@@ -117,7 +117,7 @@ export function StudentForm({
             type="button"
             variant={initialStudent.isStaff ? "success" : "secondary"}
           >
-            {`スタッフ: ${initialStudent.isStaff ? "staff" : "staffではない"}`}
+            {`スタッフ: ${initialStudent.isStaff ? "スタッフ" : "スタッフ以外"}`}
           </Button>
         </div>
       ) : null}

@@ -138,8 +138,8 @@ export function useNotificationDetail({
         data: null,
         errorMessage:
           readApiErrorStatus(error) === 404
-            ? "Scheduleが見つかりません。"
-            : "Scheduleの詳細を読み込めませんでした。",
+            ? "配信予約が見つかりません。"
+            : "配信予約の詳細を読み込めませんでした。",
         isLoading: false,
       });
     }
@@ -207,8 +207,8 @@ export function useNotificationDetail({
           data: null,
           errorMessage:
             readApiErrorStatus(error) === 404
-              ? "Push配送が見つかりません。"
-              : "Push配送詳細を読み込めませんでした。",
+              ? "プッシュ通知の配信記録が見つかりません。"
+              : "プッシュ通知の配信詳細を読み込めませんでした。",
           isLoading: false,
         });
       }

@@ -133,7 +133,7 @@ describe("配信モニター", () => {
       within(dialog).getByRole("button", { name: "実行する" })
     ).toBeDisabled();
     expect(
-      within(dialog).getByText("最新の状態: completed")
+      within(dialog).getByText("最新の状態: 配信完了")
     ).toBeInTheDocument();
     expect(
       screen.getByRole("article", { name: "配信 #503" })
@@ -191,8 +191,8 @@ describe("配信モニター", () => {
     expect(screen.getAllByRole("article")).toHaveLength(1);
     expect(within(card).getByText("40")).toBeInTheDocument();
     expect(within(card).getByText("42")).toBeInTheDocument();
-    expect(within(card).getByText("PUSH DELIVERIES")).toBeInTheDocument();
-    expect(within(card).getByText("FCM")).toBeInTheDocument();
+    expect(within(card).getByText("プッシュ通知の配信")).toBeInTheDocument();
+    expect(within(card).getByText("通知サービス")).toBeInTheDocument();
     expect(graph.props?.nodesDraggable).toBe(false);
     expect(graph.props?.nodesConnectable).toBe(false);
     expect(graph.props?.deleteKeyCode).toBeNull();
@@ -220,7 +220,7 @@ describe("配信モニター", () => {
     ).toHaveAttribute("href", "/notifications/103");
     expect(
       within(dialog).getByText(
-        "FCM受付成功は、端末での表示や既読を示しません。"
+        "通知サービス受付済みは、端末での表示や既読を示しません。"
       )
     ).toBeInTheDocument();
   });
@@ -372,13 +372,11 @@ describe("配信モニター", () => {
     expect(
       screen.getByText("配信集計を読み込めませんでした。")
     ).toBeInTheDocument();
-    expect(within(card).queryByText("配送総数")).not.toBeInTheDocument();
+    expect(within(card).queryByText("総配信件数")).not.toBeInTheDocument();
     expect(screen.getAllByRole("article")).toHaveLength(1);
     await userEvent
       .setup()
-      .click(
-        within(card).getByRole("button", { name: /NOTIFICATION配信詳細/ })
-      );
+      .click(within(card).getByRole("button", { name: /通知配信詳細/ }));
     const dialog = await screen.findByRole("dialog", { name: "配信詳細" });
     vi.mocked(api.getDetail).mockImplementation(getDetail);
     await userEvent
@@ -410,7 +408,7 @@ describe("配信モニター", () => {
     );
   });
   it.each([
-    ["配送なし", { totalCount: 0, sentCount: 0 }],
+    ["配信なし", { totalCount: 0, sentCount: 0 }],
     ["未送信あり", { sentCount: 0, pendingCount: 42 }],
     ["未送信あり", { sentCount: 40, sendingCount: 2 }],
     ["要確認", { sentCount: 40, retryWaitCount: 2 }],
@@ -436,7 +434,7 @@ describe("配信モニター", () => {
       renderPage(createMockNotificationMonitorApi(fixtures));
       const card = await screen.findByRole("article", { name: "配信 #503" });
       const fcm = within(card).getByRole("button", {
-        name: `${selected.content.push.title}のFCM配信詳細`,
+        name: `${selected.content.push.title}の通知サービス配信詳細`,
       });
       expect(within(fcm).getByText(badge)).toBeInTheDocument();
       if (badge !== "受付成功")
@@ -454,7 +452,9 @@ describe("配信モニター", () => {
     );
     renderPage(api);
     const card = await screen.findByRole("article", { name: "配信 #503" });
-    const fcm = within(card).getByRole("button", { name: /のFCM配信詳細/ });
+    const fcm = within(card).getByRole("button", {
+      name: /の通知サービス配信詳細/,
+    });
     expect(within(fcm).getByText("集計取得失敗")).toBeInTheDocument();
     expect(within(fcm).queryByText("受付成功")).not.toBeInTheDocument();
   });
