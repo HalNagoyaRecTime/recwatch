@@ -18,6 +18,7 @@ export type TeacherRow = {
   isLiveActive: boolean;
   isStaff: boolean;
   classRooms: TeacherClassRoomRow[];
+  lockVersion: number;
 };
 
 export type TeacherPage = {

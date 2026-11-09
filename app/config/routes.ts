@@ -47,17 +47,17 @@ export const sidebarSections = [
     ],
   },
   {
-    label: "運用",
+    hasDivider: true,
     items: [
       {
         id: "events",
-        label: "イベント",
+        label: "イベント管理",
         icon: "calendar",
         roles: ["admin"],
         children: [
           {
             id: "events-list",
-            label: "イベント一覧",
+            label: "イベント管理",
             to: "/events",
             activePatterns: [
               "/events",
@@ -71,102 +71,85 @@ export const sidebarSections = [
             roles: ["admin"],
           },
           {
-            id: "events-active",
-            label: "本日の進行",
-            to: "/events/today",
+            id: "gathering-spots",
+            label: "集合場所管理",
+            to: "/gathering-spots",
+            roles: ["admin"],
+          },
+          {
+            id: "venues",
+            label: "実施場所管理",
+            to: "/venues",
+            roles: ["admin"],
+          },
+          {
+            id: "notifications",
+            label: "通知管理",
+            to: "/notifications",
+            activePatterns: [
+              "/notifications",
+              "/notifications/new",
+              "/notifications/monitor",
+              "/notifications/:notificationId",
+              "/notifications/:notificationId/edit",
+            ],
             roles: ["admin"],
           },
         ],
       },
       {
-        id: "notifications",
-        label: "通知",
-        icon: "notification",
-        to: "/notifications",
-        activePatterns: [
-          "/notifications",
-          "/notifications/new",
-          "/notifications/monitor",
-          "/notifications/:notificationId",
-          "/notifications/:notificationId/edit",
-        ],
-        roles: ["admin"],
-      },
-    ],
-  },
-  {
-    label: "チーム・成績",
-    items: [
-      {
-        id: "teams",
-        label: "チーム",
-        icon: "team",
-        to: "/teams",
-        activePatterns: [
-          "/teams",
-          "/teams/new",
-          "/teams/:id",
-          "/teams/:id/edit",
-        ],
-        roles: ["admin"],
-      },
-      {
-        id: "ranking",
-        label: "ランキング",
+        id: "team-management",
+        label: "チーム管理",
         icon: "trophy",
-        to: "/ranking",
-        activePatterns: ["/ranking", "/ranking/:teamId/edit"],
         roles: ["admin"],
+        children: [
+          {
+            id: "teams",
+            label: "チーム管理",
+            to: "/teams",
+            activePatterns: [
+              "/teams",
+              "/teams/new",
+              "/teams/:id",
+              "/teams/:id/edit",
+            ],
+            roles: ["admin"],
+          },
+          {
+            id: "ranking",
+            label: "ランキング管理",
+            to: "/ranking",
+            activePatterns: ["/ranking", "/ranking/:teamId/edit"],
+            roles: ["admin"],
+          },
+        ],
       },
-    ],
-  },
-  {
-    label: "管理",
-    items: [
       {
         id: "user-management",
-        label: "ユーザー",
+        label: "ユーザー管理",
         icon: "users",
         roles: ["admin"],
         children: [
           {
             id: "students",
-            label: "学生",
+            label: "学生管理",
             to: "/students",
             activePatterns: ["/students", "/students/import"],
             roles: ["admin"],
           },
           {
+            id: "classroom",
+            label: "クラス管理",
+            to: "/classrooms",
+            roles: ["admin"],
+          },
+          {
             id: "teachers",
-            label: "教官",
+            label: "教官管理",
             to: "/teachers",
             roles: ["admin"],
           },
         ],
-      },
-      {
-        id: "classroom",
-        label: "クラス",
-        icon: "classRoom",
-        to: "/classrooms",
-        roles: ["admin"],
-      },
-    ],
-  },
-  {
-    label: "削除予定",
-    items: [
-      {
-        id: "gathering-spots",
-        label: "集合場所管理",
-        to: "/gathering-spots",
-        roles: ["admin"],
-      },
-      {
-        id: "venues",
-        label: "実施場所管理",
-        to: "/venues",
-        roles: ["admin"],
       },
     ],
   },

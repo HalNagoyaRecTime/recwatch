@@ -12,6 +12,10 @@ import { describe, expect, it, vi } from "vitest";
 
 import { TeacherCreatePage } from "~/features/teachers/pages/TeacherCreatePage";
 import { TeacherEditPage } from "~/features/teachers/pages/TeacherEditPage";
+import {
+  UPDATE_CONFLICT_MESSAGE,
+  UPDATE_CONFLICT_RELOAD_FAILED_MESSAGE,
+} from "~/lib/update-conflict";
 import type { TeacherRow } from "~/features/teachers/model/teacher";
 import { ApiClientError } from "~/lib/api-client-error";
 
@@ -60,6 +64,7 @@ const teacher: TeacherRow = {
   isLiveActive: true,
   isStaff: false,
   classRooms: [{ classRoomId: 2, classCode: "2A", className: "2年A組" }],
+  lockVersion: 3,
 };
 
 function TeacherListDestination() {
@@ -272,6 +277,7 @@ describe("teacher create and edit flows", () => {
       <TeacherEditPage
         api={createApi()}
         classRooms={classRooms}
+        loadLatest={vi.fn()}
         {...callbacks}
         teacher={teacher}
       />
@@ -288,8 +294,89 @@ describe("teacher create and edit flows", () => {
     expect(mocks.updateTeacher).toHaveBeenCalledWith(7, {
       classRoomIds: [2, 4],
       email: "sahashi@example.com",
+      lockVersion: 3,
       userName: "佐橋 晴斗",
     });
+  });
+
+  it("更新が競合したら理由を伝えて再取得し、最新の値でフォームを置き換える", async () => {
+    mocks.updateTeacher.mockRejectedValueOnce(
+      new ApiClientError(409, "conflict", "TEACHER_UPDATE_CONFLICT")
+    );
+    const loadLatest = vi.fn().mockResolvedValue({
+      ...teacher,
+      displayName: "他の人の変更",
+      lockVersion: 4,
+    });
+    const user = userEvent.setup();
+    render(
+      <TeacherEditPage
+        api={createApi()}
+        classRooms={classRooms}
+        loadLatest={loadLatest}
+        onClose={vi.fn()}
+        onSaved={vi.fn()}
+        teacher={teacher}
+      />
+    );
+
+    const nameInput = await screen.findByLabelText("先生名");
+    await user.clear(nameInput);
+    await user.type(nameInput, "自分の変更");
+    await user.click(screen.getByRole("button", { name: "保存する" }));
+
+    expect(
+      await screen.findByText(UPDATE_CONFLICT_MESSAGE)
+    ).toBeInTheDocument();
+    expect(loadLatest).toHaveBeenCalledOnce();
+    await waitFor(() =>
+      expect(screen.getByLabelText("先生名")).toHaveValue("他の人の変更")
+    );
+    expect(screen.getByText(UPDATE_CONFLICT_MESSAGE)).toBeInTheDocument();
+  });
+
+  it("競合後の再取得に失敗したら入力を残し、再度の保存で最新の値へ置き換える", async () => {
+    mocks.updateTeacher.mockRejectedValue(
+      new ApiClientError(409, "conflict", "TEACHER_UPDATE_CONFLICT")
+    );
+    const loadLatest = vi
+      .fn()
+      .mockRejectedValueOnce(new Error("network"))
+      .mockResolvedValue({
+        ...teacher,
+        displayName: "他の人の変更",
+        lockVersion: 4,
+      });
+    const user = userEvent.setup();
+    render(
+      <TeacherEditPage
+        api={createApi()}
+        classRooms={classRooms}
+        loadLatest={loadLatest}
+        onClose={vi.fn()}
+        onSaved={vi.fn()}
+        teacher={teacher}
+      />
+    );
+
+    const nameInput = await screen.findByLabelText("先生名");
+    await user.clear(nameInput);
+    await user.type(nameInput, "自分の変更");
+    await user.click(screen.getByRole("button", { name: "保存する" }));
+
+    expect(
+      await screen.findByText(UPDATE_CONFLICT_RELOAD_FAILED_MESSAGE)
+    ).toBeInTheDocument();
+    expect(screen.getByLabelText("先生名")).toHaveValue("自分の変更");
+
+    await user.click(screen.getByRole("button", { name: "保存する" }));
+
+    expect(
+      await screen.findByText(UPDATE_CONFLICT_MESSAGE)
+    ).toBeInTheDocument();
+    await waitFor(() =>
+      expect(screen.getByLabelText("先生名")).toHaveValue("他の人の変更")
+    );
   });
 
   it("更新APIエラーをフォームへ表示してモーダルを維持する", async () => {
@@ -302,6 +389,7 @@ describe("teacher create and edit flows", () => {
       <TeacherEditPage
         api={createApi()}
         classRooms={classRooms}
+        loadLatest={vi.fn()}
         {...callbacks}
         teacher={teacher}
       />

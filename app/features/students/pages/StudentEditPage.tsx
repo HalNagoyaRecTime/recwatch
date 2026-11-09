@@ -6,6 +6,7 @@ import type {
 } from "~/features/students/api/contracts/student-api";
 import { StudentForm } from "~/features/students/components/StudentForm";
 import { useStudentMutation } from "~/features/students/hooks/useStudentMutation";
+import { useLatestAfterConflict } from "~/hooks/useLatestAfterConflict";
 import type { ManagementOptionState } from "~/hooks/useManagementOptions";
 import type {
   StudentClassRoomOption,
@@ -17,6 +18,7 @@ type StudentEditPageProps = {
   api: StudentMutationApi;
   classRooms: readonly StudentClassRoomOption[];
   classRoomOptions?: ManagementOptionState<StudentClassRoomOption>;
+  loadLatest: () => Promise<StudentRow>;
   onClose: () => void | Promise<void>;
   onSaved: () => Promise<void>;
   student: StudentRow;
@@ -27,11 +29,16 @@ export function StudentEditPage({
   api,
   classRoomOptions,
   classRooms,
+  loadLatest,
   onClose,
   onSaved,
-  student,
+  student: loadedStudent,
   userApi,
 }: StudentEditPageProps) {
+  const { current: student, reloadLatest } = useLatestAfterConflict(
+    loadedStudent,
+    loadLatest
+  );
   const classRoomOptionState = classRoomOptions ?? {
     error: null,
     isLoading: false,
@@ -41,10 +48,21 @@ export function StudentEditPage({
     error: submitError,
     isMutating: isSubmitting,
     save,
-  } = useStudentMutation({ api, userApi });
+  } = useStudentMutation({
+    api,
+    onConflict: reloadLatest,
+    userApi,
+  });
 
   async function handleSubmit(input: StudentWriteInput) {
-    if (await save(student.studentId, input)) await onSaved();
+    if (
+      await save(student.studentId, {
+        ...input,
+        lockVersion: student.lockVersion,
+      })
+    ) {
+      await onSaved();
+    }
   }
 
   return (
@@ -58,7 +76,9 @@ export function StudentEditPage({
         state={classRoomOptionState}
       />
       {!classRoomOptionState.isLoading && !classRoomOptionState.error ? (
+        // 競合後の再取得で版が変わったら、編集中の内容を捨てて最新の値で作り直す。
         <StudentForm
+          key={student.lockVersion}
           classRooms={classRoomOptionState.items}
           initialStudent={student}
           isSubmitting={isSubmitting}

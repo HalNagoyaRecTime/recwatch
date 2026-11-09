@@ -4,6 +4,8 @@ import { MemoryRouter, Route, Routes, useLocation } from "react-router";
 import { describe, expect, it, vi } from "vitest";
 
 import type { EventEditorApi } from "~/features/events/api/event-editor-api";
+import { ApiClientError } from "~/lib/api-client-error";
+import { UPDATE_CONFLICT_MESSAGE } from "~/lib/update-conflict";
 import { EventEditPage } from "./EventEditPage";
 
 function LocationProbe() {
@@ -41,6 +43,7 @@ describe("EventEditPage", () => {
         rules: "旧ルール",
         startTime: "09:30",
         venueIds: [1],
+        lockVersion: 3,
       }),
       listVenues: vi.fn().mockResolvedValue([
         { id: 1, name: "運動場" },
@@ -67,17 +70,73 @@ describe("EventEditPage", () => {
     await user.click(screen.getByRole("button", { name: "変更を保存する" }));
 
     await waitFor(() =>
-      expect(update).toHaveBeenCalledWith(7, {
-        endTime: "10:00",
-        name: "大縄跳び決勝",
-        rules: "旧ルール",
-        startTime: "09:30",
-        venueIds: [2],
-      })
+      expect(update).toHaveBeenCalledWith(
+        7,
+        {
+          endTime: "10:00",
+          name: "大縄跳び決勝",
+          rules: "旧ルール",
+          startTime: "09:30",
+          venueIds: [2],
+        },
+        3
+      )
     );
     // 編集はイベント詳細から開くため、保存後は詳細へ戻る
     await waitFor(() =>
       expect(screen.getByTestId("location")).toHaveTextContent(/^\/events\/7$/)
+    );
+  });
+
+  it("更新が競合したら理由を伝えて再取得し、次の保存は新しい版で送る", async () => {
+    const value = {
+      endTime: "10:00",
+      name: "大縄跳び",
+      rules: "旧ルール",
+      startTime: "09:30",
+      venueIds: [1],
+    };
+    const update = vi
+      .fn()
+      .mockRejectedValueOnce(
+        new ApiClientError(409, "conflict", "EVENT_UPDATE_CONFLICT")
+      )
+      .mockResolvedValue(undefined);
+    const api: EventEditorApi = {
+      create: vi.fn(),
+      get: vi
+        .fn()
+        .mockResolvedValueOnce({ ...value, lockVersion: 3 })
+        .mockResolvedValue({ ...value, name: "他の人の変更", lockVersion: 4 }),
+      listVenues: vi.fn().mockResolvedValue([{ id: 1, name: "運動場" }]),
+      update,
+    };
+    const user = userEvent.setup();
+    renderPage(api);
+
+    const nameInput = await screen.findByLabelText("イベント名*");
+    await waitFor(() => expect(nameInput).toHaveValue("大縄跳び"));
+    await user.clear(nameInput);
+    await user.type(nameInput, "自分の変更");
+    await user.click(screen.getByRole("button", { name: "変更を保存する" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      UPDATE_CONFLICT_MESSAGE
+    );
+    await waitFor(() =>
+      expect(screen.getByLabelText("イベント名*")).toHaveValue("他の人の変更")
+    );
+    expect(screen.getByTestId("location")).toHaveTextContent(
+      /^\/events\/7\/edit$/
+    );
+
+    await user.click(screen.getByRole("button", { name: "変更を保存する" }));
+    await waitFor(() =>
+      expect(update).toHaveBeenLastCalledWith(
+        7,
+        expect.objectContaining({ name: "他の人の変更" }),
+        4
+      )
     );
   });
 

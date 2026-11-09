@@ -1,3 +1,4 @@
+import { useRef } from "react";
 import { useLoaderData, useRouteError } from "react-router";
 
 import { createPageTitle } from "~/lib/page-title";
@@ -39,12 +40,18 @@ export default function TeacherEditRoute() {
   const { teacher } = useLoaderData<typeof clientLoader>();
   const classRoomOptions = useManagementRouteOptions<ClassRoomOption>();
   const closeModal = useManagementModalReturn();
+  // 競合が起きたら一覧も古いので、保存せずに閉じるときも再検証する。
+  const hasConflict = useRef(false);
   return (
     <TeacherEditPage
       api={TeacherApi}
       classRoomOptions={classRoomOptions}
       classRooms={classRoomOptions.items}
-      onClose={() => closeModal()}
+      loadLatest={() => {
+        hasConflict.current = true;
+        return TeacherApi.getTeacherById(teacher.teacherId);
+      }}
+      onClose={() => closeModal(hasConflict.current)}
       onSaved={() => closeModal(true)}
       teacher={teacher}
     />

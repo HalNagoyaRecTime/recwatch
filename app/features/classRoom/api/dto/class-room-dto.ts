@@ -11,6 +11,7 @@ export type ClassRoomDTO = {
   class_name: string;
   student_count: number;
   teacher: ClassRoomTeacherDTO | null;
+  lock_version: number;
 };
 
 export type ClassRoomPageDTO = {
@@ -24,4 +25,5 @@ export type ClassRoomWriteDTO = {
   classCode: string;
   className: string;
   teacherId: number | null;
+  lockVersion?: number;
 };

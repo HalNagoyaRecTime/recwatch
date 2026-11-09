@@ -12,9 +12,16 @@ export function toVenue(response: VenueResponseDto): Venue {
     imageUrl: response.image_url,
     createdAt: response.created_at,
     updatedAt: response.updated_at,
+    lockVersion: response.lock_version,
   };
 }
 
-export function toVenueWriteRequest(name: string): VenueWriteRequestDto {
-  return { venueName: name };
+export function toVenueWriteRequest(
+  name: string,
+  lockVersion?: number
+): VenueWriteRequestDto {
+  return {
+    venueName: name,
+    ...(lockVersion === undefined ? {} : { lockVersion }),
+  };
 }

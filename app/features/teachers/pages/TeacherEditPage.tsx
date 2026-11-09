@@ -10,23 +10,30 @@ import type {
   ClassRoomOption,
   TeacherRow,
 } from "~/features/teachers/model/teacher";
+import { useLatestAfterConflict } from "~/hooks/useLatestAfterConflict";
 import type { ManagementOptionState } from "~/hooks/useManagementOptions";
 
 export function TeacherEditPage({
   api,
   classRoomOptions,
   classRooms,
+  loadLatest,
   onClose,
   onSaved,
-  teacher,
+  teacher: loadedTeacher,
 }: {
   api: TeacherMutationApi;
   classRooms: readonly ClassRoomOption[];
   classRoomOptions?: ManagementOptionState<ClassRoomOption>;
+  loadLatest: () => Promise<TeacherRow>;
   onClose: () => void | Promise<void>;
   onSaved: () => Promise<void>;
   teacher: TeacherRow;
 }) {
+  const { current: teacher, reloadLatest } = useLatestAfterConflict(
+    loadedTeacher,
+    loadLatest
+  );
   const classRoomOptionState = classRoomOptions ?? {
     error: null,
     isLoading: false,
@@ -36,10 +43,15 @@ export function TeacherEditPage({
     error: submitError,
     isMutating: isSubmitting,
     save,
-  } = useTeacherMutation({ api });
+  } = useTeacherMutation({ api, onConflict: reloadLatest });
 
   async function handleSubmit(input: TeacherFormInput) {
-    if (await save(teacher.teacherId, input)) {
+    if (
+      await save(teacher.teacherId, {
+        ...input,
+        lockVersion: teacher.lockVersion,
+      })
+    ) {
       await onSaved();
     }
   }
@@ -57,7 +69,9 @@ export function TeacherEditPage({
             state={classRoomOptionState}
           />
           {!classRoomOptionState.isLoading && !classRoomOptionState.error ? (
+            // 競合後の再取得で版が変わったら、編集中の内容を捨てて最新の値で作り直す。
             <TeacherForm
+              key={teacher.lockVersion}
               classRooms={classRoomOptionState.items}
               initialTeacher={teacher}
               isSubmitting={isSubmitting}

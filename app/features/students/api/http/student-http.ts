@@ -83,5 +83,8 @@ function toStudentWriteDTO(input: StudentWriteInput): StudentWriteDTO {
     class_room_id: input.classRoomId,
     display_name: input.displayName,
     student_id_number: input.studentIdNumber,
+    ...(input.lockVersion === undefined
+      ? {}
+      : { lock_version: input.lockVersion }),
   };
 }

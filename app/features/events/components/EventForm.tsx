@@ -64,7 +64,7 @@ export function EventForm({
     <div className={cn("space-y-6", title && "min-h-full")}>
       {title ? (
         <PageHeader
-          description="登録内容はイベント登録一覧へ反映されます"
+          description="登録内容はイベント管理へ反映されます"
           title={title}
         />
       ) : null}
@@ -94,7 +94,7 @@ export function EventForm({
             aria-label="イベントルール"
             className={`${inputClass} resize-y py-2 ${isModal ? "min-h-32" : "min-h-24"}`}
             disabled={isDisabled}
-            maxLength={2000}
+            maxLength={5000}
             onChange={(event) => update("rules", event.currentTarget.value)}
             placeholder="ルールの詳細を入力"
             value={value.rules}

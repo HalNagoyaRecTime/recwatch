@@ -39,6 +39,7 @@ const classRoom = {
   className: "1年A組",
   studentCount: 2,
   teacher: null,
+  lockVersion: 0,
 };
 
 const secondClassRoom = {
@@ -143,6 +144,7 @@ describe("management route integration wiring", () => {
             isLiveActive: true,
             isStaff: false,
             classRooms: [],
+            lockVersion: 0,
           },
         ],
         limit: 50,

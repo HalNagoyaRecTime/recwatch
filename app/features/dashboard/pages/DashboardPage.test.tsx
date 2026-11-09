@@ -24,15 +24,27 @@ describe("DashboardPage", () => {
       screen.getByRole("heading", { level: 3, name: "イベント管理" })
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("heading", { level: 3, name: "運用管理" })
+      screen.getByRole("heading", { level: 3, name: "チーム管理" })
     ).toBeInTheDocument();
     expect(
       screen.queryByRole("heading", { level: 3, name: "通知管理" })
     ).not.toBeInTheDocument();
-
+    expect(screen.getByRole("link", { name: "通知管理" })).toHaveAttribute(
+      "href",
+      "/notifications"
+    );
+    expect(screen.getByRole("link", { name: "チーム管理" })).toHaveAttribute(
+      "href",
+      "/teams"
+    );
     expect(
-      screen.getByRole("link", { name: "イベント登録一覧" })
-    ).toHaveAttribute("href", "/events");
+      screen.getByRole("link", { name: "ランキング管理" })
+    ).toHaveAttribute("href", "/ranking");
+
+    expect(screen.getByRole("link", { name: "イベント管理" })).toHaveAttribute(
+      "href",
+      "/events"
+    );
     expect(screen.getByRole("link", { name: "教官管理" })).toHaveAttribute(
       "href",
       "/teachers"

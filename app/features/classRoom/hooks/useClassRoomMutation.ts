@@ -4,11 +4,13 @@ import type { ClassRoomWriteInput } from "~/features/classRoom/model/classRoom";
 
 type UseClassRoomMutationOptions = {
   api: ClassRoomMutationApi;
+  onConflict?: () => Promise<void> | void;
   onRevalidate?: () => Promise<void> | void;
 };
 
 export function useClassRoomMutation({
   api,
+  onConflict,
   onRevalidate,
 }: UseClassRoomMutationOptions) {
   const { clearError, error, isMutating, run } = useManagementMutation({
@@ -25,7 +27,9 @@ export function useClassRoomMutation({
   function update(classRoomId: number, input: ClassRoomWriteInput) {
     return run(
       () => api.updateClassRoom(classRoomId, input),
-      "クラスを保存できませんでした。"
+      "クラスを保存できませんでした。",
+      false,
+      onConflict
     );
   }
 

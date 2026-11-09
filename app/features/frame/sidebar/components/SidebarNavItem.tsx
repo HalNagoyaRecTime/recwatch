@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { NavLink } from "react-router";
 import { ChevronRightIcon } from "lucide-react";
 import { useSidebarUI } from "~/features/frame/sidebar/hooks/useSidebarUI";
@@ -38,10 +39,17 @@ type NavFolderProps = {
 
 function NavFolder({ item, pathname, depth }: NavFolderProps) {
   const { isExpanded } = useSidebarUI();
-  const { openAccordions, toggleAccordion, closeForMobile } = useSidebarState();
+  const { openAccordions, toggleAccordion, openAccordion, closeForMobile } =
+    useSidebarState();
 
   const isAccordionOpen = openAccordions.includes(item.id);
   const isActive = isSidebarItemActive(item, pathname);
+
+  // 画面遷移したとき、開いたページを含むフォルダーが閉じていれば自動で開く。
+  // 依存に isAccordionOpen を含めないので、ユーザーが手動で閉じた状態は維持される。
+  useEffect(() => {
+    if (isActive) openAccordion(item.id);
+  }, [isActive, pathname, item.id, openAccordion]);
 
   const handleToggle = () => {
     if (isExpanded) toggleAccordion(item.id);

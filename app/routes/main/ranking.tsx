@@ -1,4 +1,9 @@
-import { Outlet, useLoaderData, useRouteError } from "react-router";
+import {
+  Outlet,
+  useLoaderData,
+  useRevalidator,
+  useRouteError,
+} from "react-router";
 
 import { PagePadding } from "~/features/frame/page-layout/PagePadding";
 import { PageLayout } from "~/features/frame/page-layout/PageLayout";
@@ -42,6 +47,7 @@ export function ErrorBoundary() {
 export default function RankingRoute() {
   const { limit, offset, rankings, total } =
     useLoaderData<typeof clientLoader>();
+  const revalidator = useRevalidator();
   const closeModal = useManagementModalNavigation("/ranking");
 
   return (
@@ -51,6 +57,7 @@ export default function RankingRoute() {
           <RankingPage
             limit={limit}
             offset={offset}
+            onRevalidate={() => revalidator.revalidate()}
             rankings={rankings}
             total={total}
           />

@@ -9,6 +9,7 @@ const venues = [
     imageUrl: null,
     createdAt: "2026-09-25T09:00:00Z",
     updatedAt: "2026-09-25T09:00:00Z",
+    lockVersion: 0,
   },
   {
     id: 2,
@@ -16,6 +17,7 @@ const venues = [
     imageUrl: null,
     createdAt: "2026-09-25T09:01:00Z",
     updatedAt: "2026-09-25T09:01:00Z",
+    lockVersion: 0,
   },
 ];
 

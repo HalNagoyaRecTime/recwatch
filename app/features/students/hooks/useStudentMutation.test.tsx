@@ -17,6 +17,7 @@ const student: StudentRow = {
   isLiveActive: true,
   isStaff: false,
   classRoom: { classRoomId: 1, classCode: "1A", className: "1年A組" },
+  lockVersion: 0,
 };
 
 function createApi(): StudentMutationApi {

@@ -15,6 +15,7 @@ export type StudentRow = {
   isLiveActive: boolean;
   isStaff: boolean;
   classRoom: StudentClassRoomRow | null;
+  lockVersion: number;
 };
 
 export type StudentPage = {
@@ -29,6 +30,8 @@ export type StudentWriteInput = {
   classRoomId: number | null;
   displayName: string;
   studentIdNumber: string;
+  /** 更新時に、取得した版を送り返して競合を検出する。作成では送らない。 */
+  lockVersion?: number;
 };
 
 export type StudentClassRoomAssignmentInput = {
