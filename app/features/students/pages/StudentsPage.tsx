@@ -100,87 +100,92 @@ function ManagedStudentsPage({
   }
 
   return (
-    <div className="min-h-full space-y-5">
-      <PageHeader
-        actions={
-          <div className="flex items-center gap-2">
-            <ImportUploadTrigger showHelperText={false} type="students" />
-            <Button
-              disabled={isMutating}
-              icon={Plus}
-              onClick={() =>
-                navigate({ pathname: "/students/new", search: location.search })
-              }
-              size="lg"
-              variant="primary"
-            >
-              新規登録
-            </Button>
-          </div>
-        }
-        description="学生の基本情報と所属クラスを管理します"
-        title="学生管理"
-      />
+    <div className="flex min-h-0 flex-1 flex-col gap-5 [&>*]:shrink-0">
+      <div className="list-page-controls flex flex-col gap-5">
+        <PageHeader
+          actions={
+            <div className="flex items-center gap-2">
+              <ImportUploadTrigger showHelperText={false} type="students" />
+              <Button
+                disabled={isMutating}
+                icon={Plus}
+                onClick={() =>
+                  navigate({
+                    pathname: "/students/new",
+                    search: location.search,
+                  })
+                }
+                size="lg"
+                variant="primary"
+              >
+                新規登録
+              </Button>
+            </div>
+          }
+          description="学生の基本情報と所属クラスを管理します"
+          title="学生管理"
+        />
 
-      <div className="flex flex-wrap items-center gap-3">
-        <div className="min-w-60 flex-1">
-          <SearchField
-            ariaLabel="学生を検索"
-            onValueChange={setSearchInput}
-            placeholder="氏名・学籍番号・クラスで検索..."
-            value={searchInput}
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="min-w-60 flex-1">
+            <SearchField
+              ariaLabel="学生を検索"
+              onValueChange={setSearchInput}
+              placeholder="氏名・学籍番号・クラスで検索..."
+              value={searchInput}
+            />
+          </div>
+          <Select
+            ariaLabel="担当クラスフィルター"
+            disabled={
+              classRoomOptionState.isLoading ||
+              Boolean(classRoomOptionState.error)
+            }
+            onValueChange={(value) =>
+              updateSearchParams({
+                page: 1,
+                classRoomId: value === "all" ? null : Number(value),
+              })
+            }
+            options={[
+              {
+                label: classRoomOptionState.isLoading
+                  ? "クラス:読み込み中..."
+                  : "クラス:すべて",
+                value: "all",
+              },
+              ...classRoomOptionState.items.map((classRoom) => ({
+                label: `${classRoom.classCode} ${classRoom.className}`,
+                value: String(classRoom.classRoomId),
+              })),
+            ]}
+            value={classRoomId ? String(classRoomId) : "all"}
+          />
+          <Select
+            ariaLabel="スタッフフィルター"
+            onValueChange={(value) => handleFilterChange("isStaff", value)}
+            options={booleanFilterOptions("スタッフ")}
+            value={isStaff}
+          />
+          <Select
+            ariaLabel="有効状態フィルター"
+            onValueChange={(value) => handleFilterChange("isLiveActive", value)}
+            options={booleanFilterOptions("有効")}
+            value={isLiveActive}
           />
         </div>
-        <Select
-          ariaLabel="担当クラスフィルター"
-          disabled={
-            classRoomOptionState.isLoading ||
-            Boolean(classRoomOptionState.error)
-          }
-          onValueChange={(value) =>
-            updateSearchParams({
-              page: 1,
-              classRoomId: value === "all" ? null : Number(value),
-            })
-          }
-          options={[
-            {
-              label: classRoomOptionState.isLoading
-                ? "クラス:読み込み中..."
-                : "クラス:すべて",
-              value: "all",
-            },
-            ...classRoomOptionState.items.map((classRoom) => ({
-              label: `${classRoom.classCode} ${classRoom.className}`,
-              value: String(classRoom.classRoomId),
-            })),
-          ]}
-          value={classRoomId ? String(classRoomId) : "all"}
+
+        <ManagementOptionFeedback
+          label="クラス候補"
+          state={classRoomOptionState}
         />
-        <Select
-          ariaLabel="スタッフフィルター"
-          onValueChange={(value) => handleFilterChange("isStaff", value)}
-          options={booleanFilterOptions("スタッフ")}
-          value={isStaff}
-        />
-        <Select
-          ariaLabel="有効状態フィルター"
-          onValueChange={(value) => handleFilterChange("isLiveActive", value)}
-          options={booleanFilterOptions("有効")}
-          value={isLiveActive}
-        />
+
+        {submitError ? (
+          <p className="text-tone-danger-text text-sm" role="alert">
+            {submitError}
+          </p>
+        ) : null}
       </div>
-
-      <ManagementOptionFeedback
-        label="クラス候補"
-        state={classRoomOptionState}
-      />
-
-      {submitError ? (
-        <p className="text-tone-danger-text text-sm" role="alert">
-          {submitError}
-        </p>
-      ) : null}
 
       <StudentTable
         emptyMessage={
