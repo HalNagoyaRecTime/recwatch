@@ -88,7 +88,7 @@ describe("NotificationDetailPage", () => {
       notificationScheduleId: 504,
     });
     renderPage(createApis({ getDetail, getSchedule }));
-    await screen.findByText("Pushタイトル");
+    await screen.findByText("プッシュ通知のタイトル");
     await user.click(screen.getByRole("button", { name: "配信状況" }));
     expect(await screen.findByText("配信処理の流れ")).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "配信状況を更新" }));
@@ -105,11 +105,11 @@ describe("NotificationDetailPage", () => {
     });
     const apis = createApis({ getSchedule });
     renderPage(apis);
-    await screen.findByText("Pushタイトル");
+    await screen.findByText("プッシュ通知のタイトル");
     await user.click(screen.getByRole("button", { name: "配信状況" }));
     expect(await screen.findByText("配信処理の流れ")).toBeInTheDocument();
     expect(
-      screen.getByRole("heading", { name: "Push内訳" })
+      screen.getByRole("heading", { name: "プッシュ通知の配信内訳" })
     ).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "配信状況を更新" }));
     await waitFor(() => expect(getSchedule).toHaveBeenCalledTimes(2));
@@ -158,7 +158,7 @@ describe("NotificationDetailPage", () => {
       .mockReturnValueOnce(next);
     const apis = createApis({ getSchedule });
     renderPage(apis);
-    await screen.findByText("Pushタイトル");
+    await screen.findByText("プッシュ通知のタイトル");
     await user.click(screen.getByRole("button", { name: "配信状況" }));
     expect(await screen.findByText("配信処理の流れ")).toBeInTheDocument();
     expect(apis.scheduleQueryApi.getResults).not.toHaveBeenCalled();

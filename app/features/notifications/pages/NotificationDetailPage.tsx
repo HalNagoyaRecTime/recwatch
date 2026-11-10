@@ -290,13 +290,19 @@ function OverviewTab({
 }) {
   return (
     <div className="flex flex-col gap-4">
-      <Card title="通知内容" description="Mobileへ表示される内容と詳細情報">
+      <Card
+        title="通知内容"
+        description="スマートフォンのアプリに表示される内容と詳細情報"
+      >
         <div className="grid gap-3 md:grid-cols-2">
           <ContentBox
-            label="Pushタイトル"
+            label="プッシュ通知のタイトル"
             value={notification.content.push.title}
           />
-          <ContentBox label="Push本文" value={notification.content.push.body} />
+          <ContentBox
+            label="プッシュ通知の本文"
+            value={notification.content.push.body}
+          />
         </div>
         <ContentBox
           label="通知タイトル"
@@ -329,19 +335,19 @@ function DeliverySummary({
       "ユーザー単位",
     ],
     [
-      "Push 成功ユーザー",
+      "配信に成功した人数",
       recipientCount(summary?.successCount),
-      "1 送信先以上で FCM 受付",
+      "1送信先以上で通知サービス受付済み",
     ],
     [
-      "Push 未成功ユーザー",
+      "配信に未成功の人数",
       recipientCount(summary?.failedCount),
       "送信待ち・再送待ちを含む",
     ],
     [
       "送信先なしユーザー",
       recipientCount(summary?.noPushTargetCount),
-      "Push 配送記録なし",
+      "配信記録なし",
     ],
   ];
   return (
@@ -427,8 +433,7 @@ function ScheduleTab({
           <header className="monitor-flow-header">
             <div>
               <h2>
-                Notification #{detail.notificationId} /{" "}
-                {detail.content.push.title}
+                通知 #{detail.notificationId} / {detail.content.push.title}
               </h2>
               <p>配信予定 {formatNotificationDateTime(detail.sendAt)}</p>
             </div>
@@ -457,15 +462,15 @@ function ScheduleTab({
                 </dd>
               </div>
               <div>
-                <dt>DB status</dt>
+                <dt>DB状態</dt>
                 <dd>{detail.status}</dd>
               </div>
               <div>
-                <dt>Schedule</dt>
+                <dt>配信予約</dt>
                 <dd>#{detail.notificationScheduleId}</dd>
               </div>
               <div>
-                <dt>Recipient確定</dt>
+                <dt>通知対象者の確定</dt>
                 <dd>{resolved ? "確定済み" : "未確定"}</dd>
               </div>
               <div>
@@ -475,7 +480,7 @@ function ScheduleTab({
             </dl>
           </section>
           <section className="monitor-panel monitor-side-panel">
-            <h2>Push内訳</h2>
+            <h2>プッシュ通知の配信内訳</h2>
             <div className="monitor-breakdown">
               {breakdown.map((row) => (
                 <div

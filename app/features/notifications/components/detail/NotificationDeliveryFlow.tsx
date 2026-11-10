@@ -42,7 +42,7 @@ function buildStages(detail: NotificationScheduleDetail): Stage[] {
       label: "配信回",
       value: scheduleStatusLabel[detail.status],
       caption: `配信予定 ${formatNotificationDateTime(detail.sendAt)}`,
-      badge: `Schedule #${detail.notificationScheduleId}`,
+      badge: `配信予約 #${detail.notificationScheduleId}`,
       tone: started ? "done" : "waiting",
     },
     {

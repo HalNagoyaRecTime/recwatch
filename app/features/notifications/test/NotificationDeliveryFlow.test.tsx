@@ -39,7 +39,7 @@ describe("配信処理フロー", () => {
     expect(screen.getAllByText("未確定").length).toBeGreaterThan(0);
     expect(screen.queryByText("40")).not.toBeInTheDocument();
     expect(screen.getByText("配信回")).toBeInTheDocument();
-    expect(screen.getByText("停止")).toBeInTheDocument();
+    expect(screen.getByText("停止済み")).toBeInTheDocument();
     expect(screen.getByText("対象指定 4 / 4 解決")).toBeInTheDocument();
     expect(screen.getByText("42件")).toBeInTheDocument();
     expect(screen.getByText("成功 38件")).toBeInTheDocument();
