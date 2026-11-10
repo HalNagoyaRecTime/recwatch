@@ -92,6 +92,11 @@ describe("AccountDeletionCallbackPage", () => {
       screen.getByText("Microsoft アカウントが削除されることはありません。")
     ).toBeInTheDocument();
     expect(
+      screen.getByText(
+        "学校から登録された学生情報（学籍番号・クラス・出席番号・集合の所属）は削除されず、同じアカウントで再度ログインすると関連付けられます。"
+      )
+    ).toBeInTheDocument();
+    expect(
       screen.getByRole("button", { name: "キャンセル" })
     ).toBeInTheDocument();
 
