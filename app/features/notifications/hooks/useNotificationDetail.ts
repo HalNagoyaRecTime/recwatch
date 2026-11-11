@@ -11,9 +11,8 @@ import type {
 import type {
   NotificationScheduleDetail,
   NotificationScheduleQueryApi,
-  NotificationScheduleResults,
 } from "~/features/notifications/api/contracts/notification-schedule-query-api";
-import { readApiErrorStatus } from "~/features/notifications/api/mappers/notification-api-error-mapper";
+import { readApiErrorStatus } from "~/features/notifications/api/contracts/notification-error";
 
 type AsyncSection<T> = {
   data: T | null;
@@ -47,25 +46,23 @@ export function useNotificationDetail({
   );
   const [schedule, setSchedule] =
     useState<AsyncSection<NotificationScheduleDetail>>(emptySection);
-  const [results, setResults] =
-    useState<AsyncSection<NotificationScheduleResults>>(emptySection);
   const [delivery, setDelivery] =
     useState<AsyncSection<NotificationPushDeliveryDetail>>(emptySection);
   const [selectedDeliveryId, setSelectedDeliveryId] = useState<number | null>(
     null
   );
+  const selectedSchedule = useRef<number | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
   const notificationRequestId = useRef(0);
   const scheduleRequestId = useRef(0);
-  const resultsRequestId = useRef(0);
   const deliveryRequestId = useRef(0);
 
   const selectSchedule = useCallback((scheduleId: number | null) => {
     scheduleRequestId.current += 1;
-    resultsRequestId.current += 1;
     deliveryRequestId.current += 1;
+    selectedSchedule.current = scheduleId;
     setSelectedScheduleId(scheduleId);
     setSchedule(emptySection());
-    setResults(emptySection());
     setSelectedDeliveryId(null);
     setDelivery(emptySection());
   }, []);
@@ -89,7 +86,13 @@ export function useNotificationDetail({
       const data = await queryApi.getDetail(notificationId);
       if (requestId !== notificationRequestId.current) return;
       setNotification({ data, errorMessage: null, isLoading: false });
-      selectSchedule(data.schedules[0]?.notificationScheduleId ?? null);
+      const next = data.schedules.some(
+        (item) => item.notificationScheduleId === selectedSchedule.current
+      )
+        ? selectedSchedule.current
+        : (data.schedules[0]?.notificationScheduleId ?? null);
+      if (next !== selectedSchedule.current) selectSchedule(next);
+      else setRefreshKey((current) => current + 1);
     } catch (error) {
       if (requestId !== notificationRequestId.current) return;
       setNotification({
@@ -129,8 +132,8 @@ export function useNotificationDetail({
         data: null,
         errorMessage:
           readApiErrorStatus(error) === 404
-            ? "Scheduleが見つかりません。"
-            : "Scheduleの詳細を読み込めませんでした。",
+            ? "配信予約が見つかりません。"
+            : "配信予約の詳細を読み込めませんでした。",
         isLoading: false,
       });
     }
@@ -148,37 +151,7 @@ export function useNotificationDetail({
       active = false;
       scheduleRequestId.current += 1;
     };
-  }, [loadSchedule, selectedScheduleId]);
-
-  const loadResults = useCallback(
-    async (page = 1) => {
-      if (selectedScheduleId === null) return;
-      const requestId = ++resultsRequestId.current;
-      setResults((current) => ({
-        ...current,
-        errorMessage: null,
-        isLoading: true,
-      }));
-      try {
-        const data = await scheduleQueryApi.getResults(selectedScheduleId, {
-          page,
-          limit: 50,
-        });
-        if (requestId === resultsRequestId.current) {
-          setResults({ data, errorMessage: null, isLoading: false });
-        }
-      } catch {
-        if (requestId === resultsRequestId.current) {
-          setResults((current) => ({
-            ...current,
-            errorMessage: "配信結果を読み込めませんでした。",
-            isLoading: false,
-          }));
-        }
-      }
-    },
-    [scheduleQueryApi, selectedScheduleId]
-  );
+  }, [loadSchedule, selectedScheduleId, refreshKey]);
 
   const openDelivery = useCallback(
     async (notificationPushDeliveryId: number) => {
@@ -198,8 +171,8 @@ export function useNotificationDetail({
           data: null,
           errorMessage:
             readApiErrorStatus(error) === 404
-              ? "Push配送が見つかりません。"
-              : "Push配送詳細を読み込めませんでした。",
+              ? "プッシュ通知の配信記録が見つかりません。"
+              : "プッシュ通知の配信詳細を読み込めませんでした。",
           isLoading: false,
         });
       }
@@ -214,14 +187,13 @@ export function useNotificationDetail({
   }, []);
 
   return {
+    refreshKey,
     closeDelivery,
     delivery,
     loadNotification,
-    loadResults,
     loadSchedule,
     notification,
     openDelivery,
-    results,
     schedule,
     selectedDeliveryId,
     selectedScheduleId,

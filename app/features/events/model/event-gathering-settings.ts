@@ -17,11 +17,14 @@ export type GatheringSetting = {
 
 export type RoundSetting = {
   round: number;
+  startTime: string | null;
   gatherings: GatheringSetting[];
 };
 
 export type EventGatheringSettings = {
   eventId: number;
+  /** Event と共有する版。集合設定の保存でも進む。 */
+  lockVersion: number;
   rounds: RoundSetting[];
 };
 
@@ -37,9 +40,8 @@ export type GatheringDraft = {
   time: string;
   spotId: number | null;
   /**
-   * サーバーに登録済みの参加人数。参加者がいる集合は保存 API が削除を拒否するため、
-   * 画面でも削除できないようにする判断に使う。
-   * 参加者はこの下書きとは別に集合ごとの参加者ピッカーで保存し、保存後に人数だけ反映する。
+   * サーバーに登録済みの参加人数。参加者はこの下書きとは別に集合ごとの
+   * 参加者ピッカーで保存し、保存後に人数だけ反映する。
    */
   savedMemberCount: number;
 };
@@ -47,6 +49,7 @@ export type GatheringDraft = {
 export type RoundDraft = {
   key: string;
   round: number;
+  startTime: string;
   gatherings: GatheringDraft[];
 };
 
@@ -59,11 +62,14 @@ export type GatheringWriteInput = {
 
 export type RoundWriteInput = {
   round: number;
+  startTime: string | null;
   gatherings: GatheringWriteInput[];
 };
 
 export type EventGatheringSettingsWriteInput = {
   rounds: RoundWriteInput[];
+  /** 取得した版を送り返して競合を検出する。 */
+  lockVersion?: number;
 };
 
 /** 旧 API で集合時刻が未設定のまま作成された行に入っている値。画面では未入力として扱う。 */
@@ -71,13 +77,6 @@ export const UNSET_GATHERING_TIME = "99:59";
 
 export const MIN_ROUND = 1;
 export const MAX_ROUND = 99;
-
-/**
- * PUT /gatherings/:gatheringId/members の user_ids は 30 件が上限。
- * D1 のバインド変数（1 人あたり 2 個・1 クエリ 100 個まで）に由来するため、
- * 保存して 400 を受け取る前に画面側でも同じ値で止める。
- */
-export const MAX_GATHERING_MEMBERS = 30;
 
 let draftKeySequence = 0;
 
@@ -107,6 +106,7 @@ export function createEmptyRoundDraft(
   return {
     key: createDraftKey(),
     round: Math.min(maxRound + 1, MAX_ROUND),
+    startTime: "",
     gatherings: [createEmptyGatheringDraft()],
   };
 }
@@ -115,6 +115,7 @@ export function toRoundDrafts(settings: EventGatheringSettings): RoundDraft[] {
   return settings.rounds.map((round) => ({
     key: createDraftKey(),
     round: round.round,
+    startTime: round.startTime ?? "",
     gatherings: round.gatherings.map((gathering) => ({
       key: createDraftKey(),
       gatheringId: gathering.id,
@@ -125,11 +126,7 @@ export function toRoundDrafts(settings: EventGatheringSettings): RoundDraft[] {
   }));
 }
 
-/** 参加者が登録されている集合は、保存 API が削除を拒否するため画面でも削除させない。 */
+/** 参加者が登録されている集合は、保存 API が個別削除を拒否するため画面でも削除させない。 */
 export function canRemoveGathering(gathering: GatheringDraft): boolean {
   return gathering.savedMemberCount === 0;
-}
-
-export function canRemoveRound(round: RoundDraft): boolean {
-  return round.gatherings.every(canRemoveGathering);
 }

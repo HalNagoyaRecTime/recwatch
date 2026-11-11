@@ -11,6 +11,8 @@ const validResponse = {
   success_count: 1,
   error_count: 0,
   errors: [],
+  excluded_count: 0,
+  excluded: [],
   rows: [{ student_id: "S001" }],
   rows_total: 1,
   rows_limit: 100,
@@ -43,6 +45,8 @@ describe("toMasterImportSession", () => {
     "success_count",
     "error_count",
     "errors",
+    "excluded_count",
+    "excluded",
     "rows",
     "rows_total",
     "rows_limit",
@@ -77,5 +81,55 @@ describe("toMasterImportSession", () => {
         field: "name",
       }),
     ]);
+  });
+
+  it("除外する行を画面モデルへ変換する", () => {
+    const result = toMasterImportSession({
+      ...validResponse,
+      total: 2,
+      success_count: 1,
+      excluded_count: 1,
+      excluded: [
+        {
+          row_index: 1,
+          class_code: "1A",
+          attendance_number: 1,
+          student_id_number: "S001",
+          display_name: "山田花子",
+          student_id: 7,
+          user_id: 70,
+          reason: "student_already_registered_inactive",
+        },
+      ],
+    });
+
+    expect(result).toMatchObject({
+      successCount: 1,
+      excludedCount: 1,
+      excluded: [
+        {
+          rowIndex: 1,
+          studentIdNumber: "S001",
+          displayName: "山田花子",
+          reason: "student_already_registered_inactive",
+        },
+      ],
+    });
+  });
+
+  it("学籍番号が無い除外行を含むレスポンスを拒否する", () => {
+    expect(() =>
+      toMasterImportSession({
+        ...validResponse,
+        excluded_count: 1,
+        excluded: [
+          {
+            row_index: 1,
+            display_name: "山田花子",
+            reason: "student_already_registered",
+          },
+        ],
+      })
+    ).toThrow("取り込み結果の形式が不正です。");
   });
 });

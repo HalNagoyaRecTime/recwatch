@@ -6,6 +6,7 @@ import type {
   NotificationPlatformDto,
   NotificationPushContentDto,
   NotificationPushDeliveryStatusDto,
+  NotificationRecipientResolutionStatusDto,
   NotificationScheduleStatusDto,
   NotificationStopDto,
   NotificationUserReferenceDto,
@@ -13,15 +14,15 @@ import type {
 
 export type NotificationScheduleListQueryDto = NotificationDateRangeQueryDto;
 
-export type NotificationScheduleListItemDto = {
-  notificationId: number;
-  notificationScheduleId: number;
-  content: { push: NotificationPushContentDto };
-  importance: NotificationImportanceDto;
-  sendAt: string;
-  status: NotificationScheduleStatusDto;
-  stop: NotificationStopDto | null;
-  creation: NotificationCreationDto;
+type NotificationScheduleProgressKey =
+  "audienceProgress" | "recipientProgress" | "deliveryProgress";
+
+export type NotificationScheduleListItemDto = Omit<
+  NotificationScheduleDetailDto,
+  NotificationScheduleProgressKey
+> & {
+  [Key in NotificationScheduleProgressKey]:
+    NotificationScheduleDetailDto[Key] | null;
 };
 
 export type NotificationScheduleListResponseDto = {
@@ -45,6 +46,7 @@ export type NotificationScheduleDetailDto = {
   importance: NotificationImportanceDto;
   sendAt: string;
   status: NotificationScheduleStatusDto;
+  failureReason: string | null;
   stop: NotificationStopDto | null;
   creation: NotificationCreationDto;
   audienceProgress: {
@@ -53,7 +55,7 @@ export type NotificationScheduleDetailDto = {
   };
   recipientProgress: {
     count: number;
-    status: "pending" | "resolved";
+    status: NotificationRecipientResolutionStatusDto;
   };
   deliveryProgress: NotificationDeliveryProgressDto;
 };

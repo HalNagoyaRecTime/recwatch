@@ -13,9 +13,10 @@ function createClient(overrides: Partial<Record<keyof Client, unknown>> = {}) {
 }
 
 describe("createHttpEventGatheringSettingsGateway", () => {
-  it("Event 詳細 1 回の GET だけで Event 単位の集合設定にし、集合ごとの参加者は読まない", async () => {
+  it("参加者数付きの Event 詳細 1 回の GET だけで Event 単位の集合設定にし、集合ごとの参加者は読まない", async () => {
     const get = vi.fn().mockResolvedValue({
       event_id: 12,
+      lock_version: 1,
       event_name: "リレー",
       rule_text: null,
       venues: [{ venue_id: 3, venue_name: "メインコート" }],
@@ -46,9 +47,11 @@ describe("createHttpEventGatheringSettingsGateway", () => {
 
     await expect(gateway.load(12)).resolves.toEqual({
       eventId: 12,
+      lockVersion: 1,
       rounds: [
         {
           round: 1,
+          startTime: null,
           gatherings: [
             {
               id: 101,
@@ -61,17 +64,24 @@ describe("createHttpEventGatheringSettingsGateway", () => {
       ],
     });
     expect(get).toHaveBeenCalledTimes(1);
-    expect(get).toHaveBeenCalledWith("/api/v1/events/12");
+    expect(get).toHaveBeenCalledWith(
+      "/api/v1/events/12?includeMemberCount=true"
+    );
   });
 
   it("集合が 1 件もない Event は空の集合設定を返す", async () => {
-    const get = vi.fn().mockResolvedValue({ event_id: 12, rounds: [] });
+    const get = vi.fn().mockResolvedValue({
+      event_id: 12,
+      lock_version: 1,
+      rounds: [],
+    });
     const gateway = createHttpEventGatheringSettingsGateway(
       createClient({ get })
     );
 
     await expect(gateway.load(12)).resolves.toEqual({
       eventId: 12,
+      lockVersion: 1,
       rounds: [],
     });
     expect(get).toHaveBeenCalledTimes(1);
@@ -80,6 +90,7 @@ describe("createHttpEventGatheringSettingsGateway", () => {
   it("保存 API へ snake_case で送り、保存後の状態を返す", async () => {
     const put = vi.fn().mockResolvedValue({
       event_id: 12,
+      lock_version: 1,
       rounds: [
         {
           round: 1,
@@ -105,6 +116,7 @@ describe("createHttpEventGatheringSettingsGateway", () => {
       rounds: [
         {
           round: 1,
+          startTime: null,
           gatherings: [
             { gatheringId: 101, time: "10:45", spotId: 1 },
             { gatheringId: null, time: "10:55", spotId: 2 },
@@ -117,6 +129,7 @@ describe("createHttpEventGatheringSettingsGateway", () => {
       rounds: [
         {
           round: 1,
+          start_time: null,
           gatherings: [
             {
               gathering_id: 101,
@@ -133,11 +146,17 @@ describe("createHttpEventGatheringSettingsGateway", () => {
 });
 
 describe("createHttpGatheringMemberGateway", () => {
-  it("クラスと学生を全ページ読み込み、停止中の学生も候補に含める", async () => {
+  it("チームと学生を全ページ読み込み、停止中の学生も候補に含める", async () => {
     const get = vi.fn().mockImplementation(async (path: string) => {
-      if (path.startsWith("/api/v1/classrooms")) {
+      if (path.startsWith("/api/v1/teams")) {
         return {
-          items: [{ class_room_id: 1, class_name: "HAL1A" }],
+          items: [
+            {
+              team_id: 10,
+              team_name: "青チーム",
+              registered_classes: ["HAL1A", "HAL1B"],
+            },
+          ],
           total: 1,
         };
       }
@@ -151,7 +170,11 @@ describe("createHttpGatheringMemberGateway", () => {
               attendance_number: 1,
               student_id_number: "2026001",
               is_live_active: true,
-              class_room: { class_room_id: 1, class_name: "HAL1A" },
+              class_room: {
+                class_room_id: 1,
+                class_code: "HAL1A",
+                class_name: "HAL1A",
+              },
             },
             {
               student_id: 11,
@@ -160,10 +183,23 @@ describe("createHttpGatheringMemberGateway", () => {
               attendance_number: 2,
               student_id_number: "2026002",
               is_live_active: false,
-              class_room: { class_room_id: 1, class_name: "HAL1A" },
+              class_room: {
+                class_room_id: 1,
+                class_code: "HAL1A",
+                class_name: "HAL1A",
+              },
+            },
+            {
+              student_id: 12,
+              user_id: 1003,
+              display_name: "鈴木 次郎",
+              attendance_number: null,
+              student_id_number: "2026003",
+              is_live_active: true,
+              class_room: null,
             },
           ],
-          total: 2,
+          total: 3,
         };
       }
       if (path.startsWith("/api/v1/teachers")) {
@@ -174,12 +210,13 @@ describe("createHttpGatheringMemberGateway", () => {
     const gateway = createHttpGatheringMemberGateway(createClient({ get }));
 
     await expect(gateway.loadCandidates()).resolves.toEqual({
-      classrooms: [{ id: 1, name: "HAL1A" }],
+      teams: [{ id: 10, name: "青チーム", classCodes: ["HAL1A", "HAL1B"] }],
       students: [
         {
           id: 10,
           userId: 1001,
           name: "山田 太郎",
+          teamId: 10,
           classroomId: 1,
           attendanceNumber: 1,
           studentNumber: "2026001",
@@ -189,15 +226,26 @@ describe("createHttpGatheringMemberGateway", () => {
           id: 11,
           userId: 1002,
           name: "佐藤 花子",
+          teamId: 10,
           classroomId: 1,
           attendanceNumber: 2,
           studentNumber: "2026002",
           isLiveActive: false,
         },
+        {
+          id: 12,
+          userId: 1003,
+          name: "鈴木 次郎",
+          teamId: null,
+          classroomId: null,
+          attendanceNumber: null,
+          studentNumber: "2026003",
+          isLiveActive: true,
+        },
       ],
       nonStudents: new Map(),
     });
-    expect(get).toHaveBeenCalledWith("/api/v1/classrooms?limit=100&offset=0");
+    expect(get).toHaveBeenCalledWith("/api/v1/teams?limit=100&offset=0");
     // 登録済みの参加者が停止されても外せるよう、停止中を含めて取得する
     expect(get).toHaveBeenCalledWith(
       "/api/v1/students?limit=100&offset=0&isLiveActive=all"

@@ -8,6 +8,7 @@ const classRoom = {
   class_name: "高度情報学科",
   student_count: 12,
   teacher: null,
+  lock_version: 2,
 };
 
 describe("ClassRoom HTTP API", () => {
@@ -72,6 +73,23 @@ describe("ClassRoom HTTP API", () => {
     );
   });
 
+  it("単体取得でclassRoomをDomain modelへ変換する", async () => {
+    const get = vi.fn().mockResolvedValue(classRoom);
+    const api = createClassRoomHttpApi({
+      get,
+      post: vi.fn(),
+      put: vi.fn(),
+      delete: vi.fn(),
+    });
+
+    await expect(api.getClassRoomById(3)).resolves.toMatchObject({
+      classRoomId: 3,
+      classCode: "IH13A",
+      className: "高度情報学科",
+    });
+    expect(get).toHaveBeenCalledWith("/api/v1/classrooms/3");
+  });
+
   it("作成・更新はcamelCaseの入力だけを送る", async () => {
     const post = vi.fn().mockResolvedValue(classRoom);
     const put = vi.fn().mockResolvedValue(classRoom);
@@ -91,6 +109,26 @@ describe("ClassRoom HTTP API", () => {
     await api.updateClassRoom(3, input);
 
     expect(post).toHaveBeenCalledWith("/api/v1/classrooms", input);
+    expect(put).toHaveBeenCalledWith("/api/v1/classrooms/3", input);
+  });
+
+  it("更新は取得した版をlockVersionとして送り返す", async () => {
+    const put = vi.fn().mockResolvedValue(classRoom);
+    const api = createClassRoomHttpApi({
+      get: vi.fn(),
+      post: vi.fn(),
+      put,
+      delete: vi.fn(),
+    });
+    const input = {
+      classCode: "IH13A",
+      className: "高度情報学科",
+      teacherId: null,
+      lockVersion: 2,
+    };
+
+    await api.updateClassRoom(3, input);
+
     expect(put).toHaveBeenCalledWith("/api/v1/classrooms/3", input);
   });
 });

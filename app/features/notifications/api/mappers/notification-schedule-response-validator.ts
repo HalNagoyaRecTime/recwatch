@@ -11,17 +11,21 @@ import {
   isNotificationCreation,
   isNotificationDeliveryProgress,
   isNotificationImportance,
+  isNotificationPlatform,
   isNotificationPushContent,
   isNotificationPushDeliveryStatus,
+  isNotificationRecipientResolutionStatus,
   isNotificationScheduleStatus,
   isNotificationUserReference,
   isNullableNotificationStop,
   isNullablePositiveInteger,
   isNullableString,
+  isNullableUtcDateTimeString,
   isNonNegativeInteger,
   isPositiveInteger,
   isRecord,
-  isString,
+  isUtcDateTimeString,
+  hasExactKeys,
 } from "~/features/notifications/api/mappers/notification-dto-validator";
 
 export function isNotificationScheduleListResponse(
@@ -29,33 +33,92 @@ export function isNotificationScheduleListResponse(
 ): value is NotificationScheduleListResponseDto {
   return (
     isRecord(value) &&
+    hasExactKeys(value, ["items"]) &&
     Array.isArray(value.items) &&
     value.items.every(isNotificationScheduleListItem)
   );
 }
+
+const notificationScheduleBaseKeys = [
+  "notificationId",
+  "notificationScheduleId",
+  "content",
+  "importance",
+  "sendAt",
+  "status",
+  "failureReason",
+  "stop",
+  "creation",
+];
+const notificationScheduleKeys = [
+  ...notificationScheduleBaseKeys,
+  "audienceProgress",
+  "recipientProgress",
+  "deliveryProgress",
+];
 
 export function isNotificationScheduleDetail(
   value: unknown
 ): value is NotificationScheduleDetailDto {
   return (
     isRecord(value) &&
+    hasExactKeys(value, notificationScheduleKeys) &&
+    hasNotificationScheduleFields(value) &&
+    isAudienceProgress(value.audienceProgress) &&
+    isRecipientProgress(value.recipientProgress) &&
+    isNotificationDeliveryProgress(value.deliveryProgress)
+  );
+}
+
+// 進み具合のキーが無い一覧は、進み具合を返す前のAPIの形です。
+// APIより先にこの画面をデプロイしても読めるよう受け付け、parserで進み具合をnullに揃えます。
+function isNotificationScheduleListItem(
+  value: unknown
+): value is NotificationScheduleListItemDto {
+  if (!isRecord(value) || !hasNotificationScheduleFields(value)) return false;
+  if (hasExactKeys(value, notificationScheduleBaseKeys)) return true;
+  return (
+    hasExactKeys(value, notificationScheduleKeys) &&
+    (value.audienceProgress === null ||
+      isAudienceProgress(value.audienceProgress)) &&
+    (value.recipientProgress === null ||
+      isRecipientProgress(value.recipientProgress)) &&
+    (value.deliveryProgress === null ||
+      isNotificationDeliveryProgress(value.deliveryProgress))
+  );
+}
+
+function hasNotificationScheduleFields(value: Record<string, unknown>) {
+  return (
     isPositiveInteger(value.notificationId) &&
     isPositiveInteger(value.notificationScheduleId) &&
     isRecord(value.content) &&
+    hasExactKeys(value.content, ["push"]) &&
     isNotificationPushContent(value.content.push) &&
     isNotificationImportance(value.importance) &&
-    isString(value.sendAt) &&
+    isUtcDateTimeString(value.sendAt) &&
     isNotificationScheduleStatus(value.status) &&
+    isNullableString(value.failureReason) &&
     isNullableNotificationStop(value.stop) &&
-    isNotificationCreation(value.creation) &&
-    isRecord(value.audienceProgress) &&
-    isNonNegativeInteger(value.audienceProgress.totalCount) &&
-    isNonNegativeInteger(value.audienceProgress.resolvedCount) &&
-    isRecord(value.recipientProgress) &&
-    isNonNegativeInteger(value.recipientProgress.count) &&
-    (value.recipientProgress.status === "pending" ||
-      value.recipientProgress.status === "resolved") &&
-    isNotificationDeliveryProgress(value.deliveryProgress)
+    isNotificationCreation(value.creation)
+  );
+}
+
+function isAudienceProgress(value: unknown) {
+  return (
+    isRecord(value) &&
+    hasExactKeys(value, ["totalCount", "resolvedCount"]) &&
+    isNonNegativeInteger(value.totalCount) &&
+    isNonNegativeInteger(value.resolvedCount)
+  );
+}
+
+function isRecipientProgress(value: unknown) {
+  return (
+    isRecord(value) &&
+    hasExactKeys(value, ["count", "status"]) &&
+    isNonNegativeInteger(value.count) &&
+    isNotificationRecipientResolutionStatus(value.status)
   );
 }
 
@@ -64,11 +127,19 @@ export function isNotificationScheduleResults(
 ): value is NotificationScheduleResultsDto {
   return (
     isRecord(value) &&
+    hasExactKeys(value, ["notificationScheduleId", "recipients"]) &&
     isPositiveInteger(value.notificationScheduleId) &&
     isRecord(value.recipients) &&
+    hasExactKeys(value.recipients, ["items", "pagination"]) &&
     Array.isArray(value.recipients.items) &&
     value.recipients.items.every(isNotificationResultRecipient) &&
     isRecord(value.recipients.pagination) &&
+    hasExactKeys(value.recipients.pagination, [
+      "page",
+      "limit",
+      "totalCount",
+      "totalPages",
+    ]) &&
     isPositiveInteger(value.recipients.pagination.page) &&
     isPositiveInteger(value.recipients.pagination.limit) &&
     isNonNegativeInteger(value.recipients.pagination.totalCount) &&
@@ -81,16 +152,30 @@ export function isNotificationPushDeliveryDetail(
 ): value is NotificationPushDeliveryDetailDto {
   return (
     isRecord(value) &&
+    hasExactKeys(value, [
+      "notificationPushDeliveryId",
+      "notificationRecipientId",
+      "firebaseTokenId",
+      "platform",
+      "status",
+      "attemptCount",
+      "firstAttemptAt",
+      "lastAttemptAt",
+      "nextRetryAt",
+      "sentAt",
+      "failedReason",
+      "fcmMessageId",
+    ]) &&
     isPositiveInteger(value.notificationPushDeliveryId) &&
     isPositiveInteger(value.notificationRecipientId) &&
     isNullablePositiveInteger(value.firebaseTokenId) &&
-    (value.platform === "ios" || value.platform === "android") &&
+    isNotificationPlatform(value.platform) &&
     isNotificationPushDeliveryStatus(value.status) &&
     isNonNegativeInteger(value.attemptCount) &&
-    isNullableString(value.firstAttemptAt) &&
-    isNullableString(value.lastAttemptAt) &&
-    isNullableString(value.nextRetryAt) &&
-    isNullableString(value.sentAt) &&
+    isNullableUtcDateTimeString(value.firstAttemptAt) &&
+    isNullableUtcDateTimeString(value.lastAttemptAt) &&
+    isNullableUtcDateTimeString(value.nextRetryAt) &&
+    isNullableUtcDateTimeString(value.sentAt) &&
     isNullableString(value.failedReason) &&
     isNullableString(value.fcmMessageId)
   );
@@ -101,31 +186,16 @@ export function isNotificationStopResponse(
 ): value is NotificationStopResponseDto {
   return (
     isRecord(value) &&
+    hasExactKeys(value, ["notificationScheduleId", "status"]) &&
     isPositiveInteger(value.notificationScheduleId) &&
     value.status === "stopped"
-  );
-}
-
-function isNotificationScheduleListItem(
-  value: unknown
-): value is NotificationScheduleListItemDto {
-  return (
-    isRecord(value) &&
-    isPositiveInteger(value.notificationId) &&
-    isPositiveInteger(value.notificationScheduleId) &&
-    isRecord(value.content) &&
-    isNotificationPushContent(value.content.push) &&
-    isNotificationImportance(value.importance) &&
-    isString(value.sendAt) &&
-    isNotificationScheduleStatus(value.status) &&
-    isNullableNotificationStop(value.stop) &&
-    isNotificationCreation(value.creation)
   );
 }
 
 function isNotificationResultRecipient(value: unknown) {
   return (
     isRecord(value) &&
+    hasExactKeys(value, ["notificationRecipientId", "user", "deliveries"]) &&
     isPositiveInteger(value.notificationRecipientId) &&
     isNotificationUserReference(value.user) &&
     Array.isArray(value.deliveries) &&
@@ -138,11 +208,19 @@ function isNotificationResultDelivery(
 ): value is NotificationResultDeliveryDto {
   return (
     isRecord(value) &&
+    hasExactKeys(value, [
+      "notificationPushDeliveryId",
+      "platform",
+      "status",
+      "attemptCount",
+      "lastAttemptAt",
+      "sentAt",
+    ]) &&
     isPositiveInteger(value.notificationPushDeliveryId) &&
-    (value.platform === "ios" || value.platform === "android") &&
+    isNotificationPlatform(value.platform) &&
     isNotificationPushDeliveryStatus(value.status) &&
     isNonNegativeInteger(value.attemptCount) &&
-    isNullableString(value.lastAttemptAt) &&
-    isNullableString(value.sentAt)
+    isNullableUtcDateTimeString(value.lastAttemptAt) &&
+    isNullableUtcDateTimeString(value.sentAt)
   );
 }

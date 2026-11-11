@@ -11,6 +11,11 @@ export type EventFormValue = {
   venueIds: number[];
 };
 
+/** 編集画面の初期値。取得時点の版を保存時に送り返す。 */
+export type EventEditValue = EventFormValue & {
+  lockVersion: number;
+};
+
 export type EventWriteInput = {
   endTime: string;
   name: string;
@@ -62,7 +67,7 @@ export function validateEventForm(
     input: {
       endTime: value.endTime,
       name: value.name.trim(),
-      rules: value.rules.trim() || null,
+      rules: value.rules.trim() ? value.rules : null,
       startTime: value.startTime,
       venueIds: value.venueIds,
     },

@@ -12,6 +12,7 @@ type DataTableRowProps<T> = {
   mainColumns: readonly DataTableColumn<T>[];
   rightColumns: readonly DataTableColumn<T>[];
   item: T;
+  rowSizing?: "fixed" | "content";
 };
 
 export function DataTableRow<T>({
@@ -19,10 +20,14 @@ export function DataTableRow<T>({
   mainColumns,
   rightColumns,
   item,
+  rowSizing = "fixed",
 }: DataTableRowProps<T>) {
   return (
     <div
-      className="border-border-subtle flex h-16 w-full flex-row items-stretch border-b transition-colors last:border-b-0"
+      className={cn(
+        "border-border-subtle flex w-full flex-row items-stretch border-b transition-colors last:border-b-0",
+        rowSizing === "content" ? "min-h-16 py-3" : "h-16"
+      )}
       role="row"
     >
       <div
@@ -37,7 +42,9 @@ export function DataTableRow<T>({
             <div
               key={column.id}
               className={cn(
-                "min-w-0 truncate",
+                rowSizing === "content"
+                  ? "min-w-0 [overflow-wrap:anywhere] break-words whitespace-normal"
+                  : "min-w-0 truncate",
                 dataTableColumnAlignmentClass[align],
                 dataTableColumnPaddingClass[padding]
               )}
@@ -62,7 +69,9 @@ export function DataTableRow<T>({
                 <div
                   key={column.id}
                   className={cn(
-                    "min-w-0 truncate",
+                    rowSizing === "content"
+                      ? "min-w-0 [overflow-wrap:anywhere] break-words whitespace-normal"
+                      : "min-w-0 truncate",
                     dataTableColumnAlignmentClass[align],
                     dataTableColumnPaddingClass[padding]
                   )}

@@ -5,6 +5,7 @@ import { FormModal } from "~/components/ui/modal/FormModal";
 
 import type { EventGatheringSettingsGateway } from "~/features/events/api/contracts/event-gathering-settings-gateway";
 import type { GatheringMemberGateway } from "~/features/events/api/contracts/gathering-member-gateway";
+import { EventGatheringContext } from "~/features/events/components/EventGatheringContext";
 import { GatheringSettingsSavedStep } from "~/features/events/components/GatheringSettingsSavedStep";
 import { GatheringSettingsStep } from "~/features/events/components/GatheringSettingsStep";
 import type { EventGatheringSettings } from "~/features/events/model/event-gathering-settings";
@@ -48,9 +49,18 @@ export function EventGatheringSettingsPage({
       description={
         savedSettings
           ? "集合設定の保存が完了しました。"
-          : "Roundごとの集合時間・集合場所を編集します。"
+          : "ラウンドごとの集合時間・集合場所を編集します。"
       }
       onClose={handleClose}
+      pinnedContent={
+        outletContext?.event ? (
+          <EventGatheringContext
+            endTime={outletContext.event.endTime}
+            name={outletContext.event.name}
+            startTime={outletContext.event.startTime}
+          />
+        ) : undefined
+      }
       size="xl"
       title="集合設定"
     >

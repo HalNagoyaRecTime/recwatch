@@ -1,5 +1,11 @@
 import { useMemo, useState } from "react";
 import { getErrorMessage } from "~/lib/client-error";
+import {
+  isUpdateConflictError,
+  UPDATE_CONFLICT_MESSAGE,
+  UPDATE_CONFLICT_RELOAD_FAILED_MESSAGE,
+} from "~/lib/update-conflict";
+import type { PlaceImageChange } from "~/types/place-image-change";
 
 import type { GatheringSpotGateway } from "~/features/gathering-spots/api/contracts/gathering-spot-gateway";
 import { useGatheringSpots } from "~/features/gathering-spots/hooks/useGatheringSpots";
@@ -38,11 +44,14 @@ export function useGatheringSpotsPage({
     createSpot,
     updateSpot,
     deleteSpot,
+    saveSpotImage,
     reload,
   } = useGatheringSpots({ gateway, listOptions });
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingSpot, setEditingSpot] = useState<GatheringSpot | null>(null);
   const [spotNameInput, setSpotNameInput] = useState("");
+  const [imageChange, setImageChange] = useState<PlaceImageChange | null>(null);
+  const [shouldFocusImage, setShouldFocusImage] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -51,6 +60,8 @@ export function useGatheringSpotsPage({
   function openCreateForm() {
     setEditingSpot(null);
     setSpotNameInput("");
+    setImageChange(null);
+    setShouldFocusImage(false);
     setSubmitError(null);
     setIsFormOpen(true);
   }
@@ -58,14 +69,23 @@ export function useGatheringSpotsPage({
   function openEditForm(spot: GatheringSpot) {
     setEditingSpot(spot);
     setSpotNameInput(spot.name);
+    setImageChange(null);
+    setShouldFocusImage(false);
     setSubmitError(null);
     setIsFormOpen(true);
+  }
+
+  function openEditImageForm(spot: GatheringSpot) {
+    openEditForm(spot);
+    setShouldFocusImage(true);
   }
 
   function closeForm() {
     setIsFormOpen(false);
     setEditingSpot(null);
     setSpotNameInput("");
+    setImageChange(null);
+    setShouldFocusImage(false);
     setSubmitError(null);
   }
 
@@ -107,10 +127,34 @@ export function useGatheringSpotsPage({
     setSpotNameInput(name);
   }
 
+  function handleImageChange(change: PlaceImageChange | null) {
+    setImageChange(change);
+  }
+
   function handleSortChange(columnId: string) {
     if (isDeleting || isSubmitting) return;
     if (!isGatheringSpotSortableColumnId(columnId)) return;
     setSort((current) => getNextGatheringSpotSort(current, columnId));
+  }
+
+  // 編集中の内容は破棄する。検索条件から外れた・削除された場合は一覧に無いのでフォームを閉じる。
+  // 一覧を取得できないときは最新の内容が分からないので、入力を残して再度の保存を促す。
+  async function replaceFormWithLatest(spotId: number) {
+    const page = await reload();
+    if (!page) {
+      setSubmitError(UPDATE_CONFLICT_RELOAD_FAILED_MESSAGE);
+      return;
+    }
+    const latest = page.items.find(({ id }) => id === spotId);
+    if (!latest) {
+      closeForm();
+      setActionError(UPDATE_CONFLICT_MESSAGE);
+      return;
+    }
+    setEditingSpot(latest);
+    setSpotNameInput(latest.name);
+    setImageChange(null);
+    setSubmitError(UPDATE_CONFLICT_MESSAGE);
   }
 
   async function submitForm() {
@@ -126,14 +170,30 @@ export function useGatheringSpotsPage({
     setSubmitError(null);
 
     try {
-      if (editingSpot) {
-        await updateSpot(editingSpot.id, name);
-      } else {
-        await createSpot(name);
+      const savedSpot = editingSpot
+        ? await updateSpot(editingSpot.id, name, editingSpot.lockVersion)
+        : await createSpot(name);
+      // 編集中に切り替えないと、画像だけ失敗した後の再送で同じ集合場所をもう一度作ってしまう
+      setEditingSpot(savedSpot);
+      try {
+        if (imageChange) await saveSpotImage(savedSpot.id, imageChange);
+      } catch (error) {
+        setSubmitError(
+          getErrorMessage(
+            error,
+            "集合場所名は保存しましたが、画像の保存に失敗しました。"
+          )
+        );
+        return;
+      } finally {
+        await reload();
       }
-      await reload();
       closeForm();
     } catch (error) {
+      if (editingSpot && isUpdateConflictError(error)) {
+        await replaceFormWithLatest(editingSpot.id);
+        return;
+      }
       setSubmitError(getErrorMessage(error, "集合場所の保存に失敗しました。"));
     } finally {
       setIsSubmitting(false);
@@ -150,8 +210,10 @@ export function useGatheringSpotsPage({
     handleDelete,
     handlePageChange,
     handleQueryChange,
+    handleImageChange,
     handleSortChange,
     handleSpotNameChange,
+    imageChange,
     isFormOpen,
     isDeleting,
     isLoading,
@@ -159,12 +221,14 @@ export function useGatheringSpotsPage({
     loadError,
     openCreateForm,
     openEditForm,
+    openEditImageForm,
     pageCount,
     pageSize,
     query,
     spotNameInput,
     submitError,
     submitForm,
+    shouldFocusImage,
     sort,
     spots,
     total,

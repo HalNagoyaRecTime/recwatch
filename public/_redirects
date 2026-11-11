@@ -1,0 +1,3 @@
+# Cloudflare PagesのHTML正規化による308を避け、ストア登録用の固定URLを200で返す。
+/legal/terms.html /legal/terms 200
+/legal/privacy.html /legal/privacy 200

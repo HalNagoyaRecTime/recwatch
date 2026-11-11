@@ -1,8 +1,6 @@
-import { useState } from "react";
-import { useLocation, useNavigate, useRevalidator } from "react-router";
-
-import { TeacherApi } from "~/features/teachers/api";
-import { teacherListTarget } from "~/features/teachers/application/teacher-navigation";
+import { ManagementOptionFeedback } from "~/components/management/ManagementOptionFeedback";
+import type { TeacherMutationApi } from "~/features/teachers/api/contracts/teacher-api";
+import { useTeacherMutation } from "~/features/teachers/hooks/useTeacherMutation";
 import {
   TeacherForm,
   type TeacherFormInput,
@@ -12,53 +10,77 @@ import type {
   ClassRoomOption,
   TeacherRow,
 } from "~/features/teachers/model/teacher";
-import { getErrorMessage } from "~/lib/client-error";
+import { useLatestAfterConflict } from "~/hooks/useLatestAfterConflict";
+import type { ManagementOptionState } from "~/hooks/useManagementOptions";
 
 export function TeacherEditPage({
+  api,
+  classRoomOptions,
   classRooms,
-  teacher,
+  loadLatest,
+  onClose,
+  onSaved,
+  teacher: loadedTeacher,
 }: {
+  api: TeacherMutationApi;
   classRooms: readonly ClassRoomOption[];
+  classRoomOptions?: ManagementOptionState<ClassRoomOption>;
+  loadLatest: () => Promise<TeacherRow>;
+  onClose: () => void | Promise<void>;
+  onSaved: () => Promise<void>;
   teacher: TeacherRow;
 }) {
-  const navigate = useNavigate();
-  const location = useLocation();
-  const revalidator = useRevalidator();
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitError, setSubmitError] = useState<string | null>(null);
+  const { current: teacher, reloadLatest } = useLatestAfterConflict(
+    loadedTeacher,
+    loadLatest
+  );
+  const classRoomOptionState = classRoomOptions ?? {
+    error: null,
+    isLoading: false,
+    items: classRooms,
+  };
+  const {
+    error: submitError,
+    isMutating: isSubmitting,
+    save,
+  } = useTeacherMutation({ api, onConflict: reloadLatest });
 
   async function handleSubmit(input: TeacherFormInput) {
-    setIsSubmitting(true);
-    setSubmitError(null);
-    try {
-      await TeacherApi.updateTeacher(teacher.teacherId, input);
-      await revalidator.revalidate();
-      close();
-    } catch (error) {
-      setSubmitError(getErrorMessage(error, "教官情報の更新に失敗しました。"));
-      setIsSubmitting(false);
+    if (
+      await save(teacher.teacherId, {
+        ...input,
+        lockVersion: teacher.lockVersion,
+      })
+    ) {
+      await onSaved();
     }
-  }
-
-  function close() {
-    navigate(teacherListTarget(location.search));
   }
 
   return (
     <TeacherFormModal
       description={`教官ID: ${teacher.teacherId}`}
-      onClose={close}
+      onClose={onClose}
       title="教官情報を編集"
     >
       {(requestClose) => (
-        <TeacherForm
-          classRooms={classRooms}
-          initialTeacher={teacher}
-          isSubmitting={isSubmitting}
-          onCancel={requestClose}
-          onSubmit={handleSubmit}
-          submitError={submitError}
-        />
+        <>
+          <ManagementOptionFeedback
+            label="クラス候補"
+            state={classRoomOptionState}
+          />
+          {!classRoomOptionState.isLoading && !classRoomOptionState.error ? (
+            // 競合後の再取得で版が変わったら、編集中の内容を捨てて最新の値で作り直す。
+            <TeacherForm
+              key={teacher.lockVersion}
+              classRooms={classRoomOptionState.items}
+              initialTeacher={teacher}
+              isSubmitting={isSubmitting}
+              onCancel={requestClose}
+              onSubmit={handleSubmit}
+              submitError={submitError}
+            />
+          ) : null}
+        </>
       )}
     </TeacherFormModal>
   );

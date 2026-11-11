@@ -50,11 +50,11 @@ export function createHttpEventCommandGateway(
       );
       return { id: response.event_id };
     },
-    async update(eventId, input) {
+    async update(eventId, input, lockVersion) {
       parseEventResponse(
         await client.put<unknown>(
           `/api/v1/events/${eventId}`,
-          toEventWriteRequest(input)
+          toEventWriteRequest(input, lockVersion)
         )
       );
     },

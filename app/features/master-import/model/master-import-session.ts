@@ -7,6 +7,13 @@ export interface MasterImportRowError {
   [key: string]: unknown;
 }
 
+export interface MasterImportExcludedRow {
+  rowIndex: number;
+  studentIdNumber: string;
+  displayName: string;
+  reason: string;
+}
+
 export interface MasterImportCommittedResult {
   imported: number;
   errorCount: number;
@@ -22,6 +29,8 @@ export interface MasterImportSession {
   successCount: number;
   errorCount: number;
   errors: MasterImportRowError[];
+  excludedCount: number;
+  excluded: MasterImportExcludedRow[];
   rows: Record<string, unknown>[];
   rowsTotal: number;
   rowsLimit: number;

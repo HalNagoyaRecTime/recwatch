@@ -35,6 +35,7 @@ function parseResponse(value: unknown): EventGatheringSettingsResponseDto {
     !Number.isSafeInteger(value.event_id) ||
     Number(value.event_id) <= 0 ||
     !Array.isArray(value.rounds) ||
+    !Number.isSafeInteger(value.lock_version) ||
     !value.rounds.every(
       (round) =>
         isRecord(round) &&
@@ -55,9 +56,10 @@ export function createHttpEventGatheringSettingsGateway(
   return {
     // Event 詳細が Round ごとの集合を人数付きで返すため、それを読み込み元にする。
     // 参加者の ID は集合ごとに参加者ピッカーを開いたときに読むので、ここでは読み足さない。
+    // 人数は既定では返らないため、集計表示のために明示して要求する。
     async load(eventId) {
       const response = await client.get<EventDetailResponseDto>(
-        `/api/v1/events/${eventId}`
+        `/api/v1/events/${eventId}?includeMemberCount=true`
       );
       return toEventGatheringSettings(parseResponse(response));
     },

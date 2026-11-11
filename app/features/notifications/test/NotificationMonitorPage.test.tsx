@@ -1,0 +1,508 @@
+import { act, render, screen, waitFor, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { createElement, type ComponentProps } from "react";
+import { MemoryRouter } from "react-router";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import type { NodeProps, ReactFlow } from "@xyflow/react";
+
+import {
+  createMockNotificationMonitorApi,
+  createNotificationMonitorFixtures,
+} from "~/features/notifications/mock/notification-monitor-api";
+import type { NotificationScheduleCommandApi } from "~/features/notifications/api/contracts/notification-schedule-command-api";
+import { ApiClientError } from "~/lib/api-client-error";
+import { NotificationMonitorPage } from "~/features/notifications/pages/NotificationMonitorPage";
+
+const graph = vi.hoisted(() => ({
+  props: null as ComponentProps<typeof ReactFlow> | null,
+  updateInternals: vi.fn(),
+}));
+vi.mock("@xyflow/react", () => ({
+  ReactFlow: (props: ComponentProps<typeof ReactFlow>) => {
+    graph.props = props;
+    return (
+      <div>
+        {props.nodes?.map((node) => {
+          const Component = props.nodeTypes?.[node.type ?? "default"];
+          return Component
+            ? createElement(Component, {
+                ...node,
+                key: node.id,
+                id: node.id,
+                data: node.data,
+                isConnectable: false,
+                positionAbsoluteX: node.position.x,
+                positionAbsoluteY: node.position.y,
+                selected: false,
+                dragging: false,
+                draggable: false,
+                selectable: false,
+                deletable: false,
+                zIndex: 0,
+                type: node.type ?? "default",
+              } as NodeProps & { key: string })
+            : null;
+        })}
+        {props.children}
+      </div>
+    );
+  },
+  Background: () => null,
+  Controls: () => null,
+  useUpdateNodeInternals: () => graph.updateInternals,
+}));
+
+const now = () => Date.parse("2026-10-04T12:00:00+09:00");
+function deferred<T>() {
+  let resolve!: (value: T) => void;
+  const promise = new Promise<T>((done) => {
+    resolve = done;
+  });
+  return { promise, resolve };
+}
+const observers: Array<{
+  element?: Element;
+  callback: ResizeObserverCallback;
+  disconnect: () => void;
+}> = [];
+beforeEach(() => {
+  observers.length = 0;
+  graph.updateInternals.mockClear();
+  vi.stubGlobal(
+    "ResizeObserver",
+    class {
+      record: (typeof observers)[number];
+      constructor(callback: ResizeObserverCallback) {
+        this.record = { callback, disconnect: vi.fn() };
+        observers.push(this.record);
+      }
+      observe(element: Element) {
+        this.record.element = element;
+      }
+      disconnect() {
+        this.record.disconnect();
+      }
+    }
+  );
+});
+afterEach(() => {
+  vi.unstubAllGlobals();
+  vi.restoreAllMocks();
+});
+
+function renderPage(
+  api = createMockNotificationMonitorApi(
+    createNotificationMonitorFixtures(now())
+  ),
+  reportFeedback = vi.fn(),
+  commandApi?: NotificationScheduleCommandApi
+) {
+  return {
+    ...render(
+      <MemoryRouter>
+        <NotificationMonitorPage
+          api={api}
+          commandApi={commandApi}
+          reportFeedback={reportFeedback}
+          now={now}
+          refreshIntervalMs={0}
+        />
+      </MemoryRouter>
+    ),
+    reportFeedback,
+  };
+}
+
+describe("配信モニター", () => {
+  it("Stop競合後もNodeと確認dialogを保ち、最新状態では実行を無効にする", async () => {
+    const fixtures = createNotificationMonitorFixtures(now());
+    const sending = fixtures.find((item) => item.status === "sending")!;
+    const api = createMockNotificationMonitorApi(fixtures);
+    const commands: NotificationScheduleCommandApi = {
+      resend: vi.fn(),
+      cancel: vi.fn(),
+      stop: vi.fn(async () => {
+        sending.status = "completed";
+        throw new ApiClientError(409, "配信が完了しました");
+      }),
+    };
+    const user = userEvent.setup();
+    renderPage(api, vi.fn(), commands);
+    await user.click(await screen.findByRole("button", { name: "緊急停止" }));
+    const dialog = await screen.findByRole("dialog", {
+      name: "緊急停止の確認",
+    });
+    await user.click(within(dialog).getByRole("button", { name: "実行する" }));
+    expect(await within(dialog).findByRole("alert")).toHaveTextContent(
+      "配信が完了しました"
+    );
+    expect(
+      within(dialog).getByRole("button", { name: "実行する" })
+    ).toBeDisabled();
+    expect(
+      within(dialog).getByText("最新の状態: 配信完了")
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("article", { name: "配信 #503" })
+    ).toBeInTheDocument();
+  });
+
+  it("予約再送の入力と送信中のEscape・二重操作を扱う", async () => {
+    let finish!: () => void;
+    const commands: NotificationScheduleCommandApi = {
+      resend: vi.fn(
+        () =>
+          new Promise<{
+            notificationId: number;
+            notificationScheduleId: number;
+          }>((resolve) => {
+            finish = () =>
+              resolve({ notificationId: 103, notificationScheduleId: 900 });
+          })
+      ),
+      cancel: vi.fn(),
+      stop: vi.fn(),
+    };
+    const user = userEvent.setup();
+    renderPage(undefined, vi.fn(), commands);
+    await user.click(await screen.findByRole("button", { name: "再送" }));
+    const dialog = await screen.findByRole("dialog", { name: "再送の確認" });
+    await user.selectOptions(
+      within(dialog).getByLabelText("再送タイミング"),
+      "scheduled"
+    );
+    await user.type(
+      within(dialog).getByLabelText("再送日時"),
+      "2030-11-01T12:00"
+    );
+    await user.click(within(dialog).getByRole("button", { name: "実行する" }));
+    await user.keyboard("{Escape}");
+    expect(
+      screen.getByRole("dialog", { name: "再送の確認" })
+    ).toBeInTheDocument();
+    expect(
+      within(dialog).getByRole("button", { name: "処理中..." })
+    ).toBeDisabled();
+    expect(commands.resend).toHaveBeenCalledOnce();
+    await act(async () => finish());
+    await waitFor(() =>
+      expect(
+        screen.queryByRole("dialog", { name: "再送の確認" })
+      ).not.toBeInTheDocument()
+    );
+  });
+
+  it("選択したScheduleの処理フローと配送内訳を表示する", async () => {
+    renderPage();
+    const card = await screen.findByRole("article", { name: "配信 #503" });
+    expect(screen.getAllByRole("article")).toHaveLength(1);
+    expect(within(card).getByText("40")).toBeInTheDocument();
+    expect(within(card).getByText("42")).toBeInTheDocument();
+    expect(within(card).getByText("プッシュ通知の配信")).toBeInTheDocument();
+    expect(within(card).getByText("通知サービス")).toBeInTheDocument();
+    expect(graph.props?.nodesDraggable).toBe(false);
+    expect(graph.props?.nodesConnectable).toBe(false);
+    expect(graph.props?.deleteKeyCode).toBeNull();
+    expect(graph.props?.edges).toEqual([]);
+    expect(graph.props?.nodes?.every((node) => node.draggable === false)).toBe(
+      true
+    );
+    expect(
+      screen.queryByRole("button", { name: /再送する|停止する|予約を取消/ })
+    ).not.toBeInTheDocument();
+  });
+
+  it("カードをキーボードから開き、Schedule詳細と通知へのリンクを表示する", async () => {
+    const user = userEvent.setup();
+    renderPage();
+    const button = await screen.findByRole("button", {
+      name: "詳細を開く",
+    });
+    button.focus();
+    await user.keyboard("{Enter}");
+    const dialog = await screen.findByRole("dialog", { name: "配信詳細" });
+    expect(within(dialog).getByText("40人")).toBeInTheDocument();
+    expect(
+      within(dialog).getByRole("link", { name: "通知詳細を開く" })
+    ).toHaveAttribute("href", "/notifications/103");
+    expect(
+      within(dialog).getByText(
+        "通知サービス受付済みは、端末での表示や既読を示しません。"
+      )
+    ).toBeInTheDocument();
+  });
+
+  it("配信選択を切り替え、フローと要約を同じScheduleに更新する", async () => {
+    const user = userEvent.setup();
+    renderPage();
+    await screen.findByRole("article", { name: "配信 #503" });
+    await user.selectOptions(
+      screen.getByRole("combobox", { name: "表示する配信" }),
+      "501"
+    );
+    expect(
+      screen.getByRole("article", { name: "配信 #501" })
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("article", { name: "配信 #503" })
+    ).not.toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: /通知103.*送信中/ }));
+    expect(
+      screen.getByRole("article", { name: "配信 #503" })
+    ).toBeInTheDocument();
+  });
+
+  it("フローの高さ変更をReact Flowに通知する", async () => {
+    const { unmount } = renderPage();
+    await screen.findByRole("article", { name: "配信 #503" });
+    const observer = await waitFor(() => {
+      const observer = observers.find(
+        (item) => item.element?.getAttribute("aria-label") === "配信 #503"
+      );
+      expect(observer).toBeDefined();
+      return observer!;
+    });
+    act(() =>
+      observer.callback(
+        [
+          {
+            borderBoxSize: [{ blockSize: 240 }],
+          } as unknown as ResizeObserverEntry,
+        ],
+        {} as ResizeObserver
+      )
+    );
+    await waitFor(() =>
+      expect(graph.updateInternals).toHaveBeenCalledWith("503")
+    );
+    unmount();
+    expect(observer.disconnect).toHaveBeenCalled();
+  });
+
+  it("状態別一覧に全Scheduleを配置し、再取得したDB状態で列を移動する", async () => {
+    const fixtures = createNotificationMonitorFixtures(now());
+    const user = userEvent.setup();
+    renderPage(createMockNotificationMonitorApi(fixtures));
+    await screen.findByRole("article", { name: "配信 #503" });
+    await user.click(screen.getByRole("button", { name: "状態別一覧" }));
+    expect(screen.getAllByRole("article")).toHaveLength(7);
+    expect(
+      graph.props?.nodes?.filter((node) => node.type === "scheduleOverview")
+    ).toHaveLength(7);
+    expect(
+      graph.props?.nodes?.find((node) => node.id === "503")?.position.x
+    ).toBe(704);
+    expect(graph.props?.nodesDraggable).toBe(false);
+    const card = screen.getByRole("article", { name: "状態別配信 #503" });
+    expect(within(card).getByText("40人")).toBeInTheDocument();
+    expect(within(card).getByText("42件")).toBeInTheDocument();
+    fixtures.find((item) => item.notificationScheduleId === 503)!.status =
+      "completed";
+    await user.click(screen.getByRole("button", { name: "再読み込み" }));
+    await waitFor(() =>
+      expect(
+        graph.props?.nodes?.find((node) => node.id === "503")?.position.x
+      ).toBe(1056)
+    );
+    await user.click(within(card).getByRole("button"));
+    expect(
+      await screen.findByRole("dialog", { name: "配信詳細" })
+    ).toBeInTheDocument();
+  });
+
+  it("選択した配信が進行中なら詳細を取らない", async () => {
+    const api = createMockNotificationMonitorApi(
+      createNotificationMonitorFixtures(now())
+    );
+    const getDetail = vi.spyOn(api, "getDetail");
+    renderPage(api);
+
+    expect(
+      await screen.findByRole("article", { name: "配信 #503" })
+    ).toBeInTheDocument();
+    expect(getDetail).not.toHaveBeenCalled();
+  });
+
+  it("状態別一覧を開くと、送り終えた配信の詳細だけ取る", async () => {
+    const fixtures = createNotificationMonitorFixtures(now());
+    const api = createMockNotificationMonitorApi(fixtures);
+    const getDetail = vi.spyOn(api, "getDetail");
+    const user = userEvent.setup();
+    renderPage(api);
+    await screen.findByRole("article", { name: "配信 #503" });
+
+    await user.click(screen.getByRole("button", { name: "状態別一覧" }));
+
+    const settledIds = fixtures
+      .filter((item) => item.status === "completed" || item.status === "failed")
+      .map((item) => item.notificationScheduleId);
+    await waitFor(() =>
+      expect(getDetail).toHaveBeenCalledTimes(settledIds.length)
+    );
+    expect(getDetail.mock.calls.map(([id]) => id).sort()).toEqual(
+      settledIds.sort()
+    );
+    const card = screen.getByRole("article", {
+      name: `状態別配信 #${settledIds[0]}`,
+    });
+    expect(await within(card).findByText("42件")).toBeInTheDocument();
+  });
+
+  it("送り終えた配信を選ぶと、集計を読み込んでから処理フローを表示する", async () => {
+    const fixtures = createNotificationMonitorFixtures(now());
+    const completed = fixtures.find((item) => item.status === "completed")!;
+    const api = createMockNotificationMonitorApi(fixtures);
+    const detail = deferred<Awaited<ReturnType<typeof api.getDetail>>>();
+    vi.spyOn(api, "getDetail").mockReturnValueOnce(detail.promise);
+    const user = userEvent.setup();
+    renderPage(api);
+    await screen.findByRole("article", { name: "配信 #503" });
+
+    await user.selectOptions(
+      screen.getByRole("combobox", { name: "表示する配信" }),
+      String(completed.notificationScheduleId)
+    );
+    expect(screen.getByText("集計を読み込んでいます。")).toBeInTheDocument();
+    await act(async () => detail.resolve(completed));
+
+    expect(
+      await screen.findByRole("article", {
+        name: `配信 #${completed.notificationScheduleId}`,
+      })
+    ).toBeInTheDocument();
+  });
+
+  it("送り終えた配信の詳細ダイアログは、集計を読み込んでから表示する", async () => {
+    const fixtures = createNotificationMonitorFixtures(now());
+    const completed = fixtures.find((item) => item.status === "completed")!;
+    const api = createMockNotificationMonitorApi(fixtures);
+    const detail = deferred<Awaited<ReturnType<typeof api.getDetail>>>();
+    vi.spyOn(api, "getDetail").mockReturnValueOnce(detail.promise);
+    const user = userEvent.setup();
+    renderPage(api);
+    await screen.findByRole("article", { name: "配信 #503" });
+    await user.click(screen.getByRole("button", { name: "状態別一覧" }));
+    await user.click(
+      screen.getByRole("button", {
+        name: `${completed.content.push.title}の状態別配信詳細`,
+      })
+    );
+    const dialog = await screen.findByRole("dialog", { name: "配信詳細" });
+    expect(
+      within(dialog).getByText("集計を読み込んでいます。")
+    ).toBeInTheDocument();
+
+    await act(async () => detail.resolve(completed));
+
+    expect(await within(dialog).findByText("40人")).toBeInTheDocument();
+  });
+
+  it("状態別カードの高さが変わると同じ列の後続Nodeをずらす", async () => {
+    renderPage();
+    await screen.findByRole("article", { name: "配信 #503" });
+    await userEvent
+      .setup()
+      .click(screen.getByRole("button", { name: "状態別一覧" }));
+    const before = graph.props?.nodes?.find((node) => node.id === "601")
+      ?.position.y;
+    const observer = observers.find(
+      (entry) => entry.element?.getAttribute("aria-label") === "状態別配信 #501"
+    )!;
+    act(() =>
+      observer.callback(
+        [
+          {
+            borderBoxSize: [{ blockSize: 600 }],
+          } as unknown as ResizeObserverEntry,
+        ],
+        {} as ResizeObserver
+      )
+    );
+    await waitFor(() =>
+      expect(
+        graph.props?.nodes?.find((node) => node.id === "601")?.position.y
+      ).toBe((before ?? 0) + 260)
+    );
+    expect(graph.updateInternals).toHaveBeenCalledWith("501");
+  });
+
+  it("空状態と読み込み中を区別する", async () => {
+    renderPage(createMockNotificationMonitorApi([]));
+    expect(screen.getByRole("status")).toHaveTextContent("読み込み中");
+    expect(
+      await screen.findByText("表示対象の配信はありません。")
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByLabelText("選択した配信の処理フロー")
+    ).not.toBeInTheDocument();
+  });
+
+  it("初期エラーから再読み込みで復旧する", async () => {
+    const api = createMockNotificationMonitorApi([]);
+    vi.spyOn(api, "list").mockRejectedValueOnce(new Error("通信失敗"));
+    renderPage(api);
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "読み込めませんでした"
+    );
+    await userEvent
+      .setup()
+      .click(screen.getByRole("button", { name: "再読み込み" }));
+    expect(
+      await screen.findByText("表示対象の配信はありません。")
+    ).toBeInTheDocument();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
+  it("refresh失敗をFeedbackへ報告し、前回のカードを保持する", async () => {
+    const api = createMockNotificationMonitorApi(
+      createNotificationMonitorFixtures(now())
+    );
+    const { reportFeedback } = renderPage(api);
+    await screen.findByRole("article", { name: "配信 #503" });
+    vi.spyOn(api, "list").mockRejectedValueOnce(new Error("通信失敗"));
+    await userEvent
+      .setup()
+      .click(screen.getByRole("button", { name: "再読み込み" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "前回の表示を保持しています"
+    );
+    expect(screen.getAllByRole("article")).toHaveLength(1);
+    expect(reportFeedback).toHaveBeenCalledWith(
+      expect.objectContaining({ kind: "background-error" })
+    );
+  });
+  it.each([
+    ["配信なし", { totalCount: 0, sentCount: 0 }],
+    ["未送信あり", { sentCount: 0, pendingCount: 42 }],
+    ["未送信あり", { sentCount: 40, sendingCount: 2 }],
+    ["要確認", { sentCount: 40, retryWaitCount: 2 }],
+    ["要確認", { sentCount: 40, failedCount: 2 }],
+    ["停止あり", { sentCount: 40, stoppedCount: 2 }],
+    ["受付成功", { sentCount: 42 }],
+  ])(
+    "FCMを%sとして表示し、全配送sentの場合だけ成功にする",
+    async (badge, counts) => {
+      const fixtures = createNotificationMonitorFixtures(now());
+      const selected = fixtures.find(
+        (item) => item.notificationScheduleId === 503
+      )!;
+      selected.deliveryProgress = {
+        totalCount: 42,
+        pendingCount: 0,
+        sendingCount: 0,
+        retryWaitCount: 0,
+        failedCount: 0,
+        stoppedCount: 0,
+        ...counts,
+      };
+      renderPage(createMockNotificationMonitorApi(fixtures));
+      const card = await screen.findByRole("article", { name: "配信 #503" });
+      const fcm = within(card).getByRole("button", {
+        name: `${selected.content.push.title}の通知サービス配信詳細`,
+      });
+      expect(within(fcm).getByText(badge)).toBeInTheDocument();
+      if (badge !== "受付成功")
+        expect(within(fcm).queryByText("受付成功")).not.toBeInTheDocument();
+    }
+  );
+});

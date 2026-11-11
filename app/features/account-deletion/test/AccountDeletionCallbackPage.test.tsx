@@ -77,9 +77,9 @@ describe("AccountDeletionCallbackPage", () => {
     renderPage();
     expect(screen.getByText("RE:CREATION")).toBeInTheDocument();
     expect(screen.queryByText(/recwatch/i)).not.toBeInTheDocument();
-    expect(screen.getByText("Produced by HAL Nagoya")).toBeInTheDocument();
+    expect(screen.getByText("制作：HAL名古屋")).toBeInTheDocument();
     expect(
-      screen.getByText("Developed by RE:CREATION Development Team")
+      screen.getByText("開発：RE:CREATION アプリ開発チーム")
     ).toBeInTheDocument();
     expect(
       screen.getByRole("heading", {
@@ -90,6 +90,11 @@ describe("AccountDeletionCallbackPage", () => {
     expect(screen.getByText("この操作は取り消せません。")).toBeInTheDocument();
     expect(
       screen.getByText("Microsoft アカウントが削除されることはありません。")
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "学校から登録された学生情報（学籍番号・クラス・出席番号・集合の所属）は削除されず、同じアカウントで再度ログインすると関連付けられます。"
+      )
     ).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: "キャンセル" })

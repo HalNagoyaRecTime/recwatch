@@ -1,5 +1,11 @@
 import { useMemo, useState } from "react";
 import { getErrorMessage } from "~/lib/client-error";
+import {
+  isUpdateConflictError,
+  UPDATE_CONFLICT_MESSAGE,
+  UPDATE_CONFLICT_RELOAD_FAILED_MESSAGE,
+} from "~/lib/update-conflict";
+import type { PlaceImageChange } from "~/types/place-image-change";
 
 import type { VenueGateway } from "~/features/venues/api/contracts/venue-gateway";
 import { useVenues } from "~/features/venues/hooks/useVenues";
@@ -36,11 +42,14 @@ export function useVenuesPage({ gateway }: UseVenuesPageOptions) {
     createVenue,
     updateVenue,
     deleteVenue,
+    saveVenueImage,
     reload,
   } = useVenues({ gateway, listOptions });
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingVenue, setEditingVenue] = useState<Venue | null>(null);
   const [venueNameInput, setVenueNameInput] = useState("");
+  const [imageChange, setImageChange] = useState<PlaceImageChange | null>(null);
+  const [shouldFocusImage, setShouldFocusImage] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -49,6 +58,8 @@ export function useVenuesPage({ gateway }: UseVenuesPageOptions) {
   function openCreateForm() {
     setEditingVenue(null);
     setVenueNameInput("");
+    setImageChange(null);
+    setShouldFocusImage(false);
     setSubmitError(null);
     setIsFormOpen(true);
   }
@@ -56,14 +67,23 @@ export function useVenuesPage({ gateway }: UseVenuesPageOptions) {
   function openEditForm(venue: Venue) {
     setEditingVenue(venue);
     setVenueNameInput(venue.name);
+    setImageChange(null);
+    setShouldFocusImage(false);
     setSubmitError(null);
     setIsFormOpen(true);
+  }
+
+  function openEditImageForm(venue: Venue) {
+    openEditForm(venue);
+    setShouldFocusImage(true);
   }
 
   function closeForm() {
     setIsFormOpen(false);
     setEditingVenue(null);
     setVenueNameInput("");
+    setImageChange(null);
+    setShouldFocusImage(false);
     setSubmitError(null);
   }
 
@@ -106,10 +126,34 @@ export function useVenuesPage({ gateway }: UseVenuesPageOptions) {
     setVenueNameInput(name);
   }
 
+  function handleImageChange(change: PlaceImageChange | null) {
+    setImageChange(change);
+  }
+
   function handleSortChange(columnId: string) {
     if (isDeleting || isSubmitting) return;
     if (!isVenueSortableColumnId(columnId)) return;
     setSort((current) => getNextVenueSort(current, columnId));
+  }
+
+  // 編集中の内容は破棄する。検索条件から外れた・削除された場合は一覧に無いのでフォームを閉じる。
+  // 一覧を取得できないときは最新の内容が分からないので、入力を残して再度の保存を促す。
+  async function replaceFormWithLatest(venueId: number) {
+    const page = await reload();
+    if (!page) {
+      setSubmitError(UPDATE_CONFLICT_RELOAD_FAILED_MESSAGE);
+      return;
+    }
+    const latest = page.items.find(({ id }) => id === venueId);
+    if (!latest) {
+      closeForm();
+      setActionError(UPDATE_CONFLICT_MESSAGE);
+      return;
+    }
+    setEditingVenue(latest);
+    setVenueNameInput(latest.name);
+    setImageChange(null);
+    setSubmitError(UPDATE_CONFLICT_MESSAGE);
   }
 
   async function submitForm() {
@@ -125,14 +169,30 @@ export function useVenuesPage({ gateway }: UseVenuesPageOptions) {
     setSubmitError(null);
 
     try {
-      if (editingVenue) {
-        await updateVenue(editingVenue.id, name);
-      } else {
-        await createVenue(name);
+      const savedVenue = editingVenue
+        ? await updateVenue(editingVenue.id, name, editingVenue.lockVersion)
+        : await createVenue(name);
+      // 編集中に切り替えないと、画像だけ失敗した後の再送で同じ実施場所をもう一度作ってしまう
+      setEditingVenue(savedVenue);
+      try {
+        if (imageChange) await saveVenueImage(savedVenue.id, imageChange);
+      } catch (error) {
+        setSubmitError(
+          getErrorMessage(
+            error,
+            "実施場所名は保存しましたが、画像の保存に失敗しました。"
+          )
+        );
+        return;
+      } finally {
+        await reload();
       }
-      await reload();
       closeForm();
     } catch (error) {
+      if (editingVenue && isUpdateConflictError(error)) {
+        await replaceFormWithLatest(editingVenue.id);
+        return;
+      }
       setSubmitError(getErrorMessage(error, "実施場所の保存に失敗しました。"));
     } finally {
       setIsSubmitting(false);
@@ -150,7 +210,9 @@ export function useVenuesPage({ gateway }: UseVenuesPageOptions) {
     handlePageChange,
     handleQueryChange,
     handleSortChange,
+    handleImageChange,
     handleVenueNameChange,
+    imageChange,
     isFormOpen,
     isDeleting,
     isLoading,
@@ -158,12 +220,14 @@ export function useVenuesPage({ gateway }: UseVenuesPageOptions) {
     loadError,
     openCreateForm,
     openEditForm,
+    openEditImageForm,
     pageCount,
     pageSize,
     query,
     venueNameInput,
     submitError,
     submitForm,
+    shouldFocusImage,
     sort,
     venues,
     total,

@@ -15,6 +15,7 @@ type GatheringSpotHttpClient = {
   get<T>(path: string): Promise<T>;
   post<T>(path: string, body: unknown): Promise<T>;
   put<T>(path: string, body: unknown): Promise<T>;
+  putBlob(path: string, body: Blob): Promise<void>;
   delete(path: string): Promise<void>;
 };
 
@@ -72,16 +73,24 @@ export function createHttpGatheringSpotGateway(
       return toGatheringSpot(response);
     },
 
-    async update(id, name) {
+    async update(id, name, lockVersion) {
       const response = await client.put<GatheringSpotResponseDto>(
         `/api/v1/gathering-spots/${id}`,
-        toGatheringSpotWriteRequest(name)
+        toGatheringSpotWriteRequest(name, lockVersion)
       );
       return toGatheringSpot(response);
     },
 
     async delete(id) {
       await client.delete(`/api/v1/gathering-spots/${id}`);
+    },
+
+    async setImage(id, image) {
+      await client.putBlob(`/api/v1/gathering-spots/${id}/image`, image);
+    },
+
+    async deleteImage(id) {
+      await client.delete(`/api/v1/gathering-spots/${id}/image`);
     },
   };
 }

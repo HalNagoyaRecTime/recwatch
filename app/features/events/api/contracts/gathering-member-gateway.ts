@@ -1,7 +1,7 @@
 import type { GatheringMemberCandidates } from "~/features/events/model/gathering-member-candidate";
 
 export interface GatheringMemberGateway {
-  /** 参加者ピッカーの選択候補（全クラス・全学生）を読み込む。 */
+  /** 参加者ピッカーの選択候補（全チーム・全学生）を読み込む。 */
   loadCandidates(): Promise<GatheringMemberCandidates>;
   /** 集合 1 件に登録済みの参加者の user_id を読み込む。 */
   loadMembers(gatheringId: number): Promise<number[]>;

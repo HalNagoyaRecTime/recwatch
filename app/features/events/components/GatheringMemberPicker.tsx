@@ -1,23 +1,26 @@
 import { Check, X } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { Button } from "~/components/ui/button/Button";
 import { SearchField } from "~/components/ui/form/SearchField";
 
-import { MAX_GATHERING_MEMBERS } from "~/features/events/model/event-gathering-settings";
 import type {
   GatheringMemberCandidates,
   MemberNonStudent,
-  MemberStudent,
 } from "~/features/events/model/gathering-member-candidate";
+import {
+  getTeamSelection,
+  updateSelectedTeamMembers,
+} from "~/features/events/model/gathering-team-selection";
 import { GatheringNonStudentMembers } from "./GatheringNonStudentMembers";
+import {
+  GatheringTeamMemberAdjustment,
+  type SelectedTeamMemberGroup,
+} from "./GatheringTeamMemberAdjustment";
 
 type GatheringMemberPickerProps = {
   candidates: GatheringMemberCandidates | null;
-  /**
-   * 開いた時点で登録済みだった参加者。停止中の学生を操作できるかの判定に使う。
-   * 操作中の選択で判定すると、チェックを外した瞬間に判定が変わって戻せなくなる。
-   */
+  /** 開いた時点で登録済みだった参加者。停止中の学生を再選択できる状態の維持に使う。 */
   initialUserIds: readonly number[];
   /** 候補または登録済み参加者の読み込み中。どちらかが終わるまで一覧は出さない。 */
   isLoading: boolean;
@@ -26,15 +29,14 @@ type GatheringMemberPickerProps = {
   onCancel: () => void;
   onChange: (userIds: number[]) => void;
   onSave: () => void;
+  saveLabel?: string;
   saveError: string | null;
   selectedUserIds: readonly number[];
 };
 
-const ALL_CLASSROOMS = "all";
-
 /**
- * 集合 1 件の参加者を選ぶ。選択状態と保存は呼び出し元が持ち、ここでは候補の絞り込みと
- * チェックの切り替え、保存・キャンセルの操作だけを扱う。
+ * 集合1件の参加対象をチーム単位で選ぶ。
+ * 選択状態と保存は呼び出し元が持ち、ここでは候補の検索とチーム全員の切り替えを扱う。
  */
 export function GatheringMemberPicker({
   candidates,
@@ -45,17 +47,15 @@ export function GatheringMemberPicker({
   onCancel,
   onChange,
   onSave,
+  saveLabel = "参加者を保存",
   saveError,
   selectedUserIds,
 }: GatheringMemberPickerProps) {
-  const [classroomId, setClassroomId] = useState(ALL_CLASSROOMS);
   const [query, setQuery] = useState("");
   const rootRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
-  // 一覧が下に続いているときだけ、下端にフェードを出して続きがあることを示す
   const [hasMoreBelow, setHasMoreBelow] = useState(false);
 
-  // モーダルの下の方で開くと見切れるため、開いた直後に自分が見える位置まで送る
   useEffect(() => {
     const root = rootRef.current;
     if (root && typeof root.scrollIntoView === "function") {
@@ -63,85 +63,116 @@ export function GatheringMemberPicker({
     }
   }, []);
 
-  const classroomNames = useMemo(
+  const visibleTeams = useMemo(() => {
+    const keyword = query.trim().toLowerCase();
+    return (candidates?.teams ?? []).filter(
+      (team) =>
+        !keyword ||
+        team.name.toLowerCase().includes(keyword) ||
+        team.classCodes.some((classCode) =>
+          classCode.toLowerCase().includes(keyword)
+        )
+    );
+  }, [candidates, query]);
+
+  const selectionsByTeamId = useMemo(
     () =>
       new Map(
-        (candidates?.classrooms ?? []).map((classroom) => [
-          classroom.id,
-          classroom.name,
+        (candidates?.teams ?? []).map((team) => [
+          team.id,
+          getTeamSelection(
+            team.id,
+            candidates?.students ?? [],
+            selectedUserIds
+          ),
         ])
       ),
-    [candidates]
+    [candidates, selectedUserIds]
   );
 
-  const visibleStudents = useMemo(() => {
-    const students = candidates?.students ?? [];
-    const keyword = query.trim().toLowerCase();
-    return students.filter((student) => {
-      if (
-        classroomId !== ALL_CLASSROOMS &&
-        String(student.classroomId) !== classroomId
-      ) {
-        return false;
-      }
-      if (!keyword) return true;
-      const classroomName = classroomNames.get(student.classroomId) ?? "";
-      return [student.name, student.studentNumber, classroomName].some(
-        (value) => value.toLowerCase().includes(keyword)
-      );
+  const selectedTeamCount = Array.from(selectionsByTeamId.values()).filter(
+    (selection) =>
+      selection.totalCount > 0 &&
+      selection.selectedCount === selection.totalCount
+  ).length;
+
+  const selectedTeamMemberGroups = useMemo<SelectedTeamMemberGroup[]>(() => {
+    if (!candidates) return [];
+
+    const studentsByUserId = new Map(
+      candidates.students.map((student) => [student.userId, student])
+    );
+
+    return candidates.teams.flatMap((team) => {
+      const selection = selectionsByTeamId.get(team.id);
+      if (!selection || selection.selectedCount === 0) return [];
+
+      return [
+        {
+          id: team.id,
+          name: team.name,
+          students: selection.userIds.flatMap((userId) => {
+            const student = studentsByUserId.get(userId);
+            return student ? [student] : [];
+          }),
+        },
+      ];
     });
-  }, [candidates, classroomId, classroomNames, query]);
+  }, [candidates, selectionsByTeamId]);
 
-  // 停止中の学生は新しく追加させない。ただし開いた時点で登録済みなら外せる必要がある。
-  const isSelectable = useCallback(
-    (student: MemberStudent) =>
-      student.isLiveActive || initialUserIds.includes(student.userId),
-    [initialUserIds]
-  );
-
-  const selectableVisibleStudents = useMemo(
-    () => visibleStudents.filter(isSelectable),
-    [isSelectable, visibleStudents]
-  );
-
-  // 候補の表に行が無い登録済みの参加者。開いた時点の登録内容で判定し、
-  // チェックを外しても別枠から消えず付け直せるようにする。
-  const nonStudentMembers = useMemo(() => {
+  // チームに紐付かない登録済み学生と学生以外の参加者は、既存設定から消さないよう別枠に出す。
+  const otherMembers = useMemo(() => {
     const named: MemberNonStudent[] = [];
     let unnamedCount = 0;
     if (!candidates) return { named, unnamedCount };
 
-    const studentUserIds = new Set(
-      candidates.students.map((student) => student.userId)
+    const teams = new Set(candidates.teams.map((team) => team.id));
+    const students = new Map(
+      candidates.students.map((student) => [student.userId, student])
     );
+
     for (const userId of initialUserIds) {
-      if (studentUserIds.has(userId)) continue;
-      const member = candidates.nonStudents.get(userId);
-      if (member === undefined) {
-        unnamedCount += 1;
-      } else {
-        named.push(member);
+      const student = students.get(userId);
+      if (student) {
+        if (
+          student.isLiveActive &&
+          student.teamId !== null &&
+          teams.has(student.teamId)
+        ) {
+          continue;
+        }
+        named.push({
+          userId,
+          name: student.name,
+          isLiveActive: student.isLiveActive,
+        });
+        continue;
       }
+
+      const member = candidates.nonStudents.get(userId);
+      if (member) named.push(member);
+      else unnamedCount += 1;
     }
     return { named, unnamedCount };
   }, [candidates, initialUserIds]);
 
-  // 絞り込みで行数が変わるたびに、続きがあるかを取り直す
   useEffect(() => {
     setHasMoreBelow(hasScrollBelow(listRef.current));
-  }, [visibleStudents]);
+  }, [visibleTeams]);
 
-  // 一括選択で上限を超えることがあるため、黙って打ち切らず保存の手前で止める。
-  const isOverLimit = selectedUserIds.length > MAX_GATHERING_MEMBERS;
-
-  // 一括選択の対象は操作できる行だけ。停止中の未登録者を巻き込まない。
-  const isAllVisibleSelected =
-    selectableVisibleStudents.length > 0 &&
-    selectableVisibleStudents.every((student) =>
-      selectedUserIds.includes(student.userId)
+  function toggleTeam(teamId: number) {
+    const selection = selectionsByTeamId.get(teamId);
+    if (!selection || selection.totalCount === 0) return;
+    onChange(
+      updateSelectedTeamMembers(
+        selectedUserIds,
+        selection.userIds,
+        selection.selectedCount < selection.totalCount
+      )
     );
+  }
 
-  function toggle(userId: number) {
+  function toggleOtherMember(userId: number) {
     onChange(
       selectedUserIds.includes(userId)
         ? selectedUserIds.filter((id) => id !== userId)
@@ -149,18 +180,12 @@ export function GatheringMemberPicker({
     );
   }
 
-  function toggleAllVisible() {
-    const visibleIds = selectableVisibleStudents.map(
-      (student) => student.userId
+  function toggleTeamMember(userId: number) {
+    onChange(
+      selectedUserIds.includes(userId)
+        ? selectedUserIds.filter((id) => id !== userId)
+        : [...selectedUserIds, userId]
     );
-    if (isAllVisibleSelected) {
-      onChange(selectedUserIds.filter((id) => !visibleIds.includes(id)));
-      return;
-    }
-    onChange([
-      ...selectedUserIds,
-      ...visibleIds.filter((id) => !selectedUserIds.includes(id)),
-    ]);
   }
 
   return (
@@ -168,47 +193,19 @@ export function GatheringMemberPicker({
       className="border-border-subtle bg-surface-muted app-rounded space-y-3 border p-3"
       ref={rootRef}
     >
-      <div className="flex flex-wrap items-center gap-3">
-        {/* モーダル内では共有 Select のプルダウンが枠をはみ出すため、既存モーダルと同じネイティブ select を使う */}
-        <select
-          aria-label="クラスで絞り込み"
-          className="app-rounded border-border-base bg-surface-base text-text-base focus:border-border-strong h-9 w-48 shrink-0 border px-3 text-sm outline-none disabled:opacity-50"
-          disabled={!candidates}
-          onChange={(event) => setClassroomId(event.currentTarget.value)}
-          value={classroomId}
-        >
-          <option value={ALL_CLASSROOMS}>すべてのクラス</option>
-          {(candidates?.classrooms ?? []).map((classroom) => (
-            <option key={classroom.id} value={classroom.id}>
-              {classroom.name}
-            </option>
-          ))}
-        </select>
-        <div className="min-w-56 flex-1">
-          <SearchField
-            ariaLabel="参加者を検索"
-            onValueChange={setQuery}
-            placeholder="名前・学籍番号・クラスで検索"
-            value={query}
-          />
-        </div>
-        <Button
-          disabled={selectableVisibleStudents.length === 0}
-          onClick={toggleAllVisible}
-          size="sm"
-          type="button"
-          variant="secondary"
-        >
-          {isAllVisibleSelected ? "表示中の選択を解除" : "表示中の全員を選択"}
-        </Button>
-      </div>
+      <SearchField
+        ariaLabel="参加するチームを検索"
+        onValueChange={setQuery}
+        placeholder="チーム名・クラスコードで検索"
+        value={query}
+      />
 
       {loadError ? (
         <p className="text-tone-danger-text text-sm" role="alert">
           {loadError}
         </p>
       ) : isLoading || !candidates ? (
-        <p className="text-text-muted text-sm">参加者を読み込み中...</p>
+        <p className="text-text-muted text-sm">参加対象を読み込み中...</p>
       ) : (
         <div className="relative">
           <div
@@ -218,10 +215,8 @@ export function GatheringMemberPicker({
             }
             ref={listRef}
           >
-            {/* 共有 DataTable は内部に横スクロール領域を持ち、モーダル内では 1px の溢れで
-                横スクロールバーが出るため、リサイズ不要のここでは素の table で描画する */}
             <table
-              aria-label="参加者候補の学生一覧"
+              aria-label="参加対象のチーム一覧"
               className="border-border-base bg-surface-base app-rounded w-full table-fixed border text-sm"
             >
               <thead className="text-text-muted">
@@ -233,64 +228,82 @@ export function GatheringMemberPicker({
                     選択
                   </th>
                   <th className="px-3 py-2.5 text-left font-normal" scope="col">
-                    氏名
+                    チーム名
                   </th>
                   <th
-                    className="w-32 px-3 py-2.5 text-left font-normal"
+                    className="w-64 px-3 py-2.5 text-left font-normal"
                     scope="col"
                   >
-                    クラス
+                    所属クラス
                   </th>
                   <th
-                    className="w-36 px-3 py-2.5 text-left font-normal"
+                    className="w-32 px-3 py-2.5 text-right font-normal"
                     scope="col"
                   >
-                    学籍番号
+                    対象者
                   </th>
                 </tr>
               </thead>
               <tbody>
-                {visibleStudents.length === 0 ? (
+                {visibleTeams.length === 0 ? (
                   <tr>
                     <td
                       className="text-text-muted px-3 py-8 text-center"
                       colSpan={4}
                     >
-                      条件に一致する学生がいません
+                      条件に一致するチームがありません
                     </td>
                   </tr>
                 ) : (
-                  visibleStudents.map((student) => (
-                    <tr
-                      key={student.id}
-                      className="border-border-subtle border-b last:border-b-0"
-                    >
-                      <td className="py-2 text-center">
-                        <input
-                          aria-label={`${student.name}を選択`}
-                          checked={selectedUserIds.includes(student.userId)}
-                          className="accent-brand-primary size-4 align-middle disabled:opacity-50"
-                          disabled={!isSelectable(student)}
-                          onChange={() => toggle(student.userId)}
-                          type="checkbox"
-                        />
-                      </td>
-                      <td className="text-text-base truncate px-3 py-2 font-semibold">
-                        {student.name}
-                        {student.isLiveActive ? null : (
-                          <span className="app-rounded bg-surface-muted text-text-muted ml-2 px-1.5 py-0.5 text-xs font-medium">
-                            停止中
-                          </span>
-                        )}
-                      </td>
-                      <td className="text-text-base truncate px-3 py-2">
-                        {classroomNames.get(student.classroomId) ?? "—"}
-                      </td>
-                      <td className="text-text-base truncate px-3 py-2">
-                        {student.studentNumber}
-                      </td>
-                    </tr>
-                  ))
+                  visibleTeams.map((team) => {
+                    const selection = selectionsByTeamId.get(team.id) ?? {
+                      selectedCount: 0,
+                      totalCount: 0,
+                      userIds: [],
+                    };
+                    const isSelected =
+                      selection.totalCount > 0 &&
+                      selection.selectedCount === selection.totalCount;
+                    const isPartiallySelected =
+                      selection.selectedCount > 0 && !isSelected;
+
+                    return (
+                      <tr
+                        key={team.id}
+                        className="border-border-subtle border-b last:border-b-0"
+                      >
+                        <td className="py-2 text-center">
+                          <input
+                            aria-label={`${team.name}を選択`}
+                            checked={isSelected}
+                            className="accent-brand-primary size-4 align-middle disabled:opacity-50"
+                            disabled={selection.totalCount === 0}
+                            onChange={() => toggleTeam(team.id)}
+                            ref={(element) => {
+                              if (element) {
+                                element.indeterminate = isPartiallySelected;
+                              }
+                            }}
+                            type="checkbox"
+                          />
+                        </td>
+                        <td className="text-text-base truncate px-3 py-2 font-semibold">
+                          {team.name}
+                        </td>
+                        <td className="text-text-muted px-3 py-2">
+                          {team.classCodes.length > 0
+                            ? team.classCodes.join("、")
+                            : "—"}
+                        </td>
+                        <td className="text-text-base px-3 py-2 text-right">
+                          {selection.selectedCount > 0
+                            ? `${selection.selectedCount} / `
+                            : ""}
+                          {selection.totalCount}人
+                        </td>
+                      </tr>
+                    );
+                  })
                 )}
               </tbody>
             </table>
@@ -304,21 +317,19 @@ export function GatheringMemberPicker({
         </div>
       )}
 
+      <GatheringTeamMemberAdjustment
+        groups={selectedTeamMemberGroups}
+        onToggle={toggleTeamMember}
+        selectedUserIds={selectedUserIds}
+      />
+
       {!loadError && !isLoading && candidates ? (
         <GatheringNonStudentMembers
-          members={nonStudentMembers.named}
-          onToggle={toggle}
+          members={otherMembers.named}
+          onToggle={toggleOtherMember}
           selectedUserIds={selectedUserIds}
-          unnamedCount={nonStudentMembers.unnamedCount}
+          unnamedCount={otherMembers.unnamedCount}
         />
-      ) : null}
-
-      {isOverLimit ? (
-        <p className="text-tone-danger-text text-sm" role="alert">
-          参加者は{MAX_GATHERING_MEMBERS}人までです。
-          {selectedUserIds.length - MAX_GATHERING_MEMBERS}
-          人減らしてください。
-        </p>
       ) : null}
 
       {saveError ? (
@@ -329,10 +340,10 @@ export function GatheringMemberPicker({
 
       <div className="flex items-center justify-between gap-3">
         <p className="text-text-base text-sm">
-          {candidates ? `${visibleStudents.length}人を表示中` : ""}
+          {candidates ? `${visibleTeams.length}チームを表示中` : ""}
           {hasMoreBelow ? "（スクロールで続きを表示）" : ""}
           {candidates
-            ? ` ／ 選択中 ${selectedUserIds.length}人 / ${MAX_GATHERING_MEMBERS}人`
+            ? ` ／ 選択中 ${selectedTeamCount}チーム・${selectedUserIds.length}人`
             : ""}
         </p>
         <div className="flex items-center gap-2">
@@ -347,16 +358,14 @@ export function GatheringMemberPicker({
             キャンセル
           </Button>
           <Button
-            disabled={
-              isSaving || isLoading || isOverLimit || Boolean(loadError)
-            }
+            disabled={isSaving || isLoading || Boolean(loadError)}
             icon={Check}
             onClick={onSave}
             size="sm"
             type="button"
             variant="primary"
           >
-            {isSaving ? "保存中..." : "参加者を保存"}
+            {isSaving ? "保存中..." : saveLabel}
           </Button>
         </div>
       </div>

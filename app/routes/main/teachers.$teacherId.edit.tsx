@@ -1,12 +1,16 @@
-import { useLoaderData } from "react-router";
+import { useRef } from "react";
+import { useLoaderData, useRouteError } from "react-router";
 
 import { createPageTitle } from "~/lib/page-title";
-import { getClassRoomData } from "~/features/classRoom/application/class-room-options";
 import { TeacherApi } from "~/features/teachers/api";
-import { toTeacherRow } from "~/features/teachers/api/mappers/teacher-mappers";
 import { parseTeacherId } from "~/features/teachers/application/teacher-loaders";
 import { TeacherEditPage } from "~/features/teachers/pages/TeacherEditPage";
 import type { ClassRoomOption } from "~/features/teachers/model/teacher";
+import { ManagementModalRouteError } from "~/routes/main/management-modal-route-error";
+import {
+  useManagementModalReturn,
+  useManagementRouteOptions,
+} from "~/routes/main/useManagementModalNavigation";
 
 export function meta() {
   return [{ title: createPageTitle("教官情報の編集") }];
@@ -18,24 +22,38 @@ export async function clientLoader({
   params: { teacherId?: string };
 }) {
   const teacherId = parseTeacherId(params.teacherId);
-  const [teacherDto, classRooms] = await Promise.all([
-    TeacherApi.getTeacherById(teacherId),
-    getClassRoomData(),
-  ]);
+  return { teacher: await TeacherApi.getTeacherById(teacherId) };
+}
 
-  const classRoomOptions: ClassRoomOption[] = classRooms.map((classRoom) => ({
-    classRoomId: classRoom.classRoomId,
-    classCode: classRoom.classCode,
-    className: classRoom.className,
-  }));
-
-  return {
-    classRooms: classRoomOptions,
-    teacher: toTeacherRow(teacherDto),
-  };
+export function ErrorBoundary() {
+  const closeModal = useManagementModalReturn();
+  return (
+    <ManagementModalRouteError
+      error={useRouteError()}
+      onClose={closeModal}
+      title="教官情報を読み込めません"
+    />
+  );
 }
 
 export default function TeacherEditRoute() {
-  const { classRooms, teacher } = useLoaderData<typeof clientLoader>();
-  return <TeacherEditPage classRooms={classRooms} teacher={teacher} />;
+  const { teacher } = useLoaderData<typeof clientLoader>();
+  const classRoomOptions = useManagementRouteOptions<ClassRoomOption>();
+  const closeModal = useManagementModalReturn();
+  // 競合が起きたら一覧も古いので、保存せずに閉じるときも再検証する。
+  const hasConflict = useRef(false);
+  return (
+    <TeacherEditPage
+      api={TeacherApi}
+      classRoomOptions={classRoomOptions}
+      classRooms={classRoomOptions.items}
+      loadLatest={() => {
+        hasConflict.current = true;
+        return TeacherApi.getTeacherById(teacher.teacherId);
+      }}
+      onClose={() => closeModal(hasConflict.current)}
+      onSaved={() => closeModal(true)}
+      teacher={teacher}
+    />
+  );
 }

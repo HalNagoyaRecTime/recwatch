@@ -29,8 +29,8 @@ export function EventDetailPage({ queryGateway }: EventDetailPageProps) {
   const [reloadToken, setReloadToken] = useState(0);
   const reload = useCallback(() => setReloadToken((token) => token + 1), []);
   const outletContext = useMemo<EventDetailOutletContext>(
-    () => ({ reload }),
-    [reload]
+    () => ({ event, reload }),
+    [event, reload]
   );
 
   useEffect(() => {

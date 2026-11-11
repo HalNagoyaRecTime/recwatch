@@ -9,6 +9,7 @@ export function formatNotificationDateTime(value: string | undefined) {
   if (Number.isNaN(date.getTime())) return "—";
 
   return new Intl.DateTimeFormat("ja-JP", {
+    timeZone: "Asia/Tokyo",
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
@@ -22,6 +23,7 @@ export function formatNotificationTime(value: string) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "—";
   return new Intl.DateTimeFormat("ja-JP", {
+    timeZone: "Asia/Tokyo",
     hour: "2-digit",
     minute: "2-digit",
     hour12: false,
@@ -64,3 +66,27 @@ export function formatNotificationImportance(
       return "高";
   }
 }
+
+/** 一覧の配信予定は日本時間の月日・時分で表示する。 */
+export function formatNotificationScheduleDateTime(value: string | undefined) {
+  if (!value) return "-";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "-";
+  return new Intl.DateTimeFormat("ja-JP", {
+    timeZone: "Asia/Tokyo",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  }).format(date);
+}
+
+export const notificationScheduleStatusLabels = {
+  scheduled: "配信待ち",
+  resolving: "対象者確定中",
+  sending: "送信中",
+  completed: "配信完了",
+  failed: "処理失敗",
+  stopped: "停止",
+} as const;

@@ -16,7 +16,8 @@ export function formatEventTime(value: string): string {
 }
 
 export function toEventWriteRequest(
-  input: EventWriteInput
+  input: EventWriteInput,
+  lockVersion?: number
 ): EventWriteRequestDto {
   return {
     event_name: input.name,
@@ -24,6 +25,8 @@ export function toEventWriteRequest(
     venue_ids: [...input.venueIds],
     start_time: input.startTime.replace(":", ""),
     end_time: input.endTime.replace(":", ""),
+    // 新規登録では版が無いため、更新時だけ送る。
+    ...(lockVersion === undefined ? {} : { lock_version: lockVersion }),
   };
 }
 
@@ -56,6 +59,7 @@ export function toEventListItem(
 export function toEventDetail(response: EventDetailResponseDto): EventDetail {
   return {
     id: response.event_id,
+    lockVersion: response.lock_version,
     name: response.event_name,
     venues: response.venues.map((venue) => ({
       id: venue.venue_id,

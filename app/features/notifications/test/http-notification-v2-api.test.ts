@@ -18,6 +18,34 @@ import {
 import { ClientError } from "~/lib/client-error";
 
 describe("notification v2 HTTP adapters", () => {
+  it("ページングと検索・絞り込み・並べ替えの条件をAPIに送る", async () => {
+    const get = vi.fn().mockResolvedValue(adminNotificationListFixture);
+    const api = createHttpAdminNotificationQueryApi({ get });
+    await api.list({
+      page: 2,
+      limit: 50,
+      search: "会場 A",
+      status: "failed",
+      creationMethod: "manual",
+      filterFrom: "2026-11-07T00:00:00+09:00",
+      filterTo: "2026-11-07T23:59:59+09:00",
+      sortBy: "title",
+      sortDirection: "asc",
+    });
+    const path = get.mock.calls[0]?.[0] as string;
+    const url = new URL(path, "https://example.invalid");
+    expect(Object.fromEntries(url.searchParams)).toEqual({
+      page: "2",
+      limit: "50",
+      search: "会場 A",
+      status: "failed",
+      creationMethod: "manual",
+      filterFrom: "2026-11-07T00:00:00+09:00",
+      filterTo: "2026-11-07T23:59:59+09:00",
+      sortBy: "title",
+      sortDirection: "asc",
+    });
+  });
   it("通知一覧と詳細を取得する", async () => {
     const get = vi
       .fn()
@@ -190,6 +218,71 @@ describe("notification v2 HTTP adapters", () => {
       3,
       "/api/v1/admin/notifications/schedules/503/results?page=1&limit=50"
     );
+  });
+
+  it("進み具合のキーが無い旧APIのSchedule一覧は、進み具合をnullにそろえて受け付ける", async () => {
+    const item: Record<string, unknown> = {
+      ...notificationScheduleListFixture.items[0],
+    };
+    delete item.audienceProgress;
+    delete item.recipientProgress;
+    delete item.deliveryProgress;
+    const api = createHttpNotificationScheduleQueryApi({
+      get: vi.fn().mockResolvedValue({ items: [item] }),
+    });
+
+    await expect(api.list()).resolves.toEqual({
+      items: [
+        {
+          ...item,
+          audienceProgress: null,
+          recipientProgress: null,
+          deliveryProgress: null,
+        },
+      ],
+    });
+  });
+
+  it("進み具合のキーが一部だけのSchedule一覧は想定外のResponseとして扱う", async () => {
+    const item: Record<string, unknown> = {
+      ...notificationScheduleListFixture.items[0],
+    };
+    delete item.deliveryProgress;
+    const api = createHttpNotificationScheduleQueryApi({
+      get: vi.fn().mockResolvedValue({ items: [item] }),
+    });
+
+    await expect(api.list()).rejects.toBeInstanceOf(ClientError);
+  });
+
+  it("Schedule一覧は進み具合のnullを受け付け、詳細のnullや形の崩れた進み具合は想定外のResponseとして扱う", async () => {
+    const settled = {
+      ...notificationScheduleDetailFixture,
+      status: "completed",
+      audienceProgress: null,
+      recipientProgress: null,
+      deliveryProgress: null,
+    };
+    const listApi = (items: unknown[]) =>
+      createHttpNotificationScheduleQueryApi({
+        get: vi.fn().mockResolvedValue({ items }),
+      });
+    const detailApi = createHttpNotificationScheduleQueryApi({
+      get: vi.fn().mockResolvedValue(settled),
+    });
+
+    await expect(listApi([settled]).list()).resolves.toEqual({
+      items: [settled],
+    });
+    await expect(
+      listApi([
+        {
+          ...notificationScheduleDetailFixture,
+          deliveryProgress: { totalCount: 1 },
+        },
+      ]).list()
+    ).rejects.toBeInstanceOf(ClientError);
+    await expect(detailApi.getDetail(503)).rejects.toBeInstanceOf(ClientError);
   });
 
   it("Schedule再送・停止・取消を同じ契約で実行する", async () => {

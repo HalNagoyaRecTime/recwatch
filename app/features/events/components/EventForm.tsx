@@ -1,3 +1,4 @@
+import { MarkdownPreview } from "~/components/ui/markdown/MarkdownPreview";
 import { Check, type LucideIcon } from "lucide-react";
 
 import { Button } from "~/components/ui/button/Button";
@@ -61,7 +62,7 @@ export function EventForm({
     <div className={cn("space-y-6", title && "min-h-full")}>
       {title ? (
         <PageHeader
-          description="登録内容はイベント登録一覧へ反映されます"
+          description="登録内容はイベント管理へ反映されます"
           title={title}
         />
       ) : null}
@@ -91,12 +92,13 @@ export function EventForm({
             aria-label="イベントルール"
             className={`${inputClass} resize-y py-2 ${isModal ? "min-h-32" : "min-h-24"}`}
             disabled={isDisabled}
-            maxLength={1000}
+            maxLength={5000}
             onChange={(event) => update("rules", event.currentTarget.value)}
             placeholder="ルールの詳細を入力"
             value={value.rules}
           />
         </label>
+        <MarkdownPreview content={value.rules} />
         <fieldset disabled={isDisabled}>
           <legend className={labelClass}>
             実施場所 <span className="text-tone-danger-text">*</span>

@@ -12,6 +12,8 @@ export function formatNotificationDetailDateTime(value: string | null) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "—";
   return new Intl.DateTimeFormat("ja-JP", {
+    timeZone: "Asia/Tokyo",
+    hourCycle: "h23",
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
@@ -23,7 +25,7 @@ export function formatNotificationDetailDateTime(value: string | null) {
 
 export const scheduleStatusLabel = {
   scheduled: "配信予定",
-  resolving: "対象解決中",
+  resolving: "対象者確定中",
   sending: "送信中",
   completed: "完了",
   failed: "失敗",
@@ -34,10 +36,33 @@ export const deliveryStatusLabel = {
   pending: "送信待ち",
   sending: "送信中",
   retry_wait: "再送待ち",
-  sent: "FCM受付成功",
+  sent: "通知サービス受付済み",
   failed: "失敗",
   stopped: "停止済み",
 } satisfies Record<NotificationPushDeliveryStatus, string>;
+
+export function formatNotificationDeliveryFailure(
+  reason: string | null
+): string {
+  switch (reason) {
+    case null:
+      return "—";
+    case "UNREGISTERED":
+      return "通知先端末の登録が無効です";
+    case "INVALID_ARGUMENT":
+      return "通知の送信情報が正しくありません";
+    case "SENDER_ID_MISMATCH":
+      return "通知の送信元と通知先端末の登録情報が一致しません";
+    case "QUOTA_EXCEEDED":
+      return "通知の送信上限を超えています";
+    case "INTERNAL":
+      return "通知サービスで内部エラーが発生しました";
+    case "UNAVAILABLE":
+      return "通知サービスを一時的に利用できません";
+    default:
+      return reason;
+  }
+}
 
 export const platformLabel = {
   ios: "iOS",

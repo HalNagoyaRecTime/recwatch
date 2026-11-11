@@ -138,6 +138,7 @@ describe("createHttpEventQueryGateway", () => {
   it("詳細GETは共通Event responseからRoundと実施場所を変換する", async () => {
     const get = vi.fn().mockResolvedValue({
       event_id: 12,
+      lock_version: 3,
       event_name: "リレー",
       rule_text: "バトンを落とさない",
       venues: [{ venue_id: 3, venue_name: "メインコート" }],
@@ -164,6 +165,7 @@ describe("createHttpEventQueryGateway", () => {
 
     await expect(gateway.get(12)).resolves.toEqual({
       id: 12,
+      lockVersion: 3,
       name: "リレー",
       rules: "バトンを落とさない",
       venues: [{ id: 3, name: "メインコート" }],
@@ -172,6 +174,7 @@ describe("createHttpEventQueryGateway", () => {
       rounds: [
         {
           round: 1,
+          startTime: null,
           gatherings: [
             {
               id: 101,

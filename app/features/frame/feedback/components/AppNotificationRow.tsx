@@ -298,10 +298,10 @@ async function copyNotificationDetails(notification: AppNotification) {
       ["時刻", diagnostic.occurredAt],
       ["画面", diagnostic.route],
       ["操作", diagnostic.action],
-      ["HTTP Status", diagnostic.status?.toString()],
-      ["Error Code", diagnostic.errorCode],
-      ["Request ID", diagnostic.requestId],
-      ["Endpoint", diagnostic.endpoint],
+      ["通信状態（HTTP）", diagnostic.status?.toString()],
+      ["エラーコード", diagnostic.errorCode],
+      ["リクエストID", diagnostic.requestId],
+      ["通信先", diagnostic.endpoint],
     ];
     lines.push(
       ...details

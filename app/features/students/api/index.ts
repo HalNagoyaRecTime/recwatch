@@ -3,6 +3,8 @@ import type {
   StudentListQuery,
   StudentListSortBy,
   StudentListSortOrder,
+  StudentMutationApi,
+  StudentAccessMutationApi,
   StudentManagementApi,
 } from "./contracts/student-api";
 import type {
@@ -16,12 +18,16 @@ import { toStudentPage, toStudentRow } from "./mappers/student-mappers";
 import type {
   StudentPage,
   StudentRow,
+  StudentClassRoomAssignmentInput,
   StudentWriteInput,
 } from "~/features/students/model/student";
 
 export const StudentApi: StudentManagementApi = {
   async getStudents(query = {}): Promise<StudentPage> {
     return toStudentPage(await studentHttpApi.getStudents(query));
+  },
+  async getStudentById(studentId: number): Promise<StudentRow> {
+    return toStudentRow(await studentHttpApi.getStudentById(studentId));
   },
   async createStudent(input: StudentWriteInput): Promise<StudentRow> {
     return toStudentRow(await studentHttpApi.createStudent(input));
@@ -32,6 +38,14 @@ export const StudentApi: StudentManagementApi = {
   ): Promise<StudentRow> {
     return toStudentRow(await studentHttpApi.updateStudent(studentId, input));
   },
+  async updateStudentClassRoom(
+    studentId: number,
+    input: StudentClassRoomAssignmentInput
+  ): Promise<StudentRow> {
+    return toStudentRow(
+      await studentHttpApi.updateStudentClassRoom(studentId, input)
+    );
+  },
 };
 
 export type {
@@ -40,6 +54,8 @@ export type {
   StudentListSortBy,
   StudentListSortOrder,
   StudentManagementApi,
+  StudentMutationApi,
+  StudentAccessMutationApi,
 };
 export type {
   StudentClassRoomDTO,
@@ -47,4 +63,9 @@ export type {
   StudentManagementDTO,
   StudentPageDTO,
 };
-export type { StudentPage, StudentRow, StudentWriteInput };
+export type {
+  StudentClassRoomAssignmentInput,
+  StudentPage,
+  StudentRow,
+  StudentWriteInput,
+};

@@ -1,8 +1,10 @@
 export type Venue = {
   id: number;
   name: string;
+  imageUrl: string | null;
   createdAt: string;
   updatedAt: string;
+  lockVersion: number;
 };
 
 export const venueSortableColumnIds = [

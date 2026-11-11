@@ -18,7 +18,13 @@ function gathering(overrides: Partial<GatheringDraft> = {}): GatheringDraft {
 }
 
 function round(overrides: Partial<RoundDraft> = {}): RoundDraft {
-  return { key: "r", round: 1, gatherings: [gathering()], ...overrides };
+  return {
+    key: "r",
+    round: 1,
+    startTime: "",
+    gatherings: [gathering()],
+    ...overrides,
+  };
 }
 
 describe("validateEventGatheringSettings", () => {
@@ -38,6 +44,7 @@ describe("validateEventGatheringSettings", () => {
         rounds: [
           {
             round: 1,
+            startTime: null,
             gatherings: [
               { gatheringId: 101, time: "10:45", spotId: 1 },
               { gatheringId: null, time: "10:55", spotId: 2 },
@@ -45,6 +52,7 @@ describe("validateEventGatheringSettings", () => {
           },
           {
             round: 2,
+            startTime: null,
             gatherings: [{ gatheringId: null, time: "10:45", spotId: 1 }],
           },
         ],
@@ -70,12 +78,12 @@ describe("validateEventGatheringSettings", () => {
       errors: [
         {
           roundKey: "r0",
-          message: "Round番号は1〜99の整数で入力してください。",
+          message: "ラウンド番号は1〜99の整数で入力してください。",
         },
-        { roundKey: "r1-dup", message: "Round 1 が重複しています。" },
+        { roundKey: "r1-dup", message: "ラウンド 1 が重複しています。" },
         {
           roundKey: "r100",
-          message: "Round番号は1〜99の整数で入力してください。",
+          message: "ラウンド番号は1〜99の整数で入力してください。",
         },
       ],
     });

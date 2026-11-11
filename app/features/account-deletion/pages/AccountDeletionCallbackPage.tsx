@@ -142,6 +142,12 @@ function ConfirmationView({
             <Info aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
             <span>Microsoft アカウントが削除されることはありません。</span>
           </p>
+          <p className="text-text-muted flex items-start gap-2 text-xs leading-5">
+            <Info aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
+            <span>
+              学校から登録された学生情報（学籍番号・クラス・出席番号・集合の所属）は削除されず、同じアカウントで再度ログインすると関連付けられます。
+            </span>
+          </p>
         </div>
       </section>
 

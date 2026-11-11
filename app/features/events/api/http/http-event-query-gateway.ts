@@ -100,6 +100,7 @@ function isGatheringSetting(value: unknown): boolean {
 function parseEventDetail(value: unknown): EventDetailResponseDto {
   if (
     !isEventBase(value) ||
+    !Number.isSafeInteger(value.lock_version) ||
     !Array.isArray(value.rounds) ||
     !value.rounds.every(
       (round) =>

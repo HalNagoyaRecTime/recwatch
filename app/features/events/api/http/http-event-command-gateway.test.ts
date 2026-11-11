@@ -49,13 +49,14 @@ describe("createHttpEventCommandGateway", () => {
       delete: vi.fn(),
     });
 
-    await expect(gateway.update(12, input)).resolves.toBeUndefined();
+    await expect(gateway.update(12, input, 5)).resolves.toBeUndefined();
     expect(put).toHaveBeenCalledWith("/api/v1/events/12", {
       event_name: "リレー",
       rule_text: "バトンを落とさない",
       venue_ids: [3, 4],
       start_time: "1100",
       end_time: "1230",
+      lock_version: 5,
     });
   });
 

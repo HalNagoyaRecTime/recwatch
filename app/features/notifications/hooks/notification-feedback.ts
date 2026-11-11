@@ -1,15 +1,11 @@
+import type { FeedbackInput, FeedbackKind } from "~/features/frame/feedback";
 import { ApiClientError } from "~/lib/api-client-error";
 
-export type NotificationFeedbackInput = {
-  kind: "action-success" | "action-error" | "background-error";
-  title: string;
-  message: string;
-  diagnostic?: {
-    action?: string;
-    endpoint?: string;
-    status?: number;
-    errorCode?: string;
-  };
+export type NotificationFeedbackInput = FeedbackInput & {
+  kind: Extract<
+    FeedbackKind,
+    "action-success" | "action-error" | "background-error"
+  >;
 };
 
 export type NotificationFeedbackReporter = (

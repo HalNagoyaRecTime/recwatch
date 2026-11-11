@@ -1,11 +1,12 @@
-/** GET /api/v1/classrooms のページ応答。参加者ピッカーで使う項目だけを持つ。 */
-export type ClassroomResponseDto = {
-  class_room_id: number;
-  class_name: string;
+/** GET /api/v1/teams のページ応答。参加者ピッカーで使う項目だけを持つ。 */
+export type TeamResponseDto = {
+  team_id: number;
+  team_name: string;
+  registered_classes: string[];
 };
 
-export type ClassroomPageResponseDto = {
-  items: ClassroomResponseDto[];
+export type TeamPageResponseDto = {
+  items: TeamResponseDto[];
   total: number;
 };
 
@@ -14,13 +15,14 @@ export type StudentResponseDto = {
   student_id: number;
   user_id: number;
   display_name: string;
-  attendance_number: number;
+  attendance_number: number | null;
   student_id_number: string;
   is_live_active: boolean;
   class_room: {
     class_room_id: number;
+    class_code: string;
     class_name: string;
-  };
+  } | null;
 };
 
 export type StudentPageResponseDto = {

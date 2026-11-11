@@ -42,15 +42,22 @@ export function validateEventGatheringSettings(
     ) {
       errors.push({
         roundKey: round.key,
-        message: `Round番号は${MIN_ROUND}〜${MAX_ROUND}の整数で入力してください。`,
+        message: `ラウンド番号は${MIN_ROUND}〜${MAX_ROUND}の整数で入力してください。`,
       });
     } else if (seenRounds.has(round.round)) {
       errors.push({
         roundKey: round.key,
-        message: `Round ${round.round} が重複しています。`,
+        message: `ラウンド ${round.round} が重複しています。`,
       });
     }
     seenRounds.add(round.round);
+
+    if (round.startTime !== "" && !TIME_PATTERN.test(round.startTime)) {
+      errors.push({
+        roundKey: round.key,
+        message: "開始時刻は時刻形式で入力してください。",
+      });
+    }
 
     if (round.gatherings.length === 0) {
       errors.push({
@@ -83,7 +90,11 @@ export function validateEventGatheringSettings(
       });
     }
 
-    roundInputs.push({ round: round.round, gatherings: gatheringInputs });
+    roundInputs.push({
+      round: round.round,
+      startTime: round.startTime || null,
+      gatherings: gatheringInputs,
+    });
   }
 
   if (errors.length > 0) return { errors };

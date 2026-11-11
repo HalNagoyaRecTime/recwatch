@@ -1,8 +1,10 @@
 import {
   autoUpdate,
+  flip,
   FloatingPortal,
   offset,
   shift,
+  size,
   useClick,
   useDismiss,
   useFloating,
@@ -10,14 +12,12 @@ import {
   useRole,
 } from "@floating-ui/react";
 import { Check, ChevronsUpDown } from "lucide-react";
-import { useId, useState, type KeyboardEvent } from "react";
+import { useId, useLayoutEffect, useState, type KeyboardEvent } from "react";
 
 import { FloatingListSurface } from "~/components/ui/panel/FloatingListSurface";
 import { cva } from "~/lib/cva";
+import { disabledControlStyle } from "~/components/ui/form/styles/control-styles";
 import { floatingListOptionStyle } from "~/components/ui/panel/styles/floating-list-styles";
-
-const floatingListOptionHeight = 36;
-const floatingListSurfaceInset = 9;
 
 export type SelectOption<T extends string> = {
   label: string;
@@ -79,12 +79,24 @@ export function Select<T extends string>({
   const selectedOptionIndex = Math.max(selectedIndex, 0);
   const selectedOption = options[selectedIndex];
 
-  const { context, floatingStyles, refs } = useFloating({
+  const { context, floatingStyles, isPositioned, refs } = useFloating({
     middleware: [
-      offset(({ rects }) => ({
-        mainAxis: -rects.reference.height - floatingListSurfaceInset,
-      })),
+      offset(4),
+      flip({ fallbackAxisSideDirection: "end", padding: 8 }),
       shift({ padding: 8 }),
+      size({
+        padding: 8,
+        apply({ availableHeight, availableWidth, elements }) {
+          elements.floating.style.setProperty(
+            "--floating-panel-available-height",
+            `${Math.min(360, Math.max(0, availableHeight))}px`
+          );
+          elements.floating.style.setProperty(
+            "--floating-panel-available-width",
+            `${Math.max(0, availableWidth)}px`
+          );
+        },
+      }),
     ],
     onOpenChange: (open) => {
       setIsOpen(open);
@@ -92,6 +104,7 @@ export function Select<T extends string>({
     },
     open: isOpen,
     placement: "bottom-start",
+    strategy: "fixed",
     whileElementsMounted: autoUpdate,
   });
 
@@ -103,11 +116,24 @@ export function Select<T extends string>({
     dismiss,
     role,
   ]);
-  const selectedOptionOffset = selectedOptionIndex * floatingListOptionHeight;
-  const selectPanelStyle = {
-    ...floatingStyles,
-    transform: `${floatingStyles.transform ?? ""} translateY(-${selectedOptionOffset}px)`,
-  };
+
+  useLayoutEffect(() => {
+    if (!isOpen || !isPositioned || activeIndex < 0) return;
+    const panel = refs.floating.current;
+    const viewport = panel?.querySelector<HTMLElement>(".scrollbar-none");
+    const option =
+      panel?.querySelectorAll<HTMLElement>('[role="option"]')[activeIndex];
+    if (!viewport || !option) return;
+
+    const viewportBounds = viewport.getBoundingClientRect();
+    const optionBounds = option.getBoundingClientRect();
+    // scrollIntoViewは外側の画面も動かすため、候補の領域だけを移動します。
+    if (optionBounds.top < viewportBounds.top) {
+      viewport.scrollTop += optionBounds.top - viewportBounds.top;
+    } else if (optionBounds.bottom > viewportBounds.bottom) {
+      viewport.scrollTop += optionBounds.bottom - viewportBounds.bottom;
+    }
+  }, [activeIndex, isOpen, isPositioned, refs.floating]);
 
   const selectOption = (option: SelectOption<T>) => {
     onValueChange(option.value);
@@ -175,7 +201,7 @@ export function Select<T extends string>({
           aria-controls={listboxId}
           aria-expanded={isOpen}
           aria-label={ariaLabel}
-          className={`${selectTriggerStyle({ variant })} disabled:cursor-not-allowed disabled:opacity-50`}
+          className={`${selectTriggerStyle({ variant })} ${disabledControlStyle}`}
           disabled={disabled}
           type="button"
         >
@@ -190,15 +216,13 @@ export function Select<T extends string>({
             // Floating UIが提供するfloating callback refをSelectのpositioning elementへ接続するため、この行のみrefs ruleを抑制する
             // eslint-disable-next-line react-hooks/refs
             ref={refs.setFloating}
-            style={selectPanelStyle}
+            style={floatingStyles}
             {...getFloatingProps()}
-            className="z-140 w-max max-w-full"
+            id={listboxId}
+            aria-label={ariaLabel}
+            className="z-140 w-max max-w-(--floating-panel-available-width) [&_.scrollbar-none]:overscroll-y-contain"
           >
-            <FloatingListSurface
-              id={listboxId}
-              aria-label={ariaLabel}
-              role="listbox"
-            >
+            <FloatingListSurface scrollable scrollTabIndex={-1}>
               {options.map((option, index) => {
                 const selected = option.value === value;
 

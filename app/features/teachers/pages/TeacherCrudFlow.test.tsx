@@ -5,11 +5,17 @@ import {
   Outlet,
   RouterProvider,
   useLocation,
+  useNavigate,
+  useRevalidator,
 } from "react-router";
 import { describe, expect, it, vi } from "vitest";
 
 import { TeacherCreatePage } from "~/features/teachers/pages/TeacherCreatePage";
 import { TeacherEditPage } from "~/features/teachers/pages/TeacherEditPage";
+import {
+  UPDATE_CONFLICT_MESSAGE,
+  UPDATE_CONFLICT_RELOAD_FAILED_MESSAGE,
+} from "~/lib/update-conflict";
 import type { TeacherRow } from "~/features/teachers/model/teacher";
 import { ApiClientError } from "~/lib/api-client-error";
 
@@ -17,8 +23,6 @@ const mocks = vi.hoisted(() => ({
   createTeacher: vi.fn(),
   updateTeacher: vi.fn(),
 }));
-
-vi.mock("~/features/teachers/api", () => ({ TeacherApi: mocks }));
 
 vi.mock("~/features/teachers/components/TeacherFormModal", () => ({
   TeacherFormModal: ({
@@ -37,6 +41,16 @@ vi.mock("~/features/teachers/components/TeacherFormModal", () => ({
   ),
 }));
 
+function createApi() {
+  return {
+    assignStaff: vi.fn(),
+    createTeacher: mocks.createTeacher,
+    revokeStaff: vi.fn(),
+    updateTeacher: mocks.updateTeacher,
+    updateUserStatus: vi.fn(),
+  };
+}
+
 const classRooms = [
   { classRoomId: 2, className: "2年A組" },
   { classRoomId: 4, className: "4年A組" },
@@ -50,6 +64,7 @@ const teacher: TeacherRow = {
   isLiveActive: true,
   isStaff: false,
   classRooms: [{ classRoomId: 2, classCode: "2A", className: "2年A組" }],
+  lockVersion: 3,
 };
 
 function TeacherListDestination() {
@@ -71,7 +86,37 @@ function LocationProbe() {
   return <output data-testid="location-search">{location.search}</output>;
 }
 
-function renderNestedCreateRouter(element: React.ReactElement) {
+type ModalCallbacks = {
+  onClose: () => void | Promise<void>;
+  onSaved: () => Promise<void>;
+};
+
+function ManagementModalRoute({
+  renderForm,
+}: {
+  renderForm: (callbacks: ModalCallbacks) => React.ReactElement;
+}) {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const revalidator = useRevalidator();
+
+  async function returnToList(refresh: boolean) {
+    await navigate(
+      { pathname: "/teachers", search: location.search },
+      { replace: true }
+    );
+    if (refresh) await revalidator.revalidate();
+  }
+
+  return renderForm({
+    onClose: () => returnToList(false),
+    onSaved: () => returnToList(true),
+  });
+}
+
+function renderNestedCreateRouter(
+  renderForm: (callbacks: ModalCallbacks) => React.ReactElement
+) {
   const listLoader = vi.fn().mockResolvedValue(null);
   const router = createMemoryRouter(
     [
@@ -79,7 +124,12 @@ function renderNestedCreateRouter(element: React.ReactElement) {
         path: "/teachers",
         loader: listLoader,
         element: <TeacherListRoute />,
-        children: [{ path: "new", element }],
+        children: [
+          {
+            path: "new",
+            element: <ManagementModalRoute renderForm={renderForm} />,
+          },
+        ],
       },
     ],
     { initialEntries: ["/teachers/new?search=佐橋&page=2"] }
@@ -89,7 +139,9 @@ function renderNestedCreateRouter(element: React.ReactElement) {
   return listLoader;
 }
 
-function renderNestedEditRouter(element: React.ReactElement) {
+function renderNestedEditRouter(
+  renderForm: (callbacks: ModalCallbacks) => React.ReactElement
+) {
   const listLoader = vi.fn().mockResolvedValue(null);
   const router = createMemoryRouter(
     [
@@ -97,7 +149,12 @@ function renderNestedEditRouter(element: React.ReactElement) {
         path: "/teachers",
         loader: listLoader,
         element: <TeacherListRoute />,
-        children: [{ path: ":teacherId/edit", element }],
+        children: [
+          {
+            path: ":teacherId/edit",
+            element: <ManagementModalRoute renderForm={renderForm} />,
+          },
+        ],
       },
     ],
     { initialEntries: ["/teachers/7/edit?sortBy=teacherId"] }
@@ -131,9 +188,13 @@ describe("teacher create and edit flows", () => {
     mocks.createTeacher.mockResolvedValueOnce({});
     const user = userEvent.setup();
 
-    const listLoader = renderNestedCreateRouter(
-      <TeacherCreatePage classRooms={classRooms} />
-    );
+    const listLoader = renderNestedCreateRouter((callbacks) => (
+      <TeacherCreatePage
+        api={createApi()}
+        classRooms={classRooms}
+        {...callbacks}
+      />
+    ));
 
     await user.type(await screen.findByLabelText("先生名"), "新任");
     await user.type(screen.getByLabelText("メールアドレス"), "new@example.com");
@@ -155,7 +216,15 @@ describe("teacher create and edit flows", () => {
     );
     const user = userEvent.setup();
 
-    renderCrudRouter("/teachers/new", <TeacherCreatePage classRooms={[]} />);
+    renderCrudRouter(
+      "/teachers/new",
+      <TeacherCreatePage
+        api={createApi()}
+        classRooms={[]}
+        onClose={vi.fn()}
+        onSaved={vi.fn().mockResolvedValue(undefined)}
+      />
+    );
 
     await user.type(screen.getByLabelText("先生名"), "新任");
     await user.type(screen.getByLabelText("メールアドレス"), "new@example.com");
@@ -174,7 +243,15 @@ describe("teacher create and edit flows", () => {
     );
     const user = userEvent.setup();
 
-    renderCrudRouter("/teachers/new", <TeacherCreatePage classRooms={[]} />);
+    renderCrudRouter(
+      "/teachers/new",
+      <TeacherCreatePage
+        api={createApi()}
+        classRooms={[]}
+        onClose={vi.fn()}
+        onSaved={vi.fn().mockResolvedValue(undefined)}
+      />
+    );
 
     await user.type(screen.getByLabelText("先生名"), "新任");
     await user.type(screen.getByLabelText("メールアドレス"), "new@example.com");
@@ -196,9 +273,15 @@ describe("teacher create and edit flows", () => {
     mocks.updateTeacher.mockResolvedValueOnce({});
     const user = userEvent.setup();
 
-    const listLoader = renderNestedEditRouter(
-      <TeacherEditPage classRooms={classRooms} teacher={teacher} />
-    );
+    const listLoader = renderNestedEditRouter((callbacks) => (
+      <TeacherEditPage
+        api={createApi()}
+        classRooms={classRooms}
+        loadLatest={vi.fn()}
+        {...callbacks}
+        teacher={teacher}
+      />
+    ));
 
     await user.click(await screen.findByRole("checkbox", { name: "4年A組" }));
     await user.click(await screen.findByRole("button", { name: "保存する" }));
@@ -211,8 +294,89 @@ describe("teacher create and edit flows", () => {
     expect(mocks.updateTeacher).toHaveBeenCalledWith(7, {
       classRoomIds: [2, 4],
       email: "sahashi@example.com",
+      lockVersion: 3,
       userName: "佐橋 晴斗",
     });
+  });
+
+  it("更新が競合したら理由を伝えて再取得し、最新の値でフォームを置き換える", async () => {
+    mocks.updateTeacher.mockRejectedValueOnce(
+      new ApiClientError(409, "conflict", "TEACHER_UPDATE_CONFLICT")
+    );
+    const loadLatest = vi.fn().mockResolvedValue({
+      ...teacher,
+      displayName: "他の人の変更",
+      lockVersion: 4,
+    });
+    const user = userEvent.setup();
+    render(
+      <TeacherEditPage
+        api={createApi()}
+        classRooms={classRooms}
+        loadLatest={loadLatest}
+        onClose={vi.fn()}
+        onSaved={vi.fn()}
+        teacher={teacher}
+      />
+    );
+
+    const nameInput = await screen.findByLabelText("先生名");
+    await user.clear(nameInput);
+    await user.type(nameInput, "自分の変更");
+    await user.click(screen.getByRole("button", { name: "保存する" }));
+
+    expect(
+      await screen.findByText(UPDATE_CONFLICT_MESSAGE)
+    ).toBeInTheDocument();
+    expect(loadLatest).toHaveBeenCalledOnce();
+    await waitFor(() =>
+      expect(screen.getByLabelText("先生名")).toHaveValue("他の人の変更")
+    );
+    expect(screen.getByText(UPDATE_CONFLICT_MESSAGE)).toBeInTheDocument();
+  });
+
+  it("競合後の再取得に失敗したら入力を残し、再度の保存で最新の値へ置き換える", async () => {
+    mocks.updateTeacher.mockRejectedValue(
+      new ApiClientError(409, "conflict", "TEACHER_UPDATE_CONFLICT")
+    );
+    const loadLatest = vi
+      .fn()
+      .mockRejectedValueOnce(new Error("network"))
+      .mockResolvedValue({
+        ...teacher,
+        displayName: "他の人の変更",
+        lockVersion: 4,
+      });
+    const user = userEvent.setup();
+    render(
+      <TeacherEditPage
+        api={createApi()}
+        classRooms={classRooms}
+        loadLatest={loadLatest}
+        onClose={vi.fn()}
+        onSaved={vi.fn()}
+        teacher={teacher}
+      />
+    );
+
+    const nameInput = await screen.findByLabelText("先生名");
+    await user.clear(nameInput);
+    await user.type(nameInput, "自分の変更");
+    await user.click(screen.getByRole("button", { name: "保存する" }));
+
+    expect(
+      await screen.findByText(UPDATE_CONFLICT_RELOAD_FAILED_MESSAGE)
+    ).toBeInTheDocument();
+    expect(screen.getByLabelText("先生名")).toHaveValue("自分の変更");
+
+    await user.click(screen.getByRole("button", { name: "保存する" }));
+
+    expect(
+      await screen.findByText(UPDATE_CONFLICT_MESSAGE)
+    ).toBeInTheDocument();
+    await waitFor(() =>
+      expect(screen.getByLabelText("先生名")).toHaveValue("他の人の変更")
+    );
   });
 
   it("更新APIエラーをフォームへ表示してモーダルを維持する", async () => {
@@ -221,9 +385,15 @@ describe("teacher create and edit flows", () => {
     );
     const user = userEvent.setup();
 
-    renderNestedEditRouter(
-      <TeacherEditPage classRooms={classRooms} teacher={teacher} />
-    );
+    renderNestedEditRouter((callbacks) => (
+      <TeacherEditPage
+        api={createApi()}
+        classRooms={classRooms}
+        loadLatest={vi.fn()}
+        {...callbacks}
+        teacher={teacher}
+      />
+    ));
 
     await user.click(await screen.findByRole("button", { name: "保存する" }));
 

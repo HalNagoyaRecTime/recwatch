@@ -9,7 +9,7 @@ type GatheringSettingsSavedStepProps = {
   settings: EventGatheringSettings;
 };
 
-/** 集合設定の保存が完了したことを示し、イベント詳細へ戻す。 */
+/** 集合設定の保存が完了したことを示し、一覧へ戻す。 */
 export function GatheringSettingsSavedStep({
   onClose,
   settings,
@@ -29,12 +29,12 @@ export function GatheringSettingsSavedStep({
           集合設定を保存しました
         </p>
         <p className="text-text-muted text-base">
-          {settings.rounds.length}Round・{gatheringCount}
+          {settings.rounds.length}ラウンド・{gatheringCount}
           件の集合を登録しました。
         </p>
       </div>
       <Button onClick={onClose} size="lg" variant="primary">
-        イベント詳細へ戻る
+        一覧へ戻る
       </Button>
     </div>
   );

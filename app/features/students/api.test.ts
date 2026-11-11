@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
   get: vi.fn(),
+  patch: vi.fn(),
   post: vi.fn(),
   put: vi.fn(),
 }));
@@ -9,6 +10,7 @@ const mocks = vi.hoisted(() => ({
 vi.mock("~/lib/api-client", () => ({
   apiClient: {
     get: mocks.get,
+    patch: mocks.patch,
     post: mocks.post,
     put: mocks.put,
   },
@@ -32,6 +34,7 @@ function makeStudentDTO(id: number): StudentDTO {
       class_code: "1A",
       class_name: "クラスA",
     },
+    lock_version: 0,
   };
 }
 
@@ -68,6 +71,28 @@ describe("studentHttpApi", () => {
     expect(mocks.get).toHaveBeenCalledWith(
       "/api/v1/students?limit=50&offset=50&search=%E5%B1%B1%E7%94%B0&classRoomId=1&isStaff=false&isLiveActive=true&sortBy=className&sortOrder=desc"
     );
+  });
+
+  it("単体取得をstudentIdのHTTP endpointへ送り、DTOをStudentRowへ変換する", async () => {
+    mocks.get.mockResolvedValueOnce(makeStudentDTO(8));
+
+    await expect(StudentApi.getStudentById(8)).resolves.toEqual({
+      studentId: 8,
+      userId: 108,
+      displayName: "学生8",
+      studentIdNumber: "8",
+      attendanceNumber: 8,
+      isLiveActive: true,
+      isStaff: false,
+      classRoom: {
+        classRoomId: 1,
+        classCode: "1A",
+        className: "クラスA",
+      },
+      lockVersion: 0,
+    });
+
+    expect(mocks.get).toHaveBeenCalledWith("/api/v1/students/8");
   });
 
   it("一覧条件未指定時はstaff=all・active=trueを既定値にする", async () => {
@@ -153,6 +178,50 @@ describe("studentHttpApi", () => {
       "isLiveActive"
     );
   });
+
+  it("更新は取得した版をlock_versionとして送り返す", async () => {
+    mocks.put.mockResolvedValueOnce(makeStudentDTO(3));
+
+    await studentHttpApi.updateStudent(3, {
+      attendanceNumber: 3,
+      classRoomId: 1,
+      displayName: "学生3",
+      studentIdNumber: "S003",
+      lockVersion: 2,
+    });
+
+    expect(mocks.put).toHaveBeenCalledWith("/api/v1/students/3", {
+      attendance_number: 3,
+      class_room_id: 1,
+      display_name: "学生3",
+      student_id_number: "S003",
+      lock_version: 2,
+    });
+  });
+
+  it("所属・移動と未所属化を専用PATCH endpointへ送信する", async () => {
+    mocks.patch.mockResolvedValue(makeStudentDTO(3));
+
+    await studentHttpApi.updateStudentClassRoom(3, {
+      attendanceNumber: 5,
+      classRoomId: 12,
+    });
+    await studentHttpApi.updateStudentClassRoom(3, {
+      attendanceNumber: null,
+      classRoomId: null,
+    });
+
+    expect(mocks.patch).toHaveBeenNthCalledWith(
+      1,
+      "/api/v1/students/3/classroom",
+      { attendance_number: 5, class_room_id: 12 }
+    );
+    expect(mocks.patch).toHaveBeenNthCalledWith(
+      2,
+      "/api/v1/students/3/classroom",
+      { attendance_number: null, class_room_id: null }
+    );
+  });
 });
 
 describe("StudentApi", () => {
@@ -178,6 +247,7 @@ describe("StudentApi", () => {
             classCode: "1A",
             className: "クラスA",
           },
+          lockVersion: 0,
         },
       ],
       total: 1,

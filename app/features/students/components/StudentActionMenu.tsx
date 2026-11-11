@@ -38,11 +38,13 @@ export function StudentActionMenu({
       disabled,
       icon: student.isStaff ? BadgeMinus : UserPlus,
       id: "staff",
-      label: student.isStaff ? "staffを解除する" : "staffを付与する",
+      label: student.isStaff
+        ? "スタッフ権限を解除する"
+        : "スタッフ権限を付与する",
       onClick: () => {
         if (
           !window.confirm(
-            `「${student.displayName}」のstaffを${student.isStaff ? "解除" : "付与"}します。よろしいですか？`
+            `「${student.displayName}」のスタッフ権限を${student.isStaff ? "解除" : "付与"}します。よろしいですか？`
           )
         ) {
           return;

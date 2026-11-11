@@ -1,8 +1,10 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, useLocation, useNavigate } from "react-router";
-import { describe, expect, it } from "vitest";
+import type { ComponentProps } from "react";
+import { describe, expect, it, vi } from "vitest";
 
+import type { TeacherMutationApi } from "~/features/teachers/api/contracts/teacher-api";
 import type { TeacherRow } from "~/features/teachers/model/teacher";
 import { TeachersPage } from "~/features/teachers/pages/TeachersPage";
 
@@ -15,8 +17,36 @@ const teachers: TeacherRow[] = [
     isLiveActive: true,
     isStaff: false,
     classRooms: [{ classRoomId: 1, classCode: "1A", className: "1年A組" }],
+    lockVersion: 0,
   },
 ];
+
+const api: TeacherMutationApi = {
+  assignStaff: vi.fn(),
+  createTeacher: vi.fn(),
+  revokeStaff: vi.fn(),
+  updateTeacher: vi.fn(),
+  updateUserStatus: vi.fn(),
+};
+
+type TestTeachersPageProps = Omit<
+  ComponentProps<typeof TeachersPage>,
+  "api" | "classRooms" | "onRevalidate"
+> & { classRooms?: ComponentProps<typeof TeachersPage>["classRooms"] };
+
+function TestTeachersPage({
+  classRooms = [],
+  ...props
+}: TestTeachersPageProps) {
+  return (
+    <TeachersPage
+      api={api}
+      classRooms={classRooms}
+      onRevalidate={vi.fn()}
+      {...props}
+    />
+  );
+}
 
 function LocationProbe() {
   const location = useLocation();
@@ -52,7 +82,7 @@ describe("TeachersPage", () => {
     const user = userEvent.setup();
     render(
       <MemoryRouter initialEntries={["/teachers?search=%E5%88%9D%E6%9C%9F"]}>
-        <TeachersPage limit={50} offset={0} teachers={teachers} total={1} />
+        <TestTeachersPage limit={50} offset={0} teachers={teachers} total={1} />
         <LocationProbe />
         <HistoryBackButton />
       </MemoryRouter>
@@ -74,7 +104,12 @@ describe("TeachersPage", () => {
     const user = userEvent.setup();
     render(
       <MemoryRouter initialEntries={["/teachers?search=佐橋&page=2"]}>
-        <TeachersPage limit={50} offset={50} teachers={teachers} total={100} />
+        <TestTeachersPage
+          limit={50}
+          offset={50}
+          teachers={teachers}
+          total={100}
+        />
         <LocationProbe />
       </MemoryRouter>
     );
@@ -88,7 +123,7 @@ describe("TeachersPage", () => {
     const user = userEvent.setup();
     render(
       <MemoryRouter initialEntries={["/teachers"]}>
-        <TeachersPage
+        <TestTeachersPage
           classRooms={[
             { classRoomId: 1, classCode: "1A", className: "1年A組" },
           ]}
@@ -119,7 +154,7 @@ describe("TeachersPage", () => {
     const user = userEvent.setup();
     render(
       <MemoryRouter initialEntries={["/teachers?page=3"]}>
-        <TeachersPage
+        <TestTeachersPage
           classRooms={[
             { classRoomId: 1, classCode: "1A", className: "1年A組" },
           ]}
@@ -138,7 +173,7 @@ describe("TeachersPage", () => {
       expect(getLocationParams().has("page")).toBe(false);
     });
 
-    await selectOption(user, "staffフィルター", "staff:いいえ");
+    await selectOption(user, "スタッフフィルター", "スタッフ:いいえ");
     await waitFor(() => {
       expect(getLocationParams().get("classRoomId")).toBe("1");
       expect(getLocationParams().get("isStaff")).toBe("false");
@@ -159,7 +194,7 @@ describe("TeachersPage", () => {
           "/teachers?page=2&classRoomId=1&isStaff=false&isLiveActive=false",
         ]}
       >
-        <TeachersPage
+        <TestTeachersPage
           classRooms={[
             { classRoomId: 1, classCode: "1A", className: "1年A組" },
           ]}
@@ -173,7 +208,7 @@ describe("TeachersPage", () => {
     );
 
     await selectOption(user, "担当クラスフィルター", "クラス:すべて");
-    await selectOption(user, "staffフィルター", "staff:すべて");
+    await selectOption(user, "スタッフフィルター", "スタッフ:すべて");
     await selectOption(user, "有効状態フィルター", "有効:すべて");
 
     await waitFor(() => {
@@ -189,7 +224,12 @@ describe("TeachersPage", () => {
     const user = userEvent.setup();
     render(
       <MemoryRouter initialEntries={["/teachers?page=3&isStaff=false"]}>
-        <TeachersPage limit={50} offset={100} teachers={teachers} total={150} />
+        <TestTeachersPage
+          limit={50}
+          offset={100}
+          teachers={teachers}
+          total={150}
+        />
         <LocationProbe />
       </MemoryRouter>
     );
@@ -214,7 +254,12 @@ describe("TeachersPage", () => {
     const user = userEvent.setup();
     render(
       <MemoryRouter initialEntries={["/teachers"]}>
-        <TeachersPage limit={50} offset={0} teachers={teachers} total={100} />
+        <TestTeachersPage
+          limit={50}
+          offset={0}
+          teachers={teachers}
+          total={100}
+        />
         <LocationProbe />
       </MemoryRouter>
     );
@@ -228,7 +273,12 @@ describe("TeachersPage", () => {
     const user = userEvent.setup();
     render(
       <MemoryRouter initialEntries={["/teachers?page=2"]}>
-        <TeachersPage limit={50} offset={50} teachers={teachers} total={100} />
+        <TestTeachersPage
+          limit={50}
+          offset={50}
+          teachers={teachers}
+          total={100}
+        />
         <LocationProbe />
       </MemoryRouter>
     );
@@ -236,7 +286,7 @@ describe("TeachersPage", () => {
     const sortCases = [
       ["ID", "teacherId"],
       ["教官名", "displayName"],
-      ["staff", "isStaff"],
+      ["スタッフ", "isStaff"],
       ["有効", "isLiveActive"],
       ["クラスコード", "classCode"],
       ["クラス名", "className"],

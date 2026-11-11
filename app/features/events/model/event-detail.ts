@@ -10,6 +10,8 @@ import type { VenueOption } from "~/features/venues/public";
  */
 export type EventDetail = {
   id: number;
+  /** 楽観ロック用の版。更新時にそのまま送り返す。 */
+  lockVersion: number;
   name: string;
   venues: VenueOption[];
   /** "HH:mm"。 */

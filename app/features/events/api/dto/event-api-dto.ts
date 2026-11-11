@@ -13,6 +13,8 @@ export type EventResponseDto = {
   venues: EventVenueResponseDto[];
   start_time: string;
   end_time: string;
+  /** 楽観ロック用の版。更新時にそのまま送り返す。 */
+  lock_version: number;
 };
 
 /** GET /api/v1/events の一覧項目。 */
@@ -41,4 +43,6 @@ export type EventWriteRequestDto = {
   venue_ids: number[];
   start_time: string;
   end_time: string;
+  /** 取得時点の版。更新時のみ送る。 */
+  lock_version?: number;
 };

@@ -67,15 +67,21 @@ npm run preview
 GitHub Actions のデプロイワークフローで、ビルド時に
 `VITE_BACKEND_BASE_URL` を注入する。
 
-| 対象               | `VITE_BACKEND_BASE_URL` の注入元          | 設定する値              |
-| ------------------ | ----------------------------------------- | ----------------------- |
-| `main` ブランチ    | GitHub Actions の本番デプロイワークフロー | 本番 Backend の公開 URL |
-| `develop` ブランチ | GitHub Actions の開発デプロイワークフロー | 開発 Backend の公開 URL |
-| ローカル開発       | `.env`                                    | ローカル Backend の URL |
+| デプロイ先  | 契機                                    | URL                                        |
+| ----------- | --------------------------------------- | ------------------------------------------ |
+| production  | `main` でデプロイワークフローを手動実行 | `https://<プロジェクト>.pages.dev`         |
+| staging     | `develop` への push                     | `https://staging.<プロジェクト>.pages.dev` |
+| development | `develop` への push                     | `https://develop.<プロジェクト>.pages.dev` |
+| preview     | PR                                      | `https://pr-<PR番号>.recwatch.pages.dev`   |
 
-GitHub Actions では、`npm run build` を実行するジョブに対象ブランチ用の
-`VITE_BACKEND_BASE_URL` を渡す。環境変数は Vite のビルド時に埋め込まれるため、
-値を変更した後は対象ブランチを再デプロイする。
+`<プロジェクト>` は学校ごとの Pages プロジェクト（名古屋 `recwatch`・東京
+`recwatch-tokyo`・大阪 `recwatch-osaka`）。development と preview は名古屋だけにデプロイする。
+
+ローカル開発では `.env` の `VITE_BACKEND_BASE_URL` を使う。
+
+GitHub Actions では、`npm run build` を実行するジョブにデプロイ先の
+GitHub Environment の `VITE_BACKEND_BASE_URL_<学校>` を `VITE_BACKEND_BASE_URL` として渡す。
+環境変数は Vite のビルド時に埋め込まれるため、値を変更した後は再デプロイする。
 
 `VITE_` で始まる変数はブラウザへ公開されるため、Backend の公開 URL のみを設定し、
 認証情報などの秘密情報は設定しない。
@@ -87,13 +93,14 @@ Wrangler CLI で Cloudflare Pages へデプロイする。
 
 GitHub では以下を設定する。
 
-- `production` Environment に `VITE_BACKEND_BASE_URL`（本番 Backend の公開 URL）
-- `development` Environment に `VITE_BACKEND_BASE_URL`（開発 Backend の公開 URL）
-- リポジトリ Secret `CLOUDFLARE_API_TOKEN`（Pages Write 権限を持つ API トークン）
-- リポジトリ Secret `CLOUDFLARE_ACCOUNT_ID`（Cloudflare アカウント ID）
+`<学校>` は `NAGOYA`・`TOKYO`・`OSAKA`。
+
+- `production`・`staging`・`development`・`preview` の各 Environment に `VITE_BACKEND_BASE_URL_<学校>`（デプロイ先に対応する Backend の公開 URL。development と preview は `NAGOYA` だけ）
+- リポジトリ Secret `CLOUDFLARE_API_TOKEN_<学校>`（その学校の Cloudflare アカウントで Pages Write 権限を持つ API トークン）
+- リポジトリ Secret `CLOUDFLARE_ACCOUNT_ID_<学校>`（その学校の Cloudflare アカウント ID）
 
 Cloudflare Pages の Git 連携による自動デプロイは全ブランチで無効化する。
-以後は GitHub Actions が `main` と `develop` の push をデプロイする。
+以後は GitHub Actions がデプロイする。
 
 Cloudflare PagesのSPAフォールバックを使用するため、トップレベルの
 `404.html`は配置しない。

@@ -8,7 +8,7 @@ import { PagePadding } from "~/features/frame/page-layout/PagePadding";
 import { PageLayout } from "~/features/frame/page-layout/PageLayout";
 
 export function meta() {
-  return [{ title: createPageTitle("イベント登録一覧") }];
+  return [{ title: createPageTitle("イベント管理") }];
 }
 
 export default function EventsRoute() {

@@ -47,5 +47,6 @@ describe("teachers route clientLoader", () => {
       isStaff: "false",
       isLiveActive: "all",
     });
+    expect(mocks.getClassRoomData).not.toHaveBeenCalled();
   });
 });

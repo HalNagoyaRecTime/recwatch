@@ -14,6 +14,7 @@ export type ClassRoomAudiencePageApiDto = {
 export type GatheringAudienceApiDto = {
   gathering_id: number;
   event_name: string;
+  round: number;
   gathering_spot_name: string;
   gathering_time: string;
 };
@@ -25,6 +26,37 @@ export type EventAudienceApiDto = {
 
 export type EventAudiencePageApiDto = {
   events: EventAudienceApiDto[];
+  total: number;
+  limit: number;
+  offset: number;
+};
+
+export type EventAudienceDetailApiDto = {
+  rounds: EventAudienceRoundApiDto[];
+};
+
+export type EventAudienceRoundApiDto = {
+  round: number;
+  gatherings: EventAudienceGatheringApiDto[];
+};
+
+export type EventAudienceGatheringApiDto = {
+  gathering_id: number;
+  gathering_time: string;
+  gathering_spot: {
+    gathering_spot_id: number;
+    gathering_spot_name: string;
+  };
+  member_count: number;
+};
+
+export type UserAudienceApiDto = {
+  user_id: number;
+  display_name: string;
+};
+
+export type UserAudiencePageApiDto = {
+  items: UserAudienceApiDto[];
   total: number;
   limit: number;
   offset: number;

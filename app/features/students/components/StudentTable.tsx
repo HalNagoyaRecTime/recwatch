@@ -55,12 +55,12 @@ export function StudentTable({
     },
     {
       align: "center",
-      header: "staff",
+      header: "スタッフ",
       id: "staff",
       sortable: true,
       width: { type: "fluid", min: 120, grow: 0.6 },
       renderCell: (student) => (
-        <span>{student.isStaff ? "staff" : "staffではない"}</span>
+        <span>{student.isStaff ? "スタッフ" : "スタッフ以外"}</span>
       ),
     },
     {
@@ -78,14 +78,14 @@ export function StudentTable({
       id: "class-code",
       sortable: true,
       width: { type: "fluid", min: 180, grow: 1 },
-      renderCell: (student) => student.classRoom.classCode,
+      renderCell: (student) => student.classRoom?.classCode ?? "未所属",
     },
     {
       header: "クラス名",
       id: "class-name",
       sortable: true,
       width: { type: "fluid", min: 180, grow: 1 },
-      renderCell: (student) => student.classRoom.className,
+      renderCell: (student) => student.classRoom?.className ?? "未所属",
     },
     {
       align: "end",
@@ -94,7 +94,7 @@ export function StudentTable({
       id: "attendance-number",
       sortable: true,
       width: { type: "fixed", value: 110 },
-      renderCell: (student) => student.attendanceNumber,
+      renderCell: (student) => student.attendanceNumber ?? "—",
     },
     {
       align: "center",

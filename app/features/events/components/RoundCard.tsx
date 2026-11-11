@@ -10,7 +10,6 @@ import type {
 } from "~/features/events/model/event-gathering-settings";
 import {
   canRemoveGathering,
-  canRemoveRound,
   MAX_ROUND,
   MIN_ROUND,
 } from "~/features/events/model/event-gathering-settings";
@@ -26,10 +25,12 @@ type RoundCardProps = {
     patch: Partial<Pick<GatheringDraft, "time" | "spotId">>
   ) => void;
   onChangeRoundNumber: (roundNumber: number) => void;
+  onChangeRoundStartTime: (startTime: string) => void;
   onRemove: () => void;
   onRemoveGathering: (gatheringKey: string) => void;
   onTogglePicker: (gatheringKey: string) => void;
   openPickerKey: string | null;
+  pendingMemberCounts: Readonly<Record<string, number>>;
   renderPicker: (gathering: GatheringDraft) => ReactNode;
   spots: readonly GatheringSpotOption[];
   value: RoundDraft;
@@ -41,36 +42,32 @@ export function RoundCard({
   onAddGathering,
   onChangeGathering,
   onChangeRoundNumber,
+  onChangeRoundStartTime,
   onRemove,
   onRemoveGathering,
   onTogglePicker,
   openPickerKey,
+  pendingMemberCounts,
   renderPicker,
   spots,
   value,
 }: RoundCardProps) {
   const roundErrors = errors.filter((error) => !error.gatheringKey);
-  const isRoundRemovable = canRemoveRound(value);
 
   return (
     <section
-      aria-label={`Round ${value.round}`}
+      aria-label={`ラウンド ${value.round}`}
       className="border-border-base app-rounded space-y-4 border p-4"
     >
       <div className="flex items-center justify-between gap-3">
         <h3 className="text-text-base text-base font-semibold">
-          Round {value.round}
+          ラウンド {value.round}
         </h3>
         <Button
-          disabled={disabled || !isRoundRemovable}
+          disabled={disabled}
           icon={Trash2}
           onClick={onRemove}
           size="sm"
-          title={
-            isRoundRemovable
-              ? undefined
-              : "参加者が登録されている集合があるため削除できません"
-          }
           type="button"
           variant="danger"
         >
@@ -79,9 +76,9 @@ export function RoundCard({
       </div>
 
       <label className="text-text-base block text-sm font-medium">
-        Round番号
+        ラウンド番号
         <input
-          aria-label={`Round ${value.round} の番号`}
+          aria-label={`ラウンド ${value.round} の番号`}
           className="app-rounded border-border-base bg-surface-base text-text-base focus:border-border-strong mt-1.5 h-9 w-24 border px-3 text-sm outline-none disabled:opacity-50"
           disabled={disabled}
           max={MAX_ROUND}
@@ -91,6 +88,19 @@ export function RoundCard({
           }
           type="number"
           value={Number.isNaN(value.round) ? "" : value.round}
+        />
+      </label>
+      <label className="text-text-base block text-sm font-medium">
+        開始時刻（任意）
+        <input
+          aria-label={`ラウンド ${value.round} の開始時刻`}
+          className="app-rounded border-border-base bg-surface-base text-text-base focus:border-border-strong mt-1.5 h-9 border px-3 text-sm outline-none disabled:opacity-50"
+          disabled={disabled}
+          type="time"
+          value={value.startTime}
+          onChange={(event) =>
+            onChangeRoundStartTime(event.currentTarget.value)
+          }
         />
       </label>
       {roundErrors.length > 0 ? (
@@ -111,6 +121,7 @@ export function RoundCard({
                 .filter((error) => error.gatheringKey === gathering.key)
                 .map((error) => error.message)}
               isPickerOpen={openPickerKey === gathering.key}
+              pendingMemberCount={pendingMemberCounts[gathering.key]}
               onChange={(patch) => onChangeGathering(gathering.key, patch)}
               onRemove={() => onRemoveGathering(gathering.key)}
               onTogglePicker={() => onTogglePicker(gathering.key)}

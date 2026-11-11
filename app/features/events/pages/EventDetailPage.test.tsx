@@ -1,13 +1,15 @@
 import { render, screen, waitFor, within } from "@testing-library/react";
-import { MemoryRouter, Route, Routes } from "react-router";
+import { MemoryRouter, Route, Routes, useOutletContext } from "react-router";
 import { describe, expect, it, vi } from "vitest";
 
 import type { EventQueryGateway } from "~/features/events/api/contracts/event-query-gateway";
 import type { EventDetail } from "~/features/events/model/event-detail";
 import { EventDetailPage } from "~/features/events/pages/EventDetailPage";
+import type { EventDetailOutletContext } from "~/features/events/routes/outlet-context";
 
 const relay: EventDetail = {
   id: 12,
+  lockVersion: 1,
   name: "リレー",
   venues: [{ id: 1, name: "メインコート" }],
   startTime: "11:00",
@@ -16,6 +18,7 @@ const relay: EventDetail = {
   rounds: [
     {
       round: 1,
+      startTime: null,
       gatherings: [
         {
           id: 101,
@@ -33,6 +36,7 @@ const relay: EventDetail = {
     },
     {
       round: 2,
+      startTime: null,
       gatherings: [
         {
           id: 103,
@@ -45,6 +49,18 @@ const relay: EventDetail = {
   ],
 };
 
+function GatheringSettingsProbe() {
+  const { event } = useOutletContext<EventDetailOutletContext>();
+
+  return (
+    <p>
+      {event
+        ? `${event.name} ${event.startTime}〜${event.endTime}`
+        : "イベントを読み込んでいます"}
+    </p>
+  );
+}
+
 function renderPage(path: string, queryGateway: EventQueryGateway) {
   render(
     <MemoryRouter initialEntries={[path]}>
@@ -53,7 +69,7 @@ function renderPage(path: string, queryGateway: EventQueryGateway) {
           element={<EventDetailPage queryGateway={queryGateway} />}
           path="/events/:eventId"
         >
-          <Route element={<p>集合設定モーダル</p>} path="gatherings" />
+          <Route element={<GatheringSettingsProbe />} path="gatherings" />
         </Route>
       </Routes>
     </MemoryRouter>
@@ -81,14 +97,14 @@ describe("EventDetailPage", () => {
       within(basicInfo).getByText("バトンを使用します。")
     ).toBeInTheDocument();
 
-    const round1 = screen.getByRole("region", { name: "Round 1" });
+    const round1 = screen.getByRole("region", { name: "ラウンド 1" });
     expect(within(round1).getByText("合計 31名")).toBeInTheDocument();
     expect(within(round1).getByText("出入口①")).toBeInTheDocument();
     expect(within(round1).getByText("16名")).toBeInTheDocument();
     expect(within(round1).getByText("15名")).toBeInTheDocument();
 
     // 集合時刻が未設定の行は "99:59" を出さない
-    const round2 = screen.getByRole("region", { name: "Round 2" });
+    const round2 = screen.getByRole("region", { name: "ラウンド 2" });
     expect(within(round2).getByText("未設定")).toBeInTheDocument();
     expect(within(round2).queryByText("99:59")).not.toBeInTheDocument();
   });
@@ -104,14 +120,14 @@ describe("EventDetailPage", () => {
     });
 
     expect(
-      await screen.findByRole("region", { name: "Round 3" })
+      await screen.findByRole("region", { name: "ラウンド 3" })
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("heading", { name: "Round 3", level: 3 })
+      screen.getByRole("heading", { name: "ラウンド 3", level: 3 })
     ).toBeInTheDocument();
     // 配列上の位置（2 番目）を番号として出さない
     expect(
-      screen.queryByRole("heading", { name: "Round 2", level: 3 })
+      screen.queryByRole("heading", { name: "ラウンド 2", level: 3 })
     ).not.toBeInTheDocument();
     expect(screen.queryByText("2")).not.toBeInTheDocument();
   });
@@ -136,7 +152,7 @@ describe("EventDetailPage", () => {
     expect(
       await screen.findByRole("link", { name: "集合を追加" })
     ).toHaveAttribute("href", "/events/12/gatherings");
-    expect(screen.queryByText("集合設定モーダル")).not.toBeInTheDocument();
+    expect(screen.queryByText("リレー 11:00〜12:30")).not.toBeInTheDocument();
   });
 
   it("子ルートの URL では詳細の上に集合設定モーダルを出す", async () => {
@@ -148,7 +164,7 @@ describe("EventDetailPage", () => {
     expect(
       await screen.findByRole("heading", { name: "リレー", level: 2 })
     ).toBeInTheDocument();
-    expect(screen.getByText("集合設定モーダル")).toBeInTheDocument();
+    expect(screen.getByText("リレー 11:00〜12:30")).toBeInTheDocument();
   });
 
   it("集合が無ければ案内を出す", async () => {

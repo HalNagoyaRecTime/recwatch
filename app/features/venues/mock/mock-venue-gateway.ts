@@ -51,8 +51,10 @@ export function createMockVenueGateway(
       const created = {
         id: nextId++,
         name,
+        imageUrl: null,
         createdAt: now,
         updatedAt: now,
+        lockVersion: 0,
       } satisfies Venue;
       venues = [...venues, created];
       return created;
@@ -66,6 +68,7 @@ export function createMockVenueGateway(
         ...current,
         name,
         updatedAt: new Date().toISOString(),
+        lockVersion: current.lockVersion + 1,
       } satisfies Venue;
       venues = venues.map((venue) => (venue.id === id ? updated : venue));
       return updated;
@@ -77,5 +80,22 @@ export function createMockVenueGateway(
       }
       venues = venues.filter((venue) => venue.id !== id);
     },
+
+    async setImage(id) {
+      setImageUrl(id, `mock://venues/${id}/image`);
+    },
+
+    async deleteImage(id) {
+      setImageUrl(id, null);
+    },
   };
+
+  function setImageUrl(id: number, imageUrl: string | null) {
+    if (!venues.some((venue) => venue.id === id)) {
+      throw new Error("実施場所が見つかりません。");
+    }
+    venues = venues.map((venue) =>
+      venue.id === id ? { ...venue, imageUrl } : venue
+    );
+  }
 }

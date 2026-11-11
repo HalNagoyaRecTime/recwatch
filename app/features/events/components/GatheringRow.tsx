@@ -16,6 +16,7 @@ type GatheringRowProps = {
   disabled: boolean;
   errors: readonly string[];
   isPickerOpen: boolean;
+  pendingMemberCount?: number;
   onChange: (patch: Partial<Pick<GatheringDraft, "time" | "spotId">>) => void;
   onRemove: () => void;
   onTogglePicker: () => void;
@@ -30,16 +31,20 @@ export function GatheringRow({
   disabled,
   errors,
   isPickerOpen,
+  pendingMemberCount,
   onChange,
   onRemove,
   onTogglePicker,
   spots,
   value,
 }: GatheringRowProps) {
-  const memberCount = value.savedMemberCount;
-  const memberLabel = `${memberCount}人登録済み`;
+  const isPendingMembers = pendingMemberCount !== undefined;
+  const memberCount = pendingMemberCount ?? value.savedMemberCount;
+  const memberLabel = isPendingMembers
+    ? `${memberCount}人選択中`
+    : `${memberCount}人登録済み`;
   const isLockedByMembers = memberCount > 0;
-  // 参加者は集合の ID 単位で保存するため、まだ保存していない新規行では選べない
+  // 参加者は集合の ID が発行されるまで画面内に一時保持する
   const isSavedGathering = value.gatheringId !== null;
   // 同じ画面に複数行が並ぶため、固定文字列にすると id が重複する
   const hintId = useId();
@@ -85,7 +90,7 @@ export function GatheringRow({
             <Button
               aria-describedby={isSavedGathering ? undefined : hintId}
               aria-expanded={isPickerOpen}
-              disabled={disabled || !isSavedGathering}
+              disabled={disabled}
               icon={Users}
               onClick={onTogglePicker}
               size="sm"
@@ -121,7 +126,7 @@ export function GatheringRow({
           押せない理由は常に見えるテキストで出す */}
       {isSavedGathering ? null : (
         <p className="text-text-muted text-xs" id={hintId}>
-          この集合を「集合設定を保存」で登録すると、参加者を選べます。
+          参加者は集合設定の保存後に登録されます。
         </p>
       )}
       {isLockedByMembers ? (

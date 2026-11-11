@@ -2,15 +2,15 @@ import { loadAllPages } from "~/lib/load-all-pages";
 
 import type { GatheringMemberGateway } from "~/features/events/api/contracts/gathering-member-gateway";
 import type {
-  ClassroomPageResponseDto,
   GatheringMemberResponseDto,
   StudentPageResponseDto,
+  TeamPageResponseDto,
   TeacherPageResponseDto,
 } from "~/features/events/api/dto/gathering-member-api-dto";
 import {
-  toMemberClassroom,
   toMemberNonStudent,
   toMemberStudent,
+  toMemberTeam,
   toMemberUserIds,
   toReplaceGatheringMembersRequest,
 } from "~/features/events/api/mappers/gathering-member-mappers";
@@ -24,21 +24,25 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
 }
 
-function parseClassroomPage(value: ClassroomPageResponseDto) {
+function parseTeamPage(value: TeamPageResponseDto) {
   if (
     !isRecord(value) ||
     !Array.isArray(value.items) ||
     !value.items.every(
       (item) =>
         isRecord(item) &&
-        Number.isSafeInteger(item.class_room_id) &&
-        Number(item.class_room_id) > 0 &&
-        typeof item.class_name === "string"
+        Number.isSafeInteger(item.team_id) &&
+        Number(item.team_id) > 0 &&
+        typeof item.team_name === "string" &&
+        Array.isArray(item.registered_classes) &&
+        item.registered_classes.every(
+          (classCode) => typeof classCode === "string"
+        )
     ) ||
     !Number.isSafeInteger(value.total) ||
     Number(value.total) < 0
   ) {
-    throw new Error("クラス一覧のレスポンス形式が正しくありません。");
+    throw new Error("チーム一覧のレスポンス形式が正しくありません。");
   }
   return value;
 }
@@ -55,13 +59,17 @@ function parseStudentPage(value: StudentPageResponseDto) {
         Number.isSafeInteger(item.user_id) &&
         Number(item.user_id) > 0 &&
         typeof item.display_name === "string" &&
-        Number.isSafeInteger(item.attendance_number) &&
+        (item.attendance_number === null ||
+          Number.isSafeInteger(item.attendance_number)) &&
         typeof item.student_id_number === "string" &&
         typeof item.is_live_active === "boolean" &&
-        isRecord(item.class_room) &&
-        Number.isSafeInteger(item.class_room.class_room_id) &&
-        Number(item.class_room.class_room_id) > 0 &&
-        typeof item.class_room.class_name === "string"
+        // クラス未所属の学生も参加者に選べるため、class_room は null を許す。
+        (item.class_room === null ||
+          (isRecord(item.class_room) &&
+            Number.isSafeInteger(item.class_room.class_room_id) &&
+            Number(item.class_room.class_room_id) > 0 &&
+            typeof item.class_room.class_code === "string" &&
+            typeof item.class_room.class_name === "string"))
     ) ||
     !Number.isSafeInteger(value.total) ||
     Number(value.total) < 0
@@ -115,21 +123,20 @@ export function createHttpGatheringMemberGateway(
 ): GatheringMemberGateway {
   return {
     async loadCandidates() {
-      const [classrooms, students, teachers] = await Promise.all([
+      const [teams, studentResponses, teachers] = await Promise.all([
         loadAllPages(async (offset, limit) => {
-          const page = parseClassroomPage(
-            await client.get<ClassroomPageResponseDto>(
-              `/api/v1/classrooms?limit=${limit}&offset=${offset}`
+          const page = parseTeamPage(
+            await client.get<TeamPageResponseDto>(
+              `/api/v1/teams?limit=${limit}&offset=${offset}`
             )
           );
           return {
-            items: page.items.map(toMemberClassroom),
+            items: page.items.map(toMemberTeam),
             total: page.total,
           };
         }),
-        // 停止中の学生も取得する。登録済みの参加者が停止されると、利用中だけの
-        // 一覧では行が消えてチェックを外せず、参加者からも集合からも外せなくなるため。
-        // 新しく追加させない制御は候補一覧側で行う。
+        // 停止中の学生も取得し、候補表では非表示にする。登録済みの停止中学生を
+        // 学生以外の参加者と誤認せず、登録済みなら別枠で解除できるよう全件を取得する。
         loadAllPages(async (offset, limit) => {
           const page = parseStudentPage(
             await client.get<StudentPageResponseDto>(
@@ -137,7 +144,7 @@ export function createHttpGatheringMemberGateway(
             )
           );
           return {
-            items: page.items.map(toMemberStudent),
+            items: page.items,
             total: page.total,
           };
         }),
@@ -159,7 +166,20 @@ export function createHttpGatheringMemberGateway(
       const nonStudents = new Map(
         teachers.map((teacher) => [teacher.userId, teacher])
       );
-      return { classrooms, students, nonStudents };
+      const teamIdByClassCode = new Map(
+        teams.flatMap((team) =>
+          team.classCodes.map((classCode) => [classCode, team.id] as const)
+        )
+      );
+      const students = studentResponses.map((student) =>
+        toMemberStudent(
+          student,
+          student.class_room
+            ? (teamIdByClassCode.get(student.class_room.class_code) ?? null)
+            : null
+        )
+      );
+      return { teams, students, nonStudents };
     },
 
     async loadMembers(gatheringId) {

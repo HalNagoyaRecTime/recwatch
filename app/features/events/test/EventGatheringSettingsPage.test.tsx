@@ -1,28 +1,61 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Outlet, Route, Routes, useLocation } from "react-router";
 import { describe, expect, it, vi } from "vitest";
 
 import { EventGatheringSettingsPage } from "~/features/events/pages/EventGatheringSettingsPage";
+import type { EventDetail } from "~/features/events/model/event-detail";
+
+const basketball: EventDetail = {
+  id: 7,
+  lockVersion: 1,
+  name: "バスケットボール",
+  venues: [{ id: 1, name: "体育館B" }],
+  startTime: "18:00",
+  endTime: "19:30",
+  rules: null,
+  rounds: [],
+};
 
 function LocationProbe() {
   return <output data-testid="location">{useLocation().pathname}</output>;
 }
 
 function renderPage(path: string, load = vi.fn(), save = vi.fn()) {
+  const memberGateway = {
+    loadCandidates: vi.fn().mockResolvedValue({
+      teams: [{ id: 10, name: "青チーム", classCodes: ["HAL1A"] }],
+      students: [
+        {
+          id: 10,
+          userId: 1001,
+          name: "山田 太郎",
+          teamId: 10,
+          classroomId: 1,
+          attendanceNumber: 1,
+          studentNumber: "2026001",
+          isLiveActive: true,
+        },
+      ],
+      nonStudents: new Map(),
+    }),
+    loadMembers: vi.fn().mockResolvedValue([]),
+    saveMembers: vi.fn().mockResolvedValue([1001]),
+  };
+
   render(
     <MemoryRouter initialEntries={[path]}>
       <Routes>
         <Route
           element={
             <EventGatheringSettingsPage
-              memberGateway={{
-                loadCandidates: vi.fn(),
-                loadMembers: vi.fn(),
-                saveMembers: vi.fn(),
-              }}
+              memberGateway={memberGateway}
               settingsGateway={{ load, save }}
-              spotReader={{ listAll: vi.fn().mockResolvedValue([]) }}
+              spotReader={{
+                listAll: vi
+                  .fn()
+                  .mockResolvedValue([{ id: 1, name: "出入口①" }]),
+              }}
             />
           }
           path="/events/:eventId/gatherings"
@@ -31,10 +64,14 @@ function renderPage(path: string, load = vi.fn(), save = vi.fn()) {
       <LocationProbe />
     </MemoryRouter>
   );
+  return { memberGateway };
 }
 
 /** イベント詳細の子ルートとして開き、詳細の再読み込みを受け取れる状態で描画する。 */
-function renderPageInEventDetail(reload: () => void) {
+function renderPageInEventDetail(
+  reload: () => void,
+  event: EventDetail = basketball
+) {
   const settings = {
     eventId: 7,
     rounds: [
@@ -53,12 +90,13 @@ function renderPageInEventDetail(reload: () => void) {
   };
   const memberGateway = {
     loadCandidates: vi.fn().mockResolvedValue({
-      classrooms: [{ id: 1, name: "HAL1A" }],
+      teams: [{ id: 10, name: "青チーム", classCodes: ["HAL1A"] }],
       students: [
         {
           id: 10,
           userId: 1001,
           name: "山田 太郎",
+          teamId: 10,
           classroomId: 1,
           attendanceNumber: 1,
           studentNumber: "2026001",
@@ -75,7 +113,7 @@ function renderPageInEventDetail(reload: () => void) {
     <MemoryRouter initialEntries={["/events/7/gatherings"]}>
       <Routes>
         <Route
-          element={<Outlet context={{ reload }} />}
+          element={<Outlet context={{ event, reload }} />}
           path="/events/:eventId"
         >
           <Route
@@ -104,11 +142,48 @@ function renderPageInEventDetail(reload: () => void) {
 }
 
 describe("EventGatheringSettingsPage", () => {
-  it("URL のイベント ID で集合設定を読み込み、保存後にイベント詳細へ戻る", async () => {
+  it("設定対象の競技名と競技時間を操作できない固定情報として表示する", async () => {
+    renderPageInEventDetail(vi.fn());
+
+    const context = screen.getByRole("region", { name: "設定対象の競技" });
+    expect(
+      within(context).getByRole("heading", { name: "バスケットボール" })
+    ).toBeInTheDocument();
+    expect(within(context).getByText("競技時間")).toBeInTheDocument();
+    expect(within(context).getByText("18:00〜19:30")).toBeInTheDocument();
+    expect(within(context).queryByRole("button")).not.toBeInTheDocument();
+    expect(within(context).queryByRole("textbox")).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "ラウンド設定" })
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("heading", { name: "集合設定", level: 3 })
+    ).not.toBeInTheDocument();
+
+    await screen.findByRole("button", { name: "メンバーを選択" });
+  });
+
+  it("新しい集合と参加者を保存した後、完了画面からイベント詳細へ戻る", async () => {
     const load = vi.fn().mockResolvedValue({ eventId: 7, rounds: [] });
-    const save = vi.fn().mockResolvedValue({ eventId: 7, rounds: [] });
+    const save = vi.fn().mockResolvedValue({
+      eventId: 7,
+      rounds: [
+        {
+          round: 1,
+          startTime: null,
+          gatherings: [
+            {
+              id: 101,
+              time: "10:45",
+              spot: { id: 1, name: "出入口①" },
+              memberCount: 0,
+            },
+          ],
+        },
+      ],
+    });
     const user = userEvent.setup();
-    renderPage("/events/7/gatherings", load, save);
+    const { memberGateway } = renderPage("/events/7/gatherings", load, save);
 
     expect(
       screen.getByRole("heading", { name: "集合設定", level: 2 })
@@ -116,23 +191,102 @@ describe("EventGatheringSettingsPage", () => {
     await waitFor(() => expect(load).toHaveBeenCalledWith(7));
 
     await user.click(
-      await screen.findByRole("button", { name: "集合設定を保存" })
+      await screen.findByRole("button", { name: "ラウンドを追加" })
     );
-    await waitFor(() => expect(save).toHaveBeenCalledWith(7, { rounds: [] }));
+    const round = screen.getByRole("region", { name: "ラウンド 1" });
+    await user.click(
+      within(round).getByRole("button", { name: "メンバーを選択" })
+    );
+    await user.click(await screen.findByLabelText("青チームを選択"));
+    await user.click(screen.getByRole("button", { name: "選択を確定" }));
+    expect(screen.getByText("1人選択中")).toBeInTheDocument();
+    expect(memberGateway.saveMembers).not.toHaveBeenCalled();
 
-    // 完了画面は同じモーダル内に出て、「イベント詳細へ戻る」で閉じると詳細へ戻る
+    await user.type(within(round).getByLabelText("集合時間"), "10:45");
+    await user.selectOptions(
+      within(round).getByRole("combobox", { name: "集合場所" }),
+      "1"
+    );
+    await user.click(screen.getByRole("button", { name: "集合設定を保存" }));
+    await waitFor(() =>
+      expect(save).toHaveBeenCalledWith(7, {
+        rounds: [
+          {
+            round: 1,
+            startTime: null,
+            gatherings: [{ gatheringId: null, time: "10:45", spotId: 1 }],
+          },
+        ],
+      })
+    );
+
+    await waitFor(() =>
+      expect(memberGateway.saveMembers).toHaveBeenCalledWith(101, [1001])
+    );
+
     expect(
       await screen.findByText("集合設定を保存しました")
     ).toBeInTheDocument();
-    expect(screen.getByTestId("location")).toHaveTextContent(
-      /^\/events\/7\/gatherings$/
-    );
-    await user.click(
-      screen.getByRole("button", { name: "イベント詳細へ戻る" })
-    );
+    expect(
+      screen.getByText("1ラウンド・1件の集合を登録しました。")
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("dialog", { name: "集合設定" })
+    ).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "一覧へ戻る" }));
     await waitFor(() =>
       expect(screen.getByTestId("location")).toHaveTextContent(/^\/events\/7$/)
     );
+    expect(
+      screen.queryByRole("dialog", { name: "集合設定" })
+    ).not.toBeInTheDocument();
+  });
+
+  it("既存集合の編集を保存すると、完了画面を表示してからモーダルを閉じる", async () => {
+    const settings = {
+      eventId: 7,
+      rounds: [
+        {
+          round: 1,
+          startTime: null,
+          gatherings: [
+            {
+              id: 101,
+              time: "10:45",
+              spot: { id: 1, name: "出入口①" },
+              memberCount: 0,
+            },
+          ],
+        },
+      ],
+    };
+    const load = vi.fn().mockResolvedValue(settings);
+    const save = vi.fn().mockResolvedValue(settings);
+    const user = userEvent.setup();
+    renderPage("/events/7/gatherings", load, save);
+
+    const startTime = await screen.findByLabelText("ラウンド 1 の開始時刻");
+    await user.type(startTime, "11:00");
+    await user.click(screen.getByRole("button", { name: "集合設定を保存" }));
+
+    expect(
+      await screen.findByText("集合設定を保存しました")
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("1ラウンド・1件の集合を登録しました。")
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("dialog", { name: "集合設定" })
+    ).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "一覧へ戻る" }));
+    await waitFor(() =>
+      expect(screen.getByTestId("location")).toHaveTextContent(/^\/events\/7$/)
+    );
+    expect(
+      screen.queryByRole("dialog", { name: "集合設定" })
+    ).not.toBeInTheDocument();
   });
 
   it("参加者だけ保存してモーダルを閉じずにいても、イベント詳細を読み直す", async () => {
@@ -143,7 +297,7 @@ describe("EventGatheringSettingsPage", () => {
     await user.click(
       await screen.findByRole("button", { name: "メンバーを選択" })
     );
-    await user.click(await screen.findByLabelText("山田 太郎を選択"));
+    await user.click(await screen.findByLabelText("青チームを選択"));
     await user.click(screen.getByRole("button", { name: "参加者を保存" }));
 
     await waitFor(() =>
@@ -152,7 +306,7 @@ describe("EventGatheringSettingsPage", () => {
     // 集合設定を保存していなくても、サーバーの人数が変わったので詳細を読み直す
     expect(reload).toHaveBeenCalledTimes(1);
     expect(
-      screen.queryByText("集合設定を保存しました")
+      screen.queryByText("集合設定を保存しました。続けて参加者を設定できます。")
     ).not.toBeInTheDocument();
   });
 

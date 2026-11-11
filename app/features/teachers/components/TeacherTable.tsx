@@ -7,14 +7,24 @@ import type { TeacherRow } from "~/features/teachers/model/teacher";
 
 type TeacherTableProps = {
   footer?: ReactNode;
+  isMutating?: boolean;
   items: readonly TeacherRow[];
+  onChangeActive: (teacher: TeacherRow) => void | Promise<void>;
+  onChangeStaff: (teacher: TeacherRow) => void | Promise<void>;
+  onClearError: () => void;
+  onEdit: (teacher: TeacherRow) => void;
   onSortChange?: (columnId: string) => void;
   sort?: DataTableSort;
 };
 
 export function TeacherTable({
   footer,
+  isMutating = false,
   items,
+  onChangeActive,
+  onChangeStaff,
+  onClearError,
+  onEdit,
   onSortChange,
   sort,
 }: TeacherTableProps) {
@@ -41,12 +51,12 @@ export function TeacherTable({
     },
     {
       align: "center",
-      header: "staff",
+      header: "スタッフ",
       id: "staff",
       sortable: true,
       width: { type: "fluid", min: 120, grow: 0.6 },
       renderCell: (teacher) => (
-        <span>{teacher.isStaff ? "staff" : "staffではない"}</span>
+        <span>{teacher.isStaff ? "スタッフ" : "スタッフ以外"}</span>
       ),
     },
     {
@@ -89,7 +99,16 @@ export function TeacherTable({
       header: "",
       id: "actions",
       width: { type: "fixed", value: 64 },
-      renderCell: (teacher) => <TeacherActionMenu teacher={teacher} />,
+      renderCell: (teacher) => (
+        <TeacherActionMenu
+          disabled={isMutating}
+          onChangeActive={() => onChangeActive(teacher)}
+          onChangeStaff={() => onChangeStaff(teacher)}
+          onClearError={onClearError}
+          onEdit={() => onEdit(teacher)}
+          teacher={teacher}
+        />
+      ),
     },
   ];
 

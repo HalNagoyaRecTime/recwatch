@@ -1,15 +1,14 @@
 import { describe, expect, it } from "vitest";
 
 import { buildSidebarMenu } from "./build-sidebar-menu";
+import { isSidebarItemActive } from "./sidebar-active-matcher";
+import type { SidebarItemDef } from "~/types/sidebar";
 
 describe("buildSidebarMenu", () => {
   it("管理者には画像のサイドメニュー構成で画面を案内する", () => {
-    const paths = buildSidebarMenu("admin").flatMap((section) =>
-      section.items.flatMap((item) => [
-        item.to,
-        ...(item.children?.map((child) => child.to) ?? []),
-      ])
-    );
+    const menu = buildSidebarMenu("admin");
+    const items = menu.flatMap((section) => flattenItems(section.items));
+    const paths = items.map((item) => item.to);
 
     expect(paths).toEqual(
       expect.arrayContaining([
@@ -18,7 +17,6 @@ describe("buildSidebarMenu", () => {
         "/classrooms",
         "/teachers",
         "/events",
-        "/events/today",
         "/notifications",
         "/teams",
         "/ranking",
@@ -26,66 +24,78 @@ describe("buildSidebarMenu", () => {
         "/venues",
       ])
     );
+    expect(paths).not.toContain("/events/today");
     expect(paths).not.toContain("/schedule");
     expect(paths).not.toContain("/events/new");
     expect(paths).not.toContain("/notifications/new");
     expect(paths).not.toContain("/events/assignments");
     expect(paths).not.toContain("/participants");
 
-    const labels = buildSidebarMenu("admin").flatMap((section) =>
-      section.items.flatMap((item) => [
-        item.label,
-        ...(item.children?.map((child) => child.label) ?? []),
-      ])
-    );
+    const labels = items.map((item) => item.label);
     expect(labels).toEqual(
       expect.arrayContaining([
-        "イベント",
-        "イベント一覧",
-        "本日の進行",
-        "通知",
-        "チーム",
-        "ランキング",
-        "ユーザー",
-        "学生",
-        "教官",
-        "クラス",
+        "ユーザー管理",
+        "学生管理",
+        "クラス管理",
+        "教官管理",
+        "イベント管理",
         "集合場所管理",
         "実施場所管理",
+        "通知管理",
+        "チーム管理",
+        "ランキング管理",
       ])
     );
+    expect(labels).not.toContain("本日の進行");
+    expect(labels).not.toContain("場所");
     expect(labels).not.toContain("スケジュール");
-    expect(labels).not.toContain("ユーザー管理");
-    expect(labels).not.toContain("イベント管理");
     expect(labels).not.toContain("運用管理");
     expect(labels).not.toContain("スケジュール管理");
     expect(labels).not.toContain("参加者設定");
     expect(labels).not.toContain("出場メンバー管理");
 
-    expect(
-      buildSidebarMenu("admin")
-        .slice(1)
-        .map((section) => section.label)
-    ).toEqual(["運用", "チーム・成績", "管理", "削除予定"]);
+    expect(menu.slice(1)).toHaveLength(1);
+    expect(menu[1].items.map((item) => item.label)).toEqual([
+      "イベント管理",
+      "チーム管理",
+      "ユーザー管理",
+    ]);
 
-    const operationSection = buildSidebarMenu("admin").find(
-      (section) => section.label === "運用"
-    );
-    const deletionSection = buildSidebarMenu("admin").find(
-      (section) => section.label === "削除予定"
-    );
+    const operationSection = menu[1];
     expect(operationSection?.items.map((item) => item.label)).not.toContain(
       "スケジュール"
     );
-    expect(deletionSection?.items.map((item) => item.label)).toEqual([
+    const events = operationSection?.items.find((item) => item.id === "events");
+    expect(events?.children?.map((item) => item.label)).toEqual([
+      "イベント管理",
       "集合場所管理",
       "実施場所管理",
+      "通知管理",
     ]);
+    expect(events?.children?.map((item) => item.to)).toEqual([
+      "/events",
+      "/gathering-spots",
+      "/venues",
+      "/notifications",
+    ]);
+    if (!events?.children) {
+      throw new Error("イベントメニューが見つかりません");
+    }
+    expect(isSidebarItemActive(events.children[1], "/gathering-spots")).toBe(
+      true
+    );
+    expect(isSidebarItemActive(events.children[2], "/venues")).toBe(true);
+    expect(isSidebarItemActive(events.children[1], "/venues")).toBe(false);
 
-    const classRoomItem = buildSidebarMenu("admin")
-      .flatMap((section) => section.items)
-      .find((item) => item.to === "/classrooms");
-    expect(classRoomItem?.icon).toBeDefined();
+    const managementSection = menu[1];
+    expect(
+      managementSection?.items.some((item) => item.id === "locations")
+    ).toBe(false);
+    expect(
+      managementSection?.items.some((item) =>
+        ["gathering-spots", "venues"].includes(item.id)
+      )
+    ).toBe(false);
   });
 
   it("運用管理者には管理画面を表示する", () => {
@@ -102,10 +112,14 @@ describe("buildSidebarMenu", () => {
 });
 
 function getLabels(role: "admin" | "manager" | "member") {
-  return buildSidebarMenu(role).flatMap((section) =>
-    section.items.flatMap((item) => [
-      item.label,
-      ...(item.children?.map((child) => child.label) ?? []),
-    ])
-  );
+  return buildSidebarMenu(role)
+    .flatMap((section) => flattenItems(section.items))
+    .map((item) => item.label);
+}
+
+function flattenItems(items: SidebarItemDef[]): SidebarItemDef[] {
+  return items.flatMap((item) => [
+    item,
+    ...(item.children ? flattenItems(item.children) : []),
+  ]);
 }

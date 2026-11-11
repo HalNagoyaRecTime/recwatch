@@ -68,7 +68,7 @@ describe("EventListPage", () => {
     );
 
     expect(
-      await screen.findByRole("heading", { name: "イベント一覧" })
+      await screen.findByRole("heading", { name: "イベント管理" })
     ).toBeInTheDocument();
     expect(
       screen.getByRole("searchbox", { name: "イベントを検索" })

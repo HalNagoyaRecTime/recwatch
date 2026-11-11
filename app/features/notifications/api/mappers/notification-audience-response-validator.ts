@@ -1,7 +1,11 @@
 import type {
   ClassRoomAudienceApiDto,
+  UserAudienceApiDto,
   EventAudienceApiDto,
+  EventAudienceDetailApiDto,
+  EventAudienceGatheringApiDto,
   EventAudiencePageApiDto,
+  EventAudienceRoundApiDto,
   GatheringAudienceApiDto,
 } from "~/features/notifications/api/dto/notification-audience-api-dto";
 
@@ -70,8 +74,44 @@ export function isGatheringAudienceItemResponse(
     isRecord(value) &&
     isPositiveInteger(value.gathering_id) &&
     isNonEmptyString(value.event_name) &&
+    isPositiveInteger(value.round) &&
     isNonEmptyString(value.gathering_spot_name) &&
     isNonEmptyString(value.gathering_time)
+  );
+}
+
+export function isEventAudienceDetailResponse(
+  value: unknown
+): value is EventAudienceDetailApiDto {
+  return (
+    isRecord(value) &&
+    Array.isArray(value.rounds) &&
+    value.rounds.every(isEventAudienceRoundResponse)
+  );
+}
+
+function isEventAudienceRoundResponse(
+  value: unknown
+): value is EventAudienceRoundApiDto {
+  return (
+    isRecord(value) &&
+    isPositiveInteger(value.round) &&
+    Array.isArray(value.gatherings) &&
+    value.gatherings.every(isEventAudienceGatheringResponse)
+  );
+}
+
+function isEventAudienceGatheringResponse(
+  value: unknown
+): value is EventAudienceGatheringApiDto {
+  return (
+    isRecord(value) &&
+    isPositiveInteger(value.gathering_id) &&
+    isNonEmptyString(value.gathering_time) &&
+    isRecord(value.gathering_spot) &&
+    isPositiveInteger(value.gathering_spot.gathering_spot_id) &&
+    isNonEmptyString(value.gathering_spot.gathering_spot_name) &&
+    isNonNegativeInteger(value.member_count)
   );
 }
 
@@ -89,4 +129,14 @@ function isPositiveInteger(value: unknown): value is number {
 
 function isNonNegativeInteger(value: unknown): value is number {
   return Number.isSafeInteger(value) && Number(value) >= 0;
+}
+
+export function isUserAudienceResponse(
+  value: unknown
+): value is UserAudienceApiDto {
+  return (
+    isRecord(value) &&
+    isPositiveInteger(value.user_id) &&
+    isNonEmptyString(value.display_name)
+  );
 }

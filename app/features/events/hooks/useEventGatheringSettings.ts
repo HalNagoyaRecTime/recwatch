@@ -1,7 +1,11 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { ApiClientError } from "~/lib/api-client-error";
 import { getErrorMessage } from "~/lib/client-error";
+import {
+  isUpdateConflictError,
+  UPDATE_CONFLICT_MESSAGE,
+} from "~/lib/update-conflict";
 
 import type { EventGatheringSettingsGateway } from "~/features/events/api/contracts/event-gathering-settings-gateway";
 import {
@@ -38,6 +42,8 @@ export function useEventGatheringSettings({
   gateway,
 }: UseEventGatheringSettingsOptions) {
   const [rounds, setRounds] = useState<RoundDraft[]>([]);
+  const [lockVersion, setLockVersion] = useState<number | null>(null);
+  const hasConflict = useRef(false);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -54,7 +60,10 @@ export function useEventGatheringSettings({
       setLoadError(null);
       try {
         const settings = await gateway.load(eventId);
-        if (isCurrent) setRounds(toRoundDrafts(settings));
+        if (isCurrent) {
+          setRounds(toRoundDrafts(settings));
+          setLockVersion(settings.lockVersion);
+        }
       } catch (error) {
         if (isCurrent) setLoadError(getErrorMessage(error, LOAD_ERROR_MESSAGE));
       } finally {
@@ -89,6 +98,13 @@ export function useEventGatheringSettings({
   const updateRoundNumber = useCallback(
     (roundKey: string, roundNumber: number) => {
       updateRound(roundKey, (round) => ({ ...round, round: roundNumber }));
+    },
+    [updateRound]
+  );
+
+  const updateRoundStartTime = useCallback(
+    (roundKey: string, startTime: string) => {
+      updateRound(roundKey, (round) => ({ ...round, startTime }));
     },
     [updateRound]
   );
@@ -147,14 +163,69 @@ export function useEventGatheringSettings({
     setIsSaving(true);
     setSaveError(null);
     try {
-      return await gateway.save(eventId, result.input);
+      const saved = await gateway.save(eventId, {
+        ...result.input,
+        ...(lockVersion === null ? {} : { lockVersion }),
+      });
+      // 版は保存で進むので、次の保存が自分自身と競合しないように更新する。
+      setLockVersion(saved.lockVersion);
+      const savedRounds = toRoundDrafts(saved);
+      setRounds(
+        savedRounds.map((savedRound) => {
+          const previousRound = rounds.find(
+            (round) => round.round === savedRound.round
+          );
+          return {
+            ...savedRound,
+            key: previousRound?.key ?? savedRound.key,
+            gatherings: savedRound.gatherings.map((savedGathering, index) => {
+              const previousGathering =
+                previousRound?.gatherings.find(
+                  (gathering) =>
+                    gathering.gatheringId === savedGathering.gatheringId
+                ) ?? previousRound?.gatherings[index];
+              return {
+                ...savedGathering,
+                key: previousGathering?.key ?? savedGathering.key,
+              };
+            }),
+          };
+        })
+      );
+      return saved;
     } catch (error) {
+      if (isUpdateConflictError(error)) {
+        hasConflict.current = true;
+        setSaveError(UPDATE_CONFLICT_MESSAGE);
+        return null;
+      }
       setSaveError(toSaveErrorMessage(error));
       return null;
     } finally {
       setIsSaving(false);
     }
-  }, [eventId, gateway, rounds]);
+  }, [eventId, gateway, lockVersion, rounds]);
+
+  /**
+   * 直前の保存が競合していたら、下書きを破棄して最新の内容を読み込む。
+   * 呼び出し側が参加者を元に戻した後で読めるよう、save とは分けている。
+   */
+  const reloadAfterConflict = useCallback(async (): Promise<boolean> => {
+    if (!hasConflict.current) return false;
+    hasConflict.current = false;
+
+    setIsLoading(true);
+    try {
+      const settings = await gateway.load(eventId);
+      setRounds(toRoundDrafts(settings));
+      setLockVersion(settings.lockVersion);
+    } catch (error) {
+      setLoadError(getErrorMessage(error, LOAD_ERROR_MESSAGE));
+    } finally {
+      setIsLoading(false);
+    }
+    return true;
+  }, [eventId, gateway]);
 
   return {
     rounds,
@@ -166,10 +237,12 @@ export function useEventGatheringSettings({
     addRound,
     removeRound,
     updateRoundNumber,
+    updateRoundStartTime,
     addGathering,
     removeGathering,
     updateGathering,
     save,
+    reloadAfterConflict,
   };
 }
 
