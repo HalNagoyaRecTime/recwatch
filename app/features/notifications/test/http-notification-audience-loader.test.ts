@@ -61,7 +61,9 @@ describe("http notification audience loader", () => {
             offset: 100,
           };
         default: {
-          const match = path.match(/^\/api\/v1\/events\/(\d+)$/);
+          const match = path.match(
+            /^\/api\/v1\/events\/(\d+)\?includeMemberCount=true$/
+          );
           if (match) {
             const eventId = Number(match[1]);
             const rounds = eventId === 1 ? [1, 2] : eventId === 101 ? [1] : [];
@@ -113,7 +115,9 @@ describe("http notification audience loader", () => {
       },
     ]);
     expect(
-      get.mock.calls.filter(([path]) => /^\/api\/v1\/events\/\d+$/.test(path))
+      get.mock.calls.filter(([path]) =>
+        /^\/api\/v1\/events\/\d+\?includeMemberCount=true$/.test(path)
+      )
     ).toHaveLength(101);
     expect(get).not.toHaveBeenCalledWith("/api/v1/gatherings");
   });
@@ -233,7 +237,9 @@ describe("http notification audience loader", () => {
       await expect(result).rejects.toEqual(
         new ClientError(ClientErrors.RESPONSE_PARSE_ERROR)
       );
-      expect(get).toHaveBeenCalledWith("/api/v1/events/1");
+      expect(get).toHaveBeenCalledWith(
+        "/api/v1/events/1?includeMemberCount=true"
+      );
     }
   );
 
@@ -367,7 +373,7 @@ function createSingleEventGet(loadDetail: () => unknown) {
           limit: 100,
           offset: 0,
         };
-      case "/api/v1/events/1":
+      case "/api/v1/events/1?includeMemberCount=true":
         return loadDetail();
       default:
         throw new Error(`想定外の取得先: ${path}`);

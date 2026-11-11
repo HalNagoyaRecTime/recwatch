@@ -18,7 +18,7 @@ export function createHttpEventGatheringSettingsGateway(
     // 参加者の ID は集合ごとに参加者ピッカーを開いたときに読むので、ここでは読み足さない。
     async load(eventId) {
       const response = await client.get<EventGatheringSettingsResponseDto>(
-        `/api/v1/events/${eventId}`
+        `/api/v1/events/${eventId}?includeMemberCount=true`
       );
       return toEventGatheringSettings(response);
     },
