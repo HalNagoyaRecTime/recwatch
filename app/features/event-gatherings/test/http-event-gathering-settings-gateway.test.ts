@@ -147,7 +147,6 @@ describe("createHttpGatheringMemberGateway", () => {
               registered_classes: ["HAL1A", "HAL1B"],
             },
           ],
-          total: 1,
         };
       }
       if (path.startsWith("/api/v1/students")) {
@@ -189,11 +188,10 @@ describe("createHttpGatheringMemberGateway", () => {
               class_room: null,
             },
           ],
-          total: 3,
         };
       }
       if (path.startsWith("/api/v1/teachers")) {
-        return { items: [], total: 0 };
+        return { items: [] };
       }
       throw new Error(`unexpected path: ${path}`);
     });
@@ -238,8 +236,58 @@ describe("createHttpGatheringMemberGateway", () => {
     expect(get).toHaveBeenCalledWith("/api/v1/teams?limit=100&offset=0");
     // 登録済みの参加者が停止されても外せるよう、停止中を含めて取得する
     expect(get).toHaveBeenCalledWith(
-      "/api/v1/students?limit=100&offset=0&isLiveActive=all"
+      "/api/v1/students?limit=100&offset=0&isLiveActive=all&includeTotal=false"
     );
+  });
+
+  it("学生と教員は件数を数えさせずに取り、limitより少ないページで止める", async () => {
+    const students = Array.from({ length: 148 }, (_, index) => ({
+      student_id: index + 1,
+      user_id: index + 1001,
+      display_name: `学生${index + 1}`,
+      attendance_number: null,
+      student_id_number: `S${index + 1}`,
+      is_live_active: true,
+      class_room: null,
+    }));
+    const teachers = Array.from({ length: 100 }, (_, index) => ({
+      user_id: index + 5001,
+      display_name: `教員${index + 1}`,
+      is_live_active: true,
+    }));
+    const get = vi.fn().mockImplementation(async (path: string) => {
+      const url = new URL(path, "http://localhost");
+      const offset = Number(url.searchParams.get("offset"));
+      const limit = Number(url.searchParams.get("limit"));
+      const all =
+        url.pathname === "/api/v1/students"
+          ? students
+          : url.pathname === "/api/v1/teachers"
+            ? teachers
+            : [];
+      return { items: all.slice(offset, offset + limit) };
+    });
+    const gateway = createHttpGatheringMemberGateway(createClient({ get }));
+
+    const candidates = await gateway.loadCandidates();
+
+    expect(candidates.students.map((student) => student.id)).toEqual(
+      students.map((student) => student.student_id)
+    );
+    expect([...candidates.nonStudents.keys()]).toEqual(
+      teachers.map((teacher) => teacher.user_id)
+    );
+    expect(
+      get.mock.calls
+        .map(([path]) => path)
+        .filter((path) => !path.startsWith("/api/v1/teams"))
+        .sort()
+    ).toEqual([
+      "/api/v1/students?limit=100&offset=0&isLiveActive=all&includeTotal=false",
+      "/api/v1/students?limit=100&offset=100&isLiveActive=all&includeTotal=false",
+      "/api/v1/teachers?limit=100&offset=0&isLiveActive=all&includeTotal=false",
+      "/api/v1/teachers?limit=100&offset=100&isLiveActive=all&includeTotal=false",
+    ]);
   });
 
   it("教員を停止中も含めて読み込み、選択候補には出さず氏名を引く表にする", async () => {
@@ -250,10 +298,9 @@ describe("createHttpGatheringMemberGateway", () => {
             { user_id: 2001, display_name: "田中 先生", is_live_active: true },
             { user_id: 2002, display_name: "高橋 先生", is_live_active: false },
           ],
-          total: 2,
         };
       }
-      return { items: [], total: 0 };
+      return { items: [] };
     });
     const gateway = createHttpGatheringMemberGateway(createClient({ get }));
 
@@ -267,7 +314,7 @@ describe("createHttpGatheringMemberGateway", () => {
       ])
     );
     expect(get).toHaveBeenCalledWith(
-      "/api/v1/teachers?limit=100&offset=0&isLiveActive=all"
+      "/api/v1/teachers?limit=100&offset=0&isLiveActive=all&includeTotal=false"
     );
   });
 

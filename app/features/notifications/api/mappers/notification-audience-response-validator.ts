@@ -1,6 +1,7 @@
 import type {
   ClassRoomAudienceApiDto,
   UserAudienceApiDto,
+  UserAudiencePageApiDto,
   EventAudienceApiDto,
   EventAudienceDetailApiDto,
   EventAudienceGatheringApiDto,
@@ -129,6 +130,16 @@ function isPositiveInteger(value: unknown): value is number {
 
 function isNonNegativeInteger(value: unknown): value is number {
   return Number.isSafeInteger(value) && Number(value) >= 0;
+}
+
+export function isUserAudiencePageResponse(
+  value: unknown
+): value is UserAudiencePageApiDto {
+  return (
+    isRecord(value) &&
+    Array.isArray(value.items) &&
+    value.items.every(isUserAudienceResponse)
+  );
 }
 
 export function isUserAudienceResponse(

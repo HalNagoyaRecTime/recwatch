@@ -11,7 +11,7 @@ import type {
 } from "~/features/notifications/api/dto/notification-audience-api-dto";
 import {
   isClassRoomAudiencePageResponse,
-  isUserAudienceResponse,
+  isUserAudiencePageResponse,
   isClassRoomAudienceResponse,
   isEventAudienceDetailResponse,
   isEventAudiencePageResponse,
@@ -169,10 +169,7 @@ function unexpectedResponse() {
 }
 
 export function toUserAudiencePage(response: unknown): UserAudiencePageApiDto {
-  if (
-    !isClassRoomAudiencePageResponse(response) ||
-    !response.items.every(isUserAudienceResponse)
-  ) {
+  if (!isUserAudiencePageResponse(response)) {
     throw unexpectedResponse();
   }
   return {
@@ -180,8 +177,5 @@ export function toUserAudiencePage(response: unknown): UserAudiencePageApiDto {
       user_id: user.user_id,
       display_name: user.display_name,
     })),
-    total: response.total,
-    limit: response.limit,
-    offset: response.offset,
   };
 }
