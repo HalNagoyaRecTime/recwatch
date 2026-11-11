@@ -1,6 +1,6 @@
 import type { AppRole } from "./permissions";
 
-export type SidebarIconKey =
+export type NavigationIconKey =
   | "calendar"
   | "clock"
   | "dashboard"
@@ -14,27 +14,29 @@ export type SidebarIconKey =
   | "team"
   | "users";
 
-type SidebarRoleConfig = {
-  roles: AppRole[];
-};
-
-export type SidebarItemConfig = SidebarRoleConfig & {
+export type NavigationItemConfig = {
   id: string;
   label: string;
-  icon?: SidebarIconKey;
+  icon?: NavigationIconKey;
   to?: string;
   activePatterns?: readonly string[];
   activeExclusions?: readonly string[];
-  children?: SidebarItemConfig[];
+  children?: NavigationItemConfig[];
+  roles: AppRole[];
+  showInSidebar?: boolean;
+  searchable?: boolean;
+  searchLabel?: string;
+  searchCategory?: string;
+  searchKeywords?: readonly string[];
 };
 
-export type SidebarSectionConfig = {
+export type NavigationSectionConfig = {
   label?: string;
   hasDivider?: boolean;
-  items: SidebarItemConfig[];
+  items: NavigationItemConfig[];
 };
 
-export const sidebarSections = [
+export const navigationSections: NavigationSectionConfig[] = [
   {
     items: [
       {
@@ -43,6 +45,8 @@ export const sidebarSections = [
         icon: "dashboard",
         to: "/dashboard",
         roles: ["admin"],
+        searchCategory: "ホーム",
+        searchKeywords: ["home", "トップ"],
       },
     ],
   },
@@ -54,6 +58,7 @@ export const sidebarSections = [
         label: "イベント管理",
         icon: "calendar",
         roles: ["admin"],
+        searchCategory: "イベント",
         children: [
           {
             id: "events-list",
@@ -69,18 +74,32 @@ export const sidebarSections = [
             // `/events/:eventId` は固定パスの画面にも一致するため、別項目のものを除外する
             activeExclusions: ["/events/today", "/events/assignments"],
             roles: ["admin"],
+            searchKeywords: ["イベント", "種目"],
+          },
+          {
+            id: "events-new",
+            label: "イベントの新規登録",
+            to: "/events/new",
+            roles: ["admin"],
+            showInSidebar: false,
+            searchCategory: "イベント",
+            searchKeywords: ["イベント", "作成", "追加"],
           },
           {
             id: "gathering-spots",
             label: "集合場所管理",
             to: "/gathering-spots",
             roles: ["admin"],
+            searchCategory: "イベント",
+            searchKeywords: ["集合", "場所"],
           },
           {
             id: "venues",
             label: "実施場所管理",
             to: "/venues",
             roles: ["admin"],
+            searchCategory: "イベント",
+            searchKeywords: ["実施", "場所", "会場"],
           },
           {
             id: "notifications",
@@ -94,6 +113,17 @@ export const sidebarSections = [
               "/notifications/:notificationId/edit",
             ],
             roles: ["admin"],
+            searchCategory: "通知",
+            searchKeywords: ["お知らせ", "履歴"],
+          },
+          {
+            id: "notifications-new",
+            label: "通知の新規登録",
+            to: "/notifications/new",
+            roles: ["admin"],
+            showInSidebar: false,
+            searchCategory: "通知",
+            searchKeywords: ["お知らせ", "配信", "送信"],
           },
         ],
       },
@@ -102,6 +132,7 @@ export const sidebarSections = [
         label: "チーム管理",
         icon: "trophy",
         roles: ["admin"],
+        searchCategory: "チーム・成績",
         children: [
           {
             id: "teams",
@@ -114,6 +145,7 @@ export const sidebarSections = [
               "/teams/:id/edit",
             ],
             roles: ["admin"],
+            searchKeywords: ["チーム", "team"],
           },
           {
             id: "ranking",
@@ -121,6 +153,7 @@ export const sidebarSections = [
             to: "/ranking",
             activePatterns: ["/ranking", "/ranking/:teamId/edit"],
             roles: ["admin"],
+            searchKeywords: ["順位", "成績"],
           },
         ],
       },
@@ -129,6 +162,7 @@ export const sidebarSections = [
         label: "ユーザー管理",
         icon: "users",
         roles: ["admin"],
+        searchCategory: "管理",
         children: [
           {
             id: "students",
@@ -136,21 +170,33 @@ export const sidebarSections = [
             to: "/students",
             activePatterns: ["/students", "/students/import"],
             roles: ["admin"],
+            searchKeywords: ["学生", "CSV", "名簿", "学籍番号", "student"],
           },
           {
             id: "classroom",
             label: "クラス管理",
             to: "/classrooms",
             roles: ["admin"],
+            searchKeywords: ["教室", "クラス"],
+          },
+          {
+            id: "classroom-new",
+            label: "クラスの新規登録",
+            to: "/classrooms/new",
+            roles: ["admin"],
+            showInSidebar: false,
+            searchCategory: "管理",
+            searchKeywords: ["クラス", "作成", "追加"],
           },
           {
             id: "teachers",
             label: "教官管理",
             to: "/teachers",
             roles: ["admin"],
+            searchKeywords: ["先生", "教官", "新規登録"],
           },
         ],
       },
     ],
   },
-] satisfies SidebarSectionConfig[];
+];
