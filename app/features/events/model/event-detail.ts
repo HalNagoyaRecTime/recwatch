@@ -1,8 +1,8 @@
 import type {
   GatheringSetting,
   RoundSetting,
-} from "~/features/event-gatherings/model/event-gathering-settings";
-import type { EventVenue } from "~/features/events/model/event-venue";
+} from "~/features/events/model/event-gathering-settings";
+import type { VenueOption } from "~/features/venues/public";
 
 /**
  * Event 詳細画面で表示する Event。基本情報と Round ごとの集合を 1 つにまとめる。
@@ -10,8 +10,10 @@ import type { EventVenue } from "~/features/events/model/event-venue";
  */
 export type EventDetail = {
   id: number;
+  /** 楽観ロック用の版。更新時にそのまま送り返す。 */
+  lockVersion: number;
   name: string;
-  venues: EventVenue[];
+  venues: VenueOption[];
   /** "HH:mm"。 */
   startTime: string;
   endTime: string;

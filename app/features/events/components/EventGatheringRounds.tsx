@@ -1,8 +1,8 @@
 import { Clock, MapPin, Plus, Users } from "lucide-react";
 
 import { ButtonLink } from "~/components/ui/button/ButtonLink";
-import type { RoundSetting } from "~/features/event-gatherings/model/event-gathering-settings";
-import { UNSET_GATHERING_TIME } from "~/features/event-gatherings/model/event-gathering-settings";
+import type { RoundSetting } from "~/features/events/model/event-gathering-settings";
+import { UNSET_GATHERING_TIME } from "~/features/events/model/event-gathering-settings";
 import {
   getGatheringMemberCount,
   sumRoundMemberCount,

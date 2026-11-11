@@ -7,26 +7,25 @@ import { getErrorMessage } from "~/lib/client-error";
 import type { DataTableSort } from "~/components/ui/data-table/data-table-types";
 import { SearchField } from "~/components/ui/form/SearchField";
 import { PageHeader } from "~/components/ui/layout/PageHeader";
-import type { EventListGateway } from "~/features/events/api/event-list-gateway";
-import { httpEventListGateway } from "~/features/events/api/http-event-list-gateway";
+import type { EventCommandGateway } from "~/features/events/api/contracts/event-command-gateway";
+import type { EventQueryGateway } from "~/features/events/api/contracts/event-query-gateway";
 import { EventTable } from "~/features/events/components/EventTable";
 import type { EventListItem } from "~/features/events/model/event-list-item";
+import type { EventListOutletContext } from "~/features/events/routes/outlet-context";
 import {
   getNextManagementTableSort,
   sortManagementTableItems,
 } from "~/features/user-management/model/management-table-sort";
 
 type EventListPageProps = {
-  gateway?: EventListGateway;
+  commandGateway: EventCommandGateway;
+  queryGateway: EventQueryGateway;
 };
 
 /** 子ルート（イベント新規作成モーダル）から一覧の再取得を依頼するための受け渡し口。 */
-export type EventListOutletContext = {
-  reload: () => void;
-};
-
 export function EventListPage({
-  gateway = httpEventListGateway,
+  commandGateway,
+  queryGateway,
 }: EventListPageProps) {
   const navigate = useNavigate();
   const [events, setEvents] = useState<EventListItem[]>([]);
@@ -46,8 +45,8 @@ export function EventListPage({
   useEffect(() => {
     let isCurrent = true;
 
-    gateway
-      .load()
+    queryGateway
+      .list()
       .then((items) => {
         if (!isCurrent) return;
         setEvents(items);
@@ -65,7 +64,7 @@ export function EventListPage({
     return () => {
       isCurrent = false;
     };
-  }, [gateway, reloadToken]);
+  }, [queryGateway, reloadToken]);
 
   const filteredEvents = useMemo(() => {
     const normalizedQuery = query.trim().toLocaleLowerCase("ja");
@@ -110,7 +109,7 @@ export function EventListPage({
     setIsDeleting(true);
     setActionError(null);
     try {
-      await gateway.delete(event.id);
+      await commandGateway.delete(event.id);
       setEvents((current) => current.filter((item) => item.id !== event.id));
     } catch (error) {
       setActionError(

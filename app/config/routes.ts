@@ -67,7 +67,7 @@ export const sidebarSections = [
               "/events/:eventId/gatherings",
             ],
             // `/events/:eventId` は固定パスの画面にも一致するため、別項目のものを除外する
-            activeExclusions: ["/events/today", "/events/assignments"],
+            activeExclusions: ["/events/today"],
             roles: ["admin"],
           },
           {

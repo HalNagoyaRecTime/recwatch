@@ -2,15 +2,14 @@ import { render, screen, waitFor, within } from "@testing-library/react";
 import { MemoryRouter, Route, Routes, useOutletContext } from "react-router";
 import { describe, expect, it, vi } from "vitest";
 
-import type { EventDetailGateway } from "~/features/events/api/event-detail-gateway";
+import type { EventQueryGateway } from "~/features/events/api/contracts/event-query-gateway";
 import type { EventDetail } from "~/features/events/model/event-detail";
-import {
-  EventDetailPage,
-  type EventDetailOutletContext,
-} from "~/features/events/pages/EventDetailPage";
+import { EventDetailPage } from "~/features/events/pages/EventDetailPage";
+import type { EventDetailOutletContext } from "~/features/events/routes/outlet-context";
 
 const relay: EventDetail = {
   id: 12,
+  lockVersion: 1,
   name: "リレー",
   venues: [{ id: 1, name: "メインコート" }],
   startTime: "11:00",
@@ -62,12 +61,12 @@ function GatheringSettingsProbe() {
   );
 }
 
-function renderPage(path: string, gateway: EventDetailGateway) {
+function renderPage(path: string, queryGateway: EventQueryGateway) {
   render(
     <MemoryRouter initialEntries={[path]}>
       <Routes>
         <Route
-          element={<EventDetailPage gateway={gateway} />}
+          element={<EventDetailPage queryGateway={queryGateway} />}
           path="/events/:eventId"
         >
           <Route element={<GatheringSettingsProbe />} path="gatherings" />
@@ -79,13 +78,13 @@ function renderPage(path: string, gateway: EventDetailGateway) {
 
 describe("EventDetailPage", () => {
   it("URL のイベント ID で読み込み、基本情報と Round ごとの集合を表示する", async () => {
-    const load = vi.fn().mockResolvedValue(relay);
-    renderPage("/events/12", { load });
+    const get = vi.fn().mockResolvedValue(relay);
+    renderPage("/events/12", { list: vi.fn(), get });
 
     expect(
       screen.getByRole("heading", { name: "イベント詳細", level: 1 })
     ).toBeInTheDocument();
-    await waitFor(() => expect(load).toHaveBeenCalledWith(12));
+    await waitFor(() => expect(get).toHaveBeenCalledWith(12));
     expect(
       await screen.findByRole("heading", { name: "リレー", level: 2 })
     ).toBeInTheDocument();
@@ -113,7 +112,8 @@ describe("EventDetailPage", () => {
   it("Round 番号が連番でなくても保存された番号をそのまま表示する", async () => {
     const [round1, round2] = relay.rounds;
     renderPage("/events/12", {
-      load: vi.fn().mockResolvedValue({
+      list: vi.fn(),
+      get: vi.fn().mockResolvedValue({
         ...relay,
         rounds: [round1, { ...round2, round: 3 }],
       }),
@@ -133,7 +133,10 @@ describe("EventDetailPage", () => {
   });
 
   it("編集・集合設定・一覧への導線を持ち、集合設定は子ルートとして開く", async () => {
-    renderPage("/events/12", { load: vi.fn().mockResolvedValue(relay) });
+    renderPage("/events/12", {
+      list: vi.fn(),
+      get: vi.fn().mockResolvedValue(relay),
+    });
 
     expect(screen.getByRole("link", { name: "一覧へ戻る" })).toHaveAttribute(
       "href",
@@ -154,7 +157,8 @@ describe("EventDetailPage", () => {
 
   it("子ルートの URL では詳細の上に集合設定モーダルを出す", async () => {
     renderPage("/events/12/gatherings", {
-      load: vi.fn().mockResolvedValue(relay),
+      list: vi.fn(),
+      get: vi.fn().mockResolvedValue(relay),
     });
 
     expect(
@@ -165,7 +169,8 @@ describe("EventDetailPage", () => {
 
   it("集合が無ければ案内を出す", async () => {
     renderPage("/events/12", {
-      load: vi.fn().mockResolvedValue({ ...relay, rules: null, rounds: [] }),
+      list: vi.fn(),
+      get: vi.fn().mockResolvedValue({ ...relay, rules: null, rounds: [] }),
     });
 
     expect(
@@ -181,13 +186,13 @@ describe("EventDetailPage", () => {
   });
 
   it("不正なイベント ID では読み込まずエラーを表示する", async () => {
-    const load = vi.fn();
-    renderPage("/events/not-a-number", { load });
+    const get = vi.fn();
+    renderPage("/events/not-a-number", { list: vi.fn(), get });
 
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "イベントIDが不正です。"
     );
-    expect(load).not.toHaveBeenCalled();
+    expect(get).not.toHaveBeenCalled();
     expect(
       screen.queryByRole("link", { name: "編集" })
     ).not.toBeInTheDocument();
@@ -195,7 +200,8 @@ describe("EventDetailPage", () => {
 
   it("読み込みに失敗したらエラーを表示する", async () => {
     renderPage("/events/12", {
-      load: vi.fn().mockRejectedValue(new Error("network")),
+      list: vi.fn(),
+      get: vi.fn().mockRejectedValue(new Error("network")),
     });
 
     expect(await screen.findByRole("alert")).toHaveTextContent(

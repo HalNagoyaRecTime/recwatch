@@ -3,16 +3,43 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes, useLocation } from "react-router";
 import { describe, expect, it, vi } from "vitest";
 
-import type { EventEditorApi } from "~/features/events/api/event-editor-api";
 import { ApiClientError } from "~/lib/api-client-error";
 import { UPDATE_CONFLICT_MESSAGE } from "~/lib/update-conflict";
+
+import type { EventCommandGateway } from "~/features/events/api/contracts/event-command-gateway";
+import type { EventQueryGateway } from "~/features/events/api/contracts/event-query-gateway";
+import type { VenueReader } from "~/features/venues/public";
 import { EventEditPage } from "./EventEditPage";
 
 function LocationProbe() {
   return <output data-testid="location">{useLocation().pathname}</output>;
 }
 
-function renderPage(api: EventEditorApi, path = "/events/7/edit") {
+const detail = {
+  id: 7,
+  lockVersion: 3,
+  name: "大縄跳び",
+  venues: [{ id: 1, name: "運動場" }],
+  startTime: "09:30",
+  endTime: "10:00",
+  rules: "旧ルール",
+  rounds: [],
+};
+
+function createVenueReader(): VenueReader {
+  return {
+    listAll: vi.fn().mockResolvedValue([
+      { id: 1, name: "運動場" },
+      { id: 2, name: "体育館" },
+    ]),
+  };
+}
+
+function renderPage(
+  queryGateway: EventQueryGateway,
+  commandGateway: EventCommandGateway,
+  path = "/events/7/edit"
+) {
   return render(
     <MemoryRouter initialEntries={[path]}>
       <Routes>
@@ -20,7 +47,11 @@ function renderPage(api: EventEditorApi, path = "/events/7/edit") {
           path="/events/:eventId/edit"
           element={
             <>
-              <EventEditPage api={api} />
+              <EventEditPage
+                commandGateway={commandGateway}
+                queryGateway={queryGateway}
+                venueReader={createVenueReader()}
+              />
               <LocationProbe />
             </>
           }
@@ -35,24 +66,17 @@ function renderPage(api: EventEditorApi, path = "/events/7/edit") {
 describe("EventEditPage", () => {
   it("既存データを復元し、更新APIへ編集内容を送信する", async () => {
     const update = vi.fn().mockResolvedValue(undefined);
-    const api: EventEditorApi = {
+    const queryGateway: EventQueryGateway = {
+      list: vi.fn(),
+      get: vi.fn().mockResolvedValue(detail),
+    };
+    const commandGateway: EventCommandGateway = {
       create: vi.fn(),
-      get: vi.fn().mockResolvedValue({
-        endTime: "10:00",
-        name: "大縄跳び",
-        rules: "旧ルール",
-        startTime: "09:30",
-        venueIds: [1],
-        lockVersion: 3,
-      }),
-      listVenues: vi.fn().mockResolvedValue([
-        { id: 1, name: "運動場" },
-        { id: 2, name: "体育館" },
-      ]),
       update,
+      delete: vi.fn(),
     };
     const user = userEvent.setup();
-    renderPage(api);
+    renderPage(queryGateway, commandGateway);
 
     expect(await screen.findByLabelText("イベント名*")).toHaveValue("大縄跳び");
     expect(screen.getByLabelText("イベントルール")).toHaveValue("旧ルール");
@@ -89,30 +113,30 @@ describe("EventEditPage", () => {
   });
 
   it("更新が競合したら理由を伝えて再取得し、次の保存は新しい版で送る", async () => {
-    const value = {
-      endTime: "10:00",
-      name: "大縄跳び",
-      rules: "旧ルール",
-      startTime: "09:30",
-      venueIds: [1],
-    };
     const update = vi
       .fn()
       .mockRejectedValueOnce(
         new ApiClientError(409, "conflict", "EVENT_UPDATE_CONFLICT")
       )
       .mockResolvedValue(undefined);
-    const api: EventEditorApi = {
-      create: vi.fn(),
+    const queryGateway: EventQueryGateway = {
+      list: vi.fn(),
       get: vi
         .fn()
-        .mockResolvedValueOnce({ ...value, lockVersion: 3 })
-        .mockResolvedValue({ ...value, name: "他の人の変更", lockVersion: 4 }),
-      listVenues: vi.fn().mockResolvedValue([{ id: 1, name: "運動場" }]),
+        .mockResolvedValueOnce({ ...detail, lockVersion: 3 })
+        .mockResolvedValue({
+          ...detail,
+          name: "他の人の変更",
+          lockVersion: 4,
+        }),
+    };
+    const commandGateway: EventCommandGateway = {
+      create: vi.fn(),
       update,
+      delete: vi.fn(),
     };
     const user = userEvent.setup();
-    renderPage(api);
+    renderPage(queryGateway, commandGateway);
 
     const nameInput = await screen.findByLabelText("イベント名*");
     await waitFor(() => expect(nameInput).toHaveValue("大縄跳び"));
@@ -141,13 +165,16 @@ describe("EventEditPage", () => {
   });
 
   it("読み込み失敗を表示してフォームを無効化する", async () => {
-    const api: EventEditorApi = {
-      create: vi.fn(),
+    const queryGateway: EventQueryGateway = {
+      list: vi.fn(),
       get: vi.fn().mockRejectedValue(new Error("イベントが見つかりません")),
-      listVenues: vi.fn().mockResolvedValue([]),
-      update: vi.fn(),
     };
-    renderPage(api);
+    const commandGateway: EventCommandGateway = {
+      create: vi.fn(),
+      update: vi.fn(),
+      delete: vi.fn(),
+    };
+    renderPage(queryGateway, commandGateway);
 
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "イベントデータの取得に失敗しました。"
@@ -156,21 +183,24 @@ describe("EventEditPage", () => {
     expect(
       screen.getByRole("button", { name: "変更を保存する" })
     ).toBeDisabled();
-    expect(api.update).not.toHaveBeenCalled();
+    expect(commandGateway.update).not.toHaveBeenCalled();
   });
 
   it("不正なイベントIDではAPIを呼ばない", async () => {
-    const api: EventEditorApi = {
-      create: vi.fn(),
+    const queryGateway: EventQueryGateway = {
+      list: vi.fn(),
       get: vi.fn(),
-      listVenues: vi.fn().mockResolvedValue([]),
-      update: vi.fn(),
     };
-    renderPage(api, "/events/not-a-number/edit");
+    const commandGateway: EventCommandGateway = {
+      create: vi.fn(),
+      update: vi.fn(),
+      delete: vi.fn(),
+    };
+    renderPage(queryGateway, commandGateway, "/events/not-a-number/edit");
 
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "イベントIDが不正です。"
     );
-    expect(api.get).not.toHaveBeenCalled();
+    expect(queryGateway.get).not.toHaveBeenCalled();
   });
 });

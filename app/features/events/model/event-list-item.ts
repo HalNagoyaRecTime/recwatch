@@ -1,4 +1,4 @@
-import type { EventVenue } from "~/features/events/model/event-venue";
+import type { VenueOption } from "~/features/venues/public";
 
 /** Event 一覧 API が Event ごとに返す集合の概要。集合場所や Round の内訳は含まない。 */
 export type EventGatheringSummary = {
@@ -14,7 +14,7 @@ export type EventListItem = {
   id: number;
   code: string;
   name: string;
-  venues: EventVenue[];
+  venues: VenueOption[];
   startTime: string;
   endTime: string;
   gatheringSummary: EventGatheringSummary;

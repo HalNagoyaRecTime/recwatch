@@ -7,7 +7,7 @@ import type {
   DataTableSort,
 } from "~/components/ui/data-table/data-table-types";
 import type { EventListItem } from "~/features/events/model/event-list-item";
-import { formatVenueNames } from "~/features/events/model/event-venue";
+import { formatVenueNames } from "~/features/events/model/event-display";
 
 type EventTableProps = {
   emptyMessage: string;

@@ -3,18 +3,27 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter, useLocation } from "react-router";
 import { describe, expect, it, vi } from "vitest";
 
-import type { EventEditorApi } from "~/features/events/api/event-editor-api";
+import type { EventCommandGateway } from "~/features/events/api/contracts/event-command-gateway";
+import type { VenueReader } from "~/features/venues/public";
 import { EventCreatePage } from "./EventCreatePage";
 
-function createApi(overrides: Partial<EventEditorApi> = {}): EventEditorApi {
+function createCommandGateway(
+  overrides: Partial<EventCommandGateway> = {}
+): EventCommandGateway {
   return {
     create: vi.fn(),
-    get: vi.fn(),
-    listVenues: vi.fn().mockResolvedValue([
+    update: vi.fn(),
+    delete: vi.fn(),
+    ...overrides,
+  };
+}
+
+function createVenueReader(overrides: Partial<VenueReader> = {}): VenueReader {
+  return {
+    listAll: vi.fn().mockResolvedValue([
       { id: 1, name: "運動場" },
       { id: 2, name: "体育館" },
     ]),
-    update: vi.fn(),
     ...overrides,
   };
 }
@@ -31,7 +40,10 @@ describe("EventCreatePage", () => {
   it("allows rules up to 5000 characters", async () => {
     render(
       <MemoryRouter initialEntries={["/events/new"]}>
-        <EventCreatePage api={createApi()} />
+        <EventCreatePage
+          commandGateway={createCommandGateway()}
+          venueReader={createVenueReader()}
+        />
       </MemoryRouter>
     );
     await waitForVenueOptions();
@@ -48,7 +60,10 @@ describe("EventCreatePage", () => {
 
     render(
       <MemoryRouter initialEntries={["/events/new"]}>
-        <EventCreatePage api={createApi({ create })} />
+        <EventCreatePage
+          commandGateway={createCommandGateway({ create })}
+          venueReader={createVenueReader()}
+        />
         <LocationProbe />
       </MemoryRouter>
     );
@@ -106,7 +121,10 @@ describe("EventCreatePage", () => {
 
     render(
       <MemoryRouter initialEntries={["/events/new"]}>
-        <EventCreatePage api={createApi({ create })} />
+        <EventCreatePage
+          commandGateway={createCommandGateway({ create })}
+          venueReader={createVenueReader()}
+        />
       </MemoryRouter>
     );
     await waitForVenueOptions();
@@ -127,7 +145,10 @@ describe("EventCreatePage", () => {
 
     render(
       <MemoryRouter initialEntries={["/events/new"]}>
-        <EventCreatePage api={createApi({ create })} />
+        <EventCreatePage
+          commandGateway={createCommandGateway({ create })}
+          venueReader={createVenueReader()}
+        />
       </MemoryRouter>
     );
     await waitForVenueOptions();
@@ -150,8 +171,9 @@ describe("EventCreatePage", () => {
     render(
       <MemoryRouter initialEntries={["/events/new"]}>
         <EventCreatePage
-          api={createApi({
-            listVenues: vi.fn().mockResolvedValue(
+          commandGateway={createCommandGateway()}
+          venueReader={createVenueReader({
+            listAll: vi.fn().mockResolvedValue(
               Array.from({ length: 21 }, (_, index) => ({
                 id: index + 1,
                 name: `実施場所${index + 1}`,
@@ -180,8 +202,9 @@ describe("EventCreatePage", () => {
     render(
       <MemoryRouter initialEntries={["/events/new"]}>
         <EventCreatePage
-          api={createApi({
-            listVenues: vi.fn().mockRejectedValue(new Error("failed")),
+          commandGateway={createCommandGateway()}
+          venueReader={createVenueReader({
+            listAll: vi.fn().mockRejectedValue(new Error("failed")),
           })}
         />
       </MemoryRouter>

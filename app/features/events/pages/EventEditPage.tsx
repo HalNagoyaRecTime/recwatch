@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router";
 
-import type { EventEditorApi } from "~/features/events/api/event-editor-api";
-import { httpEventEditorApi } from "~/features/events/api/http-event-editor-api";
+import type { EventCommandGateway } from "~/features/events/api/contracts/event-command-gateway";
+import type { EventQueryGateway } from "~/features/events/api/contracts/event-query-gateway";
 import { EventForm } from "~/features/events/components/EventForm";
-import { useEventVenueOptions } from "~/features/events/hooks/useEventVenueOptions";
+import { useVenueOptions } from "~/features/events/hooks/useVenueOptions";
 import { getErrorMessage } from "~/lib/client-error";
 import {
   isUpdateConflictError,
@@ -12,16 +12,22 @@ import {
 } from "~/lib/update-conflict";
 import {
   emptyEventForm,
+  toEventFormValue,
   validateEventForm,
   type EventEditValue,
 } from "~/features/events/model/event-form";
+import type { VenueReader } from "~/features/venues/public";
 
 type EventEditPageProps = {
-  api?: EventEditorApi;
+  commandGateway: EventCommandGateway;
+  queryGateway: EventQueryGateway;
+  venueReader: VenueReader;
 };
 
 export function EventEditPage({
-  api = httpEventEditorApi,
+  commandGateway,
+  queryGateway,
+  venueReader,
 }: EventEditPageProps) {
   const { eventId: eventIdParam } = useParams();
   const navigate = useNavigate();
@@ -30,7 +36,7 @@ export function EventEditPage({
   // ID が不正なら詳細も表示できないので一覧へ戻す。
   const detailPath =
     Number.isInteger(eventId) && eventId > 0 ? `/events/${eventId}` : "/events";
-  const venueOptions = useEventVenueOptions(api);
+  const venueOptions = useVenueOptions(venueReader);
   const [form, setForm] = useState(emptyEventForm);
   const [lockVersion, setLockVersion] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -57,8 +63,13 @@ export function EventEditPage({
       }
 
       try {
-        const value = await api.get(eventId);
-        if (isCurrent) applyLoadedEvent(value);
+        const value = await queryGateway.get(eventId);
+        if (isCurrent) {
+          applyLoadedEvent({
+            ...toEventFormValue(value),
+            lockVersion: value.lockVersion,
+          });
+        }
       } catch (error) {
         if (!isCurrent) return;
         setLoadError(
@@ -72,12 +83,16 @@ export function EventEditPage({
     return () => {
       isCurrent = false;
     };
-  }, [api, eventId]);
+  }, [eventId, queryGateway]);
 
   // 編集中の内容は破棄して、最新の値で置き換える。
   async function reloadLatestEvent() {
     try {
-      applyLoadedEvent(await api.get(eventId));
+      const value = await queryGateway.get(eventId);
+      applyLoadedEvent({
+        ...toEventFormValue(value),
+        lockVersion: value.lockVersion,
+      });
     } catch (error) {
       setLoadError(
         getErrorMessage(error, "イベントデータの取得に失敗しました。")
@@ -106,7 +121,7 @@ export function EventEditPage({
     setIsSubmitting(true);
     setSubmitError(null);
     try {
-      await api.update(eventId, result.input, lockVersion);
+      await commandGateway.update(eventId, result.input, lockVersion);
       navigate(detailPath);
     } catch (error) {
       if (isUpdateConflictError(error)) {
