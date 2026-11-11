@@ -6,10 +6,32 @@ import type { Ranking } from "~/features/ranking/model/ranking";
 type RankingTableProps = {
   footer?: import("react").ReactNode;
   items: readonly Ranking[];
+  onToggleTeam: (teamId: number) => void;
+  selectedTeamIds: ReadonlySet<number>;
 };
 
-export function RankingTable({ footer, items }: RankingTableProps) {
+export function RankingTable({
+  footer,
+  items,
+  onToggleTeam,
+  selectedTeamIds,
+}: RankingTableProps) {
   const columns: readonly DataTableColumn<Ranking>[] = [
+    {
+      align: "center",
+      header: "",
+      id: "select",
+      width: { type: "fixed", value: 48 },
+      renderCell: (ranking) => (
+        <input
+          aria-label={`${ranking.teamName}を選択`}
+          checked={selectedTeamIds.has(ranking.teamId)}
+          className="accent-brand-primary size-4"
+          onChange={() => onToggleTeam(ranking.teamId)}
+          type="checkbox"
+        />
+      ),
+    },
     {
       header: "順位",
       id: "rank",
@@ -26,7 +48,7 @@ export function RankingTable({ footer, items }: RankingTableProps) {
       header: "スコア",
       id: "score",
       width: { type: "fixed", value: 140 },
-      renderCell: (ranking) => `${ranking.score} pt`,
+      renderCell: (ranking) => `${ranking.score} 点`,
     },
     {
       align: "center",

@@ -13,6 +13,7 @@ type EventDto = {
   venues: VenueDto[];
   start_time: string;
   end_time: string;
+  lock_version: number;
 };
 
 function formatTimeForDisplay(value: string): string {
@@ -43,6 +44,7 @@ export const httpEventEditorApi: EventEditorApi = {
     const response = await apiClient.get<EventDto>(`/api/v1/events/${eventId}`);
     return {
       endTime: formatTimeForDisplay(response.end_time),
+      lockVersion: response.lock_version,
       name: response.event_name,
       rules: response.rule_text ?? "",
       startTime: formatTimeForDisplay(response.start_time),
@@ -56,7 +58,10 @@ export const httpEventEditorApi: EventEditorApi = {
       name: venue.venue_name,
     }));
   },
-  async update(eventId, input) {
-    await apiClient.put(`/api/v1/events/${eventId}`, toRequest(input));
+  async update(eventId, input, lockVersion) {
+    await apiClient.put(`/api/v1/events/${eventId}`, {
+      ...toRequest(input),
+      lock_version: lockVersion,
+    });
   },
 };

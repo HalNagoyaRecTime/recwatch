@@ -12,6 +12,7 @@ const initialTeacher = {
   isLiveActive: true,
   isStaff: false,
   classRooms: [],
+  lockVersion: 0,
 };
 
 describe("TeacherForm", () => {

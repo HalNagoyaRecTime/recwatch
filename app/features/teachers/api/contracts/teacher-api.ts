@@ -34,6 +34,8 @@ export type TeacherUpdateRequest = {
   email: string;
   userName: string;
   classRoomIds: number[];
+  /** 取得した版を送り返して競合を検出する。 */
+  lockVersion?: number;
 };
 
 export type UserStatusUpdateInput = {

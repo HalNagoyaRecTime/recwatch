@@ -15,7 +15,7 @@ export function MobileHamburgerMenuBtn() {
         "hover:border-border-strong hover:bg-surface-hover hover:text-text-base"
       )}
       onClick={toggleMobileDrawer}
-      aria-label="Toggle navigation"
+      aria-label="メニューの開閉"
       aria-expanded={mobileOpen}
       aria-controls="app-sidebar-mobile"
     >

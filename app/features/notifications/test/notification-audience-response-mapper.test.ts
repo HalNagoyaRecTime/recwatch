@@ -54,7 +54,7 @@ describe("notification audience response mapper", () => {
       { id: "1", name: "1A 1年A組", type: "class_room" },
       {
         id: "2",
-        name: "大縄跳び / Round 2 / 体育館前 (08:50)",
+        name: "大縄跳び / ラウンド2 / 体育館前 (08:50)",
         type: "gathering",
       },
       { id: "3", name: "大縄跳び", type: "event" },

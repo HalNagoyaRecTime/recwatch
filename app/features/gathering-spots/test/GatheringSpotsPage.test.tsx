@@ -6,6 +6,10 @@ import type { GatheringSpotGateway } from "~/features/gathering-spots/api/contra
 import type { GatheringSpot } from "~/features/gathering-spots/model/gathering-spot";
 import { GatheringSpotsPage } from "~/features/gathering-spots/pages/GatheringSpotsPage";
 import { ApiClientError } from "~/lib/api-client-error";
+import {
+  UPDATE_CONFLICT_MESSAGE,
+  UPDATE_CONFLICT_RELOAD_FAILED_MESSAGE,
+} from "~/lib/update-conflict";
 import { resizeImage } from "~/lib/resize-image";
 
 vi.mock("~/lib/resize-image", () => ({ resizeImage: vi.fn() }));
@@ -34,6 +38,7 @@ function createSpot(
     imageUrl,
     createdAt: "2026-08-07T09:00:00Z",
     updatedAt: "2026-08-07T09:10:00Z",
+    lockVersion: 0,
   };
 }
 
@@ -182,7 +187,7 @@ describe("GatheringSpotsPage", () => {
     await user.type(input, "正門前");
     await user.click(screen.getByRole("button", { name: "保存する" }));
 
-    await waitFor(() => expect(update).toHaveBeenCalledWith(1, "正門前"));
+    await waitFor(() => expect(update).toHaveBeenCalledWith(1, "正門前", 0));
     await waitFor(() =>
       expect(list).toHaveBeenLastCalledWith({
         limit: 20,
@@ -190,6 +195,181 @@ describe("GatheringSpotsPage", () => {
         offset: 0,
       })
     );
+  });
+
+  it("更新が競合したら理由を伝えて再取得し、最新の値でフォームを置き換える", async () => {
+    const list = vi
+      .fn()
+      .mockResolvedValueOnce({
+        items: [createSpot(1, "体育館前")],
+        total: 1,
+        limit: 20,
+        offset: 0,
+      })
+      .mockResolvedValue({
+        items: [{ ...createSpot(1, "他の人の変更"), lockVersion: 1 }],
+        total: 1,
+        limit: 20,
+        offset: 0,
+      });
+    const update = vi
+      .fn()
+      .mockRejectedValueOnce(
+        new ApiClientError(409, "conflict", "GATHERING_SPOT_UPDATE_CONFLICT")
+      )
+      .mockResolvedValue(createSpot(1, "他の人の変更"));
+    const user = userEvent.setup();
+
+    render(<GatheringSpotsPage gateway={createGateway({ list, update })} />);
+
+    await screen.findByText("体育館前");
+    await user.click(
+      screen.getByRole("button", { name: "体育館前のその他の操作" })
+    );
+    await user.click(screen.getByRole("button", { name: "編集" }));
+    const input = screen.getByRole("textbox", { name: "集合場所名*" });
+    await user.clear(input);
+    await user.type(input, "自分の変更");
+    await user.click(screen.getByRole("button", { name: "保存する" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      UPDATE_CONFLICT_MESSAGE
+    );
+    expect(screen.getByRole("textbox", { name: "集合場所名*" })).toHaveValue(
+      "他の人の変更"
+    );
+
+    await user.click(screen.getByRole("button", { name: "保存する" }));
+    await waitFor(() =>
+      expect(update).toHaveBeenLastCalledWith(1, "他の人の変更", 1)
+    );
+  });
+
+  it("競合後に一覧で見つからなければフォームを閉じて理由を一覧へ出す", async () => {
+    const list = vi
+      .fn()
+      .mockResolvedValueOnce({
+        items: [createSpot(1, "体育館前")],
+        total: 1,
+        limit: 20,
+        offset: 0,
+      })
+      .mockResolvedValue({ items: [], total: 0, limit: 20, offset: 0 });
+    const update = vi
+      .fn()
+      .mockRejectedValue(
+        new ApiClientError(409, "conflict", "GATHERING_SPOT_UPDATE_CONFLICT")
+      );
+    const user = userEvent.setup();
+
+    render(<GatheringSpotsPage gateway={createGateway({ list, update })} />);
+
+    await screen.findByText("体育館前");
+    await user.click(
+      screen.getByRole("button", { name: "体育館前のその他の操作" })
+    );
+    await user.click(screen.getByRole("button", { name: "編集" }));
+    await user.click(screen.getByRole("button", { name: "保存する" }));
+
+    expect(
+      await screen.findByText(UPDATE_CONFLICT_MESSAGE)
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("textbox", { name: "集合場所名*" })
+    ).not.toBeInTheDocument();
+  });
+
+  it("競合後の再取得に失敗したらフォームと入力を残し、再度の保存で最新の値へ置き換える", async () => {
+    const list = vi
+      .fn()
+      .mockResolvedValueOnce({
+        items: [createSpot(1, "体育館前")],
+        total: 1,
+        limit: 20,
+        offset: 0,
+      })
+      .mockRejectedValueOnce(new Error("network"))
+      .mockResolvedValue({
+        items: [{ ...createSpot(1, "他の人の変更"), lockVersion: 1 }],
+        total: 1,
+        limit: 20,
+        offset: 0,
+      });
+    const update = vi
+      .fn()
+      .mockRejectedValue(
+        new ApiClientError(409, "conflict", "GATHERING_SPOT_UPDATE_CONFLICT")
+      );
+    const user = userEvent.setup();
+
+    render(<GatheringSpotsPage gateway={createGateway({ list, update })} />);
+
+    await screen.findByText("体育館前");
+    await user.click(
+      screen.getByRole("button", { name: "体育館前のその他の操作" })
+    );
+    await user.click(screen.getByRole("button", { name: "編集" }));
+    const input = screen.getByRole("textbox", { name: "集合場所名*" });
+    await user.clear(input);
+    await user.type(input, "自分の変更");
+    await user.upload(
+      screen.getByLabelText("集合場所の画像を選択"),
+      new File(["photo"], "photo.jpg", { type: "image/jpeg" })
+    );
+    await screen.findByRole("img", { name: "集合場所の画像" });
+    await user.click(screen.getByRole("button", { name: "保存する" }));
+
+    expect(
+      await screen.findByText(UPDATE_CONFLICT_RELOAD_FAILED_MESSAGE)
+    ).toBeInTheDocument();
+    expect(screen.queryByText(UPDATE_CONFLICT_MESSAGE)).not.toBeInTheDocument();
+    expect(screen.getByRole("textbox", { name: "集合場所名*" })).toHaveValue(
+      "自分の変更"
+    );
+    expect(
+      screen.getByRole("img", { name: "集合場所の画像" })
+    ).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "保存する" }));
+
+    expect(
+      await screen.findByText(UPDATE_CONFLICT_MESSAGE)
+    ).toBeInTheDocument();
+    expect(screen.getByRole("textbox", { name: "集合場所名*" })).toHaveValue(
+      "他の人の変更"
+    );
+    expect(update).toHaveBeenCalledTimes(2);
+    expect(update).toHaveBeenLastCalledWith(1, "自分の変更", 0);
+  });
+
+  it("版の競合ではない409では入力を残す", async () => {
+    const update = vi
+      .fn()
+      .mockRejectedValue(
+        new ApiClientError(
+          409,
+          "使用中の集合場所は削除できません",
+          "GATHERING_SPOT_IN_USE"
+        )
+      );
+    const user = userEvent.setup();
+
+    render(<GatheringSpotsPage gateway={createGateway({ update })} />);
+
+    await screen.findByText("体育館前");
+    await user.click(
+      screen.getByRole("button", { name: "体育館前のその他の操作" })
+    );
+    await user.click(screen.getByRole("button", { name: "編集" }));
+    const input = screen.getByRole("textbox", { name: "集合場所名*" });
+    await user.clear(input);
+    await user.type(input, "自分の変更");
+    await user.click(screen.getByRole("button", { name: "保存する" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "使用中の集合場所は削除できません"
+    );
+    expect(input).toHaveValue("自分の変更");
   });
 
   it("削除後に現在ページを再取得して次ページの項目を繰り上げる", async () => {
@@ -492,7 +672,9 @@ describe("GatheringSpotsPage", () => {
   });
 
   it("新規登録で画像だけ失敗したとき、保存し直すと集合場所を作り直さずに画像を登録する", async () => {
-    const create = vi.fn().mockResolvedValue(createSpot(2, "正門前"));
+    const create = vi
+      .fn()
+      .mockResolvedValue({ ...createSpot(2, "正門前"), lockVersion: 5 });
     const update = vi.fn().mockResolvedValue(createSpot(2, "正門前"));
     const setImage = vi
       .fn()
@@ -536,6 +718,6 @@ describe("GatheringSpotsPage", () => {
 
     await waitFor(() => expect(setImage).toHaveBeenCalledTimes(2));
     expect(create).toHaveBeenCalledTimes(1);
-    expect(update).toHaveBeenCalledWith(2, "正門前");
+    expect(update).toHaveBeenCalledWith(2, "正門前", 5);
   });
 });

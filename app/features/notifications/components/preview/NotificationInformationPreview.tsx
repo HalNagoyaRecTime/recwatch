@@ -58,7 +58,9 @@ export function NotificationInformationPreview({
           </InformationRow>
           {creation?.source ? (
             <InformationRow label="自動生成元">
-              <span title={`${creation.source.type} #${creation.source.id}`}>
+              <span
+                title={`${notificationAudienceLabels[creation.source.type]} #${creation.source.id}`}
+              >
                 {creation.source.label?.trim() || "-"}
               </span>
             </InformationRow>

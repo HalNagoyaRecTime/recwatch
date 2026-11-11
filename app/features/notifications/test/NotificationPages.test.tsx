@@ -63,7 +63,7 @@ describe("notification pages", () => {
       target: { value: "# Push本文" },
     });
     fireEvent.change(
-      await screen.findByLabelText("Markdownソース", {}, { timeout: 10_000 }),
+      await screen.findByLabelText("詳細本文の編集", {}, { timeout: 10_000 }),
       {
         target: { value: "# 詳細本文" },
       }
@@ -125,7 +125,7 @@ describe("notification pages", () => {
       target: { value: "緊急連絡の詳細" },
     });
     fireEvent.change(
-      await screen.findByLabelText("Markdownソース", {}, { timeout: 10_000 }),
+      await screen.findByLabelText("詳細本文の編集", {}, { timeout: 10_000 }),
       {
         target: { value: "集合場所も確認してください。" },
       }
@@ -194,7 +194,7 @@ describe("notification pages", () => {
     for (const label of ["タイトル*", "本文*", "詳細タイトル*", "詳細本文*"])
       fireEvent.change(
         await screen.findByLabelText(
-          label === "詳細本文*" ? "Markdownソース" : label,
+          label === "詳細本文*" ? "詳細本文の編集" : label,
           {},
           { timeout: 10_000 }
         ),
@@ -243,7 +243,7 @@ describe("notification pages", () => {
     for (const label of ["タイトル*", "本文*", "詳細タイトル*", "詳細本文*"])
       fireEvent.change(
         await screen.findByLabelText(
-          label === "詳細本文*" ? "Markdownソース" : label,
+          label === "詳細本文*" ? "詳細本文の編集" : label,
           {},
           { timeout: 10_000 }
         ),
@@ -328,7 +328,7 @@ describe("notification pages", () => {
     for (const label of ["タイトル*", "本文*", "詳細タイトル*", "詳細本文*"])
       fireEvent.change(
         await screen.findByLabelText(
-          label === "詳細本文*" ? "Markdownソース" : label,
+          label === "詳細本文*" ? "詳細本文の編集" : label,
           {},
           { timeout: 10_000 }
         ),

@@ -4,6 +4,7 @@ export type GatheringSpotResponseDto = {
   image_url: string | null;
   created_at: string;
   updated_at: string;
+  lock_version: number;
 };
 
 export type GatheringSpotPageResponseDto = {
@@ -17,4 +18,5 @@ export type GatheringSpotPageResponseDto = {
 // explicit until the backend contract is intentionally changed.
 export type GatheringSpotWriteRequestDto = {
   gatheringSpotName: string;
+  lockVersion?: number;
 };

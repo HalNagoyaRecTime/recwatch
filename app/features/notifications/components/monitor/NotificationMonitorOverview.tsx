@@ -13,7 +13,6 @@ import { formatNotificationDateTime } from "~/features/notifications/components/
 import { NotificationMonitorProgress } from "~/features/notifications/components/monitor/NotificationMonitorProgress";
 import {
   getMonitorColumn,
-  getMonitorSchedule,
   layoutMonitorSchedules,
   monitorCardWidth,
   monitorColumnGap,
@@ -23,7 +22,7 @@ import "@xyflow/react/dist/style.css";
 
 type ScheduleNode = Node<
   {
-    item: MonitorSchedule;
+    schedule: MonitorSchedule;
     onOpen: (id: number) => void;
     onMeasure: (id: string, height: number) => void;
   },
@@ -31,7 +30,7 @@ type ScheduleNode = Node<
 >;
 type ColumnNode = Node<{ label: string; count: number }, "statusColumn">;
 type OverviewNode = ScheduleNode | ColumnNode;
-const columns = ["配信待ち", "対象解決中", "送信中", "処理終了"];
+const columns = ["配信待ち", "対象者確定中", "送信中", "処理終了"];
 
 function StatusColumn({ data }: NodeProps<ColumnNode>) {
   return (
@@ -44,8 +43,7 @@ function StatusColumn({ data }: NodeProps<ColumnNode>) {
 function ScheduleCard({ id, data }: NodeProps<ScheduleNode>) {
   const element = useRef<HTMLElement>(null);
   const updateNodeInternals = useUpdateNodeInternals();
-  const { item, onMeasure, onOpen } = data;
-  const schedule = getMonitorSchedule(item);
+  const { schedule, onMeasure, onOpen } = data;
   useEffect(() => {
     if (!element.current || typeof ResizeObserver === "undefined") return;
     const observer = new ResizeObserver((entries) => {
@@ -83,13 +81,7 @@ function ScheduleCard({ id, data }: NodeProps<ScheduleNode>) {
       <p className="text-text-muted my-3 text-xs">
         {formatNotificationDateTime(schedule.sendAt)}
       </p>
-      {item.detail ? (
-        <NotificationMonitorProgress detail={item.detail} />
-      ) : (
-        <p className="text-tone-danger-text text-xs">
-          {item.errorMessage ?? "配信集計を取得中です。"}
-        </p>
-      )}
+      <NotificationMonitorProgress schedule={schedule} />
     </article>
   );
 }
@@ -124,8 +116,7 @@ export function NotificationMonitorOverview({
         data: {
           label,
           count: items.filter(
-            (item) =>
-              getMonitorColumn(getMonitorSchedule(item).status) === column
+            (item) => getMonitorColumn(item.status) === column
           ).length,
         },
         position: { x: column * (monitorCardWidth + monitorColumnGap), y: 0 },
@@ -135,10 +126,10 @@ export function NotificationMonitorOverview({
         focusable: false,
       })),
       ...layoutMonitorSchedules(items, heights).map(
-        ({ id, position, item }): ScheduleNode => ({
+        ({ id, position, schedule }): ScheduleNode => ({
           id,
           type: "scheduleOverview",
-          data: { item, onOpen, onMeasure },
+          data: { schedule, onOpen, onMeasure },
           position,
           style: { width: monitorCardWidth },
           draggable: false,
@@ -208,7 +199,7 @@ export function NotificationMonitorOverview({
       <ReactFlow<OverviewNode>
         onNodeClick={(_, node) => {
           if (node.type === "scheduleOverview")
-            onOpen(node.data.item.summary.notificationScheduleId);
+            onOpen(node.data.schedule.notificationScheduleId);
         }}
         onInit={setInstance}
         nodes={nodes}

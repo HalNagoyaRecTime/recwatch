@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 
-import type { NotificationScheduleListItem } from "~/features/notifications/api/contracts/notification-schedule-query-api";
 import {
   getMonitorColumn,
   isMonitorScheduleVisible,
@@ -12,10 +11,7 @@ import { createNotificationMonitorFixtures } from "~/features/notifications/mock
 
 const now = Date.parse("2026-10-04T12:00:00+09:00");
 const fixture = createNotificationMonitorFixtures(now)[0];
-function schedule(
-  status: NotificationScheduleListItem["status"],
-  offset: number
-) {
+function schedule(status: MonitorSchedule["status"], offset: number) {
   return { ...fixture, status, sendAt: new Date(now + offset).toISOString() };
 }
 
@@ -68,15 +64,10 @@ describe("配信モニターの表示範囲と位置", () => {
   });
 
   it("同時刻はID順に並べ、APIの返却順に依存しない", () => {
-    const summaries = [
+    const items: MonitorSchedule[] = [
       schedule("sending", 0),
       { ...schedule("sending", 0), notificationScheduleId: 999 },
     ];
-    const items: MonitorSchedule[] = summaries.map((summary) => ({
-      summary,
-      detail: null,
-      errorMessage: null,
-    }));
     expect(layoutMonitorSchedules(items)).toEqual(
       layoutMonitorSchedules([...items].reverse())
     );
@@ -91,7 +82,7 @@ describe("配信モニターの表示範囲と位置", () => {
       schedule("sending", 0),
       { ...schedule("sending", 1), notificationScheduleId: 999 },
       { ...schedule("scheduled", 1), notificationScheduleId: 1000 },
-    ].map((summary) => ({ summary, detail: null, errorMessage: null }));
+    ];
     const initial = layoutMonitorSchedules(items);
     const resized = layoutMonitorSchedules(items, {
       [fixture.notificationScheduleId]: 600,

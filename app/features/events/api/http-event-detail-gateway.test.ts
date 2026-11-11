@@ -55,7 +55,9 @@ describe("createHttpEventDetailGateway", () => {
       ],
     });
     expect(get).toHaveBeenCalledTimes(1);
-    expect(get).toHaveBeenCalledWith("/api/v1/events/12");
+    expect(get).toHaveBeenCalledWith(
+      "/api/v1/events/12?includeMemberCount=true"
+    );
   });
 
   it("ルール未設定は null のまま、集合が無ければ rounds を空にする", async () => {

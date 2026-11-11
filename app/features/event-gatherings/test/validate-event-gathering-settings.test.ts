@@ -78,12 +78,12 @@ describe("validateEventGatheringSettings", () => {
       errors: [
         {
           roundKey: "r0",
-          message: "Round番号は1〜99の整数で入力してください。",
+          message: "ラウンド番号は1〜99の整数で入力してください。",
         },
-        { roundKey: "r1-dup", message: "Round 1 が重複しています。" },
+        { roundKey: "r1-dup", message: "ラウンド 1 が重複しています。" },
         {
           roundKey: "r100",
-          message: "Round番号は1〜99の整数で入力してください。",
+          message: "ラウンド番号は1〜99の整数で入力してください。",
         },
       ],
     });

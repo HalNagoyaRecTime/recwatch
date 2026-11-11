@@ -28,7 +28,7 @@ function LocationProbe() {
 }
 
 describe("EventCreatePage", () => {
-  it("allows rules up to 2000 characters", async () => {
+  it("allows rules up to 5000 characters", async () => {
     render(
       <MemoryRouter initialEntries={["/events/new"]}>
         <EventCreatePage api={createApi()} />
@@ -38,7 +38,7 @@ describe("EventCreatePage", () => {
 
     expect(screen.getByLabelText("イベントルール")).toHaveAttribute(
       "maxlength",
-      "2000"
+      "5000"
     );
   });
 

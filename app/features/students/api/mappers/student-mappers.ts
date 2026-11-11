@@ -23,6 +23,7 @@ export function toStudentRow(dto: StudentDTO): StudentRow {
           className: dto.class_room.class_name,
         }
       : null,
+    lockVersion: dto.lock_version,
   };
 }
 

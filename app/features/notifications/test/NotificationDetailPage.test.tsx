@@ -80,9 +80,11 @@ describe("NotificationDetailPage", () => {
     const schedules = screen.getAllByRole("button", { name: /回目/ });
     expect(schedules).toHaveLength(2);
     expect(
-      screen.getByText("Recipient単位。Push配送数とは別の集計です")
+      screen.getByText(
+        "通知対象者ごとの集計です。プッシュ通知の配信件数とは別の集計です"
+      )
     ).toBeInTheDocument();
-    expect(screen.getByText("対象Recipient")).toBeInTheDocument();
+    expect(screen.getByText("通知対象者数")).toBeInTheDocument();
     await userEvent.setup().click(schedules[1]);
     expect(
       screen.getByText("配信元削除", { exact: false })
@@ -97,7 +99,7 @@ describe("NotificationDetailPage", () => {
     const baseSchedule = detail.schedules[0];
     const statuses = [
       ["scheduled", "配信予定"],
-      ["resolving", "対象解決中"],
+      ["resolving", "対象者確定中"],
       ["sending", "送信中"],
       ["completed", "完了"],
       ["failed", "失敗"],
@@ -119,7 +121,7 @@ describe("NotificationDetailPage", () => {
     const user = userEvent.setup();
     renderPage(createApis({ getDetail: vi.fn().mockResolvedValue(detail) }));
 
-    await screen.findByText("Pushタイトル");
+    await screen.findByText("プッシュ通知のタイトル");
     const scheduleButtons = screen.getAllByRole("button", { name: /回目/ });
     statuses.forEach(([, label], index) => {
       expect(scheduleButtons[index]).toHaveTextContent(label);
@@ -159,24 +161,26 @@ describe("NotificationDetailPage", () => {
       .mockResolvedValue(cloneFixture(notificationPushDeliveryDetailFixture));
     renderPage(createApis({ getDelivery, getResults }));
 
-    await screen.findByText("Pushタイトル");
+    await screen.findByText("プッシュ通知のタイトル");
     expect(getResults).not.toHaveBeenCalled();
     expect(getDelivery).not.toHaveBeenCalled();
 
     await user.click(screen.getByRole("button", { name: "対象者・配信結果" }));
     expect(await screen.findByText("山田 太郎")).toBeInTheDocument();
     expect(getResults).toHaveBeenCalledWith(504, { page: 1, limit: 50 });
-    expect(screen.getByText("Tokenなし")).toBeInTheDocument();
+    expect(screen.getByText("通知先端末の登録なし")).toBeInTheDocument();
 
-    await user.click(
-      screen.getByRole("button", { name: "Delivery #9012の詳細" })
-    );
+    await user.click(screen.getByRole("button", { name: "配信 #9012の詳細" }));
     expect(
-      await screen.findByRole("dialog", { name: "Push配送詳細" })
+      await screen.findByRole("dialog", { name: "プッシュ通知の配信詳細" })
     ).toBeInTheDocument();
     expect(getDelivery).toHaveBeenCalledWith(9012);
-    expect(screen.getByText("UNAVAILABLE")).toBeInTheDocument();
-    expect(screen.getByText(/Android・FCM受付成功/)).toBeInTheDocument();
+    expect(
+      screen.getByText("通知サービスを一時的に利用できません")
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/Android・通知サービス受付済み/)
+    ).toBeInTheDocument();
   });
 
   it("Resultsの部分取得失敗でも通知本体を残して再試行できる", async () => {
@@ -187,7 +191,7 @@ describe("NotificationDetailPage", () => {
       .mockResolvedValueOnce(cloneFixture(notificationScheduleResultsFixture));
     renderPage(createApis({ getResults }));
 
-    await screen.findByText("Pushタイトル");
+    await screen.findByText("プッシュ通知のタイトル");
     await user.click(screen.getByRole("button", { name: "対象者・配信結果" }));
     expect(
       await screen.findByText("配信結果を読み込めませんでした。")
@@ -207,17 +211,17 @@ describe("NotificationDetailPage", () => {
       .mockRejectedValueOnce(
         new ApiClientError(
           404,
-          "Scheduleが見つかりません。",
+          "配信予約が見つかりません。",
           "NOTIFICATION_SCHEDULE_NOT_FOUND"
         )
       )
       .mockResolvedValueOnce(cloneFixture(notificationScheduleDetailFixture));
     renderPage(createApis({ getSchedule }));
 
-    await screen.findByText("Pushタイトル");
+    await screen.findByText("プッシュ通知のタイトル");
     await user.click(screen.getByRole("button", { name: "配信状況" }));
     expect(
-      await screen.findByText("Scheduleが見つかりません。")
+      await screen.findByText("配信予約が見つかりません。")
     ).toBeInTheDocument();
     expect(
       screen.getByRole("heading", { name: "競技開始時間変更のお知らせ" })
@@ -235,7 +239,7 @@ describe("NotificationDetailPage", () => {
       .mockRejectedValueOnce(
         new ApiClientError(
           404,
-          "Push配送が見つかりません。",
+          "プッシュ通知の配信記録が見つかりません。",
           "NOTIFICATION_PUSH_DELIVERY_NOT_FOUND"
         )
       )
@@ -244,19 +248,21 @@ describe("NotificationDetailPage", () => {
       );
     renderPage(createApis({ getDelivery }));
 
-    await screen.findByText("Pushタイトル");
+    await screen.findByText("プッシュ通知のタイトル");
     await user.click(screen.getByRole("button", { name: "対象者・配信結果" }));
     await screen.findByText("山田 太郎");
-    await user.click(
-      screen.getByRole("button", { name: "Delivery #9012の詳細" })
-    );
+    await user.click(screen.getByRole("button", { name: "配信 #9012の詳細" }));
 
-    const dialog = await screen.findByRole("dialog", { name: "Push配送詳細" });
+    const dialog = await screen.findByRole("dialog", {
+      name: "プッシュ通知の配信詳細",
+    });
     expect(
-      within(dialog).getByText("Push配送が見つかりません。")
+      within(dialog).getByText("プッシュ通知の配信記録が見つかりません。")
     ).toBeInTheDocument();
     await user.click(within(dialog).getByRole("button", { name: "再試行" }));
-    expect(await within(dialog).findByText("UNAVAILABLE")).toBeInTheDocument();
+    expect(
+      await within(dialog).findByText("通知サービスを一時的に利用できません")
+    ).toBeInTheDocument();
     expect(getDelivery).toHaveBeenCalledTimes(2);
   });
 
@@ -337,7 +343,7 @@ describe("NotificationDetailPage", () => {
       screen.getByRole("button", { name: "配信予約をキャンセル" })
     );
     const dialog = await screen.findByRole("alertdialog");
-    expect(within(dialog).getByText(/Schedule #/)).toBeInTheDocument();
+    expect(within(dialog).getByText(/配信予約 #/)).toBeInTheDocument();
     await user.click(
       within(dialog).getByRole("button", { name: "配信予約をキャンセル" })
     );

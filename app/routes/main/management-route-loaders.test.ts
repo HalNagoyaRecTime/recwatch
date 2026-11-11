@@ -17,6 +17,7 @@ const teacher: TeacherRow = {
   isLiveActive: true,
   isStaff: false,
   classRooms: [],
+  lockVersion: 0,
 };
 
 const classRoom: ClassRoom = {
@@ -25,6 +26,7 @@ const classRoom: ClassRoom = {
   className: "1年A組",
   studentCount: 3,
   teacher: null,
+  lockVersion: 0,
 };
 
 afterEach(() => {

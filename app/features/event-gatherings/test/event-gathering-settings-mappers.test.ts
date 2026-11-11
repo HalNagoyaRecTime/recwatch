@@ -18,6 +18,7 @@ describe("toEventGatheringSettings", () => {
   it("Event 詳細の集合を参加人数付きで変換する", () => {
     const settings = toEventGatheringSettings({
       event_id: 12,
+      lock_version: 3,
       rounds: [
         {
           round: 1,
@@ -38,9 +39,21 @@ describe("toEventGatheringSettings", () => {
     expect(settings.rounds[0].gatherings[1].memberCount).toBe(0);
   });
 
+  it("書き込みでは版がある場合だけlock_versionを送る", () => {
+    expect(
+      toEventGatheringSettingsWriteRequest({ rounds: [], lockVersion: 3 })
+    ).toEqual({ rounds: [], lock_version: 3 });
+    expect(toEventGatheringSettingsWriteRequest({ rounds: [] })).toEqual({
+      rounds: [],
+    });
+  });
+
   it("集合が無ければ rounds を空にする", () => {
-    expect(toEventGatheringSettings({ event_id: 12, rounds: [] })).toEqual({
+    expect(
+      toEventGatheringSettings({ event_id: 12, lock_version: 3, rounds: [] })
+    ).toEqual({
       eventId: 12,
+      lockVersion: 3,
       rounds: [],
     });
   });
@@ -48,6 +61,7 @@ describe("toEventGatheringSettings", () => {
   it("保存後レスポンスを参加人数付きで変換する", () => {
     const settings = toEventGatheringSettings({
       event_id: 12,
+      lock_version: 3,
       rounds: [
         {
           round: 1,
@@ -68,6 +82,7 @@ describe("toEventGatheringSettings", () => {
 
     expect(settings).toEqual({
       eventId: 12,
+      lockVersion: 3,
       rounds: [
         {
           round: 1,
@@ -129,6 +144,7 @@ describe("ラウンド開始時刻のAPI互換性", () => {
   ])("%sを画面の時刻に変換する", (start_time, expected) => {
     const settings = toEventGatheringSettings({
       event_id: 12,
+      lock_version: 3,
       rounds: [
         { round: 1, start_time, gatherings: [gatheringResponse(1, "10:45")] },
       ],

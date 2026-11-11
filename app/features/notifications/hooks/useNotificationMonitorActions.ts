@@ -1,10 +1,6 @@
 import { useRef, useState } from "react";
 import type { NotificationScheduleCommandApi } from "~/features/notifications/api/contracts/notification-schedule-command-api";
-import type { NotificationScheduleListItem } from "~/features/notifications/api/contracts/notification-schedule-query-api";
-import {
-  getMonitorSchedule,
-  type MonitorSchedule,
-} from "~/features/notifications/hooks/notification-monitor-data";
+import type { MonitorSchedule } from "~/features/notifications/hooks/notification-monitor-data";
 import {
   reportNotificationActionError,
   type NotificationFeedbackReporter,
@@ -18,7 +14,7 @@ export const monitorActionLabels: Record<MonitorAction, string> = {
   stop: "緊急停止",
 };
 export function canRunMonitorAction(
-  schedule: NotificationScheduleListItem,
+  schedule: MonitorSchedule,
   action: MonitorAction
 ) {
   if (action === "cancel") return schedule.status === "scheduled";
@@ -46,28 +42,27 @@ export function useNotificationMonitorActions({
 }: Options) {
   const [target, setTarget] = useState<{
     action: MonitorAction;
-    schedule: NotificationScheduleListItem;
+    schedule: MonitorSchedule;
   } | null>(null);
   const [timing, setTiming] = useState<"immediate" | "scheduled">("immediate");
   const [sendAt, setSendAt] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const pending = useRef(false);
-  const current =
-    target &&
-    items.find(
-      (item) =>
-        item.summary.notificationScheduleId ===
-        target.schedule.notificationScheduleId
-    );
-  const schedule = current ? getMonitorSchedule(current) : null;
+  const schedule =
+    (target &&
+      items.find(
+        (item) =>
+          item.notificationScheduleId === target.schedule.notificationScheduleId
+      )) ??
+    null;
   const canSubmit = Boolean(
     commandApi &&
     target &&
     schedule &&
     canRunMonitorAction(schedule, target.action)
   );
-  function open(schedule: NotificationScheduleListItem, action: MonitorAction) {
+  function open(schedule: MonitorSchedule, action: MonitorAction) {
     if (
       !commandApi ||
       pending.current ||
@@ -122,7 +117,7 @@ export function useNotificationMonitorActions({
       reportFeedback?.({
         kind: "action-success",
         title: `${monitorActionLabels[action]}しました`,
-        message: `Schedule #${id}の最新情報を再取得しました。`,
+        message: `配信予約 #${id}の最新情報を再取得しました。`,
       });
     } catch (cause) {
       await reload();

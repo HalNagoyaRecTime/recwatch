@@ -1,5 +1,4 @@
 import type { MemberStudent } from "~/features/event-gatherings/model/gathering-member-candidate";
-import { MAX_GATHERING_MEMBERS } from "~/features/event-gatherings/model/event-gathering-settings";
 
 export type SelectedTeamMemberGroup = {
   id: number;
@@ -13,7 +12,7 @@ type GatheringTeamMemberAdjustmentProps = {
   selectedUserIds: readonly number[];
 };
 
-/** 選択したチームの参加者を、保存上限に合わせて個別に調整する。 */
+/** 選択したチームのうち、参加させない学生を個別に外す。 */
 export function GatheringTeamMemberAdjustment({
   groups,
   onToggle,
@@ -29,10 +28,11 @@ export function GatheringTeamMemberAdjustment({
       className="border-border-base app-rounded space-y-3 border p-3"
     >
       <div>
-        <h4 className="text-text-base text-sm font-semibold">選択人数を調整</h4>
+        <h4 className="text-text-base text-sm font-semibold">
+          参加者を個別に外す
+        </h4>
         <p className="text-text-muted mt-1 text-xs">
-          保存する学生のチェックを外すと、{MAX_GATHERING_MEMBERS}
-          人以内に調整できます。
+          チェックを外した学生は参加者に含めません。
         </p>
       </div>
 

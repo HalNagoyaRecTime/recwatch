@@ -110,7 +110,7 @@ describe("createHttpGatheringSpotGateway", () => {
       id: 11,
       name: "正門前",
     });
-    await expect(gateway.update(11, "体育館入口")).resolves.toMatchObject({
+    await expect(gateway.update(11, "体育館入口", 4)).resolves.toMatchObject({
       id: 11,
       name: "体育館入口",
     });
@@ -119,6 +119,7 @@ describe("createHttpGatheringSpotGateway", () => {
     });
     expect(put).toHaveBeenCalledWith("/api/v1/gathering-spots/11", {
       gatheringSpotName: "体育館入口",
+      lockVersion: 4,
     });
   });
 

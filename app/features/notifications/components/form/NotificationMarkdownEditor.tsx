@@ -26,7 +26,7 @@ export function NotificationMarkdownEditor({
         <Suspense
           fallback={
             <div
-              aria-label="Markdownエディターを読み込み中"
+              aria-label="本文編集欄を読み込み中"
               className="bg-surface-muted min-h-64 animate-pulse"
             />
           }

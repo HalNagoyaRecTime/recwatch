@@ -56,6 +56,13 @@ vi.mock("@xyflow/react", () => ({
 }));
 
 const now = () => Date.parse("2026-10-04T12:00:00+09:00");
+function deferred<T>() {
+  let resolve!: (value: T) => void;
+  const promise = new Promise<T>((done) => {
+    resolve = done;
+  });
+  return { promise, resolve };
+}
 const observers: Array<{
   element?: Element;
   callback: ResizeObserverCallback;
@@ -145,7 +152,16 @@ describe("配信モニター", () => {
         const status = completed ? "completed" : "sending";
         if (path.endsWith("/schedules"))
           return respond({
-            items: [{ ...summary, sendAt: sending.sendAt, status }],
+            items: [
+              {
+                ...summary,
+                sendAt: sending.sendAt,
+                status,
+                audienceProgress: completed ? null : sending.audienceProgress,
+                recipientProgress: completed ? null : sending.recipientProgress,
+                deliveryProgress: completed ? null : sending.deliveryProgress,
+              },
+            ],
           });
         if (path.endsWith(`/schedules/${sending.notificationScheduleId}`))
           return respond({
@@ -180,7 +196,7 @@ describe("配信モニター", () => {
       "この通知スケジュールは停止できません"
     );
     expect(
-      within(dialog).getByText("最新の状態: completed")
+      within(dialog).getByText("最新の状態: 配信完了")
     ).toBeInTheDocument();
     expect(
       within(dialog).getByRole("button", { name: "実行する" })
@@ -239,7 +255,7 @@ describe("配信モニター", () => {
       within(dialog).getByRole("button", { name: "実行する" })
     ).toBeDisabled();
     expect(
-      within(dialog).getByText("最新の状態: completed")
+      within(dialog).getByText("最新の状態: 配信完了")
     ).toBeInTheDocument();
     expect(
       screen.getByRole("article", { name: "配信 #503" })
@@ -297,8 +313,8 @@ describe("配信モニター", () => {
     expect(screen.getAllByRole("article")).toHaveLength(1);
     expect(within(card).getByText("40")).toBeInTheDocument();
     expect(within(card).getByText("42")).toBeInTheDocument();
-    expect(within(card).getByText("PUSH DELIVERIES")).toBeInTheDocument();
-    expect(within(card).getByText("FCM")).toBeInTheDocument();
+    expect(within(card).getByText("プッシュ通知の配信")).toBeInTheDocument();
+    expect(within(card).getByText("通知サービス")).toBeInTheDocument();
     expect(graph.props?.nodesDraggable).toBe(false);
     expect(graph.props?.nodesConnectable).toBe(false);
     expect(graph.props?.deleteKeyCode).toBeNull();
@@ -326,7 +342,7 @@ describe("配信モニター", () => {
     ).toHaveAttribute("href", "/notifications/103");
     expect(
       within(dialog).getByText(
-        "FCM受付成功は、端末での表示や既読を示しません。"
+        "通知サービス受付済みは、端末での表示や既読を示しません。"
       )
     ).toBeInTheDocument();
   });
@@ -409,6 +425,93 @@ describe("配信モニター", () => {
     ).toBeInTheDocument();
   });
 
+  it("選択した配信が進行中なら詳細を取らない", async () => {
+    const api = createMockNotificationMonitorApi(
+      createNotificationMonitorFixtures(now())
+    );
+    const getDetail = vi.spyOn(api, "getDetail");
+    renderPage(api);
+
+    expect(
+      await screen.findByRole("article", { name: "配信 #503" })
+    ).toBeInTheDocument();
+    expect(getDetail).not.toHaveBeenCalled();
+  });
+
+  it("状態別一覧を開くと、送り終えた配信の詳細だけ取る", async () => {
+    const fixtures = createNotificationMonitorFixtures(now());
+    const api = createMockNotificationMonitorApi(fixtures);
+    const getDetail = vi.spyOn(api, "getDetail");
+    const user = userEvent.setup();
+    renderPage(api);
+    await screen.findByRole("article", { name: "配信 #503" });
+
+    await user.click(screen.getByRole("button", { name: "状態別一覧" }));
+
+    const settledIds = fixtures
+      .filter((item) => item.status === "completed" || item.status === "failed")
+      .map((item) => item.notificationScheduleId);
+    await waitFor(() =>
+      expect(getDetail).toHaveBeenCalledTimes(settledIds.length)
+    );
+    expect(getDetail.mock.calls.map(([id]) => id).sort()).toEqual(
+      settledIds.sort()
+    );
+    const card = screen.getByRole("article", {
+      name: `状態別配信 #${settledIds[0]}`,
+    });
+    expect(await within(card).findByText("42件")).toBeInTheDocument();
+  });
+
+  it("送り終えた配信を選ぶと、集計を読み込んでから処理フローを表示する", async () => {
+    const fixtures = createNotificationMonitorFixtures(now());
+    const completed = fixtures.find((item) => item.status === "completed")!;
+    const api = createMockNotificationMonitorApi(fixtures);
+    const detail = deferred<Awaited<ReturnType<typeof api.getDetail>>>();
+    vi.spyOn(api, "getDetail").mockReturnValueOnce(detail.promise);
+    const user = userEvent.setup();
+    renderPage(api);
+    await screen.findByRole("article", { name: "配信 #503" });
+
+    await user.selectOptions(
+      screen.getByRole("combobox", { name: "表示する配信" }),
+      String(completed.notificationScheduleId)
+    );
+    expect(screen.getByText("集計を読み込んでいます。")).toBeInTheDocument();
+    await act(async () => detail.resolve(completed));
+
+    expect(
+      await screen.findByRole("article", {
+        name: `配信 #${completed.notificationScheduleId}`,
+      })
+    ).toBeInTheDocument();
+  });
+
+  it("送り終えた配信の詳細ダイアログは、集計を読み込んでから表示する", async () => {
+    const fixtures = createNotificationMonitorFixtures(now());
+    const completed = fixtures.find((item) => item.status === "completed")!;
+    const api = createMockNotificationMonitorApi(fixtures);
+    const detail = deferred<Awaited<ReturnType<typeof api.getDetail>>>();
+    vi.spyOn(api, "getDetail").mockReturnValueOnce(detail.promise);
+    const user = userEvent.setup();
+    renderPage(api);
+    await screen.findByRole("article", { name: "配信 #503" });
+    await user.click(screen.getByRole("button", { name: "状態別一覧" }));
+    await user.click(
+      screen.getByRole("button", {
+        name: `${completed.content.push.title}の状態別配信詳細`,
+      })
+    );
+    const dialog = await screen.findByRole("dialog", { name: "配信詳細" });
+    expect(
+      within(dialog).getByText("集計を読み込んでいます。")
+    ).toBeInTheDocument();
+
+    await act(async () => detail.resolve(completed));
+
+    expect(await within(dialog).findByText("40人")).toBeInTheDocument();
+  });
+
   it("状態別カードの高さが変わると同じ列の後続Nodeをずらす", async () => {
     renderPage();
     await screen.findByRole("article", { name: "配信 #503" });
@@ -465,38 +568,6 @@ describe("配信モニター", () => {
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });
 
-  it("集計取得に失敗したカードで0件を捏造せず、詳細から再試行できる", async () => {
-    const api = createMockNotificationMonitorApi(
-      createNotificationMonitorFixtures(now())
-    );
-    const getDetail = api.getDetail;
-    vi.spyOn(api, "getDetail").mockImplementation((id) =>
-      id === 503 ? Promise.reject(new Error("通信失敗")) : getDetail(id)
-    );
-    renderPage(api);
-    const card = await screen.findByRole("article", { name: "配信 #503" });
-    expect(
-      screen.getByText("配信集計を読み込めませんでした。")
-    ).toBeInTheDocument();
-    expect(within(card).queryByText("配送総数")).not.toBeInTheDocument();
-    expect(screen.getAllByRole("article")).toHaveLength(1);
-    await userEvent
-      .setup()
-      .click(
-        within(card).getByRole("button", { name: /NOTIFICATION配信詳細/ })
-      );
-    const dialog = await screen.findByRole("dialog", { name: "配信詳細" });
-    vi.mocked(api.getDetail).mockImplementation(getDetail);
-    await userEvent
-      .setup()
-      .click(
-        within(dialog).getByRole("button", { name: "配信集計を再読み込み" })
-      );
-    await waitFor(() =>
-      expect(within(dialog).getByText("42件")).toBeInTheDocument()
-    );
-  });
-
   it("refresh失敗をFeedbackへ報告し、前回のカードを保持する", async () => {
     const api = createMockNotificationMonitorApi(
       createNotificationMonitorFixtures(now())
@@ -516,7 +587,7 @@ describe("配信モニター", () => {
     );
   });
   it.each([
-    ["配送なし", { totalCount: 0, sentCount: 0 }],
+    ["配信なし", { totalCount: 0, sentCount: 0 }],
     ["未送信あり", { sentCount: 0, pendingCount: 42 }],
     ["未送信あり", { sentCount: 40, sendingCount: 2 }],
     ["要確認", { sentCount: 40, retryWaitCount: 2 }],
@@ -542,26 +613,11 @@ describe("配信モニター", () => {
       renderPage(createMockNotificationMonitorApi(fixtures));
       const card = await screen.findByRole("article", { name: "配信 #503" });
       const fcm = within(card).getByRole("button", {
-        name: `${selected.content.push.title}のFCM配信詳細`,
+        name: `${selected.content.push.title}の通知サービス配信詳細`,
       });
       expect(within(fcm).getByText(badge)).toBeInTheDocument();
       if (badge !== "受付成功")
         expect(within(fcm).queryByText("受付成功")).not.toBeInTheDocument();
     }
   );
-
-  it("集計取得失敗時はFCM受付成功と表示しない", async () => {
-    const api = createMockNotificationMonitorApi(
-      createNotificationMonitorFixtures(now())
-    );
-    const original = api.getDetail;
-    vi.spyOn(api, "getDetail").mockImplementation((id) =>
-      id === 503 ? Promise.reject(new Error("集計取得失敗")) : original(id)
-    );
-    renderPage(api);
-    const card = await screen.findByRole("article", { name: "配信 #503" });
-    const fcm = within(card).getByRole("button", { name: /のFCM配信詳細/ });
-    expect(within(fcm).getByText("集計取得失敗")).toBeInTheDocument();
-    expect(within(fcm).queryByText("受付成功")).not.toBeInTheDocument();
-  });
 });

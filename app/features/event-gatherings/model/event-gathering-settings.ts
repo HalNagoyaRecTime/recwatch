@@ -23,6 +23,8 @@ export type RoundSetting = {
 
 export type EventGatheringSettings = {
   eventId: number;
+  /** Event と共有する版。集合設定の保存でも進む。 */
+  lockVersion: number;
   rounds: RoundSetting[];
 };
 
@@ -66,6 +68,8 @@ export type RoundWriteInput = {
 
 export type EventGatheringSettingsWriteInput = {
   rounds: RoundWriteInput[];
+  /** 取得した版を送り返して競合を検出する。 */
+  lockVersion?: number;
 };
 
 /** 旧 API で集合時刻が未設定のまま作成された行に入っている値。画面では未入力として扱う。 */
@@ -73,13 +77,6 @@ export const UNSET_GATHERING_TIME = "99:59";
 
 export const MIN_ROUND = 1;
 export const MAX_ROUND = 99;
-
-/**
- * PUT /gatherings/:gatheringId/members の user_ids は 30 件が上限。
- * D1 のバインド変数（1 人あたり 2 個・1 クエリ 100 個まで）に由来するため、
- * 保存して 400 を受け取る前に画面側でも同じ値で止める。
- */
-export const MAX_GATHERING_MEMBERS = 30;
 
 let draftKeySequence = 0;
 

@@ -10,12 +10,14 @@ import type {
 
 type UseStudentMutationOptions = {
   api: StudentMutationApi;
+  onConflict?: () => Promise<void> | void;
   onRevalidate?: () => Promise<void> | void;
   userApi?: StudentAccessMutationApi;
 };
 
 export function useStudentMutation({
   api,
+  onConflict,
   onRevalidate,
   userApi,
 }: UseStudentMutationOptions) {
@@ -29,7 +31,9 @@ export function useStudentMutation({
         studentId === null
           ? api.createStudent(input)
           : api.updateStudent(studentId, input),
-      "学生を保存できませんでした。"
+      "学生を保存できませんでした。",
+      false,
+      onConflict
     );
   }
 
@@ -51,9 +55,9 @@ export function useStudentMutation({
             ? userApi.grantStaff(student.userId)
             : userApi.revokeStaff(student.userId)
           : Promise.reject(
-              new Error("学生のstaff状態を更新できませんでした。")
+              new Error("学生のスタッフ権限を更新できませんでした。")
             ),
-      "学生のstaff状態を更新できませんでした。",
+      "学生のスタッフ権限を更新できませんでした。",
       true
     );
   }

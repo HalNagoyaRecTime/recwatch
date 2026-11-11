@@ -18,6 +18,7 @@ describe("toStudentRow", () => {
           class_code: "A-1",
           class_name: "1年A組",
         },
+        lock_version: 4,
       })
     ).toEqual({
       studentId: 7,
@@ -32,6 +33,7 @@ describe("toStudentRow", () => {
         classCode: "A-1",
         className: "1年A組",
       },
+      lockVersion: 4,
     });
   });
 
@@ -46,6 +48,7 @@ describe("toStudentRow", () => {
         is_live_active: true,
         is_staff: false,
         class_room: null,
+        lock_version: 0,
       })
     ).toMatchObject({
       attendanceNumber: null,

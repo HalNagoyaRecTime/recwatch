@@ -1,27 +1,33 @@
-import type { NotificationScheduleDetail } from "~/features/notifications/api/contracts/notification-schedule-query-api";
+import {
+  hasMonitorProgress,
+  type MonitorSchedule,
+} from "~/features/notifications/hooks/notification-monitor-data";
 
 export function NotificationMonitorProgress({
-  detail,
+  schedule,
 }: {
-  detail: NotificationScheduleDetail;
+  schedule: MonitorSchedule;
 }) {
-  const delivery = detail.deliveryProgress;
+  if (!hasMonitorProgress(schedule)) {
+    return <p className="text-text-muted text-xs">集計を読み込んでいます。</p>;
+  }
+  const delivery = schedule.deliveryProgress;
   const values = [
-    ["対象者", `${detail.recipientProgress.count}人`],
-    ["配送総数", `${delivery.totalCount}件`],
+    ["対象者", `${schedule.recipientProgress.count}人`],
+    ["総配信件数", `${delivery.totalCount}件`],
     ["送信待ち", `${delivery.pendingCount}件`],
     ["送信中", `${delivery.sendingCount}件`],
     ["再送待ち", `${delivery.retryWaitCount}件`],
-    ["FCM受付成功", `${delivery.sentCount}件`],
+    ["通知サービス受付済み", `${delivery.sentCount}件`],
     ["失敗", `${delivery.failedCount}件`],
     ["停止", `${delivery.stoppedCount}件`],
   ];
   return (
     <div>
       <p className="text-text-muted mb-2 text-xs">
-        対象解決: {detail.audienceProgress.resolvedCount} /{" "}
-        {detail.audienceProgress.totalCount}・
-        {detail.recipientProgress.status === "pending"
+        配信対象の確認: {schedule.audienceProgress.resolvedCount} /{" "}
+        {schedule.audienceProgress.totalCount}・
+        {schedule.recipientProgress.status === "pending"
           ? "人数未確定"
           : "人数確定"}
       </p>

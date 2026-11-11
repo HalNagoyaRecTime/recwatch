@@ -4,6 +4,11 @@ import { createMemoryRouter, RouterProvider, useLocation } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { StudentApi } from "~/features/students/api";
+import { ApiClientError } from "~/lib/api-client-error";
+import {
+  UPDATE_CONFLICT_MESSAGE,
+  UPDATE_CONFLICT_RELOAD_FAILED_MESSAGE,
+} from "~/lib/update-conflict";
 import type { StudentRow } from "~/features/students/model/student";
 import StudentCreateRoute from "~/routes/main/students.new";
 import StudentEditRoute, {
@@ -43,6 +48,7 @@ const student: StudentRow = {
     classCode: "1A",
     className: "1年Aクラス",
   },
+  lockVersion: 0,
 };
 
 function LocationProbe() {
@@ -152,6 +158,79 @@ describe("student management nested routes", () => {
     });
   });
 
+  it("競合後の再取得に失敗してもエラー画面へ切り替わらず、モーダルと入力を残す", async () => {
+    const user = userEvent.setup();
+    mockStudentList();
+    vi.spyOn(StudentApi, "getStudentById")
+      .mockResolvedValueOnce(student)
+      .mockRejectedValue(new Error("network"));
+    vi.spyOn(StudentApi, "updateStudent").mockRejectedValue(
+      new ApiClientError(409, "conflict", "STUDENT_UPDATE_CONFLICT")
+    );
+    mocks.getClassRoomData.mockResolvedValue([classRoom]);
+
+    renderStudentsRouter("/students/7/edit");
+
+    const name = await screen.findByLabelText("氏名*");
+    await user.clear(name);
+    await user.type(name, "自分の変更");
+    await user.click(screen.getByRole("button", { name: "保存する" }));
+
+    expect(
+      await screen.findByText(UPDATE_CONFLICT_RELOAD_FAILED_MESSAGE)
+    ).toBeInTheDocument();
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+    expect(screen.getByLabelText("氏名*")).toHaveValue("自分の変更");
+    expect(
+      screen.queryByText("学生情報を読み込めません")
+    ).not.toBeInTheDocument();
+  });
+
+  it("競合のあと保存せずに閉じると一覧を再検証する", async () => {
+    const user = userEvent.setup();
+    const getStudents = mockStudentList();
+    vi.spyOn(StudentApi, "getStudentById").mockResolvedValue(student);
+    vi.spyOn(StudentApi, "updateStudent").mockRejectedValue(
+      new ApiClientError(409, "conflict", "STUDENT_UPDATE_CONFLICT")
+    );
+    mocks.getClassRoomData.mockResolvedValue([classRoom]);
+
+    const router = renderStudentsRouter("/students/7/edit");
+
+    await screen.findByLabelText("氏名*");
+    await waitFor(() => expect(getStudents).toHaveBeenCalledOnce());
+    await user.click(screen.getByRole("button", { name: "保存する" }));
+    expect(
+      await screen.findByText(UPDATE_CONFLICT_MESSAGE)
+    ).toBeInTheDocument();
+    expect(getStudents).toHaveBeenCalledOnce();
+
+    await user.click(screen.getByRole("button", { name: "キャンセル" }));
+
+    await waitFor(() =>
+      expect(router.state.location.pathname).toBe("/students")
+    );
+    await waitFor(() => expect(getStudents).toHaveBeenCalledTimes(2));
+  });
+
+  it("競合がなければ閉じても一覧を再検証しない", async () => {
+    const user = userEvent.setup();
+    const getStudents = mockStudentList();
+    vi.spyOn(StudentApi, "getStudentById").mockResolvedValue(student);
+    mocks.getClassRoomData.mockResolvedValue([classRoom]);
+
+    const router = renderStudentsRouter("/students/7/edit");
+
+    await screen.findByLabelText("氏名*");
+    await waitFor(() => expect(getStudents).toHaveBeenCalledOnce());
+    await user.click(screen.getByRole("button", { name: "キャンセル" }));
+
+    await waitFor(() =>
+      expect(router.state.location.pathname).toBe("/students")
+    );
+    expect(getStudents).toHaveBeenCalledOnce();
+  });
+
   it("編集Routeは単体取得し、保存後は一覧だけを再検証する", async () => {
     const user = userEvent.setup();
     const getStudents = mockStudentList();
@@ -186,6 +265,7 @@ describe("student management nested routes", () => {
       classRoomId: 1,
       displayName: "山田太郎",
       studentIdNumber: "S007",
+      lockVersion: 0,
     });
     expect(getStudentById).toHaveBeenCalledOnce();
     await waitFor(() =>
@@ -222,6 +302,7 @@ describe("student management nested routes", () => {
         classRoomId: null,
         displayName: "山田 花子",
         studentIdNumber: "S007",
+        lockVersion: 0,
       })
     );
   });

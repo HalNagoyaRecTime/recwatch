@@ -8,6 +8,11 @@ export type EventFormValue = {
   venueIds: number[];
 };
 
+/** 編集画面の初期値。取得時点の版を保存時に送り返す。 */
+export type EventEditValue = EventFormValue & {
+  lockVersion: number;
+};
+
 export type EventWriteInput = {
   endTime: string;
   name: string;

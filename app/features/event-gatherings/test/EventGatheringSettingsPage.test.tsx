@@ -224,9 +224,9 @@ describe("EventGatheringSettingsPage", () => {
     await waitFor(() => expect(load).toHaveBeenCalledWith(7));
 
     await user.click(
-      await screen.findByRole("button", { name: "Roundを追加" })
+      await screen.findByRole("button", { name: "ラウンドを追加" })
     );
-    const round = screen.getByRole("region", { name: "Round 1" });
+    const round = screen.getByRole("region", { name: "ラウンド 1" });
     await user.click(
       within(round).getByRole("button", { name: "メンバーを選択" })
     );
@@ -261,7 +261,7 @@ describe("EventGatheringSettingsPage", () => {
       await screen.findByText("集合設定を保存しました")
     ).toBeInTheDocument();
     expect(
-      screen.getByText("1Round・1件の集合を登録しました。")
+      screen.getByText("1ラウンド・1件の集合を登録しました。")
     ).toBeInTheDocument();
     expect(
       screen.getByRole("dialog", { name: "集合設定" })
@@ -299,7 +299,7 @@ describe("EventGatheringSettingsPage", () => {
     const user = userEvent.setup();
     renderPage("/events/7/gatherings", load, save);
 
-    const startTime = await screen.findByLabelText("Round 1 の開始時刻");
+    const startTime = await screen.findByLabelText("ラウンド 1 の開始時刻");
     await user.type(startTime, "11:00");
     await user.click(screen.getByRole("button", { name: "集合設定を保存" }));
 
@@ -307,7 +307,7 @@ describe("EventGatheringSettingsPage", () => {
       await screen.findByText("集合設定を保存しました")
     ).toBeInTheDocument();
     expect(
-      screen.getByText("1Round・1件の集合を登録しました。")
+      screen.getByText("1ラウンド・1件の集合を登録しました。")
     ).toBeInTheDocument();
     expect(
       screen.getByRole("dialog", { name: "集合設定" })

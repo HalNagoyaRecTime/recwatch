@@ -217,7 +217,7 @@ async function fillContent() {
     ["タイトル*", "統合確認の通知"],
     ["本文*", "検証用の本文"],
     ["詳細タイトル*", "統合確認の詳細"],
-    ["Markdownソース", "検証用の詳細本文"],
+    ["詳細本文の編集", "検証用の詳細本文"],
   ])
     fireEvent.change(
       await screen.findByLabelText(
@@ -225,7 +225,7 @@ async function fillContent() {
         {},
         {
           // CIでは初回のMarkdownエディターのmodule読み込みを待つ。
-          timeout: label === "Markdownソース" ? 10_000 : 1_000,
+          timeout: label === "詳細本文の編集" ? 10_000 : 1_000,
         }
       ),
       { target: { value } }
