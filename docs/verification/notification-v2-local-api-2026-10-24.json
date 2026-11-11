@@ -1,0 +1,305 @@
+{
+  "date": "2026-10-24",
+  "environment": "isolated-local-http",
+  "recwatchDevelop": "b1abab37b47c5bdba2b819f1094b8b2124a79c3d",
+  "backendDevelop": "d7b9fe1d3a80a3a76c8720e2ae4ae90aae783172",
+  "limitations": [
+    "画面E2E・実認証・実FCM送信は未実施",
+    "競合とretry_wait等はローカルDBの状態fixture",
+    "CronはRecipient確定まで。FCM設定なしのためresolvingからの配信完了は未確認"
+  ],
+  "results": [
+    {
+      "id": "config-and-audience-count",
+      "result": "passed"
+    },
+    {
+      "id": "scheduled-create-list-detail",
+      "result": "passed"
+    },
+    {
+      "id": "patch-unstarted",
+      "result": "passed"
+    },
+    {
+      "id": "resend-immediate-and-scheduled",
+      "result": "passed"
+    },
+    {
+      "id": "cancel-unstarted-keep-notification",
+      "result": "passed"
+    },
+    {
+      "id": "delete-unstarted-and-read-404",
+      "result": "passed"
+    },
+    {
+      "id": "sending-progress-results-and-retry-wait",
+      "result": "passed"
+    },
+    {
+      "id": "started-edit-delete-cancel-conflict",
+      "result": "passed"
+    },
+    {
+      "id": "stop-bodyless-audit-and-repeat-conflict",
+      "result": "passed"
+    },
+    {
+      "id": "stop-completed-conflict",
+      "result": "passed"
+    },
+    {
+      "id": "deleted-source-label-null-and-resend-conflict",
+      "result": "passed"
+    },
+    {
+      "id": "importance-forbidden-403",
+      "result": "passed"
+    },
+    {
+      "id": "validation-error-400-through-api-client",
+      "result": "passed"
+    },
+    {
+      "id": "cron-resolves-recipient-without-token",
+      "result": "passed"
+    }
+  ],
+  "requests": [
+    {
+      "method": "GET",
+      "path": "/api/v1/admin/notifications/config",
+      "status": 200,
+      "hasBody": false
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/admin/notifications/audience-count",
+      "status": 200,
+      "hasBody": true
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/admin/notifications",
+      "status": 201,
+      "hasBody": true
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/admin/notifications",
+      "status": 200,
+      "hasBody": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/admin/notifications/7",
+      "status": 200,
+      "hasBody": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/admin/notifications",
+      "status": 200,
+      "hasBody": false
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/admin/notifications/7",
+      "status": 200,
+      "hasBody": true
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/admin/notifications/7",
+      "status": 200,
+      "hasBody": false
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/admin/notifications/schedules/9/resend",
+      "status": 201,
+      "hasBody": true
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/admin/notifications/schedules/9/resend",
+      "status": 201,
+      "hasBody": true
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/admin/notifications/7",
+      "status": 200,
+      "hasBody": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/admin/notifications/schedules/11",
+      "status": 200,
+      "hasBody": false
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/admin/notifications/schedules/11",
+      "status": 204,
+      "hasBody": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/admin/notifications/schedules/11",
+      "status": 404,
+      "hasBody": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/admin/notifications/7",
+      "status": 200,
+      "hasBody": false
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/admin/notifications/7",
+      "status": 204,
+      "hasBody": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/admin/notifications/7",
+      "status": 404,
+      "hasBody": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/admin/notifications",
+      "status": 200,
+      "hasBody": false
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/admin/notifications",
+      "status": 201,
+      "hasBody": true
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/admin/notifications/schedules/12",
+      "status": 200,
+      "hasBody": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/admin/notifications/schedules/12/results",
+      "status": 200,
+      "hasBody": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/admin/notifications/push-deliveries/5",
+      "status": 200,
+      "hasBody": false
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/admin/notifications/8",
+      "status": 409,
+      "hasBody": true
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/admin/notifications/8",
+      "status": 409,
+      "hasBody": false
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/admin/notifications/schedules/12",
+      "status": 409,
+      "hasBody": false
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/admin/notifications/8",
+      "status": 200,
+      "hasBody": true
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/admin/notifications/schedules/12/stop",
+      "status": 200,
+      "hasBody": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/admin/notifications/schedules/12",
+      "status": 200,
+      "hasBody": false
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/admin/notifications/schedules/12/stop",
+      "status": 409,
+      "hasBody": false
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/admin/notifications",
+      "status": 201,
+      "hasBody": true
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/admin/notifications/schedules/13/stop",
+      "status": 409,
+      "hasBody": false
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/admin/notifications",
+      "status": 201,
+      "hasBody": true
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/admin/notifications/10",
+      "status": 200,
+      "hasBody": false
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/admin/notifications/schedules/14/resend",
+      "status": 409,
+      "hasBody": true
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/admin/notifications",
+      "status": 403,
+      "hasBody": true
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/admin/notifications",
+      "status": 400,
+      "hasBody": true
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/admin/notifications",
+      "status": 201,
+      "hasBody": true
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/admin/notifications/schedules/15",
+      "status": 200,
+      "hasBody": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/admin/notifications/schedules/15/results",
+      "status": 200,
+      "hasBody": false
+    }
+  ]
+}

@@ -12,6 +12,9 @@ import {
 import type { NotificationScheduleCommandApi } from "~/features/notifications/api/contracts/notification-schedule-command-api";
 import { ApiClientError } from "~/lib/api-client-error";
 import { NotificationMonitorPage } from "~/features/notifications/pages/NotificationMonitorPage";
+import { httpNotificationScheduleQueryApi } from "~/features/notifications/api/http/notification-schedule-query-api";
+import { httpNotificationScheduleCommandApi } from "~/features/notifications/api/http/notification-schedule-command-api";
+import { notificationScheduleListFixture } from "~/features/notifications/mock/notification-fixtures";
 
 const graph = vi.hoisted(() => ({
   props: null as ComponentProps<typeof ReactFlow> | null,
@@ -114,6 +117,118 @@ function renderPage(
 }
 
 describe("配信モニター", () => {
+  it("本番HTTP adapterのStop409後にGETし、完了Nodeとdialogを保持する", async () => {
+    const sending = createNotificationMonitorFixtures(now()).find(
+      (item) => item.status === "sending"
+    )!;
+    const summary = notificationScheduleListFixture.items.find(
+      (item) => item.notificationScheduleId === sending.notificationScheduleId
+    )!;
+    let completed = false;
+    const requests: Array<{ method: string; path: string; body: unknown }> = [];
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: string | URL | Request, init?: RequestInit) => {
+        const path = new URL(String(input)).pathname;
+        const method = init?.method ?? "GET";
+        requests.push({ method, path, body: init?.body });
+        const respond = (body: unknown, status = 200) =>
+          new Response(JSON.stringify(body), {
+            status,
+            headers: { "Content-Type": "application/json" },
+          });
+        if (method === "POST" && path.endsWith("/stop")) {
+          completed = true;
+          return respond(
+            {
+              error: {
+                code: "NOTIFICATION_SCHEDULE_STOP_NOT_ALLOWED",
+                message: "この通知スケジュールは停止できません",
+              },
+            },
+            409
+          );
+        }
+        const status = completed ? "completed" : "sending";
+        if (path.endsWith("/schedules"))
+          return respond({
+            items: [
+              {
+                ...summary,
+                sendAt: sending.sendAt,
+                status,
+                audienceProgress: completed ? null : sending.audienceProgress,
+                recipientProgress: completed ? null : sending.recipientProgress,
+                deliveryProgress: completed ? null : sending.deliveryProgress,
+              },
+            ],
+          });
+        if (path.endsWith(`/schedules/${sending.notificationScheduleId}`))
+          return respond({
+            ...sending,
+            status,
+            deliveryProgress: completed
+              ? {
+                  totalCount: 42,
+                  pendingCount: 0,
+                  sendingCount: 0,
+                  retryWaitCount: 0,
+                  sentCount: 42,
+                  failedCount: 0,
+                  stoppedCount: 0,
+                }
+              : sending.deliveryProgress,
+          });
+        throw new Error(`未対応のHTTP: ${method} ${path}`);
+      })
+    );
+    const user = userEvent.setup();
+    const reportFeedback = vi.fn();
+    renderPage(
+      httpNotificationScheduleQueryApi,
+      reportFeedback,
+      httpNotificationScheduleCommandApi
+    );
+    await user.click(await screen.findByRole("button", { name: "緊急停止" }));
+    const dialog = screen.getByRole("dialog", { name: "緊急停止の確認" });
+    await user.click(within(dialog).getByRole("button", { name: "実行する" }));
+    expect(await within(dialog).findByRole("alert")).toHaveTextContent(
+      "この通知スケジュールは停止できません"
+    );
+    expect(
+      within(dialog).getByText("最新の状態: 配信完了")
+    ).toBeInTheDocument();
+    expect(
+      within(dialog).getByRole("button", { name: "実行する" })
+    ).toBeDisabled();
+    expect(
+      screen.getByRole("article", {
+        name: `配信 #${sending.notificationScheduleId}`,
+      })
+    ).toBeInTheDocument();
+    const stopIndex = requests.findIndex(
+      (request) => request.method === "POST"
+    );
+    expect(requests[stopIndex].body).toBeUndefined();
+    expect(
+      requests
+        .slice(stopIndex + 1)
+        .some(
+          (request) =>
+            request.method === "GET" &&
+            request.path.endsWith(
+              `/schedules/${sending.notificationScheduleId}`
+            )
+        )
+    ).toBe(true);
+    expect(reportFeedback).toHaveBeenCalledWith(
+      expect.objectContaining({ kind: "action-error" })
+    );
+    expect(reportFeedback).not.toHaveBeenCalledWith(
+      expect.objectContaining({ kind: "action-success" })
+    );
+  });
+
   it("Stop競合後もNodeと確認dialogを保ち、最新状態では実行を無効にする", async () => {
     const fixtures = createNotificationMonitorFixtures(now());
     const sending = fixtures.find((item) => item.status === "sending")!;

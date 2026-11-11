@@ -17,7 +17,9 @@ function schedule(status: MonitorSchedule["status"], offset: number) {
 
 describe("配信モニターの表示範囲と位置", () => {
   it.each([
-    ["scheduled", -1, false],
+    ["scheduled", -monitorDayMs - 1, false],
+    ["scheduled", -monitorDayMs, true],
+    ["scheduled", -1, true],
     ["scheduled", 0, true],
     ["scheduled", monitorDayMs, true],
     ["scheduled", monitorDayMs + 1, false],
