@@ -9,7 +9,6 @@ import {
   GatheringTeamMemberAdjustment,
   type SelectedTeamMemberGroup,
 } from "~/features/event-gatherings/components/GatheringTeamMemberAdjustment";
-import { MAX_GATHERING_MEMBERS } from "~/features/event-gatherings/model/event-gathering-settings";
 import type {
   GatheringMemberCandidates,
   MemberNonStudent,
@@ -160,8 +159,6 @@ export function GatheringMemberPicker({
   useEffect(() => {
     setHasMoreBelow(hasScrollBelow(listRef.current));
   }, [visibleTeams]);
-
-  const isOverLimit = selectedUserIds.length > MAX_GATHERING_MEMBERS;
 
   function toggleTeam(teamId: number) {
     const selection = selectionsByTeamId.get(teamId);
@@ -335,14 +332,6 @@ export function GatheringMemberPicker({
         />
       ) : null}
 
-      {isOverLimit ? (
-        <p className="text-tone-danger-text text-sm" role="alert">
-          参加者は{MAX_GATHERING_MEMBERS}人までです。
-          {selectedUserIds.length - MAX_GATHERING_MEMBERS}
-          人減らしてください。
-        </p>
-      ) : null}
-
       {saveError ? (
         <p className="text-tone-danger-text text-sm" role="alert">
           {saveError}
@@ -354,7 +343,7 @@ export function GatheringMemberPicker({
           {candidates ? `${visibleTeams.length}チームを表示中` : ""}
           {hasMoreBelow ? "（スクロールで続きを表示）" : ""}
           {candidates
-            ? ` ／ 選択中 ${selectedTeamCount}チーム・${selectedUserIds.length}人 / ${MAX_GATHERING_MEMBERS}人`
+            ? ` ／ 選択中 ${selectedTeamCount}チーム・${selectedUserIds.length}人`
             : ""}
         </p>
         <div className="flex items-center gap-2">
@@ -369,9 +358,7 @@ export function GatheringMemberPicker({
             キャンセル
           </Button>
           <Button
-            disabled={
-              isSaving || isLoading || isOverLimit || Boolean(loadError)
-            }
+            disabled={isSaving || isLoading || Boolean(loadError)}
             icon={Check}
             onClick={onSave}
             size="sm"

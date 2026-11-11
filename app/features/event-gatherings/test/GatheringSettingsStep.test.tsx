@@ -173,6 +173,19 @@ function renderStep({
   return { memberGateway, onMembersSaved, onSaved };
 }
 
+function teamStudents(teamId: number, firstUserId: number, count: number) {
+  return Array.from({ length: count }, (_, index) => ({
+    id: firstUserId + index,
+    userId: firstUserId + index,
+    name: `学生${firstUserId + index}`,
+    teamId,
+    classroomId: teamId,
+    attendanceNumber: index + 1,
+    studentNumber: `2026${firstUserId + index}`,
+    isLiveActive: true,
+  }));
+}
+
 describe("GatheringSettingsStep", () => {
   it("開始時刻を変更・解除しても集合を維持して保存する", async () => {
     const save = vi.fn().mockResolvedValue(existingSettings);
@@ -1264,20 +1277,19 @@ describe("GatheringSettingsStep", () => {
     );
   });
 
-  it("31人のチームを選び、1人外して30人で保存できる", async () => {
+  it("3チーム・120人を選ぶと、30人を超えてもそのまま120人で保存できる", async () => {
     const memberGateway = createMemberGateway();
     (memberGateway.loadCandidates as Mock).mockResolvedValue({
-      teams: [{ id: 10, name: "青チーム", classCodes: ["HAL1A"] }],
-      students: Array.from({ length: 31 }, (_, index) => ({
-        id: 10 + index,
-        userId: 1001 + index,
-        name: `学生${index + 1}`,
-        teamId: 10,
-        classroomId: 1,
-        attendanceNumber: index + 1,
-        studentNumber: `2026${String(index + 1).padStart(3, "0")}`,
-        isLiveActive: true,
-      })),
+      teams: [
+        { id: 10, name: "青チーム", classCodes: ["HAL1A"] },
+        { id: 11, name: "赤チーム", classCodes: ["HAL1B"] },
+        { id: 12, name: "黄チーム", classCodes: ["HAL1C"] },
+      ],
+      students: [
+        ...teamStudents(10, 1001, 40),
+        ...teamStudents(11, 2001, 40),
+        ...teamStudents(12, 3001, 40),
+      ],
       nonStudents: new Map(),
     });
     renderStep({
@@ -1292,34 +1304,57 @@ describe("GatheringSettingsStep", () => {
     await screen.findByRole("region", { name: "ラウンド 1" });
     await user.click(screen.getByRole("button", { name: "メンバーを選択" }));
     await user.click(await screen.findByLabelText("青チームを選択"));
+    await user.click(screen.getByLabelText("赤チームを選択"));
+    await user.click(screen.getByLabelText("黄チームを選択"));
 
-    expect(
-      screen.getByText(/選択中 1チーム・31人 \/ 30人/)
-    ).toBeInTheDocument();
-    expect(screen.getByRole("alert")).toHaveTextContent(
-      "参加者は30人までです。1人減らしてください。"
+    expect(screen.getByText(/選択中 3チーム・120人$/)).toBeInTheDocument();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "参加者を保存" })).toBeEnabled();
+
+    await user.click(screen.getByRole("button", { name: "参加者を保存" }));
+    await waitFor(() =>
+      expect(memberGateway.saveMembers).toHaveBeenCalledWith(101, [
+        ...Array.from({ length: 40 }, (_, index) => 1001 + index),
+        ...Array.from({ length: 40 }, (_, index) => 2001 + index),
+        ...Array.from({ length: 40 }, (_, index) => 3001 + index),
+      ])
     );
-    expect(screen.getByRole("button", { name: "参加者を保存" })).toBeDisabled();
+  });
 
+  it("36人のチームを選んだあと、1人だけ外して35人で保存できる", async () => {
+    const memberGateway = createMemberGateway();
+    (memberGateway.loadCandidates as Mock).mockResolvedValue({
+      teams: [{ id: 10, name: "青チーム", classCodes: ["HAL1A"] }],
+      students: teamStudents(10, 1001, 36),
+      nonStudents: new Map(),
+    });
+    renderStep({
+      memberGateway,
+      settingsGateway: {
+        load: vi.fn().mockResolvedValue(existingSettings),
+        save: vi.fn(),
+      },
+    });
+    const user = userEvent.setup();
+
+    await screen.findByRole("region", { name: "ラウンド 1" });
+    await user.click(screen.getByRole("button", { name: "メンバーを選択" }));
+    await user.click(await screen.findByLabelText("青チームを選択"));
     const adjustment = screen.getByRole("region", {
       name: "選択したチームの参加者調整",
     });
     await user.click(
-      within(adjustment).getByLabelText("学生31（2026031）を参加者に含める")
+      within(adjustment).getByLabelText("学生1036（20261036）を参加者に含める")
     );
 
-    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
-    expect(
-      screen.getByText(/選択中 0チーム・30人 \/ 30人/)
-    ).toBeInTheDocument();
+    expect(screen.getByText(/選択中 0チーム・35人$/)).toBeInTheDocument();
     expect(screen.getByLabelText("青チームを選択")).toBePartiallyChecked();
-    expect(screen.getByRole("button", { name: "参加者を保存" })).toBeEnabled();
 
     await user.click(screen.getByRole("button", { name: "参加者を保存" }));
     await waitFor(() =>
       expect(memberGateway.saveMembers).toHaveBeenCalledWith(
         101,
-        Array.from({ length: 30 }, (_, index) => 1001 + index)
+        Array.from({ length: 35 }, (_, index) => 1001 + index)
       )
     );
   });
