@@ -9,6 +9,8 @@ import {
 } from "~/features/notifications/model/notification-results";
 
 const ResultsPageSize = 50;
+// 1文字ごとに問い合わせないよう、検索語は入力が止まってから反映します。
+const SearchDebounceMs = 300;
 
 type Options = {
   api: NotificationScheduleQueryApi;
@@ -45,38 +47,42 @@ export function useNotificationResults({
     page: number;
   }>({ scheduleId: null, filters: defaultResultFilters, page: 1 });
   const sequence = useRef(0);
-  const queryKey =
-    selection.scheduleId === scheduleId
-      ? JSON.stringify([
-          selection.page,
-          selection.filters.search,
-          selection.filters.status,
-        ])
-      : JSON.stringify([1, "", "all"]);
+  const selectionMatchesSchedule = selection.scheduleId === scheduleId;
+  const pendingSearch = selectionMatchesSchedule
+    ? selection.filters.search
+    : "";
+  const [settledSearch, setSettledSearch] = useState(pendingSearch);
+  useEffect(() => {
+    if (pendingSearch === settledSearch) return;
+    const timeoutId = window.setTimeout(
+      () => setSettledSearch(pendingSearch),
+      SearchDebounceMs
+    );
+    return () => window.clearTimeout(timeoutId);
+  }, [pendingSearch, settledSearch]);
+  const requestPage = selectionMatchesSchedule ? selection.page : 1;
+  const requestSearch = selectionMatchesSchedule ? settledSearch.trim() : "";
+  const requestStatus = selectionMatchesSchedule
+    ? selection.filters.status
+    : "all";
+  const queryKey = JSON.stringify([requestPage, requestSearch, requestStatus]);
   const invalidateRequests = useCallback(() => {
     sequence.current++;
   }, []);
   const loadResults = useCallback(async () => {
     if (scheduleId === null) return;
-    const request = ++sequence.current;
+    const issued = ++sequence.current;
     setLoadingId(scheduleId);
     setError(null);
     try {
-      const page = selection.scheduleId === scheduleId ? selection.page : 1;
       const result = await api.getResults(scheduleId, {
-        page,
+        page: requestPage,
         limit: ResultsPageSize,
-        ...(selection.scheduleId === scheduleId &&
-        selection.filters.search.trim()
-          ? { search: selection.filters.search.trim() }
-          : {}),
-        ...(selection.scheduleId === scheduleId &&
-        selection.filters.status !== "all"
-          ? { status: selection.filters.status }
-          : {}),
+        ...(requestSearch ? { search: requestSearch } : {}),
+        ...(requestStatus !== "all" ? { status: requestStatus } : {}),
         includeRegisteredAt: "1",
       });
-      if (request !== sequence.current) return;
+      if (issued !== sequence.current) return;
       setSnapshot({
         scheduleId,
         queryKey,
@@ -84,12 +90,12 @@ export function useNotificationResults({
         pagination: result.recipients.pagination,
       });
     } catch {
-      if (request === sequence.current)
+      if (issued === sequence.current)
         setError({ scheduleId, message: "配信結果を読み込めませんでした。" });
     } finally {
-      if (request === sequence.current) setLoadingId(null);
+      if (issued === sequence.current) setLoadingId(null);
     }
-  }, [api, scheduleId, selection, queryKey]);
+  }, [api, scheduleId, requestPage, requestSearch, requestStatus, queryKey]);
   useEffect(() => {
     if (!active || scheduleId === null) return;
     let mounted = true;

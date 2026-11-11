@@ -47,6 +47,50 @@ describe("配信結果の取得と検索", () => {
       })
     );
   });
+  it("検索語の入力が止まるまで取得を待ち、連続入力でも1回だけ問い合わせる", async () => {
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+    try {
+      const getResults = vi
+        .fn()
+        .mockResolvedValue(cloneFixture(notificationScheduleResultsFixture));
+      const queryApi = api(getResults);
+      const { result } = renderHook(() =>
+        useNotificationResults({
+          api: queryApi,
+          scheduleId: 504,
+          active: true,
+          refreshKey: 0,
+        })
+      );
+      await act(async () => {});
+      expect(getResults).toHaveBeenCalledTimes(1);
+      for (const search of ["山", "山田", "山田太"]) {
+        act(() =>
+          result.current.onFiltersChange({
+            search,
+            status: "all",
+            platform: "all",
+          })
+        );
+        await act(async () => {
+          await vi.advanceTimersByTimeAsync(100);
+        });
+      }
+      expect(getResults).toHaveBeenCalledTimes(1);
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(300);
+      });
+      expect(getResults).toHaveBeenCalledTimes(2);
+      expect(getResults).toHaveBeenLastCalledWith(504, {
+        page: 1,
+        limit: 50,
+        includeRegisteredAt: "1",
+        search: "山田太",
+      });
+    } finally {
+      vi.useRealTimers();
+    }
+  });
   it("サーバーサイドページネーションで1ページ分だけ取得する", async () => {
     const first = cloneFixture(notificationScheduleResultsFixture);
     first.recipients.pagination = {
