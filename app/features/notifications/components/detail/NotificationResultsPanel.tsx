@@ -169,9 +169,11 @@ export function NotificationResultsPanel({
           items={state.items}
           getRowKey={(item) => item.notificationRecipientId}
           emptyMessage={
-            recipientResolved
-              ? "配信対象者はいません"
-              : "対象者はまだ確定していません"
+            state.filters.search.trim() || state.filters.status !== "all"
+              ? "条件に一致する対象者はいません"
+              : recipientResolved
+                ? "配信対象者はいません"
+                : "対象者はまだ確定していません"
           }
           footer={
             <Pagination
