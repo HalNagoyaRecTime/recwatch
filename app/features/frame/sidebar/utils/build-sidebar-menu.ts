@@ -1,17 +1,21 @@
 import type { AppRole } from "~/config/permissions";
 import {
-  sidebarSections,
-  type SidebarItemConfig,
-  type SidebarSectionConfig,
-} from "~/config/routes";
+  navigationSections,
+  type NavigationItemConfig,
+  type NavigationSectionConfig,
+} from "~/config/navigation";
 import { canAccess } from "~/utils/permissions";
 import { sidebarIconMap } from "~/features/frame/sidebar/utils/sidebar-icon-mapper";
 import type { SidebarItemDef, SidebarSectionDef } from "~/types/sidebar";
 
 function mapItem(
   role: AppRole,
-  item: SidebarItemConfig
+  item: NavigationItemConfig
 ): SidebarItemDef | null {
+  if (item.showInSidebar === false) {
+    return null;
+  }
+
   const children =
     item.children
       ?.map((child) => mapItem(role, child))
@@ -38,7 +42,7 @@ function mapItem(
 
 function mapSection(
   role: AppRole,
-  section: SidebarSectionConfig
+  section: NavigationSectionConfig
 ): SidebarSectionDef | null {
   const items = section.items
     .map((item) => mapItem(role, item))
@@ -56,7 +60,7 @@ function mapSection(
 }
 
 export function buildSidebarMenu(role: AppRole) {
-  return sidebarSections
+  return navigationSections
     .map((section) => mapSection(role, section))
     .filter((section): section is SidebarSectionDef => section !== null);
 }
