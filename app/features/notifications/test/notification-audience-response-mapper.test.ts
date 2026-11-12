@@ -6,6 +6,7 @@ import {
   toEventAudiencePage,
   toGatheringAudienceDtos,
   toNotificationAudienceOptions,
+  toUserAudiencePage,
 } from "~/features/notifications/api/mappers/notification-audience-response-mapper";
 
 describe("notification audience response mapper", () => {
@@ -79,5 +80,30 @@ describe("notification audience response mapper", () => {
         offset: 0,
       })
     ).toThrowError(new ClientError(ClientErrors.RESPONSE_PARSE_ERROR));
+  });
+
+  it("totalの無い学生・教員のページを受け付ける", () => {
+    expect(
+      toUserAudiencePage({
+        items: [{ user_id: 1, display_name: "学生1" }],
+        limit: 100,
+        offset: 0,
+      })
+    ).toEqual({ items: [{ user_id: 1, display_name: "学生1" }] });
+  });
+
+  it.each([
+    ["本文がnull", null],
+    ["itemsが欠落", { limit: 100, offset: 0 }],
+    ["itemsが配列ではない", { items: {}, limit: 100, offset: 0 }],
+    ["要素がnull", { items: [null], limit: 100, offset: 0 }],
+    [
+      "要素の表示名が空",
+      { items: [{ user_id: 1, display_name: "" }], limit: 100, offset: 0 },
+    ],
+  ])("学生・教員のページの%sはunexpectedエラーにする", (_, response) => {
+    expect(() => toUserAudiencePage(response)).toThrowError(
+      new ClientError(ClientErrors.RESPONSE_PARSE_ERROR)
+    );
   });
 });

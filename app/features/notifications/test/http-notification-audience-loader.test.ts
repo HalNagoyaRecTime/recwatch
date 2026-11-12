@@ -27,8 +27,8 @@ describe("http notification audience loader", () => {
     }));
     const get = vi.fn(async (path: string) => {
       switch (path) {
-        case "/api/v1/students?limit=100&offset=0&isStaff=all&isLiveActive=true":
-        case "/api/v1/teachers?limit=100&offset=0&isStaff=all&isLiveActive=true":
+        case "/api/v1/students?limit=100&offset=0&isStaff=all&isLiveActive=true&includeTotal=false":
+        case "/api/v1/teachers?limit=100&offset=0&isStaff=all&isLiveActive=true&includeTotal=false":
           return { items: [], total: 0, limit: 100, offset: 0 };
         case "/api/v1/classrooms?limit=100&offset=0":
           return {
@@ -122,51 +122,58 @@ describe("http notification audience loader", () => {
     expect(get).not.toHaveBeenCalledWith("/api/v1/gatherings");
   });
 
-  it("学生・教員を全ページ取得し、学生IDではなくuser_idで重複なく返す", async () => {
+  it("学生・教員を件数を数えさせずに全ページ取得し、学生IDではなくuser_idで重複なく返す", async () => {
+    const students = Array.from({ length: 101 }, (_, index) => ({
+      student_id: index + 1,
+      user_id: index + 901,
+      display_name: `学生${index + 1}`,
+    }));
+    const teachers = [
+      { teacher_id: 1, user_id: 1002, display_name: "教員1" },
+      { user_id: 901, display_name: "学生1" },
+    ];
     const get = vi.fn(async (path: string) => {
       const query = new URL(path, "http://localhost");
       const offset = Number(query.searchParams.get("offset"));
+      const limit = Number(query.searchParams.get("limit"));
       if (query.pathname === "/api/v1/students")
-        return {
-          items: [
-            {
-              student_id: offset + 1,
-              user_id: offset + 901,
-              display_name: `学生${offset + 1}`,
-            },
-          ],
-          total: 2,
-          limit: 100,
-          offset,
-        };
+        return { items: students.slice(offset, offset + limit), limit, offset };
       if (query.pathname === "/api/v1/teachers")
-        return {
-          items: [
-            { teacher_id: 1, user_id: 903, display_name: "教員1" },
-            { user_id: 901, display_name: "学生1" },
-          ],
-          total: 2,
-          limit: 100,
-          offset,
-        };
+        return { items: teachers.slice(offset, offset + limit), limit, offset };
       return query.pathname === "/api/v1/events"
         ? { events: [], total: 0, limit: 100, offset: 0 }
         : { items: [], total: 0, limit: 100, offset: 0 };
     });
     const options = await createHttpNotificationAudienceApi({ get }).load();
-    expect(options).toEqual([
-      {
-        id: "901",
-        name: "学生1",
-        type: "user",
-        userCategory: "student_and_teacher",
-      },
-      { id: "902", name: "学生2", type: "user", userCategory: "student" },
-      { id: "903", name: "教員1", type: "user", userCategory: "teacher" },
+    expect(options).toHaveLength(102);
+    expect(options[0]).toEqual({
+      id: "901",
+      name: "学生1",
+      type: "user",
+      userCategory: "student_and_teacher",
+    });
+    expect(options).toContainEqual({
+      id: "1001",
+      name: "学生101",
+      type: "user",
+      userCategory: "student",
+    });
+    expect(options).toContainEqual({
+      id: "1002",
+      name: "教員1",
+      type: "user",
+      userCategory: "teacher",
+    });
+    expect(
+      get.mock.calls
+        .map(([path]) => path)
+        .filter((path) => /^\/api\/v1\/(students|teachers)\?/.test(path))
+        .sort()
+    ).toEqual([
+      "/api/v1/students?limit=100&offset=0&isStaff=all&isLiveActive=true&includeTotal=false",
+      "/api/v1/students?limit=100&offset=100&isStaff=all&isLiveActive=true&includeTotal=false",
+      "/api/v1/teachers?limit=100&offset=0&isStaff=all&isLiveActive=true&includeTotal=false",
     ]);
-    expect(get).toHaveBeenCalledWith(
-      "/api/v1/students?limit=100&offset=1&isStaff=all&isLiveActive=true"
-    );
   });
 
   it.each([0, "901", undefined])(
@@ -361,8 +368,8 @@ describe("http notification audience loader", () => {
 function createSingleEventGet(loadDetail: () => unknown) {
   return vi.fn(async (path: string) => {
     switch (path) {
-      case "/api/v1/students?limit=100&offset=0&isStaff=all&isLiveActive=true":
-      case "/api/v1/teachers?limit=100&offset=0&isStaff=all&isLiveActive=true":
+      case "/api/v1/students?limit=100&offset=0&isStaff=all&isLiveActive=true&includeTotal=false":
+      case "/api/v1/teachers?limit=100&offset=0&isStaff=all&isLiveActive=true&includeTotal=false":
         return { items: [], total: 0, limit: 100, offset: 0 };
       case "/api/v1/classrooms?limit=100&offset=0":
         return { items: [], total: 0, limit: 100, offset: 0 };

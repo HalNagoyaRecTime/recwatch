@@ -57,7 +57,4 @@ export type UserAudienceApiDto = {
 
 export type UserAudiencePageApiDto = {
   items: UserAudienceApiDto[];
-  total: number;
-  limit: number;
-  offset: number;
 };
