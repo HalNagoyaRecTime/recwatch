@@ -1,4 +1,4 @@
-import { ArrowLeft, Pencil, Users } from "lucide-react";
+import { ArrowLeft, Pencil, Upload, Users } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Outlet, useParams } from "react-router";
 
@@ -90,6 +90,13 @@ export function EventDetailPage({
                   to={`/events/${eventId}/edit`}
                 >
                   編集
+                </ButtonLink>
+                <ButtonLink
+                  icon={Upload}
+                  size="lg"
+                  to={`/events/${eventId}/gathering-import`}
+                >
+                  集合を取り込む
                 </ButtonLink>
                 <ButtonLink
                   icon={Users}
