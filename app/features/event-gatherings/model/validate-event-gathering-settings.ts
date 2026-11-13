@@ -42,12 +42,12 @@ export function validateEventGatheringSettings(
     ) {
       errors.push({
         roundKey: round.key,
-        message: `Round番号は${MIN_ROUND}〜${MAX_ROUND}の整数で入力してください。`,
+        message: `ラウンド番号は${MIN_ROUND}〜${MAX_ROUND}の整数で入力してください。`,
       });
     } else if (seenRounds.has(round.round)) {
       errors.push({
         roundKey: round.key,
-        message: `Round ${round.round} が重複しています。`,
+        message: `ラウンド ${round.round} が重複しています。`,
       });
     }
     seenRounds.add(round.round);

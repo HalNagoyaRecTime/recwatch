@@ -1,18 +1,13 @@
 const DEFAULT_PAGE_SIZE = 100;
 const DEFAULT_MAX_PAGES = 100;
 
-type Page<T> = {
-  items: T[];
-  total: number;
-};
-
 type LoadAllPagesOptions = {
   maxPages?: number;
   pageSize?: number;
 };
 
 export async function loadAllPages<T>(
-  loadPage: (offset: number, limit: number) => Promise<Page<T>>,
+  loadPage: (offset: number, limit: number) => Promise<T[]>,
   options: LoadAllPagesOptions = {}
 ): Promise<T[]> {
   const pageSize = options.pageSize ?? DEFAULT_PAGE_SIZE;
@@ -21,9 +16,9 @@ export async function loadAllPages<T>(
 
   for (let pageIndex = 0; pageIndex < maxPages; pageIndex += 1) {
     const page = await loadPage(items.length, pageSize);
-    items.push(...page.items);
+    items.push(...page);
 
-    if (page.items.length === 0 || items.length >= page.total) {
+    if (page.length < pageSize) {
       return items;
     }
   }

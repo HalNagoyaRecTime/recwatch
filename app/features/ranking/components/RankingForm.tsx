@@ -38,7 +38,7 @@ export function RankingForm({
   return (
     <form className="space-y-5" onSubmit={handleSubmit}>
       <p className="text-text-muted text-sm">
-        現在の得点: {initialRanking.score}pt
+        現在の得点: {initialRanking.score}点
       </p>
       <label className="block text-sm font-semibold" htmlFor="ranking-points">
         加算する得点

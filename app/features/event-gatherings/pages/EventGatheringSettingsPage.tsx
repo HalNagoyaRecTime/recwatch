@@ -49,7 +49,7 @@ export function EventGatheringSettingsPage({
       description={
         savedSettings
           ? "集合設定の保存が完了しました。"
-          : "Roundごとの集合時間・集合場所を編集します。"
+          : "ラウンドごとの集合時間・集合場所を編集します。"
       }
       onClose={handleClose}
       pinnedContent={

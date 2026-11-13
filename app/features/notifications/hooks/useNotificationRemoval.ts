@@ -77,7 +77,7 @@ export function useNotificationRemoval({
         message:
           current.type === "notification"
             ? `通知 #${id}を削除しました。`
-            : `Schedule #${id}の予約を取り消しました。`,
+            : `配信予約 #${id}を取り消しました。`,
       });
       if (current.type === "notification") onDeleted();
       else await reload();

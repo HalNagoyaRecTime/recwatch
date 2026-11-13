@@ -145,44 +145,50 @@ export function NotificationListPage({
 
   return (
     <>
-      <section className="mx-auto flex w-full flex-col gap-4">
-        <PageHeader
-          title={isCalendar ? "通知カレンダー" : "通知管理"}
-          description={
-            isCalendar
-              ? "通知の配信予定・配信状況を時間軸で確認できます。"
-              : "通知の配信予定と処理状況を一覧・カレンダーで確認できます"
-          }
-          actions={
-            <div className="flex flex-wrap gap-2">
-              <ButtonLink
-                icon={Plus}
-                to="/notifications/new"
-                variant="primary"
-                size="lg"
-              >
-                通知を作成
-              </ButtonLink>
-            </div>
-          }
-        />
+      <section
+        className={`mx-auto flex w-full flex-col gap-4 ${isCalendar ? "" : "min-h-0 flex-1 [&>*]:shrink-0"}`}
+      >
+        <div
+          className={`flex flex-col gap-4 ${isCalendar ? "" : "list-page-controls"}`}
+        >
+          <PageHeader
+            title={isCalendar ? "通知カレンダー" : "通知管理"}
+            description={
+              isCalendar
+                ? "通知の配信予定・配信状況を時間軸で確認できます。"
+                : "通知の配信予定と処理状況を一覧・カレンダーで確認できます"
+            }
+            actions={
+              <div className="flex flex-wrap gap-2">
+                <ButtonLink
+                  icon={Plus}
+                  to="/notifications/new"
+                  variant="primary"
+                  size="lg"
+                >
+                  通知を作成
+                </ButtonLink>
+              </div>
+            }
+          />
 
-        <NotificationManagementNavigation
-          active={isCalendar ? "calendar" : "list"}
-        />
-        {!isCalendar && (
-          <div className="flex flex-wrap items-center gap-2">{toolbar}</div>
-        )}
+          <NotificationManagementNavigation
+            active={isCalendar ? "calendar" : "list"}
+          />
+          {!isCalendar && (
+            <div className="flex flex-wrap items-center gap-2">{toolbar}</div>
+          )}
 
-        {activeError && activeItemCount > 0 ? (
-          <p
-            aria-live="polite"
-            className="text-tone-danger-text text-sm"
-            role="alert"
-          >
-            {activeError}
-          </p>
-        ) : null}
+          {activeError && activeItemCount > 0 ? (
+            <p
+              aria-live="polite"
+              className="text-tone-danger-text text-sm"
+              role="alert"
+            >
+              {activeError}
+            </p>
+          ) : null}
+        </div>
 
         {viewMode === "calendar" ? (
           <>

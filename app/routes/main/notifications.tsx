@@ -4,8 +4,7 @@ import { httpAdminNotificationCommandApi } from "~/features/notifications/api/ht
 import { httpAdminNotificationQueryApi } from "~/features/notifications/api/http/admin-notification-query-api";
 import { NotificationListPage } from "~/features/notifications/pages/NotificationListPage";
 import { useFeedback } from "~/features/frame/feedback";
-import { PagePadding } from "~/features/frame/page-layout/PagePadding";
-import { PageLayout } from "~/features/frame/page-layout/PageLayout";
+import { ListPageLayout } from "~/features/frame/page-layout/ListPageLayout";
 
 export function meta() {
   return [{ title: createPageTitle("通知管理") }];
@@ -29,15 +28,13 @@ export default function NotificationsRoute() {
     );
   }
   return (
-    <PageLayout>
-      <PagePadding>
-        <NotificationListPage
-          viewMode="list"
-          commandApi={httpAdminNotificationCommandApi}
-          queryApi={httpAdminNotificationQueryApi}
-          reportFeedback={report}
-        />
-      </PagePadding>
-    </PageLayout>
+    <ListPageLayout>
+      <NotificationListPage
+        viewMode="list"
+        commandApi={httpAdminNotificationCommandApi}
+        queryApi={httpAdminNotificationQueryApi}
+        reportFeedback={report}
+      />
+    </ListPageLayout>
   );
 }

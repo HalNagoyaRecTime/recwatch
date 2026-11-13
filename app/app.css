@@ -36,6 +36,7 @@
   --color-tone-danger-border: var(--tone-danger-border);
   --color-tone-danger-text: var(--tone-danger-text);
 
+  --color-tone-warning-bg: var(--tone-warning-bg);
   --color-tone-warning-text: var(--tone-warning-text);
 }
 
@@ -82,6 +83,7 @@
   --tone-danger-bg-hover: rgba(239, 68, 68, 0.2);
   --tone-danger-border: rgba(239, 68, 68, 0.28);
   --tone-danger-text: #dc2626;
+  --tone-warning-bg: rgba(245, 158, 11, 0.12);
   --tone-warning-text: #d97706;
 
   --app-shadow-soft: 0 20px 45px rgba(15, 23, 42, 0.12);
@@ -120,6 +122,7 @@
   --tone-danger-bg-hover: rgba(239, 68, 68, 0.2);
   --tone-danger-border: rgba(239, 68, 68, 0.36);
   --tone-danger-text: #ff8d8d;
+  --tone-warning-bg: rgba(245, 158, 11, 0.12);
   --tone-warning-text: #fbbf24;
 
   --app-shadow-soft: 0 20px 45px rgba(0, 0, 0, 0.28);
@@ -196,6 +199,30 @@
 }
 
 @layer utilities {
+  html:has(.list-page-layout),
+  html:has(.list-page-layout) body {
+    overscroll-behavior-y: none;
+  }
+
+  .list-page-layout {
+    --data-table-flex: 1;
+    --data-table-max-height: none;
+    height: calc(100vh - var(--main-header-total-height));
+  }
+
+  .list-page-layout .list-page-controls {
+    max-height: max(3rem, calc(100% - 15rem));
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior-y: none;
+  }
+
+  @supports (height: 100dvh) {
+    .list-page-layout {
+      height: calc(100dvh - var(--main-header-total-height));
+    }
+  }
+
   .viewport-min-height {
     min-height: 100vh;
   }

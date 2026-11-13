@@ -130,7 +130,7 @@ export function createHttpEventListGateway(
         const page = parseEventPage(
           await client.get(`/api/v1/events?limit=${limit}&offset=${offset}`)
         );
-        return { items: page.events, total: page.total };
+        return page.events;
       });
 
       return events.map(mapEvent);

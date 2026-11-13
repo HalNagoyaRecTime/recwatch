@@ -30,32 +30,23 @@ export function createHttpGatheringMemberGateway(
           const page = await client.get<TeamPageResponseDto>(
             `/api/v1/teams?limit=${limit}&offset=${offset}`
           );
-          return {
-            items: page.items.map(toMemberTeam),
-            total: page.total,
-          };
+          return page.items.map(toMemberTeam);
         }),
         // 停止中の学生も取得し、候補表では非表示にする。登録済みの停止中学生を
         // 学生以外の参加者と誤認せず、登録済みなら別枠で解除できるよう全件を取得する。
         loadAllPages(async (offset, limit) => {
           const page = await client.get<StudentPageResponseDto>(
-            `/api/v1/students?limit=${limit}&offset=${offset}&isLiveActive=all`
+            `/api/v1/students?limit=${limit}&offset=${offset}&isLiveActive=all&includeTotal=false`
           );
-          return {
-            items: page.items,
-            total: page.total,
-          };
+          return page.items;
         }),
         // 教員は選択候補に出さず、学生以外の参加者の氏名を引くためだけに取得する。
         // 登録後に停止された教員も参加者に残るため、停止中も含める。
         loadAllPages(async (offset, limit) => {
           const page = await client.get<TeacherPageResponseDto>(
-            `/api/v1/teachers?limit=${limit}&offset=${offset}&isLiveActive=all`
+            `/api/v1/teachers?limit=${limit}&offset=${offset}&isLiveActive=all&includeTotal=false`
           );
-          return {
-            items: page.items.map(toMemberNonStudent),
-            total: page.total,
-          };
+          return page.items.map(toMemberNonStudent);
         }),
       ]);
 

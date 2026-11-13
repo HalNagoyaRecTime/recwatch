@@ -67,78 +67,80 @@ export function TeachersPage({
   }, [currentPage, pageCount, updateSearchParams]);
 
   return (
-    <div className="min-h-full space-y-5">
-      <PageHeader
-        actions={
-          <div className="flex items-center gap-2">
-            <ImportUploadTrigger showHelperText={false} type="teachers" />
-            <Button
-              icon={Plus}
-              onClick={() => navigate(teacherCreateTarget(location.search))}
-              size="lg"
-              variant="primary"
-            >
-              新規登録
-            </Button>
+    <div className="flex min-h-0 flex-1 flex-col gap-5 [&>*]:shrink-0">
+      <div className="list-page-controls flex flex-col gap-5">
+        <PageHeader
+          actions={
+            <div className="flex items-center gap-2">
+              <ImportUploadTrigger showHelperText={false} type="teachers" />
+              <Button
+                icon={Plus}
+                onClick={() => navigate(teacherCreateTarget(location.search))}
+                size="lg"
+                variant="primary"
+              >
+                新規登録
+              </Button>
+            </div>
+          }
+          description="教官の基本情報を管理します"
+          title="教官管理"
+        />
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="min-w-60 flex-1">
+            <SearchField
+              ariaLabel="教官を検索"
+              onValueChange={setSearchInput}
+              placeholder="氏名・クラス名で検索..."
+              value={searchInput}
+            />
           </div>
-        }
-        description="教官の基本情報を管理します"
-        title="教官管理"
-      />
-      <div className="flex flex-wrap items-center gap-3">
-        <div className="min-w-60 flex-1">
-          <SearchField
-            ariaLabel="教官を検索"
-            onValueChange={setSearchInput}
-            placeholder="氏名・クラス名で検索..."
-            value={searchInput}
+          <Select
+            ariaLabel="担当クラスフィルター"
+            disabled={
+              classRoomOptionState.isLoading ||
+              Boolean(classRoomOptionState.error)
+            }
+            onValueChange={(value) =>
+              updateSearchParams({
+                page: 1,
+                classRoomId: value === "all" ? null : Number(value),
+              })
+            }
+            options={[
+              {
+                label: classRoomOptionState.isLoading
+                  ? "クラス:読み込み中..."
+                  : "クラス:すべて",
+                value: "all",
+              },
+              ...classRoomOptionState.items.map((classRoom) => ({
+                label: classRoom.classCode
+                  ? `${classRoom.classCode} ${classRoom.className}`
+                  : classRoom.className,
+                value: String(classRoom.classRoomId),
+              })),
+            ]}
+            value={classRoomId ? String(classRoomId) : "all"}
+          />
+          <Select
+            ariaLabel="スタッフフィルター"
+            onValueChange={(value) => handleFilterChange("isStaff", value)}
+            options={booleanFilterOptions("スタッフ")}
+            value={isStaff}
+          />
+          <Select
+            ariaLabel="有効状態フィルター"
+            onValueChange={(value) => handleFilterChange("isLiveActive", value)}
+            options={booleanFilterOptions("有効")}
+            value={isLiveActive}
           />
         </div>
-        <Select
-          ariaLabel="担当クラスフィルター"
-          disabled={
-            classRoomOptionState.isLoading ||
-            Boolean(classRoomOptionState.error)
-          }
-          onValueChange={(value) =>
-            updateSearchParams({
-              page: 1,
-              classRoomId: value === "all" ? null : Number(value),
-            })
-          }
-          options={[
-            {
-              label: classRoomOptionState.isLoading
-                ? "クラス:読み込み中..."
-                : "クラス:すべて",
-              value: "all",
-            },
-            ...classRoomOptionState.items.map((classRoom) => ({
-              label: classRoom.classCode
-                ? `${classRoom.classCode} ${classRoom.className}`
-                : classRoom.className,
-              value: String(classRoom.classRoomId),
-            })),
-          ]}
-          value={classRoomId ? String(classRoomId) : "all"}
-        />
-        <Select
-          ariaLabel="staffフィルター"
-          onValueChange={(value) => handleFilterChange("isStaff", value)}
-          options={booleanFilterOptions("staff")}
-          value={isStaff}
-        />
-        <Select
-          ariaLabel="有効状態フィルター"
-          onValueChange={(value) => handleFilterChange("isLiveActive", value)}
-          options={booleanFilterOptions("有効")}
-          value={isLiveActive}
+        <ManagementOptionFeedback
+          label="クラス候補"
+          state={classRoomOptionState}
         />
       </div>
-      <ManagementOptionFeedback
-        label="クラス候補"
-        state={classRoomOptionState}
-      />
       <TeacherTable
         items={teachers}
         isMutating={isMutating}

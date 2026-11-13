@@ -1,4 +1,4 @@
-import type { CSSProperties } from "react";
+import { Fragment, type CSSProperties } from "react";
 
 import { LayeredPanel } from "~/components/ui/panel/LayeredPanel";
 import { DataTableHeader } from "~/components/ui/data-table/DataTableHeader";
@@ -23,6 +23,7 @@ export function DataTable<T>({
   getRowKey,
   items,
   onSortChange,
+  renderExpandedRow,
   sort,
   rowSizing = "fixed",
 }: DataTableProps<T>) {
@@ -52,11 +53,14 @@ export function DataTable<T>({
   } as CSSProperties;
 
   return (
-    <div className="w-full max-w-full min-w-0 overflow-hidden">
+    <div
+      className="flex min-h-0 w-full max-w-full min-w-0 flex-col overflow-hidden"
+      style={{ flex: "var(--data-table-flex, initial)" }}
+    >
       <LayeredPanel
         role="table"
         aria-label={ariaLabel}
-        className="text-left text-sm"
+        className="flex min-h-0 flex-1 flex-col text-left text-sm"
         header={
           <DataTableHeader
             mainColumns={mainColumns}
@@ -73,6 +77,10 @@ export function DataTable<T>({
         footer={footer}
         innerStyle={tableStyle}
         padding="none"
+        scrollMaxHeight="var(--data-table-max-height, min(60dvh, 40rem))"
+        scrollResetKey={JSON.stringify(
+          items.map((item) => String(getRowKey(item)))
+        )}
       >
         <div role="rowgroup">
           {items.length === 0 ? (
@@ -86,14 +94,16 @@ export function DataTable<T>({
             </div>
           ) : (
             items.map((item) => (
-              <DataTableRow
-                key={getRowKey(item)}
-                mainColumns={mainColumns}
-                rightColumns={rightColumns}
-                endColumns={endColumns}
-                item={item}
-                rowSizing={rowSizing}
-              />
+              <Fragment key={getRowKey(item)}>
+                <DataTableRow
+                  mainColumns={mainColumns}
+                  rightColumns={rightColumns}
+                  endColumns={endColumns}
+                  item={item}
+                  rowSizing={rowSizing}
+                />
+                {renderExpandedRow?.(item)}
+              </Fragment>
             ))
           )}
         </div>

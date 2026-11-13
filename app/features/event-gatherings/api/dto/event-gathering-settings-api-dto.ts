@@ -19,7 +19,7 @@ export type EventGatheringSettingsWriteRequestDto = {
 /**
  * Round ごとにまとめた集合設定のレスポンス。
  * PUT /api/v1/events/:eventId/gatherings が保存後の状態として返すほか、
- * GET /api/v1/events/:eventId も Event 本体の項目に加えて同じ形の `rounds` を返す。
+ * GET /api/v1/events/:eventId?includeMemberCount=true も Event 本体の項目に加えて同じ形の `rounds` を返す。
  */
 export type GatheringSpotSummaryResponseDto = {
   gathering_spot_id: number;

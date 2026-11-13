@@ -28,7 +28,7 @@ export function NotificationMonitorDetail({
           {schedule.content.push.title}
         </h2>
         <p className="text-text-muted text-sm">
-          Schedule #{schedule.notificationScheduleId}・
+          配信予約 #{schedule.notificationScheduleId}・
           {formatNotificationDateTime(schedule.sendAt)}
         </p>
         <p className="text-text-base text-sm break-words whitespace-pre-wrap">
@@ -44,7 +44,7 @@ export function NotificationMonitorDetail({
         )}
         <NotificationMonitorProgress schedule={schedule} />
         <p className="text-text-muted text-xs">
-          FCM受付成功は、端末での表示や既読を示しません。
+          通知サービス受付済みは、端末での表示や既読を示しません。
         </p>
         <ButtonLink to={`/notifications/${schedule.notificationId}`}>
           通知詳細を開く

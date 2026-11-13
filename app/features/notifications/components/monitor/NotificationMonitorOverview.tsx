@@ -30,7 +30,7 @@ type ScheduleNode = Node<
 >;
 type ColumnNode = Node<{ label: string; count: number }, "statusColumn">;
 type OverviewNode = ScheduleNode | ColumnNode;
-const columns = ["配信待ち", "対象解決中", "送信中", "処理終了"];
+const columns = ["配信待ち", "対象者確定中", "送信中", "処理終了"];
 
 function StatusColumn({ data }: NodeProps<ColumnNode>) {
   return (

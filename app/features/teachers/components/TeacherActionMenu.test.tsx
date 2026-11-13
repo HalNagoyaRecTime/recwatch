@@ -49,7 +49,7 @@ describe("TeacherActionMenu", () => {
 
     await user.click(screen.getByRole("button", { name: "佐橋 晴斗の操作" }));
     await user.click(
-      screen.getByRole("button", { name: "staff権限を付与する" })
+      screen.getByRole("button", { name: "スタッフ権限を付与する" })
     );
     expect(callbacks.onChangeStaff).toHaveBeenCalledOnce();
 

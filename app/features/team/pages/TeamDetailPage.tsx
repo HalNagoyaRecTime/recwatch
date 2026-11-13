@@ -36,7 +36,7 @@ export function TeamDetailPage({ onClose, team }: TeamDetailPageProps) {
         </div>
         <div>
           <dt className="text-text-muted">得点</dt>
-          <dd className="text-text-base mt-1">{team.score}pt</dd>
+          <dd className="text-text-base mt-1">{team.score}点</dd>
         </div>
         <div>
           <dt className="text-text-muted">登録日</dt>

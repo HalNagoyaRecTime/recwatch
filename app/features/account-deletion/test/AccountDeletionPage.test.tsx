@@ -77,9 +77,9 @@ describe("AccountDeletionPage", () => {
       })
     ).toHaveClass("text-black");
     expect(screen.queryByText(/recwatch/i)).not.toBeInTheDocument();
-    expect(screen.getByText("Produced by HAL Nagoya")).toBeInTheDocument();
+    expect(screen.getByText("制作：HAL名古屋")).toBeInTheDocument();
     expect(
-      screen.getByText("Developed by RE:CREATION App Team")
+      screen.getByText("開発：RE:CREATION アプリ開発チーム")
     ).toBeInTheDocument();
     expect(
       screen.queryByText("Microsoft アカウントが削除されることはありません。")

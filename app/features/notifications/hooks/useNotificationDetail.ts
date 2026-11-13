@@ -11,7 +11,6 @@ import type {
 import type {
   NotificationScheduleDetail,
   NotificationScheduleQueryApi,
-  NotificationScheduleResults,
 } from "~/features/notifications/api/contracts/notification-schedule-query-api";
 import { readApiErrorStatus } from "~/features/notifications/api/contracts/notification-error";
 
@@ -47,8 +46,6 @@ export function useNotificationDetail({
   );
   const [schedule, setSchedule] =
     useState<AsyncSection<NotificationScheduleDetail>>(emptySection);
-  const [results, setResults] =
-    useState<AsyncSection<NotificationScheduleResults>>(emptySection);
   const [delivery, setDelivery] =
     useState<AsyncSection<NotificationPushDeliveryDetail>>(emptySection);
   const [selectedDeliveryId, setSelectedDeliveryId] = useState<number | null>(
@@ -58,17 +55,14 @@ export function useNotificationDetail({
   const [refreshKey, setRefreshKey] = useState(0);
   const notificationRequestId = useRef(0);
   const scheduleRequestId = useRef(0);
-  const resultsRequestId = useRef(0);
   const deliveryRequestId = useRef(0);
 
   const selectSchedule = useCallback((scheduleId: number | null) => {
     scheduleRequestId.current += 1;
-    resultsRequestId.current += 1;
     deliveryRequestId.current += 1;
     selectedSchedule.current = scheduleId;
     setSelectedScheduleId(scheduleId);
     setSchedule(emptySection());
-    setResults(emptySection());
     setSelectedDeliveryId(null);
     setDelivery(emptySection());
   }, []);
@@ -138,8 +132,8 @@ export function useNotificationDetail({
         data: null,
         errorMessage:
           readApiErrorStatus(error) === 404
-            ? "Scheduleが見つかりません。"
-            : "Scheduleの詳細を読み込めませんでした。",
+            ? "配信予約が見つかりません。"
+            : "配信予約の詳細を読み込めませんでした。",
         isLoading: false,
       });
     }
@@ -159,36 +153,6 @@ export function useNotificationDetail({
     };
   }, [loadSchedule, selectedScheduleId, refreshKey]);
 
-  const loadResults = useCallback(
-    async (page = 1) => {
-      if (selectedScheduleId === null) return;
-      const requestId = ++resultsRequestId.current;
-      setResults((current) => ({
-        ...current,
-        errorMessage: null,
-        isLoading: true,
-      }));
-      try {
-        const data = await scheduleQueryApi.getResults(selectedScheduleId, {
-          page,
-          limit: 50,
-        });
-        if (requestId === resultsRequestId.current) {
-          setResults({ data, errorMessage: null, isLoading: false });
-        }
-      } catch {
-        if (requestId === resultsRequestId.current) {
-          setResults((current) => ({
-            ...current,
-            errorMessage: "配信結果を読み込めませんでした。",
-            isLoading: false,
-          }));
-        }
-      }
-    },
-    [scheduleQueryApi, selectedScheduleId]
-  );
-
   const openDelivery = useCallback(
     async (notificationPushDeliveryId: number) => {
       const requestId = ++deliveryRequestId.current;
@@ -207,8 +171,8 @@ export function useNotificationDetail({
           data: null,
           errorMessage:
             readApiErrorStatus(error) === 404
-              ? "Push配送が見つかりません。"
-              : "Push配送詳細を読み込めませんでした。",
+              ? "プッシュ通知の配信記録が見つかりません。"
+              : "プッシュ通知の配信詳細を読み込めませんでした。",
           isLoading: false,
         });
       }
@@ -227,11 +191,9 @@ export function useNotificationDetail({
     closeDelivery,
     delivery,
     loadNotification,
-    loadResults,
     loadSchedule,
     notification,
     openDelivery,
-    results,
     schedule,
     selectedDeliveryId,
     selectedScheduleId,

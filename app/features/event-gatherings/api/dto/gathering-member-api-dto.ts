@@ -7,7 +7,6 @@ export type TeamResponseDto = {
 
 export type TeamPageResponseDto = {
   items: TeamResponseDto[];
-  total: number;
 };
 
 /** GET /api/v1/students のページ応答。参加者ピッカーで使う項目だけを持つ。 */
@@ -27,7 +26,6 @@ export type StudentResponseDto = {
 
 export type StudentPageResponseDto = {
   items: StudentResponseDto[];
-  total: number;
 };
 
 /** GET /api/v1/teachers のページ応答。参加者の氏名を引くのに使う項目だけを持つ。 */
@@ -39,7 +37,6 @@ export type TeacherResponseDto = {
 
 export type TeacherPageResponseDto = {
   items: TeacherResponseDto[];
-  total: number;
 };
 
 /**

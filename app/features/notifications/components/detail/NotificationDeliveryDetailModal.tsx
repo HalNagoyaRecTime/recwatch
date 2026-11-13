@@ -3,6 +3,7 @@ import { FormModal } from "~/components/ui/modal/FormModal";
 import type { NotificationPushDeliveryDetail } from "~/features/notifications/api/contracts/notification-push-delivery-api";
 import {
   deliveryStatusLabel,
+  formatNotificationDeliveryFailure,
   formatNotificationDetailDateTime,
   platformLabel,
 } from "~/features/notifications/components/detail/notification-detail-display";
@@ -24,9 +25,9 @@ export function NotificationDeliveryDetailModal({
 }: NotificationDeliveryDetailModalProps) {
   return (
     <FormModal
-      description="FCMへの送信試行と現在の状態を表示します"
+      description="通知サービスへの送信の試行状況と現在の状態を表示します"
       onClose={onClose}
-      title="Push配送詳細"
+      title="プッシュ通知の配信詳細"
     >
       {isLoading ? (
         <p
@@ -34,7 +35,7 @@ export function NotificationDeliveryDetailModal({
           className="text-text-muted py-8 text-center"
           role="status"
         >
-          Push配送詳細を読み込み中です
+          プッシュ通知の配信詳細を読み込み中です
         </p>
       ) : errorMessage ? (
         <div className="flex flex-col items-center gap-3 py-8" role="alert">
@@ -44,7 +45,7 @@ export function NotificationDeliveryDetailModal({
       ) : delivery ? (
         <dl className="divide-border-subtle border-border-base app-rounded divide-y border text-sm">
           <DetailRow
-            label="Delivery ID"
+            label="配信番号"
             value={`#${delivery.notificationPushDeliveryId}`}
           />
           <DetailRow label="送信先" value={platformLabel[delivery.platform]} />
@@ -66,12 +67,15 @@ export function NotificationDeliveryDetailModal({
             value={formatNotificationDetailDateTime(delivery.nextRetryAt)}
           />
           <DetailRow
-            label="FCM受付"
+            label="通知サービス受付日時"
             value={formatNotificationDetailDateTime(delivery.sentAt)}
           />
-          <DetailRow label="失敗理由" value={delivery.failedReason ?? "—"} />
           <DetailRow
-            label="FCM Message ID"
+            label="失敗理由"
+            value={formatNotificationDeliveryFailure(delivery.failedReason)}
+          />
+          <DetailRow
+            label="通知サービス受付番号"
             value={delivery.fcmMessageId ?? "—"}
           />
         </dl>

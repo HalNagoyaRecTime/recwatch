@@ -173,6 +173,19 @@ function renderStep({
   return { memberGateway, onMembersSaved, onSaved };
 }
 
+function teamStudents(teamId: number, firstUserId: number, count: number) {
+  return Array.from({ length: count }, (_, index) => ({
+    id: firstUserId + index,
+    userId: firstUserId + index,
+    name: `学生${firstUserId + index}`,
+    teamId,
+    classroomId: teamId,
+    attendanceNumber: index + 1,
+    studentNumber: `2026${firstUserId + index}`,
+    isLiveActive: true,
+  }));
+}
+
 describe("GatheringSettingsStep", () => {
   it("開始時刻を変更・解除しても集合を維持して保存する", async () => {
     const save = vi.fn().mockResolvedValue(existingSettings);
@@ -188,7 +201,7 @@ describe("GatheringSettingsStep", () => {
         save,
       },
     });
-    const input = await screen.findByLabelText("Round 1 の開始時刻");
+    const input = await screen.findByLabelText("ラウンド 1 の開始時刻");
     expect(input).toHaveValue("11:00");
     fireEvent.change(input, { target: { value: "11:10" } });
     const user = userEvent.setup();
@@ -205,7 +218,7 @@ describe("GatheringSettingsStep", () => {
         ],
       })
     );
-    fireEvent.change(screen.getByLabelText("Round 1 の開始時刻"), {
+    fireEvent.change(screen.getByLabelText("ラウンド 1 の開始時刻"), {
       target: { value: "" },
     });
     await user.click(screen.getByRole("button", { name: "集合設定を保存" }));
@@ -231,7 +244,7 @@ describe("GatheringSettingsStep", () => {
       },
     });
 
-    const round = await screen.findByRole("region", { name: "Round 1" });
+    const round = await screen.findByRole("region", { name: "ラウンド 1" });
     expect(within(round).getByLabelText("集合時間")).toHaveValue("10:45");
     expect(
       within(round).getByRole("combobox", { name: "集合場所" })
@@ -276,9 +289,9 @@ describe("GatheringSettingsStep", () => {
     });
     const user = userEvent.setup();
 
-    await screen.findByRole("region", { name: "Round 1" });
-    await user.click(screen.getByRole("button", { name: "Roundを追加" }));
-    const round2 = screen.getByRole("region", { name: "Round 2" });
+    await screen.findByRole("region", { name: "ラウンド 1" });
+    await user.click(screen.getByRole("button", { name: "ラウンドを追加" }));
+    const round2 = screen.getByRole("region", { name: "ラウンド 2" });
     await user.type(within(round2).getByLabelText("集合時間"), "11:00");
     await user.selectOptions(
       within(round2).getByRole("combobox", { name: "集合場所" }),
@@ -319,7 +332,7 @@ describe("GatheringSettingsStep", () => {
     });
     const user = userEvent.setup();
 
-    await screen.findByRole("region", { name: "Round 1" });
+    await screen.findByRole("region", { name: "ラウンド 1" });
     await user.click(screen.getByRole("button", { name: "集合設定を保存" }));
     await waitFor(() => expect(save).toHaveBeenCalledTimes(1));
     expect(save.mock.calls[0][1]).toMatchObject({ lockVersion: 3 });
@@ -365,7 +378,7 @@ describe("GatheringSettingsStep", () => {
     });
     const user = userEvent.setup();
 
-    const round = await screen.findByRole("region", { name: "Round 1" });
+    const round = await screen.findByRole("region", { name: "ラウンド 1" });
     const time = within(round).getByLabelText("集合時間");
     fireEvent.change(time, { target: { value: "12:00" } });
     await user.click(screen.getByRole("button", { name: "集合設定を保存" }));
@@ -427,12 +440,12 @@ describe("GatheringSettingsStep", () => {
     const user = userEvent.setup();
     renderStep({ memberGateway, settingsGateway: { load, save } });
 
-    const round1 = await screen.findByRole("region", { name: "Round 1" });
+    const round1 = await screen.findByRole("region", { name: "ラウンド 1" });
     await user.click(within(round1).getByRole("button", { name: "削除" }));
     await user.click(screen.getByRole("button", { name: "集合設定を保存" }));
 
     expect(
-      await screen.findByRole("region", { name: "Round 1" })
+      await screen.findByRole("region", { name: "ラウンド 1" })
     ).toBeInTheDocument();
     expect(await screen.findByRole("alert")).toHaveTextContent(
       UPDATE_CONFLICT_MESSAGE
@@ -461,7 +474,7 @@ describe("GatheringSettingsStep", () => {
     });
     const user = userEvent.setup();
 
-    await screen.findByRole("region", { name: "Round 1" });
+    await screen.findByRole("region", { name: "ラウンド 1" });
     expect(
       screen.queryByRole("button", { name: "この集合を削除" })
     ).not.toBeInTheDocument();
@@ -496,7 +509,7 @@ describe("GatheringSettingsStep", () => {
     const user = userEvent.setup();
 
     await user.click(
-      await screen.findByRole("button", { name: "Roundを追加" })
+      await screen.findByRole("button", { name: "ラウンドを追加" })
     );
     await user.click(screen.getByRole("button", { name: "集合設定を保存" }));
 
@@ -520,9 +533,9 @@ describe("GatheringSettingsStep", () => {
     });
     const user = userEvent.setup();
 
-    await screen.findByRole("region", { name: "Round 1" });
-    await user.click(screen.getByRole("button", { name: "Roundを追加" }));
-    const round2 = screen.getByRole("region", { name: "Round 2" });
+    await screen.findByRole("region", { name: "ラウンド 1" });
+    await user.click(screen.getByRole("button", { name: "ラウンドを追加" }));
+    const round2 = screen.getByRole("region", { name: "ラウンド 2" });
     await user.type(within(round2).getByLabelText("集合時間"), "11:00");
     await user.selectOptions(
       within(round2).getByRole("combobox", { name: "集合場所" }),
@@ -533,7 +546,9 @@ describe("GatheringSettingsStep", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "参加者が登録されている集合は削除できません。"
     );
-    expect(screen.getByRole("region", { name: "Round 2" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("region", { name: "ラウンド 2" })
+    ).toBeInTheDocument();
     expect(within(round2).getByLabelText("集合時間")).toHaveValue("11:00");
   });
 
@@ -551,7 +566,7 @@ describe("GatheringSettingsStep", () => {
     });
     const user = userEvent.setup();
 
-    await screen.findByRole("region", { name: "Round 1" });
+    await screen.findByRole("region", { name: "ラウンド 1" });
     expect(screen.getByText("2人登録済み")).toBeInTheDocument();
     expect(
       screen.getByText("参加者が登録されているため、この集合は削除できません。")
@@ -563,10 +578,10 @@ describe("GatheringSettingsStep", () => {
     expect(screen.getByRole("button", { name: "削除" })).toBeEnabled();
     await user.click(screen.getByRole("button", { name: "削除" }));
     expect(confirm).toHaveBeenCalledWith(
-      "Round 1を削除します。Round内に登録されている参加者もすべて解除されます。よろしいですか？"
+      "ラウンド 1を削除します。ラウンド内に登録されている参加者もすべて解除されます。よろしいですか？"
     );
     expect(
-      screen.queryByRole("region", { name: "Round 1" })
+      screen.queryByRole("region", { name: "ラウンド 1" })
     ).not.toBeInTheDocument();
   });
 
@@ -584,12 +599,14 @@ describe("GatheringSettingsStep", () => {
     });
     const user = userEvent.setup();
 
-    const round1 = await screen.findByRole("region", { name: "Round 1" });
+    const round1 = await screen.findByRole("region", { name: "ラウンド 1" });
     await user.click(within(round1).getByRole("button", { name: "削除" }));
     await user.click(screen.getByRole("button", { name: "集合設定を保存" }));
 
     expect(confirm).toHaveBeenCalledTimes(1);
-    expect(screen.getByRole("region", { name: "Round 1" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("region", { name: "ラウンド 1" })
+    ).toBeInTheDocument();
     expect(memberGateway.loadMembers).not.toHaveBeenCalled();
     expect(memberGateway.saveMembers).not.toHaveBeenCalled();
     expect(save).toHaveBeenCalledWith(12, {
@@ -626,7 +643,7 @@ describe("GatheringSettingsStep", () => {
     });
     const user = userEvent.setup();
 
-    await screen.findByRole("region", { name: "Round 1" });
+    await screen.findByRole("region", { name: "ラウンド 1" });
     await user.click(screen.getByRole("button", { name: "削除" }));
     await user.click(screen.getByRole("button", { name: "集合設定を保存" }));
 
@@ -721,9 +738,9 @@ describe("GatheringSettingsStep", () => {
       },
     });
 
-    const round1 = await screen.findByRole("region", { name: "Round 1" });
+    const round1 = await screen.findByRole("region", { name: "ラウンド 1" });
     await user.click(within(round1).getByRole("button", { name: "削除" }));
-    const round2 = screen.getByRole("region", { name: "Round 2" });
+    const round2 = screen.getByRole("region", { name: "ラウンド 2" });
     await user.click(
       within(round2).getByRole("button", { name: "集合場所を追加" })
     );
@@ -778,12 +795,12 @@ describe("GatheringSettingsStep", () => {
     });
     const user = userEvent.setup();
 
-    await screen.findByRole("region", { name: "Round 1" });
+    await screen.findByRole("region", { name: "ラウンド 1" });
     await user.click(screen.getByRole("button", { name: "削除" }));
     await user.click(screen.getByRole("button", { name: "集合設定を保存" }));
 
     expect(await screen.findByRole("alert")).toHaveTextContent(
-      "参加者の解除に失敗しました。Roundは削除されていません。"
+      "参加者の解除に失敗しました。ラウンドは削除されていません。"
     );
     expect(settingsSave).not.toHaveBeenCalled();
     expect(memberGateway.saveMembers).toHaveBeenNthCalledWith(1, 101, []);
@@ -807,7 +824,7 @@ describe("GatheringSettingsStep", () => {
     });
     const user = userEvent.setup();
 
-    await screen.findByRole("region", { name: "Round 1" });
+    await screen.findByRole("region", { name: "ラウンド 1" });
     await user.click(screen.getByRole("button", { name: "削除" }));
     await user.click(screen.getByRole("button", { name: "集合設定を保存" }));
 
@@ -829,7 +846,7 @@ describe("GatheringSettingsStep", () => {
     });
     const user = userEvent.setup();
 
-    await screen.findByRole("region", { name: "Round 1" });
+    await screen.findByRole("region", { name: "ラウンド 1" });
     expect(memberGateway.loadCandidates).not.toHaveBeenCalled();
     await user.click(screen.getByRole("button", { name: "メンバーを選択" }));
 
@@ -911,7 +928,7 @@ describe("GatheringSettingsStep", () => {
     });
     const user = userEvent.setup();
 
-    await screen.findByRole("region", { name: "Round 1" });
+    await screen.findByRole("region", { name: "ラウンド 1" });
     await user.click(screen.getByRole("button", { name: "メンバーを選択" }));
     const search = screen.getByRole("searchbox", {
       name: "参加するチームを検索",
@@ -973,7 +990,7 @@ describe("GatheringSettingsStep", () => {
     });
     const user = userEvent.setup();
 
-    await screen.findByRole("region", { name: "Round 1" });
+    await screen.findByRole("region", { name: "ラウンド 1" });
     await user.click(screen.getByRole("button", { name: "メンバーを選択" }));
 
     const table = await screen.findByRole("table", {
@@ -1050,7 +1067,7 @@ describe("GatheringSettingsStep", () => {
     });
     const user = userEvent.setup();
 
-    await screen.findByRole("region", { name: "Round 1" });
+    await screen.findByRole("region", { name: "ラウンド 1" });
     await user.click(screen.getByRole("button", { name: "メンバーを選択" }));
 
     const outside = await screen.findByRole("region", {
@@ -1119,7 +1136,7 @@ describe("GatheringSettingsStep", () => {
     });
     const user = userEvent.setup();
 
-    await screen.findByRole("region", { name: "Round 1" });
+    await screen.findByRole("region", { name: "ラウンド 1" });
     expect(screen.getByText("1人登録済み")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "削除" })).toBeEnabled();
     expect(
@@ -1172,7 +1189,7 @@ describe("GatheringSettingsStep", () => {
     });
     const user = userEvent.setup();
 
-    await screen.findByRole("region", { name: "Round 1" });
+    await screen.findByRole("region", { name: "ラウンド 1" });
     await user.click(screen.getByRole("button", { name: "メンバーを選択" }));
 
     expect(await screen.findByLabelText("青チームを選択")).not.toBeChecked();
@@ -1221,7 +1238,7 @@ describe("GatheringSettingsStep", () => {
     });
     const user = userEvent.setup();
 
-    await screen.findByRole("region", { name: "Round 1" });
+    await screen.findByRole("region", { name: "ラウンド 1" });
     await user.click(screen.getByRole("button", { name: "メンバーを選択" }));
 
     const table = await screen.findByRole("table", {
@@ -1260,20 +1277,19 @@ describe("GatheringSettingsStep", () => {
     );
   });
 
-  it("31人のチームを選び、1人外して30人で保存できる", async () => {
+  it("3チーム・120人を選ぶと、30人を超えてもそのまま120人で保存できる", async () => {
     const memberGateway = createMemberGateway();
     (memberGateway.loadCandidates as Mock).mockResolvedValue({
-      teams: [{ id: 10, name: "青チーム", classCodes: ["HAL1A"] }],
-      students: Array.from({ length: 31 }, (_, index) => ({
-        id: 10 + index,
-        userId: 1001 + index,
-        name: `学生${index + 1}`,
-        teamId: 10,
-        classroomId: 1,
-        attendanceNumber: index + 1,
-        studentNumber: `2026${String(index + 1).padStart(3, "0")}`,
-        isLiveActive: true,
-      })),
+      teams: [
+        { id: 10, name: "青チーム", classCodes: ["HAL1A"] },
+        { id: 11, name: "赤チーム", classCodes: ["HAL1B"] },
+        { id: 12, name: "黄チーム", classCodes: ["HAL1C"] },
+      ],
+      students: [
+        ...teamStudents(10, 1001, 40),
+        ...teamStudents(11, 2001, 40),
+        ...teamStudents(12, 3001, 40),
+      ],
       nonStudents: new Map(),
     });
     renderStep({
@@ -1285,37 +1301,60 @@ describe("GatheringSettingsStep", () => {
     });
     const user = userEvent.setup();
 
-    await screen.findByRole("region", { name: "Round 1" });
+    await screen.findByRole("region", { name: "ラウンド 1" });
     await user.click(screen.getByRole("button", { name: "メンバーを選択" }));
     await user.click(await screen.findByLabelText("青チームを選択"));
+    await user.click(screen.getByLabelText("赤チームを選択"));
+    await user.click(screen.getByLabelText("黄チームを選択"));
 
-    expect(
-      screen.getByText(/選択中 1チーム・31人 \/ 30人/)
-    ).toBeInTheDocument();
-    expect(screen.getByRole("alert")).toHaveTextContent(
-      "参加者は30人までです。1人減らしてください。"
+    expect(screen.getByText(/選択中 3チーム・120人$/)).toBeInTheDocument();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "参加者を保存" })).toBeEnabled();
+
+    await user.click(screen.getByRole("button", { name: "参加者を保存" }));
+    await waitFor(() =>
+      expect(memberGateway.saveMembers).toHaveBeenCalledWith(101, [
+        ...Array.from({ length: 40 }, (_, index) => 1001 + index),
+        ...Array.from({ length: 40 }, (_, index) => 2001 + index),
+        ...Array.from({ length: 40 }, (_, index) => 3001 + index),
+      ])
     );
-    expect(screen.getByRole("button", { name: "参加者を保存" })).toBeDisabled();
+  });
 
+  it("36人のチームを選んだあと、1人だけ外して35人で保存できる", async () => {
+    const memberGateway = createMemberGateway();
+    (memberGateway.loadCandidates as Mock).mockResolvedValue({
+      teams: [{ id: 10, name: "青チーム", classCodes: ["HAL1A"] }],
+      students: teamStudents(10, 1001, 36),
+      nonStudents: new Map(),
+    });
+    renderStep({
+      memberGateway,
+      settingsGateway: {
+        load: vi.fn().mockResolvedValue(existingSettings),
+        save: vi.fn(),
+      },
+    });
+    const user = userEvent.setup();
+
+    await screen.findByRole("region", { name: "ラウンド 1" });
+    await user.click(screen.getByRole("button", { name: "メンバーを選択" }));
+    await user.click(await screen.findByLabelText("青チームを選択"));
     const adjustment = screen.getByRole("region", {
       name: "選択したチームの参加者調整",
     });
     await user.click(
-      within(adjustment).getByLabelText("学生31（2026031）を参加者に含める")
+      within(adjustment).getByLabelText("学生1036（20261036）を参加者に含める")
     );
 
-    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
-    expect(
-      screen.getByText(/選択中 0チーム・30人 \/ 30人/)
-    ).toBeInTheDocument();
+    expect(screen.getByText(/選択中 0チーム・35人$/)).toBeInTheDocument();
     expect(screen.getByLabelText("青チームを選択")).toBePartiallyChecked();
-    expect(screen.getByRole("button", { name: "参加者を保存" })).toBeEnabled();
 
     await user.click(screen.getByRole("button", { name: "参加者を保存" }));
     await waitFor(() =>
       expect(memberGateway.saveMembers).toHaveBeenCalledWith(
         101,
-        Array.from({ length: 30 }, (_, index) => 1001 + index)
+        Array.from({ length: 35 }, (_, index) => 1001 + index)
       )
     );
   });
@@ -1334,7 +1373,7 @@ describe("GatheringSettingsStep", () => {
     });
     const user = userEvent.setup();
 
-    await screen.findByRole("region", { name: "Round 1" });
+    await screen.findByRole("region", { name: "ラウンド 1" });
     await user.click(screen.getByRole("button", { name: "メンバーを選択" }));
     await user.click(await screen.findByLabelText("青チームを選択"));
     await user.click(screen.getByRole("button", { name: "参加者を保存" }));
@@ -1384,7 +1423,7 @@ describe("GatheringSettingsStep", () => {
     });
     const user = userEvent.setup();
 
-    await screen.findByRole("region", { name: "Round 1" });
+    await screen.findByRole("region", { name: "ラウンド 1" });
     await user.click(screen.getByRole("button", { name: "メンバーを選択" }));
     await user.click(await screen.findByLabelText("青チームを選択"));
     await user.click(screen.getByRole("button", { name: "キャンセル" }));
@@ -1469,7 +1508,7 @@ describe("GatheringSettingsStep", () => {
     });
 
     await user.click(
-      await screen.findByRole("button", { name: "Roundを追加" })
+      await screen.findByRole("button", { name: "ラウンドを追加" })
     );
     await user.click(screen.getByRole("button", { name: "集合場所を追加" }));
     const pickerButtons = screen.getAllByRole("button", {

@@ -1,4 +1,10 @@
-import { useMemo, useState, type CSSProperties, type ReactNode } from "react";
+import {
+  useLayoutEffect,
+  useMemo,
+  useState,
+  type CSSProperties,
+  type ReactNode,
+} from "react";
 
 import { Scrollbar } from "~/components/ui/scrollbar/Scrollbar";
 import { createElementScrollbarTarget } from "~/components/ui/scrollbar/scrollbar-target";
@@ -15,6 +21,8 @@ type ScrollbarAreaProps = {
   verticalTrackInsetBottom?: number;
   /** スクロール領域をTab順から外すなど、必要な画面だけ指定します。 */
   scrollTabIndex?: number;
+  /** 内容が切り替わったときに縦位置だけを先頭へ戻すためのキー。 */
+  scrollResetKey?: string;
 };
 
 /** 独立したlocal scroll領域に共通Scrollbarを付けます。 */
@@ -25,6 +33,7 @@ export function ScrollbarArea({
   orientation = "vertical",
   verticalTrackInsetBottom = 0,
   scrollTabIndex,
+  scrollResetKey,
 }: ScrollbarAreaProps) {
   const [scrollElement, setScrollElement] = useState<HTMLDivElement | null>(
     null
@@ -44,6 +53,12 @@ export function ScrollbarArea({
   } = useScrollbar({ orientation, target });
   const showVertical = orientation === "vertical" || orientation === "both";
   const showHorizontal = orientation === "horizontal" || orientation === "both";
+
+  useLayoutEffect(() => {
+    if (scrollResetKey !== undefined) {
+      target.setPosition("vertical", 0);
+    }
+  }, [target, scrollResetKey]);
 
   return (
     <div

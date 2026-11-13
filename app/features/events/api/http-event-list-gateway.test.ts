@@ -13,23 +13,21 @@ describe("createHttpEventListGateway", () => {
     const get = vi.fn(async (path: string): Promise<unknown> => {
       const responses: Record<string, unknown> = {
         "/api/v1/events?limit=100&offset=0": {
-          events: [
-            {
-              event_id: 1,
-              event_name: "リレー",
-              rule_text: null,
-              venues: [{ venue_id: 1, venue_name: "グラウンド" }],
-              start_time: "0900",
-              end_time: "1000",
-              gathering_summary: gatheringSummary,
-            },
-          ],
-          total: 2,
+          events: Array.from({ length: 100 }, (_, index) => ({
+            event_id: index + 1,
+            event_name: "リレー",
+            rule_text: null,
+            venues: [{ venue_id: 1, venue_name: "グラウンド" }],
+            start_time: "0900",
+            end_time: "1000",
+            gathering_summary: gatheringSummary,
+          })),
+          total: 101,
         },
-        "/api/v1/events?limit=100&offset=1": {
+        "/api/v1/events?limit=100&offset=100": {
           events: [
             {
-              event_id: 2,
+              event_id: 101,
               event_name: "綱引き",
               rule_text: "ルール",
               venues: [{ venue_id: 2, venue_name: "体育館" }],
@@ -42,7 +40,7 @@ describe("createHttpEventListGateway", () => {
               },
             },
           ],
-          total: 2,
+          total: 101,
         },
       };
       return responses[path];
@@ -54,7 +52,7 @@ describe("createHttpEventListGateway", () => {
 
     const items = await gateway.load();
 
-    expect(items).toHaveLength(2);
+    expect(items).toHaveLength(101);
     expect(items[0]).toMatchObject({
       id: 1,
       venues: [{ id: 1, name: "グラウンド" }],
@@ -65,12 +63,12 @@ describe("createHttpEventListGateway", () => {
         firstGatheringTime: "08:45",
       },
     });
-    expect(items[1].gatheringSummary).toEqual({
+    expect(items[100].gatheringSummary).toEqual({
       gatheringCount: 0,
       configuredGatheringCount: 0,
       firstGatheringTime: null,
     });
-    expect(get).toHaveBeenCalledWith("/api/v1/events?limit=100&offset=1");
+    expect(get).toHaveBeenCalledWith("/api/v1/events?limit=100&offset=100");
     expect(get).not.toHaveBeenCalledWith("/api/v1/gatherings");
   });
 

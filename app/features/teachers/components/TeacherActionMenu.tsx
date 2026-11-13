@@ -53,7 +53,9 @@ export function TeacherActionMenu({
       disabled: actionDisabled,
       icon: teacher.isStaff ? ShieldOff : ShieldCheck,
       id: "staff",
-      label: teacher.isStaff ? "staff権限を解除する" : "staff権限を付与する",
+      label: teacher.isStaff
+        ? "スタッフ権限を解除する"
+        : "スタッフ権限を付与する",
       onClick: () => {
         setIsOpen(false);
         void onChangeStaff();
