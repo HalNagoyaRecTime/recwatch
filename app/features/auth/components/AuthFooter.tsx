@@ -11,7 +11,7 @@ export function AuthFooter() {
           <li>
             <a
               className="decoration-text-muted hover:text-text-base underline underline-offset-4"
-              href="/legal/terms.html"
+              href={appConfig.legalPageUrls.terms}
             >
               利用規約
             </a>
@@ -19,7 +19,7 @@ export function AuthFooter() {
           <li>
             <a
               className="decoration-text-muted hover:text-text-base underline underline-offset-4"
-              href="/legal/privacy.html"
+              href={appConfig.legalPageUrls.privacy}
             >
               プライバシーポリシー
             </a>

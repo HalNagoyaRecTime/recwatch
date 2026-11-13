@@ -138,7 +138,9 @@ jobs:
               });
             }
 
+      # 法務ページは名古屋のPagesプロジェクトを正本とする
       - name: Verify deployed legal pages
+        if: matrix.region == 'nagoya'
         env:
           LEGAL_BASE_URL: >-
             ${{ steps.target.outputs.pages_branch == 'main' && format('https://{0}.pages.dev', matrix.project) || format('https://{0}.{1}.pages.dev', steps.target.outputs.pages_branch, matrix.project) }}
