@@ -30,7 +30,6 @@ export function TeamCreatePage({
     setSubmitError(null);
     try {
       await TeamApi.createTeam({
-        teamName: input.name,
         classCodes: [...input.registeredClasses],
       });
     } catch (error) {
@@ -43,7 +42,7 @@ export function TeamCreatePage({
 
   return (
     <FormModal
-      description="チーム名と登録クラスを選択して登録します。"
+      description="登録クラスを選択して登録します。チーム名はクラスコードから自動設定されます。"
       onClose={() => void onClose()}
       title="チームを新規登録"
     >
