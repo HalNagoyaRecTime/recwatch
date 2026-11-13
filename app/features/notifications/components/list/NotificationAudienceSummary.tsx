@@ -30,13 +30,14 @@ export function NotificationAudienceSummary({
         <FloatingPanel
           interaction="both"
           placement="bottom-start"
+          scrollable
           trigger={
             <Button size="sm" variant="secondary">
               {items.length}件の対象指定
             </Button>
           }
           content={
-            <FloatingListSurface>
+            <FloatingListSurface scrollable>
               <ul className="space-y-2 p-1 text-sm">
                 {labels.map((label, index) => (
                   <li key={index}>{label}</li>
