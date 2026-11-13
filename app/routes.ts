@@ -18,6 +18,10 @@ export default [
     // 集合設定モーダルはイベント詳細の上に開き、閉じると詳細へ戻る
     route("events/:eventId", "routes/main/events.$eventId.tsx", [
       route("gatherings", "routes/main/events.$eventId.gatherings.tsx"),
+      route(
+        "gathering-import",
+        "routes/main/events.$eventId.gathering-import.tsx"
+      ),
     ]),
     route("notifications", "routes/main/notifications.tsx"),
     route("notifications/calendar", "routes/main/notifications.calendar.tsx"),
