@@ -1,3 +1,5 @@
+import { appConfig } from "~/config/app";
+
 export function AccountDeletionFooter() {
   return (
     <footer className="mt-auto w-full pt-8 pb-[calc(8px+env(safe-area-inset-bottom,0px))] text-center text-xs leading-4 text-[#808080]">
@@ -7,7 +9,7 @@ export function AccountDeletionFooter() {
       >
         <a
           className="inline-flex min-h-12 items-center rounded px-3 focus-visible:outline-2"
-          href="https://recwatch.pages.dev/legal/terms.html"
+          href={appConfig.legalPageUrls.terms}
           target="_blank"
           rel="noopener noreferrer"
         >
@@ -15,7 +17,7 @@ export function AccountDeletionFooter() {
         </a>
         <a
           className="inline-flex min-h-12 items-center rounded px-3 focus-visible:outline-2"
-          href="https://recwatch.pages.dev/legal/privacy.html"
+          href={appConfig.legalPageUrls.privacy}
           target="_blank"
           rel="noopener noreferrer"
         >

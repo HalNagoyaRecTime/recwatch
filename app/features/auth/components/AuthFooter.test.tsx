@@ -17,8 +17,14 @@ describe("AuthFooter", () => {
       name: "プライバシーポリシー",
     });
 
-    expect(termsLink).toHaveAttribute("href", "/legal/terms.html");
-    expect(privacyLink).toHaveAttribute("href", "/legal/privacy.html");
+    expect(termsLink).toHaveAttribute(
+      "href",
+      "https://recwatch.pages.dev/legal/terms.html"
+    );
+    expect(privacyLink).toHaveAttribute(
+      "href",
+      "https://recwatch.pages.dev/legal/privacy.html"
+    );
 
     await user.tab();
     expect(termsLink).toHaveFocus();
