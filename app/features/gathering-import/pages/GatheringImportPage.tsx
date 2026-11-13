@@ -1,12 +1,4 @@
-import {
-  Check,
-  ChevronDown,
-  Clock,
-  Loader2,
-  MapPin,
-  Upload,
-  Users,
-} from "lucide-react";
+import { Check, ChevronDown, Clock, MapPin, Upload, Users } from "lucide-react";
 import {
   type ChangeEvent,
   type ReactNode,
@@ -32,6 +24,8 @@ type GatheringImportPageProps = {
 
 type Preview = { file: File; result: GatheringImportResult };
 
+type Busy = "preview" | "commit" | null;
+
 export function GatheringImportPage({
   gateway = httpGatheringImportGateway,
 }: GatheringImportPageProps) {
@@ -51,66 +45,73 @@ export function GatheringImportPage({
   const [committed, setCommitted] = useState<GatheringImportResult | null>(
     null
   );
-  const [isBusy, setIsBusy] = useState(false);
+  const [busy, setBusy] = useState<Busy>(null);
   const [error, setError] = useState<string | null>(null);
   const [hasAcknowledgedExclusion, setHasAcknowledgedExclusion] =
     useState(false);
 
-  async function handleFileChange(event: ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0];
-    event.target.value = "";
-    if (!file) return;
-
-    setIsBusy(true);
+  async function loadPreview(file: File) {
+    setBusy("preview");
     setError(null);
     setHasAcknowledgedExclusion(false);
     try {
       setPreview({ file, result: await gateway.preview(eventId, file) });
+      return true;
     } catch (err) {
       setPreview(null);
       setError(getErrorMessage(err, "ファイルを読み取れませんでした。"));
+      return false;
     } finally {
-      setIsBusy(false);
+      setBusy(null);
     }
+  }
+
+  function handleFileChange(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (file) void loadPreview(file);
   }
 
   async function handleCommit() {
     if (!preview) return;
-    setIsBusy(true);
+    setBusy("commit");
     setError(null);
     try {
       setCommitted(
         await gateway.commit(eventId, preview.file, preview.result.lockVersion)
       );
       outletContext?.reload();
+      setBusy(null);
     } catch (err) {
+      setBusy(null);
       if (err instanceof ApiClientError && err.status === 409) {
-        setPreview(null);
-        setError("確認している間に、この競技の集合が変更されました。");
+        if (await loadPreview(preview.file)) {
+          setError(
+            "確認している間に、この競技の集合が変更されたため、最新の状態で確認し直しました。"
+          );
+        }
       } else {
         setError(getErrorMessage(err, "集合の取り込みに失敗しました。"));
       }
-    } finally {
-      setIsBusy(false);
     }
   }
 
   const fileButton = (label: string) => (
     <>
       <Button
-        disabled={isBusy}
-        icon={isBusy ? Loader2 : Upload}
+        disabled={busy !== null}
+        icon={Upload}
         onClick={() => inputRef.current?.click()}
         variant={preview ? "secondary" : "primary"}
       >
-        {label}
+        {busy === "preview" ? "読み込み中..." : label}
       </Button>
       <input
         ref={inputRef}
         accept=".csv"
         aria-label="CSV ファイル"
         className="hidden"
-        onChange={(event) => void handleFileChange(event)}
+        onChange={handleFileChange}
         type="file"
       />
     </>
@@ -119,7 +120,7 @@ export function GatheringImportPage({
   return (
     <FormModal
       description="CSV の内容で、この競技の集合をすべて置き換えます。"
-      isDismissDisabled={isBusy}
+      isDismissDisabled={busy !== null}
       onClose={handleClose}
       size="xl"
       title={
@@ -154,7 +155,7 @@ export function GatheringImportPage({
             {preview ? (
               <PreviewStep
                 hasAcknowledgedExclusion={hasAcknowledgedExclusion}
-                isBusy={isBusy}
+                busy={busy}
                 onAcknowledgeExclusion={setHasAcknowledgedExclusion}
                 onCancel={requestClose}
                 onCommit={() => void handleCommit()}
@@ -198,16 +199,16 @@ function SelectStep({ fileButton }: { fileButton: ReactNode }) {
 type PreviewTab = "gatherings" | "errors" | "warnings";
 
 function PreviewStep({
+  busy,
   hasAcknowledgedExclusion,
-  isBusy,
   onAcknowledgeExclusion,
   onCancel,
   onCommit,
   reselectButton,
   result,
 }: {
+  busy: Busy;
   hasAcknowledgedExclusion: boolean;
-  isBusy: boolean;
   onAcknowledgeExclusion: (value: boolean) => void;
   onCancel: () => void;
   onCommit: () => void;
@@ -334,31 +335,45 @@ function PreviewStep({
       </p>
 
       <div className="border-border-subtle flex flex-wrap items-center justify-between gap-3 border-t pt-4">
-        {hasExcluded ? (
-          <label className="text-tone-danger-text flex items-center gap-2 text-sm font-medium">
-            <input
-              checked={hasAcknowledgedExclusion}
-              onChange={(event) => onAcknowledgeExclusion(event.target.checked)}
-              type="checkbox"
-            />
-            {result.excludedRows.toLocaleString()}
-            行を除いて取り込む
-          </label>
+        {result.importedRows === 0 ? (
+          <p className="text-tone-danger-text text-sm">
+            取り込める行がありません
+          </p>
+        ) : hasExcluded ? (
+          <div className="space-y-1">
+            <p className="text-tone-danger-text text-sm">
+              エラーの {result.excludedRows.toLocaleString()}
+              行の生徒は、確定すると、どの集合にも入りません。
+            </p>
+            <label className="text-text-base flex items-center gap-2 text-sm font-medium">
+              <input
+                checked={hasAcknowledgedExclusion}
+                onChange={(event) =>
+                  onAcknowledgeExclusion(event.target.checked)
+                }
+                type="checkbox"
+              />
+              {result.excludedRows.toLocaleString()}
+              行を除いて取り込む
+            </label>
+          </div>
         ) : (
           <span />
         )}
         <div className="flex flex-wrap justify-end gap-3">
-          <Button disabled={isBusy} onClick={onCancel}>
+          <Button disabled={busy !== null} onClick={onCancel}>
             キャンセル
           </Button>
           {reselectButton}
           <Button
-            disabled={!canCommit || isBusy}
+            disabled={!canCommit || busy !== null}
             icon={Check}
             onClick={onCommit}
             variant="primary"
           >
-            {isBusy ? "取り込み中..." : `確定する（${result.importedRows}人）`}
+            {busy === "commit"
+              ? "取り込み中..."
+              : `確定する（${result.importedRows}人）`}
           </Button>
         </div>
       </div>

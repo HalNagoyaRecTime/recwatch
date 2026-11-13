@@ -105,6 +105,11 @@ describe("GatheringImportPage", () => {
       name: "確定する（2人）",
     });
     expect(commitButton).toBeDisabled();
+    expect(
+      screen.getByText(/行の生徒は、確定すると、どの集合にも入りません/)
+    ).toHaveTextContent(
+      "エラーの 1行の生徒は、確定すると、どの集合にも入りません。"
+    );
 
     await userEvent.click(screen.getByLabelText("1行を除いて取り込む"));
     await userEvent.click(commitButton);
@@ -137,14 +142,48 @@ describe("GatheringImportPage", () => {
     expect(round).toHaveTextContent("09:45体育館前2名");
   });
 
-  it("確認中に集合が変更されていたら、ファイルを選び直すよう伝える", async () => {
+  it("確認中に集合が変更されていたら、同じファイルで確認し直す", async () => {
     const gateway: GatheringImportGateway = {
-      preview: vi.fn().mockResolvedValue(buildResult()),
+      preview: vi
+        .fn()
+        .mockResolvedValueOnce(buildResult())
+        .mockResolvedValueOnce(buildResult({ lockVersion: 8 })),
       commit: vi
         .fn()
-        .mockRejectedValue(
+        .mockRejectedValueOnce(
           new ApiClientError(409, "競技が他の操作で更新されています")
-        ),
+        )
+        .mockResolvedValueOnce(buildResult()),
+    };
+    const { file, selectFile } = renderPage(gateway);
+    await selectFile();
+
+    await userEvent.click(
+      await screen.findByRole("button", { name: "確定する（2人）" })
+    );
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "確認している間に、この競技の集合が変更されたため、最新の状態で確認し直しました。"
+    );
+    expect(gateway.preview).toHaveBeenNthCalledWith(2, 12, file);
+
+    await userEvent.click(
+      screen.getByRole("button", { name: "確定する（2人）" })
+    );
+
+    expect(gateway.commit).toHaveBeenLastCalledWith(12, file, 8);
+  });
+
+  it("確定している間は確定ボタンだけ表示を変え、ほかのボタンは押せなくする", async () => {
+    let finishCommit: (result: GatheringImportResult) => void = () => {};
+    const gateway: GatheringImportGateway = {
+      preview: vi.fn().mockResolvedValue(buildResult()),
+      commit: vi.fn(
+        () =>
+          new Promise<GatheringImportResult>((resolve) => {
+            finishCommit = resolve;
+          })
+      ),
     };
     const { selectFile } = renderPage(gateway);
     await selectFile();
@@ -153,14 +192,16 @@ describe("GatheringImportPage", () => {
       await screen.findByRole("button", { name: "確定する（2人）" })
     );
 
-    await waitFor(() =>
-      expect(screen.getByRole("alert")).toHaveTextContent(
-        "確認している間に、この競技の集合が変更されました。"
-      )
-    );
     expect(
-      screen.getByRole("button", { name: "CSV ファイルを選ぶ" })
-    ).toBeInTheDocument();
+      screen.getByRole("button", { name: "取り込み中..." })
+    ).toBeDisabled();
+    const reselectButton = screen.getByRole("button", {
+      name: "別のファイルを選ぶ",
+    });
+    expect(reselectButton).toBeDisabled();
+    expect(reselectButton.querySelector("svg")).toHaveClass("lucide-upload");
+    finishCommit(buildResult());
+    expect(await screen.findByRole("status")).toBeInTheDocument();
   });
 
   it("別のファイルを選び直すと、取り込まれない行の確認をやり直させる", async () => {
@@ -254,6 +295,32 @@ describe("GatheringImportPage", () => {
 
     expect(
       await screen.findByRole("button", { name: "確定する（0人）" })
+    ).toBeDisabled();
+    expect(screen.getByText("取り込める行がありません")).toBeInTheDocument();
+  });
+
+  it("全部の行がエラーのときは、取り込める行が無いことを見せる", async () => {
+    const gateway: GatheringImportGateway = {
+      preview: vi.fn().mockResolvedValue({
+        ...withExcludedRow,
+        totalRows: 1,
+        importedRows: 0,
+        rounds: [],
+      }),
+      commit: vi.fn(),
+    };
+    const { selectFile } = renderPage(gateway);
+
+    await selectFile();
+
+    expect(
+      await screen.findByText("取り込める行がありません")
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByLabelText("1行を除いて取り込む")
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "確定する（0人）" })
     ).toBeDisabled();
   });
 
