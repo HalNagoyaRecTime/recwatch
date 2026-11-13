@@ -2,7 +2,7 @@ import { AlertTriangleIcon } from "lucide-react";
 import { useEffect } from "react";
 
 import { Button } from "~/components/ui/button/Button";
-import type { Team } from "~/features/team/model/team";
+import { canDeleteTeam, type Team } from "~/features/team/model/team";
 
 type DeleteTeamDialogProps = {
   team: Team;
@@ -59,8 +59,11 @@ export function DeleteTeamDialog({
               id="delete-team-description"
               className="text-text-muted mt-2 text-sm leading-6"
             >
-              「{team.name}
-              」を削除すると、登録済みのクラス・得点も一覧から見えなくなります。この操作は元に戻せません。
+              「{team.name}」を削除します。
+              {team.registeredClasses.length > 0
+                ? `登録クラス（${team.registeredClasses.join("・")}）は、クラスごとの新しいチームに戻ります。`
+                : null}
+              この操作は元に戻せません。
             </p>
           </div>
         </div>
@@ -80,7 +83,7 @@ export function DeleteTeamDialog({
             戻る
           </Button>
           <Button
-            disabled={isSubmitting}
+            disabled={isSubmitting || !canDeleteTeam(team)}
             onClick={onConfirm}
             size="md"
             variant="danger"
