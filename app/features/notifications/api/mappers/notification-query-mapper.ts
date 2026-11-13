@@ -46,6 +46,10 @@ export function toNotificationScheduleResultsPath(
     page: String(query.page),
     limit: String(query.limit),
   });
+  if (query.search) search.set("search", query.search);
+  if (query.status) search.set("status", query.status);
+  if (query.includeRegisteredAt)
+    search.set("includeRegisteredAt", query.includeRegisteredAt);
   return `/api/v1/admin/notifications/schedules/${notificationScheduleId}/results?${search.toString()}`;
 }
 
