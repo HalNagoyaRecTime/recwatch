@@ -23,6 +23,13 @@ import {
 import { NotificationDetailPage } from "~/features/notifications/pages/NotificationDetailPage";
 import { ApiClientError } from "~/lib/api-client-error";
 
+vi.mock(
+  "~/features/notifications/components/detail/NotificationDeliveryFlow",
+  () => ({
+    NotificationDeliveryFlow: () => <div>配信処理の流れ</div>,
+  })
+);
+
 afterEach(cleanup);
 
 function createApis(overrides?: {
@@ -70,6 +77,45 @@ function renderPage(apis = createApis()) {
 }
 
 describe("NotificationDetailPage", () => {
+  it("手動更新が失敗した場合は前回の配信状況を残す", async () => {
+    const user = userEvent.setup();
+    const getDetail = vi
+      .fn()
+      .mockResolvedValueOnce(cloneFixture(adminNotificationDetailFixture))
+      .mockRejectedValueOnce(new Error("network"));
+    const getSchedule = vi.fn().mockResolvedValue({
+      ...cloneFixture(notificationScheduleDetailFixture),
+      notificationScheduleId: 504,
+    });
+    renderPage(createApis({ getDetail, getSchedule }));
+    await screen.findByText("プッシュ通知のタイトル");
+    await user.click(screen.getByRole("button", { name: "配信状況" }));
+    expect(await screen.findByText("配信処理の流れ")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "配信状況を更新" }));
+    expect(
+      await screen.findByText(/前回の表示を保持しています/)
+    ).toBeInTheDocument();
+    expect(screen.getByText("配信処理の流れ")).toBeInTheDocument();
+  });
+  it("配信状況を手動更新し、対象者・配信結果へ移動できる", async () => {
+    const user = userEvent.setup();
+    const getSchedule = vi.fn().mockResolvedValue({
+      ...cloneFixture(notificationScheduleDetailFixture),
+      notificationScheduleId: 504,
+    });
+    const apis = createApis({ getSchedule });
+    renderPage(apis);
+    await screen.findByText("プッシュ通知のタイトル");
+    await user.click(screen.getByRole("button", { name: "配信状況" }));
+    expect(await screen.findByText("配信処理の流れ")).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "プッシュ通知の配信内訳" })
+    ).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "配信状況を更新" }));
+    await waitFor(() => expect(getSchedule).toHaveBeenCalledTimes(2));
+    await user.click(screen.getByRole("button", { name: "対象者・配信結果" }));
+    expect(await screen.findByText("山田 太郎")).toBeInTheDocument();
+  });
   it("対象者が未確定のときはユーザー単位の集計を未確定と表示する", async () => {
     const notification = cloneFixture(adminNotificationDetailFixture);
     notification.schedules[0].audience.recipientResolution.status = "pending";
@@ -82,7 +128,7 @@ describe("NotificationDetailPage", () => {
     expect(within(card).getAllByText("未確定")).toHaveLength(4);
   });
 
-  it("概要に選択した配信回のサマリーを表示し、切り替え中は古い送信先集計を表示しない", async () => {
+  it("配信回の切り替え中は前の配信回の送信先集計を表示しない", async () => {
     const user = userEvent.setup();
     let resolveNext!: (value: typeof notificationScheduleDetailFixture) => void;
     const next = new Promise<typeof notificationScheduleDetailFixture>(
@@ -112,38 +158,29 @@ describe("NotificationDetailPage", () => {
       .mockReturnValueOnce(next);
     const apis = createApis({ getSchedule });
     renderPage(apis);
-    const heading = await screen.findByRole("heading", {
-      name: "配信サマリー",
-    });
-    const card = heading.closest("section")!;
-    expect(await within(card).findByText("42")).toBeInTheDocument();
-    expect(within(card).getByText("Push 未成功ユーザー")).toBeInTheDocument();
-    expect(within(card).getByText("送信先なしユーザー")).toBeInTheDocument();
-    expect(within(card).getByText("再送待ち")).toBeInTheDocument();
-    expect(getSchedule).toHaveBeenCalledTimes(1);
-    expect(apis.queryApi.getDetail).toHaveBeenCalledTimes(1);
+    await screen.findByText("プッシュ通知のタイトル");
+    await user.click(screen.getByRole("button", { name: "配信状況" }));
+    expect(await screen.findByText("配信処理の流れ")).toBeInTheDocument();
     expect(apis.scheduleQueryApi.getResults).not.toHaveBeenCalled();
 
-    await user.click(
-      within(screen.getByRole("complementary")).getByRole("button", {
-        name: /2回目/,
-      })
-    );
-    expect(within(card).queryByText("42")).not.toBeInTheDocument();
+    await user.click(screen.getByRole("combobox", { name: "配信回を変更" }));
+    await user.click(screen.getAllByRole("option")[1]);
+    expect(screen.queryByText("配信処理の流れ")).not.toBeInTheDocument();
     expect(
-      within(card).getByText("送信先の集計を読み込み中です")
+      screen.getByLabelText("配信状況を読み込み中です")
     ).toBeInTheDocument();
+
     await act(async () => {
       resolveNext(second);
       await next;
     });
-    expect(await within(card).findByText("99")).toBeInTheDocument();
+    expect(await screen.findByText("配信処理の流れ")).toBeInTheDocument();
     expect(getSchedule).toHaveBeenCalledTimes(2);
     expect(apis.queryApi.getDetail).toHaveBeenCalledTimes(1);
     expect(apis.scheduleQueryApi.getResults).not.toHaveBeenCalled();
   });
 
-  it("全タブで共通情報を表示し、配信回に応じた情報を切り替える", async () => {
+  it("配信回は全タブ共通で切り替え、サイドバーは概要だけに表示する", async () => {
     const user = userEvent.setup();
     const detail = cloneFixture(adminNotificationDetailFixture);
     detail.schedules[1].audience.items = [{ type: "all" }];
@@ -160,27 +197,29 @@ describe("NotificationDetailPage", () => {
     );
 
     const sidebar = await screen.findByRole("complementary");
-    expect(within(sidebar).getByText("配信履歴")).toBeInTheDocument();
-    expect(within(sidebar).getByText("配信結果")).toBeInTheDocument();
     expect(within(sidebar).getByText("対象指定")).toBeInTheDocument();
+    expect(within(sidebar).getByText("配信回の情報")).toBeInTheDocument();
     expect(within(sidebar).getByText("通知情報")).toBeInTheDocument();
-    expect(await within(sidebar).findByText("4 / 4")).toBeInTheDocument();
-
-    await user.click(within(sidebar).getByRole("button", { name: /2回目/ }));
-    expect(within(sidebar).getAllByText("全員").length).toBeGreaterThan(0);
-    expect(await within(sidebar).findByText("7 / 9")).toBeInTheDocument();
     expect(within(sidebar).getByText("#103")).toBeInTheDocument();
+    expect(within(sidebar).queryByText("配信履歴")).not.toBeInTheDocument();
+    expect(within(sidebar).queryByText("配信結果")).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("combobox", { name: "配信回を変更" }));
+    await user.click(screen.getAllByRole("option")[1]);
+    expect(
+      (await within(sidebar).findAllByText("全員")).length
+    ).toBeGreaterThan(0);
+    expect(within(sidebar).getByText("#506")).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "配信状況" }));
+    expect(screen.queryByText("通知情報")).not.toBeInTheDocument();
     expect(
-      within(screen.getByRole("complementary")).getByText("7 / 9")
+      screen.getByRole("combobox", { name: "配信回を変更" })
     ).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "対象者・配信結果" }));
+    expect(screen.queryByText("通知情報")).not.toBeInTheDocument();
     expect(
-      within(screen.getByRole("complementary")).getByText("7 / 9")
-    ).toBeInTheDocument();
-    expect(
-      within(screen.getByRole("complementary")).getByText("#103")
+      screen.getByRole("combobox", { name: "配信回を変更" })
     ).toBeInTheDocument();
   });
 
@@ -212,8 +251,7 @@ describe("NotificationDetailPage", () => {
     await user.click(screen.getByRole("combobox", { name: "配信回を変更" }));
     const schedules = screen.getAllByRole("option");
     expect(schedules).toHaveLength(2);
-    expect(screen.getByText(/対象者単位/)).toBeInTheDocument();
-    expect(screen.getByText("対象")).toBeInTheDocument();
+    expect(screen.getByText("対象者単位の配信結果")).toBeInTheDocument();
     await user.click(schedules[1]);
     expect(
       screen.getByText("配信元削除", { exact: false })
@@ -372,7 +410,7 @@ describe("NotificationDetailPage", () => {
     ).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "再試行" }));
-    expect(await screen.findByText("処理状況")).toBeInTheDocument();
+    expect(await screen.findByText("配信処理の流れ")).toBeInTheDocument();
     expect(getSchedule).toHaveBeenCalledTimes(2);
   });
 

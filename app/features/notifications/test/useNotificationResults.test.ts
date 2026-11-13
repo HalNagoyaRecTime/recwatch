@@ -164,6 +164,93 @@ describe("配信結果の取得と検索", () => {
     });
     expect(result.current.data?.[0].user.userName).toBe("次の配信回");
   });
+  it("件数が減って表示中のページが範囲外になったら最終ページを取り直す", async () => {
+    const first = cloneFixture(notificationScheduleResultsFixture);
+    first.recipients.pagination = {
+      page: 1,
+      limit: 50,
+      totalPages: 2,
+      totalCount: 60,
+    };
+    const emptyPage = cloneFixture(notificationScheduleResultsFixture);
+    emptyPage.recipients.items = [];
+    emptyPage.recipients.pagination = {
+      page: 2,
+      limit: 50,
+      totalPages: 1,
+      totalCount: 1,
+    };
+    const lastPage = cloneFixture(notificationScheduleResultsFixture);
+    lastPage.recipients.items[0].user.userName = "最後のページ";
+    lastPage.recipients.pagination = {
+      page: 1,
+      limit: 50,
+      totalPages: 1,
+      totalCount: 1,
+    };
+    const getResults = vi
+      .fn()
+      .mockResolvedValueOnce(first)
+      .mockResolvedValueOnce(emptyPage)
+      .mockResolvedValueOnce(lastPage);
+    const queryApi = api(getResults);
+    const { result } = renderHook(() =>
+      useNotificationResults({
+        api: queryApi,
+        scheduleId: 504,
+        active: true,
+        refreshKey: 0,
+      })
+    );
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    act(() => result.current.onPageChange(2));
+    await waitFor(() =>
+      expect(result.current.data?.[0].user.userName).toBe("最後のページ")
+    );
+    expect(getResults).toHaveBeenNthCalledWith(3, 504, {
+      page: 1,
+      limit: 50,
+      includeRegisteredAt: "1",
+    });
+    expect(result.current.page).toBe(1);
+    expect(result.current.pageCount).toBe(1);
+  });
+  it("絞り込み後の取得が失敗したら前の条件の一覧を残さない", async () => {
+    const first = cloneFixture(notificationScheduleResultsFixture);
+    first.recipients.items[0].user.userName = "前の条件";
+    first.recipients.pagination = {
+      page: 1,
+      limit: 50,
+      totalPages: 1,
+      totalCount: first.recipients.items.length,
+    };
+    const getResults = vi
+      .fn()
+      .mockResolvedValueOnce(first)
+      .mockRejectedValueOnce(new Error("取得失敗"));
+    const queryApi = api(getResults);
+    const { result } = renderHook(() =>
+      useNotificationResults({
+        api: queryApi,
+        scheduleId: 504,
+        active: true,
+        refreshKey: 0,
+      })
+    );
+    await waitFor(() =>
+      expect(result.current.data?.[0].user.userName).toBe("前の条件")
+    );
+    act(() =>
+      result.current.onFiltersChange({
+        search: "山田",
+        status: "all",
+        platform: "all",
+      })
+    );
+    await waitFor(() => expect(result.current.errorMessage).toBeTruthy());
+    expect(result.current.data).toBeNull();
+    expect(result.current.total).toBe(0);
+  });
   it("取得失敗時にエラーメッセージを表示する", async () => {
     const queryApi = api(vi.fn().mockRejectedValueOnce(new Error("取得失敗")));
     const { result } = renderHook(() =>

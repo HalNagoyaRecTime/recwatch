@@ -67,44 +67,47 @@ export function useNotificationDetail({
     setDelivery(emptySection());
   }, []);
 
-  const loadNotification = useCallback(async () => {
-    if (!Number.isSafeInteger(notificationId) || notificationId <= 0) {
-      setNotification({
-        data: null,
-        errorMessage: "通知が見つかりません。",
-        isLoading: false,
-      });
-      return;
-    }
-    const requestId = ++notificationRequestId.current;
-    setNotification((current) => ({
-      ...current,
-      errorMessage: null,
-      isLoading: true,
-    }));
-    try {
-      const data = await queryApi.getDetail(notificationId);
-      if (requestId !== notificationRequestId.current) return;
-      setNotification({ data, errorMessage: null, isLoading: false });
-      const next = data.schedules.some(
-        (item) => item.notificationScheduleId === selectedSchedule.current
-      )
-        ? selectedSchedule.current
-        : (data.schedules[0]?.notificationScheduleId ?? null);
-      if (next !== selectedSchedule.current) selectSchedule(next);
-      else setRefreshKey((current) => current + 1);
-    } catch (error) {
-      if (requestId !== notificationRequestId.current) return;
-      setNotification({
-        data: null,
-        errorMessage:
-          readApiErrorStatus(error) === 404
-            ? "通知が見つかりません。"
-            : "通知詳細を読み込めませんでした。",
-        isLoading: false,
-      });
-    }
-  }, [notificationId, queryApi, selectSchedule]);
+  const loadNotification = useCallback(
+    async (preserveOnError = false) => {
+      if (!Number.isSafeInteger(notificationId) || notificationId <= 0) {
+        setNotification({
+          data: null,
+          errorMessage: "通知が見つかりません。",
+          isLoading: false,
+        });
+        return;
+      }
+      const requestId = ++notificationRequestId.current;
+      setNotification((current) => ({
+        ...current,
+        errorMessage: null,
+        isLoading: true,
+      }));
+      try {
+        const data = await queryApi.getDetail(notificationId);
+        if (requestId !== notificationRequestId.current) return;
+        setNotification({ data, errorMessage: null, isLoading: false });
+        const next = data.schedules.some(
+          (item) => item.notificationScheduleId === selectedSchedule.current
+        )
+          ? selectedSchedule.current
+          : (data.schedules[0]?.notificationScheduleId ?? null);
+        if (next !== selectedSchedule.current) selectSchedule(next);
+        else setRefreshKey((current) => current + 1);
+      } catch (error) {
+        if (requestId !== notificationRequestId.current) return;
+        setNotification((current) => ({
+          data: preserveOnError ? current.data : null,
+          errorMessage:
+            readApiErrorStatus(error) === 404
+              ? "通知が見つかりません。"
+              : "通知詳細を読み込めませんでした。",
+          isLoading: false,
+        }));
+      }
+    },
+    [notificationId, queryApi, selectSchedule]
+  );
 
   useEffect(() => {
     let active = true;
@@ -120,7 +123,11 @@ export function useNotificationDetail({
   const loadSchedule = useCallback(async () => {
     if (selectedScheduleId === null) return;
     const requestId = ++scheduleRequestId.current;
-    setSchedule({ data: null, errorMessage: null, isLoading: true });
+    setSchedule((current) => ({
+      ...current,
+      errorMessage: null,
+      isLoading: true,
+    }));
     try {
       const data = await scheduleQueryApi.getDetail(selectedScheduleId);
       if (requestId === scheduleRequestId.current) {
@@ -128,14 +135,14 @@ export function useNotificationDetail({
       }
     } catch (error) {
       if (requestId !== scheduleRequestId.current) return;
-      setSchedule({
-        data: null,
+      setSchedule((current) => ({
+        data: current.data,
         errorMessage:
           readApiErrorStatus(error) === 404
             ? "配信予約が見つかりません。"
             : "配信予約の詳細を読み込めませんでした。",
         isLoading: false,
-      });
+      }));
     }
   }, [scheduleQueryApi, selectedScheduleId]);
 

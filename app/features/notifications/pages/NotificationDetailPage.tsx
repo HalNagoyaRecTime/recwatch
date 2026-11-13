@@ -2,8 +2,9 @@ import { NotificationScheduleSelector } from "~/features/notifications/component
 import { useNotificationResults } from "~/features/notifications/hooks/useNotificationResults";
 import { NotificationResultsPanel } from "~/features/notifications/components/detail/NotificationResultsPanel";
 import { NotificationResultSidebar } from "~/features/notifications/components/detail/NotificationResultSidebar";
+import { NotificationDeliveryFlow } from "~/features/notifications/components/detail/NotificationDeliveryFlow";
 import { MarkdownContent } from "~/components/ui/markdown/MarkdownContent";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, RefreshCw } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router";
 
@@ -25,6 +26,7 @@ import {
   importanceLabel,
 } from "~/features/notifications/components/detail/notification-detail-display";
 import { NotificationStatusBadge } from "~/features/notifications/components/list/NotificationStatusBadge";
+import { formatNotificationDateTime } from "~/features/notifications/components/list/notification-display";
 import type { AdminNotificationCommandApi } from "~/features/notifications/api/contracts/admin-notification-command-api";
 import type { NotificationScheduleCommandApi } from "~/features/notifications/api/contracts/notification-schedule-command-api";
 import type { NotificationFeedbackReporter } from "~/features/notifications/hooks/notification-feedback";
@@ -102,7 +104,7 @@ export function NotificationDetailPage({
     return <PageState role="status" message="通知詳細を読み込み中です" />;
   }
 
-  if (state.notification.errorMessage || !state.notification.data) {
+  if (!state.notification.data) {
     return (
       <PageState
         action={
@@ -221,22 +223,29 @@ export function NotificationDetailPage({
         onSelect={selectSchedule}
       />
 
-      <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
+      <div
+        className={cn(
+          "grid items-start gap-4",
+          tab === "overview" && "xl:grid-cols-[minmax(0,1fr)_320px]"
+        )}
+      >
         <div className="min-w-0">
           {tab === "overview" ? (
             <OverviewTab
               notification={notification}
               schedule={selectedSchedule}
-              detail={state.schedule.data}
-              isLoading={state.schedule.isLoading}
-              errorMessage={state.schedule.errorMessage}
             />
           ) : tab === "schedule" ? (
             <ScheduleTab
               detail={state.schedule.data}
               errorMessage={state.schedule.errorMessage}
+              refreshError={state.notification.errorMessage}
               isLoading={state.schedule.isLoading}
+              isRefreshing={
+                state.notification.isLoading || state.schedule.isLoading
+              }
               onRetry={() => void state.loadSchedule()}
+              onRefresh={() => void state.loadNotification(true)}
               schedule={selectedSchedule}
             />
           ) : (
@@ -251,15 +260,12 @@ export function NotificationDetailPage({
             />
           )}
         </div>
-        <NotificationResultSidebar
-          notification={notification}
-          selected={selectedSchedule}
-          scheduleDetail={state.schedule.data}
-          scheduleLoading={state.schedule.isLoading}
-          scheduleError={state.schedule.errorMessage}
-          onSelect={selectSchedule}
-          onRetrySchedule={() => void state.loadSchedule()}
-        />
+        {tab === "overview" ? (
+          <NotificationResultSidebar
+            notification={notification}
+            selected={selectedSchedule}
+          />
+        ) : null}
       </div>
 
       {state.selectedDeliveryId !== null ? (
@@ -278,15 +284,9 @@ export function NotificationDetailPage({
 function OverviewTab({
   notification,
   schedule,
-  detail,
-  isLoading,
-  errorMessage,
 }: {
   notification: AdminNotificationDetail;
   schedule: NotificationScheduleSummary | null;
-  detail: NotificationScheduleDetail | null;
-  isLoading: boolean;
-  errorMessage: string | null;
 }) {
   return (
     <div className="flex flex-col gap-4">
@@ -314,39 +314,20 @@ function OverviewTab({
           markdown
         />
       </Card>
-      <DeliverySummary
-        schedule={schedule}
-        detail={detail}
-        isLoading={isLoading}
-        errorMessage={errorMessage}
-      />
+      <DeliverySummary schedule={schedule} />
     </div>
   );
 }
 
 function DeliverySummary({
   schedule,
-  detail,
-  isLoading,
-  errorMessage,
 }: {
   schedule: NotificationScheduleSummary | null;
-  detail: NotificationScheduleDetail | null;
-  isLoading: boolean;
-  errorMessage: string | null;
 }) {
   const resolved = schedule?.audience.recipientResolution.status === "resolved";
   const summary = schedule?.recipientPushSummary;
-  const delivery =
-    !isLoading &&
-    !errorMessage &&
-    detail?.notificationScheduleId === schedule?.notificationScheduleId
-      ? detail?.deliveryProgress
-      : null;
   const recipientCount = (value: number | undefined) =>
     resolved && value !== undefined ? value.toLocaleString() : "未確定";
-  const deliveryCount = (value: number | undefined) =>
-    value === undefined ? "—" : value.toLocaleString();
   const items = [
     [
       "確定した対象者",
@@ -354,58 +335,40 @@ function DeliverySummary({
       "ユーザー単位",
     ],
     [
-      "Push 成功ユーザー",
+      "配信に成功した人数",
       recipientCount(summary?.successCount),
-      "1 送信先以上で FCM 受付",
+      "1送信先以上で通知サービス受付済み",
     ],
     [
-      "Push 未成功ユーザー",
+      "配信に未成功の人数",
       recipientCount(summary?.failedCount),
       "送信待ち・再送待ちを含む",
     ],
     [
       "送信先なしユーザー",
       recipientCount(summary?.noPushTargetCount),
-      "Push 配送記録なし",
+      "配信記録なし",
     ],
-    ["Push 送信先", deliveryCount(delivery?.totalCount), "送信先単位"],
-    ["FCM 受付成功", deliveryCount(delivery?.sentCount), "送信先単位"],
-    ["送信失敗", deliveryCount(delivery?.failedCount), "送信先単位"],
-    ["再送待ち", deliveryCount(delivery?.retryWaitCount), "送信先単位"],
   ];
   return (
-    <Card
-      title="配信サマリー"
-      description="ユーザー単位と Push 送信先単位を分けて表示"
-    >
+    <Card title="配信サマリー" description="対象者単位の配信結果">
       {!schedule ? (
         <p className="text-text-muted text-sm">配信回がありません。</p>
       ) : (
-        <>
-          {isLoading ? (
-            <p className="text-text-muted text-xs" role="status">
-              送信先の集計を読み込み中です
-            </p>
-          ) : errorMessage ? (
-            <p className="text-tone-danger-text text-xs">
-              送信先の集計を取得できませんでした。右側から再試行できます。
-            </p>
-          ) : null}
-          <dl className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-            {items.map(([label, value, description]) => (
-              <div
-                key={label}
-                className="border-border-subtle app-rounded min-w-0 border px-4 py-3"
-              >
-                <dt className="text-text-muted text-xs">{label}</dt>
-                <dd className="text-text-base mt-1 text-2xl font-bold">
-                  {value}
-                </dd>
-                <p className="text-text-muted mt-1 text-xs">{description}</p>
-              </div>
-            ))}
-          </dl>
-        </>
+        <dl className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+          {items.map(([label, value, description]) => (
+            <div
+              key={label}
+              className="border-border-subtle app-rounded min-w-0 border px-4 py-3"
+            >
+              <dt className="text-text-muted text-xs">{label}</dt>
+              <dd className="text-text-base mt-1 text-2xl font-bold">
+                {value}
+              </dd>
+              <p className="text-text-muted mt-1 text-xs">{description}</p>
+            </div>
+          ))}
+        </dl>
       )}
     </Card>
   );
@@ -414,19 +377,24 @@ function DeliverySummary({
 function ScheduleTab({
   detail,
   errorMessage,
+  refreshError,
   isLoading,
+  isRefreshing,
   onRetry,
+  onRefresh,
   schedule,
 }: {
   detail: NotificationScheduleDetail | null;
   errorMessage: string | null;
+  refreshError: string | null;
   isLoading: boolean;
+  isRefreshing: boolean;
   onRetry: () => void;
+  onRefresh: () => void;
   schedule: NotificationScheduleSummary | null;
 }) {
-  if (isLoading)
-    return <SectionState message="配信状況を読み込み中です" role="status" />;
-  if (errorMessage)
+  if (isLoading && !detail) return <ScheduleTabSkeleton />;
+  if (errorMessage && !detail)
     return (
       <SectionState
         action={<Button onClick={onRetry}>再試行</Button>}
@@ -437,48 +405,130 @@ function ScheduleTab({
   if (!detail || !schedule)
     return <SectionState message="配信状況はありません。" role="status" />;
 
+  const delivery = detail.deliveryProgress;
+  const resolved = detail.recipientProgress.status === "resolved";
+  const percent = (count: number) =>
+    delivery.totalCount > 0
+      ? ((count / delivery.totalCount) * 100).toFixed(1)
+      : "0.0";
+  const breakdown = [
+    { label: "Sent", count: delivery.sentCount, tone: "success" },
+    { label: "Pending", count: delivery.pendingCount, tone: "muted" },
+    { label: "Sending", count: delivery.sendingCount, tone: "active" },
+    { label: "Retry", count: delivery.retryWaitCount, tone: "attention" },
+    { label: "Failed", count: delivery.failedCount, tone: "danger" },
+    { label: "Stopped", count: delivery.stoppedCount, tone: "muted" },
+  ];
+
   return (
-    <div className="grid gap-4 lg:grid-cols-2">
-      <Card title="処理状況">
-        <div className="mb-4">
-          <NotificationStatusBadge status={schedule.status} />
+    <div className="space-y-4">
+      {(errorMessage || refreshError) && (
+        <div role="alert" className="text-tone-danger-text text-sm">
+          最新の配信状況を取得できませんでした。前回の表示を保持しています。
+          <Button onClick={onRefresh}>再試行</Button>
         </div>
-        <Definition
-          label="配信対象の確認"
-          value={`${detail.audienceProgress.resolvedCount} / ${detail.audienceProgress.totalCount}`}
-        />
-        <Definition
-          label="通知対象者の確定"
-          value={`${detail.recipientProgress.count}件・${detail.recipientProgress.status === "resolved" ? "確定済み" : "確定待ち"}`}
-        />
-        <Definition label="停止情報" value={formatStop(detail.stop)} />
-      </Card>
-      <Card
-        title="プッシュ通知の配信集計"
-        description="通知先端末の登録情報ごとの集計です。通知対象者数とは一致しない場合があります"
-      >
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <Metric
-            label="総配信件数"
-            value={detail.deliveryProgress.totalCount}
-          />
-          <Metric
-            label="通知サービス受付済み"
-            value={detail.deliveryProgress.sentCount}
-          />
-          <Metric
-            label="再送待ち"
-            value={detail.deliveryProgress.retryWaitCount}
-          />
-          <Metric label="失敗" value={detail.deliveryProgress.failedCount} />
-          <Metric
-            label="送信待ち"
-            value={detail.deliveryProgress.pendingCount}
-          />
-          <Metric label="送信中" value={detail.deliveryProgress.sendingCount} />
-          <Metric label="停止" value={detail.deliveryProgress.stoppedCount} />
+      )}
+      <div className="monitor-workspace">
+        <section className="monitor-panel monitor-flow-panel">
+          <header className="monitor-flow-header">
+            <div>
+              <h2>
+                通知 #{detail.notificationId} / {detail.content.push.title}
+              </h2>
+              <p>配信予定 {formatNotificationDateTime(detail.sendAt)}</p>
+            </div>
+            <div className="flex items-center gap-3">
+              <Button
+                aria-label="配信状況を更新"
+                disabled={isRefreshing}
+                icon={RefreshCw}
+                onClick={onRefresh}
+                size="sm"
+              >
+                {isRefreshing ? "更新中" : "更新"}
+              </Button>
+            </div>
+          </header>
+          <NotificationDeliveryFlow detail={detail} />
+        </section>
+        <aside className="monitor-sidebar">
+          <section className="monitor-panel monitor-side-panel">
+            <h2>現在の処理</h2>
+            <dl className="monitor-status-list">
+              <div>
+                <dt>表示状態</dt>
+                <dd>
+                  <NotificationStatusBadge status={detail.status} />
+                </dd>
+              </div>
+              <div>
+                <dt>DB状態</dt>
+                <dd>{detail.status}</dd>
+              </div>
+              <div>
+                <dt>配信予約</dt>
+                <dd>#{detail.notificationScheduleId}</dd>
+              </div>
+              <div>
+                <dt>通知対象者の確定</dt>
+                <dd>{resolved ? "確定済み" : "未確定"}</dd>
+              </div>
+              <div>
+                <dt>停止情報</dt>
+                <dd>{detail.stop ? formatStop(detail.stop) : "—"}</dd>
+              </div>
+            </dl>
+          </section>
+          <section className="monitor-panel monitor-side-panel">
+            <h2>プッシュ通知の配信内訳</h2>
+            <div className="monitor-breakdown">
+              {breakdown.map((row) => (
+                <div
+                  key={row.label}
+                  className={`monitor-bar-row monitor-bar-${row.tone}`}
+                >
+                  <div>
+                    <span>
+                      {row.label} {row.count.toLocaleString()}
+                    </span>
+                    <strong>{percent(row.count)}%</strong>
+                  </div>
+                  <div className="monitor-bar-track">
+                    <span style={{ width: `${percent(row.count)}%` }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        </aside>
+      </div>
+    </div>
+  );
+}
+
+function ScheduleTabSkeleton() {
+  return (
+    <div
+      aria-busy="true"
+      aria-label="配信状況を読み込み中です"
+      className="space-y-4"
+      role="status"
+    >
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="bg-surface-muted h-9 w-20 animate-pulse rounded" />
+        <div className="bg-surface-muted h-9 w-32 animate-pulse rounded" />
+      </div>
+      <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,1fr)_260px]">
+        <div className="border-border-base bg-surface-base app-rounded h-[620px] animate-pulse border" />
+        <div className="space-y-4">
+          {[0, 1, 2].map((index) => (
+            <div
+              key={index}
+              className="border-border-base bg-surface-base app-rounded h-40 animate-pulse border"
+            />
+          ))}
         </div>
-      </Card>
+      </div>
     </div>
   );
 }
@@ -520,28 +570,6 @@ function ContentBox({
       <div className="text-text-base mt-1 font-medium whitespace-pre-wrap">
         {markdown ? <MarkdownContent content={value} /> : value}
       </div>
-    </div>
-  );
-}
-
-function Definition({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="border-border-subtle grid grid-cols-[7rem_minmax(0,1fr)] gap-3 border-b pb-3 text-sm last:border-0 last:pb-0">
-      <dt className="text-text-muted">{label}</dt>
-      <dd className="text-text-base min-w-0 text-right font-medium break-words">
-        {value}
-      </dd>
-    </div>
-  );
-}
-
-function Metric({ label, value }: { label: string; value: number }) {
-  return (
-    <div className="border-border-subtle app-rounded border px-4 py-3">
-      <p className="text-text-muted text-xs">{label}</p>
-      <p className="text-text-base mt-1 text-2xl font-bold">
-        {value.toLocaleString()}
-      </p>
     </div>
   );
 }

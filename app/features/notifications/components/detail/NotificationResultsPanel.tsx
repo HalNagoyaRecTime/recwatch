@@ -123,79 +123,109 @@ export function NotificationResultsPanel({
   ];
   return (
     <section aria-label="対象者・配信結果" className="min-w-0 space-y-4">
-      <div className="space-y-2">
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="min-w-56 flex-1">
-            <SearchField
-              ariaLabel="対象者を検索"
-              placeholder="ユーザー名・User IDを検索"
-              maxLength={100}
-              value={state.filters.search}
-              onValueChange={(search) =>
-                state.onFiltersChange({ ...state.filters, search })
-              }
-            />
-          </div>
-          <Select
-            ariaLabel="送信結果で絞り込み"
-            value={state.filters.status}
-            onValueChange={(status) =>
-              state.onFiltersChange({ ...state.filters, status })
+      <div className="flex flex-wrap items-center gap-2">
+        <div className="min-w-56 flex-1">
+          <SearchField
+            ariaLabel="対象者を検索"
+            placeholder="ユーザー名・User IDを検索"
+            maxLength={100}
+            value={state.filters.search}
+            onValueChange={(search) =>
+              state.onFiltersChange({ ...state.filters, search })
             }
-            options={[
-              { value: "all", label: "すべての送信結果" },
-              ...Object.entries(resultLabels).map(([value, label]) => ({
-                value: value as ResultStatus,
-                label,
-              })),
-            ]}
           />
         </div>
+        <Select
+          ariaLabel="送信結果で絞り込み"
+          value={state.filters.status}
+          onValueChange={(status) =>
+            state.onFiltersChange({ ...state.filters, status })
+          }
+          options={[
+            { value: "all", label: "すべての送信結果" },
+            ...Object.entries(resultLabels).map(([value, label]) => ({
+              value: value as ResultStatus,
+              label,
+            })),
+          ]}
+        />
+        {state.isRefreshing ? (
+          <span className="text-text-muted text-xs" role="status">
+            更新中…
+          </span>
+        ) : null}
       </div>
-      {state.isLoading && (
-        <p role="status" className="text-text-muted px-4 py-3 text-sm">
-          配信結果を読み込み中です
-        </p>
-      )}
       {state.errorMessage && (
         <div role="alert" className="flex items-center gap-3 p-4 text-sm">
           <p className="text-tone-danger-text">{state.errorMessage}</p>
           <Button onClick={() => void state.loadResults()}>再試行</Button>
         </div>
       )}
+      {state.isLoading && !state.data ? <ResultsTableSkeleton /> : null}
       {state.data && (
-        <>
-          <DataTable
-            ariaLabel="対象者一覧"
-            columns={columns}
-            items={state.items}
-            getRowKey={(item) => item.notificationRecipientId}
-            emptyMessage={
-              recipientResolved
+        <DataTable
+          ariaLabel="対象者一覧"
+          columns={columns}
+          items={state.items}
+          getRowKey={(item) => item.notificationRecipientId}
+          emptyMessage={
+            state.filters.search.trim() || state.filters.status !== "all"
+              ? "条件に一致する対象者はいません"
+              : recipientResolved
                 ? "配信対象者はいません"
                 : "対象者はまだ確定していません"
-            }
-            footer={
-              <Pagination
-                currentPage={state.page}
-                pageCount={state.pageCount}
-                pageSize={50}
-                totalItems={state.total}
-                onPageChange={state.onPageChange}
+          }
+          footer={
+            <Pagination
+              currentPage={state.page}
+              pageCount={state.pageCount}
+              pageSize={50}
+              totalItems={state.total}
+              onPageChange={state.onPageChange}
+            />
+          }
+          renderExpandedRow={(item) =>
+            expandedIds.has(item.notificationRecipientId) ? (
+              <RecipientDeliveries
+                item={item}
+                onOpenDelivery={onOpenDelivery}
               />
-            }
-            renderExpandedRow={(item) =>
-              expandedIds.has(item.notificationRecipientId) ? (
-                <RecipientDeliveries
-                  item={item}
-                  onOpenDelivery={onOpenDelivery}
-                />
-              ) : null
-            }
-          />
-        </>
+            ) : null
+          }
+        />
       )}
     </section>
+  );
+}
+
+function ResultsTableSkeleton() {
+  return (
+    <div
+      aria-busy="true"
+      aria-label="配信結果を読み込み中です"
+      className="border-border-base bg-surface-base app-rounded overflow-hidden border"
+      role="status"
+    >
+      <div className="border-border-subtle flex h-12 items-center gap-4 border-b px-5">
+        <div className="bg-surface-muted h-3 w-16 animate-pulse rounded" />
+        <div className="bg-surface-muted h-3 w-20 animate-pulse rounded" />
+        <div className="bg-surface-muted h-3 w-24 animate-pulse rounded" />
+        <div className="bg-surface-muted h-3 w-24 animate-pulse rounded" />
+      </div>
+      <div className="divide-border-subtle divide-y">
+        {[0, 1, 2, 3, 4, 5, 6, 7].map((index) => (
+          <div key={index} className="flex h-16 items-center gap-4 px-5">
+            <div className="bg-surface-muted h-4 w-1/4 animate-pulse rounded" />
+            <div className="bg-surface-muted h-4 w-24 animate-pulse rounded" />
+            <div className="bg-surface-muted h-4 w-32 animate-pulse rounded" />
+            <div className="bg-surface-muted ml-auto h-4 w-24 animate-pulse rounded" />
+          </div>
+        ))}
+      </div>
+      <div className="border-border-subtle flex h-16 items-center justify-center border-t">
+        <div className="bg-surface-muted h-4 w-40 animate-pulse rounded" />
+      </div>
+    </div>
   );
 }
 function RecipientDeliveries({
