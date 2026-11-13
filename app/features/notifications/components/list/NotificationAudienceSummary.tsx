@@ -1,3 +1,4 @@
+import { FloatingListSurface } from "~/components/ui/panel/FloatingListSurface";
 import { FloatingPanel } from "~/components/ui/panel/FloatingPanel";
 import { Button } from "~/components/ui/button/Button";
 import type { AdminNotificationListSchedule } from "~/features/notifications/api/contracts/admin-notification-query-api";
@@ -35,11 +36,13 @@ export function NotificationAudienceSummary({
             </Button>
           }
           content={
-            <ul className="space-y-2 p-3 text-sm">
-              {labels.map((label, index) => (
-                <li key={index}>{label}</li>
-              ))}
-            </ul>
+            <FloatingListSurface>
+              <ul className="space-y-2 p-1 text-sm">
+                {labels.map((label, index) => (
+                  <li key={index}>{label}</li>
+                ))}
+              </ul>
+            </FloatingListSurface>
           }
         />
       )}
