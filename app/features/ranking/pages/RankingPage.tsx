@@ -12,8 +12,13 @@ import {
 } from "~/features/ranking/application/ranking-list-url";
 import { RankingBulkScoreDialog } from "~/features/ranking/components/RankingBulkScoreDialog";
 import { RankingTable } from "~/features/ranking/components/RankingTable";
+import { TeamApi } from "~/features/team/api";
+import { ApiClientError } from "~/lib/api-client-error";
 import { useRankingSelection } from "~/features/ranking/hooks/useRankingSelection";
 import type { Ranking } from "~/features/ranking/model/ranking";
+
+// 選択中のチーム名は、この件数を超えたら「ほか○件」とまとめる
+const SELECTED_NAME_PREVIEW_COUNT = 8;
 
 type RankingPageProps = {
   limit: number;
@@ -46,9 +51,19 @@ export function RankingPage({
     readonly Ranking[] | null
   >(null);
 
-  const [jumpError, setJumpError] = useState<string | null>(null);
-  // チーム名から別ページへ移動したあと、画面の真ん中へスクロールするチーム
-  const scrollTargetTeamIdRef = useRef<number | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [selectionNotice, setSelectionNotice] = useState<string | null>(null);
+  const [isPreparingBulkEdit, setIsPreparingBulkEdit] = useState(false);
+  const [isSelectionExpanded, setIsSelectionExpanded] = useState(false);
+  // チーム名から別ページへ移動したあと、画面の真ん中へスクロールするチームと
+  // その移動先のページ（検索なし）
+  const scrollTargetRef = useRef<{ page: number; teamId: number } | null>(null);
+
+  const visibleSelectedRankings = isSelectionExpanded
+    ? selectedRankings
+    : selectedRankings.slice(0, SELECTED_NAME_PREVIEW_COUNT);
+  const hiddenSelectedCount =
+    selectedRankings.length - visibleSelectedRankings.length;
 
   const currentPage = Math.floor(offset / limit) + 1;
   const pageCount = Math.max(1, Math.ceil(total / limit));
@@ -73,8 +88,8 @@ export function RankingPage({
    * そのチームの行を画面の真ん中へスクロールする。
    */
   async function jumpToTeam(teamId: number) {
-    setJumpError(null);
-    scrollTargetTeamIdRef.current = null;
+    setActionError(null);
+    scrollTargetRef.current = null;
     if (rankings.some((ranking) => ranking.teamId === teamId)) {
       scrollToTeam(teamId);
       return;
@@ -82,27 +97,90 @@ export function RankingPage({
     try {
       const page = await findRankingPage(teamId, limit);
       if (page === null) {
-        setJumpError("このチームは一覧に見つかりませんでした。");
+        setActionError("このチームは一覧に見つかりませんでした。");
         return;
       }
-      scrollTargetTeamIdRef.current = teamId;
+      // 位置を調べている間に順位が変わり、移動先が今と同じページになった
+      // 場合は、URLが変わらず再描画もされないので、何もしない
+      if (page === currentPage && search === "") return;
+      scrollTargetRef.current = { page, teamId };
       setSearchParams((current) =>
         updateRankingListUrl(current, { page, search: "" })
       );
     } catch {
-      setJumpError("チームの表示ページへ移動できませんでした。");
+      setActionError("チームの表示ページへ移動できませんでした。");
     }
   }
 
   // 移動先のページが表示されたら、そのチームの行を画面の真ん中へ寄せる。
   // ページ移動時のスクロール位置の復元（ScrollRestoration）より後に動くよう、
   // 一覧の描画後（useEffect）に行う。
+  // 見つからなくても（移動中に順位が変わった、別のページへ移ったなど）
+  // 1回描画したらクリアする。残すと、あとで偶然そのチームが載っている
+  // ページを開いたときに勝手にスクロールしてしまうため。
+  // 移動先とは別のページ（移動が終わる前にユーザーが別のページへ移ったなど）
+  // が表示された場合は、スクロールせずにクリアだけする。
   useEffect(() => {
-    const teamId = scrollTargetTeamIdRef.current;
-    if (teamId !== null && scrollToTeam(teamId)) {
-      scrollTargetTeamIdRef.current = null;
+    const target = scrollTargetRef.current;
+    if (target === null) return;
+    scrollTargetRef.current = null;
+    if (target.page === currentPage && search === "") {
+      scrollToTeam(target.teamId);
     }
-  }, [rankings]);
+  }, [rankings, currentPage, search]);
+
+  /**
+   * まとめ入力を開く前に、選択中チームの最新の得点を取り直す。
+   * 別ページで選んだチームは選択した時点の得点のままなので、古い得点を
+   * 基準にすると、通信エラー時の加算済み判定（二重加算の防止）や
+   * 「更新後の得点」の表示がずれるため。
+   * 削除されていたチームは選択から外す。
+   */
+  async function openBulkEdit() {
+    setActionError(null);
+    setSelectionNotice(null);
+    setIsPreparingBulkEdit(true);
+    try {
+      const results = await Promise.allSettled(
+        selectedRankings.map((ranking) => TeamApi.getTeamById(ranking.teamId))
+      );
+      const latestRankings: Ranking[] = [];
+      const deletedRankings: Ranking[] = [];
+      for (const [index, result] of results.entries()) {
+        const ranking = selectedRankings[index];
+        if (result.status === "fulfilled") {
+          latestRankings.push({
+            ...ranking,
+            score: result.value.score,
+            teamName: result.value.name,
+          });
+        } else if (
+          result.reason instanceof ApiClientError &&
+          result.reason.status === 404
+        ) {
+          deletedRankings.push(ranking);
+        } else {
+          setActionError(
+            "最新の得点を取得できませんでした。時間をおいて再度お試しください。"
+          );
+          return;
+        }
+      }
+
+      syncTeams(latestRankings);
+      if (deletedRankings.length > 0) {
+        removeTeams(deletedRankings.map((ranking) => ranking.teamId));
+        setSelectionNotice(
+          `削除されたチーム（${deletedRankings
+            .map((ranking) => ranking.teamName)
+            .join("、")}）を選択から外しました。`
+        );
+      }
+      if (latestRankings.length > 0) setBulkEditRankings(latestRankings);
+    } finally {
+      setIsPreparingBulkEdit(false);
+    }
+  }
 
   function updateUrl(updates: Parameters<typeof updateRankingListUrl>[1]) {
     setSearchParams(updateRankingListUrl(searchParams, updates));
@@ -128,12 +206,12 @@ export function RankingPage({
             ) : (
               <>
                 {`選択中 ${selectedRankings.length}件（`}
-                {selectedRankings.map((ranking, index) => (
+                {visibleSelectedRankings.map((ranking, index) => (
                   <Fragment key={ranking.teamId}>
                     {index > 0 ? "、" : null}
                     <button
                       aria-label={`${ranking.teamName}の表示ページへ移動`}
-                      className="hover:text-brand-primary cursor-pointer text-sky-700 underline underline-offset-2 dark:text-sky-300"
+                      className="text-text-link hover:text-brand-primary cursor-pointer underline underline-offset-2"
                       onClick={() => void jumpToTeam(ranking.teamId)}
                       title="このチームの表示ページへ移動"
                       type="button"
@@ -142,13 +220,40 @@ export function RankingPage({
                     </button>
                   </Fragment>
                 ))}
+                {hiddenSelectedCount > 0 ? (
+                  <>
+                    {"、"}
+                    <button
+                      className="text-text-muted hover:text-text-base cursor-pointer underline underline-offset-2"
+                      onClick={() => setIsSelectionExpanded(true)}
+                      type="button"
+                    >
+                      {`ほか${hiddenSelectedCount}件`}
+                    </button>
+                  </>
+                ) : null}
                 ）
+                {isSelectionExpanded &&
+                selectedRankings.length > SELECTED_NAME_PREVIEW_COUNT ? (
+                  <button
+                    className="text-text-muted hover:text-text-base ml-2 cursor-pointer underline underline-offset-2"
+                    onClick={() => setIsSelectionExpanded(false)}
+                    type="button"
+                  >
+                    折りたたむ
+                  </button>
+                ) : null}
               </>
             )}
           </p>
-          {jumpError ? (
+          {actionError ? (
             <p className="text-tone-danger-text text-sm" role="alert">
-              {jumpError}
+              {actionError}
+            </p>
+          ) : null}
+          {selectionNotice ? (
+            <p className="text-text-muted text-sm" role="status">
+              {selectionNotice}
             </p>
           ) : null}
         </div>
@@ -162,12 +267,14 @@ export function RankingPage({
             すべての選択を解除
           </Button>
           <Button
-            disabled={selectedRankings.length === 0}
-            onClick={() => setBulkEditRankings(selectedRankings)}
+            disabled={selectedRankings.length === 0 || isPreparingBulkEdit}
+            onClick={() => void openBulkEdit()}
             size="sm"
             variant="primary"
           >
-            まとめて得点を入力
+            {isPreparingBulkEdit
+              ? "最新の得点を確認中..."
+              : "まとめて得点を入力"}
           </Button>
         </div>
       </div>

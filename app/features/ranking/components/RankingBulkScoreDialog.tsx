@@ -12,6 +12,21 @@ type RankingBulkScoreDialogProps = {
   rankings: readonly Ranking[];
 };
 
+// 表の列幅（チーム / 現在の得点 / 加算点 / 更新後の得点）。
+// 「全チームへの加算点」の欄を加算点の列と縦にそろえるため、
+// 得点の表と入力欄の行の両方で同じ定義を使う。
+const COLUMN_WIDTH_CLASSES = ["", "w-28", "w-32", "w-28"] as const;
+
+function ColumnWidths() {
+  return (
+    <colgroup>
+      {COLUMN_WIDTH_CLASSES.map((className, index) => (
+        <col className={className || undefined} key={index} />
+      ))}
+    </colgroup>
+  );
+}
+
 type SaveOutcome = {
   succeededTeamIds: number[];
   failedTeamNames: string[];
@@ -177,31 +192,41 @@ export function RankingBulkScoreDialog({
         ) : (
           <div className="space-y-5">
             <div className="space-y-2">
-              {/* 表の列幅（チーム / 現在の得点 w-28 / 加算点 w-32 / 更新後 w-28）と
-                枠線1pxに合わせ、入力欄が加算点の列と縦にそろうようにする。 */}
-              <div className="grid grid-cols-[1fr_7rem_8rem_7rem] items-center border border-transparent text-sm">
-                <label
-                  className="text-text-muted col-span-2 px-3 text-right"
-                  htmlFor={sharedPointsInputId}
-                >
-                  全チームへの加算点
-                </label>
-                <div className="px-3">
-                  <input
-                    className="border-border-base bg-surface-base text-text-base h-9 w-full [appearance:textfield] rounded-md border px-2 text-right outline-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
-                    disabled={isSubmitting}
-                    id={sharedPointsInputId}
-                    onChange={(event) => changeSharedPoints(event.target.value)}
-                    type="number"
-                    value={sharedPointsInput}
-                  />
-                </div>
-              </div>
+              {/* 得点の表と同じ列幅・枠線1pxにして、入力欄を加算点の列にそろえる */}
+              <table
+                className="w-full table-fixed border border-transparent text-sm"
+                role="presentation"
+              >
+                <ColumnWidths />
+                <tbody>
+                  <tr>
+                    <td className="text-text-muted px-3 text-right" colSpan={2}>
+                      <label htmlFor={sharedPointsInputId}>
+                        全チームへの加算点
+                      </label>
+                    </td>
+                    <td className="px-3">
+                      <input
+                        className="border-border-base bg-surface-base text-text-base h-9 w-full [appearance:textfield] rounded-md border px-2 text-right outline-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                        disabled={isSubmitting}
+                        id={sharedPointsInputId}
+                        onChange={(event) =>
+                          changeSharedPoints(event.target.value)
+                        }
+                        type="number"
+                        value={sharedPointsInput}
+                      />
+                    </td>
+                    <td />
+                  </tr>
+                </tbody>
+              </table>
               <div className="border-border-base app-rounded overflow-hidden border">
                 <table
                   aria-label="選択したチームの得点"
                   className="bg-surface-base w-full table-fixed text-sm"
                 >
+                  <ColumnWidths />
                   <thead className="text-text-muted">
                     <tr className="border-border-subtle border-b">
                       <th
@@ -211,19 +236,19 @@ export function RankingBulkScoreDialog({
                         チーム
                       </th>
                       <th
-                        className="w-28 px-3 py-2.5 text-right font-normal"
+                        className="px-3 py-2.5 text-right font-normal"
                         scope="col"
                       >
                         現在の得点
                       </th>
                       <th
-                        className="w-32 px-3 py-2.5 text-left font-normal"
+                        className="px-3 py-2.5 text-left font-normal"
                         scope="col"
                       >
                         加算点
                       </th>
                       <th
-                        className="w-28 px-3 py-2.5 text-right font-normal"
+                        className="px-3 py-2.5 text-right font-normal"
                         scope="col"
                       >
                         更新後の得点

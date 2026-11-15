@@ -23,6 +23,7 @@
   --color-text-subtle-inverse: var(--text-subtle-inverse);
 
   --color-brand-primary: var(--brand-primary);
+  --color-text-link: var(--text-link);
   --color-button-brand-gradient-start: var(--button-brand-gradient-start);
   --color-button-brand-gradient-end: var(--button-brand-gradient-end);
 
@@ -71,6 +72,7 @@
   --text-subtle-inverse: #91a9ba;
 
   --brand-primary: #38bdf8;
+  --text-link: #0369a1;
   --button-brand-gradient-start: #2397d6;
   --button-brand-gradient-end: #63c2f0;
 
@@ -110,6 +112,7 @@
   --text-subtle-inverse: #7b95ab;
 
   --brand-primary: #38bdf8;
+  --text-link: #7dd3fc;
   --button-brand-gradient-start: #1b6ea8;
   --button-brand-gradient-end: #3a9cda;
 

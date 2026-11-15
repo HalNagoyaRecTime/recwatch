@@ -49,4 +49,20 @@ describe("loadAllPages", () => {
     ).rejects.toThrow("一覧データの取得上限を超えました。");
     expect(loadPage).toHaveBeenCalledTimes(2);
   });
+
+  it("stopWhen が true を返したページで取得を止める", async () => {
+    const loadPage = vi
+      .fn()
+      .mockResolvedValueOnce([1, 2])
+      .mockResolvedValueOnce([3, 4])
+      .mockResolvedValueOnce([5, 6]);
+
+    await expect(
+      loadAllPages(loadPage, {
+        pageSize: 2,
+        stopWhen: (page) => page.includes(3),
+      })
+    ).resolves.toEqual([1, 2, 3, 4]);
+    expect(loadPage).toHaveBeenCalledTimes(2);
+  });
 });
