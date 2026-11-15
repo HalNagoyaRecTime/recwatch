@@ -195,7 +195,14 @@ export function isNotificationStopResponse(
 function isNotificationResultRecipient(value: unknown) {
   return (
     isRecord(value) &&
-    hasExactKeys(value, ["notificationRecipientId", "user", "deliveries"]) &&
+    hasExactKeys(
+      value,
+      value.registeredAt === undefined
+        ? ["notificationRecipientId", "user", "deliveries"]
+        : ["notificationRecipientId", "registeredAt", "user", "deliveries"]
+    ) &&
+    (value.registeredAt === undefined ||
+      isUtcDateTimeString(value.registeredAt)) &&
     isPositiveInteger(value.notificationRecipientId) &&
     isNotificationUserReference(value.user) &&
     Array.isArray(value.deliveries) &&

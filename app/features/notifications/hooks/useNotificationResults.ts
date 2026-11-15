@@ -9,6 +9,8 @@ import {
 } from "~/features/notifications/model/notification-results";
 
 const ResultsPageSize = 50;
+// 1文字ごとに問い合わせないよう、検索語は入力が止まってから反映します。
+const SearchDebounceMs = 300;
 
 type Options = {
   api: NotificationScheduleQueryApi;
@@ -18,6 +20,7 @@ type Options = {
 };
 type Snapshot = {
   scheduleId: number;
+  queryKey: string;
   items: NotificationScheduleResults["recipients"]["items"];
   pagination: {
     page: number;
@@ -44,33 +47,55 @@ export function useNotificationResults({
     page: number;
   }>({ scheduleId: null, filters: defaultResultFilters, page: 1 });
   const sequence = useRef(0);
+  const selectionMatchesSchedule = selection.scheduleId === scheduleId;
+  const pendingSearch = selectionMatchesSchedule
+    ? selection.filters.search
+    : "";
+  const [settledSearch, setSettledSearch] = useState(pendingSearch);
+  useEffect(() => {
+    if (pendingSearch === settledSearch) return;
+    const timeoutId = window.setTimeout(
+      () => setSettledSearch(pendingSearch),
+      SearchDebounceMs
+    );
+    return () => window.clearTimeout(timeoutId);
+  }, [pendingSearch, settledSearch]);
+  const requestPage = selectionMatchesSchedule ? selection.page : 1;
+  const requestSearch = selectionMatchesSchedule ? settledSearch.trim() : "";
+  const requestStatus = selectionMatchesSchedule
+    ? selection.filters.status
+    : "all";
+  const queryKey = JSON.stringify([requestPage, requestSearch, requestStatus]);
   const invalidateRequests = useCallback(() => {
     sequence.current++;
   }, []);
   const loadResults = useCallback(async () => {
     if (scheduleId === null) return;
-    const request = ++sequence.current;
+    const issued = ++sequence.current;
     setLoadingId(scheduleId);
     setError(null);
     try {
-      const page = selection.scheduleId === scheduleId ? selection.page : 1;
       const result = await api.getResults(scheduleId, {
-        page,
+        page: requestPage,
         limit: ResultsPageSize,
+        ...(requestSearch ? { search: requestSearch } : {}),
+        ...(requestStatus !== "all" ? { status: requestStatus } : {}),
+        includeRegisteredAt: "1",
       });
-      if (request !== sequence.current) return;
+      if (issued !== sequence.current) return;
       setSnapshot({
         scheduleId,
+        queryKey,
         items: result.recipients.items,
         pagination: result.recipients.pagination,
       });
     } catch {
-      if (request === sequence.current)
+      if (issued === sequence.current)
         setError({ scheduleId, message: "配信結果を読み込めませんでした。" });
     } finally {
-      if (request === sequence.current) setLoadingId(null);
+      if (issued === sequence.current) setLoadingId(null);
     }
-  }, [api, scheduleId, selection.page, selection.scheduleId]);
+  }, [api, scheduleId, requestPage, requestSearch, requestStatus, queryKey]);
   useEffect(() => {
     if (!active || scheduleId === null) return;
     let mounted = true;
@@ -82,13 +107,16 @@ export function useNotificationResults({
       invalidateRequests();
     };
   }, [active, loadResults, refreshKey, scheduleId, invalidateRequests]);
-  const data = snapshot?.scheduleId === scheduleId ? snapshot.items : null;
+  const data =
+    snapshot?.scheduleId === scheduleId && snapshot.queryKey === queryKey
+      ? snapshot.items
+      : null;
   const filters =
     selection.scheduleId === scheduleId
       ? selection.filters
       : defaultResultFilters;
   const pagination =
-    snapshot?.scheduleId === scheduleId
+    snapshot?.scheduleId === scheduleId && snapshot.queryKey === queryKey
       ? snapshot.pagination
       : { page: 1, limit: ResultsPageSize, totalCount: 0, totalPages: 1 };
   const pageCount = Math.max(1, pagination.totalPages);
