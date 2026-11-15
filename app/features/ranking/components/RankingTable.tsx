@@ -6,7 +6,7 @@ import type { Ranking } from "~/features/ranking/model/ranking";
 type RankingTableProps = {
   footer?: import("react").ReactNode;
   items: readonly Ranking[];
-  onToggleTeam: (teamId: number) => void;
+  onToggleTeam: (ranking: Ranking) => void;
   selectedTeamIds: ReadonlySet<number>;
 };
 
@@ -27,7 +27,8 @@ export function RankingTable({
           aria-label={`${ranking.teamName}を選択`}
           checked={selectedTeamIds.has(ranking.teamId)}
           className="accent-brand-primary size-4"
-          onChange={() => onToggleTeam(ranking.teamId)}
+          data-ranking-team-id={ranking.teamId}
+          onChange={() => onToggleTeam(ranking)}
           type="checkbox"
         />
       ),
