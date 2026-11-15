@@ -1,5 +1,5 @@
 import { Check, X } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useId, useMemo, useState } from "react";
 
 import { Button } from "~/components/ui/button/Button";
 import { FormModal } from "~/components/ui/modal/FormModal";
@@ -11,6 +11,21 @@ type RankingBulkScoreDialogProps = {
   onSaved: (succeededTeamIds: readonly number[]) => void;
   rankings: readonly Ranking[];
 };
+
+// 表の列幅（チーム / 現在の得点 / 加算点 / 更新後の得点）。
+// 「全チームへの加算点」の欄を加算点の列と縦にそろえるため、
+// 得点の表と入力欄の行の両方で同じ定義を使う。
+const COLUMN_WIDTH_CLASSES = ["", "w-28", "w-32", "w-28"] as const;
+
+function ColumnWidths() {
+  return (
+    <colgroup>
+      {COLUMN_WIDTH_CLASSES.map((className, index) => (
+        <col className={className || undefined} key={index} />
+      ))}
+    </colgroup>
+  );
+}
 
 type SaveOutcome = {
   succeededTeamIds: number[];
@@ -40,6 +55,8 @@ export function RankingBulkScoreDialog({
   const [pointsInput, setPointsInput] = useState<Record<number, string>>(() =>
     Object.fromEntries(rankings.map((ranking) => [ranking.teamId, "0"]))
   );
+  const sharedPointsInputId = useId();
+  const [sharedPointsInput, setSharedPointsInput] = useState("0");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -51,10 +68,19 @@ export function RankingBulkScoreDialog({
     .filter((ranking): ranking is Ranking => ranking !== undefined);
 
   function parsePoints(teamId: number): number | null {
-    const raw = pointsInput[teamId] ?? "";
-    if (raw.trim() === "") return null;
-    const value = Number(raw);
-    return Number.isInteger(value) ? value : null;
+    return parseIntegerInput(pointsInput[teamId] ?? "");
+  }
+
+  /**
+   * 全チーム用の入力を、まだ保存していない全チームの入力欄へそのまま反映する。
+   * 反映後も各チームの欄は個別に変更でき、確定は「まとめて保存」で行う。
+   */
+  function changeSharedPoints(value: string) {
+    setSharedPointsInput(value);
+    setPointsInput((current) => ({
+      ...current,
+      ...Object.fromEntries(pendingTeamIds.map((teamId) => [teamId, value])),
+    }));
   }
 
   async function handleSubmit() {
@@ -165,79 +191,111 @@ export function RankingBulkScoreDialog({
           </div>
         ) : (
           <div className="space-y-5">
-            <div className="border-border-base app-rounded overflow-hidden border">
+            <div className="space-y-2">
+              {/* 得点の表と同じ列幅・枠線1pxにして、入力欄を加算点の列にそろえる */}
               <table
-                aria-label="選択したチームの得点"
-                className="bg-surface-base w-full table-fixed text-sm"
+                className="w-full table-fixed border border-transparent text-sm"
+                role="presentation"
               >
-                <thead className="text-text-muted">
-                  <tr className="border-border-subtle border-b">
-                    <th
-                      className="px-3 py-2.5 text-left font-normal"
-                      scope="col"
-                    >
-                      チーム
-                    </th>
-                    <th
-                      className="w-28 px-3 py-2.5 text-right font-normal"
-                      scope="col"
-                    >
-                      現在の得点
-                    </th>
-                    <th
-                      className="w-32 px-3 py-2.5 text-left font-normal"
-                      scope="col"
-                    >
-                      加算点
-                    </th>
-                    <th
-                      className="w-28 px-3 py-2.5 text-right font-normal"
-                      scope="col"
-                    >
-                      更新後の得点
-                    </th>
-                  </tr>
-                </thead>
+                <ColumnWidths />
                 <tbody>
-                  {pendingRows.map((ranking) => {
-                    const points = parsePoints(ranking.teamId);
-                    return (
-                      <tr
-                        className="border-border-subtle border-b last:border-b-0"
-                        key={ranking.teamId}
-                      >
-                        <td className="text-text-base truncate px-3 py-2 font-semibold">
-                          {ranking.teamName}
-                        </td>
-                        <td className="text-text-base px-3 py-2 text-right">
-                          {ranking.score}pt
-                        </td>
-                        <td className="px-3 py-2">
-                          <input
-                            aria-invalid={points === null}
-                            aria-label={`${ranking.teamName}の加算点`}
-                            className="border-border-base bg-surface-base text-text-base h-9 w-full [appearance:textfield] rounded-md border px-2 text-right outline-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
-                            disabled={isSubmitting}
-                            onChange={(event) =>
-                              setPointsInput((current) => ({
-                                ...current,
-                                [ranking.teamId]: event.target.value,
-                              }))
-                            }
-                            type="number"
-                            value={pointsInput[ranking.teamId] ?? ""}
-                          />
-                        </td>
-                        <td className="text-text-base px-3 py-2 text-right">
-                          {points === null
-                            ? "—"
-                            : `${ranking.score + points}pt`}
-                        </td>
-                      </tr>
-                    );
-                  })}
+                  <tr>
+                    <td className="text-text-muted px-3 text-right" colSpan={2}>
+                      <label htmlFor={sharedPointsInputId}>
+                        全チームへの加算点
+                      </label>
+                    </td>
+                    <td className="px-3">
+                      <input
+                        className="border-border-base bg-surface-base text-text-base h-9 w-full [appearance:textfield] rounded-md border px-2 text-right outline-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                        disabled={isSubmitting}
+                        id={sharedPointsInputId}
+                        onChange={(event) =>
+                          changeSharedPoints(event.target.value)
+                        }
+                        type="number"
+                        value={sharedPointsInput}
+                      />
+                    </td>
+                    <td />
+                  </tr>
                 </tbody>
               </table>
+              <div className="border-border-base app-rounded overflow-hidden border">
+                <table
+                  aria-label="選択したチームの得点"
+                  className="bg-surface-base w-full table-fixed text-sm"
+                >
+                  <ColumnWidths />
+                  <thead className="text-text-muted">
+                    <tr className="border-border-subtle border-b">
+                      <th
+                        className="px-3 py-2.5 text-left font-normal"
+                        scope="col"
+                      >
+                        チーム
+                      </th>
+                      <th
+                        className="px-3 py-2.5 text-right font-normal"
+                        scope="col"
+                      >
+                        現在の得点
+                      </th>
+                      <th
+                        className="px-3 py-2.5 text-left font-normal"
+                        scope="col"
+                      >
+                        加算点
+                      </th>
+                      <th
+                        className="px-3 py-2.5 text-right font-normal"
+                        scope="col"
+                      >
+                        更新後の得点
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {pendingRows.map((ranking) => {
+                      const points = parsePoints(ranking.teamId);
+                      return (
+                        <tr
+                          className="border-border-subtle border-b last:border-b-0"
+                          key={ranking.teamId}
+                        >
+                          <td className="text-text-base truncate px-3 py-2 font-semibold">
+                            {ranking.teamName}
+                          </td>
+                          <td className="text-text-base px-3 py-2 text-right">
+                            {ranking.score}pt
+                          </td>
+                          <td className="px-3 py-2">
+                            <input
+                              aria-invalid={points === null}
+                              aria-label={`${ranking.teamName}の加算点`}
+                              className="border-border-base bg-surface-base text-text-base h-9 w-full [appearance:textfield] rounded-md border px-2 text-right outline-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                              disabled={isSubmitting}
+                              onChange={(event) =>
+                                setPointsInput((current) => ({
+                                  ...current,
+                                  [ranking.teamId]: event.target.value,
+                                }))
+                              }
+                              type="number"
+                              value={pointsInput[ranking.teamId] ?? ""}
+                            />
+                          </td>
+                          <td className="text-text-base px-3 py-2 text-right">
+                            {points === null
+                              ? "—"
+                              : `${ranking.score + points}pt`}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
             </div>
             {validationError || submitError ? (
               <p className="text-tone-danger-text text-sm" role="alert">
@@ -267,4 +325,10 @@ export function RankingBulkScoreDialog({
       }
     </FormModal>
   );
+}
+
+function parseIntegerInput(raw: string): number | null {
+  if (raw.trim() === "") return null;
+  const value = Number(raw);
+  return Number.isInteger(value) ? value : null;
 }

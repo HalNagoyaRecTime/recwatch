@@ -1,14 +1,19 @@
 const DEFAULT_PAGE_SIZE = 100;
 const DEFAULT_MAX_PAGES = 100;
 
-type LoadAllPagesOptions = {
+type LoadAllPagesOptions<T> = {
   maxPages?: number;
   pageSize?: number;
+  /**
+   * 取得したページを受け取り、true を返したらそこで取得を止める。
+   * 探しているデータが見つかった時点で打ち切りたい場合に使う。
+   */
+  stopWhen?: (page: T[]) => boolean;
 };
 
 export async function loadAllPages<T>(
   loadPage: (offset: number, limit: number) => Promise<T[]>,
-  options: LoadAllPagesOptions = {}
+  options: LoadAllPagesOptions<T> = {}
 ): Promise<T[]> {
   const pageSize = options.pageSize ?? DEFAULT_PAGE_SIZE;
   const maxPages = options.maxPages ?? DEFAULT_MAX_PAGES;
@@ -18,7 +23,7 @@ export async function loadAllPages<T>(
     const page = await loadPage(items.length, pageSize);
     items.push(...page);
 
-    if (page.length < pageSize) {
+    if (page.length < pageSize || options.stopWhen?.(page)) {
       return items;
     }
   }
