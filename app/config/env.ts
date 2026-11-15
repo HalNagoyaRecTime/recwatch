@@ -21,5 +21,15 @@ export function buildBackendUrl(path = "/") {
     return null;
   }
 
+  if (
+    import.meta.env.DEV &&
+    typeof window !== "undefined" &&
+    ["100.126.161.58", "pcsan.tailc70a6c.ts.net"].includes(
+      window.location.hostname
+    )
+  ) {
+    return new URL(path, window.location.origin).toString();
+  }
+
   return new URL(path, `${env.backendBaseUrl}/`).toString();
 }

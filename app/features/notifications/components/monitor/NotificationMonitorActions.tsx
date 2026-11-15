@@ -15,18 +15,20 @@ export function NotificationMonitorActions({
   state,
   disabled = false,
   onSelect,
+  allowedActions = ["resend", "cancel", "stop"],
 }: {
   schedule: MonitorSchedule;
   state: ActionState;
   disabled?: boolean;
   onSelect?: (id: number) => void;
+  allowedActions?: readonly MonitorAction[];
 }) {
   return (
     <div
       className="flex flex-wrap gap-2"
       aria-label={`配信予約 #${schedule.notificationScheduleId}の操作`}
     >
-      {(["resend", "cancel", "stop"] as MonitorAction[])
+      {allowedActions
         .filter((action) => canRunMonitorAction(schedule, action))
         .map((action) => (
           <Button

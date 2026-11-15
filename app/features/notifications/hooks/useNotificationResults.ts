@@ -74,14 +74,21 @@ export function useNotificationResults({
     const issued = ++sequence.current;
     setLoadingId(scheduleId);
     setError(null);
-    try {
-      const result = await api.getResults(scheduleId, {
-        page: requestPage,
+    const fetchPage = (page: number) =>
+      api.getResults(scheduleId, {
+        page,
         limit: ResultsPageSize,
         ...(requestSearch ? { search: requestSearch } : {}),
         ...(requestStatus !== "all" ? { status: requestStatus } : {}),
         includeRegisteredAt: "1",
       });
+    try {
+      let result = await fetchPage(requestPage);
+      // 絞り込みや更新で件数が減り、表示中のページが範囲外になった場合は最終ページを取り直します。
+      const lastPage = Math.max(1, result.recipients.pagination.totalPages);
+      if (requestPage > lastPage) {
+        result = await fetchPage(lastPage);
+      }
       if (issued !== sequence.current) return;
       setSnapshot({
         scheduleId,
@@ -107,23 +114,30 @@ export function useNotificationResults({
       invalidateRequests();
     };
   }, [active, loadResults, refreshKey, scheduleId, invalidateRequests]);
-  const data =
-    snapshot?.scheduleId === scheduleId && snapshot.queryKey === queryKey
-      ? snapshot.items
+  // 取得したときと条件が違うスナップショットは、現在の結果として見せません。
+  const currentSnapshot =
+    snapshot !== null &&
+    snapshot.scheduleId === scheduleId &&
+    snapshot.queryKey === queryKey
+      ? snapshot
       : null;
+  const data = currentSnapshot ? currentSnapshot.items : null;
   const filters =
     selection.scheduleId === scheduleId
       ? selection.filters
       : defaultResultFilters;
-  const pagination =
-    snapshot?.scheduleId === scheduleId && snapshot.queryKey === queryKey
-      ? snapshot.pagination
-      : { page: 1, limit: ResultsPageSize, totalCount: 0, totalPages: 1 };
+  const pagination = currentSnapshot
+    ? currentSnapshot.pagination
+    : { page: 1, limit: ResultsPageSize, totalCount: 0, totalPages: 1 };
   const pageCount = Math.max(1, pagination.totalPages);
   const page = Math.min(
     selection.scheduleId === scheduleId ? selection.page : 1,
     pageCount
   );
+  const isLoading =
+    active &&
+    scheduleId !== null &&
+    (loadingId === scheduleId || (!data && error?.scheduleId !== scheduleId));
   return {
     data,
     items: data ?? [],
@@ -131,10 +145,8 @@ export function useNotificationResults({
     page,
     pageCount,
     filters,
-    isLoading:
-      active &&
-      scheduleId !== null &&
-      (loadingId === scheduleId || (!data && error?.scheduleId !== scheduleId)),
+    isLoading,
+    isRefreshing: data !== null && isLoading,
     errorMessage: error?.scheduleId === scheduleId ? error.message : null,
     loadResults,
     resetFilters: () =>

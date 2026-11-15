@@ -43,6 +43,11 @@ export default defineConfig(({ mode }) => {
     plugins: [tailwindcss(), reactRouter(), tsconfigPaths()],
     server: {
       host: "0.0.0.0",
+      allowedHosts: ["pcsan.tailc70a6c.ts.net"],
+      proxy: {
+        "/api": { target: "http://127.0.0.1:8787" },
+        "/health": { target: "http://127.0.0.1:8787" },
+      },
     },
   };
 });
