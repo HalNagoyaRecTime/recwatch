@@ -18,8 +18,23 @@ describe("toTeam", () => {
       name: "赤組",
       registeredClasses: ["1A", "1B"],
       score: 120,
-      registeredAt: "2026-09-01T09:00:00Z",
-      updatedAt: "2026-09-05T12:00:00Z",
+      registeredAt: "2026-09-01T09:00:00.000Z",
+      updatedAt: "2026-09-05T12:00:00.000Z",
     });
+  });
+
+  it("APIが返すタイムゾーンなしの日時をUTCとして扱う", () => {
+    // rectime-apiはSQLiteのCURRENT_TIMESTAMP(UTC)をそのまま返す
+    const team = toTeam({
+      team_id: 1,
+      team_name: "1年Aクラス(11A)",
+      registered_classes: ["11A"],
+      scores: 0,
+      created_at: "2026-10-16 12:20:58",
+      updated_at: "2026-10-16 12:20:58",
+    });
+
+    expect(team.registeredAt).toBe("2026-10-16T12:20:58.000Z");
+    expect(team.updatedAt).toBe("2026-10-16T12:20:58.000Z");
   });
 });

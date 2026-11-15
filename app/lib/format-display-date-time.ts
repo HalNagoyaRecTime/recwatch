@@ -4,6 +4,7 @@ const displayDateTimeFormatter = new Intl.DateTimeFormat("ja-JP", {
   hour12: false,
   minute: "2-digit",
   month: "2-digit",
+  timeZone: "Asia/Tokyo",
 });
 
 export function formatDisplayDateTime(value: string): string {
