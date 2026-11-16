@@ -76,6 +76,63 @@ describe("RankingBulkScoreDialog", () => {
     expect(screen.getByText("70pt")).toBeInTheDocument();
   });
 
+  it("全チーム用の入力が各チームの加算点へ即反映され、そのあと個別に変更もできる", async () => {
+    const user = userEvent.setup();
+    render(
+      <RankingBulkScoreDialog
+        onClose={vi.fn()}
+        onSaved={vi.fn()}
+        rankings={[blueTeam, redTeam]}
+      />
+    );
+
+    const sharedInput = screen.getByLabelText("全チームへの加算点");
+    expect(sharedInput).toHaveValue(0);
+    await user.clear(sharedInput);
+    await user.type(sharedInput, "20");
+
+    expect(screen.getByLabelText("青チームの加算点")).toHaveValue(20);
+    expect(screen.getByLabelText("赤チームの加算点")).toHaveValue(20);
+    expect(screen.getByText("120pt")).toBeInTheDocument();
+    // 赤チームは80pt + 20 = 100pt
+    const redRow = screen.getByText("赤チーム").closest("tr")!;
+    expect(within(redRow).getByText("100pt")).toBeInTheDocument();
+
+    const redInput = screen.getByLabelText("赤チームの加算点");
+    await user.clear(redInput);
+    await user.type(redInput, "5");
+
+    expect(screen.getByLabelText("青チームの加算点")).toHaveValue(20);
+    expect(screen.getByText("85pt")).toBeInTheDocument();
+  });
+
+  it("全チーム用の入力だけでは保存せず、まとめて保存で確定する", async () => {
+    const user = userEvent.setup();
+    const addTeamScore = vi
+      .spyOn(TeamApi, "addTeamScore")
+      .mockImplementation(async (teamId, { points }) =>
+        createTeam(teamId === 1 ? blueTeam : redTeam, points)
+      );
+    render(
+      <RankingBulkScoreDialog
+        onClose={vi.fn()}
+        onSaved={vi.fn()}
+        rankings={[blueTeam, redTeam]}
+      />
+    );
+
+    const sharedInput = screen.getByLabelText("全チームへの加算点");
+    await user.clear(sharedInput);
+    await user.type(sharedInput, "-10");
+    expect(addTeamScore).not.toHaveBeenCalled();
+
+    await user.click(screen.getByRole("button", { name: "まとめて保存" }));
+
+    await waitFor(() => expect(addTeamScore).toHaveBeenCalledTimes(2));
+    expect(addTeamScore).toHaveBeenCalledWith(1, { points: -10 });
+    expect(addTeamScore).toHaveBeenCalledWith(2, { points: -10 });
+  });
+
   it("未入力があると保存せずエラーを表示する", async () => {
     const user = userEvent.setup();
     const addTeamScore = vi.spyOn(TeamApi, "addTeamScore");
