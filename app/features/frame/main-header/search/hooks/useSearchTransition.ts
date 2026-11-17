@@ -8,43 +8,47 @@ import {
 
 import { useDocumentScrollLock } from "~/hooks/useDocumentScrollLock";
 import { useSearchFrame } from "~/features/frame/main-header/search/hooks/useSearchFrame";
-import { useSearchGlobalShortcut } from "~/features/frame/main-header/search/hooks/useSearchGlobalShortcut";
 
-const SEARCH_OPEN_FOCUS_DELAY_MS = 220;
 const SEARCH_CLOSE_DURATION_MS = 400;
 
 type SearchPhase = "closed" | "opening" | "open" | "closing";
 
 export function useSearchTransition() {
   const [phase, setPhase] = useState<SearchPhase>("closed");
+  const [query, setQuery] = useState("");
   const isOpen = phase === "open";
   const isOverlayActive = phase !== "closed";
-  const [query, setQuery] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
   const wasOverlayActiveRef = useRef(false);
-  const { anchorRef, frame, transitionFrame } = useSearchFrame({ isOpen });
+  const {
+    anchorRef,
+    finishTransition,
+    frame,
+    geometryReady,
+    geometryTransitionEnabled,
+    positionRef,
+    transitionFrame,
+  } = useSearchFrame();
 
   const open = useCallback(() => {
     if (phase === "opening" || phase === "open") {
       return;
     }
 
-    if (phase === "closed") {
-      // ヘッダーの位置でPortalを描画してから展開する。
-      transitionFrame(false);
-      setPhase("opening");
-      return;
-    }
-
-    transitionFrame(true);
-    setPhase("open");
+    // ヘッダー上のトリガー位置からPortalの検索面を広げる
+    transitionFrame(false);
+    setPhase("opening");
   }, [phase, transitionFrame]);
 
   const close = useCallback(() => {
+    if (phase === "closed" || phase === "closing") {
+      return;
+    }
+
     transitionFrame(false);
-    setPhase((current) => (current === "closed" ? current : "closing"));
+    setPhase("closing");
     setQuery("");
-  }, [transitionFrame]);
+  }, [phase, transitionFrame]);
 
   useLayoutEffect(() => {
     if (isOverlayActive) {
@@ -79,7 +83,7 @@ export function useSearchTransition() {
       return;
     }
 
-    // 縮小が終わるまでPortalを残し、閉じた検索欄をヘッダーへ戻す。
+    // 縮小が終わるまでPortalを残し、閉じた検索欄をヘッダーへ戻す
     const timeoutId = window.setTimeout(
       () => setPhase("closed"),
       SEARCH_CLOSE_DURATION_MS
@@ -93,30 +97,28 @@ export function useSearchTransition() {
       return;
     }
 
-    const timeoutId = window.setTimeout(
-      () => inputRef.current?.focus(),
-      SEARCH_OPEN_FOCUS_DELAY_MS
-    );
+    const frameId = window.requestAnimationFrame(() => {
+      inputRef.current?.focus();
+    });
 
     return () => {
-      window.clearTimeout(timeoutId);
+      window.cancelAnimationFrame(frameId);
     };
-  }, [isOpen]);
+  }, [geometryReady, isOpen]);
 
   useDocumentScrollLock(isOverlayActive);
-  useSearchGlobalShortcut({
-    isOpen: isOverlayActive,
-    onClose: close,
-    onOpen: open,
-  });
 
   return {
     anchorRef,
     close,
+    finishTransition,
     frame,
+    geometryReady,
+    geometryTransitionEnabled,
     inputRef,
     isOpen,
     isOverlayActive,
+    positionRef,
     query,
     setQuery,
     open,
